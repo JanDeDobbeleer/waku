@@ -1,24 +1,24 @@
-target_sources(yasb_core PRIVATE
-  ../util/natural_time.cpp
-  ../util/natural_time.h
+# Widget framework only. Concrete widgets live in widgets/ (target yasb_widgets).
+target_sources(yasb_ui PRIVATE
+  backdrop.h
   backdrop.cpp
+  base_widget.h
   base_widget.cpp
+  callbacks.h
   callbacks.cpp
   event_bus.h
+  label_format.h
   label_format.cpp
+  polling_worker.h
   polling_worker.cpp
+  popup.h
   popup.cpp
+  registry.h
   registry.cpp
+  stat_popup.h
   stat_popup.cpp
+  tooltip.h
   tooltip.cpp
+  widget_builder.h
   widget_builder.cpp
-  ../../widgets/stat_widgets.cpp
-  ../../widgets/stat_widgets.h
-  ../../widgets/cpu/cpu_widget.cpp
-  ../../widgets/cpu/cpu_widget.h
-  ../../widgets/memory/memory_widget.cpp
-  ../../widgets/memory/memory_widget.h
-  ../../widgets/battery/battery_widget.cpp
-  ../../widgets/battery/battery_widget.h
-  ../../widgets/system_widget_helpers.h
 )

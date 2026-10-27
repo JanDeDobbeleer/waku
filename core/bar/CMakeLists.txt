@@ -1,4 +1,4 @@
-target_sources(yasb_core PRIVATE
+target_sources(yasb_ui PRIVATE
   adaptive_frame.h
   adaptive_frame.cpp
   app_bar.h

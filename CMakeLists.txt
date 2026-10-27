@@ -31,8 +31,6 @@ endif()
 find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui Widgets)
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
-find_package(nlohmann_json_schema_validator CONFIG REQUIRED)
-find_package(wil CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 
 # Applied to our own targets only, so third-party code keeps its warning level.
@@ -46,26 +44,13 @@ target_compile_options(yasb_options INTERFACE
   /external:anglebrackets /external:W0)
 target_link_options(yasb_options INTERFACE /GUARD:CF /DYNAMICBASE /NXCOMPAT)
 
-add_library(yasb_core STATIC)
-target_include_directories(yasb_core PUBLIC ${CMAKE_SOURCE_DIR})
-target_sources(yasb_core PRIVATE
-  app/app_services.h app/app_services.cpp
-  app/cli_server.h app/cli_server.cpp
-  app/file_watcher.h app/file_watcher.cpp
-  app/hotkeys.h app/hotkeys.cpp
-  app/log.h app/log.cpp
-  app/single_instance.h app/single_instance.cpp
-  app/tray_icon.h app/tray_icon.cpp
-)
-target_link_libraries(yasb_core
-  PUBLIC Qt6::Core Qt6::Gui Qt6::Widgets
-         yaml-cpp::yaml-cpp nlohmann_json::nlohmann_json
-         nlohmann_json_schema_validator::validator WIL::WIL
-  PRIVATE yasb_options)
+# Layered targets; each link line encodes one arrow (see docs/architecture.md):
+#   yasb-native -> yasb_app -> yasb_widgets -> yasb_ui -> {yasb_css, yasb_config}
+#                                           -> yasb_platform
+add_subdirectory(platform)
 add_subdirectory(core)
-
-add_executable(yasb-native WIN32 app/main.cpp)
-target_link_libraries(yasb-native PRIVATE yasb_core yasb_options windowsapp runtimeobject)
+add_subdirectory(widgets)
+add_subdirectory(app)
 
 add_executable(yasbc-native tools/yasbc-native/main.cpp)
 target_link_libraries(yasbc-native PRIVATE yasb_options)

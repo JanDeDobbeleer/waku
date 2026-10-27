@@ -1,0 +1,28 @@
+# app: process services (single instance, CLI pipe, hotkeys, tray, file watcher, logging).
+add_library(yasb_app STATIC
+  app_services.h
+  app_services.cpp
+  cli_server.h
+  cli_server.cpp
+  file_watcher.h
+  file_watcher.cpp
+  hotkeys.h
+  hotkeys.cpp
+  log.h
+  log.cpp
+  single_instance.h
+  single_instance.cpp
+  tray_icon.h
+  tray_icon.cpp
+)
+target_include_directories(yasb_app PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(yasb_app
+  PUBLIC yasb_widgets
+  PRIVATE yasb_options)
+
+# Composition root. main.cpp is the only WinRT user (winrt::init_apartment), so the WinRT libs
+# stay on the executable.
+add_executable(yasb-native WIN32 main.cpp)
+target_link_libraries(yasb-native PRIVATE yasb_app yasb_options windowsapp runtimeobject)
+# Keep build\<preset>\yasb-native.exe where docs and tools expect it.
+set_target_properties(yasb-native PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

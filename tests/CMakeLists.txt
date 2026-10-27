@@ -1,7 +1,8 @@
 include(GoogleTest)
 
 add_executable(yasb_tests smoke/test_startup.cpp)
-target_link_libraries(yasb_tests PRIVATE yasb_core yasb_options GTest::gtest_main)
+# One test binary covers every layer, so it links the top library (yasb_app).
+target_link_libraries(yasb_tests PRIVATE yasb_app yasb_options GTest::gtest_main)
 
 # Qt DLLs and plugins must sit next to the test exe so ctest discovery and runs work without PATH.
 add_custom_command(TARGET yasb_tests POST_BUILD

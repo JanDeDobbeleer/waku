@@ -49,8 +49,8 @@ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 ## Layering
 
-Dependencies point one way only. Do not add an include that goes against the arrow, even though
-the single `yasb_core` CMake target does not stop you yet (plan unit R7 splits it).
+Dependencies point one way only. Each layer is its own static library and links only the layers
+below it.
 
 ```
 app  ->  widgets  ->  core/{widgets,bar,util} (ui)  ->  core/{css,config}  ->  platform
@@ -64,9 +64,19 @@ app  ->  widgets  ->  core/{widgets,bar,util} (ui)  ->  core/{css,config}  ->  p
 | css / config | `core/css/`, `core/config/` | Qt, nlohmann, yaml-cpp; not each other |
 | platform | `platform/` | Win32, Qt Core only |
 
-Core must never include `widgets/` (today `core/widgets/CMakeLists.txt` compiles the stat widgets
-into the core target; that is a known violation, not a pattern to copy). Details:
-`docs/architecture.md`.
+| Target | Layer |
+|---|---|
+| `yasb_app` (+ exe `yasb-native` from `app/main.cpp`) | app |
+| `yasb_widgets` | widgets |
+| `yasb_ui` | ui |
+| `yasb_css`, `yasb_config` | css / config |
+| `yasb_platform` | platform |
+
+Core must never include `widgets/` or `app/`. A new widget's sources go in
+`widgets/CMakeLists.txt` and its registration in `widgets/` (called from `app/main.cpp`), never in a
+`core/` CMake file. A new dependency between layers needs both the include and a matching
+`target_link_libraries` line in the dependent layer's `CMakeLists.txt`; third-party libraries go
+`PRIVATE` unless a public header includes them. Details: `docs/architecture.md`.
 
 ## Style
 

@@ -6,8 +6,6 @@
   "dependencies": [
     "yaml-cpp",
     "nlohmann-json",
-    "json-schema-validator",
-    "wil",
     "gtest"
   ]
 }

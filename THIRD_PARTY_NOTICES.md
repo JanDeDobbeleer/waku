@@ -97,8 +97,6 @@ licences apply to binaries that include them.
 | Qt 6.10 (Core, Gui, Widgets) | LGPLv3 | Dynamically linked; DLLs deployed next to the exe by `windeployqt`, unmodified |
 | yaml-cpp | MIT | Statically linked (config parsing) |
 | nlohmann-json | MIT | Header-only (config model) |
-| json-schema-validator (pboettch) | MIT | Statically linked (schema validation) |
-| WIL (Windows Implementation Libraries) | MIT | Header-only; linked but not used yet |
 | GoogleTest | BSD-3-Clause | Test executable only; not shipped |
 | C++/WinRT headers (Windows SDK) | MIT | Header-only (apartment init) |
 | Microsoft Visual C++ runtime | Microsoft redistributable licence | `vc_redist.<arch>.exe` copied to `dist` by the `deploy` target |

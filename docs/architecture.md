@@ -13,23 +13,31 @@ Intended dependency direction:
 app  ->  widgets  ->  core/{widgets,bar,util} (ui)  ->  core/{css,config}  ->  platform
 ```
 
-Today all of `app/`, `core/`, `platform/` and `widgets/` compile into one static target,
-`yasb_core`, so CMake does not enforce the arrows. Includes currently respect them except for one
-build-level inversion: `core/widgets/CMakeLists.txt` compiles `widgets/stat_widgets.cpp` and the
-cpu/memory/battery widgets into the core target. Plan unit R7 splits the targets:
+Each layer is its own static library (plan unit R7); the link lines encode the arrows, so a lower
+target cannot link symbols from a higher one, and every target links `yasb_options`:
 
-| Target (planned) | Sources | Links PUBLIC | Links PRIVATE | Today |
+| Target | Folder (`CMakeLists.txt`) | Sources | Links PUBLIC | Links PRIVATE |
 |---|---|---|---|---|
-| `yasb_platform` | `platform/` | `Qt6::Core` | `pdh setupapi psapi` | in `yasb_core` |
-| `yasb_config` | `core/config/` + generated options | `nlohmann_json`, `Qt6::Core` | `yaml-cpp` | in `yasb_core` |
-| `yasb_css` | `core/css/` | `Qt6::Widgets` | | in `yasb_core` |
-| `yasb_ui` | `core/bar/`, `core/widgets/`, `core/util/` | `yasb_css`, `yasb_config`, `Qt6::Widgets` | | in `yasb_core` |
-| `yasb_widgets` | `widgets/` | `yasb_ui`, `yasb_platform` | | in `yasb_core` (via `core/widgets/CMakeLists.txt`) |
-| `yasb_app` | `app/` minus `main.cpp` | `yasb_widgets` | | in `yasb_core` (root `CMakeLists.txt`) |
-| `yasb-native` | `app/main.cpp` | | `yasb_app` | links `yasb_core`, `windowsapp`, `runtimeobject` |
+| `yasb_platform` | `platform/` | `platform/` | `Qt6::Core` | `pdh setupapi psapi` |
+| `yasb_config` | `core/config/` | `core/config/` + generated options + embedded schema | `Qt6::Core`, `nlohmann_json` | `yaml-cpp` |
+| `yasb_css` | `core/css/` | `core/css/` | `Qt6::Core` | `Qt6::Gui`, `Qt6::Widgets` |
+| `yasb_ui` | `core/` | `core/bar/`, `core/widgets/`, `core/util/`, `core/version.cpp` | `yasb_css`, `yasb_config`, `Qt6::Widgets` | |
+| `yasb_widgets` | `widgets/` | `widgets/` (incl. `registerStatWidgets`) | `yasb_ui`, `yasb_platform` | |
+| `yasb_app` | `app/` | `app/` minus `main.cpp` | `yasb_widgets` | |
+| `yasb-native` (exe) | `app/` | `app/main.cpp` | | `yasb_app`, `windowsapp`, `runtimeobject` |
+| `yasbc-native` (exe) | root | `tools/yasbc-native/main.cpp` | | (none of ours) |
+| `yasb_tests` (exe) | `tests/` | `tests/**` | | `yasb_app`, `GTest`, `Qt6::Test` |
 
-Until R7 lands, a new include that points against the arrow is a review failure even though it
-builds.
+Notes on the current graph:
+
+- `yasb_ui` does not include `core/css` yet (the transition engine is installed by `main.cpp`); the
+  link is kept because ui is the layer that applies CSS.
+- Only `widgets/` uses `platform/` today; config and css do not.
+- The WinRT libs sit on the executable because `winrt::init_apartment` in `main.cpp` is the only
+  WinRT call. Move them to the library that first uses a WinRT projection.
+
+All targets share the repo root as include directory (includes are written `"core/..."`), so the
+compiler alone does not reject a header-only include against the arrow.
 
 ## Startup and ownership
 

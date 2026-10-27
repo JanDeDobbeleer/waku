@@ -17,9 +17,21 @@ const std::size_t kEmbeddedSchemaSize = ${_schema_size};
 }
 " @ONLY)
 
-target_sources(yasb_core PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/deprecation.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/loader.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/paths.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/schema_validator.cpp
+# config: YAML loading, schema validation, paths and the generated typed options. yaml-cpp stays
+# private; headers expose nlohmann::json and Qt Core (QLoggingCategory).
+file(GLOB YASB_OPTIONS_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/options/*.h")
+add_library(yasb_config STATIC
+  deprecation.h
+  deprecation.cpp
+  loader.h
+  loader.cpp
+  paths.h
+  paths.cpp
+  schema_validator.h
+  schema_validator.cpp
+  ${YASB_OPTIONS_HEADERS}
   ${YASB_SCHEMA_DATA_CPP})
+target_include_directories(yasb_config PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(yasb_config
+  PUBLIC Qt6::Core nlohmann_json::nlohmann_json
+  PRIVATE yasb_options yaml-cpp::yaml-cpp)
