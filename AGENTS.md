@@ -42,7 +42,10 @@ Enable them once per clone:
 
 ```powershell
 git config core.hooksPath tools/hooks
+git config blame.ignoreRevsFile .git-blame-ignore-revs
 ```
+
+`.git-blame-ignore-revs` lists mechanical formatting commits so `git blame` skips them.
 
 ## Layering
 
