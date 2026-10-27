@@ -6,6 +6,7 @@
 #include <QProcess>
 #include <QRegularExpression>
 #include <QScreen>
+#include <QTimer>
 #include <utility>
 
 #include "app/log.h"
@@ -15,9 +16,19 @@
 #include "core/config/paths.h"
 
 namespace yasb::app {
+namespace {
+
+constexpr int kScreenChangeDebounceMs = 250;
+
+}  // namespace
 
 AppServices::AppServices(nlohmann::json config, QObject* parent)
-    : QObject(parent), config_(std::move(config)), instance_(L"yasb_reborn") {}
+    : QObject(parent), config_(std::move(config)), instance_(L"yasb_reborn") {
+  screenRestartTimer_.setSingleShot(true);
+  screenRestartTimer_.setInterval(kScreenChangeDebounceMs);
+  connect(&screenRestartTimer_, &QTimer::timeout, this,
+          [this] { requestRestart(screenRestartReason_); });
+}
 
 AppServices::~AppServices() { stop(); }
 
@@ -32,7 +43,8 @@ bool AppServices::start(bool restartWait) {
   }
   if (!instance_.acquire(restartWait)) {
     error_ = instance_.error();
-    qWarning().noquote() << QString::fromStdString(error_);
+    qCritical().noquote() << "Process" << QCoreApplication::applicationPid()
+                          << "not started:" << QString::fromStdString(error_);
     return false;
   }
 
@@ -45,9 +57,9 @@ bool AppServices::start(bool restartWait) {
       config_.value("watch_stylesheet", true));
   if (auto* guiApp = qobject_cast<QGuiApplication*>(QCoreApplication::instance())) {
     connect(guiApp, &QGuiApplication::screenAdded, this,
-            [this](QScreen*) { requestRestart(QStringLiteral("Screen added")); });
+            [this](QScreen*) { scheduleScreenRestart(QStringLiteral("Screen added")); });
     connect(guiApp, &QGuiApplication::screenRemoved, this,
-            [this](QScreen*) { requestRestart(QStringLiteral("Screen removed")); });
+            [this](QScreen*) { scheduleScreenRestart(QStringLiteral("Screen removed")); });
   }
 
   tray_ = new TrayIcon(this);
@@ -76,6 +88,7 @@ void AppServices::addBar(yasb::bar::BarWindow* bar) {
 }
 
 void AppServices::stop() {
+  screenRestartTimer_.stop();
   if (cli_) cli_->stop();
   if (hotkeys_) hotkeys_->stop();
   if (watcher_) watcher_.reset();
@@ -101,6 +114,13 @@ void AppServices::handleCommand(const QString& command) {
   }
 }
 
+void AppServices::scheduleScreenRestart(const QString& reason) {
+  if (restarting_) return;
+  if (screenRestartTimer_.isActive()) qInfo().noquote() << reason << "(restart pending, debounced)";
+  screenRestartReason_ = reason;
+  screenRestartTimer_.start();
+}
+
 void AppServices::requestRestart(const QString& reason) {
   if (restarting_) return;
   restarting_ = true;
@@ -110,12 +130,20 @@ void AppServices::requestRestart(const QString& reason) {
   if (!args.contains(QStringLiteral("--restart-wait")))
     args.append(QStringLiteral("--restart-wait"));
   qInfo() << "Starting replacement process with restart wait";
-  if (!QProcess::startDetached(QCoreApplication::applicationFilePath(), args,
-                               QCoreApplication::applicationDirPath())) {
+  QProcess replacement;
+  replacement.setProgram(QCoreApplication::applicationFilePath());
+  replacement.setArguments(args);
+  replacement.setWorkingDirectory(QCoreApplication::applicationDirPath());
+  qint64 pid = 0;
+  if (!replacement.startDetached(&pid)) {
     restarting_ = false;
-    qCritical() << "Could not start replacement application";
+    qCritical().noquote() << "Could not start replacement application" << replacement.program()
+                          << ":" << replacement.errorString();
     return;
   }
+  // The replacement logs to the same file; if it cannot take over (the single-instance wait times
+  // out) it logs "Process <pid> not started".
+  qInfo() << "Replacement process started, pid" << pid;
   emit restartRequested(reason);
   QCoreApplication::quit();
 }

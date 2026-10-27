@@ -2,6 +2,8 @@
 
 #include <QObject>
 #include <QPointer>
+#include <QString>
+#include <QTimer>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <vector>
@@ -42,6 +44,7 @@ class AppServices : public QObject {
   void handleCommand(const QString& command);
   void requestRestart(const QString& reason);
   void applyBarCommand(const QString& action, const QString& screen);
+  void scheduleScreenRestart(const QString& reason);
 
   nlohmann::json config_;
   SingleInstance instance_;
@@ -50,6 +53,9 @@ class AppServices : public QObject {
   std::unique_ptr<CliServer> cli_;
   TrayIcon* tray_ = nullptr;
   std::vector<QPointer<yasb::bar::BarWindow>> bars_;
+  // Docking fires several screenAdded/screenRemoved in a burst; restart once it settles.
+  QTimer screenRestartTimer_;
+  QString screenRestartReason_;
   std::string error_;
   bool started_ = false;
   bool restarting_ = false;
