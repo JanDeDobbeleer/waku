@@ -39,6 +39,15 @@ dist\msvc2022_arm64\yasb-native.exe --version   # prints "yasb-native 0.1.0"
 dist\msvc2022_arm64\yasb-native.exe --smoke     # builds QApplication, exits 0
 ```
 
+Render a bar offscreen to a PNG (no window, no app-bar registration; the unpackaged debug exe has no
+Qt DLLs, so reuse the ones deployed next to the tests):
+
+```powershell
+$t = "$PWD\build\arm64-debug\tests"
+$env:PATH = "$t;$env:PATH"; $env:QT_PLUGIN_PATH = $t; $env:QT_QPA_PLATFORM = 'offscreen'
+build\arm64-debug\yasb-native.exe --config-home "$PWD\build\cfg" --screenshot "$PWD\build\bar.png"
+```
+
 Notes:
 
 - Tests are copied next to `yasb_tests.exe` with `windeployqt` (including the `offscreen`

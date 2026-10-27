@@ -4,3 +4,4 @@ target_sources(yasb_core PRIVATE
 
 add_subdirectory(config)
 add_subdirectory(css)
+add_subdirectory(bar)

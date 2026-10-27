@@ -25,3 +25,6 @@ target_compile_definitions(yasb_tests PRIVATE YASB_VECTORS_DIR="${CMAKE_SOURCE_D
 find_package(Qt6 REQUIRED COMPONENTS Test)
 target_sources(yasb_tests PRIVATE css/test_preprocessor.cpp css/test_transitions.cpp)
 target_link_libraries(yasb_tests PRIVATE nlohmann_json::nlohmann_json Qt6::Test)
+
+# --- U5: bar shell and adaptive frame ---
+target_sources(yasb_tests PRIVATE bar/test_adaptive_frame.cpp bar/test_bar_window.cpp)
