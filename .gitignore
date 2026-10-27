@@ -1,0 +1,9 @@
+/build/
+/out/
+/dist/
+/vcpkg_installed/
+/.vs/
+CMakeUserPresets.json
+__pycache__/
+*.pyc
+/tools/ab/out/
