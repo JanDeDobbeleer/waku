@@ -18,7 +18,7 @@ This is a four-run baseline (`N=4`), rather than the planned five. A display cha
 
 ## Measurement procedure
 
-Use Windows PowerShell 5.1 from `tools\ab`. Close other apps; keep the machine idle and the lid and display on.
+Use `pwsh` from `tools\ab`. Close other apps; keep the machine idle and the lid and display on.
 
 1. Dry-run first: `.\Switch-Bar.ps1 -Target python -WhatIf` and read the plan.
 2. For each of N = 4 runs: `.\Switch-Bar.ps1 -Target python -Label run<N>` (stops the bar, waits for the tray hook DLL to leave `explorer.exe`, starts the bar through explorer, waits for the `Created on Screen` log line, waits 5 s, captures the bar). Note `readySeconds` from the JSON next to the capture.

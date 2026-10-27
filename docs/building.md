@@ -78,9 +78,9 @@ during startup, before `WidgetBuilder` constructs the configured widgets; repeat
 `arm64-debug` build and `ctest`. It sets up the MSVC environment itself.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1          # everything
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast    # format + generated only
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -SkipFormat -Preset arm64-release
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1          # everything
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast    # format + generated + static checks
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -SkipFormat -Preset arm64-release
 ```
 
 Configure also writes `build\<preset>\compile_commands.json` for clang tooling. Git hooks live in

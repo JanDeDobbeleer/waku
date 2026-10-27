@@ -1,4 +1,4 @@
-# Exercises Compare-Screenshots.ps1 on synthetic images. Run: powershell -File tools\ab\tests\Test-CompareScreenshots.ps1
+# Exercises Compare-Screenshots.ps1 on synthetic images. Run: pwsh -File tools\ab\tests\Test-CompareScreenshots.ps1
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 
@@ -18,7 +18,7 @@ function New-Image([string]$Path, [scriptblock]$Paint) {
 }
 
 function Invoke-Compare([string[]]$Arguments) {
-    $output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script @Arguments
+    $output = & pwsh -NoProfile -ExecutionPolicy Bypass -File $script @Arguments
     return @{ Code = $LASTEXITCODE; Text = ($output -join ' ') }
 }
 

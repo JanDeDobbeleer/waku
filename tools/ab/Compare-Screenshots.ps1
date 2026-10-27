@@ -5,7 +5,7 @@
     A pixel differs when any colour channel differs by more than -ChannelTolerance. Masked
     rectangles (clock text, CPU/memory values, anything live) are ignored. The comparison
     passes when the share of differing pixels outside the masks is at most -MaxDiffPercent.
-    Exit code 0 = pass, 1 = fail, 2 = bad input. Works on Windows PowerShell 5.1.
+    Exit code 0 = pass, 1 = fail, 2 = bad input. Runs with pwsh on Windows.
 .PARAMETER Reference
     Baseline image (PNG/BMP).
 .PARAMETER Candidate
@@ -33,7 +33,11 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 
 if (-not ('BarImageCompare' -as [type])) {
-    Add-Type -ReferencedAssemblies System.Drawing -TypeDefinition @'
+    Add-Type -ReferencedAssemblies @(
+        [System.Drawing.Bitmap].Assembly.Location,
+        [System.Drawing.Rectangle].Assembly.Location,
+        'System.Runtime.dll'
+    ) -TypeDefinition @'
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;

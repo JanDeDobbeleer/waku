@@ -30,7 +30,7 @@
 .PARAMETER Preset
     CMake configure/build preset. Default arm64-debug.
 .EXAMPLE
-    powershell -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast
+    pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast
 #>
 [CmdletBinding()]
 param(

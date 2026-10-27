@@ -8,6 +8,8 @@ the behavioural reference: when in doubt, match what Python YASB does.
 
 ## Build and test
 
+Use `pwsh`, never `powershell` or `powershell.exe`, for script execution.
+
 Run every step in one `cmd.exe` process after the MSVC environment script; environment changes do
 not survive between separate `cmd /c` calls. `vcvars*.bat` live in
 `C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build`. They point
