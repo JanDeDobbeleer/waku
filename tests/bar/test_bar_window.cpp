@@ -158,6 +158,10 @@ TEST(BarScreens, StarSkipsExplicitlyAssignedAndWarnsOnUnknown) {
   EXPECT_FALSE(warn.empty());
 }
 
+TEST(BarScreens, ScreenByNameIsNullWhenNothingMatches) {
+  EXPECT_EQ(screenByName({}, QStringLiteral("DISPLAY1")), nullptr);
+}
+
 TEST(BarSettingsParse, ReadsNormalizedBarObject) {
   const auto bar = nlohmann::json::parse(R"({"alignment":{"align":"right","position":"bottom"},
     "class_name":"x","dimensions":{"height":36,"width":"90%"},"padding":{"left":1,"right":2,"top":3,"bottom":4},

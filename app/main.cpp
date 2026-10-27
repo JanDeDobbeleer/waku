@@ -6,7 +6,9 @@
 #include <QPixmap>
 #include <QPointer>
 #include <QString>
+#include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <memory>
 #include <string>
 #include <vector>
@@ -23,6 +25,10 @@
 #include "widgets/stat_widgets.h"
 
 namespace {
+
+// Process exit codes. 1 is a config or service start failure, 2 a --screenshot failure.
+constexpr int kExitNoScreen = 3;
+constexpr int kExitUnhandledException = 4;
 
 bool hasFlag(int argc, char** argv, const char* flag) {
   for (int i = 1; i < argc; ++i) {
@@ -65,10 +71,21 @@ const char* optionValue(int argc, char** argv, const char* flag) {
   return nullptr;
 }
 
+std::vector<std::string> stringList(const nlohmann::json& object, const char* key) {
+  std::vector<std::string> out;
+  const auto it = object.find(key);
+  if (it == object.end() || !it->is_array()) return out;
+  for (const auto& item : *it) {
+    if (item.is_string()) out.push_back(item.get<std::string>());
+  }
+  return out;
+}
+
 // Builds the first configured bar. App-bar registration is opt-in so --config-home runs never
 // disturb the live desktop's work area.
 // --screenshot <png> renders the bar to a file without ever showing it.
-int runBar(int argc, char** argv) {
+// `engine` is owned by main() so it is destroyed before QApplication.
+int runBar(int argc, char** argv, yasb::css::TransitionEngine& engine) {
   const auto result = yasb::config::loadConfigFile(yasb::config::configPath());
   if (!result.ok()) {
     qCritical().noquote() << "Config not loaded:" << QString::fromStdString(result.message);
@@ -76,7 +93,6 @@ int runBar(int argc, char** argv) {
   }
 
   yasb::css::CssPreprocessor pre(QString::fromStdWString(yasb::config::stylesheetPath().wstring()));
-  static yasb::css::TransitionEngine engine;
   const QString stylesheet = engine.loadStyleSheet(pre.process());
   engine.install(qApp);
   const bool screenshot = optionValue(argc, argv, "--screenshot") != nullptr;
@@ -91,14 +107,22 @@ int runBar(int argc, char** argv) {
     }
   }
 
+  const nlohmann::json noBars = nlohmann::json::object();
+  const auto barsIt = result.config.find("bars");
+  const nlohmann::json& barsConfig =
+      barsIt != result.config.end() && barsIt->is_object() ? *barsIt : noBars;
   std::vector<yasb::bar::BarScreens> bars;
-  for (const auto& [name, bar] : result.config.at("bars").items()) {
-    if (!bar.value("enabled", true)) continue;
-    bars.push_back({name, bar.at("screens").get<std::vector<std::string>>()});
+  for (const auto& [name, bar] : barsConfig.items()) {
+    if (!bar.is_object() || !bar.value("enabled", true)) continue;
+    bars.push_back({name, stringList(bar, "screens")});
+  }
+  QScreen* primary = QGuiApplication::primaryScreen();
+  if (primary == nullptr) {
+    qCritical() << "No primary screen is available; cannot place a bar";
+    return kExitNoScreen;
   }
   std::vector<std::string> screenNames;
   for (QScreen* s : QGuiApplication::screens()) screenNames.push_back(s->name().toStdString());
-  QScreen* primary = QGuiApplication::primaryScreen();
   const auto assignments =
       yasb::bar::resolveBarScreens(bars, screenNames, primary->name().toStdString());
   if (assignments.empty()) {
@@ -109,6 +133,12 @@ int runBar(int argc, char** argv) {
   const auto& pick = assignments.front();
   QScreen* screen =
       yasb::bar::screenByName(QGuiApplication::screens(), QString::fromStdString(pick.screenName));
+  if (screen == nullptr) {
+    qCritical().noquote() << "Screen" << QString::fromStdString(pick.screenName)
+                          << "is no longer connected; cannot place bar"
+                          << QString::fromStdString(pick.barName);
+    return kExitNoScreen;
+  }
   const QString barId =
       QStringLiteral("%1_%2").arg(QString::fromStdString(pick.barName), screen->name());
   yasb::bar::BarDeps deps;
@@ -116,23 +146,21 @@ int runBar(int argc, char** argv) {
 
   yasb::widgets::registerStatWidgets();
   yasb::widgets::WidgetBuilder::Columns columns;
-  const auto& barConfig = result.config["bars"][pick.barName];
+  const auto barIt = barsConfig.find(pick.barName);
+  const nlohmann::json& barConfig = barIt != barsConfig.end() ? *barIt : noBars;
   if (const auto placements = barConfig.find("widgets");
       placements != barConfig.end() && placements->is_object()) {
     for (const char* side : {"left", "center", "right"}) {
-      const auto items = placements->find(side);
-      if (items == placements->end() || !items->is_array()) continue;
       auto& column = columns[QString::fromLatin1(side)];
-      for (const auto& item : *items) {
-        if (item.is_string()) column.append(QString::fromStdString(item.get<std::string>()));
-      }
+      for (const auto& name : stringList(*placements, side))
+        column.append(QString::fromStdString(name));
     }
   }
   yasb::widgets::WidgetBuilder builder(result);
   const auto widgets = builder.buildWidgets(columns, screen->name(), barId);
   auto* window = new yasb::bar::BarWindow(
       barId, QString::fromStdString(pick.barName), screen, stylesheet, widgets,
-      yasb::bar::BarSettings::fromJson(result.config["bars"][pick.barName]), std::move(deps));
+      yasb::bar::BarSettings::fromJson(barConfig), std::move(deps));
   if (screenshot) {
     const char* png = optionValue(argc, argv, "--screenshot");
     window->ensurePolished();
@@ -153,19 +181,34 @@ int runBar(int argc, char** argv) {
   }
   services->addBar(window);
   const QPointer<yasb::bar::BarWindow> bar(window);
-  QObject::connect(services.get(), &yasb::app::AppServices::stylesheetChanged, qApp, [bar] {
-    if (!bar) return;
-    yasb::css::CssPreprocessor updated(
-        QString::fromStdWString(yasb::config::stylesheetPath().wstring()));
-    bar->setStyleSheet(engine.loadStyleSheet(updated.process()));
-  });
+  QObject::connect(
+      services.get(), &yasb::app::AppServices::stylesheetChanged, qApp, [bar, &engine] {
+        if (!bar) return;
+        try {
+          yasb::css::CssPreprocessor updated(
+              QString::fromStdWString(yasb::config::stylesheetPath().wstring()));
+          bar->setStyleSheet(engine.loadStyleSheet(updated.process()));
+        } catch (const std::exception& error) {
+          qCritical().noquote() << "Stylesheet reload failed:" << QString::fromUtf8(error.what());
+        }
+      });
   QObject::connect(services.get(), &yasb::app::AppServices::exitRequested, qApp,
                    &QCoreApplication::quit);
   qApp->setQuitOnLastWindowClosed(false);
   window->show();
   qInfo().noquote() << "Bar" << QString::fromStdString(pick.barName) << "Created on Screen"
                     << screen->name();
-  return QApplication::exec();
+  const int code = QApplication::exec();
+  // Widgets go before the services and the engine that styles them.
+  delete bar.data();
+  return code;
+}
+
+// Last resort for exceptions that hit a noexcept boundary (for example a Qt callback): leave a line
+// in the application log before the process dies.
+[[noreturn]] void logTerminate() {
+  qCritical() << "Terminating on an unhandled exception";
+  std::abort();
 }
 
 }  // namespace
@@ -179,6 +222,7 @@ int main(int argc, char** argv) {
   }
 
   setFontEngine();
+  std::set_terminate(logTerminate);
   QApplication app(argc, argv);
   QCoreApplication::setApplicationName(QStringLiteral("yasb-native"));
   QCoreApplication::setApplicationVersion(QString::fromLatin1(yasb::version()));
@@ -192,5 +236,13 @@ int main(int argc, char** argv) {
     SetEnvironmentVariableW(L"YASB_CONFIG_HOME",
                             QString::fromUtf8(configHome).toStdWString().c_str());
   }
-  return runBar(argc, argv);
+  try {
+    yasb::css::TransitionEngine engine;
+    return runBar(argc, argv, engine);
+  } catch (const std::exception& error) {
+    qCritical().noquote() << "Unhandled exception:" << QString::fromUtf8(error.what());
+  } catch (...) {
+    qCritical() << "Unhandled non-standard exception";
+  }
+  return kExitUnhandledException;
 }
