@@ -2,10 +2,11 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <fstream>
-#include <regex>
+#include <initializer_list>
 #include <sstream>
 
 #include "core/config/paths.h"
@@ -65,54 +66,130 @@ OJson numberFromDigits(const std::string& digits, int base, bool negative) {
   return negative ? -v : v;
 }
 
-// PyYAML (YAML 1.1) implicit scalar resolution for plain scalars.
-OJson resolvePlainScalar(const std::string& text) {
-  static const std::regex kNull(R"(^(?:~|null|Null|NULL|)$)");
-  static const std::regex kBool(
-      R"(^(?:yes|Yes|YES|no|No|NO|true|True|TRUE|false|False|FALSE|on|On|ON|off|Off|OFF)$)");
-  static const std::regex kBin(R"(^([-+]?)0b([0-1_]+)$)");
-  static const std::regex kOct(R"(^([-+]?)0([0-7_]+)$)");
-  static const std::regex kDec(R"(^([-+]?)((?:0|[1-9][0-9_]*))$)");
-  static const std::regex kHex(R"(^([-+]?)0x([0-9a-fA-F_]+)$)");
-  static const std::regex kSexInt(R"(^([-+]?)([1-9][0-9_]*(?::[0-5]?[0-9])+)$)");
-  static const std::regex kFloat(
-      R"(^(?:[-+]?[0-9][0-9_]*\.[0-9_]*(?:[eE][-+][0-9]+)?|\.[0-9][0-9_]*(?:[eE][-+][0-9]+)?)$)");
-  static const std::regex kSexFloat(R"(^([-+]?)([0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*)$)");
-  static const std::regex kInf(R"(^([-+]?)\.(?:inf|Inf|INF)$)");
-  static const std::regex kNan(R"(^\.(?:nan|NaN|NAN)$)");
+// ---- PyYAML (YAML 1.1) implicit resolvers as linear scanners ----
+// Each matcher mirrors one resolver regex anchored at both ends; `s` excludes the optional sign.
 
-  std::smatch m;
-  if (std::regex_match(text, kNull)) return nullptr;
-  if (std::regex_match(text, kBool)) {
+bool isDigit(char c) { return c >= '0' && c <= '9'; }
+bool isDigitOrUnderscore(char c) { return isDigit(c) || c == '_'; }
+
+template <class Pred>
+bool allOf(std::string_view s, Pred pred) {
+  return std::all_of(s.begin(), s.end(), pred);
+}
+
+bool oneOf(std::string_view s, std::initializer_list<std::string_view> words) {
+  return std::find(words.begin(), words.end(), s) != words.end();
+}
+
+// [-+]?0b[0-1_]+
+bool matchBin(std::string_view s) {
+  return s.size() > 2 && s.starts_with("0b") &&
+         allOf(s.substr(2), [](char c) { return c == '0' || c == '1' || c == '_'; });
+}
+
+// [-+]?0[0-7_]+
+bool matchOct(std::string_view s) {
+  return s.size() > 1 && s[0] == '0' &&
+         allOf(s.substr(1), [](char c) { return (c >= '0' && c <= '7') || c == '_'; });
+}
+
+// [-+]?(?:0|[1-9][0-9_]*)
+bool matchDec(std::string_view s) {
+  return s == "0" || (!s.empty() && s[0] >= '1' && s[0] <= '9' &&
+                      allOf(s.substr(1), [](char c) { return isDigitOrUnderscore(c); }));
+}
+
+// [-+]?0x[0-9a-fA-F_]+
+bool matchHex(std::string_view s) {
+  return s.size() > 2 && s.starts_with("0x") && allOf(s.substr(2), [](char c) {
+           return std::isxdigit(static_cast<unsigned char>(c)) || c == '_';
+         });
+}
+
+// int:   [-+]?[1-9][0-9_]*(?::[0-5]?[0-9])+
+// float: [-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\.[0-9_]*
+bool matchSexagesimal(std::string_view s, bool isFloat) {
+  if (s.empty() || !isDigit(s[0]) || (!isFloat && s[0] == '0')) return false;
+  std::size_t i = 1;
+  while (i < s.size() && isDigitOrUnderscore(s[i])) ++i;
+  int groups = 0;
+  while (i < s.size() && s[i] == ':') {
+    const std::size_t start = ++i;
+    while (i < s.size() && isDigit(s[i])) ++i;
+    const std::size_t len = i - start;
+    if (len != 1 && !(len == 2 && s[start] <= '5')) return false;
+    ++groups;
+  }
+  if (groups == 0) return false;
+  if (!isFloat) return i == s.size();
+  return i < s.size() && s[i] == '.' &&
+         allOf(s.substr(i + 1), [](char c) { return isDigitOrUnderscore(c); });
+}
+
+// [-+]?[0-9][0-9_]*\.[0-9_]*(?:[eE][-+][0-9]+)? | \.[0-9][0-9_]*(?:[eE][-+][0-9]+)?
+// (the second branch takes no sign).
+bool matchFloat(std::string_view t) {
+  std::size_t i = 0;
+  const bool signed_ = !t.empty() && (t[0] == '-' || t[0] == '+');
+  if (signed_) ++i;
+  if (i < t.size() && isDigit(t[i])) {
+    while (i < t.size() && isDigitOrUnderscore(t[i])) ++i;
+    if (i == t.size() || t[i] != '.') return false;
+    ++i;
+  } else if (!signed_ && i < t.size() && t[i] == '.') {
+    ++i;
+    if (i == t.size() || !isDigit(t[i])) return false;
+  } else {
+    return false;
+  }
+  while (i < t.size() && isDigitOrUnderscore(t[i])) ++i;
+  if (i == t.size()) return true;
+  if (t[i] != 'e' && t[i] != 'E') return false;
+  ++i;
+  if (i == t.size() || (t[i] != '-' && t[i] != '+')) return false;
+  ++i;
+  return i < t.size() && allOf(t.substr(i), isDigit);
+}
+
+OJson sexagesimal(std::string_view body, bool negative, bool isFloat) {
+  const std::string digits = stripUnderscores(std::string(body));
+  double total = 0;
+  std::stringstream parts(digits);
+  std::string part;
+  while (std::getline(parts, part, ':')) total = total * 60 + std::strtod(part.c_str(), nullptr);
+  if (negative) total = -total;
+  return isFloat ? OJson(total) : OJson(static_cast<std::int64_t>(total));
+}
+
+}  // namespace
+
+OJson resolvePlainScalar(std::string_view text) {
+  if (oneOf(text, {"", "~", "null", "Null", "NULL"})) return nullptr;
+  if (oneOf(text, {"yes", "Yes", "YES", "no", "No", "NO", "true", "True", "TRUE", "false", "False",
+                   "FALSE", "on", "On", "ON", "off", "Off", "OFF"})) {
     const char c = static_cast<char>(std::tolower(static_cast<unsigned char>(text[0])));
     return c == 'y' || c == 't' ||
            (c == 'o' && std::tolower(static_cast<unsigned char>(text[1])) == 'n');
   }
-  if (std::regex_match(text, m, kBin))
-    return numberFromDigits(stripUnderscores(m[2]), 2, m[1] == "-");
-  if (std::regex_match(text, m, kOct))
-    return numberFromDigits(stripUnderscores(m[2]), 8, m[1] == "-");
-  if (std::regex_match(text, m, kDec))
-    return numberFromDigits(stripUnderscores(m[2]), 10, m[1] == "-");
-  if (std::regex_match(text, m, kHex))
-    return numberFromDigits(stripUnderscores(m[2]), 16, m[1] == "-");
-  if (std::regex_match(text, m, kSexInt) || std::regex_match(text, m, kSexFloat)) {
-    const bool isFloat = text.find('.') != std::string::npos;
-    std::string body = stripUnderscores(m[2]);
-    double total = 0;
-    std::stringstream parts(body);
-    std::string part;
-    while (std::getline(parts, part, ':')) total = total * 60 + std::strtod(part.c_str(), nullptr);
-    if (m[1] == "-") total = -total;
-    return isFloat ? OJson(total) : OJson(static_cast<std::int64_t>(total));
+  const bool hasSign = !text.empty() && (text[0] == '-' || text[0] == '+');
+  const bool negative = hasSign && text[0] == '-';
+  const std::string_view s = hasSign ? text.substr(1) : text;
+  auto digits = [](std::string_view d) { return stripUnderscores(std::string(d)); };
+
+  if (matchBin(s)) return numberFromDigits(digits(s.substr(2)), 2, negative);
+  if (matchOct(s)) return numberFromDigits(digits(s.substr(1)), 8, negative);
+  if (matchDec(s)) return numberFromDigits(digits(s), 10, negative);
+  if (matchHex(s)) return numberFromDigits(digits(s.substr(2)), 16, negative);
+  if (matchSexagesimal(s, false) || matchSexagesimal(s, true)) {
+    return sexagesimal(s, negative, text.find('.') != std::string_view::npos);
   }
-  if (std::regex_match(text, kFloat)) return std::strtod(stripUnderscores(text).c_str(), nullptr);
-  if (std::regex_match(text, m, kInf)) {
-    return m[1] == "-" ? -HUGE_VAL : HUGE_VAL;
-  }
-  if (std::regex_match(text, kNan)) return std::nan("");
-  return text;
+  if (matchFloat(text)) return std::strtod(digits(text).c_str(), nullptr);
+  if (oneOf(s, {".inf", ".Inf", ".INF"})) return negative ? -HUGE_VAL : HUGE_VAL;
+  if (oneOf(text, {".nan", ".NaN", ".NAN"})) return std::nan("");
+  return std::string(text);
 }
+
+namespace {
 
 OJson convert(const YAML::Node& node);
 

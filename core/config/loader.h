@@ -81,6 +81,9 @@ OJson expandEnvironment(const OJson& value, const EnvLookup& lookup);
 // sexagesimal...). Throws YAML::Exception on malformed input.
 OJson parseYaml(std::string_view text);
 
+// PyYAML (YAML 1.1) implicit resolution of one plain scalar: null, bool, int, float or string.
+OJson resolvePlainScalar(std::string_view text);
+
 LoadResult loadConfigText(std::string_view yaml, const EnvLookup& env = {});
 LoadResult loadConfigFile(const std::filesystem::path& file, const EnvLookup& env = {});
 
