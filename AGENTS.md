@@ -40,6 +40,10 @@ Parity vectors (needs the YASB virtualenv): see `tools/parity/README.md`.
 include-layering check, the `arm64-debug` build and `ctest`. `tools\check.ps1 -Fast` runs only the
 first three.
 
+`pwsh -NoProfile -File tools\check.ps1 -Analyze` runs the fast checks and opt-in local static
+analysis instead of tests, in an isolated build directory. It requires clang-tidy; see
+`docs/building.md`. Ordinary checks reset `YASB_ANALYZE=OFF`; hooks remain fast-only.
+
 Git hooks in `tools/hooks` run the fast checks on staged files and validate the commit message.
 Enable them once per clone:
 

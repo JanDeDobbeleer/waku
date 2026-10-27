@@ -143,11 +143,11 @@ PinnablePopup::PinnablePopup(QWidget* anchor, bar::GlobalState& globalState, boo
                              bool roundCorners, const QString& roundCornersType,
                              const QString& borderColor)
     : PopupWidget(anchor),
-      globalState_(globalState),
       blur_(blur),
       roundCorners_(roundCorners),
       roundCornersType_(roundCornersType),
-      borderColor_(borderColor) {
+      borderColor_(borderColor),
+      globalState_(globalState) {
   setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
                  Qt::NoDropShadowWindowHint);
 }

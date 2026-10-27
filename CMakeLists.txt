@@ -35,6 +35,11 @@ find_package(GTest CONFIG REQUIRED)
 
 # Applied to our own targets only, so third-party code keeps its warning level.
 add_library(yasb_options INTERFACE)
+option(YASB_ANALYZE "Enable MSVC static analysis for own targets" OFF)
+if(YASB_ANALYZE)
+  target_compile_options(yasb_options INTERFACE /analyze /analyze:external-
+    "/external:I${CMAKE_CURRENT_SOURCE_DIR}/core/config/options")
+endif()
 target_compile_features(yasb_options INTERFACE cxx_std_20)
 target_compile_definitions(yasb_options INTERFACE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX

@@ -81,10 +81,41 @@ during startup, before `WidgetBuilder` constructs the configured widgets; repeat
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1          # everything
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast    # format + generated + static checks
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -SkipFormat -Preset arm64-release
+pwsh -NoProfile -File tools\check.ps1 -Analyze                       # local static analysis
 ```
 
 Configure also writes `build\<preset>\compile_commands.json` for clang tooling. Git hooks live in
 `tools\hooks`; enable them with `git config core.hooksPath tools/hooks`.
+
+### Local static analysis
+
+`-Analyze` requires PowerShell 7, the build prerequisites above and LLVM `clang-tidy` on `PATH`
+or in `C:\Program Files\LLVM\bin`. It runs the fast checks, then a clean MSVC `/analyze` build
+and clang-tidy over production compilation units in `app`, `core`, `platform`, `widgets` and
+`tools\yasbc-native`. It does not run tests, launch the bar or register an app-bar.
+`-Fast` and `-Staged` cannot be combined with `-Analyze`; hooks still run only fast checks.
+
+Analysis uses `build\<preset>-analyze` with `BUILD_TESTING=OFF` and `YASB_ANALYZE=ON`.
+The default `YASB_ANALYZE` is `OFF`; ordinary checks explicitly reset it to `OFF`.
+The option applies `/analyze /analyze:external-` only through our `yasb_options` target.
+Generated option headers are external for MSVC and excluded by clang-tidy, as are Qt and
+third-party headers. Generated MOC units are built by MSVC but are not clang-tidy entry points.
+Logs and diagnostic counts appear in the analysis directory and the check summary. Missing tools,
+compiler errors and analyzer findings fail the command; an incremental no-op cannot count as analysis.
+
+`.clang-tidy` selects explicit checks rather than wildcard families: suspicious assertions, dangling
+handles, erase/size/integer mistakes, invalid forwarding and use-after-move; unsafe C library/thread
+APIs; ineffective moves and throwing move constructors; and `nullptr`/`override` consistency.
+Naming checks require the `_` suffix on private/protected state and static class members, without
+imposing snake_case on existing camelCase_ names. Public aggregate/schema fields retain their names.
+This is a baseline, not a proof of thread safety or a whole-program analysis.
+
+The clang-tidy database copy removes MSVC-only `/analyze`, `/analyze:external-` and
+`/external:anglebrackets`; dependency `/external:I` paths remain. The driver receives the preset's
+ARM64 or x64 target explicitly. Clang's overloaded-virtual warning is disabled because Qt signals
+named `event()` intentionally do not override `QObject::event(QEvent*)`; other diagnostics remain
+errors. Verified locally with MSVC 19.44, LLVM 22.1.8 and ARM64 Qt 6.10.2: 42 production units.
+The x64/Release presets are supported by the command but were not validated in this R11 gate.
 
 Notes:
 

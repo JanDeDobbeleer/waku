@@ -110,7 +110,8 @@ std::optional<BatterySample> WindowsBatteryDataSource::sample() {
   if (DeviceIoControl(battery, IOCTL_BATTERY_QUERY_STATUS, &wait, sizeof(wait), &state,
                       sizeof(state), &returned, nullptr)) {
     out.charging = (state.PowerState & BATTERY_CHARGING) != 0;
-    if (state.Rate != BATTERY_UNKNOWN_RATE) out.rate = static_cast<double>(state.Rate) / 1000.0;
+    if (state.Rate != static_cast<LONG>(BATTERY_UNKNOWN_RATE))
+      out.rate = static_cast<double>(state.Rate) / 1000.0;
     if (state.Voltage != BATTERY_UNKNOWN_VOLTAGE) out.voltage = state.Voltage / 1000.0;
     if (state.Capacity != BATTERY_UNKNOWN_CAPACITY) out.capacity = state.Capacity;
   }

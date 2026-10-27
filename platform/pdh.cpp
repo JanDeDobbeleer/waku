@@ -80,8 +80,9 @@ struct PdhCpuDataSource::Impl {
     OSVERSIONINFOW os{};
     os.dwOSVersionInfoSize = sizeof(os);
     using RtlGetVersionFn = LONG(WINAPI*)(OSVERSIONINFOW*);
-    const auto rtlGetVersion = reinterpret_cast<RtlGetVersionFn>(
-        GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion"));
+    const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+    const auto rtlGetVersion =
+        ntdll ? reinterpret_cast<RtlGetVersionFn>(GetProcAddress(ntdll, "RtlGetVersion")) : nullptr;
     const DWORD build = rtlGetVersion && rtlGetVersion(&os) == 0 ? os.dwBuildNumber : 0;
     const bool modern = build >= kWin1124H2Build;
     const wchar_t* counter = modern ? L"\\Processor Information(_Total)\\% Processor Time"

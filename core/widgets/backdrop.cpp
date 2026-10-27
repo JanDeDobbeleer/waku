@@ -41,8 +41,12 @@ struct CompositionAttribData {
 using SetWindowCompositionAttributeFn = BOOL(WINAPI*)(HWND, CompositionAttribData*);
 
 void setAccentPolicy(HWND hwnd, int state, DWORD gradient) {
-  static const auto fn = reinterpret_cast<SetWindowCompositionAttributeFn>(
-      GetProcAddress(GetModuleHandleW(L"user32.dll"), "SetWindowCompositionAttribute"));
+  static const auto fn = [] {
+    const HMODULE user32 = GetModuleHandleW(L"user32.dll");
+    return user32 ? reinterpret_cast<SetWindowCompositionAttributeFn>(
+                        GetProcAddress(user32, "SetWindowCompositionAttribute"))
+                  : nullptr;
+  }();
   if (!fn) throw std::runtime_error("SetWindowCompositionAttribute unavailable");
   AccentPolicy accent{state, 0, gradient, 0};
   CompositionAttribData data{kWcaAccentPolicy, &accent, sizeof(accent)};
@@ -82,8 +86,9 @@ std::uint32_t hexToRgbaInt(const QString& hex) {
 unsigned windowsBuild() {
   using RtlGetVersionFn = LONG(WINAPI*)(OSVERSIONINFOW*);
   static const unsigned build = [] {
-    const auto fn = reinterpret_cast<RtlGetVersionFn>(
-        GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion"));
+    const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+    const auto fn =
+        ntdll ? reinterpret_cast<RtlGetVersionFn>(GetProcAddress(ntdll, "RtlGetVersion")) : nullptr;
     OSVERSIONINFOW info{};
     info.dwOSVersionInfoSize = sizeof(info);
     return fn && fn(&info) == 0 ? static_cast<unsigned>(info.dwBuildNumber) : 0u;

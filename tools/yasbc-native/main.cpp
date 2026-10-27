@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -25,17 +26,19 @@ int sendCommand(const std::string& command) {
     CloseHandle(pipe);
     return 1;
   }
-  char response[65536]{};
+  std::vector<char> response(65536);
   DWORD read = 0;
-  const bool ok = ReadFile(pipe, response, sizeof(response), &read, nullptr) && read > 0;
+  const bool ok =
+      ReadFile(pipe, response.data(), static_cast<DWORD>(response.size()), &read, nullptr) &&
+      read > 0;
   CloseHandle(pipe);
   if (!ok) {
     std::fprintf(stderr, "Could not read command response: %lu\n", GetLastError());
     return 1;
   }
-  std::fwrite(response, 1, read, stdout);
+  std::fwrite(response.data(), 1, read, stdout);
   std::fputc('\n', stdout);
-  return std::string(response, read) == "ACK" ? 0 : 2;
+  return std::string(response.data(), read) == "ACK" ? 0 : 2;
 }
 
 }  // namespace

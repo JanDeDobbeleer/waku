@@ -18,11 +18,15 @@
       5. configure  cmake --preset <Preset>       (skipped with -Fast)
       6. build      cmake --build --preset <Preset> (skipped with -Fast)
       7. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 (skipped with -Fast)
+    -Analyze replaces steps 5-7 with an isolated MSVC /analyze build and clang-tidy.
     Configure, build and test each run in their own cmd.exe after the matching vcvars*.bat, with
     VCPKG_ROOT=C:\vcpkg (override with the VCPKG_ROOT_OVERRIDE environment variable).
-    Exits 1 if any step fails. Compatible with Windows PowerShell 5.1.
+    Exits 1 if any step fails. Requires PowerShell 7 (pwsh).
 .PARAMETER Fast
     Only the format, generated-file, layering and JSON-subscript checks.
+.PARAMETER Analyze
+    Instead of ordinary build/tests, run MSVC /analyze and clang-tidy on production units in an
+    isolated build\<Preset>-analyze directory. Requires LLVM clang-tidy.
 .PARAMETER SkipFormat
     Skip the clang-format check.
 .PARAMETER Staged
@@ -37,6 +41,7 @@ param(
     [switch]$Fast,
     [switch]$SkipFormat,
     [switch]$Staged,
+    [switch]$Analyze,
     [ValidateSet('arm64-debug', 'arm64-release', 'x64-release')]
     [string]$Preset = 'arm64-debug'
 )
@@ -47,6 +52,10 @@ $ErrorActionPreference = 'Continue'
 
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $repo
+if ($Analyze -and ($Fast -or $Staged)) {
+    Write-Error '-Analyze cannot be combined with -Fast or -Staged.'
+    exit 1
+}
 
 $formatDirs = @('app', 'core', 'platform', 'widgets', 'tests', 'tools/yasbc-native')
 $results = New-Object System.Collections.Generic.List[object]
@@ -123,6 +132,7 @@ function Invoke-InVsEnv([string]$Name, [string]$Vcvars, [string]$Command) {
     $lines = @(
         '@echo off',
         "call `"$Vcvars`" >nul 2>nul",
+        'if errorlevel 1 exit /b %errorlevel%',
         "set `"VCPKG_ROOT=$vcpkg`"",
         $Command,
         'exit /b %errorlevel%'
@@ -328,8 +338,87 @@ if ($hits.Count -eq 0) {
     Add-Result 'json-subscript' 'FAIL' "$($hits.Count) suspicious subscript(s)" $sw.Elapsed.TotalSeconds
 }
 
-# 5-7. configure, build, test ----------------------------------------------------------------
-if ($Fast) {
+# 5-7. configure, build, test (or isolated static analysis) ------------------------------------
+if ($Analyze) {
+    $vcvars = Get-VcvarsScript $Preset
+    $analysisDir = Join-Path $repo "build\$Preset-analyze"
+    Write-Step 'MSVC /analyze (production targets, isolated build)'
+    $sw = [Diagnostics.Stopwatch]::StartNew()
+    if (-not (Test-Path $vcvars)) {
+        Add-Result 'msvc-analyze' 'FAIL' "missing $vcvars (set YASB_VCVARS_DIR)" 0
+        Add-Result 'clang-tidy' 'SKIP' 'configure failed' 0
+    } else {
+        $code = Invoke-InVsEnv 'analyze-configure' $vcvars "cmake --preset $Preset -B `"$analysisDir`" -DYASB_ANALYZE=ON -DBUILD_TESTING=OFF"
+        if ($code -ne 0) {
+            Add-Result 'msvc-analyze' 'FAIL' "configure exit $code" $sw.Elapsed.TotalSeconds
+            Add-Result 'clang-tidy' 'SKIP' 'configure failed' 0
+        } else {
+            $log = Join-Path $analysisDir 'msvc-analyze.log'
+            # Clean rebuild: incremental no-op builds do not run the analyzer.
+            $command = @(
+                "cmake --build `"$analysisDir`" --clean-first > `"$log`" 2>&1",
+                'set rc=%errorlevel%',
+                "type `"$log`"",
+                'exit /b %rc%'
+            ) -join "`r`n"
+            $code = Invoke-InVsEnv 'msvc-analyze' $vcvars $command
+            $findings = @(Get-Content $log | Where-Object { $_ -match 'warning C\d{4,5}:' }).Count
+            $status = 'PASS'
+            if ($code -ne 0 -or $findings -gt 0) { $status = 'FAIL' }
+            Add-Result 'msvc-analyze' $status "$findings diagnostics; exit $code; $log" $sw.Elapsed.TotalSeconds
+
+            Write-Step 'clang-tidy (production compile database entries)'
+            $sw = [Diagnostics.Stopwatch]::StartNew()
+            $tidy = Get-Command clang-tidy -ErrorAction SilentlyContinue
+            $tidyExe = 'C:\Program Files\LLVM\bin\clang-tidy.exe'
+            if ($tidy) { $tidyExe = $tidy.Source }
+            if (-not (Test-Path $tidyExe)) {
+                Add-Result 'clang-tidy' 'FAIL' 'clang-tidy not found on PATH or in C:\Program Files\LLVM\bin' 0
+            } elseif ($code -ne 0) {
+                Add-Result 'clang-tidy' 'FAIL' 'MSVC build failed; generated Qt headers may be unavailable' 0
+            } else {
+                $entries = Get-Content (Join-Path $analysisDir 'compile_commands.json') -Raw | ConvertFrom-Json
+                # clang-cl does not accept MSVC's analyzer/anglebrackets switches. Keep the
+                # original database for MSVC; /external:I still marks dependency headers.
+                $tidyDir = Join-Path $analysisDir 'clang-tidy'
+                New-Item -ItemType Directory -Force -Path $tidyDir | Out-Null
+                foreach ($entry in $entries) {
+                    $entry.command = $entry.command -replace '(?<=\s)/analyze(?=\s)', '' `
+                        -replace '(?<=\s)/analyze:external-(?=\s)', '' `
+                        -replace '(?<=\s)/external:anglebrackets(?=\s)', ''
+                }
+                $entries | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $tidyDir 'compile_commands.json')
+                $units = @($entries | Where-Object {
+                    $relative = [IO.Path]::GetRelativePath($repo, $_.file).Replace('\', '/')
+                    $relative -match '^(app|core|platform|widgets|tools/yasbc-native)/.*\.cpp$'
+                } | ForEach-Object { $_.file } | Sort-Object -Unique)
+                $commands = New-Object System.Collections.Generic.List[string]
+                $commands.Add('set failures=0')
+                $log = Join-Path $analysisDir 'clang-tidy.log'
+                $commands.Add("type nul > `"$log`"")
+                $triple = 'aarch64-pc-windows-msvc'
+                if ($Preset -eq 'x64-release') { $triple = 'x86_64-pc-windows-msvc' }
+                foreach ($unit in $units) {
+                    $commands.Add("echo Analyzing $unit >> `"$log`"")
+                    # Qt signals named event() intentionally do not override QObject::event().
+                    $commands.Add("`"$tidyExe`" -p `"$tidyDir`" --extra-arg=--target=$triple --extra-arg=-Wno-overloaded-virtual `"$unit`" >> `"$log`" 2>&1")
+                    $commands.Add('if errorlevel 1 set /a failures+=1 >nul')
+                }
+                $commands.Add("type `"$log`"")
+                $commands.Add('exit /b %failures%')
+                if ($units.Count -eq 0) {
+                    Add-Result 'clang-tidy' 'FAIL' 'no production compilation units found' 0
+                } else {
+                    $code = Invoke-InVsEnv 'clang-tidy' $vcvars ($commands -join "`r`n")
+                    $findings = @(Get-Content $log | Where-Object { $_ -match '(^|:\d+:\d+: )(warning|error|fatal error):' }).Count
+                    $status = 'PASS'
+                    if ($code -ne 0 -or $findings -gt 0) { $status = 'FAIL' }
+                    Add-Result 'clang-tidy' $status "$($units.Count) units; $findings diagnostics; $code failed units; $log" $sw.Elapsed.TotalSeconds
+                }
+            }
+        }
+    }
+} elseif ($Fast) {
     Add-Result 'configure' 'SKIP' '-Fast' 0
     Add-Result 'build' 'SKIP' '-Fast' 0
     Add-Result 'test' 'SKIP' '-Fast' 0
@@ -342,7 +431,7 @@ if ($Fast) {
     } else {
         Write-Step "configure (cmake --preset $Preset)"
         $sw = [Diagnostics.Stopwatch]::StartNew()
-        $code = Invoke-InVsEnv 'configure' $vcvars "cmake --preset $Preset"
+        $code = Invoke-InVsEnv 'configure' $vcvars "cmake --preset $Preset -DYASB_ANALYZE=OFF"
         if ($code -ne 0) {
             Add-Result 'configure' 'FAIL' "exit $code" $sw.Elapsed.TotalSeconds
             Add-Result 'build' 'SKIP' 'configure failed' 0

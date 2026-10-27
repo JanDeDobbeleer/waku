@@ -10,7 +10,6 @@ class WindowsBatteryDataSource final : public BatteryDataSource {
 
  private:
   std::wstring devicePath_;
-  bool extendedErrorLogged_ = false;
 };
 
 }  // namespace yasb::platform

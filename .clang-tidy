@@ -1,0 +1,28 @@
+# Deliberately explicit: avoid cosmetic rewrites and Qt-unaware blanket check groups.
+Checks: >
+  -*,
+  bugprone-assert-side-effect,
+  bugprone-dangling-handle,
+  bugprone-inaccurate-erase,
+  bugprone-integer-division,
+  bugprone-move-forwarding-reference,
+  bugprone-sizeof-expression,
+  bugprone-suspicious-memset-usage,
+  bugprone-use-after-move,
+  concurrency-mt-unsafe,
+  concurrency-thread-canceltype-asynchronous,
+  performance-move-const-arg,
+  performance-noexcept-move-constructor,
+  modernize-use-nullptr,
+  modernize-use-override,
+  readability-identifier-naming
+WarningsAsErrors: '*'
+# Own headers only; generated options are schema-owned. System headers remain excluded.
+HeaderFilterRegex: '(^|[/\\])(app|core|platform|widgets|tools[/\\]yasbc-native)[/\\]'
+ExcludeHeaderFilterRegex: '(^|[/\\])(core[/\\]config[/\\]options|build|vcpkg_installed)[/\\]'
+SystemHeaders: false
+CheckOptions:
+  # Encapsulated state, not public aggregate/schema fields. No case rule: camelCase_ is valid.
+  readability-identifier-naming.PrivateMemberSuffix: '_'
+  readability-identifier-naming.ProtectedMemberSuffix: '_'
+  readability-identifier-naming.ClassMemberSuffix: '_'

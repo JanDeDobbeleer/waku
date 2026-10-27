@@ -11,8 +11,6 @@
 namespace yasb::widgets {
 namespace {
 
-constexpr double kGiB = 1024.0 * 1024.0 * 1024.0;
-
 QString popupSize(std::uint64_t bytes) {
   static const char* units[] = {"Bytes", "KB", "MB", "GB", "TB", "PB"};
   double value = static_cast<double>(bytes);
