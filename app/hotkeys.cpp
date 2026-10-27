@@ -127,7 +127,7 @@ HotkeyService::~HotkeyService() { stop(); }
 void HotkeyService::start() {
   if (thread_.joinable() || bindings_.empty()) return;
   thread_ = std::thread([this] { run(); });
-  while (!ready_.load()) Sleep(1);
+  ready_.acquire();
 }
 
 void HotkeyService::stop() {
@@ -141,7 +141,7 @@ void HotkeyService::run() {
   MSG message{};
   PeekMessageW(&message, nullptr, 0, 0, PM_NOREMOVE);
   threadId_.store(id);
-  ready_.store(true);
+  ready_.release();
   std::map<int, HotkeyBinding> registered;
   for (std::size_t i = 0; i < bindings_.size(); ++i) {
     const int hotkeyId = static_cast<int>(i + 1);

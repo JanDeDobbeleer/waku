@@ -7,6 +7,7 @@
 #include <atomic>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
+#include <semaphore>
 #include <string>
 #include <thread>
 #include <vector>
@@ -48,7 +49,7 @@ class HotkeyService {
   void run();
   std::vector<HotkeyBinding> bindings_;
   std::atomic<DWORD> threadId_{0};
-  std::atomic<bool> ready_{false};
+  std::binary_semaphore ready_{0};  // released by run() once threadId_ is set
   std::thread thread_;
 };
 
