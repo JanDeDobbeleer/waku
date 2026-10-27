@@ -47,12 +47,6 @@ TEST(PopupPosition, UnknownAlignmentFallsBackToLeft) {
 }
 
 TEST(PopupWidgetTest, AnchorsToParentGlobalPosition) {
-  qputenv("QT_QPA_PLATFORM", "offscreen");
-  int argc = 1;
-  char arg0[] = "tests";
-  char* argv[] = {arg0, nullptr};
-  auto app = std::make_unique<QApplication>(argc, argv);
-
   QWidget anchor;
   anchor.setGeometry(100, 100, 200, 30);
   auto* popup = new PopupWidget(&anchor);

@@ -28,12 +28,13 @@ void capture(QtMsgType type, const QMessageLogContext& ctx, const QString& msg) 
 class Transitions : public testing::Test {
  protected:
   void SetUp() override {
-    qputenv("QT_QPA_PLATFORM", "offscreen");
-    app = std::make_unique<QApplication>(argc, argv);
+    qApp->setStyleSheet(QString());
     g_warnings = &warnings;
     g_prev = qInstallMessageHandler(capture);
   }
   void TearDown() override {
+    qApp->removeEventFilter(&engine_);
+    qApp->setStyleSheet(QString());
     qInstallMessageHandler(g_prev);
     g_warnings = nullptr;
   }
@@ -44,10 +45,7 @@ class Transitions : public testing::Test {
     return m.hasMatch() ? m.captured(1).toInt() : -1;
   }
 
-  int argc = 1;
-  char arg0[11] = "yasb_tests";
-  char* argv[2] = {arg0, nullptr};
-  std::unique_ptr<QApplication> app;
+  TransitionEngine engine_;
   QStringList warnings;
 };
 
@@ -61,12 +59,11 @@ QWidget* makeWidget(const char* cls) {
 }  // namespace
 
 TEST_F(Transitions, BackgroundColorInterpolatesOnHover) {
-  TransitionEngine engine;
-  const QString qss = engine.loadStyleSheet(QStringLiteral(
+  const QString qss = engine_.loadStyleSheet(QStringLiteral(
       ".widget { background-color: #202020; transition: background-color 0.3s linear; }\n"
       ".widget:hover { background-color: #404040; }"));
-  app->setStyleSheet(qss);
-  engine.install(app.get());
+  qApp->setStyleSheet(qss);
+  engine_.install(qApp);
 
   std::unique_ptr<QWidget> w(makeWidget("widget"));
   w->show();
@@ -79,27 +76,26 @@ TEST_F(Transitions, BackgroundColorInterpolatesOnHover) {
   QCoreApplication::sendEvent(w.get(), &enter);
 
   QTest::qWait(150);
-  const int mid = redOf(engine.currentValue(w.get(), QStringLiteral("background-color")));
+  const int mid = redOf(engine_.currentValue(w.get(), QStringLiteral("background-color")));
   EXPECT_GT(mid, 0x20) << "should have started moving";
   EXPECT_LT(mid, 0x40) << "should not have finished at ~half time";
 
   QTest::qWait(300);
   EXPECT_GE(clock.elapsed(), 300);
-  EXPECT_EQ(redOf(engine.currentValue(w.get(), QStringLiteral("background-color"))), 0x40);
+  EXPECT_EQ(redOf(engine_.currentValue(w.get(), QStringLiteral("background-color"))), 0x40);
 
   QEvent leave(QEvent::HoverLeave);
   QCoreApplication::sendEvent(w.get(), &leave);
   QTest::qWait(450);
-  EXPECT_EQ(redOf(engine.currentValue(w.get(), QStringLiteral("background-color"))), 0x20);
+  EXPECT_EQ(redOf(engine_.currentValue(w.get(), QStringLiteral("background-color"))), 0x20);
   EXPECT_TRUE(warnings.isEmpty());
 }
 
 TEST_F(Transitions, ClickedOpacityDipsThenReturns) {
-  TransitionEngine engine;
-  app->setStyleSheet(engine.loadStyleSheet(
+  qApp->setStyleSheet(engine_.loadStyleSheet(
       QStringLiteral(".btn { opacity: 1; transition: opacity 100ms linear; }\n"
                      ".btn:clicked { opacity: 0.5; }")));
-  engine.install(app.get());
+  engine_.install(qApp);
 
   std::unique_ptr<QWidget> w(makeWidget("btn"));
   w->show();
@@ -125,8 +121,7 @@ TEST_F(Transitions, ClickedOpacityDipsThenReturns) {
 }
 
 TEST_F(Transitions, BoxShadowWarnsOnce) {
-  TransitionEngine engine;
-  engine.loadStyleSheet(QStringLiteral(".card { box-shadow: 0 2px 4px #000; color: red; }"));
+  engine_.loadStyleSheet(QStringLiteral(".card { box-shadow: 0 2px 4px #000; color: red; }"));
   ASSERT_EQ(warnings.size(), 1);
   EXPECT_TRUE(warnings[0].contains(QStringLiteral(".card")));
   EXPECT_TRUE(warnings[0].contains(QStringLiteral("box-shadow")));
@@ -149,59 +144,56 @@ int hoverRed(TransitionEngine& engine, QWidget* w) {
 }  // namespace
 
 TEST_F(Transitions, CachedCascadeFollowsOwnPropertyChange) {
-  TransitionEngine engine;
-  app->setStyleSheet(engine.loadStyleSheet(
+  qApp->setStyleSheet(engine_.loadStyleSheet(
       QStringLiteral(".a { background-color: #200000; }\n"
                      ".a:hover { background-color: #400000; }\n"
                      ".a[active=\"true\"]:hover { background-color: #800000; }")));
-  engine.install(app.get());
+  engine_.install(qApp);
   std::unique_ptr<QWidget> w(makeWidget("a"));
-  EXPECT_EQ(hoverRed(engine, w.get()), 0x40);
+  EXPECT_EQ(hoverRed(engine_, w.get()), 0x40);
   w->setProperty("active", QStringLiteral("true"));  // re-evaluates while hovered
-  EXPECT_EQ(redOf(engine.currentValue(w.get(), QStringLiteral("background-color"))), 0x80);
+  EXPECT_EQ(redOf(engine_.currentValue(w.get(), QStringLiteral("background-color"))), 0x80);
   w->setProperty("active", QStringLiteral("false"));
-  EXPECT_EQ(redOf(engine.currentValue(w.get(), QStringLiteral("background-color"))), 0x40);
+  EXPECT_EQ(redOf(engine_.currentValue(w.get(), QStringLiteral("background-color"))), 0x40);
   w->setProperty("class", QStringLiteral("b"));
-  EXPECT_EQ(hoverRed(engine, w.get()), -1) << "no rule matches any more";
+  EXPECT_EQ(hoverRed(engine_, w.get()), -1) << "no rule matches any more";
 }
 
 TEST_F(Transitions, CachedCascadeFollowsAncestorAndNameChanges) {
-  TransitionEngine engine;
-  app->setStyleSheet(
-      engine.loadStyleSheet(QStringLiteral(".a { background-color: #100000; }\n"
-                                           ".a:hover { background-color: #200000; }\n"
-                                           ".p .a:hover { background-color: #400000; }\n"
-                                           ".q .a:hover { background-color: #600000; }\n"
-                                           "#named:hover { background-color: #800000; }")));
-  engine.install(app.get());
+  qApp->setStyleSheet(
+      engine_.loadStyleSheet(QStringLiteral(".a { background-color: #100000; }\n"
+                                            ".a:hover { background-color: #200000; }\n"
+                                            ".p .a:hover { background-color: #400000; }\n"
+                                            ".q .a:hover { background-color: #600000; }\n"
+                                            "#named:hover { background-color: #800000; }")));
+  engine_.install(qApp);
   QWidget p;
   p.setProperty("class", QStringLiteral("p"));
   QWidget q;
   q.setProperty("class", QStringLiteral("x"));
   QWidget* w = makeWidget("a");
   w->setParent(&p);
-  EXPECT_EQ(hoverRed(engine, w), 0x40);
+  EXPECT_EQ(hoverRed(engine_, w), 0x40);
   w->setParent(&q);
-  EXPECT_EQ(hoverRed(engine, w), 0x20) << "reparented under a non-matching ancestor";
+  EXPECT_EQ(hoverRed(engine_, w), 0x20) << "reparented under a non-matching ancestor";
   q.setProperty("class", QStringLiteral("q"));
-  EXPECT_EQ(hoverRed(engine, w), 0x60) << "ancestor class change";
+  EXPECT_EQ(hoverRed(engine_, w), 0x60) << "ancestor class change";
   w->setObjectName(QStringLiteral("named"));
-  EXPECT_EQ(hoverRed(engine, w), 0x80) << "object name change";
+  EXPECT_EQ(hoverRed(engine_, w), 0x80) << "object name change";
   q.setObjectName(QStringLiteral("renamed"));
   w->setObjectName(QString());
-  EXPECT_EQ(hoverRed(engine, w), 0x60);
+  EXPECT_EQ(hoverRed(engine_, w), 0x60);
 }
 
 TEST_F(Transitions, CachedCascadeIsDroppedOnStyleSheetReload) {
-  TransitionEngine engine;
-  app->setStyleSheet(engine.loadStyleSheet(QStringLiteral(
+  qApp->setStyleSheet(engine_.loadStyleSheet(QStringLiteral(
       ".a { background-color: #100000; }\n.a:hover { background-color: #200000; }")));
-  engine.install(app.get());
+  engine_.install(qApp);
   std::unique_ptr<QWidget> w(makeWidget("a"));
-  EXPECT_EQ(hoverRed(engine, w.get()), 0x20);
-  app->setStyleSheet(engine.loadStyleSheet(QStringLiteral(
+  EXPECT_EQ(hoverRed(engine_, w.get()), 0x20);
+  qApp->setStyleSheet(engine_.loadStyleSheet(QStringLiteral(
       ".a { background-color: #100000; }\n.a:hover { background-color: #300000; }")));
-  EXPECT_EQ(hoverRed(engine, w.get()), 0x30);
+  EXPECT_EQ(hoverRed(engine_, w.get()), 0x30);
 }
 
 // Micro-benchmark: 200 widgets in 20 groups, 120 rules, a mix of hover/focus/release events,
@@ -226,9 +218,8 @@ TEST_F(Transitions, EventFilterThroughputBenchmark) {
     css += QStringLiteral(".k%1[active=\"true\"] { margin: 1px; }\n").arg(k);
     css += QStringLiteral("#item%1:focus { color: #336699; }\n").arg(k);
   }
-  TransitionEngine engine;
-  app->setStyleSheet(engine.loadStyleSheet(css));
-  engine.install(app.get());
+  qApp->setStyleSheet(engine_.loadStyleSheet(css));
+  engine_.install(qApp);
 
   QWidget root;
   std::vector<QWidget*> widgets;
@@ -260,8 +251,8 @@ TEST_F(Transitions, EventFilterThroughputBenchmark) {
       continue;
     }
     QEvent ev(cycle[e % std::size(cycle)]);
-    engine.eventFilter(w, &ev);
-    engine.eventFilter(&plain, &ev);
+    engine_.eventFilter(w, &ev);
+    engine_.eventFilter(&plain, &ev);
   }
   const qint64 ms = clock.elapsed();
   std::printf("[ bench    ] transition engine: %d events over %zu widgets in %lld ms\n", kEvents,

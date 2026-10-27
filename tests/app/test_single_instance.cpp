@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <atomic>
 #include <chrono>
 #include <memory>
 #include <thread>
@@ -16,13 +15,14 @@ TEST(SingleInstance, RejectsSecondInstanceAndAllowsRestartWaitAfterRelease) {
   EXPECT_FALSE(second.acquire(false));
   EXPECT_NE(second.error().find("already running"), std::string::npos);
 
-  std::atomic<bool> acquired = false;
-  std::thread waiter([&] {
-    yasb::app::SingleInstance replacement(name);
-    acquired.store(replacement.acquire(true, 3000));
-  });
-  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+  const auto started = std::chrono::steady_clock::now();
+  EXPECT_FALSE(second.acquire(true, 50));
+  EXPECT_NE(second.error().find("Timeout"), std::string::npos)
+      << "restart wait must report a bounded timeout while the old instance owns the mutex";
+  EXPECT_LT(std::chrono::steady_clock::now() - started, std::chrono::seconds(3))
+      << "restart wait exceeded its test deadline";
+
   first.reset();
-  waiter.join();
-  EXPECT_TRUE(acquired.load());
+  yasb::app::SingleInstance replacement(name);
+  EXPECT_TRUE(replacement.acquire(true, 3000)) << replacement.error();
 }

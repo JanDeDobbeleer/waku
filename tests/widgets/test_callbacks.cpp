@@ -20,12 +20,6 @@ namespace {
 
 class CallbacksTest : public testing::Test {
  protected:
-  static void SetUpTestSuite() {
-    qputenv("QT_QPA_PLATFORM", "offscreen");
-    app_ = std::make_unique<QApplication>(argc_, argv_);
-  }
-  static void TearDownTestSuite() { app_.reset(); }
-
   void SetUp() override {
     savedLauncher_ = processLauncher();
     savedFunctions_ = systemFunctions();
@@ -43,11 +37,6 @@ class CallbacksTest : public testing::Test {
   QStringList launched_;
   ProcessLauncher savedLauncher_;
   SystemFunctionMap savedFunctions_;
-
-  static inline int argc_ = 1;
-  static inline char arg0_[8] = "tests";
-  static inline char* argv_[2] = {arg0_, nullptr};
-  static inline std::unique_ptr<QApplication> app_;
 };
 
 }  // namespace

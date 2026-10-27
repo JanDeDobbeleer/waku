@@ -2,11 +2,7 @@
 
 #include <QApplication>
 
-TEST(Startup, QApplicationCreatesOffscreen) {
-  qputenv("QT_QPA_PLATFORM", "offscreen");
-  int argc = 1;
-  char arg0[] = "yasb_tests";
-  char* argv[] = {arg0, nullptr};
-  QApplication app(argc, argv);
+TEST(Startup, SharedQApplicationUsesOffscreenPlatform) {
+  ASSERT_NE(QApplication::instance(), nullptr);
   EXPECT_EQ(QGuiApplication::platformName(), QStringLiteral("offscreen"));
 }

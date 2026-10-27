@@ -82,7 +82,6 @@ Made makeBar(const QString& css, const BarWindow::Widgets& groups, const json& c
                            QGuiApplication::primaryScreen(), stylesheet, groups,
                            settingsFor(config), std::move(deps));
   made.bar->show();
-  QTest::qWait(20);
   return made;
 }
 
@@ -157,19 +156,7 @@ void expectSnapshot(const json& expected, BarWindow& bar) {
   expectPath(expected.at("border_path"), frame->borderPath(), "border_path");
 }
 
-class IslandVectors : public testing::TestWithParam<std::string> {
- protected:
-  static void SetUpTestSuite() {
-    qputenv("QT_QPA_PLATFORM", "offscreen");
-    app_ = std::make_unique<QApplication>(argc_, argv_);
-  }
-  static void TearDownTestSuite() { app_.reset(); }
-
-  static inline int argc_ = 1;
-  static inline char arg0_[11] = "yasb_tests";
-  static inline char* argv_[2] = {arg0_, nullptr};
-  static inline std::unique_ptr<QApplication> app_;
-};
+class IslandVectors : public testing::TestWithParam<std::string> {};
 
 BarWindow::Widgets groupsFrom(const json& layout) {
   BarWindow::Widgets groups;
@@ -186,7 +173,14 @@ void runStandard(const json& c) {
                       groupsFrom(in.at("layout")), in.at("bar_config"),
                       QString::fromStdString(in.at("extra_rules").get<std::string>()));
   ASSERT_FALSE(made.bar.isNull());
-  expectSnapshot(c.at("expected"), *made.bar);
+  const json& expected = c.at("expected");
+  QTRY_VERIFY_WITH_TIMEOUT(
+      islandsJson(made.bar->adaptiveFrame()->islandSpans()) == expected.at("islands") &&
+          rectJson(made.bar->geometry()) == expected.at("bar_geometry") &&
+          json::array({made.bar->adaptiveFrame()->width(), made.bar->adaptiveFrame()->height()}) ==
+              expected.at("frame_size"),
+      3000);
+  expectSnapshot(expected, *made.bar);
   closeBar(made.bar);
 }
 
@@ -204,9 +198,12 @@ void runGrow(const json& c) {
   Made made = makeBar({}, groups, json::object());
   ASSERT_FALSE(made.bar.isNull());
   const json& ex = c.at("expected");
-  EXPECT_EQ(ex.at("islands_before"), islandsJson(made.bar->adaptiveFrame()->islandSpans()));
+  QTRY_VERIFY_WITH_TIMEOUT(
+      islandsJson(made.bar->adaptiveFrame()->islandSpans()) == ex.at("islands_before"), 3000);
   label->setFixedWidth(in.at("label_width_after").get<int>());
-  QTest::qWait(20);
+  const json expectedIslands = ex.at("islands_after");
+  QTRY_VERIFY_WITH_TIMEOUT(islandsJson(made.bar->adaptiveFrame()->islandSpans()) == expectedIslands,
+                           3000);
   EXPECT_EQ(ex.at("islands_after"), islandsJson(made.bar->adaptiveFrame()->islandSpans()));
   closeBar(made.bar);
 }
@@ -219,13 +216,14 @@ void runEdgeChange(const json& c) {
   Made made = makeBar(QStringLiteral("qproperty-edgeradius: 0;"), groups,
                       {{"alignment", {{"position", in.at("position")}}}});
   ASSERT_FALSE(made.bar.isNull());
+  QTRY_VERIFY_WITH_TIMEOUT(rectJson(made.bar->geometry()) == ex.at("geometry_before"), 3000);
   EXPECT_EQ(ex.at("geometry_before"), rectJson(made.bar->geometry()));
   made.bar->setStyleSheet(QStringLiteral(".bar { background: rgb(200, 0, 0); qproperty-railheight: "
                                          "%1; qproperty-edgeradius: %2; }")
                               .arg(kRail)
                               .arg(in.at("edge_radius_after").get<int>()));
   EXPECT_EQ(ex.at("geometry_immediately_after_stylesheet"), rectJson(made.bar->geometry()));
-  QTest::qWait(20);
+  QTRY_VERIFY_WITH_TIMEOUT(rectJson(made.bar->geometry()) == ex.at("geometry_after"), 3000);
   EXPECT_EQ(ex.at("geometry_after"), rectJson(made.bar->geometry()));
   EXPECT_EQ(ex.at("bar_height_after").get<int>(), made.bar->height());
   closeBar(made.bar);

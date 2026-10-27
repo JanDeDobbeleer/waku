@@ -22,19 +22,7 @@ namespace {
 
 QString qs(const std::string& s) { return QString::fromStdString(s); }
 
-class LabelFormatTest : public testing::Test {
- protected:
-  static void SetUpTestSuite() {
-    qputenv("QT_QPA_PLATFORM", "offscreen");
-    app_ = std::make_unique<QApplication>(argc_, argv_);
-  }
-  static void TearDownTestSuite() { app_.reset(); }
-
-  static inline int argc_ = 1;
-  static inline char arg0_[8] = "tests";
-  static inline char* argv_[2] = {arg0_, nullptr};
-  static inline std::unique_ptr<QApplication> app_;
-};
+class LabelFormatTest : public testing::Test {};
 
 const std::vector<std::string> kHistogramIcons = {"\u2581", "\u2581", "\u2582", "\u2583", "\u2584",
                                                   "\u2585", "\u2586", "\u2587", "\u2588"};

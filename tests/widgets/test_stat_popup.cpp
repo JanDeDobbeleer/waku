@@ -15,17 +15,6 @@ using namespace yasb::widgets;
 
 namespace {
 
-struct OffscreenApp {
-  OffscreenApp() {
-    qputenv("QT_QPA_PLATFORM", "offscreen");
-    app = std::make_unique<QApplication>(argc, argv);
-  }
-  int argc = 1;
-  char arg0[8] = "tests";
-  char* argv[2] = {arg0, nullptr};
-  std::unique_ptr<QApplication> app;
-};
-
 const QRect kScreen(0, 0, 2560, 1707);
 
 }  // namespace
@@ -64,7 +53,6 @@ TEST(Tooltip, PositionPrefersBelowThenAbove) {
 }
 
 TEST(StatPopup, BuildsStructureAndPinsOnToggle) {
-  OffscreenApp env;
   QWidget anchor;
   anchor.setGeometry(100, 100, 200, 30);
   StatPopupMenuConfig menu;
@@ -95,7 +83,6 @@ TEST(StatPopup, BuildsStructureAndPinsOnToggle) {
 }
 
 TEST(WidgetBuilder, BuildsKnownWidgetsAndRemembersFailuresOnce) {
-  OffscreenApp env;
   yasb::config::LoadResult cfg;
   auto add = [&](const char* name, yasb::config::WidgetStatus status, const char* type) {
     yasb::config::WidgetResult r;
@@ -133,7 +120,6 @@ TEST(WidgetBuilder, BuildsKnownWidgetsAndRemembersFailuresOnce) {
 }
 
 TEST(WidgetBuilder, ThrowingFactoryIsSkippedInsteadOfEscaping) {
-  OffscreenApp env;
   yasb::config::LoadResult cfg;
   yasb::config::WidgetResult r;
   r.status = yasb::config::WidgetStatus::Ok;

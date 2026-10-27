@@ -8,19 +8,7 @@
 
 namespace {
 
-class RuntimeTest : public testing::Test {
- protected:
-  static void SetUpTestSuite() {
-    qputenv("QT_QPA_PLATFORM", "offscreen");
-    app_ = std::make_unique<QApplication>(argc_, argv_);
-  }
-  static void TearDownTestSuite() { app_.reset(); }
-
-  static inline int argc_ = 1;
-  static inline char arg0_[11] = "yasb_tests";
-  static inline char* argv_[2] = {arg0_, nullptr};
-  static inline std::unique_ptr<QApplication> app_;
-};
+class RuntimeTest : public testing::Test {};
 
 }  // namespace
 

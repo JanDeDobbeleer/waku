@@ -5,10 +5,10 @@
 // clang-format on
 
 #include <chrono>
+#include <condition_variable>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
-#include <thread>
 #include <vector>
 
 #include "app/cli_server.h"
@@ -21,38 +21,68 @@ std::wstring uniquePipeName(const wchar_t* suffix) {
 }
 
 HANDLE connectPipe(const std::wstring& name) {
-  const ULONGLONG deadline = GetTickCount64() + 3000;
-  while (GetTickCount64() < deadline) {
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+  DWORD lastError = ERROR_SUCCESS;
+  std::mutex retryMutex;
+  std::condition_variable retryCondition;
+  while (std::chrono::steady_clock::now() < deadline) {
     HANDLE pipe = CreateFileW(name.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
-                              0, nullptr);
+                              FILE_FLAG_OVERLAPPED, nullptr);
     if (pipe != INVALID_HANDLE_VALUE) return pipe;
-    if (GetLastError() == ERROR_PIPE_BUSY)
+    lastError = GetLastError();
+    if (lastError == ERROR_PIPE_BUSY) {
       WaitNamedPipeW(name.c_str(), 100);
-    else
-      Sleep(20);
+      continue;
+    }
+    std::unique_lock lock(retryMutex);
+    retryCondition.wait_for(lock, std::chrono::milliseconds(10));
   }
+  SetLastError(lastError);
   return INVALID_HANDLE_VALUE;
 }
 
 bool readMessage(HANDLE pipe, std::string& data) {
-  const ULONGLONG deadline = GetTickCount64() + 3000;
-  DWORD available = 0;
-  while (GetTickCount64() < deadline) {
-    if (PeekNamedPipe(pipe, nullptr, 0, nullptr, &available, nullptr) && available > 0) break;
-    Sleep(10);
-  }
-  if (available == 0) return false;
   char buffer[65536]{};
+  OVERLAPPED operation{};
+  operation.hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  if (!operation.hEvent) return false;
   DWORD read = 0;
-  if (!ReadFile(pipe, buffer, sizeof(buffer), &read, nullptr)) return false;
+  BOOL complete = ReadFile(pipe, buffer, sizeof(buffer), &read, &operation);
+  if (!complete && GetLastError() == ERROR_IO_PENDING) {
+    const DWORD wait = WaitForSingleObject(operation.hEvent, 3000);
+    if (wait != WAIT_OBJECT_0) {
+      CancelIoEx(pipe, &operation);
+      GetOverlappedResult(pipe, &operation, &read, TRUE);
+      CloseHandle(operation.hEvent);
+      return false;
+    }
+    complete = GetOverlappedResult(pipe, &operation, &read, FALSE);
+  }
+  CloseHandle(operation.hEvent);
+  if (!complete) return false;
   data.assign(buffer, read);
   return true;
 }
 
 bool writeMessage(HANDLE pipe, const std::string& data) {
+  OVERLAPPED operation{};
+  operation.hEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  if (!operation.hEvent) return false;
   DWORD written = 0;
-  return WriteFile(pipe, data.data(), static_cast<DWORD>(data.size()), &written, nullptr) &&
-         written == static_cast<DWORD>(data.size());
+  BOOL complete =
+      WriteFile(pipe, data.data(), static_cast<DWORD>(data.size()), &written, &operation);
+  if (!complete && GetLastError() == ERROR_IO_PENDING) {
+    const DWORD wait = WaitForSingleObject(operation.hEvent, 3000);
+    if (wait != WAIT_OBJECT_0) {
+      CancelIoEx(pipe, &operation);
+      GetOverlappedResult(pipe, &operation, &written, TRUE);
+      CloseHandle(operation.hEvent);
+      return false;
+    }
+    complete = GetOverlappedResult(pipe, &operation, &written, FALSE);
+  }
+  CloseHandle(operation.hEvent);
+  return complete && written == static_cast<DWORD>(data.size());
 }
 
 std::vector<unsigned char> currentUser() {
@@ -117,34 +147,32 @@ TEST(CliProtocol, CommandPipeAcknowledgesAndDispatchesPlainText) {
   const auto commandName = uniquePipeName(L"_cli");
   const auto logName = uniquePipeName(L"_log");
   std::mutex mutex;
+  std::condition_variable condition;
   QString received;
   yasb::app::CliServer server(commandName, logName);
   server.start([&](const QString& command) {
     std::lock_guard lock(mutex);
     received = command;
+    condition.notify_all();
   });
 
   HANDLE pipe = connectPipe(commandName);
-  ASSERT_NE(pipe, INVALID_HANDLE_VALUE);
+  ASSERT_NE(pipe, INVALID_HANDLE_VALUE) << "timed out connecting to command pipe";
   ASSERT_TRUE(writeMessage(pipe, "hide-bar --screen DISPLAY1"));
   std::string response;
   ASSERT_TRUE(readMessage(pipe, response));
   EXPECT_EQ(response, "ACK");
   CloseHandle(pipe);
-  for (int i = 0; i < 100; ++i) {
-    {
-      std::lock_guard lock(mutex);
-      if (!received.isEmpty()) break;
-    }
-    Sleep(10);
-  }
   {
-    std::lock_guard lock(mutex);
+    std::unique_lock lock(mutex);
+    ASSERT_TRUE(condition.wait_for(lock, std::chrono::seconds(3), [&] {
+      return !received.isEmpty();
+    })) << "command pipe acknowledged but did not dispatch the command within 3 seconds";
     EXPECT_EQ(received, QStringLiteral("hide-bar --screen DISPLAY1"));
   }
 
   pipe = connectPipe(commandName);
-  ASSERT_NE(pipe, INVALID_HANDLE_VALUE);
+  ASSERT_NE(pipe, INVALID_HANDLE_VALUE) << "timed out reconnecting to command pipe";
   ASSERT_TRUE(writeMessage(pipe, "invalid-command"));
   ASSERT_TRUE(readMessage(pipe, response));
   EXPECT_EQ(response, "CLI Unknown Command");
@@ -158,16 +186,16 @@ TEST(CliProtocol, LogPipeStreamsDataAndAnswersPing) {
   server.start([](const QString&) {});
 
   HANDLE pipe = connectPipe(logName);
-  ASSERT_NE(pipe, INVALID_HANDLE_VALUE);
+  ASSERT_NE(pipe, INVALID_HANDLE_VALUE) << "timed out connecting to log pipe";
   std::string frame;
-  ASSERT_TRUE(readMessage(pipe, frame));
+  ASSERT_TRUE(readMessage(pipe, frame)) << "timed out waiting for initial log frame";
   ASSERT_FALSE(frame.empty());
   EXPECT_EQ(frame.back(), '\0');
   const auto data = nlohmann::json::parse(frame.data(), frame.data() + frame.size() - 1);
   EXPECT_EQ(data.at("type"), "DATA");
 
   ASSERT_TRUE(writeMessage(pipe, R"({"type":"PING"})"));
-  ASSERT_TRUE(readMessage(pipe, frame));
+  ASSERT_TRUE(readMessage(pipe, frame)) << "timed out waiting for PONG";
   const auto pong = nlohmann::json::parse(frame.data(), frame.data() + frame.size());
   EXPECT_EQ(pong.at("type"), "PONG");
   CloseHandle(pipe);
@@ -177,36 +205,33 @@ TEST(CliProtocol, OversizedCommandIsRejectedAndNotDispatched) {
   const auto commandName = uniquePipeName(L"_cli");
   const auto logName = uniquePipeName(L"_log");
   std::mutex mutex;
+  std::condition_variable condition;
   int dispatched = 0;
   yasb::app::CliServer server(commandName, logName);
   server.start([&](const QString&) {
     std::lock_guard lock(mutex);
     ++dispatched;
+    condition.notify_all();
   });
 
   HANDLE pipe = connectPipe(commandName);
-  ASSERT_NE(pipe, INVALID_HANDLE_VALUE);
+  ASSERT_NE(pipe, INVALID_HANDLE_VALUE) << "timed out connecting to command pipe";
   const std::string oversized = "reload " + std::string(yasb::app::kMaxPipeMessageBytes, 'x');
   ASSERT_TRUE(writeMessage(pipe, oversized));
   std::string response;
-  ASSERT_TRUE(readMessage(pipe, response));
+  ASSERT_TRUE(readMessage(pipe, response)) << "timed out waiting for oversize-command response";
   EXPECT_EQ(response, "CLI Unknown Command");
   CloseHandle(pipe);
 
   pipe = connectPipe(commandName);
-  ASSERT_NE(pipe, INVALID_HANDLE_VALUE);
+  ASSERT_NE(pipe, INVALID_HANDLE_VALUE) << "timed out reconnecting to command pipe";
   ASSERT_TRUE(writeMessage(pipe, "reload"));
-  ASSERT_TRUE(readMessage(pipe, response));
+  ASSERT_TRUE(readMessage(pipe, response)) << "timed out waiting for valid-command response";
   EXPECT_EQ(response, "ACK");
   CloseHandle(pipe);
-  for (int i = 0; i < 100; ++i) {
-    {
-      std::lock_guard lock(mutex);
-      if (dispatched > 0) break;
-    }
-    Sleep(10);
-  }
-  std::lock_guard lock(mutex);
+  std::unique_lock lock(mutex);
+  ASSERT_TRUE(condition.wait_for(lock, std::chrono::seconds(3), [&] { return dispatched > 0; }))
+      << "valid command was not dispatched within 3 seconds";
   EXPECT_EQ(dispatched, 1);
 }
 
@@ -218,7 +243,8 @@ TEST(CliProtocol, PipesAdmitOnlyTheCurrentUser) {
 
   for (const auto& name : {commandName, logName}) {
     HANDLE pipe = connectPipe(name);
-    ASSERT_NE(pipe, INVALID_HANDLE_VALUE);
+    ASSERT_NE(pipe, INVALID_HANDLE_VALUE)
+        << "timed out connecting to " << QString::fromWCharArray(name.c_str()).toStdString();
     expectCurrentUserOnly(pipe);
     CloseHandle(pipe);
   }
