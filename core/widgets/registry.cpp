@@ -1,4 +1,4 @@
-#include "registry.h"
+#include "core/widgets/registry.h"
 
 #include <QDebug>
 
@@ -12,12 +12,12 @@ WidgetRegistry& WidgetRegistry::instance() {
 }
 
 void WidgetRegistry::add(const std::string& type, WidgetFactory factory) {
-  m_factories[type] = std::move(factory);
+  factories_[type] = std::move(factory);
 }
 
 BaseWidget* WidgetRegistry::create(const WidgetContext& ctx) const {
-  const auto it = m_factories.find(ctx.type);
-  if (it == m_factories.end()) {
+  const auto it = factories_.find(ctx.type);
+  if (it == factories_.end()) {
     qWarning().noquote() << "Unknown widget type" << QString::fromStdString(ctx.type) << "for"
                          << QString::fromStdString(ctx.name);
     return nullptr;

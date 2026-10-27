@@ -24,20 +24,20 @@ class PopupWidget : public QWidget {
   void setPosition(const QString& alignment = QStringLiteral("left"),
                    const QString& direction = QStringLiteral("down"), int offsetLeft = 0,
                    int offsetTop = 0);
-  void setAutoClose(bool enabled) { m_autoClose = enabled; }
+  void setAutoClose(bool enabled) { autoClose_ = enabled; }
 
  protected:
   void resizeEvent(QResizeEvent* event) override;
   bool event(QEvent* event) override;
 
  private:
-  QWidget* m_anchor;
-  QString m_alignment = QStringLiteral("left");
-  QString m_direction = QStringLiteral("down");
-  int m_offsetLeft = 0;
-  int m_offsetTop = 0;
-  bool m_positioned = false;
-  bool m_autoClose = true;
+  QWidget* anchor_;
+  QString alignment_ = QStringLiteral("left");
+  QString direction_ = QStringLiteral("down");
+  int offsetLeft_ = 0;
+  int offsetTop_ = 0;
+  bool positioned_ = false;
+  bool autoClose_ = true;
 };
 
 }  // namespace yasb::widgets

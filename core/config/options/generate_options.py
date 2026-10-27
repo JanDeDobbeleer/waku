@@ -44,28 +44,27 @@ COMMON_PREAMBLE = """#pragma once
 
 #include <cstdint>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <vector>
-
-#include <nlohmann/json.hpp>
 
 namespace yasb::config::options {
 
 // Missing keys keep the member's default; null clears an optional.
 template <class T>
 void readField(const nlohmann::json& j, const char* key, T& out) {
-    if (auto it = j.find(key); it != j.end()) it->get_to(out);
+  if (auto it = j.find(key); it != j.end()) it->get_to(out);
 }
 
 template <class T>
 void readField(const nlohmann::json& j, const char* key, std::optional<T>& out) {
-    auto it = j.find(key);
-    if (it == j.end() || it->is_null()) {
-        out.reset();
-    } else {
-        out = it->template get<T>();
-    }
+  auto it = j.find(key);
+  if (it == j.end() || it->is_null()) {
+    out.reset();
+  } else {
+    out = it->template get<T>();
+  }
 }
 """
 
@@ -165,8 +164,8 @@ class Generator:
                     init = " = 0"
                 elif ctype == "bool":
                     init = " = false"
-            lines.append(f"    {ctype} {member}{init};")
-            reads.append(f'    readField(j, "{key}", s.{member});')
+            lines.append(f"  {ctype} {member}{init};")
+            reads.append(f'  readField(j, "{key}", s.{member});')
         lines.append("};")
         lines.append("")
         lines.append(f"inline void from_json(const nlohmann::json& j, {name}& s) {{")
@@ -199,7 +198,7 @@ def main():
                 common_sorted.append(dep)
     common = banner + COMMON_PREAMBLE + "\n" + "\n\n".join(gen.emit_struct(n) for n in common_sorted)
     common += "\n\n}  // namespace yasb::config::options\n"
-    (HERE / "common.h").write_text(common, encoding="utf-8", newline="\n")
+    (HERE / "common.h").write_text(common, encoding="utf-8", newline="\r\n")
 
     for widget, names in closures.items():
         own = [n for n in names if n not in shared]
@@ -207,10 +206,10 @@ def main():
         text += "namespace yasb::config::options {\n\n"
         text += "\n\n".join(gen.emit_struct(n) for n in own)
         text += "\n\n}  // namespace yasb::config::options\n"
-        (HERE / f"{widget}.h").write_text(text, encoding="utf-8", newline="\n")
+        (HERE / f"{widget}.h").write_text(text, encoding="utf-8", newline="\r\n")
 
-    all_h = banner + "#pragma once\n\n" + "".join(f'#include "core/config/options/{w}.h"\n' for w in WIDGETS)
-    (HERE / "all.h").write_text(all_h, encoding="utf-8", newline="\n")
+    all_h = banner + "#pragma once\n\n" + "".join(f'#include "core/config/options/{w}.h"\n' for w in sorted(WIDGETS))
+    (HERE / "all.h").write_text(all_h, encoding="utf-8", newline="\r\n")
     print(f"{len(WIDGETS)} widgets, {len(shared)} shared structs", file=sys.stderr)
 
 

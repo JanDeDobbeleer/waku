@@ -3,40 +3,39 @@
 
 #include <cstdint>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <vector>
-
-#include <nlohmann/json.hpp>
 
 namespace yasb::config::options {
 
 // Missing keys keep the member's default; null clears an optional.
 template <class T>
 void readField(const nlohmann::json& j, const char* key, T& out) {
-    if (auto it = j.find(key); it != j.end()) it->get_to(out);
+  if (auto it = j.find(key); it != j.end()) it->get_to(out);
 }
 
 template <class T>
 void readField(const nlohmann::json& j, const char* key, std::optional<T>& out) {
-    auto it = j.find(key);
-    if (it == j.end() || it->is_null()) {
-        out.reset();
-    } else {
-        out = it->template get<T>();
-    }
+  auto it = j.find(key);
+  if (it == j.end() || it->is_null()) {
+    out.reset();
+  } else {
+    out = it->template get<T>();
+  }
 }
 
 struct KeybindingConfig {
-    std::string keys;
-    std::string action;
-    std::string screen;
+  std::string keys;
+  std::string action;
+  std::string screen;
 };
 
 inline void from_json(const nlohmann::json& j, KeybindingConfig& s) {
-    readField(j, "keys", s.keys);
-    readField(j, "action", s.action);
-    readField(j, "screen", s.screen);
+  readField(j, "keys", s.keys);
+  readField(j, "action", s.action);
+  readField(j, "screen", s.screen);
 }
 
 }  // namespace yasb::config::options

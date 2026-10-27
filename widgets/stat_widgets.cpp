@@ -1,4 +1,4 @@
-#include "stat_widgets.h"
+#include "widgets/stat_widgets.h"
 
 #include "core/widgets/registry.h"
 #include "widgets/battery/battery_widget.h"

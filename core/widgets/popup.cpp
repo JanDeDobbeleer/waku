@@ -1,4 +1,4 @@
-#include "popup.h"
+#include "core/widgets/popup.h"
 
 #include <QApplication>
 #include <QEvent>
@@ -34,34 +34,34 @@ QPoint computePopupPosition(const QPoint& parentTopLeft, const QSize& parentSize
 
 PopupWidget::PopupWidget(QWidget* anchor)
     : QWidget(anchor, Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint),
-      m_anchor(anchor) {
+      anchor_(anchor) {
   setAttribute(Qt::WA_TranslucentBackground);
   setProperty("class", "popup");
 }
 
 void PopupWidget::setPosition(const QString& alignment, const QString& direction, int offsetLeft,
                               int offsetTop) {
-  m_alignment = alignment;
-  m_direction = direction;
-  m_offsetLeft = offsetLeft;
-  m_offsetTop = offsetTop;
-  m_positioned = true;
-  if (!m_anchor) return;
+  alignment_ = alignment;
+  direction_ = direction;
+  offsetLeft_ = offsetLeft;
+  offsetTop_ = offsetTop;
+  positioned_ = true;
+  if (!anchor_) return;
 
-  const QPoint topLeft = m_anchor->mapToGlobal(QPoint(0, 0));
-  const QScreen* screen = QApplication::screenAt(m_anchor->mapToGlobal(m_anchor->rect().center()));
+  const QPoint topLeft = anchor_->mapToGlobal(QPoint(0, 0));
+  const QScreen* screen = QApplication::screenAt(anchor_->mapToGlobal(anchor_->rect().center()));
   if (!screen) screen = QApplication::primaryScreen();
-  move(computePopupPosition(topLeft, m_anchor->size(), size(), screen->geometry(), alignment,
+  move(computePopupPosition(topLeft, anchor_->size(), size(), screen->geometry(), alignment,
                             direction, offsetLeft, offsetTop));
 }
 
 void PopupWidget::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
-  if (m_positioned) setPosition(m_alignment, m_direction, m_offsetLeft, m_offsetTop);
+  if (positioned_) setPosition(alignment_, direction_, offsetLeft_, offsetTop_);
 }
 
 bool PopupWidget::event(QEvent* e) {
-  if (e->type() == QEvent::WindowDeactivate && m_autoClose && isVisible()) {
+  if (e->type() == QEvent::WindowDeactivate && autoClose_ && isVisible()) {
     hide();
   }
   return QWidget::event(e);

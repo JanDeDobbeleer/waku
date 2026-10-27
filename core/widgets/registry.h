@@ -5,7 +5,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
-#include "base_widget.h"
+#include "core/widgets/base_widget.h"
 
 namespace yasb::config {
 struct LoadResult;
@@ -31,7 +31,7 @@ class WidgetRegistry {
   static WidgetRegistry& instance();
 
   void add(const std::string& type, WidgetFactory factory);
-  bool contains(const std::string& type) const { return m_factories.count(type) != 0; }
+  bool contains(const std::string& type) const { return factories_.count(type) != 0; }
 
   // nullptr (with a warning) for unknown types.
   BaseWidget* create(const WidgetContext& ctx) const;
@@ -42,7 +42,7 @@ class WidgetRegistry {
                      const QString& screenName, const QString& barId) const;
 
  private:
-  std::map<std::string, WidgetFactory> m_factories;
+  std::map<std::string, WidgetFactory> factories_;
 };
 
 }  // namespace yasb::widgets

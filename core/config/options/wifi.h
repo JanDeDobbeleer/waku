@@ -6,75 +6,75 @@
 namespace yasb::config::options {
 
 struct WifiCallbacksConfig {
-    std::string on_left;
-    std::string on_middle;
-    std::string on_right;
+  std::string on_left;
+  std::string on_middle;
+  std::string on_right;
 };
 
 inline void from_json(const nlohmann::json& j, WifiCallbacksConfig& s) {
-    readField(j, "on_left", s.on_left);
-    readField(j, "on_middle", s.on_middle);
-    readField(j, "on_right", s.on_right);
+  readField(j, "on_left", s.on_left);
+  readField(j, "on_middle", s.on_middle);
+  readField(j, "on_right", s.on_right);
 }
 
 struct WifiMenuConfig {
-    bool blur = true;
-    bool round_corners = true;
-    std::string round_corners_type;
-    std::string border_color;
-    std::string alignment;
-    std::string direction;
-    int offset_top = 6;
-    int offset_left = 0;
-    std::vector<std::string> wifi_icons_secured;
-    std::vector<std::string> wifi_icons_unsecured;
+  bool blur = true;
+  bool round_corners = true;
+  std::string round_corners_type;
+  std::string border_color;
+  std::string alignment;
+  std::string direction;
+  int offset_top = 6;
+  int offset_left = 0;
+  std::vector<std::string> wifi_icons_secured;
+  std::vector<std::string> wifi_icons_unsecured;
 };
 
 inline void from_json(const nlohmann::json& j, WifiMenuConfig& s) {
-    readField(j, "blur", s.blur);
-    readField(j, "round_corners", s.round_corners);
-    readField(j, "round_corners_type", s.round_corners_type);
-    readField(j, "border_color", s.border_color);
-    readField(j, "alignment", s.alignment);
-    readField(j, "direction", s.direction);
-    readField(j, "offset_top", s.offset_top);
-    readField(j, "offset_left", s.offset_left);
-    readField(j, "wifi_icons_secured", s.wifi_icons_secured);
-    readField(j, "wifi_icons_unsecured", s.wifi_icons_unsecured);
+  readField(j, "blur", s.blur);
+  readField(j, "round_corners", s.round_corners);
+  readField(j, "round_corners_type", s.round_corners_type);
+  readField(j, "border_color", s.border_color);
+  readField(j, "alignment", s.alignment);
+  readField(j, "direction", s.direction);
+  readField(j, "offset_top", s.offset_top);
+  readField(j, "offset_left", s.offset_left);
+  readField(j, "wifi_icons_secured", s.wifi_icons_secured);
+  readField(j, "wifi_icons_unsecured", s.wifi_icons_unsecured);
 }
 
 struct WifiConfig {
-    std::string label;
-    std::string label_alt;
-    int update_interval = 1000;
-    std::string class_name;
-    std::vector<std::string> wifi_icons;
-    std::string ethernet_label;
-    std::string ethernet_label_alt;
-    std::string ethernet_icon;
-    std::string vpn_icon;
-    bool get_exact_wifi_strength = false;
-    bool hide_if_ethernet = false;
-    std::vector<KeybindingConfig> keybindings;
-    WifiCallbacksConfig callbacks;
-    WifiMenuConfig menu_config;
+  std::string label;
+  std::string label_alt;
+  int update_interval = 1000;
+  std::string class_name;
+  std::vector<std::string> wifi_icons;
+  std::string ethernet_label;
+  std::string ethernet_label_alt;
+  std::string ethernet_icon;
+  std::string vpn_icon;
+  bool get_exact_wifi_strength = false;
+  bool hide_if_ethernet = false;
+  std::vector<KeybindingConfig> keybindings;
+  WifiCallbacksConfig callbacks;
+  WifiMenuConfig menu_config;
 };
 
 inline void from_json(const nlohmann::json& j, WifiConfig& s) {
-    readField(j, "label", s.label);
-    readField(j, "label_alt", s.label_alt);
-    readField(j, "update_interval", s.update_interval);
-    readField(j, "class_name", s.class_name);
-    readField(j, "wifi_icons", s.wifi_icons);
-    readField(j, "ethernet_label", s.ethernet_label);
-    readField(j, "ethernet_label_alt", s.ethernet_label_alt);
-    readField(j, "ethernet_icon", s.ethernet_icon);
-    readField(j, "vpn_icon", s.vpn_icon);
-    readField(j, "get_exact_wifi_strength", s.get_exact_wifi_strength);
-    readField(j, "hide_if_ethernet", s.hide_if_ethernet);
-    readField(j, "keybindings", s.keybindings);
-    readField(j, "callbacks", s.callbacks);
-    readField(j, "menu_config", s.menu_config);
+  readField(j, "label", s.label);
+  readField(j, "label_alt", s.label_alt);
+  readField(j, "update_interval", s.update_interval);
+  readField(j, "class_name", s.class_name);
+  readField(j, "wifi_icons", s.wifi_icons);
+  readField(j, "ethernet_label", s.ethernet_label);
+  readField(j, "ethernet_label_alt", s.ethernet_label_alt);
+  readField(j, "ethernet_icon", s.ethernet_icon);
+  readField(j, "vpn_icon", s.vpn_icon);
+  readField(j, "get_exact_wifi_strength", s.get_exact_wifi_strength);
+  readField(j, "hide_if_ethernet", s.hide_if_ethernet);
+  readField(j, "keybindings", s.keybindings);
+  readField(j, "callbacks", s.callbacks);
+  readField(j, "menu_config", s.menu_config);
 }
 
 }  // namespace yasb::config::options

@@ -9,7 +9,6 @@
 
 namespace yasb::css {
 
-using namespace Qt::StringLiterals;
 using Re = QRegularExpression;
 
 namespace {
@@ -17,82 +16,88 @@ namespace {
 constexpr auto kUnicode = Re::UseUnicodePropertiesOption;
 
 const QSet<QString>& effectProps() {
-  static const QSet<QString> s{u"opacity"_s, u"box-shadow"_s};
+  static const QSet<QString> s{QStringLiteral("opacity"), QStringLiteral("box-shadow")};
   return s;
 }
 
 const QSet<QString>& borderRadiusProps() {
-  static const QSet<QString> s{u"border-radius"_s, u"border-top-left-radius"_s,
-                               u"border-top-right-radius"_s, u"border-bottom-right-radius"_s,
-                               u"border-bottom-left-radius"_s};
+  static const QSet<QString> s{
+      QStringLiteral("border-radius"), QStringLiteral("border-top-left-radius"),
+      QStringLiteral("border-top-right-radius"), QStringLiteral("border-bottom-right-radius"),
+      QStringLiteral("border-bottom-left-radius")};
   return s;
 }
 
 const QSet<QString>& numericProps() {
-  static const QSet<QString> s{u"max-height"_s,
-                               u"max-width"_s,
-                               u"min-height"_s,
-                               u"min-width"_s,
-                               u"width"_s,
-                               u"height"_s,
-                               u"border-width"_s,
-                               u"border-top-width"_s,
-                               u"border-right-width"_s,
-                               u"border-bottom-width"_s,
-                               u"border-left-width"_s,
-                               u"border-radius"_s,
-                               u"border-top-left-radius"_s,
-                               u"border-top-right-radius"_s,
-                               u"border-bottom-left-radius"_s,
-                               u"border-bottom-right-radius"_s,
-                               u"margin"_s,
-                               u"margin-top"_s,
-                               u"margin-right"_s,
-                               u"margin-bottom"_s,
-                               u"margin-left"_s,
-                               u"padding"_s,
-                               u"padding-top"_s,
-                               u"padding-right"_s,
-                               u"padding-bottom"_s,
-                               u"padding-left"_s,
-                               u"font-size"_s,
-                               u"font-weight"_s,
-                               u"letter-spacing"_s,
-                               u"word-spacing"_s,
-                               u"spacing"_s,
-                               u"bottom"_s,
-                               u"left"_s,
-                               u"right"_s,
-                               u"top"_s};
+  static const QSet<QString> s{QStringLiteral("max-height"),
+                               QStringLiteral("max-width"),
+                               QStringLiteral("min-height"),
+                               QStringLiteral("min-width"),
+                               QStringLiteral("width"),
+                               QStringLiteral("height"),
+                               QStringLiteral("border-width"),
+                               QStringLiteral("border-top-width"),
+                               QStringLiteral("border-right-width"),
+                               QStringLiteral("border-bottom-width"),
+                               QStringLiteral("border-left-width"),
+                               QStringLiteral("border-radius"),
+                               QStringLiteral("border-top-left-radius"),
+                               QStringLiteral("border-top-right-radius"),
+                               QStringLiteral("border-bottom-left-radius"),
+                               QStringLiteral("border-bottom-right-radius"),
+                               QStringLiteral("margin"),
+                               QStringLiteral("margin-top"),
+                               QStringLiteral("margin-right"),
+                               QStringLiteral("margin-bottom"),
+                               QStringLiteral("margin-left"),
+                               QStringLiteral("padding"),
+                               QStringLiteral("padding-top"),
+                               QStringLiteral("padding-right"),
+                               QStringLiteral("padding-bottom"),
+                               QStringLiteral("padding-left"),
+                               QStringLiteral("font-size"),
+                               QStringLiteral("font-weight"),
+                               QStringLiteral("letter-spacing"),
+                               QStringLiteral("word-spacing"),
+                               QStringLiteral("spacing"),
+                               QStringLiteral("bottom"),
+                               QStringLiteral("left"),
+                               QStringLiteral("right"),
+                               QStringLiteral("top")};
   return s;
 }
 
 const QHash<QString, QStringList>& shorthandSides() {
   static const QHash<QString, QStringList> h{
-      {u"padding"_s,
-       {u"padding-top"_s, u"padding-right"_s, u"padding-bottom"_s, u"padding-left"_s}},
-      {u"margin"_s, {u"margin-top"_s, u"margin-right"_s, u"margin-bottom"_s, u"margin-left"_s}},
-      {u"border-width"_s,
-       {u"border-top-width"_s, u"border-right-width"_s, u"border-bottom-width"_s,
-        u"border-left-width"_s}},
-      {u"border-color"_s,
-       {u"border-top-color"_s, u"border-right-color"_s, u"border-bottom-color"_s,
-        u"border-left-color"_s}},
-      {u"border-radius"_s,
-       {u"border-top-left-radius"_s, u"border-top-right-radius"_s, u"border-bottom-right-radius"_s,
-        u"border-bottom-left-radius"_s}}};
+      {QStringLiteral("padding"),
+       {QStringLiteral("padding-top"), QStringLiteral("padding-right"),
+        QStringLiteral("padding-bottom"), QStringLiteral("padding-left")}},
+      {QStringLiteral("margin"),
+       {QStringLiteral("margin-top"), QStringLiteral("margin-right"),
+        QStringLiteral("margin-bottom"), QStringLiteral("margin-left")}},
+      {QStringLiteral("border-width"),
+       {QStringLiteral("border-top-width"), QStringLiteral("border-right-width"),
+        QStringLiteral("border-bottom-width"), QStringLiteral("border-left-width")}},
+      {QStringLiteral("border-color"),
+       {QStringLiteral("border-top-color"), QStringLiteral("border-right-color"),
+        QStringLiteral("border-bottom-color"), QStringLiteral("border-left-color")}},
+      {QStringLiteral("border-radius"),
+       {QStringLiteral("border-top-left-radius"), QStringLiteral("border-top-right-radius"),
+        QStringLiteral("border-bottom-right-radius"),
+        QStringLiteral("border-bottom-left-radius")}}};
   return h;
 }
 
 const QSet<QString>& animationPseudos() {
-  static const QSet<QString> s{u":pressed"_s, u":hover"_s,   u":focus"_s,
-                               u":checked"_s, u":clicked"_s, u":active"_s};
+  static const QSet<QString> s{QStringLiteral(":pressed"), QStringLiteral(":hover"),
+                               QStringLiteral(":focus"),   QStringLiteral(":checked"),
+                               QStringLiteral(":clicked"), QStringLiteral(":active")};
   return s;
 }
 
 QString normalizeProp(const QString& name) {
-  if (name == u"background") return u"background-color"_s;
-  if (name == u"text-shadow") return u"box-shadow"_s;
+  if (name == u"background") return QStringLiteral("background-color");
+  if (name == u"text-shadow") return QStringLiteral("box-shadow");
   return name;
 }
 
@@ -262,18 +267,18 @@ QString requoteString(const QString& raw, bool closed) {
     }
     value.append(n);
   }
-  QString out = u"\""_s;
+  QString out = QStringLiteral("\"");
   for (const QChar c : value) {
     if (c == u'\\')
-      out += u"\\\\"_s;
+      out += QStringLiteral("\\\\");
     else if (c == u'"')
-      out += u"\\\""_s;
+      out += QStringLiteral("\\\"");
     else if (c == u'\n')
-      out += u"\\A "_s;
+      out += QStringLiteral("\\A ");
     else if (c == u'\r')
-      out += u"\\D "_s;
+      out += QStringLiteral("\\D ");
     else if (c == u'\f')
-      out += u"\\C "_s;
+      out += QStringLiteral("\\C ");
     else
       out.append(c);
   }
@@ -281,8 +286,8 @@ QString requoteString(const QString& raw, bool closed) {
 }
 
 QString serializeUrl(const QString& value, bool bad) {
-  if (bad) return u"url([bad url])"_s;
-  QString out = u"url("_s;
+  if (bad) return QStringLiteral("url([bad url])");
+  QString out = QStringLiteral("url(");
   for (const QChar c : value) {
     if (c == u'\\' || c == u'"' || c == u'\'' || c == u'(' || c == u')' || c == u' ') {
       out.append(u'\\');
@@ -452,10 +457,13 @@ QStringList splitComponents(const QString& value) {
 }
 
 QList<Declaration> expandBorder(const QString& value) {
-  static const QSet<QString> styles{u"none"_s,  u"hidden"_s, u"dotted"_s, u"dashed"_s,
-                                    u"solid"_s, u"double"_s, u"groove"_s, u"ridge"_s,
-                                    u"inset"_s, u"outset"_s};
-  static const QSet<QString> widths{u"thin"_s, u"medium"_s, u"thick"_s};
+  static const QSet<QString> styles{QStringLiteral("none"),   QStringLiteral("hidden"),
+                                    QStringLiteral("dotted"), QStringLiteral("dashed"),
+                                    QStringLiteral("solid"),  QStringLiteral("double"),
+                                    QStringLiteral("groove"), QStringLiteral("ridge"),
+                                    QStringLiteral("inset"),  QStringLiteral("outset")};
+  static const QSet<QString> widths{QStringLiteral("thin"), QStringLiteral("medium"),
+                                    QStringLiteral("thick")};
   QList<Declaration> result;
   auto put = [&](const QString& k, const QString& v) {
     for (auto& d : result) {
@@ -468,11 +476,11 @@ QList<Declaration> expandBorder(const QString& value) {
   };
   for (const QString& token : splitComponents(value)) {
     if (styles.contains(token))
-      put(u"border-style"_s, token);
+      put(QStringLiteral("border-style"), token);
     else if (widths.contains(token) || (!token.isEmpty() && token[0].isDigit()))
-      put(u"border-width"_s, token);
+      put(QStringLiteral("border-width"), token);
     else
-      put(u"border-color"_s, token);
+      put(QStringLiteral("border-color"), token);
   }
   return result;
 }
@@ -522,7 +530,8 @@ QList<Declaration> expandShorthand(const QString& prop, const QString& value) {
 
 QStringList transitionLonghands(const QString& prop) {
   if (prop == u"border") {
-    return shorthandSides().value(u"border-width"_s) + shorthandSides().value(u"border-color"_s);
+    return shorthandSides().value(QStringLiteral("border-width")) +
+           shorthandSides().value(QStringLiteral("border-color"));
   }
   const auto it = shorthandSides().constFind(prop);
   return it != shorthandSides().constEnd() ? *it : QStringList{prop};
@@ -533,8 +542,8 @@ QList<Declaration> staticDeclarations(const QString& prop, const QString& value,
   const QList<Declaration> expanded = expandShorthand(prop, value);
   QList<Declaration> remaining;
   for (const auto& d : expanded) {
-    const bool strip =
-        isAnimatable(d.first) && (animated.contains(u"all"_s) || animated.contains(d.first));
+    const bool strip = isAnimatable(d.first) &&
+                       (animated.contains(QStringLiteral("all")) || animated.contains(d.first));
     if (!strip) remaining.append(d);
   }
   if (remaining.size() == expanded.size()) return {{prop, value}};
@@ -601,7 +610,7 @@ struct Segment {
 std::optional<Segment> parseTransitionSegment(const QList<Tok>& tokens) {
   if (tokens.size() < 2) return std::nullopt;
   if (tokens[0].type != Tok::Ident || !isTime(tokens[1])) return std::nullopt;
-  Segment s{tokens[0].text, timeMs(tokens[1]), u"ease"_s, 0};
+  Segment s{tokens[0].text, timeMs(tokens[1]), QStringLiteral("ease"), 0};
   for (qsizetype i = 2; i < tokens.size(); ++i) {
     const Tok& t = tokens[i];
     if (isTime(t))
@@ -629,7 +638,7 @@ QList<TransitionSpec> combineLonghands(const std::optional<QStringList>& props,
   const std::optional<QList<QString>> easingList = easings;
   for (qsizetype i = 0; i < props->size(); ++i) {
     const int dur = pick<int>(durations, i, 0);
-    const QString easing = pick<QString>(easingList, i, u"ease"_s);
+    const QString easing = pick<QString>(easingList, i, QStringLiteral("ease"));
     const int delay = pick<int>(delays, i, 0);
     for (const QString& lh : transitionLonghands(normalizeProp((*props)[i]))) {
       result.append({lh, dur, easing, delay});
@@ -667,7 +676,8 @@ std::array<int, 3> computeSpecificity(const QString& base, const QStringList& ps
   int a = 0;
   int b = static_cast<int>(pseudos.size());
   int c = 0;
-  for (const QString& segment : base.split(QRegularExpression(u"\\s+"_s), Qt::SkipEmptyParts)) {
+  for (const QString& segment :
+       base.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts)) {
     b += static_cast<int>(parseAttrConditions(segment).size());
     QString noAttrs = segment;
     noAttrs.remove(attrRe);
@@ -678,7 +688,7 @@ std::array<int, 3> computeSpecificity(const QString& base, const QStringList& ps
     }
     QString noId = noAttrs;
     noId.remove(idRe);
-    QString noSub = noId.split(u"::"_s).first();
+    QString noSub = noId.split(QStringLiteral("::")).first();
     QString head = noSub.split(u':').first();
     const QStringList parts = head.split(u'.');
     const QString tag = parts[0].trimmed();
@@ -884,12 +894,12 @@ QList<AttrCondition> parseAttrConditions(const QString& segment) {
     if (!parsed.hasMatch()) continue;
     const QString op = parsed.captured(2);
     if (op.isEmpty()) {
-      out.append({parsed.captured(1), u"exists"_s, std::nullopt});
+      out.append({parsed.captured(1), QStringLiteral("exists"), std::nullopt});
     } else if (op == u"=") {
       QString value = parsed.captured(3);
       if (parsed.capturedStart(3) < 0)
         value = parsed.capturedStart(4) >= 0 ? parsed.captured(4) : parsed.captured(5);
-      out.append({parsed.captured(1), u"="_s, value});
+      out.append({parsed.captured(1), QStringLiteral("="), value});
     } else {
       out.append({parsed.captured(1), op, std::nullopt});
     }
@@ -985,8 +995,9 @@ QString stopsString(const QStringList& stopArgs) {
   QList<Stop> raw;
   for (const QString& a : stopArgs) raw.append(parseStop(a));
   QStringList parts;
-  for (const auto& [p, color] : fillPositions(raw)) parts.append(u"stop:%1 %2"_s.arg(g4(p), color));
-  return parts.join(u", "_s);
+  for (const auto& [p, color] : fillPositions(raw))
+    parts.append(QStringLiteral("stop:%1 %2").arg(g4(p), color));
+  return parts.join(QStringLiteral(", "));
 }
 
 double parsePosValue(const QString& in) {
@@ -999,12 +1010,18 @@ double parsePosValue(const QString& in) {
 
 std::optional<QString> translateLinear(const QString& inner) {
   static const QHash<QString, std::array<double, 4>> dirs{
-      {u"to right"_s, {0, 0, 1, 0}},        {u"to left"_s, {1, 0, 0, 0}},
-      {u"to bottom"_s, {0, 0, 0, 1}},       {u"to top"_s, {0, 1, 0, 0}},
-      {u"to bottom right"_s, {0, 0, 1, 1}}, {u"to right bottom"_s, {0, 0, 1, 1}},
-      {u"to bottom left"_s, {1, 0, 0, 1}},  {u"to left bottom"_s, {1, 0, 0, 1}},
-      {u"to top right"_s, {0, 1, 1, 0}},    {u"to right top"_s, {0, 1, 1, 0}},
-      {u"to top left"_s, {1, 1, 0, 0}},     {u"to left top"_s, {1, 1, 0, 0}}};
+      {QStringLiteral("to right"), {0, 0, 1, 0}},
+      {QStringLiteral("to left"), {1, 0, 0, 0}},
+      {QStringLiteral("to bottom"), {0, 0, 0, 1}},
+      {QStringLiteral("to top"), {0, 1, 0, 0}},
+      {QStringLiteral("to bottom right"), {0, 0, 1, 1}},
+      {QStringLiteral("to right bottom"), {0, 0, 1, 1}},
+      {QStringLiteral("to bottom left"), {1, 0, 0, 1}},
+      {QStringLiteral("to left bottom"), {1, 0, 0, 1}},
+      {QStringLiteral("to top right"), {0, 1, 1, 0}},
+      {QStringLiteral("to right top"), {0, 1, 1, 0}},
+      {QStringLiteral("to top left"), {1, 1, 0, 0}},
+      {QStringLiteral("to left top"), {1, 1, 0, 0}}};
   static const Re angleRe(QStringLiteral(R"(^(-?[\d.]+)deg$)"));
   const QStringList args = splitArgs(inner);
   if (args.isEmpty()) return std::nullopt;
@@ -1022,8 +1039,8 @@ std::optional<QString> translateLinear(const QString& inner) {
   QStringList stopArgs = dir ? args.mid(1) : args;
   if (!dir) dir = std::array<double, 4>{0, 0, 0, 1};
   if (stopArgs.size() < 2) return std::nullopt;
-  return u"qlineargradient(x1:%1, y1:%2, x2:%3, y2:%4, %5)"_s.arg(
-      g4((*dir)[0]), g4((*dir)[1]), g4((*dir)[2]), g4((*dir)[3]), stopsString(stopArgs));
+  return QStringLiteral("qlineargradient(x1:%1, y1:%2, x2:%3, y2:%4, %5)")
+      .arg(g4((*dir)[0]), g4((*dir)[1]), g4((*dir)[2]), g4((*dir)[3]), stopsString(stopArgs));
 }
 
 std::optional<QString> translateRadial(const QString& inner) {
@@ -1035,9 +1052,13 @@ std::optional<QString> translateRadial(const QString& inner) {
           R"(\b(circle|ellipse|closest-side|farthest-side|closest-corner|farthest-corner)\b)"),
       Re::CaseInsensitiveOption);
   static const Re sizeRe(QStringLiteral(R"(([\d.]+)(%?))"));
-  static const QSet<QString> keywords{u"circle"_s,         u"ellipse"_s,       u"at"_s,
-                                      u"closest-side"_s,   u"farthest-side"_s, u"closest-corner"_s,
-                                      u"farthest-corner"_s};
+  static const QSet<QString> keywords{QStringLiteral("circle"),
+                                      QStringLiteral("ellipse"),
+                                      QStringLiteral("at"),
+                                      QStringLiteral("closest-side"),
+                                      QStringLiteral("farthest-side"),
+                                      QStringLiteral("closest-corner"),
+                                      QStringLiteral("farthest-corner")};
   const QStringList args = splitArgs(inner);
   if (args.isEmpty()) return std::nullopt;
   double cx = 0.5, cy = 0.5, radius = 0.5;
@@ -1063,8 +1084,8 @@ std::optional<QString> translateRadial(const QString& inner) {
   }
   const QStringList stopArgs = args.mid(stopStart);
   if (stopArgs.size() < 2) return std::nullopt;
-  return u"qradialgradient(cx:%1, cy:%2, radius:%3, fx:%1, fy:%2, %4)"_s.arg(
-      g4(cx), g4(cy), g4(radius), stopsString(stopArgs));
+  return QStringLiteral("qradialgradient(cx:%1, cy:%2, radius:%3, fx:%1, fy:%2, %4)")
+      .arg(g4(cx), g4(cy), g4(radius), stopsString(stopArgs));
 }
 
 std::optional<QString> translateConic(const QString& inner) {
@@ -1076,7 +1097,7 @@ std::optional<QString> translateConic(const QString& inner) {
   double cx = 0.5, cy = 0.5, angle = 0.0;
   qsizetype stopStart = 0;
   const QStringList firstWords =
-      args[0].toLower().split(QRegularExpression(u"\\s+"_s), Qt::SkipEmptyParts);
+      args[0].toLower().split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
   if (firstWords.contains(u"from") || firstWords.contains(u"at")) {
     stopStart = 1;
     if (const auto fm = fromRe.match(args[0]); fm.hasMatch()) angle = fm.captured(1).toDouble();
@@ -1087,8 +1108,8 @@ std::optional<QString> translateConic(const QString& inner) {
   }
   const QStringList stopArgs = args.mid(stopStart);
   if (stopArgs.size() < 2) return std::nullopt;
-  return u"qconicalgradient(cx:%1, cy:%2, angle:%3, %4)"_s.arg(g4(cx), g4(cy), g4(angle),
-                                                               stopsString(stopArgs));
+  return QStringLiteral("qconicalgradient(cx:%1, cy:%2, angle:%3, %4)")
+      .arg(g4(cx), g4(cy), g4(angle), stopsString(stopArgs));
 }
 
 }  // namespace
@@ -1160,7 +1181,7 @@ ParsedStyleSheet extractRules(const QString& stylesheet) {
           resets = true;
           tProps = QStringList{};
           tDurations = QList<int>{0};
-          tEasings = QStringList{u"ease"_s};
+          tEasings = QStringList{QStringLiteral("ease")};
           tDelays = QList<int>{0};
           continue;
         }
@@ -1256,7 +1277,7 @@ ParsedStyleSheet extractRules(const QString& stylesheet) {
     if (hasAttrBlock) {
       QString stripped = split.base;
       stripped.remove(attrBlock);
-      stripped = stripped.replace(ws, u" "_s).trimmed();
+      stripped = stripped.replace(ws, QStringLiteral(" ")).trimmed();
       animated.unite(animatedMap.value(stripped));
     }
     QStringList lines;
@@ -1273,15 +1294,17 @@ ParsedStyleSheet extractRules(const QString& stylesheet) {
       } else {
         declarations = {{pName, pVal}};
       }
-      for (const auto& d : declarations) lines.append(u"    %1: %2;"_s.arg(d.first, d.second));
+      for (const auto& d : declarations)
+        lines.append(QStringLiteral("    %1: %2;").arg(d.first, d.second));
     }
     if (!lines.isEmpty()) {
-      cleanedParts.append(rr.selector + u" {\n"_s + lines.join(u'\n') + u"\n}"_s);
+      cleanedParts.append(rr.selector + QStringLiteral(" {\n") + lines.join(u'\n') +
+                          QStringLiteral("\n}"));
     } else {
-      cleanedParts.append(rr.selector + u" { }"_s);
+      cleanedParts.append(rr.selector + QStringLiteral(" { }"));
     }
   }
-  return {cleanedParts.join(u"\n\n"_s), rules};
+  return {cleanedParts.join(QStringLiteral("\n\n")), rules};
 }
 
 }  // namespace yasb::css

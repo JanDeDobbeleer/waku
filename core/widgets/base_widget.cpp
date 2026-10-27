@@ -1,41 +1,41 @@
-#include "base_widget.h"
+#include "core/widgets/base_widget.h"
 
 #include <QContextMenuEvent>
 #include <QMouseEvent>
 #include <QStyle>
 
-#include "event_bus.h"
+#include "core/widgets/event_bus.h"
 
 namespace yasb::widgets {
 
 BaseWidget::BaseWidget(const QString& widgetName, const QString& className, int timerIntervalMs,
                        QWidget* parent)
-    : QWidget(parent), m_widgetName(widgetName), m_timerInterval(timerIntervalMs) {
+    : QWidget(parent), widgetName_(widgetName), timerInterval_(timerIntervalMs) {
   // BarWindow's island code identifies container children by this property.
   setProperty("widget_name", widgetName);
 
-  m_widgetLayout = new QHBoxLayout(this);
-  m_widgetLayout->setContentsMargins(0, 0, 0, 0);
-  m_widgetLayout->setSpacing(0);
+  widgetLayout_ = new QHBoxLayout(this);
+  widgetLayout_->setContentsMargins(0, 0, 0, 0);
+  widgetLayout_->setSpacing(0);
 
-  m_frame = new QFrame(this);
-  m_frame->setProperty("class", QStringLiteral("widget ") + className);
-  m_widgetLayout->addWidget(m_frame);
+  frame_ = new QFrame(this);
+  frame_->setProperty("class", QStringLiteral("widget ") + className);
+  widgetLayout_->addWidget(frame_);
 
-  auto* frameLayout = new QHBoxLayout(m_frame);
+  auto* frameLayout = new QHBoxLayout(frame_);
   frameLayout->setContentsMargins(0, 0, 0, 0);
   frameLayout->setSpacing(0);
 
-  m_containerLayout = new QHBoxLayout;
-  m_containerLayout->setSpacing(0);
-  m_containerLayout->setContentsMargins(0, 0, 0, 0);
-  m_container = new QFrame(m_frame);
-  m_container->setLayout(m_containerLayout);
-  m_container->setProperty("class", QStringLiteral("widget-container"));
-  frameLayout->addWidget(m_container);
+  containerLayout_ = new QHBoxLayout;
+  containerLayout_->setSpacing(0);
+  containerLayout_->setContentsMargins(0, 0, 0, 0);
+  container_ = new QFrame(frame_);
+  container_->setLayout(containerLayout_);
+  container_->setProperty("class", QStringLiteral("widget-container"));
+  frameLayout->addWidget(container_);
 
   connect(&EventBus::instance(), &EventBus::widgetHotkey, this, &BaseWidget::handleHotkey);
-  connect(&m_timer, &QTimer::timeout, this, [this] { runCallback(m_binding.timer); });
+  connect(&timer_, &QTimer::timeout, this, [this] { runCallback(binding_.timer); });
 }
 
 QString BaseWidget::screenName() const { return property("screen_name").toString(); }
@@ -43,45 +43,45 @@ QString BaseWidget::screenName() const { return property("screen_name").toString
 QString BaseWidget::barId() const { return property("bar_id").toString(); }
 
 void BaseWidget::startTimer() {
-  if (m_timerInterval > 0) m_timer.start(m_timerInterval);
-  runCallback(m_binding.timer);
+  if (timerInterval_ > 0) timer_.start(timerInterval_);
+  runCallback(binding_.timer);
 }
 
 void BaseWidget::buildWidgetLabel(const QString& content, const QString& contentAlt,
                                   const QString& placeholder, bool hideIcons) {
-  for (QLabel* l : m_labels) delete l;
-  for (QLabel* l : m_labelsAlt) delete l;
-  m_labels.clear();
-  m_labelsAlt.clear();
-  m_isIcon.clear();
-  m_hideIcons = hideIcons;
-  m_showAlt = false;
+  for (QLabel* l : labels_) delete l;
+  for (QLabel* l : labelsAlt_) delete l;
+  labels_.clear();
+  labelsAlt_.clear();
+  isIcon_.clear();
+  hideIcons_ = hideIcons;
+  showAlt_ = false;
 
   auto build = [&](const QString& text, bool isAlt, std::vector<QLabel*>& out) {
     for (const LabelPart& part : splitLabelParts(text, isAlt)) {
-      auto* label = new QLabel(part.text, m_container);
+      auto* label = new QLabel(part.text, container_);
       label->setProperty("class", part.cssClass);
       if (!part.isIcon && !placeholder.isNull()) label->setText(placeholder);
       label->setAlignment(Qt::AlignCenter);
-      m_containerLayout->addWidget(label);
+      containerLayout_->addWidget(label);
       out.push_back(label);
-      if (!isAlt) m_isIcon.push_back(part.isIcon);
+      if (!isAlt) isIcon_.push_back(part.isIcon);
     }
   };
-  build(content, false, m_labels);
-  if (!contentAlt.isEmpty()) build(contentAlt, true, m_labelsAlt);
+  build(content, false, labels_);
+  if (!contentAlt.isEmpty()) build(contentAlt, true, labelsAlt_);
   applyAltVisibility();
 }
 
 void BaseWidget::applyAltVisibility() {
-  for (size_t i = 0; i < m_labels.size(); ++i) {
-    m_labels[i]->setVisible(!m_showAlt && !(m_isIcon[i] && m_hideIcons));
+  for (size_t i = 0; i < labels_.size(); ++i) {
+    labels_[i]->setVisible(!showAlt_ && !(isIcon_[i] && hideIcons_));
   }
-  for (QLabel* l : m_labelsAlt) l->setVisible(m_showAlt);
+  for (QLabel* l : labelsAlt_) l->setVisible(showAlt_);
 }
 
 void BaseWidget::toggleAlt() {
-  m_showAlt = !m_showAlt;
+  showAlt_ = !showAlt_;
   applyAltVisibility();
 }
 
@@ -99,13 +99,13 @@ void BaseWidget::clearHoverState() {
     w->style()->polish(w);
   };
   repolish(this);
-  repolish(m_frame);
-  for (QWidget* w : m_frame->findChildren<QWidget*>()) repolish(w);
+  repolish(frame_);
+  for (QWidget* w : frame_->findChildren<QWidget*>()) repolish(w);
 }
 
 void BaseWidget::handleHotkey(const QString& widgetName, const QString& action,
                               const QString& screen) {
-  if (!m_hotkeyEnabled || widgetName != m_widgetName) return;
+  if (!hotkeyEnabled_ || widgetName != widgetName_) return;
   if (screen.isEmpty() || screenName() != screen) return;
   if (!action.isEmpty()) runCallback(action);
 }
@@ -113,13 +113,13 @@ void BaseWidget::handleHotkey(const QString& widgetName, const QString& action,
 void BaseWidget::mouseReleaseEvent(QMouseEvent* event) {
   switch (event->button()) {
     case Qt::LeftButton:
-      runCallback(m_binding.left);
+      runCallback(binding_.left);
       break;
     case Qt::MiddleButton:
-      runCallback(m_binding.middle);
+      runCallback(binding_.middle);
       break;
     case Qt::RightButton:
-      runCallback(m_binding.right);
+      runCallback(binding_.right);
       break;
     default:
       break;

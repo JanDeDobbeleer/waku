@@ -10,7 +10,7 @@
 #include <optional>
 #include <vector>
 
-#include "popup.h"
+#include "core/widgets/popup.h"
 
 namespace yasb::widgets {
 

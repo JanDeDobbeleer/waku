@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "core/config/loader.h"
-#include "registry.h"
+#include "core/widgets/registry.h"
 
 namespace yasb::widgets {
 

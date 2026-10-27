@@ -1,4 +1,4 @@
-#include "label_format.h"
+#include "core/widgets/label_format.h"
 
 #include <QRegularExpression>
 #include <QStringList>

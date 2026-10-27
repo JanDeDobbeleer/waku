@@ -1,4 +1,4 @@
-#include "memory_widget.h"
+#include "widgets/memory/memory_widget.h"
 
 #include <QCoreApplication>
 #include <QLabel>

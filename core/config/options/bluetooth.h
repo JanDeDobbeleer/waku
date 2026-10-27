@@ -6,181 +6,181 @@
 namespace yasb::config::options {
 
 struct BluetoothIconsConfig {
-    std::string bluetooth_on;
-    std::string bluetooth_off;
-    std::string bluetooth_connected;
+  std::string bluetooth_on;
+  std::string bluetooth_off;
+  std::string bluetooth_connected;
 };
 
 inline void from_json(const nlohmann::json& j, BluetoothIconsConfig& s) {
-    readField(j, "bluetooth_on", s.bluetooth_on);
-    readField(j, "bluetooth_off", s.bluetooth_off);
-    readField(j, "bluetooth_connected", s.bluetooth_connected);
+  readField(j, "bluetooth_on", s.bluetooth_on);
+  readField(j, "bluetooth_off", s.bluetooth_off);
+  readField(j, "bluetooth_connected", s.bluetooth_connected);
 }
 
 struct BluetoothDeviceAliasConfig {
-    std::string name;
-    std::string alias;
+  std::string name;
+  std::string alias;
 };
 
 inline void from_json(const nlohmann::json& j, BluetoothDeviceAliasConfig& s) {
-    readField(j, "name", s.name);
-    readField(j, "alias", s.alias);
+  readField(j, "name", s.name);
+  readField(j, "alias", s.alias);
 }
 
 struct BluetoothCallbacksConfig {
-    std::string on_left;
-    std::string on_middle;
-    std::string on_right;
+  std::string on_left;
+  std::string on_middle;
+  std::string on_right;
 };
 
 inline void from_json(const nlohmann::json& j, BluetoothCallbacksConfig& s) {
-    readField(j, "on_left", s.on_left);
-    readField(j, "on_middle", s.on_middle);
-    readField(j, "on_right", s.on_right);
+  readField(j, "on_left", s.on_left);
+  readField(j, "on_middle", s.on_middle);
+  readField(j, "on_right", s.on_right);
 }
 
 struct BluetoothLabelsConfig {
-    std::string title;
-    std::string your_devices;
-    std::string new_devices;
-    std::string not_connected;
-    std::string connected;
-    std::string more_settings;
-    std::string connect;
-    std::string disconnect;
-    std::string connecting;
-    std::string disconnecting;
-    std::string pair;
-    std::string manage;
-    std::string power_on;
-    std::string power_off;
+  std::string title;
+  std::string your_devices;
+  std::string new_devices;
+  std::string not_connected;
+  std::string connected;
+  std::string more_settings;
+  std::string connect;
+  std::string disconnect;
+  std::string connecting;
+  std::string disconnecting;
+  std::string pair;
+  std::string manage;
+  std::string power_on;
+  std::string power_off;
 };
 
 inline void from_json(const nlohmann::json& j, BluetoothLabelsConfig& s) {
-    readField(j, "title", s.title);
-    readField(j, "your_devices", s.your_devices);
-    readField(j, "new_devices", s.new_devices);
-    readField(j, "not_connected", s.not_connected);
-    readField(j, "connected", s.connected);
-    readField(j, "more_settings", s.more_settings);
-    readField(j, "connect", s.connect);
-    readField(j, "disconnect", s.disconnect);
-    readField(j, "connecting", s.connecting);
-    readField(j, "disconnecting", s.disconnecting);
-    readField(j, "pair", s.pair);
-    readField(j, "manage", s.manage);
-    readField(j, "power_on", s.power_on);
-    readField(j, "power_off", s.power_off);
+  readField(j, "title", s.title);
+  readField(j, "your_devices", s.your_devices);
+  readField(j, "new_devices", s.new_devices);
+  readField(j, "not_connected", s.not_connected);
+  readField(j, "connected", s.connected);
+  readField(j, "more_settings", s.more_settings);
+  readField(j, "connect", s.connect);
+  readField(j, "disconnect", s.disconnect);
+  readField(j, "connecting", s.connecting);
+  readField(j, "disconnecting", s.disconnecting);
+  readField(j, "pair", s.pair);
+  readField(j, "manage", s.manage);
+  readField(j, "power_on", s.power_on);
+  readField(j, "power_off", s.power_off);
 }
 
 struct BluetoothBatteryIconsConfig {
-    std::string empty;
-    std::string low;
-    std::string medium;
-    std::string high;
-    std::string full;
+  std::string empty;
+  std::string low;
+  std::string medium;
+  std::string high;
+  std::string full;
 };
 
 inline void from_json(const nlohmann::json& j, BluetoothBatteryIconsConfig& s) {
-    readField(j, "empty", s.empty);
-    readField(j, "low", s.low);
-    readField(j, "medium", s.medium);
-    readField(j, "high", s.high);
-    readField(j, "full", s.full);
+  readField(j, "empty", s.empty);
+  readField(j, "low", s.low);
+  readField(j, "medium", s.medium);
+  readField(j, "high", s.high);
+  readField(j, "full", s.full);
 }
 
 struct BluetoothDeviceIconsConfig {
-    std::string headphones;
-    std::string headset;
-    std::string speaker;
-    std::string phone;
-    std::string tablet;
-    std::string laptop;
-    std::string computer;
-    std::string keyboard;
-    std::string mouse;
-    std::string controller;
-    std::string watch;
-    std::string camera;
-    std::string generic;
-    BluetoothBatteryIconsConfig battery;
-    std::string scan;
+  std::string headphones;
+  std::string headset;
+  std::string speaker;
+  std::string phone;
+  std::string tablet;
+  std::string laptop;
+  std::string computer;
+  std::string keyboard;
+  std::string mouse;
+  std::string controller;
+  std::string watch;
+  std::string camera;
+  std::string generic;
+  BluetoothBatteryIconsConfig battery;
+  std::string scan;
 };
 
 inline void from_json(const nlohmann::json& j, BluetoothDeviceIconsConfig& s) {
-    readField(j, "headphones", s.headphones);
-    readField(j, "headset", s.headset);
-    readField(j, "speaker", s.speaker);
-    readField(j, "phone", s.phone);
-    readField(j, "tablet", s.tablet);
-    readField(j, "laptop", s.laptop);
-    readField(j, "computer", s.computer);
-    readField(j, "keyboard", s.keyboard);
-    readField(j, "mouse", s.mouse);
-    readField(j, "controller", s.controller);
-    readField(j, "watch", s.watch);
-    readField(j, "camera", s.camera);
-    readField(j, "generic", s.generic);
-    readField(j, "battery", s.battery);
-    readField(j, "scan", s.scan);
+  readField(j, "headphones", s.headphones);
+  readField(j, "headset", s.headset);
+  readField(j, "speaker", s.speaker);
+  readField(j, "phone", s.phone);
+  readField(j, "tablet", s.tablet);
+  readField(j, "laptop", s.laptop);
+  readField(j, "computer", s.computer);
+  readField(j, "keyboard", s.keyboard);
+  readField(j, "mouse", s.mouse);
+  readField(j, "controller", s.controller);
+  readField(j, "watch", s.watch);
+  readField(j, "camera", s.camera);
+  readField(j, "generic", s.generic);
+  readField(j, "battery", s.battery);
+  readField(j, "scan", s.scan);
 }
 
 struct BluetoothMenuConfig {
-    bool blur = true;
-    bool round_corners = true;
-    std::string round_corners_type;
-    std::string border_color;
-    std::string alignment;
-    std::string direction;
-    int offset_top = 6;
-    int offset_left = 0;
-    BluetoothLabelsConfig labels;
-    BluetoothDeviceIconsConfig device_icons;
+  bool blur = true;
+  bool round_corners = true;
+  std::string round_corners_type;
+  std::string border_color;
+  std::string alignment;
+  std::string direction;
+  int offset_top = 6;
+  int offset_left = 0;
+  BluetoothLabelsConfig labels;
+  BluetoothDeviceIconsConfig device_icons;
 };
 
 inline void from_json(const nlohmann::json& j, BluetoothMenuConfig& s) {
-    readField(j, "blur", s.blur);
-    readField(j, "round_corners", s.round_corners);
-    readField(j, "round_corners_type", s.round_corners_type);
-    readField(j, "border_color", s.border_color);
-    readField(j, "alignment", s.alignment);
-    readField(j, "direction", s.direction);
-    readField(j, "offset_top", s.offset_top);
-    readField(j, "offset_left", s.offset_left);
-    readField(j, "labels", s.labels);
-    readField(j, "device_icons", s.device_icons);
+  readField(j, "blur", s.blur);
+  readField(j, "round_corners", s.round_corners);
+  readField(j, "round_corners_type", s.round_corners_type);
+  readField(j, "border_color", s.border_color);
+  readField(j, "alignment", s.alignment);
+  readField(j, "direction", s.direction);
+  readField(j, "offset_top", s.offset_top);
+  readField(j, "offset_left", s.offset_left);
+  readField(j, "labels", s.labels);
+  readField(j, "device_icons", s.device_icons);
 }
 
 struct BluetoothConfig {
-    std::string label;
-    std::string label_alt;
-    std::string class_name;
-    std::string label_no_device;
-    std::string label_device_separator;
-    std::optional<int> max_length;
-    std::string max_length_ellipsis;
-    bool tooltip = true;
-    BluetoothIconsConfig icons;
-    std::vector<BluetoothDeviceAliasConfig> device_aliases;
-    std::vector<KeybindingConfig> keybindings;
-    BluetoothCallbacksConfig callbacks;
-    BluetoothMenuConfig menu_config;
+  std::string label;
+  std::string label_alt;
+  std::string class_name;
+  std::string label_no_device;
+  std::string label_device_separator;
+  std::optional<int> max_length;
+  std::string max_length_ellipsis;
+  bool tooltip = true;
+  BluetoothIconsConfig icons;
+  std::vector<BluetoothDeviceAliasConfig> device_aliases;
+  std::vector<KeybindingConfig> keybindings;
+  BluetoothCallbacksConfig callbacks;
+  BluetoothMenuConfig menu_config;
 };
 
 inline void from_json(const nlohmann::json& j, BluetoothConfig& s) {
-    readField(j, "label", s.label);
-    readField(j, "label_alt", s.label_alt);
-    readField(j, "class_name", s.class_name);
-    readField(j, "label_no_device", s.label_no_device);
-    readField(j, "label_device_separator", s.label_device_separator);
-    readField(j, "max_length", s.max_length);
-    readField(j, "max_length_ellipsis", s.max_length_ellipsis);
-    readField(j, "tooltip", s.tooltip);
-    readField(j, "icons", s.icons);
-    readField(j, "device_aliases", s.device_aliases);
-    readField(j, "keybindings", s.keybindings);
-    readField(j, "callbacks", s.callbacks);
-    readField(j, "menu_config", s.menu_config);
+  readField(j, "label", s.label);
+  readField(j, "label_alt", s.label_alt);
+  readField(j, "class_name", s.class_name);
+  readField(j, "label_no_device", s.label_no_device);
+  readField(j, "label_device_separator", s.label_device_separator);
+  readField(j, "max_length", s.max_length);
+  readField(j, "max_length_ellipsis", s.max_length_ellipsis);
+  readField(j, "tooltip", s.tooltip);
+  readField(j, "icons", s.icons);
+  readField(j, "device_aliases", s.device_aliases);
+  readField(j, "keybindings", s.keybindings);
+  readField(j, "callbacks", s.callbacks);
+  readField(j, "menu_config", s.menu_config);
 }
 
 }  // namespace yasb::config::options

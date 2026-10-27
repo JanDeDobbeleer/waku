@@ -1,4 +1,4 @@
-#include "battery_widget.h"
+#include "widgets/battery/battery_widget.h"
 
 #include <QCoreApplication>
 #include <QMutex>

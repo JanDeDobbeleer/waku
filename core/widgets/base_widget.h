@@ -7,8 +7,8 @@
 #include <QWidget>
 #include <vector>
 
-#include "callbacks.h"
-#include "label_format.h"
+#include "core/widgets/callbacks.h"
+#include "core/widgets/label_format.h"
 
 namespace yasb::widgets {
 
@@ -28,31 +28,31 @@ class BaseWidget : public QWidget {
   explicit BaseWidget(const QString& widgetName, const QString& className = QString(),
                       int timerIntervalMs = 0, QWidget* parent = nullptr);
 
-  const QString& widgetName() const { return m_widgetName; }
+  const QString& widgetName() const { return widgetName_; }
   // screen_name / bar_id come from the properties BarWindow sets when it adds the widget.
   QString screenName() const;
   QString barId() const;
   void setScreenName(const QString& name) { setProperty("screen_name", name); }
-  void setHotkeyEnabled(bool enabled) { m_hotkeyEnabled = enabled; }
+  void setHotkeyEnabled(bool enabled) { hotkeyEnabled_ = enabled; }
 
-  CallbackRegistry& callbacks() { return m_callbacks; }
+  CallbackRegistry& callbacks() { return callbacks_; }
   void registerCallback(const QString& name, CallbackFn fn, int arity = 0) {
-    m_callbacks.add(name, std::move(fn), arity);
+    callbacks_.add(name, std::move(fn), arity);
   }
-  void setCallbackBinding(const CallbackBinding& binding) { m_binding = binding; }
-  bool runCallback(const QString& callbackStr) { return m_callbacks.run(callbackStr); }
+  void setCallbackBinding(const CallbackBinding& binding) { binding_ = binding; }
+  bool runCallback(const QString& callbackStr) { return callbacks_.run(callbackStr); }
 
   // Runs the timer callback once now, then every interval (when > 0).
   void startTimer();
-  void stopTimer() { m_timer.stop(); }
+  void stopTimer() { timer_.stop(); }
 
   // Rebuilds the primary and alt label sets from label templates. `hideIcons` hides icon parts.
   // Alt widgets start hidden; their text is the raw template until the subclass renders it.
   void buildWidgetLabel(const QString& content, const QString& contentAlt = QString(),
                         const QString& placeholder = QString(), bool hideIcons = false);
-  const std::vector<QLabel*>& labels() const { return m_labels; }
-  const std::vector<QLabel*>& labelsAlt() const { return m_labelsAlt; }
-  bool showAlt() const { return m_showAlt; }
+  const std::vector<QLabel*>& labels() const { return labels_; }
+  const std::vector<QLabel*>& labelsAlt() const { return labelsAlt_; }
+  bool showAlt() const { return showAlt_; }
   // Swaps which label set is visible (toggle_label).
   void toggleAlt();
 
@@ -60,8 +60,8 @@ class BaseWidget : public QWidget {
   static void setLabelClass(QLabel* label, const QString& cssClass);
   void clearHoverState();
 
-  QFrame* widgetFrame() const { return m_frame; }
-  QFrame* labelContainer() const { return m_container; }
+  QFrame* widgetFrame() const { return frame_; }
+  QFrame* labelContainer() const { return container_; }
 
  public slots:
   void handleHotkey(const QString& widgetName, const QString& action, const QString& screen);
@@ -73,21 +73,21 @@ class BaseWidget : public QWidget {
  private:
   void applyAltVisibility();
 
-  QString m_widgetName;
-  QHBoxLayout* m_widgetLayout = nullptr;
-  QFrame* m_frame = nullptr;
-  QFrame* m_container = nullptr;
-  QHBoxLayout* m_containerLayout = nullptr;
-  std::vector<QLabel*> m_labels;
-  std::vector<QLabel*> m_labelsAlt;
-  std::vector<bool> m_isIcon;
-  bool m_showAlt = false;
-  bool m_hotkeyEnabled = true;
-  bool m_hideIcons = false;
-  CallbackRegistry m_callbacks;
-  CallbackBinding m_binding;
-  QTimer m_timer;
-  int m_timerInterval;
+  QString widgetName_;
+  QHBoxLayout* widgetLayout_ = nullptr;
+  QFrame* frame_ = nullptr;
+  QFrame* container_ = nullptr;
+  QHBoxLayout* containerLayout_ = nullptr;
+  std::vector<QLabel*> labels_;
+  std::vector<QLabel*> labelsAlt_;
+  std::vector<bool> isIcon_;
+  bool showAlt_ = false;
+  bool hotkeyEnabled_ = true;
+  bool hideIcons_ = false;
+  CallbackRegistry callbacks_;
+  CallbackBinding binding_;
+  QTimer timer_;
+  int timerInterval_;
 };
 
 }  // namespace yasb::widgets

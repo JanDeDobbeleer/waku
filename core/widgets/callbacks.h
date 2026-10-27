@@ -38,7 +38,7 @@ class CallbackRegistry {
 
   // `arity` is the exact number of args accepted; -1 means variadic.
   void add(const QString& name, CallbackFn fn, int arity = 0);
-  bool contains(const QString& name) const { return m_callbacks.count(name) != 0; }
+  bool contains(const QString& name) const { return callbacks_.count(name) != 0; }
 
   // Unknown names log once and run nothing (as Python's KeyError path); bad arity or a throwing
   // handler also logs. Returns true only when a handler ran to completion.
@@ -49,8 +49,8 @@ class CallbackRegistry {
     CallbackFn fn;
     int arity;
   };
-  std::map<QString, Entry> m_callbacks;
-  std::set<QString> m_warned;
+  std::map<QString, Entry> callbacks_;
+  std::set<QString> warned_;
 };
 
 }  // namespace yasb::widgets

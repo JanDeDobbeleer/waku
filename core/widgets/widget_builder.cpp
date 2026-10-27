@@ -1,4 +1,4 @@
-#include "widget_builder.h"
+#include "core/widgets/widget_builder.h"
 
 #include <QDebug>
 

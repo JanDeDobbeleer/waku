@@ -1,4 +1,4 @@
-#include "stat_popup.h"
+#include "core/widgets/stat_popup.h"
 
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -8,9 +8,9 @@
 #include <QVBoxLayout>
 #include <algorithm>
 
-#include "backdrop.h"
 #include "core/bar/theme_class.h"
-#include "tooltip.h"
+#include "core/widgets/backdrop.h"
+#include "core/widgets/tooltip.h"
 
 namespace yasb::widgets {
 namespace {

@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "system_stats.h"
+#include "platform/system_stats.h"
 
 namespace yasb::platform {
 

@@ -76,8 +76,8 @@ into the core target; that is a known violation, not a pattern to copy). Details
   code except where an API needs a Latin-1 view.
 - `NOMINMAX`, `WIN32_LEAN_AND_MEAN`, `UNICODE` come from the `yasb_options` target; do not redefine
   them locally.
-- `.editorconfig` defines whitespace and line endings: CRLF for sources and docs, LF for the parity
-  vectors, fixtures and generated option headers.
+- `.editorconfig` defines whitespace and line endings: CRLF for sources, docs and generated option
+  headers, LF for the parity vectors and fixtures.
 
 ## Error handling
 

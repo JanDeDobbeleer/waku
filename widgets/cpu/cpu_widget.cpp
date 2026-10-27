@@ -1,4 +1,4 @@
-#include "cpu_widget.h"
+#include "widgets/cpu/cpu_widget.h"
 
 #include <QCoreApplication>
 #include <QLabel>

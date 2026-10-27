@@ -9,8 +9,6 @@
 
 namespace yasb::css {
 
-using namespace Qt::StringLiterals;
-
 Q_LOGGING_CATEGORY(lcPreprocessor, "yasb.css.preprocessor")
 
 namespace {
@@ -246,7 +244,9 @@ QString CssPreprocessor::resolveUrls(const QString& css) {
   return replaceAll(urlRe, css, [&](const QRegularExpressionMatch& m) {
     const QString quote = m.captured(1);
     const QString path = m.captured(2);
-    for (const QString& prefix : {u"data:"_s, u"file:"_s, u"http:"_s, u"https:"_s, u"qrc:"_s}) {
+    for (const QString& prefix :
+         {QStringLiteral("data:"), QStringLiteral("file:"), QStringLiteral("http:"),
+          QStringLiteral("https:"), QStringLiteral("qrc:")}) {
       if (path.startsWith(prefix)) return m.captured(0);
     }
     if (isWinAbs(path)) return m.captured(0);

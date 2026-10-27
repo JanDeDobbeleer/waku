@@ -6,67 +6,67 @@
 namespace yasb::config::options {
 
 struct ToggleWorkspaceLayerConfig {
-    bool enabled = false;
-    std::string tiling_label;
-    std::string floating_label;
+  bool enabled = false;
+  std::string tiling_label;
+  std::string floating_label;
 };
 
 inline void from_json(const nlohmann::json& j, ToggleWorkspaceLayerConfig& s) {
-    readField(j, "enabled", s.enabled);
-    readField(j, "tiling_label", s.tiling_label);
-    readField(j, "floating_label", s.floating_label);
+  readField(j, "enabled", s.enabled);
+  readField(j, "tiling_label", s.tiling_label);
+  readField(j, "floating_label", s.floating_label);
 }
 
 struct KomorebiAppIconsConfig {
-    bool enabled_populated = false;
-    bool enabled_active = false;
-    int size = 16;
-    int max_icons = 0;
-    bool hide_label = false;
-    bool hide_duplicates = false;
-    bool hide_floating = false;
+  bool enabled_populated = false;
+  bool enabled_active = false;
+  int size = 16;
+  int max_icons = 0;
+  bool hide_label = false;
+  bool hide_duplicates = false;
+  bool hide_floating = false;
 };
 
 inline void from_json(const nlohmann::json& j, KomorebiAppIconsConfig& s) {
-    readField(j, "enabled_populated", s.enabled_populated);
-    readField(j, "enabled_active", s.enabled_active);
-    readField(j, "size", s.size);
-    readField(j, "max_icons", s.max_icons);
-    readField(j, "hide_label", s.hide_label);
-    readField(j, "hide_duplicates", s.hide_duplicates);
-    readField(j, "hide_floating", s.hide_floating);
+  readField(j, "enabled_populated", s.enabled_populated);
+  readField(j, "enabled_active", s.enabled_active);
+  readField(j, "size", s.size);
+  readField(j, "max_icons", s.max_icons);
+  readField(j, "hide_label", s.hide_label);
+  readField(j, "hide_duplicates", s.hide_duplicates);
+  readField(j, "hide_floating", s.hide_floating);
 }
 
 struct KomorebiWorkspacesConfig {
-    std::string label_offline;
-    std::string label_workspace_btn;
-    std::string label_workspace_active_btn;
-    std::string label_workspace_populated_btn;
-    std::string label_default_name;
-    std::string label_float_override;
-    ToggleWorkspaceLayerConfig toggle_workspace_layer;
-    bool hide_if_offline = false;
-    bool label_zero_index = false;
-    bool hide_empty_workspaces = false;
-    KomorebiAppIconsConfig app_icons;
-    bool enable_scroll_switching = false;
-    bool reverse_scroll_direction = false;
+  std::string label_offline;
+  std::string label_workspace_btn;
+  std::string label_workspace_active_btn;
+  std::string label_workspace_populated_btn;
+  std::string label_default_name;
+  std::string label_float_override;
+  ToggleWorkspaceLayerConfig toggle_workspace_layer;
+  bool hide_if_offline = false;
+  bool label_zero_index = false;
+  bool hide_empty_workspaces = false;
+  KomorebiAppIconsConfig app_icons;
+  bool enable_scroll_switching = false;
+  bool reverse_scroll_direction = false;
 };
 
 inline void from_json(const nlohmann::json& j, KomorebiWorkspacesConfig& s) {
-    readField(j, "label_offline", s.label_offline);
-    readField(j, "label_workspace_btn", s.label_workspace_btn);
-    readField(j, "label_workspace_active_btn", s.label_workspace_active_btn);
-    readField(j, "label_workspace_populated_btn", s.label_workspace_populated_btn);
-    readField(j, "label_default_name", s.label_default_name);
-    readField(j, "label_float_override", s.label_float_override);
-    readField(j, "toggle_workspace_layer", s.toggle_workspace_layer);
-    readField(j, "hide_if_offline", s.hide_if_offline);
-    readField(j, "label_zero_index", s.label_zero_index);
-    readField(j, "hide_empty_workspaces", s.hide_empty_workspaces);
-    readField(j, "app_icons", s.app_icons);
-    readField(j, "enable_scroll_switching", s.enable_scroll_switching);
-    readField(j, "reverse_scroll_direction", s.reverse_scroll_direction);
+  readField(j, "label_offline", s.label_offline);
+  readField(j, "label_workspace_btn", s.label_workspace_btn);
+  readField(j, "label_workspace_active_btn", s.label_workspace_active_btn);
+  readField(j, "label_workspace_populated_btn", s.label_workspace_populated_btn);
+  readField(j, "label_default_name", s.label_default_name);
+  readField(j, "label_float_override", s.label_float_override);
+  readField(j, "toggle_workspace_layer", s.toggle_workspace_layer);
+  readField(j, "hide_if_offline", s.hide_if_offline);
+  readField(j, "label_zero_index", s.label_zero_index);
+  readField(j, "hide_empty_workspaces", s.hide_empty_workspaces);
+  readField(j, "app_icons", s.app_icons);
+  readField(j, "enable_scroll_switching", s.enable_scroll_switching);
+  readField(j, "reverse_scroll_direction", s.reverse_scroll_direction);
 }
 
 }  // namespace yasb::config::options

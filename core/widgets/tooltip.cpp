@@ -1,4 +1,4 @@
-#include "tooltip.h"
+#include "core/widgets/tooltip.h"
 
 #include <QCursor>
 #include <QEvent>
@@ -7,9 +7,9 @@
 #include <QScreen>
 #include <algorithm>
 
-#include "backdrop.h"
 #include "core/bar/bar_window.h"
 #include "core/bar/theme_class.h"
+#include "core/widgets/backdrop.h"
 
 namespace yasb::widgets {
 namespace {

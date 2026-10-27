@@ -47,9 +47,9 @@ class SchemaValidator {
   bool knowsWidgetType(std::string_view widgetType) const;
 
  private:
-  OJson m_schema;
-  OJson m_rootSchema;
-  std::map<std::string, std::string, std::less<>> m_optionsModelByType;
+  OJson schema_;
+  OJson rootSchema_;
+  std::map<std::string, std::string, std::less<>> optionsModelByType_;
 };
 
 }  // namespace yasb::config

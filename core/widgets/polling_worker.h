@@ -21,16 +21,16 @@ class PollingWorker : public QObject {
 
   void start(bool pollImmediately = true);
   void stop();
-  bool isRunning() const { return m_thread.isRunning(); }
+  bool isRunning() const { return thread_.isRunning(); }
 
  signals:
   void dataReady(const QVariant& data);
 
  private:
-  PollFn m_poll;
-  int m_interval;
-  QThread m_thread;
-  QTimer* m_timer = nullptr;
+  PollFn poll_;
+  int interval_;
+  QThread thread_;
+  QTimer* timer_ = nullptr;
 };
 
 }  // namespace yasb::widgets

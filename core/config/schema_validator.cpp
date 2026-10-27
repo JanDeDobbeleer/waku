@@ -57,14 +57,14 @@ bool parseDouble(const std::string& s, double& out) {
 
 class Walker {
  public:
-  explicit Walker(const OJson& defs) : m_defs(defs) {}
+  explicit Walker(const OJson& defs) : defs_(defs) {}
 
   bool check(const OJson& schema, const OJson& v, bool strict, Ctx& ctx, OJson& out,
              std::string_view model = {}) const {
     if (auto ref = schema.find("$ref"); ref != schema.end()) {
       const std::string name = ref->get<std::string>().substr(std::string("#/$defs/").size());
-      auto def = m_defs.find(name);
-      if (def == m_defs.end()) {
+      auto def = defs_.find(name);
+      if (def == defs_.end()) {
         report(ctx, "schema_error", "Unresolved reference " + name);
         return false;
       }
@@ -121,7 +121,7 @@ class Walker {
   }
 
  private:
-  const OJson& m_defs;
+  const OJson& defs_;
 
   // pydantic's smart union: an exact (strict) match wins, then the first member that coerces.
   bool checkUnion(const OJson& members, const OJson& v, bool strict, Ctx& ctx, OJson& out) const {
@@ -439,17 +439,17 @@ Validated run(const OJson& defs, const OJson& schema, const OJson& value, std::s
 
 }  // namespace
 
-SchemaValidator::SchemaValidator(OJson schema) : m_schema(std::move(schema)) {
-  m_rootSchema = m_schema;
-  m_rootSchema.erase("$defs");
-  m_rootSchema.erase("required");
-  m_rootSchema["properties"]["widgets"] = {
+SchemaValidator::SchemaValidator(OJson schema) : schema_(std::move(schema)) {
+  rootSchema_ = schema_;
+  rootSchema_.erase("$defs");
+  rootSchema_.erase("required");
+  rootSchema_["properties"]["widgets"] = {
       {"type", "object"},
       {"default", OJson::object()},
       {"additionalProperties", {{"anyOf", {{{"type", "string"}}, {{"type", "object"}}}}}},
   };
 
-  for (auto it = m_schema["$defs"].begin(); it != m_schema["$defs"].end(); ++it) {
+  for (auto it = schema_["$defs"].begin(); it != schema_["$defs"].end(); ++it) {
     const auto& def = it.value();
     if (it.key().size() < 6 || it.key().compare(it.key().size() - 5, 5, "Entry") != 0) continue;
     if (!def.contains("properties")) continue;
@@ -458,7 +458,7 @@ SchemaValidator::SchemaValidator(OJson schema) : m_schema(std::move(schema)) {
         !props["options"].contains("$ref")) {
       continue;
     }
-    m_optionsModelByType[props["type"]["const"].get<std::string>()] =
+    optionsModelByType_[props["type"]["const"].get<std::string>()] =
         props["options"]["$ref"].get<std::string>();
   }
 }
@@ -471,23 +471,23 @@ const SchemaValidator& SchemaValidator::embedded() {
 }
 
 Validated SchemaValidator::validateRoot(const OJson& raw) const {
-  return run(m_schema["$defs"], m_rootSchema, raw, "YasbConfig");
+  return run(schema_["$defs"], rootSchema_, raw, "YasbConfig");
 }
 
 Validated SchemaValidator::validateWidgetOptions(std::string_view widgetType,
                                                  const OJson& options) const {
-  const auto it = m_optionsModelByType.find(widgetType);
-  if (it == m_optionsModelByType.end()) {
+  const auto it = optionsModelByType_.find(widgetType);
+  if (it == optionsModelByType_.end()) {
     Validated failed;
     failed.issues.push_back(Issue{json::array(), "unknown_type", "Unknown widget type"});
     return failed;
   }
   const OJson ref = {{"$ref", it->second}};
-  return run(m_schema["$defs"], ref, options, {});
+  return run(schema_["$defs"], ref, options, {});
 }
 
 bool SchemaValidator::knowsWidgetType(std::string_view widgetType) const {
-  return m_optionsModelByType.find(widgetType) != m_optionsModelByType.end();
+  return optionsModelByType_.find(widgetType) != optionsModelByType_.end();
 }
 
 }  // namespace yasb::config

@@ -1,14 +1,11 @@
-#include "callbacks.h"
+#include "core/widgets/callbacks.h"
+
+#include <windows.h>
 
 #include <QDebug>
 #include <QProcess>
 #include <QRegularExpression>
 #include <iterator>
-
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
 
 namespace yasb::widgets {
 
@@ -117,14 +114,14 @@ CallbackRegistry::CallbackRegistry() {
 }
 
 void CallbackRegistry::add(const QString& name, CallbackFn fn, int arity) {
-  m_callbacks[name] = Entry{std::move(fn), arity};
+  callbacks_[name] = Entry{std::move(fn), arity};
 }
 
 bool CallbackRegistry::run(const QString& callbackStr) {
   const ParsedCallback parsed = parseCallback(callbackStr);
-  const auto it = m_callbacks.find(parsed.name);
-  if (it == m_callbacks.end()) {
-    if (m_warned.insert(parsed.name).second) {
+  const auto it = callbacks_.find(parsed.name);
+  if (it == callbacks_.end()) {
+    if (warned_.insert(parsed.name).second) {
       qWarning().noquote() << "Unknown callback" << parsed.name;
     }
     return false;
@@ -132,7 +129,7 @@ bool CallbackRegistry::run(const QString& callbackStr) {
   const Entry& entry = it->second;
   const bool arityOk = entry.arity < 0 || parsed.args.size() == entry.arity;
   if (!arityOk) {
-    if (m_warned.insert(parsed.name + QLatin1String("#arity")).second) {
+    if (warned_.insert(parsed.name + QLatin1String("#arity")).second) {
       qWarning().noquote() << "Callback" << parsed.name << "called with" << parsed.args.size()
                            << "args";
     }

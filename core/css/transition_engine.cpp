@@ -23,8 +23,6 @@ namespace yasb::css {
 
 Q_LOGGING_CATEGORY(lcTransitions, "yasb.css.transitions")
 
-using namespace Qt::StringLiterals;
-
 namespace {
 
 constexpr const char* kScopeProp = "_anim_scope";
@@ -37,22 +35,27 @@ struct Val {
   bool operator==(const Val& o) const { return kind == o.kind && n == o.n && c == o.c; }
 };
 
-bool isColorProp(const QString& p) { return p == u"color"_s || p.endsWith(u"-color"_s); }
+bool isColorProp(const QString& p) {
+  return p == QStringLiteral("color") || p.endsWith(QStringLiteral("-color"));
+}
 
 bool isNumericProp(const QString& p) {
-  static const QSet<QString> exact{u"width"_s,     u"height"_s,     u"min-width"_s,
-                                   u"max-width"_s, u"min-height"_s, u"max-height"_s};
-  return exact.contains(p) || p.startsWith(u"padding"_s) || p.startsWith(u"margin"_s) ||
-         (p.startsWith(u"border"_s) && p.endsWith(u"-width"_s));
+  static const QSet<QString> exact{QStringLiteral("width"),      QStringLiteral("height"),
+                                   QStringLiteral("min-width"),  QStringLiteral("max-width"),
+                                   QStringLiteral("min-height"), QStringLiteral("max-height")};
+  return exact.contains(p) || p.startsWith(QStringLiteral("padding")) ||
+         p.startsWith(QStringLiteral("margin")) ||
+         (p.startsWith(QStringLiteral("border")) && p.endsWith(QStringLiteral("-width")));
 }
 
 bool isAnimatable(const QString& p) {
-  return p == u"opacity"_s || isColorProp(p) || isNumericProp(p);
+  return p == QStringLiteral("opacity") || isColorProp(p) || isNumericProp(p);
 }
 
 std::optional<QColor> parseColor(const QString& text) {
   static const QRegularExpression fn(
-      u"^rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*(?:,\\s*([\\d.]+%?)\\s*)?\\)$"_s,
+      QStringLiteral(
+          "^rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*(?:,\\s*([\\d.]+%?)\\s*)?\\)$"),
       QRegularExpression::CaseInsensitiveOption);
   const QString s = text.trimmed();
   const auto m = fn.match(s);
@@ -75,7 +78,7 @@ std::optional<QColor> parseColor(const QString& text) {
 
 std::optional<Val> parseVal(const QString& prop, const QString& text) {
   Val v;
-  if (prop == u"opacity"_s) {
+  if (prop == QStringLiteral("opacity")) {
     bool ok = false;
     const double d = text.trimmed().toDouble(&ok);
     if (!ok) return std::nullopt;
@@ -90,7 +93,7 @@ std::optional<Val> parseVal(const QString& prop, const QString& text) {
     v.c = *c;
     return v;
   }
-  static const QRegularExpression num(u"^(-?(?:\\d+\\.?\\d*|\\.\\d+))(?:px)?$"_s);
+  static const QRegularExpression num(QStringLiteral("^(-?(?:\\d+\\.?\\d*|\\.\\d+))(?:px)?$"));
   const auto m = num.match(text.trimmed());
   if (!m.hasMatch()) return std::nullopt;
   v.n = m.captured(1).toDouble();
@@ -100,7 +103,8 @@ std::optional<Val> parseVal(const QString& prop, const QString& text) {
 QString format(const Val& v) {
   switch (v.kind) {
     case Val::Color:
-      return u"rgba(%1, %2, %3, %4)"_s.arg(v.c.red())
+      return QStringLiteral("rgba(%1, %2, %3, %4)")
+          .arg(v.c.red())
           .arg(v.c.green())
           .arg(v.c.blue())
           .arg(v.c.alpha());
@@ -109,7 +113,7 @@ QString format(const Val& v) {
     case Val::Num:
       break;
   }
-  return QString::number(v.n, 'f', 3) + u"px"_s;
+  return QString::number(v.n, 'f', 3) + QStringLiteral("px");
 }
 
 Val lerp(const Val& a, const Val& b, double t) {
@@ -143,15 +147,16 @@ struct Ease {
 Ease parseEase(const QString& name) {
   Ease e;
   const QString n = name.trimmed().toLower();
-  static const QRegularExpression bez(u"^cubic-bezier\\(([^)]*)\\)$"_s);
-  static const QRegularExpression stp(u"^steps\\(\\s*(\\d+)\\s*(?:,\\s*([a-z-]+))?\\s*\\)$"_s);
-  if (n == u"linear"_s) {
+  static const QRegularExpression bez(QStringLiteral("^cubic-bezier\\(([^)]*)\\)$"));
+  static const QRegularExpression stp(
+      QStringLiteral("^steps\\(\\s*(\\d+)\\s*(?:,\\s*([a-z-]+))?\\s*\\)$"));
+  if (n == QStringLiteral("linear")) {
     e.curve = QEasingCurve(QEasingCurve::Linear);
-  } else if (n == u"ease-in"_s) {
+  } else if (n == QStringLiteral("ease-in")) {
     e.curve = QEasingCurve(QEasingCurve::InCubic);
-  } else if (n == u"ease-out"_s) {
+  } else if (n == QStringLiteral("ease-out")) {
     e.curve = QEasingCurve(QEasingCurve::OutCubic);
-  } else if (n == u"ease-in-out"_s) {
+  } else if (n == QStringLiteral("ease-in-out")) {
     e.curve = QEasingCurve(QEasingCurve::InOutCubic);
   } else if (const auto m = bez.match(n); m.hasMatch()) {
     const auto parts = m.captured(1).split(u',');
@@ -163,30 +168,32 @@ Ease parseEase(const QString& name) {
     }
   } else if (const auto s = stp.match(n); s.hasMatch()) {
     e.steps = std::max(1, s.captured(1).toInt());
-    e.stepStart = s.captured(2) == u"start"_s || s.captured(2) == u"jump-start"_s;
+    e.stepStart =
+        s.captured(2) == QStringLiteral("start") || s.captured(2) == QStringLiteral("jump-start");
   }
   return e;
 }
 
 std::optional<Qt::CursorShape> cursorShape(const QString& name) {
-  static const QHash<QString, Qt::CursorShape> map{{u"default"_s, Qt::ArrowCursor},
-                                                   {u"pointer"_s, Qt::PointingHandCursor},
-                                                   {u"text"_s, Qt::IBeamCursor},
-                                                   {u"wait"_s, Qt::WaitCursor},
-                                                   {u"progress"_s, Qt::BusyCursor},
-                                                   {u"crosshair"_s, Qt::CrossCursor},
-                                                   {u"move"_s, Qt::SizeAllCursor},
-                                                   {u"not-allowed"_s, Qt::ForbiddenCursor},
-                                                   {u"help"_s, Qt::WhatsThisCursor},
-                                                   {u"grab"_s, Qt::OpenHandCursor},
-                                                   {u"grabbing"_s, Qt::ClosedHandCursor},
-                                                   {u"ew-resize"_s, Qt::SizeHorCursor},
-                                                   {u"ns-resize"_s, Qt::SizeVerCursor},
-                                                   {u"nwse-resize"_s, Qt::SizeFDiagCursor},
-                                                   {u"nesw-resize"_s, Qt::SizeBDiagCursor},
-                                                   {u"col-resize"_s, Qt::SplitHCursor},
-                                                   {u"row-resize"_s, Qt::SplitVCursor},
-                                                   {u"none"_s, Qt::BlankCursor}};
+  static const QHash<QString, Qt::CursorShape> map{
+      {QStringLiteral("default"), Qt::ArrowCursor},
+      {QStringLiteral("pointer"), Qt::PointingHandCursor},
+      {QStringLiteral("text"), Qt::IBeamCursor},
+      {QStringLiteral("wait"), Qt::WaitCursor},
+      {QStringLiteral("progress"), Qt::BusyCursor},
+      {QStringLiteral("crosshair"), Qt::CrossCursor},
+      {QStringLiteral("move"), Qt::SizeAllCursor},
+      {QStringLiteral("not-allowed"), Qt::ForbiddenCursor},
+      {QStringLiteral("help"), Qt::WhatsThisCursor},
+      {QStringLiteral("grab"), Qt::OpenHandCursor},
+      {QStringLiteral("grabbing"), Qt::ClosedHandCursor},
+      {QStringLiteral("ew-resize"), Qt::SizeHorCursor},
+      {QStringLiteral("ns-resize"), Qt::SizeVerCursor},
+      {QStringLiteral("nwse-resize"), Qt::SizeFDiagCursor},
+      {QStringLiteral("nesw-resize"), Qt::SizeBDiagCursor},
+      {QStringLiteral("col-resize"), Qt::SplitHCursor},
+      {QStringLiteral("row-resize"), Qt::SplitVCursor},
+      {QStringLiteral("none"), Qt::BlankCursor}};
   const auto it = map.find(name.trimmed().toLower());
   if (it == map.end()) return std::nullopt;
   return *it;
@@ -195,9 +202,9 @@ std::optional<Qt::CursorShape> cursorShape(const QString& name) {
 int pseudoPriority(const QStringList& set) {
   int p = 0;
   for (const auto& s : set) {
-    if (s == u":clicked"_s || s == u"clicked"_s)
+    if (s == QStringLiteral(":clicked") || s == QStringLiteral("clicked"))
       p = std::max(p, 3);
-    else if (s == u":pressed"_s || s == u"pressed"_s)
+    else if (s == QStringLiteral(":pressed") || s == QStringLiteral("pressed"))
       p = std::max(p, 2);
     else
       p = std::max(p, 1);
@@ -238,27 +245,31 @@ struct TransitionEngine::Impl {
   int nextScope = 1;
 
   void warnOnce(const StyleRule& r, const QString& construct) {
-    const QString key = r.selector + u"|"_s + construct;
+    const QString key = r.selector + QStringLiteral("|") + construct;
     if (warned.contains(key)) return;
     warned.insert(key);
-    qCWarning(lcTransitions).noquote()
-        << u"unsupported %1 in '%2' (line %3)"_s.arg(construct, r.selector).arg(r.line);
+    qCWarning(lcTransitions).noquote() << QStringLiteral("unsupported %1 in '%2' (line %3)")
+                                              .arg(construct, r.selector)
+                                              .arg(r.line);
   }
 
   void audit() {
-    static const QRegularExpression combinator(u"[>+~]|:not\\(|:nth-|:is\\(|:where\\("_s);
+    static const QRegularExpression combinator(
+        QStringLiteral("[>+~]|:not\\(|:nth-|:is\\(|:where\\("));
     for (const auto& r : std::as_const(parsed.rules)) {
-      if (r.has(u"box-shadow"_s)) warnOnce(r, u"box-shadow"_s);
-      if (r.droppedSubcontrolTransition) warnOnce(r, u"transition on sub-control"_s);
+      if (r.has(QStringLiteral("box-shadow"))) warnOnce(r, QStringLiteral("box-shadow"));
+      if (r.droppedSubcontrolTransition) warnOnce(r, QStringLiteral("transition on sub-control"));
       for (const auto& t : r.transitions) {
-        if (t.prop != u"all"_s && !isAnimatable(t.prop))
-          warnOnce(r, u"transition of '%1'"_s.arg(t.prop));
+        if (t.prop != QStringLiteral("all") && !isAnimatable(t.prop))
+          warnOnce(r, QStringLiteral("transition of '%1'").arg(t.prop));
       }
       if (!r.subcontrol) {
-        if (combinator.match(r.selector).hasMatch()) warnOnce(r, u"selector combinator"_s);
+        if (combinator.match(r.selector).hasMatch())
+          warnOnce(r, QStringLiteral("selector combinator"));
         for (const auto& p : r.pseudoSet) {
           const QString b = bare(p);
-          if (b == u"checked"_s || b == u"active"_s) warnOnce(r, u"pseudo-class :%1"_s.arg(b));
+          if (b == QStringLiteral("checked") || b == QStringLiteral("active"))
+            warnOnce(r, QStringLiteral("pseudo-class :%1").arg(b));
         }
       }
     }
@@ -266,7 +277,7 @@ struct TransitionEngine::Impl {
 
   // ---- matching ----
   static bool matchSegment(const QWidget* w, const CompiledSegment& s) {
-    if (!s.tag.isEmpty() && s.tag != u"*"_s) {
+    if (!s.tag.isEmpty() && s.tag != QStringLiteral("*")) {
       bool ok = false;
       for (const QMetaObject* m = w->metaObject(); m && !ok; m = m->superClass()) {
         ok = s.tag == QLatin1String(m->className());
@@ -275,17 +286,17 @@ struct TransitionEngine::Impl {
     }
     if (!s.objName.isEmpty() && w->objectName() != s.objName) return false;
     if (!s.classes.isEmpty()) {
-      const QStringList have =
-          w->property("class").toString().split(QRegularExpression(u"\\s+"_s), Qt::SkipEmptyParts);
+      const QStringList have = w->property("class").toString().split(
+          QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
       for (const auto& c : s.classes) {
         if (!have.contains(c)) return false;
       }
     }
     for (const auto& a : s.attrs) {
       const QVariant v = w->property(a.name.toUtf8().constData());
-      if (a.op == u"exists"_s) {
+      if (a.op == QStringLiteral("exists")) {
         if (!v.isValid()) return false;
-      } else if (a.op == u"="_s) {
+      } else if (a.op == QStringLiteral("=")) {
         if (!v.isValid() || !a.value || v.toString() != *a.value) return false;
       } else {
         return false;
@@ -354,7 +365,7 @@ struct TransitionEngine::Impl {
       const auto& r = parsed.rules[i];
       if (r.subcontrol) continue;
       if ((!r.pseudoSet.isEmpty() || !r.transitions.isEmpty() || r.hasCursorProp ||
-           r.has(u"opacity"_s)) &&
+           r.has(QStringLiteral("opacity"))) &&
           matches(w, i)) {
         relevant = true;
       }
@@ -382,10 +393,10 @@ struct TransitionEngine::Impl {
       QStringList keys = c.written.keys();
       keys.sort();
       QString body;
-      for (const auto& k : keys) body += u"%1: %2; "_s.arg(k, c.written[k]);
-      w->setStyleSheet(c.origStyle +
-                       u"\n*[%1=\"%2\"] { %3}"_s.arg(QString::fromLatin1(kScopeProp),
-                                                     w->property(kScopeProp).toString(), body));
+      for (const auto& k : keys) body += QStringLiteral("%1: %2; ").arg(k, c.written[k]);
+      w->setStyleSheet(c.origStyle + QStringLiteral("\n*[%1=\"%2\"] { %3}")
+                                         .arg(QString::fromLatin1(kScopeProp),
+                                              w->property(kScopeProp).toString(), body));
     }
     c.writing = false;
   }
@@ -419,21 +430,21 @@ struct TransitionEngine::Impl {
 
   static std::optional<Val> defaultVal(const QWidget* w, const QString& prop) {
     Val v;
-    if (prop == u"opacity"_s) {
+    if (prop == QStringLiteral("opacity")) {
       v.kind = Val::Opacity;
       v.n = 1.0;
       return v;
     }
-    if (prop == u"width"_s) {
+    if (prop == QStringLiteral("width")) {
       v.n = w->width();
       return v;
     }
-    if (prop == u"height"_s) {
+    if (prop == QStringLiteral("height")) {
       v.n = w->height();
       return v;
     }
-    if (prop.startsWith(u"padding"_s) || prop.startsWith(u"margin"_s) ||
-        prop.endsWith(u"-width"_s)) {
+    if (prop.startsWith(QStringLiteral("padding")) || prop.startsWith(QStringLiteral("margin")) ||
+        prop.endsWith(QStringLiteral("-width"))) {
       v.n = 0;
       return v;
     }
@@ -521,7 +532,7 @@ struct TransitionEngine::Impl {
     for (const auto& prop : std::as_const(props)) {
       const bool varies = target.value(prop) != base.value(prop) || c.cur.contains(prop);
       if (!varies && !c.anims.contains(prop)) {
-        if (prop == u"opacity"_s && target.contains(prop) && !c.cur.contains(prop)) {
+        if (prop == QStringLiteral("opacity") && target.contains(prop) && !c.cur.contains(prop)) {
           // static opacity still needs the effect
         } else {
           continue;
@@ -551,7 +562,7 @@ struct TransitionEngine::Impl {
       }
 
       auto spec = sp.find(prop);
-      if (spec == sp.end()) spec = sp.find(u"all"_s);
+      if (spec == sp.end()) spec = sp.find(QStringLiteral("all"));
       const bool animate =
           from && spec != sp.end() && spec->durationMs + spec->delayMs > 0 && w->isVisible();
       if (animate) {
@@ -569,7 +580,7 @@ struct TransitionEngine::Impl {
 
   void applyCursor(Ctx& c, const QHash<QString, QString>& target) {
     QWidget* w = c.w;
-    const QString name = target.value(u"cursor"_s);
+    const QString name = target.value(QStringLiteral("cursor"));
     if (name == c.cursorName) return;
     c.cursorName = name;
     const auto shape = name.isEmpty() ? std::nullopt : cursorShape(name);
@@ -595,13 +606,14 @@ struct TransitionEngine::Impl {
   void onPress(QWidget* w) {
     const auto c = ctxFor(w, true);
     if (!c) return;
-    c->active.insert(u"pressed"_s);
+    c->active.insert(QStringLiteral("pressed"));
     bool hasClicked = false;
     for (qsizetype i = 0; i < parsed.rules.size() && !hasClicked; ++i) {
       const auto& r = parsed.rules[i];
-      hasClicked = !r.subcontrol && r.pseudoSet.contains(u":clicked"_s) && matches(w, i);
+      hasClicked =
+          !r.subcontrol && r.pseudoSet.contains(QStringLiteral(":clicked")) && matches(w, i);
     }
-    if (hasClicked) c->active.insert(u"clicked"_s);
+    if (hasClicked) c->active.insert(QStringLiteral("clicked"));
     evaluate(c);
     if (hasClicked) {
       // :clicked is a pulse: hold it until the forward animation finishes, then animate back.
@@ -609,7 +621,7 @@ struct TransitionEngine::Impl {
       QTimer::singleShot(pendingMs(*c) + 1, q, [this, weak] {
         const auto cc = weak.lock();
         if (!cc || !cc->w) return;
-        cc->active.remove(u"clicked"_s);
+        cc->active.remove(QStringLiteral("clicked"));
         evaluate(cc);
       });
     }
@@ -657,7 +669,7 @@ void TransitionEngine::install(QCoreApplication* app) { app->installEventFilter(
 QString TransitionEngine::currentValue(const QWidget* widget, const QString& prop) const {
   const auto it = d_->ctxs.find(const_cast<QWidget*>(widget));
   if (it == d_->ctxs.end()) return {};
-  if (prop == u"opacity"_s) {
+  if (prop == QStringLiteral("opacity")) {
     const auto v = (*it)->cur.value(prop);
     return (*it)->cur.contains(prop) ? format(v) : QString();
   }
@@ -672,7 +684,7 @@ bool TransitionEngine::eventFilter(QObject* watched, QEvent* event) {
       const auto c = d_->ctxFor(w, true);
       if (c) {
         for (const auto& r : std::as_const(d_->parsed.rules)) {
-          if (r.pseudoSet.contains(u":hover"_s)) {
+          if (r.pseudoSet.contains(QStringLiteral(":hover"))) {
             w->setAttribute(Qt::WA_Hover, true);
             break;
           }
@@ -683,23 +695,23 @@ bool TransitionEngine::eventFilter(QObject* watched, QEvent* event) {
     }
     case QEvent::HoverEnter:
     case QEvent::Enter:
-      d_->setPseudo(w, u"hover"_s, true);
+      d_->setPseudo(w, QStringLiteral("hover"), true);
       break;
     case QEvent::HoverLeave:
     case QEvent::Leave:
-      d_->setPseudo(w, u"hover"_s, false);
+      d_->setPseudo(w, QStringLiteral("hover"), false);
       break;
     case QEvent::FocusIn:
-      d_->setPseudo(w, u"focus"_s, true);
+      d_->setPseudo(w, QStringLiteral("focus"), true);
       break;
     case QEvent::FocusOut:
-      d_->setPseudo(w, u"focus"_s, false);
+      d_->setPseudo(w, QStringLiteral("focus"), false);
       break;
     case QEvent::MouseButtonPress:
       if (static_cast<QMouseEvent*>(event)->button() == Qt::LeftButton) d_->onPress(w);
       break;
     case QEvent::MouseButtonRelease:
-      d_->setPseudo(w, u"pressed"_s, false);
+      d_->setPseudo(w, QStringLiteral("pressed"), false);
       break;
     case QEvent::DynamicPropertyChange: {
       const QByteArray name = static_cast<QDynamicPropertyChangeEvent*>(event)->propertyName();

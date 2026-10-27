@@ -1,13 +1,10 @@
-#include "backdrop.h"
+#include "core/widgets/backdrop.h"
+
+#include <windows.h>
+#include <dwmapi.h>
 
 #include <QDebug>
 #include <stdexcept>
-
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-#include <dwmapi.h>
 
 #pragma comment(lib, "dwmapi.lib")
 
