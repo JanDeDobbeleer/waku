@@ -140,8 +140,9 @@ commit. It must fail soft (fall back or skip) when the symbol is missing or the 
 
 A widget is not done until it ships all of:
 
-1. The typed options struct from `core/config/options/<widget>.h`, wired through `WidgetContext`
-   (no restated defaults in C++).
+1. The generated typed options struct from `core/config/options/<widget>.h`, populated by
+   `WidgetBuilder` and passed through `WidgetContext` (no raw JSON reads or restated schema defaults
+   in widget code).
 2. A label-vector exporter in `tools/parity/vec_labels.py` and its regenerated vectors.
 3. A C++ parity test that replays those vectors under `tests/widgets/`.
 4. An updated row in `docs/parity-checklist.md`.

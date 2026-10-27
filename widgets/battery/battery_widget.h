@@ -23,7 +23,7 @@ class BatteryWidget final : public BaseWidget {
   QString timeRemaining(int seconds) const;
   QString chargingIcon(const QString& threshold) const;
 
-  nlohmann::json options_;
+  config::options::BatteryConfig options_;
   QString label_;
   QString labelAlt_;
   bool hideUnsupported_ = true;

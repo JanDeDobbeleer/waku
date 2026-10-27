@@ -3,10 +3,12 @@
 #include <QApplication>
 #include <memory>
 
+#include "core/config/loader.h"
 #include "core/widgets/event_bus.h"
 #include "core/widgets/polling_worker_registry.h"
 #include "core/widgets/registry.h"
 #include "core/widgets/stat_popup.h"
+#include "core/widgets/widget_builder.h"
 #include "widgets/battery/battery_widget.h"
 #include "widgets/cpu/cpu_widget.h"
 #include "widgets/memory/memory_widget.h"
@@ -22,14 +24,26 @@ std::unique_ptr<QApplication> g_app;
 
 WidgetContext context(const char* widget, const char* type, json options, EventBus& eventBus,
                       yasb::bar::GlobalState& globalState, PollingWorkerRegistry& pollingWorkers) {
-  return {widget, type, std::move(options), {}, {}, eventBus, globalState, pollingWorkers};
+  TypedWidgetOptions typedOptions;
+  if (std::string(type) == "yasb.cpu.CpuWidget") {
+    typedOptions = options.get<yasb::config::options::CpuConfig>();
+  } else if (std::string(type) == "yasb.memory.MemoryWidget") {
+    typedOptions = options.get<yasb::config::options::MemoryConfig>();
+  } else if (std::string(type) == "yasb.battery.BatteryWidget") {
+    typedOptions = options.get<yasb::config::options::BatteryConfig>();
+  }
+  return {widget,      type,           std::move(options),     {}, {}, eventBus,
+          globalState, pollingWorkers, std::move(typedOptions)};
 }
+
+json histogramIcons() { return {"▁", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}; }
 
 json cpuOptions(bool menu = false) {
   return {{"label", "<span>\ueea1</span> {info[percent][total]}%"},
           {"label_alt", "<span>\ueea1</span> {info[freq][current]} MHz"},
           {"update_interval", 2000},
           {"hide_decimal", true},
+          {"histogram_icons", histogramIcons()},
           {"menu",
            {{"enabled", menu},
             {"blur", false},
@@ -43,6 +57,7 @@ json memoryOptions() {
           {"label_alt", "<span>\ueea0</span> {virtual_mem_outof}"},
           {"update_interval", 5000},
           {"hide_decimal", true},
+          {"histogram_icons", histogramIcons()},
           {"menu",
            {{"enabled", true},
             {"blur", false},
@@ -195,4 +210,57 @@ TEST_F(SystemWidgetTest, RegistersOnlyTheThreeStatWidgetFactories) {
   EXPECT_TRUE(registry.contains("yasb.cpu.CpuWidget"));
   EXPECT_TRUE(registry.contains("yasb.memory.MemoryWidget"));
   EXPECT_TRUE(registry.contains("yasb.battery.BatteryWidget"));
+}
+
+TEST_F(SystemWidgetTest, TypedOptionsReachWidgetConstructionWithDistinctPollingIntervals) {
+  const auto config = yasb::config::loadConfigText(R"(
+bars:
+  main:
+    widgets:
+      left: [cpu-fast, cpu-slow, memory, battery]
+widgets:
+  cpu-fast:
+    type: yasb.cpu.CpuWidget
+    options:
+      label: "Fast {info[percent][total]}%"
+      update_interval: 1200
+      hide_decimal: true
+  cpu-slow:
+    type: yasb.cpu.CpuWidget
+    options:
+      label: "Slow {info[percent][total]}%"
+      update_interval: 2300
+  memory:
+    type: yasb.memory.MemoryWidget
+    options:
+      update_interval: 3400
+  battery:
+    type: yasb.battery.BatteryWidget
+    options:
+      update_interval: 4500
+)");
+  ASSERT_TRUE(config.ok()) << config.message;
+
+  WidgetRegistry registry;
+  registerStatWidgets(registry);
+  WidgetBuilder builder(config, registry, eventBus_, globalState_, pollingWorkers_);
+  const auto widgets =
+      builder.buildWidgets({{"left", {"cpu-fast", "cpu-slow", "memory", "battery"}}}, {}, {});
+
+  ASSERT_EQ(widgets.value("left").size(), 4);
+  ASSERT_EQ(pollingWorkers_.size(), 4u);
+  auto* fastCpu = qobject_cast<CpuWidget*>(widgets.value("left")[0]);
+  auto* slowCpu = qobject_cast<CpuWidget*>(widgets.value("left")[1]);
+  ASSERT_NE(fastCpu, nullptr);
+  ASSERT_NE(slowCpu, nullptr);
+  CpuSample sample;
+  sample.percent = 43.8;
+  sample.percentPerCore = {43.8};
+  fastCpu->applySample(sample);
+  slowCpu->applySample(sample);
+  EXPECT_EQ(fastCpu->labels()[0]->text(), "Fast 44%");
+  EXPECT_EQ(slowCpu->labels()[0]->text(), "Slow 43.8%");
+
+  pollingWorkers_.stopAll();
+  qDeleteAll(widgets.value("left"));
 }

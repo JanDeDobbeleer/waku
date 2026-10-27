@@ -27,7 +27,7 @@ class CpuWidget final : public BaseWidget {
   QString threshold(double value) const;
   void openPopup();
 
-  nlohmann::json options_;
+  config::options::CpuConfig options_;
   bar::GlobalState& globalState_;
   QString label_;
   QString labelAlt_;

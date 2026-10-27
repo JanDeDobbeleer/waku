@@ -29,11 +29,9 @@ QString labelSize(std::uint64_t bytes, bool hideDecimal) {
   return QString::fromStdString(naturalSizeGnu(static_cast<double>(bytes), hideDecimal ? 0 : 1));
 }
 
-QString histogram(double value, double minimum, double maximum, const nlohmann::json& options) {
-  const auto configured = options.value("histogram_icons", std::vector<std::string>{});
-  const std::vector<std::string> icons =
-      configured.empty() ? std::vector<std::string>{"▁", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}
-                         : configured;
+QString histogram(double value, double minimum, double maximum,
+                  const config::options::MemoryConfig& options) {
+  const auto& icons = options.histogram_icons;
   if (maximum == minimum) return QString::fromStdString(icons.front());
   const double raw =
       (value - minimum) / (maximum - minimum) * static_cast<double>(icons.size() - 1);
@@ -46,22 +44,27 @@ QString histogram(double value, double minimum, double maximum, const nlohmann::
 
 MemoryWidget::MemoryWidget(const WidgetContext& context, bool startPolling)
     : BaseWidget(QString::fromStdString(context.name), context.eventBus,
-                 detail::className(context.options, "memory-widget ").trimmed() + " ", 0),
-      options_(context.options),
+                 detail::className(std::get<config::options::MemoryConfig>(context.typedOptions),
+                                   "memory-widget ")
+                         .trimmed() +
+                     " ",
+                 0),
+      options_(std::get<config::options::MemoryConfig>(context.typedOptions)),
       globalState_(context.globalState),
-      label_(detail::stringOption(options_, "label")),
-      labelAlt_(detail::stringOption(options_, "label_alt")),
-      hideDecimal_(options_.value("hide_decimal", false)),
-      historyLimit_(detail::objectOption(options_, "menu").value("graph_history_size", 60)) {
+      label_(QString::fromStdString(options_.label)),
+      labelAlt_(QString::fromStdString(options_.label_alt)),
+      hideDecimal_(options_.hide_decimal),
+      historyLimit_(options_.menu.graph_history_size) {
   buildWidgetLabel(label_, labelAlt_);
   registerCallback(QStringLiteral("toggle_label"), [this](const QStringList&) { toggleLabel(); });
   registerCallback(QStringLiteral("toggle_menu"), [this](const QStringList&) { toggleMenu(); });
-  setCallbackBinding({detail::callbackOption(options_, "on_left"), QStringLiteral("do_nothing"),
-                      detail::callbackOption(options_, "on_right"), QStringLiteral("do_nothing")});
+  setCallbackBinding(
+      {QString::fromStdString(options_.callbacks.on_left), QStringLiteral("do_nothing"),
+       QString::fromStdString(options_.callbacks.on_right), QStringLiteral("do_nothing")});
   last_ = platform::MemorySample{};
   render();
   if (startPolling) {
-    const int interval = options_.value("update_interval", 5000);
+    const int interval = options_.update_interval;
     if (PollingWorker* worker = context.pollingWorkers.get("memory", interval, [] {
           auto source = platform::createMemoryDataSource();
           return [source] { return QVariant::fromValue(source->sample()); };
@@ -76,7 +79,7 @@ MemoryWidget::MemoryWidget(const WidgetContext& context, bool startPolling)
 
 void MemoryWidget::applySample(const platform::MemorySample& sample) {
   last_ = sample;
-  if (detail::objectOption(options_, "menu").value("enabled", false)) {
+  if (options_.menu.enabled) {
     detail::appendHistory(graphHistory_, sample.percent, historyLimit_);
   }
   render();
@@ -84,8 +87,7 @@ void MemoryWidget::applySample(const platform::MemorySample& sample) {
 }
 
 QString MemoryWidget::threshold(double value) const {
-  return detail::thresholdClass(value, detail::objectOption(options_, "memory_thresholds"),
-                                "status-");
+  return detail::thresholdClass(value, options_.memory_thresholds, "status-");
 }
 
 void MemoryWidget::render() {
@@ -126,7 +128,7 @@ void MemoryWidget::toggleLabel() {
 }
 
 void MemoryWidget::toggleMenu() {
-  if (!detail::objectOption(options_, "menu").value("enabled", false)) return;
+  if (!options_.menu.enabled) return;
   if (popup_ && popup_->isVisible()) {
     popup_->hide();
     return;
@@ -136,7 +138,7 @@ void MemoryWidget::toggleMenu() {
 
 void MemoryWidget::openPopup() {
   const auto& sampleData = *last_;
-  auto menu = detail::popupConfig(options_, false);
+  auto menu = detail::popupConfig(options_.menu);
   const std::vector<StatRow> rows = {
       {QStringLiteral("In use"), "used", popupSize(sampleData.used), QStringLiteral("All memory"),
        "total", popupSize(sampleData.total)},

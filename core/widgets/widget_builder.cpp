@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <exception>
+#include <utility>
 
 namespace yasb::widgets {
 
@@ -39,8 +40,23 @@ BaseWidget* WidgetBuilder::buildWidget(const std::string& name, const QString& s
     return skip(unknownTypes_, "has a type that is not registered");
   // Factories read options with nlohmann; a throw here must not unwind into Qt.
   try {
+    TypedWidgetOptions typedOptions;
+    if (entry->type == "yasb.cpu.CpuWidget") {
+      auto options = config_.widgetOptions<config::options::CpuConfig>(name);
+      if (!options) return skip(invalidOptions_, "has invalid options");
+      typedOptions = std::move(*options);
+    } else if (entry->type == "yasb.memory.MemoryWidget") {
+      auto options = config_.widgetOptions<config::options::MemoryConfig>(name);
+      if (!options) return skip(invalidOptions_, "has invalid options");
+      typedOptions = std::move(*options);
+    } else if (entry->type == "yasb.battery.BatteryWidget") {
+      auto options = config_.widgetOptions<config::options::BatteryConfig>(name);
+      if (!options) return skip(invalidOptions_, "has invalid options");
+      typedOptions = std::move(*options);
+    }
     return registry_.create(WidgetContext{name, entry->type, entry->options, screenName, barId,
-                                          eventBus_, globalState_, pollingWorkers_});
+                                          eventBus_, globalState_, pollingWorkers_,
+                                          std::move(typedOptions)});
   } catch (const std::exception& error) {
     qCritical().noquote() << "Widget" << QString::fromStdString(name)
                           << "could not be created:" << QString::fromUtf8(error.what());

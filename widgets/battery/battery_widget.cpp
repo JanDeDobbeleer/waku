@@ -18,20 +18,25 @@ QString optionalString(const std::optional<std::string>& value) {
 
 BatteryWidget::BatteryWidget(const WidgetContext& context, bool startPolling)
     : BaseWidget(QString::fromStdString(context.name), context.eventBus,
-                 detail::className(context.options, "battery-widget ").trimmed() + " ", 0),
-      options_(context.options),
-      label_(detail::stringOption(options_, "label")),
-      labelAlt_(detail::stringOption(options_, "label_alt")),
-      hideUnsupported_(options_.value("hide_unsupported", true)),
-      naturalTime_(options_.value("time_remaining_natural", false)) {
+                 detail::className(std::get<config::options::BatteryConfig>(context.typedOptions),
+                                   "battery-widget ")
+                         .trimmed() +
+                     " ",
+                 0),
+      options_(std::get<config::options::BatteryConfig>(context.typedOptions)),
+      label_(QString::fromStdString(options_.label)),
+      labelAlt_(QString::fromStdString(options_.label_alt)),
+      hideUnsupported_(options_.hide_unsupported),
+      naturalTime_(options_.time_remaining_natural) {
   buildWidgetLabel(label_, labelAlt_);
   registerCallback(QStringLiteral("toggle_label"), [this](const QStringList&) { toggleLabel(); });
-  setCallbackBinding({detail::callbackOption(options_, "on_left"),
-                      detail::callbackOption(options_, "on_middle"),
-                      detail::callbackOption(options_, "on_right"), QStringLiteral("do_nothing")});
+  setCallbackBinding({QString::fromStdString(options_.callbacks.on_left),
+                      QString::fromStdString(options_.callbacks.on_middle),
+                      QString::fromStdString(options_.callbacks.on_right),
+                      QStringLiteral("do_nothing")});
   applySample(std::nullopt);
   if (startPolling) {
-    const int interval = options_.value("update_interval", 5000);
+    const int interval = options_.update_interval;
     if (PollingWorker* worker = context.pollingWorkers.get("battery", interval, [] {
           auto source = platform::createBatteryDataSource();
           return [source] {
@@ -68,35 +73,36 @@ bool BatteryWidget::event(QEvent* event) {
 }
 
 QString BatteryWidget::threshold(int percent) const {
-  const auto t = detail::objectOption(options_, "status_thresholds");
-  if (percent <= t.value("critical", 10)) return QStringLiteral("critical");
-  if (percent <= t.value("low", 25)) return QStringLiteral("low");
-  if (percent <= t.value("medium", 75)) return QStringLiteral("medium");
-  if (percent <= t.value("high", 95)) return QStringLiteral("high");
+  const auto& t = options_.status_thresholds;
+  if (percent <= t.critical) return QStringLiteral("critical");
+  if (percent <= t.low) return QStringLiteral("low");
+  if (percent <= t.medium) return QStringLiteral("medium");
+  if (percent <= t.high) return QStringLiteral("high");
   return QStringLiteral("full");
 }
 
 QString BatteryWidget::timeRemaining(int seconds) const {
-  if (seconds == -2)
-    return detail::stringOption(options_, "time_remaining_unlimited_icon", "unlimited");
+  if (seconds == -2) return QString::fromStdString(options_.time_remaining_unlimited_icon);
   if (seconds < 0) return QStringLiteral("unknown");
   if (naturalTime_) return QString::fromStdString(util::naturalTimePhrase(seconds));
   return QString::fromStdString(timedeltaStr(seconds));
 }
 
 QString BatteryWidget::chargingIcon(const QString& state) const {
-  const auto icons = detail::objectOption(options_, "status_icons");
-  const QString icon =
-      QString::fromStdString(icons.value("icon_" + state.toStdString(), std::string()));
-  if (!last_ || (!last_->charging && !last_->plugged)) return icon;
-  const auto charging = detail::objectOption(options_, "charging_options");
-  const QString format = QString::fromStdString(charging.value("icon_format", std::string()));
+  const auto& icons = options_.status_icons;
+  const std::string icon = state == "critical" ? icons.icon_critical
+                           : state == "low"    ? icons.icon_low
+                           : state == "medium" ? icons.icon_medium
+                           : state == "high"   ? icons.icon_high
+                           : state == "full"   ? icons.icon_full
+                                               : std::string();
+  if (!last_ || (!last_->charging && !last_->plugged)) return QString::fromStdString(icon);
+  const QString format = QString::fromStdString(options_.charging_options.icon_format);
   try {
-    return QString::fromStdString(pyFormat(
-        format.toStdString(), {{"charging_icon", icons.value("icon_charging", std::string())},
-                               {"icon", icon.toStdString()}}));
+    return QString::fromStdString(
+        pyFormat(format.toStdString(), {{"charging_icon", icons.icon_charging}, {"icon", icon}}));
   } catch (const FormatError&) {
-    return icon;
+    return QString::fromStdString(icon);
   }
 }
 

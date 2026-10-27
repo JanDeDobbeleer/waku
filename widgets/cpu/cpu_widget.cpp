@@ -19,21 +19,26 @@ nlohmann::json jsonValue(double value, bool hideDecimal) {
 
 CpuWidget::CpuWidget(const WidgetContext& context, bool startPolling)
     : BaseWidget(QString::fromStdString(context.name), context.eventBus,
-                 detail::className(context.options, "cpu-widget ").trimmed() + " ", 0),
-      options_(context.options),
+                 detail::className(std::get<config::options::CpuConfig>(context.typedOptions),
+                                   "cpu-widget ")
+                         .trimmed() +
+                     " ",
+                 0),
+      options_(std::get<config::options::CpuConfig>(context.typedOptions)),
       globalState_(context.globalState),
-      label_(detail::stringOption(options_, "label")),
-      labelAlt_(detail::stringOption(options_, "label_alt")),
-      hideDecimal_(options_.value("hide_decimal", false)),
-      historyLimit_(detail::objectOption(options_, "menu").value("graph_history_size", 60)) {
+      label_(QString::fromStdString(options_.label)),
+      labelAlt_(QString::fromStdString(options_.label_alt)),
+      hideDecimal_(options_.hide_decimal),
+      historyLimit_(options_.menu.graph_history_size) {
   buildWidgetLabel(label_, labelAlt_);
-  const int columns = std::max(1, options_.value("histogram_num_columns", 10));
+  const int columns = std::max(1, options_.histogram_num_columns);
   frequencyHistory_.assign(static_cast<size_t>(columns), 0);
   percentHistory_.assign(static_cast<size_t>(columns), 0);
   registerCallback(QStringLiteral("toggle_label"), [this](const QStringList&) { toggleLabel(); });
   registerCallback(QStringLiteral("toggle_menu"), [this](const QStringList&) { toggleMenu(); });
-  setCallbackBinding({detail::callbackOption(options_, "on_left"), QStringLiteral("do_nothing"),
-                      detail::callbackOption(options_, "on_right"), QStringLiteral("do_nothing")});
+  setCallbackBinding(
+      {QString::fromStdString(options_.callbacks.on_left), QStringLiteral("do_nothing"),
+       QString::fromStdString(options_.callbacks.on_right), QStringLiteral("do_nothing")});
 
   platform::CpuSample initial;
   initial.percentPerCore = {0};
@@ -43,7 +48,7 @@ CpuWidget::CpuWidget(const WidgetContext& context, bool startPolling)
   render();
 
   if (startPolling) {
-    const int interval = options_.value("update_interval", 1000);
+    const int interval = options_.update_interval;
     if (PollingWorker* worker = context.pollingWorkers.get("cpu", interval, [] {
           auto source = platform::createCpuDataSource();
           return [source] { return QVariant::fromValue(source->sample()); };
@@ -57,7 +62,7 @@ CpuWidget::CpuWidget(const WidgetContext& context, bool startPolling)
 
 void CpuWidget::applySample(const platform::CpuSample& sample) {
   last_ = sample;
-  if (detail::objectOption(options_, "menu").value("enabled", false)) {
+  if (options_.menu.enabled) {
     detail::appendHistory(graphHistory_, sample.percent, historyLimit_);
   }
   render();
@@ -65,14 +70,11 @@ void CpuWidget::applySample(const platform::CpuSample& sample) {
 }
 
 QString CpuWidget::threshold(double value) const {
-  return detail::thresholdClass(value, detail::objectOption(options_, "cpu_thresholds"), "status-");
+  return detail::thresholdClass(value, options_.cpu_thresholds, "status-");
 }
 
 QString CpuWidget::histogram(double value, double minimum, double maximum) const {
-  const auto configured = options_.value("histogram_icons", std::vector<std::string>{});
-  const std::vector<std::string> icons =
-      configured.empty() ? std::vector<std::string>{"▁", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}
-                         : configured;
+  const auto& icons = options_.histogram_icons;
   if (maximum == minimum) return QString::fromStdString(icons.front());
   const double raw =
       (value - minimum) / (maximum - minimum) * static_cast<double>(icons.size() - 1);
@@ -137,7 +139,7 @@ void CpuWidget::toggleLabel() {
 }
 
 void CpuWidget::toggleMenu() {
-  if (!detail::objectOption(options_, "menu").value("enabled", false)) return;
+  if (!options_.menu.enabled) return;
   if (popup_ && popup_->isVisible()) {
     popup_->hide();
     return;
@@ -147,7 +149,7 @@ void CpuWidget::toggleMenu() {
 
 void CpuWidget::openPopup() {
   const auto& sampleData = *last_;
-  auto menu = detail::popupConfig(options_, false);
+  auto menu = detail::popupConfig(options_.menu);
   std::vector<StatRow> rows = {
       {QStringLiteral("Usage"), QStringLiteral("usage"),
        QString::number(pyRound(sampleData.percent)) + "%", QStringLiteral("Frequency"),

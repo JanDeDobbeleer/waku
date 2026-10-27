@@ -26,7 +26,7 @@ class MemoryWidget final : public BaseWidget {
   void openPopup();
   QString threshold(double value) const;
 
-  nlohmann::json options_;
+  config::options::MemoryConfig options_;
   bar::GlobalState& globalState_;
   QString label_;
   QString labelAlt_;
