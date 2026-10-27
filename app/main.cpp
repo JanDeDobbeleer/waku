@@ -20,7 +20,9 @@
 #include "core/config/paths.h"
 #include "core/css/preprocessor.h"
 #include "core/css/transition_engine.h"
+#include "core/widgets/widget_builder.h"
 #include "core/version.h"
+#include "widgets/stat_widgets.h"
 
 namespace {
 
@@ -47,6 +49,17 @@ void printVersion() {
   WriteFile(out, text.data(), static_cast<DWORD>(text.size()), &written, nullptr);
 }
 
+// Mirrors Python YASB (src/env.py): GDI by default. Qt's DirectWrite font database memory-maps
+// every installed font file, which costs ~1.7k handles and ~100 MiB working set on large font sets.
+void setFontEngine() {
+  std::string engine = "gdi";
+  if (const QByteArray requested = qgetenv("YASB_FONT_ENGINE").toLower();
+      requested == "native" || requested == "freetype" || requested == "gdi") {
+    engine = requested.toStdString();
+  }
+  qputenv("QT_QPA_PLATFORM", QByteArray("windows:fontengine=") + engine.c_str());
+}
+
 const char* optionValue(int argc, char** argv, const char* flag) {
   for (int i = 1; i + 1 < argc; ++i) {
     if (std::strcmp(argv[i], flag) == 0) return argv[i + 1];
@@ -54,8 +67,8 @@ const char* optionValue(int argc, char** argv, const char* flag) {
   return nullptr;
 }
 
-// Builds the first configured bar with no widgets. The app-bar registration is a no-op unless
-// --register-app-bar is given, so --config-home runs never disturb the live desktop's work area.
+// Builds the first configured bar. App-bar registration is opt-in so --config-home runs never
+// disturb the live desktop's work area.
 // --screenshot <png> renders the bar to a file without ever showing it.
 int runBar(int argc, char** argv) {
   const auto result = yasb::config::loadConfigFile(yasb::config::configPath());
@@ -95,26 +108,42 @@ int runBar(int argc, char** argv) {
 
   const auto& pick = assignments.front();
   QScreen* screen = yasb::bar::screenByName(QGuiApplication::screens(), QString::fromStdString(pick.screenName));
+  const QString barId = QStringLiteral("%1_%2").arg(QString::fromStdString(pick.barName), screen->name());
   yasb::bar::BarDeps deps;
   if (hasFlag(argc, argv, "--register-app-bar")) deps.appBar = yasb::bar::makeWin32AppBar();
 
-  auto* window = new yasb::bar::BarWindow(QStringLiteral("%1_%2").arg(QString::fromStdString(pick.barName), screen->name()),
-                                          QString::fromStdString(pick.barName), screen, stylesheet, {},
+  yasb::widgets::registerStatWidgets();
+  yasb::widgets::WidgetBuilder::Columns columns;
+  const auto& barConfig = result.config["bars"][pick.barName];
+  if (const auto placements = barConfig.find("widgets"); placements != barConfig.end() && placements->is_object()) {
+    for (const char* side : {"left", "center", "right"}) {
+      const auto items = placements->find(side);
+      if (items == placements->end() || !items->is_array()) continue;
+      auto& column = columns[QString::fromLatin1(side)];
+      for (const auto& item : *items) {
+        if (item.is_string()) column.append(QString::fromStdString(item.get<std::string>()));
+      }
+    }
+  }
+  yasb::widgets::WidgetBuilder builder(result);
+  const auto widgets = builder.buildWidgets(columns, screen->name(), barId);
+  auto* window = new yasb::bar::BarWindow(barId, QString::fromStdString(pick.barName), screen, stylesheet, widgets,
                                           yasb::bar::BarSettings::fromJson(result.config["bars"][pick.barName]),
                                           std::move(deps));
   if (screenshot) {
     const char* png = optionValue(argc, argv, "--screenshot");
     window->ensurePolished();
-    const QPixmap image = window->barFrame()->grab();
-    if (image.isNull()) {
-      qCritical() << "Screenshot failed: bar frame grab returned an empty image";
+    const QPixmap screenshotImage = window->barFrame()->grab();
+    if (screenshotImage.isNull()) {
+      qCritical().noquote() << "Failed to grab bar screenshot for" << QString::fromUtf8(png)
+                            << "frame size:" << window->barFrame()->size();
       delete window;
-      return 1;
+      return 2;
     }
-    if (!image.save(QString::fromUtf8(png))) {
-      qCritical().noquote() << "Screenshot failed: could not save" << QString::fromUtf8(png);
+    if (!screenshotImage.save(QString::fromUtf8(png))) {
+      qCritical().noquote() << "Failed to save bar screenshot:" << QString::fromUtf8(png);
       delete window;
-      return 1;
+      return 2;
     }
     delete window;
     return 0;
@@ -129,6 +158,7 @@ int runBar(int argc, char** argv) {
   QObject::connect(services.get(), &yasb::app::AppServices::exitRequested, qApp, &QCoreApplication::quit);
   qApp->setQuitOnLastWindowClosed(false);
   window->show();
+  qInfo().noquote() << "Bar" << QString::fromStdString(pick.barName) << "Created on Screen" << screen->name();
   return QApplication::exec();
 }
 
@@ -142,6 +172,7 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+  setFontEngine();
   QApplication app(argc, argv);
   QCoreApplication::setApplicationName(QStringLiteral("yasb-native"));
   QCoreApplication::setApplicationVersion(QString::fromLatin1(yasb::version()));
