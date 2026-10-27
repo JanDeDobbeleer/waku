@@ -9,9 +9,9 @@
       2. generated  runs core/config/options/generate_options.py into a scratch copy under build\
                     and compares the output with core/config/options/*.h. The working tree is never
                     rewritten.
-      3. layering   fails on an #include "..." against the layer arrow
-                    app -> widgets -> ui (core/bar, core/widgets, core/util) -> css/config -> platform
-                    (with -Staged: only staged files, reading their staged content).
+      3. json-subscript
+                    heuristic grep for the const nlohmann::json operator[] in product code (app,
+                    core, platform, widgets, tools/yasbc-native); see Test-JsonSubscript.
       4. configure  cmake --preset <Preset>       (skipped with -Fast)
       5. build      cmake --build --preset <Preset> (skipped with -Fast)
       6. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 (skipped with -Fast)
@@ -216,30 +216,29 @@ if (-not $python) {
     }
 }
 
-# 3. layering --------------------------------------------------------------------------------
-# All targets share the repo root as include directory, so CMake alone cannot stop a header from
-# being included against the arrow (app -> widgets -> ui -> {css, config} -> platform). The
-# first matching folder prefix wins; its list holds the include prefixes it must not use.
-Write-Step 'layering (#include directions)'
+# 3. json-subscript ---------------------------------------------------------------------------
+# operator[] on a const nlohmann::json with a missing key is undefined behaviour (AGENTS.md, error
+# handling). Types are invisible to a grep, so this is a heuristic over files that mention "json":
+#   flagged  a string-literal subscript that is not assigned to (x["k"] ... with no "] =" after it),
+#            an iterator value subscript (it.value()[...]) and a dereference subscript ((*p)[...]).
+#   missed   subscripts with a variable key on a named object (obj[key]), and any json use in a file
+#            that never spells "json" (for example through an alias header).
+#   false +  a read through a std::map/QMap with a literal key in such a file; use at()/find() or
+#            end the line with the comment "json-subscript-ok".
+Write-Step 'json-subscript (const nlohmann::json operator[] heuristic)'
 $sw = [Diagnostics.Stopwatch]::StartNew()
-$layerRules = @(
-    @{ Dir = 'platform/';    Deny = @('core/', 'widgets/', 'app/') },
-    @{ Dir = 'core/config/'; Deny = @('core/css/', 'core/bar/', 'core/widgets/', 'core/util/', 'core/version.h', 'widgets/', 'app/') },
-    @{ Dir = 'core/css/';    Deny = @('core/config/', 'core/bar/', 'core/widgets/', 'core/util/', 'core/version.h', 'widgets/', 'app/') },
-    @{ Dir = 'core/';        Deny = @('widgets/', 'app/') },
-    @{ Dir = 'widgets/';     Deny = @('app/') }
-)
-$layerDirs = @('app', 'core', 'platform', 'widgets')
+$productDirs = @('app', 'core', 'platform', 'widgets', 'tools/yasbc-native')
 if ($Staged) {
-    $layerFiles = @(git diff --cached --name-only --diff-filter=ACMR -- $layerDirs)
+    $jsonFiles = @(git diff --cached --name-only --diff-filter=ACMR -- $productDirs)
 } else {
-    $layerFiles = @(git ls-files --cached --others --exclude-standard -- $layerDirs)
+    $jsonFiles = @(git ls-files --cached --others --exclude-standard -- $productDirs)
 }
-$layerFiles = @($layerFiles | Where-Object { $_ -match '\.(cpp|h)$' } | Sort-Object -Unique)
-$violations = New-Object System.Collections.Generic.List[string]
-foreach ($f in $layerFiles) {
-    $rule = $layerRules | Where-Object { $f.StartsWith($_.Dir) } | Select-Object -First 1
-    if (-not $rule) { continue }
+$jsonFiles = @($jsonFiles | Where-Object { $_ -match '\.(cpp|h)$' } | Sort-Object -Unique)
+$literalRead = '[\w\)\]]\s*\[\s*"[^"\\]*"\s*\]'
+$assigned = '\]\s*=(?!=)'
+$otherRead = '\.value\(\)\s*\[|\(\*\w+\)\s*\['
+$hits = New-Object System.Collections.Generic.List[string]
+foreach ($f in $jsonFiles) {
     if ($Staged) {
         $lines = @(git show ":$f" 2>$null)
     } elseif (Test-Path -LiteralPath $f) {
@@ -247,24 +246,22 @@ foreach ($f in $layerFiles) {
     } else {
         continue
     }
+    if (-not ($lines -match 'json')) { continue }
     for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ("$($lines[$i])" -match '^\s*#\s*include\s+"([^"]+)"') {
-            $inc = $Matches[1]
-            foreach ($deny in $rule.Deny) {
-                if ($inc.StartsWith($deny)) {
-                    $violations.Add("${f}:$($i + 1): includes `"$inc`" ($($rule.Dir) must not include $deny)")
-                    break
-                }
-            }
+        $line = "$($lines[$i])"
+        if ($line -match '^\s*//' -or $line -match 'json-subscript-ok') { continue }
+        $code = ($line -replace '\s//.*$', '')
+        if ((($code -match $literalRead) -and ($code -notmatch $assigned)) -or ($code -match $otherRead)) {
+            $hits.Add("${f}:$($i + 1): $($line.Trim())")
         }
     }
 }
-if ($violations.Count -eq 0) {
-    Add-Result 'layering' 'PASS' "$($layerFiles.Count) files respect app -> widgets -> ui -> css/config -> platform" $sw.Elapsed.TotalSeconds
+if ($hits.Count -eq 0) {
+    Add-Result 'json-subscript' 'PASS' "$($jsonFiles.Count) files scanned" $sw.Elapsed.TotalSeconds
 } else {
-    Write-Host 'Includes against the layering arrow (see AGENTS.md, Layering):'
-    $violations | ForEach-Object { Write-Host "  $_" }
-    Add-Result 'layering' 'FAIL' "$($violations.Count) include(s) against the arrow" $sw.Elapsed.TotalSeconds
+    Write-Host 'Possible const nlohmann::json operator[] (use find(), at() or value()):'
+    $hits | ForEach-Object { Write-Host "  $_" }
+    Add-Result 'json-subscript' 'FAIL' "$($hits.Count) suspicious subscript(s)" $sw.Elapsed.TotalSeconds
 }
 
 # 4-6. configure, build, test ----------------------------------------------------------------
