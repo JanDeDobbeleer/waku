@@ -69,9 +69,8 @@ build\arm64-debug\yasb-native.exe --config-home "$PWD\build\cfg" --screenshot "$
 ```
 
 Stat widget factories (CPU, memory, battery) are exposed through
-`yasb::widgets::registerStatWidgets()` in `widgets\stat_widgets.h`. The application should call
-this once during startup before `WidgetBuilder` constructs configured widgets. This port intentionally
-does not wire that call into `app\main.cpp` yet.
+`yasb::widgets::registerStatWidgets()` in `widgets\stat_widgets.h`. `app\main.cpp` calls it once
+during startup, before `WidgetBuilder` constructs the configured widgets; repeated calls are no-ops.
 
 Notes:
 
