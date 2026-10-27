@@ -15,6 +15,10 @@
     Full path of yasb-native.exe. Required for -Target native (and to stop it when swapping away).
 .PARAMETER NativeCli
     Full path of the native CLI client. Defaults to yasbc-native.exe next to -NativeExe.
+.PARAMETER ConfigHome
+    Isolated config directory. Starts directly instead of through Explorer; use only for tests without a tray hook.
+.PARAMETER RegisterAppBar
+    Register the native app bar when starting with -ConfigHome.
 .PARAMETER Settle
     Seconds to wait after the readiness line before capturing, so widgets finish their first update.
 .PARAMETER ReadyPattern
@@ -31,6 +35,8 @@ param(
     [Parameter(Mandatory = $true)][ValidateSet('python', 'native')][string]$Target,
     [string]$NativeExe,
     [string]$NativeCli,
+    [string]$ConfigHome,
+    [switch]$RegisterAppBar,
     [int]$StopTimeoutSeconds = 20,
     [int]$HookUnloadTimeoutSeconds = 30,
     [int]$StartTimeoutSeconds = 60,
@@ -54,6 +60,11 @@ $WhatIfPreference = $false # dry runs are handled explicitly; keeps module auto-
 $other = if ($Target -eq 'python') { 'native' } else { 'python' }
 $targetInfo = Get-BuildInfo $Target $NativeExe $NativeCli
 $otherInfo = Get-BuildInfo $other $NativeExe $NativeCli
+if ($ConfigHome) {
+    if (-not (Test-Path -LiteralPath $ConfigHome -PathType Container)) { throw "Config home not found: $ConfigHome" }
+    $logName = if ($Target -eq 'python') { 'yasb.log' } else { 'yasb-native.log' }
+    $targetInfo.Log = Join-Path $ConfigHome $logName
+}
 $allHookDlls = @($script:Builds.python.HookDlls) + @($script:Builds.native.HookDlls)
 
 if ($dry) { Write-Step "DRY RUN: nothing will be stopped, started or captured" }
@@ -71,7 +82,7 @@ if ($dry) {
 
 $offset = Get-LogOffset $targetInfo.Log
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-Start-Build $targetInfo $dry
+Start-Build $targetInfo $dry $ConfigHome $Target ([bool]$RegisterAppBar)
 
 $readyLine = $null
 if (-not $dry) {

@@ -127,9 +127,38 @@ function Stop-Build($Info, [int]$TimeoutSeconds, [bool]$Dry) {
     }
 }
 
-function Start-Build($Info, [bool]$Dry) {
-    if ($Dry) { Write-Step "WHATIF: start through explorer: explorer.exe `"$($Info.Exe)`""; return }
+function Start-Build($Info, [bool]$Dry, [string]$ConfigHome = '', [string]$Build = '', [bool]$RegisterAppBar = $false) {
+    if ($Dry) {
+        if ($ConfigHome) {
+            Write-Step "WHATIF: start $Build directly with isolated config home $ConfigHome"
+        } else {
+            Write-Step "WHATIF: start through explorer: explorer.exe `"$($Info.Exe)`""
+        }
+        return
+    }
     if (-not (Test-Path -LiteralPath $Info.Exe)) { throw "Executable not found: $($Info.Exe)" }
+    if ($ConfigHome) {
+        if ($Build -eq 'python') {
+            $previousConfigHome = $env:YASB_CONFIG_HOME
+            $env:YASB_CONFIG_HOME = $ConfigHome
+            try {
+                Start-Process -FilePath $Info.Exe | Out-Null
+            } finally {
+                if ($null -eq $previousConfigHome) {
+                    Remove-Item Env:YASB_CONFIG_HOME -ErrorAction SilentlyContinue
+                } else {
+                    $env:YASB_CONFIG_HOME = $previousConfigHome
+                }
+            }
+        } elseif ($Build -eq 'native') {
+            $arguments = @('--config-home', ('"{0}"' -f $ConfigHome))
+            if ($RegisterAppBar) { $arguments += '--register-app-bar' }
+            Start-Process -FilePath $Info.Exe -ArgumentList $arguments | Out-Null
+        } else {
+            throw "Unknown build target: $Build"
+        }
+        return
+    }
     Start-Process -FilePath (Join-Path $env:WINDIR 'explorer.exe') -ArgumentList ('"{0}"' -f $Info.Exe) | Out-Null
 }
 

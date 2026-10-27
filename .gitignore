@@ -7,3 +7,4 @@ CMakeUserPresets.json
 __pycache__/
 *.pyc
 /tools/ab/out/
+/tools/ab/masks.json

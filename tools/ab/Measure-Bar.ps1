@@ -44,14 +44,17 @@ if (-not $targetPid) { throw "No running process with path $($info.Exe)" }
 
 function Get-ContextSwitchTotal([int]$ProcessIdToRead) {
     $counter = Get-CimInstance Win32_PerfRawData_PerfProc_Process -Filter "IDProcess=$ProcessIdToRead"
-    if ($counter) { return [double]$counter.ContextSwitchesPersec }
-    return 0
+    if ($counter -and $null -ne $counter.ContextSwitchesPersec -and "$($counter.ContextSwitchesPersec)" -ne '') {
+        return [double]$counter.ContextSwitchesPersec
+    }
+    return $null
 }
 
 $rows = New-Object System.Collections.ArrayList
 $process = Get-Process -Id $targetPid
 $startCpu = $process.TotalProcessorTime.TotalSeconds
 $startSwitches = Get-ContextSwitchTotal $targetPid
+if ($null -eq $startSwitches) { Write-Warning 'Context-switch counter is unavailable; recording null.' }
 $clock = [System.Diagnostics.Stopwatch]::StartNew()
 Write-Step "Sampling PID $targetPid for $IdleMinutes min"
 
@@ -71,6 +74,12 @@ for ($i = 0; $i -lt $samples; $i++) {
 $elapsed = $clock.Elapsed.TotalSeconds
 $last = $rows[$rows.Count - 1]
 $privateSorted = @($rows | ForEach-Object { $_.privateBytes } | Sort-Object)
+$endSwitches = Get-ContextSwitchTotal $targetPid
+$contextSwitchesPerSec = if ($null -ne $startSwitches -and $null -ne $endSwitches) {
+    [math]::Round(($endSwitches - $startSwitches) / $elapsed, 1)
+} else {
+    $null
+}
 $summary = [ordered]@{
     target                  = $Target
     exe                     = $info.Exe
@@ -82,7 +91,7 @@ $summary = [ordered]@{
     privateBytesMax         = $privateSorted[$privateSorted.Count - 1]
     privateBytesEnd         = $last.privateBytes
     idleCpuPercentOfCore    = [math]::Round(100.0 * ($last.cpuSeconds - $startCpu) / $elapsed, 3)
-    contextSwitchesPerSec   = [math]::Round(((Get-ContextSwitchTotal $targetPid) - $startSwitches) / $elapsed, 1)
+    contextSwitchesPerSec   = $contextSwitchesPerSec
     handlesEnd              = $last.handles
     threadsEnd              = $last.threads
     timeToBarVisibleSeconds = $null
