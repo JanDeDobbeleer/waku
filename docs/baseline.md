@@ -65,6 +65,7 @@ Filled in per milestone with the same procedure and `-Target native -NativeExe <
 | Milestone | Date | Time to bar visible (s) | Private bytes (MB) | Idle CPU (% of core) | Context switches/s | Screenshot diff (%) |
 | --- | --- | --- | --- | --- | --- | --- |
 | U8 (cpu, memory, battery only) | 2026-10-27 | not measured | 19.6 (Python 62.7) | 0.19 before font fix (Python 0.41); re-measure | N/A | visually identical; values masked |
+| R12 (cpu, memory, battery, post-hardening) | 2026-10-27 | 0.9 (Python 1.0) | 22.2 (Python 61.9) | 0.223 (Python 0.731) | N/A | visually identical except live values |
 
 ### U8 A/B run notes
 
@@ -82,5 +83,22 @@ BenQ RD280UG 3840x2560 at 150%, one run each, 5 minutes after 30 s settle.
 The first native run left Qt on its default DirectWrite font database, which memory-maps every installed font
 (1,067 here: 863 File + 853 Section handles). Python YASB forces `QT_QPA_PLATFORM=windows:fontengine=gdi`
 (`src/env.py`, override `YASB_FONT_ENGINE`); `app/main.cpp` now does the same. Handle counts stayed flat over
-90 s, so there is no leak. The post-fix visual check and CPU re-measure are still open.
+90 s, so there is no leak.
+
+### R12 post-hardening run (2026-10-27)
+
+Same procedure after the design-review remediation (R0–R11, commit `fdb8455`), release build from
+`dist\msvc2022_arm64`, laptop panel 2880x1920 at 200% (bar 36 logical / 72 physical px), on AC,
+5 minutes after 30 s settle, one run each.
+
+| Metric | Python 2.0.8 | Native |
+| --- | --- | --- |
+| Private bytes, median (MiB) | 61.9 | 22.2 |
+| Idle CPU (% of one core) | 0.731 | 0.223 |
+| Handles / threads at end | 459 / 16 | 420 / 17 |
+| Readiness line after start (s) | 1.0 | 0.9 |
+
+Captures were visually identical except for the live values (the island width follows the value text).
+Python was restored on the live config afterwards. Popups, clicks and the 30-minute log comparison are
+still not signed off.
 | Full parity | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING |
