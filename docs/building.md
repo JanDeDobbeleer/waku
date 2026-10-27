@@ -48,6 +48,11 @@ $env:PATH = "$t;$env:PATH"; $env:QT_PLUGIN_PATH = $t; $env:QT_QPA_PLATFORM = 'of
 build\arm64-debug\yasb-native.exe --config-home "$PWD\build\cfg" --screenshot "$PWD\build\bar.png"
 ```
 
+Stat widget factories (CPU, memory, battery) are exposed through
+`yasb::widgets::registerStatWidgets()` in `widgets\stat_widgets.h`. The application should call
+this once during startup before `WidgetBuilder` constructs configured widgets. This port intentionally
+does not wire that call into `app\main.cpp` yet.
+
 Notes:
 
 - Tests are copied next to `yasb_tests.exe` with `windeployqt` (including the `offscreen`

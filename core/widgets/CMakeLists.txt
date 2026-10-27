@@ -1,4 +1,6 @@
 target_sources(yasb_core PRIVATE
+  ../util/natural_time.cpp
+  ../util/natural_time.h
   backdrop.cpp
   base_widget.cpp
   callbacks.cpp
@@ -10,5 +12,13 @@ target_sources(yasb_core PRIVATE
   stat_popup.cpp
   tooltip.cpp
   widget_builder.cpp
+  ../../widgets/stat_widgets.cpp
+  ../../widgets/stat_widgets.h
+  ../../widgets/cpu/cpu_widget.cpp
+  ../../widgets/cpu/cpu_widget.h
+  ../../widgets/memory/memory_widget.cpp
+  ../../widgets/memory/memory_widget.h
+  ../../widgets/battery/battery_widget.cpp
+  ../../widgets/battery/battery_widget.h
+  ../../widgets/system_widget_helpers.h
 )
-

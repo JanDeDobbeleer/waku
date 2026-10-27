@@ -30,4 +30,9 @@ target_link_libraries(yasb_tests PRIVATE nlohmann_json::nlohmann_json Qt6::Test)
 target_sources(yasb_tests PRIVATE bar/test_adaptive_frame.cpp bar/test_bar_window.cpp)
 
 # --- U6: widget framework ---
-target_sources(yasb_tests PRIVATE widgets/test_label_format.cpp widgets/test_callbacks.cpp widgets/test_popup.cpp widgets/test_stat_popup.cpp)
+target_sources(yasb_tests PRIVATE
+  widgets/test_label_format.cpp
+  widgets/test_callbacks.cpp
+  widgets/test_popup.cpp
+  widgets/test_stat_popup.cpp
+  widgets/test_system_widgets.cpp)
