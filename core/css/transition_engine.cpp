@@ -237,9 +237,40 @@ struct TransitionEngine::Impl {
     bool writing = false;
   };
 
+  // The cascade for one set of active pseudo-classes, folded.
+  struct Folded {
+    QList<const StyleRule*> rules;  // cascade order
+    QHash<QString, QString> props;
+    QHash<QString, TransitionSpec> specs;
+    QStringList animatable;  // animatable declarations of `rules`, in declaration order
+  };
+
+  // Rules matching one widget, ignoring pseudo-classes. Matching reads the widget's and its
+  // ancestors' class names, object names, dynamic properties and parents. Entries are valid
+  // while `epoch` is current (bumped on stylesheet load, DynamicPropertyChange and
+  // ParentChange anywhere) and the object-name chain is unchanged (Qt sends no event for it).
+  // Selectors on static Q_PROPERTYs change without an event, so those widgets are not cached.
+  struct Match {
+    QPointer<QWidget> w;  // detects a new widget at a recycled address
+    quint64 epoch = 0;
+    size_t names = 0;
+    bool cacheable = true;
+    QList<qsizetype> rules;
+    bool relevant = false;  // has pseudo, transition, cursor or opacity rules
+    bool hasClicked = false;
+    QHash<QString, Folded> folded;  // keyed by the sorted active pseudo-classes
+  };
+
   TransitionEngine* q = nullptr;
   ParsedStyleSheet parsed;
   QList<QList<CompiledSegment>> compiled;
+  QList<qsizetype> cascadeOrder;  // non-sub-control rules, stable-sorted once per load
+  QList<bool> ruleRelevant;
+  QList<QByteArray> selectorProps;  // property names selectors read
+  bool anyHoverRule = false;
+  QHash<const QWidget*, Match> matchCache;
+  qsizetype pruneAt = 256;
+  quint64 epoch = 1;
   QHash<QWidget*, std::shared_ptr<Ctx>> ctxs;
   QSet<QString> warned;
   int nextScope = 1;
@@ -286,8 +317,9 @@ struct TransitionEngine::Impl {
     }
     if (!s.objName.isEmpty() && w->objectName() != s.objName) return false;
     if (!s.classes.isEmpty()) {
-      const QStringList have = w->property("class").toString().split(
-          QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts);
+      static const QRegularExpression whitespace(QStringLiteral("\\s+"));
+      const QStringList have =
+          w->property("class").toString().split(whitespace, Qt::SkipEmptyParts);
       for (const auto& c : s.classes) {
         if (!have.contains(c)) return false;
       }
@@ -317,12 +349,98 @@ struct TransitionEngine::Impl {
     return true;
   }
 
-  // Rules matching `w` whose pseudo-classes are all active, in cascade order.
-  QList<const StyleRule*> cascade(const QWidget* w, const QSet<QString>& active) const {
-    QList<const StyleRule*> out;
+  // Builds the per-load lookup tables: cascade order, relevance and the properties selectors read.
+  void prepareRules() {
+    cascadeOrder.clear();
+    ruleRelevant.clear();
+    selectorProps.clear();
+    anyHoverRule = false;
+    bool readsClass = false;
     for (qsizetype i = 0; i < parsed.rules.size(); ++i) {
       const auto& r = parsed.rules[i];
-      if (r.subcontrol) continue;
+      ruleRelevant.push_back(!r.pseudoSet.isEmpty() || !r.transitions.isEmpty() ||
+                             r.hasCursorProp || r.has(QStringLiteral("opacity")));
+      anyHoverRule = anyHoverRule || r.pseudoSet.contains(QStringLiteral(":hover"));
+      if (!r.subcontrol) cascadeOrder.push_back(i);
+      for (const auto& s : compiled[i]) {
+        readsClass = readsClass || !s.classes.isEmpty();
+        for (const auto& a : s.attrs) {
+          const QByteArray name = a.name.toUtf8();
+          if (!selectorProps.contains(name)) selectorProps.push_back(name);
+        }
+      }
+    }
+    if (readsClass && !selectorProps.contains("class")) selectorProps.push_back("class");
+    QList<int> priority;
+    for (const auto& r : std::as_const(parsed.rules))
+      priority.push_back(pseudoPriority(r.pseudoSet));
+    std::stable_sort(cascadeOrder.begin(), cascadeOrder.end(), [&](qsizetype a, qsizetype b) {
+      const auto& ra = parsed.rules[a];
+      const auto& rb = parsed.rules[b];
+      return std::tuple(ra.scopeRank, ra.specificity, priority[a], ra.order) <
+             std::tuple(rb.scopeRank, rb.specificity, priority[b], rb.order);
+    });
+  }
+
+  static size_t nameChain(const QWidget* w) {
+    size_t h = 0;
+    for (const QWidget* cur = w; cur; cur = cur->parentWidget()) {
+      h = qHashMulti(h, cur, cur->objectName());
+    }
+    return h;
+  }
+
+  // True when a selector reads a static Q_PROPERTY of `w` or an ancestor: Qt sends no event
+  // when those change, so the match cannot be cached.
+  bool readsStaticProperty(const QWidget* w) const {
+    for (const QWidget* cur = w; cur; cur = cur->parentWidget()) {
+      const QMetaObject* meta = cur->metaObject();
+      for (const auto& name : selectorProps) {
+        if (meta->indexOfProperty(name.constData()) >= 0) return true;
+      }
+    }
+    return false;
+  }
+
+  // The returned reference is invalidated by the next matchFor/invalidate call.
+  Match& matchFor(QWidget* w) {
+    const size_t names = nameChain(w);
+    auto it = matchCache.find(w);
+    if (it != matchCache.end() && it->cacheable && it->epoch == epoch && it->names == names &&
+        it->w == w) {
+      return *it;
+    }
+    if (it == matchCache.end()) {
+      if (matchCache.size() >= pruneAt) {
+        matchCache.removeIf([](const auto& entry) { return entry.value().w.isNull(); });
+        pruneAt = std::max<qsizetype>(256, matchCache.size() * 2);
+      }
+      it = matchCache.insert(w, {});
+    }
+    Match& m = *it;
+    m = Match{};
+    m.w = w;
+    m.epoch = epoch;
+    m.names = names;
+    m.cacheable = !readsStaticProperty(w);
+    for (const qsizetype i : std::as_const(cascadeOrder)) {
+      if (!matches(w, i)) continue;
+      m.rules.push_back(i);
+      m.relevant = m.relevant || ruleRelevant[i];
+      m.hasClicked = m.hasClicked || parsed.rules[i].pseudoSet.contains(QStringLiteral(":clicked"));
+    }
+    return m;
+  }
+
+  // Rules matching `w` whose pseudo-classes are all active, in cascade order, folded.
+  Folded foldFor(Match& m, const QSet<QString>& active) const {
+    QStringList keyParts(active.begin(), active.end());
+    keyParts.sort();
+    const QString key = keyParts.join(u',');
+    if (const auto it = m.folded.constFind(key); it != m.folded.constEnd()) return *it;
+    Folded f;
+    for (const qsizetype i : std::as_const(m.rules)) {
+      const auto& r = parsed.rules[i];
       bool ok = true;
       for (const auto& p : r.pseudoSet) {
         if (!active.contains(bare(p))) {
@@ -330,13 +448,17 @@ struct TransitionEngine::Impl {
           break;
         }
       }
-      if (ok && matches(w, i)) out.push_back(&r);
+      if (ok) f.rules.push_back(&r);
     }
-    std::stable_sort(out.begin(), out.end(), [](const StyleRule* a, const StyleRule* b) {
-      return std::tuple(a->scopeRank, a->specificity, pseudoPriority(a->pseudoSet), a->order) <
-             std::tuple(b->scopeRank, b->specificity, pseudoPriority(b->pseudoSet), b->order);
-    });
-    return out;
+    f.props = fold(f.rules);
+    f.specs = specs(f.rules);
+    for (const auto* r : std::as_const(f.rules)) {
+      for (const auto& d : r->properties) {
+        if (isAnimatable(d.first)) f.animatable.push_back(d.first);
+      }
+    }
+    m.folded.insert(key, f);
+    return f;
   }
 
   static QHash<QString, QString> fold(const QList<const StyleRule*>& rules) {
@@ -360,17 +482,7 @@ struct TransitionEngine::Impl {
   std::shared_ptr<Ctx> ctxFor(QWidget* w, bool create) {
     if (const auto it = ctxs.find(w); it != ctxs.end()) return *it;
     if (!create) return nullptr;
-    bool relevant = false;
-    for (qsizetype i = 0; i < parsed.rules.size() && !relevant; ++i) {
-      const auto& r = parsed.rules[i];
-      if (r.subcontrol) continue;
-      if ((!r.pseudoSet.isEmpty() || !r.transitions.isEmpty() || r.hasCursorProp ||
-           r.has(QStringLiteral("opacity"))) &&
-          matches(w, i)) {
-        relevant = true;
-      }
-    }
-    if (!relevant) return nullptr;
+    if (!matchFor(w).relevant) return nullptr;
     auto c = std::make_shared<Ctx>();
     c->w = w;
     ctxs.insert(w, c);
@@ -515,18 +627,16 @@ struct TransitionEngine::Impl {
     Ctx& c = *cp;
     QWidget* w = c.w;
     if (!w) return;
-    const auto activeRules = cascade(w, c.active);
-    const auto baseRules = cascade(w, {});
-    const auto target = fold(activeRules);
-    const auto base = fold(baseRules);
-    const auto sp = specs(activeRules);
+    // Copies: applying values sends events that may touch matchCache.
+    Match& m = matchFor(w);
+    const Folded active = foldFor(m, c.active);
+    const Folded baseFolded = foldFor(m, {});
+    const auto& target = active.props;
+    const auto& base = baseFolded.props;
+    const auto& sp = active.specs;
 
     QSet<QString> props;
-    for (const auto* r : activeRules) {
-      for (const auto& d : r->properties) {
-        if (isAnimatable(d.first)) props.insert(d.first);
-      }
-    }
+    for (const auto& p : active.animatable) props.insert(p);
     for (const auto& k : c.cur.keys()) props.insert(k);
 
     for (const auto& prop : std::as_const(props)) {
@@ -607,12 +717,7 @@ struct TransitionEngine::Impl {
     const auto c = ctxFor(w, true);
     if (!c) return;
     c->active.insert(QStringLiteral("pressed"));
-    bool hasClicked = false;
-    for (qsizetype i = 0; i < parsed.rules.size() && !hasClicked; ++i) {
-      const auto& r = parsed.rules[i];
-      hasClicked =
-          !r.subcontrol && r.pseudoSet.contains(QStringLiteral(":clicked")) && matches(w, i);
-    }
+    const bool hasClicked = matchFor(w).hasClicked;
     if (hasClicked) c->active.insert(QStringLiteral("clicked"));
     evaluate(c);
     if (hasClicked) {
@@ -658,6 +763,9 @@ QString TransitionEngine::loadStyleSheet(const QString& processedCss) {
     for (const auto& s : r.segments) segs.push_back(compileSegment(s));
     d_->compiled.push_back(segs);
   }
+  d_->prepareRules();
+  d_->matchCache.clear();
+  ++d_->epoch;
   d_->audit();
   return d_->parsed.qss;
 }
@@ -677,18 +785,14 @@ QString TransitionEngine::currentValue(const QWidget* widget, const QString& pro
 }
 
 bool TransitionEngine::eventFilter(QObject* watched, QEvent* event) {
-  auto* w = qobject_cast<QWidget*>(watched);
-  if (!w || d_->parsed.rules.isEmpty()) return false;
+  if (!watched->isWidgetType() || d_->parsed.rules.isEmpty()) return false;
+  auto* w = static_cast<QWidget*>(watched);
   switch (event->type()) {
     case QEvent::Polish: {
+      d_->matchCache.remove(w);
       const auto c = d_->ctxFor(w, true);
       if (c) {
-        for (const auto& r : std::as_const(d_->parsed.rules)) {
-          if (r.pseudoSet.contains(QStringLiteral(":hover"))) {
-            w->setAttribute(Qt::WA_Hover, true);
-            break;
-          }
-        }
+        if (d_->anyHoverRule) w->setAttribute(Qt::WA_Hover, true);
         d_->evaluate(c);
       }
       break;
@@ -715,11 +819,14 @@ bool TransitionEngine::eventFilter(QObject* watched, QEvent* event) {
       break;
     case QEvent::DynamicPropertyChange: {
       const QByteArray name = static_cast<QDynamicPropertyChangeEvent*>(event)->propertyName();
+      if (name == kScopeProp) break;
+      ++d_->epoch;  // descendant selectors may read this widget's properties
       if (name.startsWith('_')) break;
       if (const auto c = d_->ctxFor(w, true)) d_->evaluate(c);
       break;
     }
     case QEvent::ParentChange:
+      ++d_->epoch;
       if (const auto c = d_->ctxFor(w, true)) d_->evaluate(c);
       break;
     default:
