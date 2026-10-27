@@ -72,10 +72,26 @@ Stat widget factories (CPU, memory, battery) are exposed through
 `yasb::widgets::registerStatWidgets()` in `widgets\stat_widgets.h`. `app\main.cpp` calls it once
 during startup, before `WidgetBuilder` constructs the configured widgets; repeated calls are no-ops.
 
+## Checks
+
+`tools\check.ps1` is the definition of done: clang-format check, generated-file drift check,
+`arm64-debug` build and `ctest`. It sets up the MSVC environment itself.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1          # everything
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast    # format + generated only
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -SkipFormat -Preset arm64-release
+```
+
+Configure also writes `build\<preset>\compile_commands.json` for clang tooling. Git hooks live in
+`tools\hooks`; enable them with `git config core.hooksPath tools/hooks`.
+
 Notes:
 
 - Tests are copied next to `yasb_tests.exe` with `windeployqt` (including the `offscreen`
   platform plugin) and `ctest` sets `QT_QPA_PLATFORM=offscreen`.
 - `deploy` also drops `vc_redist.<arch>.exe` in `dist` for machines without the VC++ runtime.
-- Warnings are errors (`/WX`) for our targets only; vcpkg and Qt code are unaffected.
+- Warnings are errors (`/WX`) for our targets only; vcpkg and Qt code are unaffected, and headers
+  included with angle brackets are treated as external (`/external:anglebrackets /external:W0`).
+- MSVC only: configuring with another compiler stops with an error.
 - Debug builds use `/Z7` because `/ZI` conflicts with `/guard:cf`.

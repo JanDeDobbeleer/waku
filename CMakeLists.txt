@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.25)
 
 project(yasb-native VERSION 0.1.0 LANGUAGES CXX)
 
+if(NOT MSVC)
+  message(FATAL_ERROR "yasb-native builds with MSVC only (see docs/building.md)")
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -38,7 +42,8 @@ target_compile_definitions(yasb_options INTERFACE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX
   YASB_VERSION="${PROJECT_VERSION}")
 target_compile_options(yasb_options INTERFACE
-  /W4 /WX /permissive- /guard:cf /sdl /utf-8 /EHsc /Zc:__cplusplus)
+  /W4 /WX /permissive- /guard:cf /sdl /utf-8 /EHsc /Zc:__cplusplus
+  /external:anglebrackets /external:W0)
 target_link_options(yasb_options INTERFACE /GUARD:CF /DYNAMICBASE /NXCOMPAT)
 
 add_library(yasb_core STATIC)

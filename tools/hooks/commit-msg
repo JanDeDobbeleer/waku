@@ -1,0 +1,22 @@
+#!/bin/sh
+# commit-msg: enforce conventional commit subjects (see AGENTS.md).
+# Enable with: git config core.hooksPath tools/hooks
+
+msg_file="$1"
+subject=$(grep -v '^#' "$msg_file" | tr -d '\r' | sed -n '/[^[:space:]]/{p;q;}')
+
+case "$subject" in
+  "Merge "* | "Revert \""* | "fixup! "* | "squash! "* | "amend! "*) exit 0 ;;
+esac
+
+pattern='^(feat|fix|refactor|perf|test|docs|build|ci|chore|style|revert)(\([a-z0-9-]+\))?!?: .+'
+if printf '%s\n' "$subject" | grep -Eq "$pattern"; then
+  exit 0
+fi
+
+echo "commit-msg: subject is not a conventional commit:" >&2
+echo "  $subject" >&2
+echo "expected: type(scope)?: subject, e.g. 'fix(config): reject list roots'" >&2
+echo "types: feat fix refactor perf test docs build ci chore style revert" >&2
+echo "scopes: config css bar widgets app platform parity ab build docs test style chore" >&2
+exit 1
