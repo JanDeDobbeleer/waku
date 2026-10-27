@@ -15,8 +15,8 @@ gtest_discover_tests(yasb_tests
   DISCOVERY_MODE PRE_TEST
   PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
-# --- config loading (U3) ---
-target_sources(yasb_tests PRIVATE
-  config/test_loader.cpp
-  config/test_parity_config.cpp)
+# --- U4: CSS preprocessor / rules / transition engine ---
+find_package(Qt6 REQUIRED COMPONENTS Test)
+target_sources(yasb_tests PRIVATE css/test_preprocessor.cpp css/test_transitions.cpp)
 target_compile_definitions(yasb_tests PRIVATE YASB_VECTORS_DIR="${CMAKE_SOURCE_DIR}/tests/vectors")
+target_link_libraries(yasb_tests PRIVATE nlohmann_json::nlohmann_json Qt6::Test)
