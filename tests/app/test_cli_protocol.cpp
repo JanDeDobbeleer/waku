@@ -1,10 +1,15 @@
 #include <gtest/gtest.h>
+// clang-format off
+#include <windows.h>
+#include <aclapi.h>
+// clang-format on
 
 #include <chrono>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "app/cli_server.h"
 
@@ -48,6 +53,37 @@ bool writeMessage(HANDLE pipe, const std::string& data) {
   DWORD written = 0;
   return WriteFile(pipe, data.data(), static_cast<DWORD>(data.size()), &written, nullptr) &&
          written == static_cast<DWORD>(data.size());
+}
+
+std::vector<unsigned char> currentUser() {
+  HANDLE token = nullptr;
+  if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) return {};
+  DWORD size = 0;
+  GetTokenInformation(token, TokenUser, nullptr, 0, &size);
+  std::vector<unsigned char> buffer(size);
+  if (!GetTokenInformation(token, TokenUser, buffer.data(), size, &size)) buffer.clear();
+  CloseHandle(token);
+  return buffer;
+}
+
+// The DACL of the pipe behind `pipe` must hold exactly one allow ACE, for the current user.
+void expectCurrentUserOnly(HANDLE pipe) {
+  PACL dacl = nullptr;
+  PSECURITY_DESCRIPTOR descriptor = nullptr;
+  ASSERT_EQ(GetSecurityInfo(pipe, SE_KERNEL_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr,
+                            &dacl, nullptr, &descriptor),
+            static_cast<DWORD>(ERROR_SUCCESS));
+  ASSERT_NE(dacl, nullptr);
+  EXPECT_EQ(dacl->AceCount, 1);
+  void* ace = nullptr;
+  ASSERT_TRUE(GetAce(dacl, 0, &ace));
+  auto* allowed = static_cast<ACCESS_ALLOWED_ACE*>(ace);
+  EXPECT_EQ(allowed->Header.AceType, ACCESS_ALLOWED_ACE_TYPE);
+  const auto user = currentUser();
+  ASSERT_FALSE(user.empty());
+  EXPECT_TRUE(EqualSid(reinterpret_cast<PSID>(&allowed->SidStart),
+                       reinterpret_cast<const TOKEN_USER*>(user.data())->User.Sid));
+  LocalFree(descriptor);
 }
 
 }  // namespace
@@ -135,4 +171,55 @@ TEST(CliProtocol, LogPipeStreamsDataAndAnswersPing) {
   const auto pong = nlohmann::json::parse(frame.data(), frame.data() + frame.size());
   EXPECT_EQ(pong.at("type"), "PONG");
   CloseHandle(pipe);
+}
+
+TEST(CliProtocol, OversizedCommandIsRejectedAndNotDispatched) {
+  const auto commandName = uniquePipeName(L"_cli");
+  const auto logName = uniquePipeName(L"_log");
+  std::mutex mutex;
+  int dispatched = 0;
+  yasb::app::CliServer server(commandName, logName);
+  server.start([&](const QString&) {
+    std::lock_guard lock(mutex);
+    ++dispatched;
+  });
+
+  HANDLE pipe = connectPipe(commandName);
+  ASSERT_NE(pipe, INVALID_HANDLE_VALUE);
+  const std::string oversized = "reload " + std::string(yasb::app::kMaxPipeMessageBytes, 'x');
+  ASSERT_TRUE(writeMessage(pipe, oversized));
+  std::string response;
+  ASSERT_TRUE(readMessage(pipe, response));
+  EXPECT_EQ(response, "CLI Unknown Command");
+  CloseHandle(pipe);
+
+  pipe = connectPipe(commandName);
+  ASSERT_NE(pipe, INVALID_HANDLE_VALUE);
+  ASSERT_TRUE(writeMessage(pipe, "reload"));
+  ASSERT_TRUE(readMessage(pipe, response));
+  EXPECT_EQ(response, "ACK");
+  CloseHandle(pipe);
+  for (int i = 0; i < 100; ++i) {
+    {
+      std::lock_guard lock(mutex);
+      if (dispatched > 0) break;
+    }
+    Sleep(10);
+  }
+  std::lock_guard lock(mutex);
+  EXPECT_EQ(dispatched, 1);
+}
+
+TEST(CliProtocol, PipesAdmitOnlyTheCurrentUser) {
+  const auto commandName = uniquePipeName(L"_cli");
+  const auto logName = uniquePipeName(L"_log");
+  yasb::app::CliServer server(commandName, logName);
+  server.start([](const QString&) {});
+
+  for (const auto& name : {commandName, logName}) {
+    HANDLE pipe = connectPipe(name);
+    ASSERT_NE(pipe, INVALID_HANDLE_VALUE);
+    expectCurrentUserOnly(pipe);
+    CloseHandle(pipe);
+  }
 }
