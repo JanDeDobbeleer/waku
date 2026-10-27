@@ -14,3 +14,9 @@ add_custom_command(TARGET yasb_tests POST_BUILD
 gtest_discover_tests(yasb_tests
   DISCOVERY_MODE PRE_TEST
   PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# --- config loading (U3) ---
+target_sources(yasb_tests PRIVATE
+  config/test_loader.cpp
+  config/test_parity_config.cpp)
+target_compile_definitions(yasb_tests PRIVATE YASB_VECTORS_DIR="${CMAKE_SOURCE_DIR}/tests/vectors")
