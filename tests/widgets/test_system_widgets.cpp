@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <QApplication>
-#include <memory>
 
 #include "core/config/loader.h"
 #include "core/widgets/event_bus.h"
@@ -19,8 +18,6 @@ using namespace yasb::widgets;
 using namespace yasb::platform;
 
 namespace {
-
-std::unique_ptr<QApplication> g_app;
 
 WidgetContext context(const char* widget, const char* type, json options, EventBus& eventBus,
                       yasb::bar::GlobalState& globalState, PollingWorkerRegistry& pollingWorkers) {
@@ -89,15 +86,6 @@ json batteryOptions(bool hideUnsupported = true) {
 
 class SystemWidgetTest : public testing::Test {
  protected:
-  static void SetUpTestSuite() {
-    qputenv("QT_QPA_PLATFORM", "offscreen");
-    int argc = 1;
-    static char name[] = "system-widget-tests";
-    static char* argv[] = {name, nullptr};
-    g_app = std::make_unique<QApplication>(argc, argv);
-  }
-  static void TearDownTestSuite() { g_app.reset(); }
-
   WidgetContext context(const char* widget, const char* type, json options) {
     return ::context(widget, type, std::move(options), eventBus_, globalState_, pollingWorkers_);
   }
