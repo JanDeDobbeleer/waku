@@ -403,6 +403,12 @@ TEST(LabelFormat, PyFormatNestedLookupsAndEscapes) {
   EXPECT_THROW(pyFormat("{a", {{"a", 1}}), FormatError);
 }
 
+TEST(LabelFormat, OversizedWidthOrIndexIsAFormatError) {
+  EXPECT_THROW(pyFormat("{v:99999999999}", {{"v", 1}}), FormatError);
+  EXPECT_THROW(pyFormat("{v:.99999999999f}", {{"v", 1.0}}), FormatError);
+  EXPECT_THROW(pyFormat("{v[99999999999]}", {{"v", json::array({1})}}), FormatError);
+}
+
 TEST(LabelFormat, RoundingMatchesPython) {
   EXPECT_EQ(pyRound(36.5), 36);
   EXPECT_EQ(pyRound(37.5), 38);

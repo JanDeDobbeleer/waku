@@ -124,3 +124,19 @@ TEST(WidgetBuilder, BuildsKnownWidgetsAndRemembersFailuresOnce) {
   qDeleteAll(built["left"]);
   qDeleteAll(built["right"]);
 }
+
+TEST(WidgetBuilder, ThrowingFactoryIsSkippedInsteadOfEscaping) {
+  OffscreenApp env;
+  yasb::config::LoadResult cfg;
+  yasb::config::WidgetResult r;
+  r.status = yasb::config::WidgetStatus::Ok;
+  r.type = "test.Throwing";
+  cfg.widgets["boom"] = r;
+  WidgetRegistry registry;
+  registry.add("test.Throwing", [](const WidgetContext& c) -> BaseWidget* {
+    return new BaseWidget(QString::fromStdString(c.options.at("missing").get<std::string>()), "",
+                          0);
+  });
+  WidgetBuilder builder(cfg, registry);
+  EXPECT_EQ(builder.buildWidget("boom", "DISPLAY1", "bar-1"), nullptr);
+}

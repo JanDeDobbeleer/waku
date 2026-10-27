@@ -52,6 +52,16 @@ std::string toText(const nlohmann::json& v) {
   return reprValue(v);
 }
 
+// Python raises ValueError for widths/indices too large for a C ssize_t; stoi would throw
+// std::out_of_range, which callers that only catch FormatError would let escape into Qt.
+int parseCount(const std::string& digits) {
+  int value = 0;
+  const auto [end, ec] = std::from_chars(digits.data(), digits.data() + digits.size(), value);
+  if (ec != std::errc() || end != digits.data() + digits.size())
+    throw FormatError("Too many decimal digits in format string");
+  return value;
+}
+
 std::string applySpec(const nlohmann::json& v, const std::string& spec) {
   if (spec.empty()) return toText(v);
   static const std::regex re(R"(^(?:(.)?([<>^]))?([0-9]+)?(?:\.([0-9]+))?([fds%])?$)");
@@ -61,9 +71,9 @@ std::string applySpec(const nlohmann::json& v, const std::string& spec) {
   }
   const char fill = m[1].matched ? m[1].str()[0] : ' ';
   const std::string align = m[2].matched ? m[2].str() : "";
-  const int width = m[3].matched ? std::stoi(m[3].str()) : 0;
+  const int width = m[3].matched ? parseCount(m[3].str()) : 0;
   const bool hasPrec = m[4].matched;
-  const int prec = hasPrec ? std::stoi(m[4].str()) : 0;
+  const int prec = hasPrec ? parseCount(m[4].str()) : 0;
   const std::string type = m[5].matched ? m[5].str() : "";
 
   std::string body;
@@ -96,7 +106,7 @@ const nlohmann::json& lookup(const nlohmann::json& root, const std::string& fiel
   const std::string head = field.substr(0, i);
   if (head.empty()) throw FormatError("positional fields are not supported");
   if (!root.is_object() || !root.contains(head)) throw FormatError("KeyError: " + head);
-  const nlohmann::json* cur = &root[head];
+  const nlohmann::json* cur = &root.at(head);
   while (i < field.size()) {
     if (field[i] == '[') {
       const size_t end = field.find(']', i);
@@ -105,12 +115,12 @@ const nlohmann::json& lookup(const nlohmann::json& root, const std::string& fiel
       const bool numericKey =
           !key.empty() && key.find_first_not_of("0123456789") == std::string::npos;
       if (numericKey && cur->is_array()) {
-        const size_t idx = std::stoul(key);
+        const auto idx = static_cast<size_t>(parseCount(key));
         if (idx >= cur->size()) throw FormatError("IndexError: " + key);
-        cur = &(*cur)[idx];
+        cur = &cur->at(idx);
       } else {
         if (!cur->is_object() || !cur->contains(key)) throw FormatError("KeyError: " + key);
-        cur = &(*cur)[key];
+        cur = &cur->at(key);
       }
       i = end + 1;
     } else {
@@ -118,7 +128,7 @@ const nlohmann::json& lookup(const nlohmann::json& root, const std::string& fiel
       while (j < field.size() && field[j] != '[' && field[j] != '.') ++j;
       const std::string attr = field.substr(i + 1, j - i - 1);
       if (!cur->is_object() || !cur->contains(attr)) throw FormatError("AttributeError: " + attr);
-      cur = &(*cur)[attr];
+      cur = &cur->at(attr);
       i = j;
     }
   }

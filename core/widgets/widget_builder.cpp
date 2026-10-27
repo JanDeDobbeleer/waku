@@ -1,6 +1,7 @@
 #include "core/widgets/widget_builder.h"
 
 #include <QDebug>
+#include <exception>
 
 namespace yasb::widgets {
 
@@ -30,7 +31,14 @@ BaseWidget* WidgetBuilder::buildWidget(const std::string& name, const QString& s
   }
   if (!registry_.contains(entry->type))
     return skip(unknownTypes_, "has a type that is not registered");
-  return registry_.create(config_, name, screenName, barId);
+  // Factories read options with nlohmann; a throw here must not unwind into Qt.
+  try {
+    return registry_.create(config_, name, screenName, barId);
+  } catch (const std::exception& error) {
+    qCritical().noquote() << "Widget" << QString::fromStdString(name)
+                          << "could not be created:" << QString::fromUtf8(error.what());
+    return nullptr;
+  }
 }
 
 WidgetBuilder::Widgets WidgetBuilder::buildWidgets(const Columns& columns,
