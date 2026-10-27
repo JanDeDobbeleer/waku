@@ -1,0 +1,48 @@
+# Building
+
+Prerequisites (Windows 11, ARM64 or x64 host):
+
+- Visual Studio 2022 Build Tools (MSVC 14.44, Windows SDK 10.0.26100 with C++/WinRT headers)
+- Qt 6.10.2 from aqtinstall at `C:\Qt\6.10.2\msvc2022_arm64` and `...\msvc2022_64`
+  (`QT_ROOT` overrides the `C:\Qt\6.10.2` root)
+- vcpkg checkout at `C:\vcpkg` (`git clone https://github.com/microsoft/vcpkg C:\vcpkg`, then
+  `C:\vcpkg\bootstrap-vcpkg.bat -disableMetrics`). The Build Tools' bundled vcpkg has no ports
+  tree, so it can't resolve the `builtin-baseline` in `vcpkg.json`.
+
+Triplets are `arm64-windows-static-md` / `x64-windows-static-md`: static vcpkg libraries, dynamic
+CRT (Qt is dynamic and uses the same CRT), so no extra DLLs to ship.
+
+Run every command in one `cmd.exe` after `vcvarsall.bat` (`arm64`, or `arm64_amd64` to cross-build
+x64 from an ARM64 host). `vcvarsall` points `VCPKG_ROOT` at the bundled vcpkg, so set it after.
+A `vswhere.exe is not recognized` line from `vcvarsall` is harmless.
+
+```powershell
+$vc = 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat'
+
+# ARM64 debug / release: configure, build, test
+cmd /c "call `"$vc`" arm64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset arm64-debug && cmake --build --preset arm64-debug && ctest --preset arm64-debug"
+cmd /c "call `"$vc`" arm64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset arm64-release && cmake --build --preset arm64-release && ctest --preset arm64-release"
+
+# x64 release, cross-built (tests run under emulation)
+cmd /c "call `"$vc`" arm64_amd64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64-release && cmake --build --preset x64-release && ctest --preset x64-release"
+
+# Portable folder: dist\msvc2022_arm64 (or msvc2022_64)
+cmd /c "call `"$vc`" arm64 && set VCPKG_ROOT=C:\vcpkg&& cmake --build --preset arm64-release --target deploy"
+```
+
+On an x64 host use `vcvarsall.bat x64` and the same presets.
+
+Check the deployed build without opening a window:
+
+```powershell
+dist\msvc2022_arm64\yasb-native.exe --version   # prints "yasb-native 0.1.0"
+dist\msvc2022_arm64\yasb-native.exe --smoke     # builds QApplication, exits 0
+```
+
+Notes:
+
+- Tests are copied next to `yasb_tests.exe` with `windeployqt` (including the `offscreen`
+  platform plugin) and `ctest` sets `QT_QPA_PLATFORM=offscreen`.
+- `deploy` also drops `vc_redist.<arch>.exe` in `dist` for machines without the VC++ runtime.
+- Warnings are errors (`/WX`) for our targets only; vcpkg and Qt code are unaffected.
+- Debug builds use `/Z7` because `/ZI` conflicts with `/guard:cf`.

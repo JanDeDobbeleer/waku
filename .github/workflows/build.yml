@@ -1,0 +1,90 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+env:
+  QT_VERSION: "6.10.2"
+  QT_ROOT: C:/Qt/6.10.2
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
+
+jobs:
+  build:
+    name: ${{ matrix.preset }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            preset: x64-release
+            vcvars_arch: x64
+            qt_arch: win64_msvc2022_64
+          - runner: windows-11-arm
+            preset: arm64-release
+            vcvars_arch: arm64
+            qt_arch: win64_msvc2022_arm64
+          - runner: windows-11-arm
+            preset: arm64-debug
+            vcvars_arch: arm64
+            qt_arch: win64_msvc2022_arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      # The manifest baseline needs the vcpkg git history, so check out the pinned commit.
+      - name: Read vcpkg baseline
+        id: baseline
+        shell: pwsh
+        run: |
+          $b = (Get-Content vcpkg.json | ConvertFrom-Json).'builtin-baseline'
+          "sha=$b" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          ref: ${{ steps.baseline.outputs.sha }}
+          path: vcpkg
+
+      - name: Bootstrap vcpkg
+        shell: cmd
+        run: vcpkg\bootstrap-vcpkg.bat -disableMetrics
+
+      - uses: actions/cache@v4
+        with:
+          path: .vcpkg-cache
+          key: vcpkg-${{ matrix.preset }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: vcpkg-${{ matrix.preset }}-
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Qt ${{ env.QT_VERSION }}
+        shell: pwsh
+        run: |
+          python -m pip install aqtinstall
+          python -m aqt install-qt windows desktop $env:QT_VERSION ${{ matrix.qt_arch }} -O C:/Qt
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.vcvars_arch }}
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }}
+
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }}
+
+      - name: Deploy
+        run: cmake --build --preset ${{ matrix.preset }} --target deploy
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.preset }}
+          path: dist/
+          if-no-files-found: error
