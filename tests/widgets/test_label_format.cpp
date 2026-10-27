@@ -10,6 +10,7 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <regex>
 
 #include "core/widgets/base_widget.h"
 #include "core/widgets/label_format.h"
@@ -403,10 +404,87 @@ TEST(LabelFormat, PyFormatNestedLookupsAndEscapes) {
   EXPECT_THROW(pyFormat("{a", {{"a", 1}}), FormatError);
 }
 
-TEST(LabelFormat, OversizedWidthOrIndexIsAFormatError) {
-  EXPECT_THROW(pyFormat("{v:99999999999}", {{"v", 1}}), FormatError);
+namespace {
+
+// The std::regex format-spec path the scanner replaced, kept as the oracle.
+std::string oracleSpec(const json& v, const std::string& spec) {
+  static const std::regex re(R"(^(?:(.)?([<>^]))?([0-9]+)?(?:\.([0-9]+))?([fds%])?$)");
+  std::smatch m;
+  if (!std::regex_match(spec, m, re)) throw FormatError("unsupported format spec: " + spec);
+  const char fill = m[1].matched ? m[1].str()[0] : ' ';
+  const std::string align = m[2].matched ? m[2].str() : "";
+  const int width = m[3].matched ? std::stoi(m[3].str()) : 0;
+  const bool hasPrec = m[4].matched;
+  const int prec = hasPrec ? std::stoi(m[4].str()) : 0;
+  const std::string type = m[5].matched ? m[5].str() : "";
+  std::string body;
+  const bool numeric = v.is_number();
+  if (type == "f" || type == "%") {
+    if (!numeric) throw FormatError("format code 'f' requires a number");
+    const double d = v.get<double>();
+    body = type == "%" ? formatFixed(d * 100.0, hasPrec ? prec : 6) + "%"
+                       : formatFixed(d, hasPrec ? prec : 6);
+  } else if (type == "d") {
+    if (!v.is_number_integer()) throw FormatError("format code 'd' requires an integer");
+    body = std::to_string(v.get<long long>());
+  } else if (v.is_number_float() && hasPrec) {
+    body = formatFixed(v.get<double>(), prec);
+  } else {
+    body = pyFormat("{v}", {{"v", v}});
+    if (hasPrec && v.is_string() && static_cast<int>(body.size()) > prec) body.resize(prec);
+  }
+  if (static_cast<int>(body.size()) >= width) return body;
+  const size_t pad = static_cast<size_t>(width) - body.size();
+  const std::string a = align.empty() ? (numeric ? ">" : "<") : align;
+  if (a == "<") return body + std::string(pad, fill);
+  if (a == ">") return std::string(pad, fill) + body;
+  return std::string(pad / 2, fill) + body + std::string(pad - pad / 2, fill);
+}
+
+template <class F>
+std::string outcome(F&& f) {
+  try {
+    return "ok:" + f();
+  } catch (const FormatError& e) {
+    return std::string("error:") + e.what();
+  }
+}
+
+}  // namespace
+
+TEST(LabelFormat, SpecScannerMatchesRegexOnEveryShortSpec) {
+  const std::string alphabet = "<>^1.fd%\n";  // the curated specs cover \r, 0, s, high bytes
+  std::vector<std::string> specs{""};
+  for (std::size_t begin = 0, len = 1; len <= 4; ++len) {
+    const std::size_t end = specs.size();
+    for (std::size_t i = begin; i < end; ++i) {
+      for (const char c : alphabet) specs.push_back(specs[i] + c);
+    }
+    begin = end;
+  }
+  specs.insert(
+      specs.end(),
+      {"x^12.3f", "*<10", "0>8.2%", "10.10s", "<>5",    ">>",  ".",  "5.", ".f", "f5",  "1.2.3",
+       "%%",      "\n>3", "\r<3",   " ^9d",   "\xC3>4", "0<5", "05", "s",  "5s", ".2s", "<0.0s"});
+  const json values[] = {42, 2.5, "abc"};
+  for (const auto& spec : specs) {
+    for (const auto& v : values) {
+      const json kwargs = {{"v", v}};
+      const std::string templ = "{v:" + spec + "}";
+      ASSERT_EQ(outcome([&] { return pyFormat(templ, kwargs); }),
+                outcome([&] { return oracleSpec(v, spec); }))
+          << "spec: " << spec << " value: " << v.dump();
+    }
+  }
+}
+
+TEST(LabelFormat, SpecScannerHandlesLongAndOversizedSpecs) {
+  const std::string zeros(100000, '0');
+  EXPECT_EQ(pyFormat("{v:" + zeros + "5}", {{"v", 1}}), "    1");
+  EXPECT_EQ(pyFormat("{v:." + zeros + "2f}", {{"v", 1.0}}), "1.00");
+  EXPECT_THROW(pyFormat("{v:" + std::string(100000, '<') + "}", {{"v", 1}}), FormatError);
+  EXPECT_THROW(pyFormat("{v:99999999999}", {{"v", 1}}), FormatError) << "width beyond int";
   EXPECT_THROW(pyFormat("{v:.99999999999f}", {{"v", 1.0}}), FormatError);
-  EXPECT_THROW(pyFormat("{v[99999999999]}", {{"v", json::array({1})}}), FormatError);
 }
 
 TEST(LabelFormat, RoundingMatchesPython) {

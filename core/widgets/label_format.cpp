@@ -6,7 +6,8 @@
 #include <charconv>
 #include <cmath>
 #include <cstdio>
-#include <regex>
+#include <optional>
+#include <string_view>
 
 namespace yasb::widgets {
 namespace {
@@ -52,38 +53,68 @@ std::string toText(const nlohmann::json& v) {
   return reprValue(v);
 }
 
-// Python raises ValueError for widths/indices too large for a C ssize_t; stoi would throw
-// std::out_of_range, which callers that only catch FormatError would let escape into Qt.
-int parseCount(const std::string& digits) {
-  int value = 0;
-  const auto [end, ec] = std::from_chars(digits.data(), digits.data() + digits.size(), value);
-  if (ec != std::errc() || end != digits.data() + digits.size())
-    throw FormatError("Too many decimal digits in format string");
-  return value;
+struct FormatSpec {
+  char fill = ' ';
+  char align = 0;  // '<', '>', '^', or 0 for the type's default
+  int width = 0;
+  std::optional<int> precision;
+  char type = 0;  // 'f', 'd', 's', '%', or 0
+};
+
+// Scanner for [[fill]align][width][.precision][type] with align in <>^ and type in fds%.
+// The fill is any character except a line break.
+FormatSpec parseSpec(const std::string& spec) {
+  auto isAlign = [](char c) { return c == '<' || c == '>' || c == '^'; };
+  const auto unsupported = [&spec] { return FormatError("unsupported format spec: " + spec); };
+  FormatSpec out;
+  std::size_t i = 0;
+  if (spec.size() >= 2 && isAlign(spec[1]) && spec[0] != '\n' && spec[0] != '\r') {
+    out.fill = spec[0];
+    out.align = spec[1];
+    i = 2;
+  } else if (!spec.empty() && isAlign(spec[0])) {
+    out.align = spec[0];
+    i = 1;
+  }
+  auto number = [&]() -> std::optional<int> {
+    const std::size_t start = i;
+    while (i < spec.size() && spec[i] >= '0' && spec[i] <= '9') ++i;
+    if (i == start) return std::nullopt;
+    int value = 0;
+    const auto result = std::from_chars(spec.data() + start, spec.data() + i, value);
+    if (result.ec != std::errc()) throw FormatError("Too many decimal digits in format string");
+    return value;
+  };
+  out.width = number().value_or(0);
+  if (i < spec.size() && spec[i] == '.') {
+    ++i;
+    out.precision = number();
+    if (!out.precision) throw unsupported();
+  }
+  if (i < spec.size() && std::string_view("fds%").find(spec[i]) != std::string_view::npos) {
+    out.type = spec[i++];
+  }
+  if (i != spec.size()) throw unsupported();
+  return out;
 }
 
 std::string applySpec(const nlohmann::json& v, const std::string& spec) {
   if (spec.empty()) return toText(v);
-  static const std::regex re(R"(^(?:(.)?([<>^]))?([0-9]+)?(?:\.([0-9]+))?([fds%])?$)");
-  std::smatch m;
-  if (!std::regex_match(spec, m, re)) {
-    throw FormatError("unsupported format spec: " + spec);
-  }
-  const char fill = m[1].matched ? m[1].str()[0] : ' ';
-  const std::string align = m[2].matched ? m[2].str() : "";
-  const int width = m[3].matched ? parseCount(m[3].str()) : 0;
-  const bool hasPrec = m[4].matched;
-  const int prec = hasPrec ? parseCount(m[4].str()) : 0;
-  const std::string type = m[5].matched ? m[5].str() : "";
+  const FormatSpec fs = parseSpec(spec);
+  const char fill = fs.fill;
+  const int width = fs.width;
+  const bool hasPrec = fs.precision.has_value();
+  const int prec = fs.precision.value_or(0);
+  const char type = fs.type;
 
   std::string body;
   bool numeric = v.is_number();
-  if (type == "f" || type == "%") {
+  if (type == 'f' || type == '%') {
     if (!numeric) throw FormatError("format code 'f' requires a number");
     const double d = v.get<double>();
-    body = type == "%" ? formatFixed(d * 100.0, hasPrec ? prec : 6) + "%"
+    body = type == '%' ? formatFixed(d * 100.0, hasPrec ? prec : 6) + "%"
                        : formatFixed(d, hasPrec ? prec : 6);
-  } else if (type == "d") {
+  } else if (type == 'd') {
     if (!v.is_number_integer()) throw FormatError("format code 'd' requires an integer");
     body = std::to_string(v.get<long long>());
   } else if (v.is_number_float() && hasPrec) {
@@ -94,9 +125,9 @@ std::string applySpec(const nlohmann::json& v, const std::string& spec) {
   }
   if (static_cast<int>(body.size()) >= width) return body;
   const size_t pad = static_cast<size_t>(width) - body.size();
-  const std::string a = align.empty() ? (numeric ? ">" : "<") : align;
-  if (a == "<") return body + std::string(pad, fill);
-  if (a == ">") return std::string(pad, fill) + body;
+  const char a = fs.align ? fs.align : (numeric ? '>' : '<');
+  if (a == '<') return body + std::string(pad, fill);
+  if (a == '>') return std::string(pad, fill) + body;
   return std::string(pad / 2, fill) + body + std::string(pad - pad / 2, fill);
 }
 
