@@ -6,7 +6,6 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QtLogging>
-
 #include <memory>
 
 namespace yasb::app {

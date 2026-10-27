@@ -1,8 +1,8 @@
 #include "registry.h"
 
-#include "core/config/loader.h"
-
 #include <QDebug>
+
+#include "core/config/loader.h"
 
 namespace yasb::widgets {
 
@@ -11,7 +11,9 @@ WidgetRegistry& WidgetRegistry::instance() {
   return registry;
 }
 
-void WidgetRegistry::add(const std::string& type, WidgetFactory factory) { m_factories[type] = std::move(factory); }
+void WidgetRegistry::add(const std::string& type, WidgetFactory factory) {
+  m_factories[type] = std::move(factory);
+}
 
 BaseWidget* WidgetRegistry::create(const WidgetContext& ctx) const {
   const auto it = m_factories.find(ctx.type);
@@ -32,7 +34,8 @@ BaseWidget* WidgetRegistry::create(const config::LoadResult& config, const std::
                                    const QString& screenName, const QString& barId) const {
   const auto* entry = config.widget(name);
   if (!entry || entry->status != config::WidgetStatus::Ok) {
-    qWarning().noquote() << "Widget" << QString::fromStdString(name) << "is undefined or has invalid options";
+    qWarning().noquote() << "Widget" << QString::fromStdString(name)
+                         << "is undefined or has invalid options";
     return nullptr;
   }
   return create(WidgetContext{name, entry->type, entry->options, screenName, barId});

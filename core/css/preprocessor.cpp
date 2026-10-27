@@ -174,7 +174,8 @@ QString extractAndReplaceVariables(const QString& cssIn) {
 
 QString normalizeQproperty(const QString& css) {
   static const Re re(QStringLiteral(R"((?<=[{;\s])-qproperty-(?=[\w-]+\s*:))"), kUnicode);
-  return replaceAll(re, css, [](const QRegularExpressionMatch&) { return QStringLiteral("qproperty-"); });
+  return replaceAll(re, css,
+                    [](const QRegularExpressionMatch&) { return QStringLiteral("qproperty-"); });
 }
 
 }  // namespace
@@ -209,8 +210,8 @@ QString CssPreprocessor::readCssFile(const QString& path) {
   QFile file(path);
   if (!file.open(QIODevice::ReadOnly)) {
     const QString reason = QFileInfo::exists(path)
-        ? QStringLiteral("[Errno 13] Permission denied: ")
-        : QStringLiteral("[Errno 2] No such file or directory: ");
+                               ? QStringLiteral("[Errno 13] Permission denied: ")
+                               : QStringLiteral("[Errno 2] No such file or directory: ");
     error(QStringLiteral("CSSProcessor Error '%1': %2%3").arg(path, reason, pyRepr(path)));
     return {};
   }

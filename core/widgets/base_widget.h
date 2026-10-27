@@ -1,14 +1,14 @@
 #pragma once
 
-#include "callbacks.h"
-#include "label_format.h"
-
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QTimer>
 #include <QWidget>
 #include <vector>
+
+#include "callbacks.h"
+#include "label_format.h"
 
 namespace yasb::widgets {
 
@@ -20,12 +20,13 @@ struct CallbackBinding {
   QString timer = QStringLiteral("do_nothing");
 };
 
-// Port of core/widgets/base.py. Subclasses (U8) register callbacks, build labels and call startTimer().
+// Port of core/widgets/base.py. Subclasses (U8) register callbacks, build labels and call
+// startTimer().
 class BaseWidget : public QWidget {
   Q_OBJECT
  public:
-  explicit BaseWidget(const QString& widgetName, const QString& className = QString(), int timerIntervalMs = 0,
-                      QWidget* parent = nullptr);
+  explicit BaseWidget(const QString& widgetName, const QString& className = QString(),
+                      int timerIntervalMs = 0, QWidget* parent = nullptr);
 
   const QString& widgetName() const { return m_widgetName; }
   // screen_name / bar_id come from the properties BarWindow sets when it adds the widget.
@@ -35,7 +36,9 @@ class BaseWidget : public QWidget {
   void setHotkeyEnabled(bool enabled) { m_hotkeyEnabled = enabled; }
 
   CallbackRegistry& callbacks() { return m_callbacks; }
-  void registerCallback(const QString& name, CallbackFn fn, int arity = 0) { m_callbacks.add(name, std::move(fn), arity); }
+  void registerCallback(const QString& name, CallbackFn fn, int arity = 0) {
+    m_callbacks.add(name, std::move(fn), arity);
+  }
   void setCallbackBinding(const CallbackBinding& binding) { m_binding = binding; }
   bool runCallback(const QString& callbackStr) { return m_callbacks.run(callbackStr); }
 

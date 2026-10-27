@@ -12,8 +12,8 @@ std::optional<std::string> environmentVariable(std::string_view name);
 
 // YASB_CONFIG_HOME, else ~/.config/yasb (settings.py DEFAULT_CONFIG_DIRECTORY).
 std::filesystem::path configDir();
-std::filesystem::path configPath();       // config.yaml
-std::filesystem::path stylesheetPath();   // styles.css
+std::filesystem::path configPath();      // config.yaml
+std::filesystem::path stylesheetPath();  // styles.css
 
 // %LOCALAPPDATA%\YASB (core/utils/system.py app_data_path).
 std::filesystem::path dataDir();

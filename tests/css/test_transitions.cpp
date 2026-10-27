@@ -96,9 +96,9 @@ TEST_F(Transitions, BackgroundColorInterpolatesOnHover) {
 
 TEST_F(Transitions, ClickedOpacityDipsThenReturns) {
   TransitionEngine engine;
-  app->setStyleSheet(engine.loadStyleSheet(QStringLiteral(
-      ".btn { opacity: 1; transition: opacity 100ms linear; }\n"
-      ".btn:clicked { opacity: 0.5; }")));
+  app->setStyleSheet(engine.loadStyleSheet(
+      QStringLiteral(".btn { opacity: 1; transition: opacity 100ms linear; }\n"
+                     ".btn:clicked { opacity: 0.5; }")));
   engine.install(app.get());
 
   std::unique_ptr<QWidget> w(makeWidget("btn"));
@@ -106,8 +106,8 @@ TEST_F(Transitions, ClickedOpacityDipsThenReturns) {
   ASSERT_TRUE(QTest::qWaitForWindowExposed(w.get()));
   w->ensurePolished();
 
-  QMouseEvent press(QEvent::MouseButtonPress, QPointF(5, 5), QPointF(5, 5), Qt::LeftButton, Qt::LeftButton,
-                    Qt::NoModifier);
+  QMouseEvent press(QEvent::MouseButtonPress, QPointF(5, 5), QPointF(5, 5), Qt::LeftButton,
+                    Qt::LeftButton, Qt::NoModifier);
   QCoreApplication::sendEvent(w.get(), &press);
 
   double minOpacity = 1.0;

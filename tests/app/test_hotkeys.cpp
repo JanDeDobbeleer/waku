@@ -17,8 +17,8 @@ TEST(Hotkeys, ParsesModifiersAndRejectsMalformedBindings) {
 }
 
 TEST(Hotkeys, CursorModeRoutesToContainingScreen) {
-  const std::vector<yasb::app::ScreenTarget> screens = {
-      {"LEFT", QRect(-1920, 0, 1920, 1080)}, {"RIGHT", QRect(0, 0, 2560, 1440)}};
+  const std::vector<yasb::app::ScreenTarget> screens = {{"LEFT", QRect(-1920, 0, 1920, 1080)},
+                                                        {"RIGHT", QRect(0, 0, 2560, 1440)}};
   EXPECT_EQ(yasb::app::routeHotkeyScreen("cursor", QPoint(100, 100), screens, "LEFT"), "RIGHT");
   EXPECT_EQ(yasb::app::routeHotkeyScreen("cursor", QPoint(-100, 100), screens, "LEFT"), "LEFT");
   EXPECT_EQ(yasb::app::routeHotkeyScreen("primary", QPoint(100, 100), screens, "LEFT"), "LEFT");

@@ -7,12 +7,14 @@
 
 namespace yasb::widgets {
 
-QPoint computePopupPosition(const QPoint& parentTopLeft, const QSize& parentSize, const QSize& popupSize,
-                            const QRect& screen, const QString& alignment, const QString& direction, int offsetLeft,
-                            int offsetTop) {
-  QPoint anchor(parentTopLeft.x() + offsetLeft, parentTopLeft.y() + parentSize.height() + offsetTop);
+QPoint computePopupPosition(const QPoint& parentTopLeft, const QSize& parentSize,
+                            const QSize& popupSize, const QRect& screen, const QString& alignment,
+                            const QString& direction, int offsetLeft, int offsetTop) {
+  QPoint anchor(parentTopLeft.x() + offsetLeft,
+                parentTopLeft.y() + parentSize.height() + offsetTop);
   if (direction == QLatin1String("up")) {
-    anchor = QPoint(parentTopLeft.x() + offsetLeft, parentTopLeft.y() - popupSize.height() - offsetTop);
+    anchor =
+        QPoint(parentTopLeft.x() + offsetLeft, parentTopLeft.y() - popupSize.height() - offsetTop);
   }
 
   QPoint pos = anchor;
@@ -31,12 +33,14 @@ QPoint computePopupPosition(const QPoint& parentTopLeft, const QSize& parentSize
 }
 
 PopupWidget::PopupWidget(QWidget* anchor)
-    : QWidget(anchor, Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint), m_anchor(anchor) {
+    : QWidget(anchor, Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint),
+      m_anchor(anchor) {
   setAttribute(Qt::WA_TranslucentBackground);
   setProperty("class", "popup");
 }
 
-void PopupWidget::setPosition(const QString& alignment, const QString& direction, int offsetLeft, int offsetTop) {
+void PopupWidget::setPosition(const QString& alignment, const QString& direction, int offsetLeft,
+                              int offsetTop) {
   m_alignment = alignment;
   m_direction = direction;
   m_offsetLeft = offsetLeft;
@@ -47,8 +51,8 @@ void PopupWidget::setPosition(const QString& alignment, const QString& direction
   const QPoint topLeft = m_anchor->mapToGlobal(QPoint(0, 0));
   const QScreen* screen = QApplication::screenAt(m_anchor->mapToGlobal(m_anchor->rect().center()));
   if (!screen) screen = QApplication::primaryScreen();
-  move(computePopupPosition(topLeft, m_anchor->size(), size(), screen->geometry(), alignment, direction, offsetLeft,
-                            offsetTop));
+  move(computePopupPosition(topLeft, m_anchor->size(), size(), screen->geometry(), alignment,
+                            direction, offsetLeft, offsetTop));
 }
 
 void PopupWidget::resizeEvent(QResizeEvent* event) {

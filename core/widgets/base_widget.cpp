@@ -1,14 +1,15 @@
 #include "base_widget.h"
 
-#include "event_bus.h"
-
 #include <QContextMenuEvent>
 #include <QMouseEvent>
 #include <QStyle>
 
+#include "event_bus.h"
+
 namespace yasb::widgets {
 
-BaseWidget::BaseWidget(const QString& widgetName, const QString& className, int timerIntervalMs, QWidget* parent)
+BaseWidget::BaseWidget(const QString& widgetName, const QString& className, int timerIntervalMs,
+                       QWidget* parent)
     : QWidget(parent), m_widgetName(widgetName), m_timerInterval(timerIntervalMs) {
   // BarWindow's island code identifies container children by this property.
   setProperty("widget_name", widgetName);
@@ -46,8 +47,8 @@ void BaseWidget::startTimer() {
   runCallback(m_binding.timer);
 }
 
-void BaseWidget::buildWidgetLabel(const QString& content, const QString& contentAlt, const QString& placeholder,
-                                  bool hideIcons) {
+void BaseWidget::buildWidgetLabel(const QString& content, const QString& contentAlt,
+                                  const QString& placeholder, bool hideIcons) {
   for (QLabel* l : m_labels) delete l;
   for (QLabel* l : m_labelsAlt) delete l;
   m_labels.clear();
@@ -102,7 +103,8 @@ void BaseWidget::clearHoverState() {
   for (QWidget* w : m_frame->findChildren<QWidget*>()) repolish(w);
 }
 
-void BaseWidget::handleHotkey(const QString& widgetName, const QString& action, const QString& screen) {
+void BaseWidget::handleHotkey(const QString& widgetName, const QString& action,
+                              const QString& screen) {
   if (!m_hotkeyEnabled || widgetName != m_widgetName) return;
   if (screen.isEmpty() || screenName() != screen) return;
   if (!action.isEmpty()) runCallback(action);

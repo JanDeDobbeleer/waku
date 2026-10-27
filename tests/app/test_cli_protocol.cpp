@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <nlohmann/json.hpp>
-
 #include <chrono>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <thread>
 
@@ -19,10 +18,13 @@ std::wstring uniquePipeName(const wchar_t* suffix) {
 HANDLE connectPipe(const std::wstring& name) {
   const ULONGLONG deadline = GetTickCount64() + 3000;
   while (GetTickCount64() < deadline) {
-    HANDLE pipe = CreateFileW(name.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+    HANDLE pipe = CreateFileW(name.c_str(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
+                              0, nullptr);
     if (pipe != INVALID_HANDLE_VALUE) return pipe;
-    if (GetLastError() == ERROR_PIPE_BUSY) WaitNamedPipeW(name.c_str(), 100);
-    else Sleep(20);
+    if (GetLastError() == ERROR_PIPE_BUSY)
+      WaitNamedPipeW(name.c_str(), 100);
+    else
+      Sleep(20);
   }
   return INVALID_HANDLE_VALUE;
 }
@@ -51,11 +53,13 @@ bool writeMessage(HANDLE pipe, const std::string& data) {
 }  // namespace
 
 TEST(CliProtocol, AcceptsKnownCommandsAndRejectsUnknownOnes) {
-  for (const QString& command : {QStringLiteral("reload"), QStringLiteral("stop"), QStringLiteral("show-bar"),
-                                 QStringLiteral("hide-bar --screen DISPLAY1"), QStringLiteral("toggle-bar -s DISPLAY1")}) {
+  for (const QString& command :
+       {QStringLiteral("reload"), QStringLiteral("stop"), QStringLiteral("show-bar"),
+        QStringLiteral("hide-bar --screen DISPLAY1"), QStringLiteral("toggle-bar -s DISPLAY1")}) {
     EXPECT_EQ(yasb::app::commandReply(command), QStringLiteral("ACK"));
   }
-  EXPECT_EQ(yasb::app::commandReply(QStringLiteral("unknown")), QStringLiteral("CLI Unknown Command"));
+  EXPECT_EQ(yasb::app::commandReply(QStringLiteral("unknown")),
+            QStringLiteral("CLI Unknown Command"));
   EXPECT_EQ(yasb::app::commandReply(QString()), QStringLiteral("CLI Unknown Command"));
 }
 

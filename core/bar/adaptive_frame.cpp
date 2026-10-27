@@ -31,7 +31,8 @@ void BarFrame::resizeEvent(QResizeEvent* event) {
   resizeClickFloor();
 }
 
-AdaptiveBarFrame::AdaptiveBarFrame(QWidget* parent, std::string position, const std::vector<std::string>& exclude)
+AdaptiveBarFrame::AdaptiveBarFrame(QWidget* parent, std::string position,
+                                   const std::vector<std::string>& exclude)
     : BarFrame(parent), position_(std::move(position)), exclude_(exclude.begin(), exclude.end()) {}
 
 void AdaptiveBarFrame::setRailHeight(int value) {
@@ -184,7 +185,8 @@ QRect AdaptiveBarFrame::changedArea(const IslandSpans& before, const IslandSpans
   std::vector<int> edges;
   for (std::size_t i = 0; i < before.size(); ++i) {
     if (before[i] != after[i]) {
-      edges.insert(edges.end(), {before[i].first, before[i].second, after[i].first, after[i].second});
+      edges.insert(edges.end(),
+                   {before[i].first, before[i].second, after[i].first, after[i].second});
     }
   }
   if (edges.empty()) return rect();
@@ -216,7 +218,8 @@ IslandSpans AdaptiveBarFrame::computeIslandSpans() const {
     if (QLayout* inner = container->layout()) inner->activate();
 
     QList<QWidget*> children = container->findChildren<QWidget*>(Qt::FindDirectChildrenOnly);
-    std::stable_sort(children.begin(), children.end(), [](QWidget* a, QWidget* b) { return a->x() < b->x(); });
+    std::stable_sort(children.begin(), children.end(),
+                     [](QWidget* a, QWidget* b) { return a->x() < b->x(); });
 
     std::optional<std::pair<int, int>> run;
     for (QWidget* child : std::as_const(children)) {
@@ -257,17 +260,20 @@ IslandSpans AdaptiveBarFrame::computeIslandSpans() const {
     // An excluded widget against an edge must not be snapped over
     const int minSkipped = skipped.empty() ? 0 : *std::min_element(skipped.begin(), skipped.end());
     const int maxSkipped = skipped.empty() ? 0 : *std::max_element(skipped.begin(), skipped.end());
-    if (merged.front().first <= islandRadius_ && (skipped.empty() || minSkipped >= merged.front().first)) {
+    if (merged.front().first <= islandRadius_ &&
+        (skipped.empty() || minSkipped >= merged.front().first)) {
       merged.front().first = 0;
     }
-    if (merged.back().second >= w - islandRadius_ && (skipped.empty() || maxSkipped <= merged.back().second)) {
+    if (merged.back().second >= w - islandRadius_ &&
+        (skipped.empty() || maxSkipped <= merged.back().second)) {
       merged.back().second = w;
     }
   }
   return merged;
 }
 
-void AdaptiveBarFrame::buildShape(const IslandSpans& islands, QPainterPath& shapeOut, QPainterPath& borderOut) const {
+void AdaptiveBarFrame::buildShape(const IslandSpans& islands, QPainterPath& shapeOut,
+                                  QPainterPath& borderOut) const {
   const double w = width();
   // The frame is taller than the bar by edgeradius; that strip holds the edge curves
   const double bottom = frameBottom();
@@ -290,7 +296,8 @@ void AdaptiveBarFrame::buildShape(const IslandSpans& islands, QPainterPath& shap
   }
 
   // Both curves share the island's side, so together they cannot exceed its height
-  const double radius = std::min(static_cast<double>(islandRadius_), std::max(0.0, (height - rail) / 2));
+  const double radius =
+      std::min(static_cast<double>(islandRadius_), std::max(0.0, (height - rail) / 2));
 
   QPainterPath path;
   const bool reachesRight = !islands.empty() && islands.back().second >= w;
@@ -305,14 +312,17 @@ void AdaptiveBarFrame::buildShape(const IslandSpans& islands, QPainterPath& shap
     const double corner = std::min(radius, (x1 - x0) / 2);
 
     if (x1 >= w) {
-      if (overhang > 0.0) path.arcTo(QRectF(w - 2 * overhang, height, 2 * overhang, 2 * overhang), 0.0, 90.0);
+      if (overhang > 0.0)
+        path.arcTo(QRectF(w - 2 * overhang, height, 2 * overhang, 2 * overhang), 0.0, 90.0);
     } else {
       const double nextStart = index < last ? islands[index + 1].first : w;
       const double fillet = std::min(radius, (nextStart - x1) / 2);
       path.lineTo(x1 + fillet, rail);
       if (fillet > 0.0) path.arcTo(QRectF(x1, rail, 2 * fillet, 2 * fillet), 90.0, 90.0);
       path.lineTo(x1, height - corner);
-      if (corner > 0.0) path.arcTo(QRectF(x1 - 2 * corner, height - 2 * corner, 2 * corner, 2 * corner), 0.0, -90.0);
+      if (corner > 0.0)
+        path.arcTo(QRectF(x1 - 2 * corner, height - 2 * corner, 2 * corner, 2 * corner), 0.0,
+                   -90.0);
     }
 
     if (x0 <= 0.0) {
@@ -324,11 +334,13 @@ void AdaptiveBarFrame::buildShape(const IslandSpans& islands, QPainterPath& shap
       }
     } else {
       path.lineTo(x0 + corner, height);
-      if (corner > 0.0) path.arcTo(QRectF(x0, height - 2 * corner, 2 * corner, 2 * corner), 270.0, -90.0);
+      if (corner > 0.0)
+        path.arcTo(QRectF(x0, height - 2 * corner, 2 * corner, 2 * corner), 270.0, -90.0);
       const double previousEnd = index > 0 ? islands[index - 1].second : 0.0;
       const double fillet = std::min(radius, (x0 - previousEnd) / 2);
       path.lineTo(x0, rail + fillet);
-      if (fillet > 0.0) path.arcTo(QRectF(x0 - 2 * fillet, rail, 2 * fillet, 2 * fillet), 0.0, 90.0);
+      if (fillet > 0.0)
+        path.arcTo(QRectF(x0 - 2 * fillet, rail, 2 * fillet, 2 * fillet), 0.0, 90.0);
       if (index == 0) path.lineTo(0.0, rail);
     }
   }

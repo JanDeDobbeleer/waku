@@ -46,11 +46,14 @@ bool isNumericProp(const QString& p) {
          (p.startsWith(u"border"_s) && p.endsWith(u"-width"_s));
 }
 
-bool isAnimatable(const QString& p) { return p == u"opacity"_s || isColorProp(p) || isNumericProp(p); }
+bool isAnimatable(const QString& p) {
+  return p == u"opacity"_s || isColorProp(p) || isNumericProp(p);
+}
 
 std::optional<QColor> parseColor(const QString& text) {
-  static const QRegularExpression fn(u"^rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*(?:,\\s*([\\d.]+%?)\\s*)?\\)$"_s,
-                                     QRegularExpression::CaseInsensitiveOption);
+  static const QRegularExpression fn(
+      u"^rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*(?:,\\s*([\\d.]+%?)\\s*)?\\)$"_s,
+      QRegularExpression::CaseInsensitiveOption);
   const QString s = text.trimmed();
   const auto m = fn.match(s);
   if (m.hasMatch()) {
@@ -97,7 +100,10 @@ std::optional<Val> parseVal(const QString& prop, const QString& text) {
 QString format(const Val& v) {
   switch (v.kind) {
     case Val::Color:
-      return u"rgba(%1, %2, %3, %4)"_s.arg(v.c.red()).arg(v.c.green()).arg(v.c.blue()).arg(v.c.alpha());
+      return u"rgba(%1, %2, %3, %4)"_s.arg(v.c.red())
+          .arg(v.c.green())
+          .arg(v.c.blue())
+          .arg(v.c.alpha());
     case Val::Opacity:
       return QString::number(v.n, 'f', 3);
     case Val::Num:
@@ -109,9 +115,11 @@ QString format(const Val& v) {
 Val lerp(const Val& a, const Val& b, double t) {
   Val r = b;
   if (b.kind == Val::Color) {
-    auto mix = [t](int x, int y) { return std::clamp(static_cast<int>(std::lround(x + (y - x) * t)), 0, 255); };
-    r.c = QColor(mix(a.c.red(), b.c.red()), mix(a.c.green(), b.c.green()), mix(a.c.blue(), b.c.blue()),
-                 mix(a.c.alpha(), b.c.alpha()));
+    auto mix = [t](int x, int y) {
+      return std::clamp(static_cast<int>(std::lround(x + (y - x) * t)), 0, 255);
+    };
+    r.c = QColor(mix(a.c.red(), b.c.red()), mix(a.c.green(), b.c.green()),
+                 mix(a.c.blue(), b.c.blue()), mix(a.c.alpha(), b.c.alpha()));
   } else {
     r.n = a.n + (b.n - a.n) * t;
   }
@@ -149,8 +157,8 @@ Ease parseEase(const QString& name) {
     const auto parts = m.captured(1).split(u',');
     if (parts.size() == 4) {
       QEasingCurve c(QEasingCurve::BezierSpline);
-      c.addCubicBezierSegment({parts[0].toDouble(), parts[1].toDouble()}, {parts[2].toDouble(), parts[3].toDouble()},
-                              {1.0, 1.0});
+      c.addCubicBezierSegment({parts[0].toDouble(), parts[1].toDouble()},
+                              {parts[2].toDouble(), parts[3].toDouble()}, {1.0, 1.0});
       e.curve = c;
     }
   } else if (const auto s = stp.match(n); s.hasMatch()) {
@@ -161,16 +169,24 @@ Ease parseEase(const QString& name) {
 }
 
 std::optional<Qt::CursorShape> cursorShape(const QString& name) {
-  static const QHash<QString, Qt::CursorShape> map{
-      {u"default"_s, Qt::ArrowCursor},        {u"pointer"_s, Qt::PointingHandCursor},
-      {u"text"_s, Qt::IBeamCursor},           {u"wait"_s, Qt::WaitCursor},
-      {u"progress"_s, Qt::BusyCursor},        {u"crosshair"_s, Qt::CrossCursor},
-      {u"move"_s, Qt::SizeAllCursor},         {u"not-allowed"_s, Qt::ForbiddenCursor},
-      {u"help"_s, Qt::WhatsThisCursor},       {u"grab"_s, Qt::OpenHandCursor},
-      {u"grabbing"_s, Qt::ClosedHandCursor},  {u"ew-resize"_s, Qt::SizeHorCursor},
-      {u"ns-resize"_s, Qt::SizeVerCursor},    {u"nwse-resize"_s, Qt::SizeFDiagCursor},
-      {u"nesw-resize"_s, Qt::SizeBDiagCursor}, {u"col-resize"_s, Qt::SplitHCursor},
-      {u"row-resize"_s, Qt::SplitVCursor},    {u"none"_s, Qt::BlankCursor}};
+  static const QHash<QString, Qt::CursorShape> map{{u"default"_s, Qt::ArrowCursor},
+                                                   {u"pointer"_s, Qt::PointingHandCursor},
+                                                   {u"text"_s, Qt::IBeamCursor},
+                                                   {u"wait"_s, Qt::WaitCursor},
+                                                   {u"progress"_s, Qt::BusyCursor},
+                                                   {u"crosshair"_s, Qt::CrossCursor},
+                                                   {u"move"_s, Qt::SizeAllCursor},
+                                                   {u"not-allowed"_s, Qt::ForbiddenCursor},
+                                                   {u"help"_s, Qt::WhatsThisCursor},
+                                                   {u"grab"_s, Qt::OpenHandCursor},
+                                                   {u"grabbing"_s, Qt::ClosedHandCursor},
+                                                   {u"ew-resize"_s, Qt::SizeHorCursor},
+                                                   {u"ns-resize"_s, Qt::SizeVerCursor},
+                                                   {u"nwse-resize"_s, Qt::SizeFDiagCursor},
+                                                   {u"nesw-resize"_s, Qt::SizeBDiagCursor},
+                                                   {u"col-resize"_s, Qt::SplitHCursor},
+                                                   {u"row-resize"_s, Qt::SplitVCursor},
+                                                   {u"none"_s, Qt::BlankCursor}};
   const auto it = map.find(name.trimmed().toLower());
   if (it == map.end()) return std::nullopt;
   return *it;
@@ -179,9 +195,12 @@ std::optional<Qt::CursorShape> cursorShape(const QString& name) {
 int pseudoPriority(const QStringList& set) {
   int p = 0;
   for (const auto& s : set) {
-    if (s == u":clicked"_s || s == u"clicked"_s) p = std::max(p, 3);
-    else if (s == u":pressed"_s || s == u"pressed"_s) p = std::max(p, 2);
-    else p = std::max(p, 1);
+    if (s == u":clicked"_s || s == u"clicked"_s)
+      p = std::max(p, 3);
+    else if (s == u":pressed"_s || s == u"pressed"_s)
+      p = std::max(p, 2);
+    else
+      p = std::max(p, 1);
   }
   return p;
 }
@@ -222,7 +241,8 @@ struct TransitionEngine::Impl {
     const QString key = r.selector + u"|"_s + construct;
     if (warned.contains(key)) return;
     warned.insert(key);
-    qCWarning(lcTransitions).noquote() << u"unsupported %1 in '%2' (line %3)"_s.arg(construct, r.selector).arg(r.line);
+    qCWarning(lcTransitions).noquote()
+        << u"unsupported %1 in '%2' (line %3)"_s.arg(construct, r.selector).arg(r.line);
   }
 
   void audit() {
@@ -231,7 +251,8 @@ struct TransitionEngine::Impl {
       if (r.has(u"box-shadow"_s)) warnOnce(r, u"box-shadow"_s);
       if (r.droppedSubcontrolTransition) warnOnce(r, u"transition on sub-control"_s);
       for (const auto& t : r.transitions) {
-        if (t.prop != u"all"_s && !isAnimatable(t.prop)) warnOnce(r, u"transition of '%1'"_s.arg(t.prop));
+        if (t.prop != u"all"_s && !isAnimatable(t.prop))
+          warnOnce(r, u"transition of '%1'"_s.arg(t.prop));
       }
       if (!r.subcontrol) {
         if (combinator.match(r.selector).hasMatch()) warnOnce(r, u"selector combinator"_s);
@@ -254,7 +275,8 @@ struct TransitionEngine::Impl {
     }
     if (!s.objName.isEmpty() && w->objectName() != s.objName) return false;
     if (!s.classes.isEmpty()) {
-      const QStringList have = w->property("class").toString().split(QRegularExpression(u"\\s+"_s), Qt::SkipEmptyParts);
+      const QStringList have =
+          w->property("class").toString().split(QRegularExpression(u"\\s+"_s), Qt::SkipEmptyParts);
       for (const auto& c : s.classes) {
         if (!have.contains(c)) return false;
       }
@@ -331,7 +353,8 @@ struct TransitionEngine::Impl {
     for (qsizetype i = 0; i < parsed.rules.size() && !relevant; ++i) {
       const auto& r = parsed.rules[i];
       if (r.subcontrol) continue;
-      if ((!r.pseudoSet.isEmpty() || !r.transitions.isEmpty() || r.hasCursorProp || r.has(u"opacity"_s)) &&
+      if ((!r.pseudoSet.isEmpty() || !r.transitions.isEmpty() || r.hasCursorProp ||
+           r.has(u"opacity"_s)) &&
           matches(w, i)) {
         relevant = true;
       }
@@ -360,8 +383,9 @@ struct TransitionEngine::Impl {
       keys.sort();
       QString body;
       for (const auto& k : keys) body += u"%1: %2; "_s.arg(k, c.written[k]);
-      w->setStyleSheet(c.origStyle + u"\n*[%1=\"%2\"] { %3}"_s.arg(QString::fromLatin1(kScopeProp),
-                                                                    w->property(kScopeProp).toString(), body));
+      w->setStyleSheet(c.origStyle +
+                       u"\n*[%1=\"%2\"] { %3}"_s.arg(QString::fromLatin1(kScopeProp),
+                                                     w->property(kScopeProp).toString(), body));
     }
     c.writing = false;
   }
@@ -408,7 +432,8 @@ struct TransitionEngine::Impl {
       v.n = w->height();
       return v;
     }
-    if (prop.startsWith(u"padding"_s) || prop.startsWith(u"margin"_s) || prop.endsWith(u"-width"_s)) {
+    if (prop.startsWith(u"padding"_s) || prop.startsWith(u"margin"_s) ||
+        prop.endsWith(u"-width"_s)) {
       v.n = 0;
       return v;
     }
@@ -424,8 +449,8 @@ struct TransitionEngine::Impl {
     a->deleteLater();
   }
 
-  void startAnim(const std::shared_ptr<Ctx>& cp, const QString& prop, const Val& from, const Val& to,
-                 const TransitionSpec& spec) {
+  void startAnim(const std::shared_ptr<Ctx>& cp, const QString& prop, const Val& from,
+                 const Val& to, const TransitionSpec& spec) {
     Ctx& c = *cp;
     stopAnim(c, prop);
     Anim an;
@@ -441,17 +466,18 @@ struct TransitionEngine::Impl {
     an.a->setEndValue(1.0);
     c.anims.insert(prop, an);
     const std::weak_ptr<Ctx> weak = cp;
-    QObject::connect(an.a, &QVariantAnimation::valueChanged, q, [this, weak, prop](const QVariant& value) {
-      const auto cc = weak.lock();
-      if (!cc || !cc->w) return;
-      const auto it = cc->anims.find(prop);
-      if (it == cc->anims.end()) return;
-      const double elapsed = value.toDouble() * (it->delay + it->duration);
-      const double p = std::clamp((elapsed - it->delay) / it->duration, 0.0, 1.0);
-      const Val v = lerp(it->from, it->to, it->ease.at(p));
-      cc->cur[prop] = v;
-      apply(*cc, prop, v, true);
-    });
+    QObject::connect(an.a, &QVariantAnimation::valueChanged, q,
+                     [this, weak, prop](const QVariant& value) {
+                       const auto cc = weak.lock();
+                       if (!cc || !cc->w) return;
+                       const auto it = cc->anims.find(prop);
+                       if (it == cc->anims.end()) return;
+                       const double elapsed = value.toDouble() * (it->delay + it->duration);
+                       const double p = std::clamp((elapsed - it->delay) / it->duration, 0.0, 1.0);
+                       const Val v = lerp(it->from, it->to, it->ease.at(p));
+                       cc->cur[prop] = v;
+                       apply(*cc, prop, v, true);
+                     });
     QObject::connect(an.a, &QVariantAnimation::finished, q, [this, weak, prop] {
       const auto cc = weak.lock();
       if (!cc) return;
@@ -526,7 +552,8 @@ struct TransitionEngine::Impl {
 
       auto spec = sp.find(prop);
       if (spec == sp.end()) spec = sp.find(u"all"_s);
-      const bool animate = from && spec != sp.end() && spec->durationMs + spec->delayMs > 0 && w->isVisible();
+      const bool animate =
+          from && spec != sp.end() && spec->durationMs + spec->delayMs > 0 && w->isVisible();
       if (animate) {
         c.cur[prop] = *from;
         startAnim(cp, prop, *from, *to, *spec);
@@ -589,7 +616,8 @@ struct TransitionEngine::Impl {
   }
 };
 
-TransitionEngine::TransitionEngine(QObject* parent) : QObject(parent), d_(std::make_unique<Impl>()) {
+TransitionEngine::TransitionEngine(QObject* parent)
+    : QObject(parent), d_(std::make_unique<Impl>()) {
   d_->q = this;
 }
 

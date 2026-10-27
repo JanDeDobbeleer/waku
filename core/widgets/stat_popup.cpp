@@ -1,9 +1,5 @@
 #include "stat_popup.h"
 
-#include "backdrop.h"
-#include "core/bar/theme_class.h"
-#include "tooltip.h"
-
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLinearGradient>
@@ -12,13 +8,18 @@
 #include <QVBoxLayout>
 #include <algorithm>
 
+#include "backdrop.h"
+#include "core/bar/theme_class.h"
+#include "tooltip.h"
+
 namespace yasb::widgets {
 namespace {
 constexpr double kStroke = 2.0;
 constexpr int kGridCell = 16;
 }  // namespace
 
-std::vector<QPointF> graphPoints(const std::vector<double>& data, int width, int height, double stroke) {
+std::vector<QPointF> graphPoints(const std::vector<double>& data, int width, int height,
+                                 double stroke) {
   std::vector<QPointF> pts;
   if (data.empty() || width <= 0 || height <= 0) return pts;
   const double pad = stroke / 2;
@@ -58,7 +59,8 @@ QPainterPath buildSmoothPath(const std::vector<QPointF>& pts, double tension) {
   return path;
 }
 
-GraphWidget::GraphWidget(const QString& cssClass, bool showGrid, QWidget* parent) : QFrame(parent), showGrid_(showGrid) {
+GraphWidget::GraphWidget(const QString& cssClass, bool showGrid, QWidget* parent)
+    : QFrame(parent), showGrid_(showGrid) {
   setMinimumHeight(20);
   setProperty("class", cssClass);
   setAttribute(Qt::WA_TranslucentBackground);
@@ -138,14 +140,15 @@ void GraphWidget::paintEvent(QPaintEvent* event) {
   p.drawPath(line_);
 }
 
-PinnablePopup::PinnablePopup(QWidget* anchor, bool blur, bool roundCorners, const QString& roundCornersType,
-                             const QString& borderColor)
+PinnablePopup::PinnablePopup(QWidget* anchor, bool blur, bool roundCorners,
+                             const QString& roundCornersType, const QString& borderColor)
     : PopupWidget(anchor),
       blur_(blur),
       roundCorners_(roundCorners),
       roundCornersType_(roundCornersType),
       borderColor_(borderColor) {
-  setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::NoDropShadowWindowHint);
+  setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
+                 Qt::NoDropShadowWindowHint);
 }
 
 void PinnablePopup::setPinned(bool pinned) {
@@ -157,7 +160,8 @@ void PinnablePopup::setPinned(bool pinned) {
 void PinnablePopup::showEvent(QShowEvent* event) {
   PopupWidget::showEvent(event);
   if (blur_) {
-    enableBlur(winId(), yasb::bar::GlobalState::instance().isDark(), roundCorners_, roundCornersType_, borderColor_);
+    enableBlur(winId(), yasb::bar::GlobalState::instance().isDark(), roundCorners_,
+               roundCornersType_, borderColor_);
   }
 }
 
@@ -188,10 +192,12 @@ void PinnablePopup::mouseReleaseEvent(QMouseEvent* event) {
   PopupWidget::mouseReleaseEvent(event);
 }
 
-PinnablePopup* buildStatPopup(QWidget* anchor, const StatPopupMenuConfig& menu, const QString& popupClass,
-                              const QString& title, const std::vector<double>& history,
-                              const std::vector<StatRow>& rows, const QString& graphClass) {
-  auto* popup = new PinnablePopup(anchor, menu.blur, menu.roundCorners, menu.roundCornersType, menu.borderColor);
+PinnablePopup* buildStatPopup(QWidget* anchor, const StatPopupMenuConfig& menu,
+                              const QString& popupClass, const QString& title,
+                              const std::vector<double>& history, const std::vector<StatRow>& rows,
+                              const QString& graphClass) {
+  auto* popup = new PinnablePopup(anchor, menu.blur, menu.roundCorners, menu.roundCornersType,
+                                  menu.borderColor);
   popup->setProperty("class", popupClass);
   auto* layout = new QVBoxLayout(popup);
   layout->setContentsMargins(0, 0, 0, 0);
@@ -214,7 +220,8 @@ PinnablePopup* buildStatPopup(QWidget* anchor, const StatPopupMenuConfig& menu, 
   QObject::connect(pin, &QPushButton::toggled, popup, [popup, pin, menu](bool checked) {
     pin->setText(checked ? menu.unpinIcon : menu.pinIcon);
     pin->setProperty("class", checked ? "pin-btn pinned" : "pin-btn");
-    setTooltip(pin, checked ? QStringLiteral("Unpin this window") : QStringLiteral("Pin this window"));
+    setTooltip(pin,
+               checked ? QStringLiteral("Unpin this window") : QStringLiteral("Pin this window"));
     yasb::bar::refreshWidgetStyle(pin);
     popup->setPinned(checked);
   });

@@ -20,7 +20,8 @@ class WidgetBuilder {
   using Columns = QMap<QString, QList<QString>>;  // "left" | "center" | "right" -> names
   using Widgets = QMap<QString, QList<QWidget*>>;
 
-  WidgetBuilder(const config::LoadResult& config, const WidgetRegistry& registry = WidgetRegistry::instance());
+  WidgetBuilder(const config::LoadResult& config,
+                const WidgetRegistry& registry = WidgetRegistry::instance());
 
   Widgets buildWidgets(const Columns& columns, const QString& screenName, const QString& barId);
   BaseWidget* buildWidget(const std::string& name, const QString& screenName, const QString& barId);
@@ -28,7 +29,9 @@ class WidgetBuilder {
   const std::set<std::string>& invalidNames() const { return invalid_; }
   const std::set<std::string>& invalidOptions() const { return invalidOptions_; }
   const std::set<std::string>& unknownTypes() const { return unknownTypes_; }
-  bool hasErrors() const { return !invalid_.empty() || !invalidOptions_.empty() || !unknownTypes_.empty(); }
+  bool hasErrors() const {
+    return !invalid_.empty() || !invalidOptions_.empty() || !unknownTypes_.empty();
+  }
 
   // One line per problem, for logs or an alert dialog.
   std::vector<std::string> errorReport() const;

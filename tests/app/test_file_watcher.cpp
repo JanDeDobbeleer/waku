@@ -4,7 +4,6 @@
 #include <QDir>
 #include <QFile>
 #include <QTest>
-
 #include <memory>
 
 #include "app/file_watcher.h"
@@ -54,7 +53,8 @@ TEST_F(FileWatcherTest, DebouncesAndWaitsForAValidConfig) {
     QFile file(config_);
     return file.open(QIODevice::ReadOnly) && file.readAll() == "valid";
   };
-  yasb::app::FileWatcher watcher(config_, style_, valid, [&] { ++configChanges; }, [&] { ++styleChanges; }, 100);
+  yasb::app::FileWatcher watcher(
+      config_, style_, valid, [&] { ++configChanges; }, [&] { ++styleChanges; }, 100);
 
   ASSERT_TRUE(writeFile(config_, "x"));
   QTest::qWait(250);

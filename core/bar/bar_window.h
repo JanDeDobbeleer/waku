@@ -46,9 +46,9 @@ struct BarSettings {
 
 // Test and tooling seams: nothing here touches the live desktop unless the caller says so.
 struct BarDeps {
-  std::unique_ptr<IAppBar> appBar;                     // null: no app-bar registration at all
+  std::unique_ptr<IAppBar> appBar;  // null: no app-bar registration at all
   OsThemeManager::Detector themeDetector = detectOsDarkTheme;
-  std::function<QRect()> screenGeometry;               // default: target screen geometry
+  std::function<QRect()> screenGeometry;  // default: target screen geometry
 };
 
 // The bar window (port of core/bar.py Bar): a translucent frameless tool window holding the
@@ -59,8 +59,8 @@ class BarWindow : public QWidget {
  public:
   using Widgets = QMap<QString, QList<QWidget*>>;  // "left" | "center" | "right"
 
-  BarWindow(QString barId, QString barName, QScreen* screen, const QString& stylesheet, const Widgets& widgets,
-            BarSettings settings, BarDeps deps = {});
+  BarWindow(QString barId, QString barName, QScreen* screen, const QString& stylesheet,
+            const Widgets& widgets, BarSettings settings, BarDeps deps = {});
   ~BarWindow() override;
 
   const QString& barId() const { return barId_; }

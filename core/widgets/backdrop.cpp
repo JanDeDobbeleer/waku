@@ -7,7 +7,6 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
-
 #include <dwmapi.h>
 
 #pragma comment(lib, "dwmapi.lib")
@@ -74,7 +73,8 @@ HWND toHwnd(quintptr h) { return reinterpret_cast<HWND>(h); }
 }  // namespace
 
 std::uint32_t hexToRgbaInt(const QString& hex) {
-  if (hex.size() != 9 || hex[0] != QLatin1Char('#')) throw std::invalid_argument("expected #RRGGBBAA");
+  if (hex.size() != 9 || hex[0] != QLatin1Char('#'))
+    throw std::invalid_argument("expected #RRGGBBAA");
   bool ok = false;
   const QString swapped = hex.mid(7, 2) + hex.mid(5, 2) + hex.mid(3, 2) + hex.mid(1, 2);
   const std::uint32_t v = swapped.toUInt(&ok, 16);
@@ -85,7 +85,8 @@ std::uint32_t hexToRgbaInt(const QString& hex) {
 unsigned windowsBuild() {
   using RtlGetVersionFn = LONG(WINAPI*)(OSVERSIONINFOW*);
   static const unsigned build = [] {
-    const auto fn = reinterpret_cast<RtlGetVersionFn>(GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion"));
+    const auto fn = reinterpret_cast<RtlGetVersionFn>(
+        GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion"));
     OSVERSIONINFOW info{};
     info.dwOSVersionInfoSize = sizeof(info);
     return fn && fn(&info) == 0 ? static_cast<unsigned>(info.dwBuildNumber) : 0u;
@@ -95,8 +96,8 @@ unsigned windowsBuild() {
 
 bool isMicaSupported() { return windowsBuild() >= 22000; }
 
-void enableBlur(quintptr hwndValue, bool darkMode, bool roundCorners, const QString& roundCornersType,
-                const QString& borderColor) {
+void enableBlur(quintptr hwndValue, bool darkMode, bool roundCorners,
+                const QString& roundCornersType, const QString& borderColor) {
   const HWND hwnd = toHwnd(hwndValue);
   if (!IsWindow(hwnd)) return;
   try {
@@ -107,8 +108,9 @@ void enableBlur(quintptr hwndValue, bool darkMode, bool roundCorners, const QStr
         setAttr(hwnd, kUseImmersiveDarkMode, &one, sizeof(one));
       }
       if (roundCorners) {
-        setCornerPreference(hwnd, roundCornersType == QLatin1String("normal") ? kCornerRound : kCornerRoundSmall,
-                            borderColor);
+        setCornerPreference(
+            hwnd, roundCornersType == QLatin1String("normal") ? kCornerRound : kCornerRoundSmall,
+            borderColor);
       }
     } else {
       setAccentPolicy(hwnd, kAccentAcrylicBlurBehind, 0x01202020);

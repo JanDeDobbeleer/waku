@@ -9,7 +9,8 @@
 namespace yasb::widgets {
 
 // Runs `poll` on a worker thread every `intervalMs` and delivers each result to the owner's thread.
-// The poll function must be self-contained (no widget access). Stop it before destroying captured state.
+// The poll function must be self-contained (no widget access). Stop it before destroying captured
+// state.
 class PollingWorker : public QObject {
   Q_OBJECT
  public:

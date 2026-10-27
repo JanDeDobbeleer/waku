@@ -71,7 +71,8 @@ std::string applySpec(const nlohmann::json& v, const std::string& spec) {
   if (type == "f" || type == "%") {
     if (!numeric) throw FormatError("format code 'f' requires a number");
     const double d = v.get<double>();
-    body = type == "%" ? formatFixed(d * 100.0, hasPrec ? prec : 6) + "%" : formatFixed(d, hasPrec ? prec : 6);
+    body = type == "%" ? formatFixed(d * 100.0, hasPrec ? prec : 6) + "%"
+                       : formatFixed(d, hasPrec ? prec : 6);
   } else if (type == "d") {
     if (!v.is_number_integer()) throw FormatError("format code 'd' requires an integer");
     body = std::to_string(v.get<long long>());
@@ -101,7 +102,8 @@ const nlohmann::json& lookup(const nlohmann::json& root, const std::string& fiel
       const size_t end = field.find(']', i);
       if (end == std::string::npos) throw FormatError("expected ']' in field");
       const std::string key = field.substr(i + 1, end - i - 1);
-      const bool numericKey = !key.empty() && key.find_first_not_of("0123456789") == std::string::npos;
+      const bool numericKey =
+          !key.empty() && key.find_first_not_of("0123456789") == std::string::npos;
       if (numericKey && cur->is_array()) {
         const size_t idx = std::stoul(key);
         if (idx >= cur->size()) throw FormatError("IndexError: " + key);
@@ -138,8 +140,10 @@ std::string pyFormat(const std::string& templ, const nlohmann::json& kwargs) {
       int depth = 1;
       size_t j = i + 1;
       while (j < templ.size() && depth > 0) {
-        if (templ[j] == '{') ++depth;
-        else if (templ[j] == '}') --depth;
+        if (templ[j] == '{')
+          ++depth;
+        else if (templ[j] == '}')
+          --depth;
         ++j;
       }
       if (depth != 0) throw FormatError("expected '}' before end of string");
@@ -149,8 +153,10 @@ std::string pyFormat(const std::string& templ, const nlohmann::json& kwargs) {
       // The spec starts at the first ':' outside [] brackets.
       int bracket = 0;
       for (size_t k = 0; k < body.size(); ++k) {
-        if (body[k] == '[') ++bracket;
-        else if (body[k] == ']') --bracket;
+        if (body[k] == '[')
+          ++bracket;
+        else if (body[k] == ']')
+          --bracket;
         else if (body[k] == ':' && bracket == 0) {
           spec = body.substr(k + 1);
           body.resize(k);
@@ -202,7 +208,9 @@ std::string naturalSizeGnu(double bytes, int precision) {
   return formatFixed(bytes / std::pow(base, exp), precision) + kSuffix[exp - 1];
 }
 
-bool isSpanPart(const QString& part) { return part.contains(QLatin1String("<span")) && part.contains(QLatin1String("</span>")); }
+bool isSpanPart(const QString& part) {
+  return part.contains(QLatin1String("<span")) && part.contains(QLatin1String("</span>"));
+}
 
 std::vector<LabelPart> splitLabelParts(const QString& content, bool isAlt) {
   static const QRegularExpression splitRe(QStringLiteral("(<span.*?>.*?</span>)"));

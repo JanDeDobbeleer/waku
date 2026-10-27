@@ -6,3 +6,21 @@ IndentWidth: 2
 SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 PointerAlignment: Left
+LineEnding: CRLF
+IncludeCategories:
+  # windows.h must precede the other Win32 headers, which rely on its declarations.
+  - Regex: '^<windows\.h>$'
+    Priority: 1
+    SortPriority: 1
+  - Regex: '^<ext/.*\.h>'
+    Priority: 2
+    SortPriority: 3
+  - Regex: '^<.*\.h>'
+    Priority: 1
+    SortPriority: 2
+  - Regex: '^<.*'
+    Priority: 2
+    SortPriority: 3
+  - Regex: '.*'
+    Priority: 3
+    SortPriority: 4

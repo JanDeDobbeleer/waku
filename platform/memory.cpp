@@ -1,8 +1,8 @@
 #include "memory.h"
 
+#include <windows.h>
 #include <pdh.h>
 #include <psapi.h>
-#include <windows.h>
 
 #include <algorithm>
 #include <cmath>

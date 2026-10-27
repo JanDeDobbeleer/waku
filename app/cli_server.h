@@ -3,7 +3,6 @@
 #include <windows.h>
 
 #include <QString>
-
 #include <atomic>
 #include <functional>
 #include <string>
@@ -23,7 +22,8 @@ class CliServer {
  public:
   using CommandHandler = std::function<void(const QString&)>;
 
-  explicit CliServer(std::wstring commandPipeName = kCommandPipeName, std::wstring logPipeName = kLogPipeName);
+  explicit CliServer(std::wstring commandPipeName = kCommandPipeName,
+                     std::wstring logPipeName = kLogPipeName);
   ~CliServer();
   CliServer(const CliServer&) = delete;
   CliServer& operator=(const CliServer&) = delete;

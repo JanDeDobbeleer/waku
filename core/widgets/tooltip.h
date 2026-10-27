@@ -28,10 +28,12 @@ void setTooltipOptions(const TooltipOptions& options);
 const TooltipOptions& tooltipOptions();
 
 // Pure port of CustomToolTip.calculate_position. `position` is "top", "bottom" or empty (auto).
-QPoint computeTooltipPosition(const QRect& widgetGeometry, const QRect& topLevelGeometry, const QSize& tipSize,
-                              const QRect& screen, const QString& position, int offset);
+QPoint computeTooltipPosition(const QRect& widgetGeometry, const QRect& topLevelGeometry,
+                              const QSize& tipSize, const QRect& screen, const QString& position,
+                              int offset);
 
-// Frameless tooltip with fade and slide animations; styled by the app stylesheet (`.tooltip[.dark]`).
+// Frameless tooltip with fade and slide animations; styled by the app stylesheet
+// (`.tooltip[.dark]`).
 class CustomToolTip : public QFrame {
   Q_OBJECT
   Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity)
@@ -48,7 +50,8 @@ class CustomToolTip : public QFrame {
   void setPositionPreference(const QString& position) { position_ = position; }
   void updateContent(const QString& text);
   // A null or empty widgetGeometry only sets the text (matches Python).
-  void showTooltip(const QString& text, const QRect& widgetGeometry, const QRect& topLevelGeometry, int durationMs = 0);
+  void showTooltip(const QString& text, const QRect& widgetGeometry, const QRect& topLevelGeometry,
+                   int durationMs = 0);
   void startFadeOut();
   static void hideActive();
 
@@ -104,8 +107,10 @@ class TooltipEventFilter : public QObject {
   bool mouseInside_ = false;
 };
 
-// Declarative attach: an empty text does nothing; calling again updates the existing tooltip's text.
-void setTooltip(QWidget* widget, const QString& text, int delayMs = 400, const QString& position = QString());
+// Declarative attach: an empty text does nothing; calling again updates the existing tooltip's
+// text.
+void setTooltip(QWidget* widget, const QString& text, int delayMs = 400,
+                const QString& position = QString());
 void showTooltipNow(QWidget* widget);
 
 }  // namespace yasb::widgets

@@ -6,7 +6,6 @@
 #include <QProcess>
 #include <QRegularExpression>
 #include <QScreen>
-
 #include <utility>
 
 #include "app/log.h"
@@ -52,14 +51,16 @@ bool AppServices::start(bool restartWait) {
   }
 
   tray_ = new TrayIcon(this);
-  connect(tray_, &TrayIcon::reloadRequested, this, [this] { requestRestart(QStringLiteral("Reload requested")); });
+  connect(tray_, &TrayIcon::reloadRequested, this,
+          [this] { requestRestart(QStringLiteral("Reload requested")); });
   connect(tray_, &TrayIcon::exitRequested, this, &AppServices::exitRequested);
   connect(tray_, &TrayIcon::barActionRequested, this,
           [this](const QString& action) { applyBarCommand(action, QString()); });
 
   cli_ = std::make_unique<CliServer>();
   cli_->start([this](const QString& command) {
-    QMetaObject::invokeMethod(this, [this, command] { handleCommand(command); }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        this, [this, command] { handleCommand(command); }, Qt::QueuedConnection);
   });
   hotkeys_ = std::make_unique<HotkeyService>(collectHotkeys(config_));
   hotkeys_->start();
@@ -106,9 +107,11 @@ void AppServices::requestRestart(const QString& reason) {
   qInfo().noquote() << reason;
   QStringList args = QCoreApplication::arguments();
   if (!args.isEmpty()) args.removeFirst();
-  if (!args.contains(QStringLiteral("--restart-wait"))) args.append(QStringLiteral("--restart-wait"));
+  if (!args.contains(QStringLiteral("--restart-wait")))
+    args.append(QStringLiteral("--restart-wait"));
   qInfo() << "Starting replacement process with restart wait";
-  if (!QProcess::startDetached(QCoreApplication::applicationFilePath(), args, QCoreApplication::applicationDirPath())) {
+  if (!QProcess::startDetached(QCoreApplication::applicationFilePath(), args,
+                               QCoreApplication::applicationDirPath())) {
     restarting_ = false;
     qCritical() << "Could not start replacement application";
     return;
@@ -120,7 +123,8 @@ void AppServices::requestRestart(const QString& reason) {
 void AppServices::applyBarCommand(const QString& action, const QString& screen) {
   for (const auto& bar : bars_) {
     if (!bar) continue;
-    if (!screen.isEmpty() && bar->screenName() != screen && !bar->screenName().contains(screen)) continue;
+    if (!screen.isEmpty() && bar->screenName() != screen && !bar->screenName().contains(screen))
+      continue;
     if (action == QLatin1String("show")) {
       bar->show();
     } else if (action == QLatin1String("hide")) {

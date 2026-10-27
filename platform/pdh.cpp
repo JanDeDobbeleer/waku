@@ -1,7 +1,7 @@
 #include "pdh.h"
 
-#include <pdh.h>
 #include <windows.h>
+#include <pdh.h>
 
 #include <QDebug>
 #include <algorithm>

@@ -12,7 +12,8 @@ int sendCommand(const std::string& command) {
     std::fprintf(stderr, "Could not connect to yasb-native (named pipe unavailable).\n");
     return 1;
   }
-  HANDLE pipe = CreateFileW(kCommandPipeName, GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+  HANDLE pipe = CreateFileW(kCommandPipeName, GENERIC_READ | GENERIC_WRITE, 0, nullptr,
+                            OPEN_EXISTING, 0, nullptr);
   if (pipe == INVALID_HANDLE_VALUE) {
     std::fprintf(stderr, "Could not open command pipe: %lu\n", GetLastError());
     return 1;
@@ -41,7 +42,8 @@ int sendCommand(const std::string& command) {
 
 int main(int argc, char** argv) {
   if (argc < 2) {
-    std::fprintf(stderr, "Usage: yasbc-native <reload|stop|show-bar|hide-bar|toggle-bar> [--screen NAME]\n");
+    std::fprintf(
+        stderr, "Usage: yasbc-native <reload|stop|show-bar|hide-bar|toggle-bar> [--screen NAME]\n");
     return 2;
   }
   std::string command;

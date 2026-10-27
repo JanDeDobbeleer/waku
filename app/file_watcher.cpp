@@ -1,14 +1,13 @@
 #include "app/file_watcher.h"
 
 #include <QFileInfo>
-
 #include <utility>
 
 namespace yasb::app {
 
-FileWatcher::FileWatcher(QString configPath, QString stylesheetPath, Validator configIsValid, Callback configChanged,
-                         Callback stylesheetChanged, int debounceMs, bool watchConfig, bool watchStylesheet,
-                         QObject* parent)
+FileWatcher::FileWatcher(QString configPath, QString stylesheetPath, Validator configIsValid,
+                         Callback configChanged, Callback stylesheetChanged, int debounceMs,
+                         bool watchConfig, bool watchStylesheet, QObject* parent)
     : QObject(parent),
       configPath_(std::move(configPath)),
       stylesheetPath_(std::move(stylesheetPath)),
@@ -30,7 +29,8 @@ FileWatcher::FileWatcher(QString configPath, QString stylesheetPath, Validator c
 
 FileWatcher::Stamp FileWatcher::stamp(const QString& path) {
   const QFileInfo info(path);
-  return {info.exists(), info.exists() ? info.size() : -1, info.exists() ? info.lastModified() : QDateTime()};
+  return {info.exists(), info.exists() ? info.size() : -1,
+          info.exists() ? info.lastModified() : QDateTime()};
 }
 
 void FileWatcher::rearm() {
@@ -38,7 +38,8 @@ void FileWatcher::rearm() {
   for (const QString& file : files) watcher_.removePath(file);
   if (watchConfig_ && QFileInfo::exists(configPath_)) watcher_.addPath(configPath_);
   if (watchStylesheet_ && QFileInfo::exists(stylesheetPath_)) watcher_.addPath(stylesheetPath_);
-  if (QFileInfo::exists(directory_) && !watcher_.directories().contains(directory_)) watcher_.addPath(directory_);
+  if (QFileInfo::exists(directory_) && !watcher_.directories().contains(directory_))
+    watcher_.addPath(directory_);
 }
 
 void FileWatcher::inspectChanges() {

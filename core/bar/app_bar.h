@@ -28,7 +28,8 @@ struct AppBarRect {
   int left = 0, top = 0, right = 0, bottom = 0;
   bool operator==(const AppBarRect&) const = default;
 };
-AppBarRect computeAppBarRect(AppBarEdge edge, int height, const QRect& screenGeometry, double dpr, bool scaleScreenHeight);
+AppBarRect computeAppBarRect(AppBarEdge edge, int height, const QRect& screenGeometry, double dpr,
+                             bool scaleScreenHeight);
 
 // Seam so tests and --config-home runs never touch the live desktop's app-bar list.
 class IAppBar {

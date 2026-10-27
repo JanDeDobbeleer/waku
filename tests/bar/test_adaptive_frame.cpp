@@ -55,7 +55,8 @@ QWidget* makeWidget(int width, const json& name) {
   auto* inner = new QHBoxLayout(w);
   inner->setContentsMargins(0, 0, 0, 0);
   w->setProperty("test_widget", true);
-  if (name.is_string()) w->setProperty("widget_name", QString::fromStdString(name.get<std::string>()));
+  if (name.is_string())
+    w->setProperty("widget_name", QString::fromStdString(name.get<std::string>()));
   return w;
 }
 
@@ -64,7 +65,8 @@ struct Made {
   FakeAppBar* appBar = nullptr;
 };
 
-Made makeBar(const QString& css, const BarWindow::Widgets& groups, const json& config, const QString& rules = {}) {
+Made makeBar(const QString& css, const BarWindow::Widgets& groups, const json& config,
+             const QString& rules = {}) {
   auto fake = std::make_unique<FakeAppBar>();
   Made made;
   made.appBar = fake.get();
@@ -72,11 +74,13 @@ Made makeBar(const QString& css, const BarWindow::Widgets& groups, const json& c
   deps.appBar = std::move(fake);
   deps.themeDetector = [] { return false; };
   deps.screenGeometry = [] { return vectorScreen(); };
-  const QString stylesheet = QStringLiteral(".bar { background: rgb(200, 0, 0); qproperty-railheight: %1; %2 } %3")
-                                 .arg(kRail)
-                                 .arg(css, rules);
-  made.bar = new BarWindow(QStringLiteral("adaptive"), QStringLiteral("adaptive"), QGuiApplication::primaryScreen(),
-                           stylesheet, groups, settingsFor(config), std::move(deps));
+  const QString stylesheet =
+      QStringLiteral(".bar { background: rgb(200, 0, 0); qproperty-railheight: %1; %2 } %3")
+          .arg(kRail)
+          .arg(css, rules);
+  made.bar = new BarWindow(QStringLiteral("adaptive"), QStringLiteral("adaptive"),
+                           QGuiApplication::primaryScreen(), stylesheet, groups,
+                           settingsFor(config), std::move(deps));
   made.bar->show();
   QTest::qWait(20);
   return made;
@@ -100,8 +104,10 @@ void expectPath(const json& expected, const QPainterPath& actual, const char* wh
   ASSERT_EQ(expected.size(), got.size()) << what << " element count\n" << got.dump();
   for (std::size_t i = 0; i < expected.size(); ++i) {
     EXPECT_EQ(expected[i][0], got[i][0]) << what << "[" << i << "] type";
-    EXPECT_NEAR(expected[i][1].get<double>(), got[i][1].get<double>(), 0.002) << what << "[" << i << "].x";
-    EXPECT_NEAR(expected[i][2].get<double>(), got[i][2].get<double>(), 0.002) << what << "[" << i << "].y";
+    EXPECT_NEAR(expected[i][1].get<double>(), got[i][1].get<double>(), 0.002)
+        << what << "[" << i << "].x";
+    EXPECT_NEAR(expected[i][2].get<double>(), got[i][2].get<double>(), 0.002)
+        << what << "[" << i << "].y";
   }
 }
 
@@ -139,9 +145,10 @@ void expectSnapshot(const json& expected, BarWindow& bar) {
       if (!child->property("test_widget").toBool()) continue;
       const QPoint origin = child->mapTo(frame, QPoint(0, 0));
       const QVariant name = child->property("widget_name");
-      widgets.push_back({{"container", container->property("class").toString().toStdString()},
-                         {"name", name.isValid() ? json(name.toString().toStdString()) : json(nullptr)},
-                         {"rect", {origin.x(), origin.y(), child->width(), child->height()}}});
+      widgets.push_back(
+          {{"container", container->property("class").toString().toStdString()},
+           {"name", name.isValid() ? json(name.toString().toStdString()) : json(nullptr)},
+           {"rect", {origin.x(), origin.y(), child->width(), child->height()}}});
     }
   }
   EXPECT_EQ(expected.at("widgets"), widgets);
@@ -175,8 +182,9 @@ BarWindow::Widgets groupsFrom(const json& layout) {
 
 void runStandard(const json& c) {
   const json& in = c.at("inputs");
-  Made made = makeBar(QString::fromStdString(in.at("bar_css").get<std::string>()), groupsFrom(in.at("layout")),
-                      in.at("bar_config"), QString::fromStdString(in.at("extra_rules").get<std::string>()));
+  Made made = makeBar(QString::fromStdString(in.at("bar_css").get<std::string>()),
+                      groupsFrom(in.at("layout")), in.at("bar_config"),
+                      QString::fromStdString(in.at("extra_rules").get<std::string>()));
   ASSERT_FALSE(made.bar.isNull());
   expectSnapshot(c.at("expected"), *made.bar);
   closeBar(made.bar);
@@ -212,10 +220,10 @@ void runEdgeChange(const json& c) {
                       {{"alignment", {{"position", in.at("position")}}}});
   ASSERT_FALSE(made.bar.isNull());
   EXPECT_EQ(ex.at("geometry_before"), rectJson(made.bar->geometry()));
-  made.bar->setStyleSheet(
-      QStringLiteral(".bar { background: rgb(200, 0, 0); qproperty-railheight: %1; qproperty-edgeradius: %2; }")
-          .arg(kRail)
-          .arg(in.at("edge_radius_after").get<int>()));
+  made.bar->setStyleSheet(QStringLiteral(".bar { background: rgb(200, 0, 0); qproperty-railheight: "
+                                         "%1; qproperty-edgeradius: %2; }")
+                              .arg(kRail)
+                              .arg(in.at("edge_radius_after").get<int>()));
   EXPECT_EQ(ex.at("geometry_immediately_after_stylesheet"), rectJson(made.bar->geometry()));
   QTest::qWait(20);
   EXPECT_EQ(ex.at("geometry_after"), rectJson(made.bar->geometry()));
@@ -237,10 +245,11 @@ TEST_P(IslandVectors, MatchesPython) {
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(Islands, IslandVectors, testing::ValuesIn(caseNames()), [](const auto& info) {
-  std::string n = info.param;
-  for (char& ch : n) {
-    if (!std::isalnum(static_cast<unsigned char>(ch))) ch = '_';
-  }
-  return n;
-});
+INSTANTIATE_TEST_SUITE_P(Islands, IslandVectors, testing::ValuesIn(caseNames()),
+                         [](const auto& info) {
+                           std::string n = info.param;
+                           for (char& ch : n) {
+                             if (!std::isalnum(static_cast<unsigned char>(ch))) ch = '_';
+                           }
+                           return n;
+                         });

@@ -2,9 +2,8 @@
 
 #include <QObject>
 #include <QPointer>
-#include <nlohmann/json.hpp>
-
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <vector>
 
 #include "app/cli_server.h"

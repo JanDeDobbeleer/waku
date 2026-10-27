@@ -1,12 +1,11 @@
 #pragma once
 
-#include "base_widget.h"
-
-#include <nlohmann/json.hpp>
-
 #include <functional>
 #include <map>
+#include <nlohmann/json.hpp>
 #include <string>
+
+#include "base_widget.h"
 
 namespace yasb::config {
 struct LoadResult;
@@ -25,7 +24,8 @@ struct WidgetContext {
 
 using WidgetFactory = std::function<BaseWidget*(const WidgetContext&)>;
 
-// Maps config `type` strings ("yasb.cpu.CpuWidget") to factories. U8 registers each widget once at startup.
+// Maps config `type` strings ("yasb.cpu.CpuWidget") to factories. U8 registers each widget once at
+// startup.
 class WidgetRegistry {
  public:
   static WidgetRegistry& instance();
@@ -36,9 +36,10 @@ class WidgetRegistry {
   // nullptr (with a warning) for unknown types.
   BaseWidget* create(const WidgetContext& ctx) const;
 
-  // Builds a widget from the loaded config; nullptr when the name is undefined, invalid or unregistered.
-  BaseWidget* create(const config::LoadResult& config, const std::string& name, const QString& screenName,
-                     const QString& barId) const;
+  // Builds a widget from the loaded config; nullptr when the name is undefined, invalid or
+  // unregistered.
+  BaseWidget* create(const config::LoadResult& config, const std::string& name,
+                     const QString& screenName, const QString& barId) const;
 
  private:
   std::map<std::string, WidgetFactory> m_factories;

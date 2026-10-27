@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QObject>
-#include <QFileSystemWatcher>
-#include <QTimer>
 #include <QDateTime>
+#include <QFileSystemWatcher>
+#include <QObject>
+#include <QTimer>
 #include <functional>
 
 namespace yasb::app {
@@ -15,9 +15,9 @@ class FileWatcher : public QObject {
   using Validator = std::function<bool()>;
   using Callback = std::function<void()>;
 
-  FileWatcher(QString configPath, QString stylesheetPath, Validator configIsValid, Callback configChanged,
-              Callback stylesheetChanged, int debounceMs = 250, bool watchConfig = true,
-              bool watchStylesheet = true, QObject* parent = nullptr);
+  FileWatcher(QString configPath, QString stylesheetPath, Validator configIsValid,
+              Callback configChanged, Callback stylesheetChanged, int debounceMs = 250,
+              bool watchConfig = true, bool watchStylesheet = true, QObject* parent = nullptr);
 
  private:
   struct Stamp {

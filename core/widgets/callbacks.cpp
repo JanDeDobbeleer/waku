@@ -1,8 +1,8 @@
 #include "callbacks.h"
 
 #include <QDebug>
-#include <QRegularExpression>
 #include <QProcess>
+#include <QRegularExpression>
 #include <iterator>
 
 #ifndef NOMINMAX
@@ -39,7 +39,8 @@ ParsedCallback parseCallback(const QString& callbackStr) {
 QString quoteCmdLine(const QStringList& argv) {
   QStringList parts;
   for (const QString& arg : argv) {
-    const bool needQuote = arg.isEmpty() || arg.contains(QLatin1Char(' ')) || arg.contains(QLatin1Char('\t'));
+    const bool needQuote =
+        arg.isEmpty() || arg.contains(QLatin1Char(' ')) || arg.contains(QLatin1Char('\t'));
     QString result;
     int backslashes = 0;
     if (needQuote) result += QLatin1Char('"');
@@ -132,7 +133,8 @@ bool CallbackRegistry::run(const QString& callbackStr) {
   const bool arityOk = entry.arity < 0 || parsed.args.size() == entry.arity;
   if (!arityOk) {
     if (m_warned.insert(parsed.name + QLatin1String("#arity")).second) {
-      qWarning().noquote() << "Callback" << parsed.name << "called with" << parsed.args.size() << "args";
+      qWarning().noquote() << "Callback" << parsed.name << "called with" << parsed.args.size()
+                           << "args";
     }
     return false;
   }

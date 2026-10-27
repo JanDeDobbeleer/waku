@@ -30,7 +30,8 @@ std::vector<std::string> caseNames() {
 QString q(const std::string& s) { return QString::fromStdString(s); }
 
 QString entryPath(const json& c) {
-  return QDir::toNativeSeparators(QDir(QStringLiteral(YASB_VECTORS_DIR)).absoluteFilePath(q(c.at("input"))));
+  return QDir::toNativeSeparators(
+      QDir(QStringLiteral(YASB_VECTORS_DIR)).absoluteFilePath(q(c.at("input"))));
 }
 
 struct Dirs {
@@ -43,9 +44,12 @@ Dirs dirsFor(const QString& entry) {
   return {dir, QDir::cleanPath(dir + QStringLiteral("/../.."))};
 }
 
-// ${DIR} / ${CONFIG_HOME} placeholders; `native` picks the separators (log lines are Windows paths).
+// ${DIR} / ${CONFIG_HOME} placeholders; `native` picks the separators (log lines are Windows
+// paths).
 QString expand(QString text, const Dirs& d, bool native) {
-  auto fix = [&](const QString& p) { return native ? QDir::toNativeSeparators(p) : QDir::fromNativeSeparators(p); };
+  auto fix = [&](const QString& p) {
+    return native ? QDir::toNativeSeparators(p) : QDir::fromNativeSeparators(p);
+  };
   text.replace(QStringLiteral("${DIR}"), fix(d.dir));
   text.replace(QStringLiteral("${CONFIG_HOME}"), fix(d.configHome));
   return text;
@@ -96,7 +100,8 @@ void expectRules(const ParsedStyleSheet& parsed, const json& expected, const Dir
       }
       want["properties"] = wantProps;
     }
-    EXPECT_EQ(have, want) << "rule " << i << ": " << parsed.rules[static_cast<qsizetype>(i)].selector.toStdString();
+    EXPECT_EQ(have, want) << "rule " << i << ": "
+                          << parsed.rules[static_cast<qsizetype>(i)].selector.toStdString();
   }
 }
 
@@ -135,4 +140,6 @@ TEST_P(CssVector, ExtractRulesMatchesPython) {
 }
 
 INSTANTIATE_TEST_SUITE_P(Vectors, CssVector, testing::ValuesIn(caseNames()),
-                         [](const testing::TestParamInfo<std::string>& info) { return info.param; });
+                         [](const testing::TestParamInfo<std::string>& info) {
+                           return info.param;
+                         });

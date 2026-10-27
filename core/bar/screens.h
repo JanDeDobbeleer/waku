@@ -27,7 +27,8 @@ std::vector<BarScreenAssignment> resolveBarScreens(const std::vector<BarScreens>
                                                    const std::string& primaryScreen,
                                                    std::vector<std::string>* warn = nullptr);
 
-// Exact name first, then the first screen whose name contains `name` (utilities.get_screen_by_name).
+// Exact name first, then the first screen whose name contains `name`
+// (utilities.get_screen_by_name).
 QScreen* screenByName(const QList<QScreen*>& screens, const QString& name);
 
 }  // namespace yasb::bar

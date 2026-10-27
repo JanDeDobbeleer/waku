@@ -2,8 +2,6 @@
 
 namespace yasb {
 
-const char* version() noexcept {
-  return YASB_VERSION;
-}
+const char* version() noexcept { return YASB_VERSION; }
 
 }  // namespace yasb

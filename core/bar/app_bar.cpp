@@ -5,7 +5,8 @@
 
 namespace yasb::bar {
 
-AppBarRect computeAppBarRect(AppBarEdge edge, int height, const QRect& g, double dpr, bool scaleScreenHeight) {
+AppBarRect computeAppBarRect(AppBarEdge edge, int height, const QRect& g, double dpr,
+                             bool scaleScreenHeight) {
   const int barHeight = static_cast<int>(height * dpr);
   const int screenHeight = static_cast<int>(scaleScreenHeight ? g.height() * dpr : g.height());
   AppBarRect rc;
@@ -39,8 +40,8 @@ class Win32AppBar : public IAppBar {
     SetWindowLongPtrW(data_.hWnd, GWL_EXSTYLE, style);
 
     if (r.screen) {
-      const AppBarRect rc = computeAppBarRect(r.edge, r.height, r.screen->geometry(), r.screen->devicePixelRatio(),
-                                              r.scaleScreenHeight);
+      const AppBarRect rc = computeAppBarRect(r.edge, r.height, r.screen->geometry(),
+                                              r.screen->devicePixelRatio(), r.scaleScreenHeight);
       data_.rc = {rc.left, rc.top, rc.right, rc.bottom};
     }
     if (r.reserveSpace) SHAppBarMessage(ABM_SETPOS, &data_);

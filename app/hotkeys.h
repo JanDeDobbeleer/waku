@@ -4,7 +4,6 @@
 
 #include <QPoint>
 #include <QRect>
-
 #include <atomic>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
@@ -30,7 +29,8 @@ struct ScreenTarget {
 
 std::optional<HotkeyBinding> parseHotkey(std::string keys, std::string widget, std::string action,
                                          std::string screen = "active");
-std::string routeHotkeyScreen(const std::string& mode, const QPoint& cursor, const std::vector<ScreenTarget>& screens,
+std::string routeHotkeyScreen(const std::string& mode, const QPoint& cursor,
+                              const std::vector<ScreenTarget>& screens,
                               const std::string& primaryScreen);
 std::vector<HotkeyBinding> collectHotkeys(const nlohmann::json& config);
 

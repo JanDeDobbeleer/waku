@@ -17,7 +17,8 @@ class EventBus : public QObject {
   }
 
  signals:
-  // Hotkey routed to the widget whose config name is `widgetName` on `screen`; `action` is a callback string.
+  // Hotkey routed to the widget whose config name is `widgetName` on `screen`; `action` is a
+  // callback string.
   void widgetHotkey(const QString& widgetName, const QString& action, const QString& screen);
   // Generic named events (e.g. "komorebi_update", "bar_cli") with a payload.
   void event(const QString& name, const QVariantMap& payload);

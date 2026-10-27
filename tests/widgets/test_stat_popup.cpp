@@ -49,11 +49,15 @@ TEST(StatPopup, GraphPointsAndSplineShape) {
 TEST(Tooltip, PositionPrefersBelowThenAbove) {
   const QRect widget(100, 0, 50, 30);
   EXPECT_EQ(computeTooltipPosition(widget, widget, {80, 20}, kScreen, "", 5), QPoint(84, 34));
-  EXPECT_EQ(computeTooltipPosition(widget, widget, {80, 20}, kScreen, "top", 5), QPoint(84, 34));  // no room above
+  EXPECT_EQ(computeTooltipPosition(widget, widget, {80, 20}, kScreen, "top", 5),
+            QPoint(84, 34));  // no room above
 
   const QRect low(100, 1690, 50, 16);
   EXPECT_EQ(computeTooltipPosition(low, low, {80, 20}, kScreen, "", 5), QPoint(84, 1665));
-  EXPECT_EQ(computeTooltipPosition(QRect(0, 0, 10, 10), QRect(0, 0, 10, 10), {80, 20}, kScreen, "", 5).x(), 0);
+  EXPECT_EQ(
+      computeTooltipPosition(QRect(0, 0, 10, 10), QRect(0, 0, 10, 10), {80, 20}, kScreen, "", 5)
+          .x(),
+      0);
 }
 
 TEST(StatPopup, BuildsStructureAndPinsOnToggle) {
@@ -64,9 +68,11 @@ TEST(StatPopup, BuildsStructureAndPinsOnToggle) {
   menu.blur = false;
   menu.pinIcon = "P";
   menu.unpinIcon = "U";
-  const std::vector<StatRow> rows = {{QString("Total"), "total", "1G", QString("Used"), "used", "2G"},
-                                     {QString("Free"), "free", "3G", std::nullopt, "", ""}};
-  PinnablePopup* popup = buildStatPopup(&anchor, menu, "memory-popup", "Memory", {10, 20, 30}, rows);
+  const std::vector<StatRow> rows = {
+      {QString("Total"), "total", "1G", QString("Used"), "used", "2G"},
+      {QString("Free"), "free", "3G", std::nullopt, "", ""}};
+  PinnablePopup* popup =
+      buildStatPopup(&anchor, menu, "memory-popup", "Memory", {10, 20, 30}, rows);
 
   EXPECT_EQ(popup->property("class").toString(), "memory-popup");
   ASSERT_NE(popup->graph, nullptr);
@@ -103,7 +109,8 @@ TEST(WidgetBuilder, BuildsKnownWidgetsAndRemembersFailuresOnce) {
     return new BaseWidget(QString::fromStdString(c.name), "test-widget ", 0);
   });
   WidgetBuilder builder(cfg, registry);
-  const WidgetBuilder::Columns columns = {{"left", {"ok", "bad", "ghost"}}, {"right", {"odd", "ok", "unreg", "bad"}}};
+  const WidgetBuilder::Columns columns = {{"left", {"ok", "bad", "ghost"}},
+                                          {"right", {"odd", "ok", "unreg", "bad"}}};
   auto built = builder.buildWidgets(columns, "DISPLAY1", "bar-1");
 
   ASSERT_EQ(built["left"].size(), 1);

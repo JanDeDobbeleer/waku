@@ -29,21 +29,48 @@ const QSet<QString>& borderRadiusProps() {
 }
 
 const QSet<QString>& numericProps() {
-  static const QSet<QString> s{
-      u"max-height"_s, u"max-width"_s, u"min-height"_s, u"min-width"_s, u"width"_s, u"height"_s,
-      u"border-width"_s, u"border-top-width"_s, u"border-right-width"_s, u"border-bottom-width"_s,
-      u"border-left-width"_s, u"border-radius"_s, u"border-top-left-radius"_s,
-      u"border-top-right-radius"_s, u"border-bottom-left-radius"_s, u"border-bottom-right-radius"_s,
-      u"margin"_s, u"margin-top"_s, u"margin-right"_s, u"margin-bottom"_s, u"margin-left"_s,
-      u"padding"_s, u"padding-top"_s, u"padding-right"_s, u"padding-bottom"_s, u"padding-left"_s,
-      u"font-size"_s, u"font-weight"_s, u"letter-spacing"_s, u"word-spacing"_s, u"spacing"_s,
-      u"bottom"_s, u"left"_s, u"right"_s, u"top"_s};
+  static const QSet<QString> s{u"max-height"_s,
+                               u"max-width"_s,
+                               u"min-height"_s,
+                               u"min-width"_s,
+                               u"width"_s,
+                               u"height"_s,
+                               u"border-width"_s,
+                               u"border-top-width"_s,
+                               u"border-right-width"_s,
+                               u"border-bottom-width"_s,
+                               u"border-left-width"_s,
+                               u"border-radius"_s,
+                               u"border-top-left-radius"_s,
+                               u"border-top-right-radius"_s,
+                               u"border-bottom-left-radius"_s,
+                               u"border-bottom-right-radius"_s,
+                               u"margin"_s,
+                               u"margin-top"_s,
+                               u"margin-right"_s,
+                               u"margin-bottom"_s,
+                               u"margin-left"_s,
+                               u"padding"_s,
+                               u"padding-top"_s,
+                               u"padding-right"_s,
+                               u"padding-bottom"_s,
+                               u"padding-left"_s,
+                               u"font-size"_s,
+                               u"font-weight"_s,
+                               u"letter-spacing"_s,
+                               u"word-spacing"_s,
+                               u"spacing"_s,
+                               u"bottom"_s,
+                               u"left"_s,
+                               u"right"_s,
+                               u"top"_s};
   return s;
 }
 
 const QHash<QString, QStringList>& shorthandSides() {
   static const QHash<QString, QStringList> h{
-      {u"padding"_s, {u"padding-top"_s, u"padding-right"_s, u"padding-bottom"_s, u"padding-left"_s}},
+      {u"padding"_s,
+       {u"padding-top"_s, u"padding-right"_s, u"padding-bottom"_s, u"padding-left"_s}},
       {u"margin"_s, {u"margin-top"_s, u"margin-right"_s, u"margin-bottom"_s, u"margin-left"_s}},
       {u"border-width"_s,
        {u"border-top-width"_s, u"border-right-width"_s, u"border-bottom-width"_s,
@@ -58,7 +85,7 @@ const QHash<QString, QStringList>& shorthandSides() {
 }
 
 const QSet<QString>& animationPseudos() {
-  static const QSet<QString> s{u":pressed"_s, u":hover"_s, u":focus"_s,
+  static const QSet<QString> s{u":pressed"_s, u":hover"_s,   u":focus"_s,
                                u":checked"_s, u":clicked"_s, u":active"_s};
   return s;
 }
@@ -219,7 +246,9 @@ QString requoteString(const QString& raw, bool closed) {
     if (++i >= inner.size()) break;
     const QChar n = inner[i];
     if (n == u'\n') continue;
-    auto hexVal = [](QChar h) { return h.isDigit() || (h.toLower() >= u'a' && h.toLower() <= u'f'); };
+    auto hexVal = [](QChar h) {
+      return h.isDigit() || (h.toLower() >= u'a' && h.toLower() <= u'f');
+    };
     if (hexVal(n)) {
       qsizetype k = i;
       while (k < inner.size() && k - i < 6 && hexVal(inner[k])) ++k;
@@ -235,12 +264,18 @@ QString requoteString(const QString& raw, bool closed) {
   }
   QString out = u"\""_s;
   for (const QChar c : value) {
-    if (c == u'\\') out += u"\\\\"_s;
-    else if (c == u'"') out += u"\\\""_s;
-    else if (c == u'\n') out += u"\\A "_s;
-    else if (c == u'\r') out += u"\\D "_s;
-    else if (c == u'\f') out += u"\\C "_s;
-    else out.append(c);
+    if (c == u'\\')
+      out += u"\\\\"_s;
+    else if (c == u'"')
+      out += u"\\\""_s;
+    else if (c == u'\n')
+      out += u"\\A "_s;
+    else if (c == u'\r')
+      out += u"\\D "_s;
+    else if (c == u'\f')
+      out += u"\\C "_s;
+    else
+      out.append(c);
   }
   return out + u'"';
 }
@@ -320,7 +355,8 @@ QList<Tok> tokenize(const QString& v) {
   auto startsIdent = [&](qsizetype p) {
     if (p >= n) return false;
     if (isIdentStart(v[p]) || v[p] == u'\\') return true;
-    return v[p] == u'-' && p + 1 < n && (isIdentStart(v[p + 1]) || v[p + 1] == u'-' || v[p + 1] == u'\\');
+    return v[p] == u'-' && p + 1 < n &&
+           (isIdentStart(v[p + 1]) || v[p + 1] == u'-' || v[p + 1] == u'\\');
   };
   while (i < n) {
     const QChar c = v[i];
@@ -416,8 +452,9 @@ QStringList splitComponents(const QString& value) {
 }
 
 QList<Declaration> expandBorder(const QString& value) {
-  static const QSet<QString> styles{u"none"_s,   u"hidden"_s, u"dotted"_s, u"dashed"_s, u"solid"_s,
-                                    u"double"_s, u"groove"_s, u"ridge"_s,  u"inset"_s,  u"outset"_s};
+  static const QSet<QString> styles{u"none"_s,  u"hidden"_s, u"dotted"_s, u"dashed"_s,
+                                    u"solid"_s, u"double"_s, u"groove"_s, u"ridge"_s,
+                                    u"inset"_s, u"outset"_s};
   static const QSet<QString> widths{u"thin"_s, u"medium"_s, u"thick"_s};
   QList<Declaration> result;
   auto put = [&](const QString& k, const QString& v) {
@@ -430,9 +467,12 @@ QList<Declaration> expandBorder(const QString& value) {
     result.append({k, v});
   };
   for (const QString& token : splitComponents(value)) {
-    if (styles.contains(token)) put(u"border-style"_s, token);
-    else if (widths.contains(token) || (!token.isEmpty() && token[0].isDigit())) put(u"border-width"_s, token);
-    else put(u"border-color"_s, token);
+    if (styles.contains(token))
+      put(u"border-style"_s, token);
+    else if (widths.contains(token) || (!token.isEmpty() && token[0].isDigit()))
+      put(u"border-width"_s, token);
+    else
+      put(u"border-color"_s, token);
   }
   return result;
 }
@@ -460,11 +500,20 @@ QList<Declaration> expandShorthand(const QString& prop, const QString& value) {
   const QStringList parts = splitComponents(value);
   QStringList expanded;
   switch (parts.size()) {
-    case 0: break;
-    case 1: expanded = {parts[0], parts[0], parts[0], parts[0]}; break;
-    case 2: expanded = {parts[0], parts[1], parts[0], parts[1]}; break;
-    case 3: expanded = {parts[0], parts[1], parts[2], parts[1]}; break;
-    default: expanded = parts.mid(0, 4); break;
+    case 0:
+      break;
+    case 1:
+      expanded = {parts[0], parts[0], parts[0], parts[0]};
+      break;
+    case 2:
+      expanded = {parts[0], parts[1], parts[0], parts[1]};
+      break;
+    case 3:
+      expanded = {parts[0], parts[1], parts[2], parts[1]};
+      break;
+    default:
+      expanded = parts.mid(0, 4);
+      break;
   }
   QList<Declaration> result;
   for (qsizetype i = 0; i < expanded.size(); ++i) result.append({(*it)[i], expanded[i]});
@@ -484,7 +533,8 @@ QList<Declaration> staticDeclarations(const QString& prop, const QString& value,
   const QList<Declaration> expanded = expandShorthand(prop, value);
   QList<Declaration> remaining;
   for (const auto& d : expanded) {
-    const bool strip = isAnimatable(d.first) && (animated.contains(u"all"_s) || animated.contains(d.first));
+    const bool strip =
+        isAnimatable(d.first) && (animated.contains(u"all"_s) || animated.contains(d.first));
     if (!strip) remaining.append(d);
   }
   if (remaining.size() == expanded.size()) return {{prop, value}};
@@ -499,7 +549,9 @@ bool isNone(const QList<Tok>& tokens) {
 
 int timeMs(const Tok& t) { return static_cast<int>(t.number * (t.unit == u"s" ? 1000 : 1)); }
 
-bool isTime(const Tok& t) { return t.type == Tok::Dimension && (t.unit == u"ms" || t.unit == u"s"); }
+bool isTime(const Tok& t) {
+  return t.type == Tok::Dimension && (t.unit == u"ms" || t.unit == u"s");
+}
 
 bool isEasingFn(const Tok& t) {
   const QString n = t.name.toLower();
@@ -521,8 +573,10 @@ QList<int> parseTimeList(const QList<Tok>& tokens) {
   for (const auto& seg : splitByComma(tokens)) {
     if (seg.isEmpty()) continue;
     const Tok& t = seg[0];
-    if (isTime(t)) result.append(timeMs(t));
-    else if (t.type == Tok::Number && t.number == 0) result.append(0);
+    if (isTime(t))
+      result.append(timeMs(t));
+    else if (t.type == Tok::Number && t.number == 0)
+      result.append(0);
   }
   return result;
 }
@@ -550,9 +604,12 @@ std::optional<Segment> parseTransitionSegment(const QList<Tok>& tokens) {
   Segment s{tokens[0].text, timeMs(tokens[1]), u"ease"_s, 0};
   for (qsizetype i = 2; i < tokens.size(); ++i) {
     const Tok& t = tokens[i];
-    if (isTime(t)) s.delay = timeMs(t);
-    else if (t.type == Tok::Ident && t.text != u"normal" && t.text != u"allow-discrete") s.easing = t.text;
-    else if (isEasingFn(t)) s.easing = t.text;
+    if (isTime(t))
+      s.delay = timeMs(t);
+    else if (t.type == Tok::Ident && t.text != u"normal" && t.text != u"allow-discrete")
+      s.easing = t.text;
+    else if (isEasingFn(t))
+      s.easing = t.text;
   }
   return s;
 }
@@ -636,7 +693,7 @@ std::array<int, 3> computeSpecificity(const QString& base, const QStringList& ps
 // ---- Stylesheet parse --------------------------------------------------------------------------
 
 struct RawDecl {
-  QString name;  // lower-cased
+  QString name;   // lower-cased
   QString value;  // serialised, trimmed, `!important` removed
 };
 
@@ -647,8 +704,10 @@ struct RawRule {
 };
 
 bool validIdent(const QString& name) {
-  static const Re re(QStringLiteral(R"(^(?:--|-?(?:[A-Za-z_\x{80}-\x{10FFFF}]|\\.))(?:[\w\x{80}-\x{10FFFF}-]|\\.)*$)"),
-                     kUnicode);
+  static const Re re(
+      QStringLiteral(
+          R"(^(?:--|-?(?:[A-Za-z_\x{80}-\x{10FFFF}]|\\.))(?:[\w\x{80}-\x{10FFFF}-]|\\.)*$)"),
+      kUnicode);
   return re.match(name).hasMatch();
 }
 
@@ -734,7 +793,9 @@ QList<RawRule> parseStylesheet(const QString& s) {
     if (s[i] == u'\n') newlines.append(i);
   }
   auto lineOf = [&](qsizetype pos) {
-    return static_cast<int>(std::lower_bound(newlines.begin(), newlines.end(), pos) - newlines.begin()) + 1;
+    return static_cast<int>(std::lower_bound(newlines.begin(), newlines.end(), pos) -
+                            newlines.begin()) +
+           1;
   };
 
   QList<RawRule> rules;
@@ -797,7 +858,8 @@ QList<RawRule> parseStylesheet(const QString& s) {
 }  // namespace
 
 bool StyleRule::has(const QString& name) const {
-  return std::any_of(properties.begin(), properties.end(), [&](const Declaration& d) { return d.first == name; });
+  return std::any_of(properties.begin(), properties.end(),
+                     [&](const Declaration& d) { return d.first == name; });
 }
 
 QString StyleRule::value(const QString& name) const {
@@ -812,7 +874,8 @@ QString StyleRule::value(const QString& name) const {
 QList<AttrCondition> parseAttrConditions(const QString& segment) {
   static const Re attrRe(QStringLiteral(R"(\[([^\]]+)\])"));
   static const Re content(
-      QStringLiteral(R"re(^\s*([A-Za-z_][\w\-.]*)(?:\s*([~|^$*!]?=)\s*(?:"([^"]*)"|'([^']*)'|([^\s'"\]]+))\s*)?$)re"),
+      QStringLiteral(
+          R"re(^\s*([A-Za-z_][\w\-.]*)(?:\s*([~|^$*!]?=)\s*(?:"([^"]*)"|'([^']*)'|([^\s'"\]]+))\s*)?$)re"),
       kUnicode);
   QList<AttrCondition> out;
   auto it = attrRe.globalMatch(segment);
@@ -824,7 +887,8 @@ QList<AttrCondition> parseAttrConditions(const QString& segment) {
       out.append({parsed.captured(1), u"exists"_s, std::nullopt});
     } else if (op == u"=") {
       QString value = parsed.captured(3);
-      if (parsed.capturedStart(3) < 0) value = parsed.capturedStart(4) >= 0 ? parsed.captured(4) : parsed.captured(5);
+      if (parsed.capturedStart(3) < 0)
+        value = parsed.capturedStart(4) >= 0 ? parsed.captured(4) : parsed.captured(5);
       out.append({parsed.captured(1), u"="_s, value});
     } else {
       out.append({parsed.captured(1), op, std::nullopt});
@@ -905,7 +969,8 @@ QList<std::pair<double, QString>> fillPositions(const QList<Stop>& raw) {
       const double ps = pos[i - 1].value_or(0.0);
       const double pe = j < n ? pos[j].value_or(1.0) : 1.0;
       const qsizetype count = j - i + 1;
-      for (qsizetype k = i; k < j; ++k) pos[k] = ps + (pe - ps) * static_cast<double>(k - i + 1) / static_cast<double>(count);
+      for (qsizetype k = i; k < j; ++k)
+        pos[k] = ps + (pe - ps) * static_cast<double>(k - i + 1) / static_cast<double>(count);
     }
     ++i;
   }
@@ -957,17 +1022,22 @@ std::optional<QString> translateLinear(const QString& inner) {
   QStringList stopArgs = dir ? args.mid(1) : args;
   if (!dir) dir = std::array<double, 4>{0, 0, 0, 1};
   if (stopArgs.size() < 2) return std::nullopt;
-  return u"qlineargradient(x1:%1, y1:%2, x2:%3, y2:%4, %5)"_s.arg(g4((*dir)[0]), g4((*dir)[1]), g4((*dir)[2]), g4((*dir)[3]), stopsString(stopArgs));
+  return u"qlineargradient(x1:%1, y1:%2, x2:%3, y2:%4, %5)"_s.arg(
+      g4((*dir)[0]), g4((*dir)[1]), g4((*dir)[2]), g4((*dir)[3]), stopsString(stopArgs));
 }
 
 std::optional<QString> translateRadial(const QString& inner) {
   static const Re wordRe(QStringLiteral(R"([a-z-]+)"));
-  static const Re atRe(QStringLiteral(R"(\bat\s+([\d.]+%?)\s+([\d.]+%?))"), Re::CaseInsensitiveOption);
-  static const Re shapeRe(QStringLiteral(R"(\b(circle|ellipse|closest-side|farthest-side|closest-corner|farthest-corner)\b)"),
-                          Re::CaseInsensitiveOption);
+  static const Re atRe(QStringLiteral(R"(\bat\s+([\d.]+%?)\s+([\d.]+%?))"),
+                       Re::CaseInsensitiveOption);
+  static const Re shapeRe(
+      QStringLiteral(
+          R"(\b(circle|ellipse|closest-side|farthest-side|closest-corner|farthest-corner)\b)"),
+      Re::CaseInsensitiveOption);
   static const Re sizeRe(QStringLiteral(R"(([\d.]+)(%?))"));
-  static const QSet<QString> keywords{u"circle"_s, u"ellipse"_s, u"at"_s, u"closest-side"_s,
-                                      u"farthest-side"_s, u"closest-corner"_s, u"farthest-corner"_s};
+  static const QSet<QString> keywords{u"circle"_s,         u"ellipse"_s,       u"at"_s,
+                                      u"closest-side"_s,   u"farthest-side"_s, u"closest-corner"_s,
+                                      u"farthest-corner"_s};
   const QStringList args = splitArgs(inner);
   if (args.isEmpty()) return std::nullopt;
   double cx = 0.5, cy = 0.5, radius = 0.5;
@@ -993,17 +1063,20 @@ std::optional<QString> translateRadial(const QString& inner) {
   }
   const QStringList stopArgs = args.mid(stopStart);
   if (stopArgs.size() < 2) return std::nullopt;
-  return u"qradialgradient(cx:%1, cy:%2, radius:%3, fx:%1, fy:%2, %4)"_s.arg(g4(cx), g4(cy), g4(radius), stopsString(stopArgs));
+  return u"qradialgradient(cx:%1, cy:%2, radius:%3, fx:%1, fy:%2, %4)"_s.arg(
+      g4(cx), g4(cy), g4(radius), stopsString(stopArgs));
 }
 
 std::optional<QString> translateConic(const QString& inner) {
-  static const Re atRe(QStringLiteral(R"(\bat\s+([\d.]+%?)\s+([\d.]+%?))"), Re::CaseInsensitiveOption);
+  static const Re atRe(QStringLiteral(R"(\bat\s+([\d.]+%?)\s+([\d.]+%?))"),
+                       Re::CaseInsensitiveOption);
   static const Re fromRe(QStringLiteral(R"(\bfrom\s+(-?[\d.]+)deg\b)"), Re::CaseInsensitiveOption);
   const QStringList args = splitArgs(inner);
   if (args.isEmpty()) return std::nullopt;
   double cx = 0.5, cy = 0.5, angle = 0.0;
   qsizetype stopStart = 0;
-  const QStringList firstWords = args[0].toLower().split(QRegularExpression(u"\\s+"_s), Qt::SkipEmptyParts);
+  const QStringList firstWords =
+      args[0].toLower().split(QRegularExpression(u"\\s+"_s), Qt::SkipEmptyParts);
   if (firstWords.contains(u"from") || firstWords.contains(u"at")) {
     stopStart = 1;
     if (const auto fm = fromRe.match(args[0]); fm.hasMatch()) angle = fm.captured(1).toDouble();
@@ -1014,13 +1087,15 @@ std::optional<QString> translateConic(const QString& inner) {
   }
   const QStringList stopArgs = args.mid(stopStart);
   if (stopArgs.size() < 2) return std::nullopt;
-  return u"qconicalgradient(cx:%1, cy:%2, angle:%3, %4)"_s.arg(g4(cx), g4(cy), g4(angle), stopsString(stopArgs));
+  return u"qconicalgradient(cx:%1, cy:%2, angle:%3, %4)"_s.arg(g4(cx), g4(cy), g4(angle),
+                                                               stopsString(stopArgs));
 }
 
 }  // namespace
 
 QString translateGradients(const QString& value) {
-  static const Re gradientRe(QStringLiteral(R"(\b(linear|radial|conic)-gradient\s*\()"), Re::CaseInsensitiveOption);
+  static const Re gradientRe(QStringLiteral(R"(\b(linear|radial|conic)-gradient\s*\()"),
+                             Re::CaseInsensitiveOption);
   QString result = value;
   qsizetype offset = 0;
   auto it = gradientRe.globalMatch(value);
@@ -1032,7 +1107,8 @@ QString translateGradients(const QString& value) {
     int depth = 0;
     qsizetype parenClose = -1;
     for (qsizetype i = parenOpen; i < result.size(); ++i) {
-      if (result[i] == u'(') ++depth;
+      if (result[i] == u'(')
+        ++depth;
       else if (result[i] == u')' && --depth == 0) {
         parenClose = i;
         break;
@@ -1040,7 +1116,7 @@ QString translateGradients(const QString& value) {
     }
     if (parenClose < 0) continue;
     const QString inner = result.mid(parenOpen + 1, parenClose - parenOpen - 1);
-    const auto translated = type == u"linear" ? translateLinear(inner)
+    const auto translated = type == u"linear"   ? translateLinear(inner)
                             : type == u"radial" ? translateRadial(inner)
                                                 : translateConic(inner);
     if (!translated) continue;
@@ -1054,8 +1130,10 @@ QString translateGradients(const QString& value) {
 // ---- extract_rules -----------------------------------------------------------------------------
 
 ParsedStyleSheet extractRules(const QString& stylesheet) {
-  static const Re gradientValue(QStringLiteral(R"(\b(?:q(?:linear|radial|conical)gradient|(?:linear|radial|conic)-gradient)\s*\()"),
-                                Re::CaseInsensitiveOption);
+  static const Re gradientValue(
+      QStringLiteral(
+          R"(\b(?:q(?:linear|radial|conical)gradient|(?:linear|radial|conic)-gradient)\s*\()"),
+      Re::CaseInsensitiveOption);
   static const Re attrBlock(QStringLiteral(R"(\[[^\]]*\])"));
   static const Re ws(QStringLiteral(R"(\s+)"));
 
@@ -1091,8 +1169,9 @@ ParsedStyleSheet extractRules(const QString& stylesheet) {
         for (const auto& seg : segments) {
           if (const auto r = parseTransitionSegment(seg)) entries.append(*r);
         }
-        const bool anyNone = std::any_of(entries.begin(), entries.end(),
-                                         [](const Segment& e) { return e.prop.toLower() == u"none"; });
+        const bool anyNone = std::any_of(entries.begin(), entries.end(), [](const Segment& e) {
+          return e.prop.toLower() == u"none";
+        });
         if (anyNone) {
           if (entries.size() == 1 && segments.size() == 1) {
             transitions.clear();
@@ -1133,7 +1212,8 @@ ParsedStyleSheet extractRules(const QString& stylesheet) {
         tDelays = parseTimeList(value);
       } else {
         const QString norm = normalizeProp(name);
-        for (const auto& d : expandShorthand(norm, translateGradients(decl.value))) putDecl(props, d.first, d.second);
+        for (const auto& d : expandShorthand(norm, translateGradients(decl.value)))
+          putDecl(props, d.first, d.second);
       }
     }
     transitions += combineLonghands(tProps, tDurations, tEasings, tDelays);
@@ -1155,7 +1235,8 @@ ParsedStyleSheet extractRules(const QString& stylesheet) {
     rule.line = rr.line;
     for (const auto& d : rule.properties) {
       rule.hasEffectProps = rule.hasEffectProps || effectProps().contains(d.first);
-      rule.hasBorderRadiusProps = rule.hasBorderRadiusProps || borderRadiusProps().contains(d.first);
+      rule.hasBorderRadiusProps =
+          rule.hasBorderRadiusProps || borderRadiusProps().contains(d.first);
       rule.hasCursorProp = rule.hasCursorProp || d.first == u"cursor";
     }
     rules.append(rule);
@@ -1185,7 +1266,8 @@ ParsedStyleSheet extractRules(const QString& stylesheet) {
       const QString pVal = translateGradients(decl.value);
       if (pName == u"box-shadow" || pName == u"cursor") continue;
       QList<Declaration> declarations;
-      const bool staticGradient = pName == u"background-color" && gradientValue.match(pVal).hasMatch();
+      const bool staticGradient =
+          pName == u"background-color" && gradientValue.match(pVal).hasMatch();
       if ((!split.pseudos.isEmpty() || hasAttrBlock) && !staticGradient) {
         declarations = staticDeclarations(pName, pVal, animated);
       } else {

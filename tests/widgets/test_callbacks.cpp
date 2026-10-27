@@ -153,7 +153,9 @@ TEST_F(CallbacksTest, TimerCallbackRunsImmediatelyOnStart) {
 
 TEST_F(CallbacksTest, RegistryBuildsKnownTypesOnly) {
   auto& reg = WidgetRegistry::instance();
-  reg.add("test.Widget", [](const WidgetContext& ctx) { return new BaseWidget(QString::fromStdString(ctx.name)); });
+  reg.add("test.Widget", [](const WidgetContext& ctx) {
+    return new BaseWidget(QString::fromStdString(ctx.name));
+  });
   WidgetContext ctx{"w1", "test.Widget", {}, "DISPLAY1", "bar-a"};
   std::unique_ptr<BaseWidget> w(reg.create(ctx));
   ASSERT_TRUE(w);

@@ -1,15 +1,15 @@
 #include "tooltip.h"
 
-#include "backdrop.h"
-#include "core/bar/bar_window.h"
-#include "core/bar/theme_class.h"
-
 #include <QCursor>
 #include <QEvent>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QScreen>
 #include <algorithm>
+
+#include "backdrop.h"
+#include "core/bar/bar_window.h"
+#include "core/bar/theme_class.h"
 
 namespace yasb::widgets {
 namespace {
@@ -22,8 +22,9 @@ TooltipOptions& options() {
 void setTooltipOptions(const TooltipOptions& o) { options() = o; }
 const TooltipOptions& tooltipOptions() { return options(); }
 
-QPoint computeTooltipPosition(const QRect& widgetGeometry, const QRect& topLevelGeometry, const QSize& tipSize,
-                              const QRect& screen, const QString& position, int offset) {
+QPoint computeTooltipPosition(const QRect& widgetGeometry, const QRect& topLevelGeometry,
+                              const QSize& tipSize, const QRect& screen, const QString& position,
+                              int offset) {
   int x = widgetGeometry.center().x() - tipSize.width() / 2;
   const int below = screen.bottom() - topLevelGeometry.bottom();
   const int above = topLevelGeometry.top() - screen.top();
@@ -54,7 +55,8 @@ CustomToolTip::CustomToolTip(QWidget* parent) : QFrame(parent) {
   setAttribute(Qt::WA_TranslucentBackground);
 
   label_ = new QLabel;
-  label_->setProperty("class", yasb::bar::GlobalState::instance().isDark() ? "tooltip dark" : "tooltip");
+  label_->setProperty("class",
+                      yasb::bar::GlobalState::instance().isDark() ? "tooltip dark" : "tooltip");
   auto* layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(label_);
@@ -101,8 +103,8 @@ void CustomToolTip::updateContent(const QString& text) {
   if (isVisible() && hasBasePos_) move(basePos_.x(), basePos_.y() + slideOffset_);
 }
 
-void CustomToolTip::showTooltip(const QString& text, const QRect& widgetGeometry, const QRect& topLevelGeometry,
-                                int durationMs) {
+void CustomToolTip::showTooltip(const QString& text, const QRect& widgetGeometry,
+                                const QRect& topLevelGeometry, int durationMs) {
   if (active_ && active_ != this) active_->hide();
   active_ = this;
 
@@ -113,7 +115,8 @@ void CustomToolTip::showTooltip(const QString& text, const QRect& widgetGeometry
   const QRect top = topLevelGeometry.isNull() ? widgetGeometry : topLevelGeometry;
   const QScreen* screen = QGuiApplication::screenAt(widgetGeometry.center());
   if (!screen) screen = QGuiApplication::primaryScreen();
-  basePos_ = computeTooltipPosition(widgetGeometry, top, size(), screen->geometry(), position_, options().offset);
+  basePos_ = computeTooltipPosition(widgetGeometry, top, size(), screen->geometry(), position_,
+                                    options().offset);
   hasBasePos_ = true;
   move(basePos_);
 
@@ -121,7 +124,8 @@ void CustomToolTip::showTooltip(const QString& text, const QRect& widgetGeometry
   show();
 
   const TooltipBlur& blur = options().blur;
-  if (blur.enabled) enableBlur(winId(), blur.darkMode, blur.roundCorners, blur.roundCornersType, blur.borderColor);
+  if (blur.enabled)
+    enableBlur(winId(), blur.darkMode, blur.roundCorners, blur.roundCornersType, blur.borderColor);
   if (durationMs > 0) hideTimer_.start(durationMs);
 }
 
@@ -161,7 +165,8 @@ void CustomToolTip::checkHideComplete() {
   deleteLater();
 }
 
-TooltipEventFilter::TooltipEventFilter(QWidget* widget, const QString& text, int delayMs, const QString& position)
+TooltipEventFilter::TooltipEventFilter(QWidget* widget, const QString& text, int delayMs,
+                                       const QString& position)
     : QObject(widget), widget_(widget), text_(text), position_(position), delay_(delayMs) {
   hideTimer_.setSingleShot(true);
   connect(&hideTimer_, &QTimer::timeout, this, &TooltipEventFilter::hideTooltip);
@@ -192,7 +197,8 @@ void TooltipEventFilter::showNow() {
   } else {
     const QRect rect = widget_->rect();
     const QRect global = rect.translated(widget_->mapToGlobal(QPoint(0, 0)));
-    const QRect geometry = widget_->isVisible() && rect.width() > 0 && rect.height() > 0 ? global : QRect();
+    const QRect geometry =
+        widget_->isVisible() && rect.width() > 0 && rect.height() > 0 ? global : QRect();
     QRect topLevel = global;
     if (auto* bar = qobject_cast<yasb::bar::BarWindow*>(widget_->window())) {
       auto* frame = bar->barFrame();
@@ -258,7 +264,8 @@ bool TooltipEventFilter::eventFilter(QObject* watched, QEvent* event) {
 
 void setTooltip(QWidget* widget, const QString& text, int delayMs, const QString& position) {
   if (text.isEmpty()) return;
-  if (auto* existing = widget->findChild<TooltipEventFilter*>(QString(), Qt::FindDirectChildrenOnly)) {
+  if (auto* existing =
+          widget->findChild<TooltipEventFilter*>(QString(), Qt::FindDirectChildrenOnly)) {
     existing->updateText(text);
     if (!position.isNull()) existing->setPosition(position);
     return;
@@ -269,7 +276,8 @@ void setTooltip(QWidget* widget, const QString& text, int delayMs, const QString
 }
 
 void showTooltipNow(QWidget* widget) {
-  if (auto* f = widget->findChild<TooltipEventFilter*>(QString(), Qt::FindDirectChildrenOnly)) f->showNow();
+  if (auto* f = widget->findChild<TooltipEventFilter*>(QString(), Qt::FindDirectChildrenOnly))
+    f->showNow();
 }
 
 }  // namespace yasb::widgets

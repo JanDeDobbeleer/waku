@@ -4,11 +4,9 @@
 #include <QJsonObject>
 #include <QLoggingCategory>
 #include <QRegularExpression>
-
-#include <nlohmann/json.hpp>
-
 #include <memory>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <utility>
 
 #include "app/log.h"
@@ -20,8 +18,9 @@ constexpr DWORD kBufferSize = 64 * 1024;
 constexpr DWORD kPipeInstances = 10;
 
 HANDLE createPipe(const wchar_t* name) {
-  return CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX, PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-                          kPipeInstances, kBufferSize, kBufferSize, 0, nullptr);
+  return CreateNamedPipeW(name, PIPE_ACCESS_DUPLEX,
+                          PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, kPipeInstances,
+                          kBufferSize, kBufferSize, 0, nullptr);
 }
 
 bool connectPipe(HANDLE pipe) {
@@ -37,7 +36,8 @@ void disconnectPipe(HANDLE pipe) {
 void wakePipe(const wchar_t* name, int attempts) {
   for (int i = 0; i < attempts; ++i) {
     if (!WaitNamedPipeW(name, 100)) continue;
-    HANDLE client = CreateFileW(name, GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+    HANDLE client =
+        CreateFileW(name, GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
     if (client != INVALID_HANDLE_VALUE) CloseHandle(client);
   }
 }
@@ -54,21 +54,26 @@ void sendPipeMessage(HANDLE pipe, const QByteArray& data, bool reportError = tru
 
 QString commandReply(const QString& command) {
   const QString trimmed = command.trimmed();
-  const QString commandName = trimmed.section(QRegularExpression(QStringLiteral("\\s+")), 0, 0).toLower();
-  static const QStringList supported = {QStringLiteral("stop"), QStringLiteral("reload"), QStringLiteral("show-bar"),
-                                        QStringLiteral("hide-bar"), QStringLiteral("toggle-bar")};
-  return supported.contains(commandName) ? QStringLiteral("ACK") : QStringLiteral("CLI Unknown Command");
+  const QString commandName =
+      trimmed.section(QRegularExpression(QStringLiteral("\\s+")), 0, 0).toLower();
+  static const QStringList supported = {QStringLiteral("stop"), QStringLiteral("reload"),
+                                        QStringLiteral("show-bar"), QStringLiteral("hide-bar"),
+                                        QStringLiteral("toggle-bar")};
+  return supported.contains(commandName) ? QStringLiteral("ACK")
+                                         : QStringLiteral("CLI Unknown Command");
 }
 
 QByteArray logDataFrame(const QString& data) {
-  const QByteArray json = QJsonDocument(QJsonObject{{QStringLiteral("type"), QStringLiteral("DATA")},
-                                                    {QStringLiteral("data"), data}})
-                              .toJson(QJsonDocument::Compact);
+  const QByteArray json =
+      QJsonDocument(QJsonObject{{QStringLiteral("type"), QStringLiteral("DATA")},
+                                {QStringLiteral("data"), data}})
+          .toJson(QJsonDocument::Compact);
   return json + '\0';
 }
 
 QByteArray logPongMessage() {
-  return QJsonDocument(QJsonObject{{QStringLiteral("type"), QStringLiteral("PONG")}}).toJson(QJsonDocument::Compact);
+  return QJsonDocument(QJsonObject{{QStringLiteral("type"), QStringLiteral("PONG")}})
+      .toJson(QJsonDocument::Compact);
 }
 
 CliServer::CliServer(std::wstring commandPipeName, std::wstring logPipeName)
@@ -140,7 +145,8 @@ void CliServer::logLoop() {
   const auto state = std::make_shared<PipeState>();
   setLogObserver([state](const QString& line) {
     std::lock_guard lock(state->mutex);
-    if (state->handle != INVALID_HANDLE_VALUE) sendPipeMessage(state->handle, logDataFrame(line), false);
+    if (state->handle != INVALID_HANDLE_VALUE)
+      sendPipeMessage(state->handle, logDataFrame(line), false);
   });
   while (!stopping_.load()) {
     HANDLE pipe = createPipe(logPipeName_.c_str());
@@ -169,7 +175,8 @@ void CliServer::logLoop() {
       const QByteArray bytes(buffer, static_cast<qsizetype>(read));
       const QList<QByteArray> frames = bytes.split('\0');
       for (const QByteArray& frame : frames) {
-        const auto request = nlohmann::json::parse(frame.constData(), frame.constData() + frame.size(), nullptr, false);
+        const auto request = nlohmann::json::parse(
+            frame.constData(), frame.constData() + frame.size(), nullptr, false);
         if (!request.is_discarded() && request.value("type", std::string()) == "PING") {
           sendPipeMessage(pipe, logPongMessage(), false);
         }

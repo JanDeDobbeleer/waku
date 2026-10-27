@@ -85,8 +85,8 @@ BarSettings BarSettings::fromJson(const json& bar) {
   return s;
 }
 
-BarWindow::BarWindow(QString barId, QString barName, QScreen* screen, const QString& stylesheet, const Widgets& widgets,
-                     BarSettings settings, BarDeps deps)
+BarWindow::BarWindow(QString barId, QString barName, QScreen* screen, const QString& stylesheet,
+                     const Widgets& widgets, BarSettings settings, BarDeps deps)
     : QWidget(nullptr),
       barId_(std::move(barId)),
       barName_(std::move(barName)),
@@ -132,13 +132,17 @@ BarWindow::BarWindow(QString barId, QString barName, QScreen* screen, const QStr
     QTimer::singleShot(0, this, [this] { applyAutoWidth(autoWidth()); });
   }
 
-  connect(screen_, &QScreen::geometryChanged, this, [this] { onGeometryChanged(); }, Qt::QueuedConnection);
+  connect(
+      screen_, &QScreen::geometryChanged, this, [this] { onGeometryChanged(); },
+      Qt::QueuedConnection);
   updateAppBar();
 }
 
 BarWindow::~BarWindow() = default;
 
-QRect BarWindow::screenRect() const { return deps_.screenGeometry ? deps_.screenGeometry() : screen_->geometry(); }
+QRect BarWindow::screenRect() const {
+  return deps_.screenGeometry ? deps_.screenGeometry() : screen_->geometry();
+}
 
 void BarWindow::onGeometryChanged() {
   if (screen_->devicePixelRatio() != devicePixelRatio_) {
@@ -184,7 +188,8 @@ QPoint BarWindow::barPos(int barW, int barH, int screenW, int screenH) const {
     x = sx + settings_.paddingLeft;
     x = std::min(x, sx + screenW - barW - settings_.paddingRight);
   }
-  const int y = settings_.position == "bottom" ? sy + screenH - barH - settings_.paddingBottom : sy + settings_.paddingTop;
+  const int y = settings_.position == "bottom" ? sy + screenH - barH - settings_.paddingBottom
+                                               : sy + settings_.paddingTop;
   return {x, y};
 }
 
@@ -254,7 +259,8 @@ void BarWindow::addWidgets(const Widgets& widgets) {
   const struct {
     const char* name;
     const LayoutSettings* cfg;
-  } columns[] = {{"left", &settings_.left}, {"center", &settings_.center}, {"right", &settings_.right}};
+  } columns[] = {
+      {"left", &settings_.left}, {"center", &settings_.center}, {"right", &settings_.right}};
 
   int column = 0;
   for (const auto& col : columns) {
@@ -262,7 +268,8 @@ void BarWindow::addWidgets(const Widgets& widgets) {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     auto* container = new QFrame;
-    container->setProperty("class", QStringLiteral("container container-%1").arg(QLatin1String(col.name)));
+    container->setProperty("class",
+                           QStringLiteral("container container-%1").arg(QLatin1String(col.name)));
 
     for (QWidget* w : widgets.value(QLatin1String(col.name))) {
       w->setProperty("yasb_layout_type", QLatin1String(col.name));

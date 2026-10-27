@@ -5,7 +5,6 @@
 #include <QGuiApplication>
 #include <QMetaObject>
 #include <QScreen>
-
 #include <algorithm>
 #include <cctype>
 #include <map>
@@ -27,12 +26,14 @@ constexpr unsigned kHotkeyMessage = 0x0312;
 
 unsigned keyCode(const std::string& key) {
   static const std::map<std::string, unsigned> special = {
-      {"space", 0x20}, {"tab", 0x09}, {"enter", 0x0D}, {"return", 0x0D}, {"esc", 0x1B},
-      {"escape", 0x1B}, {"backspace", 0x08}, {"delete", 0x2E}, {"del", 0x2E}, {"insert", 0x2D},
-      {"home", 0x24}, {"end", 0x23}, {"pageup", 0x21}, {"pagedown", 0x22}, {"left", 0x25},
-      {"up", 0x26}, {"right", 0x27}, {"down", 0x28}, {"semicolon", 0xBA}, {"equal", 0xBB},
-      {"comma", 0xBC}, {"minus", 0xBD}, {"period", 0xBE}, {"slash", 0xBF}, {"backquote", 0xC0},
-      {"bracketleft", 0xDB}, {"backslash", 0xDC}, {"bracketright", 0xDD}, {"quote", 0xDE}};
+      {"space", 0x20},     {"tab", 0x09},         {"enter", 0x0D},     {"return", 0x0D},
+      {"esc", 0x1B},       {"escape", 0x1B},      {"backspace", 0x08}, {"delete", 0x2E},
+      {"del", 0x2E},       {"insert", 0x2D},      {"home", 0x24},      {"end", 0x23},
+      {"pageup", 0x21},    {"pagedown", 0x22},    {"left", 0x25},      {"up", 0x26},
+      {"right", 0x27},     {"down", 0x28},        {"semicolon", 0xBA}, {"equal", 0xBB},
+      {"comma", 0xBC},     {"minus", 0xBD},       {"period", 0xBE},    {"slash", 0xBF},
+      {"backquote", 0xC0}, {"bracketleft", 0xDB}, {"backslash", 0xDC}, {"bracketright", 0xDD},
+      {"quote", 0xDE}};
   if (const auto found = special.find(key); found != special.end()) return found->second;
   if (key.size() == 1 && std::isalnum(static_cast<unsigned char>(key[0]))) {
     return static_cast<unsigned>(std::toupper(static_cast<unsigned char>(key[0])));
@@ -55,8 +56,11 @@ std::optional<HotkeyBinding> parseHotkey(std::string keys, std::string widget, s
   std::string key;
   std::istringstream input(binding.keys);
   while (std::getline(input, key, '+')) {
-    key.erase(std::remove_if(key.begin(), key.end(), [](unsigned char ch) { return std::isspace(ch); }), key.end());
-    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char ch) { return std::tolower(ch); });
+    key.erase(
+        std::remove_if(key.begin(), key.end(), [](unsigned char ch) { return std::isspace(ch); }),
+        key.end());
+    std::transform(key.begin(), key.end(), key.begin(),
+                   [](unsigned char ch) { return std::tolower(ch); });
     if (key.empty()) continue;
     if (key == "win" || key == "windows" || key == "super" || key == "meta") {
       binding.modifiers |= kWin;
@@ -72,11 +76,13 @@ std::optional<HotkeyBinding> parseHotkey(std::string keys, std::string widget, s
       if (binding.virtualKey == 0) return std::nullopt;
     }
   }
-  if (binding.virtualKey == 0 || binding.widget.empty() || binding.action.empty()) return std::nullopt;
+  if (binding.virtualKey == 0 || binding.widget.empty() || binding.action.empty())
+    return std::nullopt;
   return binding;
 }
 
-std::string routeHotkeyScreen(const std::string& mode, const QPoint& cursor, const std::vector<ScreenTarget>& screens,
+std::string routeHotkeyScreen(const std::string& mode, const QPoint& cursor,
+                              const std::vector<ScreenTarget>& screens,
                               const std::string& primaryScreen) {
   if (mode == "cursor") {
     for (const auto& screen : screens) {
@@ -107,13 +113,15 @@ std::vector<HotkeyBinding> collectHotkeys(const nlohmann::json& config) {
       const std::string keys = item.value("keys", std::string());
       const std::string action = item.value("action", std::string());
       const std::string screen = item.value("screen", std::string("active"));
-      if (auto parsed = parseHotkey(keys, it.key(), action, screen)) bindings.push_back(std::move(*parsed));
+      if (auto parsed = parseHotkey(keys, it.key(), action, screen))
+        bindings.push_back(std::move(*parsed));
     }
   }
   return bindings;
 }
 
-HotkeyService::HotkeyService(std::vector<HotkeyBinding> bindings) : bindings_(std::move(bindings)) {}
+HotkeyService::HotkeyService(std::vector<HotkeyBinding> bindings)
+    : bindings_(std::move(bindings)) {}
 HotkeyService::~HotkeyService() { stop(); }
 
 void HotkeyService::start() {
@@ -152,19 +160,23 @@ void HotkeyService::run() {
     const auto found = registered.find(static_cast<int>(message.wParam));
     if (found == registered.end()) continue;
     const HotkeyBinding binding = found->second;
-    QMetaObject::invokeMethod(QCoreApplication::instance(), [binding] {
-      std::vector<ScreenTarget> screens;
-      for (QScreen* screen : QGuiApplication::screens()) {
-        screens.push_back({screen->name().toStdString(), screen->geometry()});
-      }
-      const QString primary = QGuiApplication::primaryScreen()
-                                  ? QGuiApplication::primaryScreen()->name()
-                                  : QString();
-      const std::string target = routeHotkeyScreen(binding.screen, QCursor::pos(), screens, primary.toStdString());
-      emit widgets::EventBus::instance().widgetHotkey(QString::fromStdString(binding.widget),
-                                                       QString::fromStdString(binding.action),
-                                                       QString::fromStdString(target));
-    }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        QCoreApplication::instance(),
+        [binding] {
+          std::vector<ScreenTarget> screens;
+          for (QScreen* screen : QGuiApplication::screens()) {
+            screens.push_back({screen->name().toStdString(), screen->geometry()});
+          }
+          const QString primary = QGuiApplication::primaryScreen()
+                                      ? QGuiApplication::primaryScreen()->name()
+                                      : QString();
+          const std::string target =
+              routeHotkeyScreen(binding.screen, QCursor::pos(), screens, primary.toStdString());
+          emit widgets::EventBus::instance().widgetHotkey(QString::fromStdString(binding.widget),
+                                                          QString::fromStdString(binding.action),
+                                                          QString::fromStdString(target));
+        },
+        Qt::QueuedConnection);
   }
   for (const auto& [hotkeyId, binding] : registered) {
     Q_UNUSED(binding);

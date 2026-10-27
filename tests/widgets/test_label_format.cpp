@@ -36,7 +36,7 @@ class LabelFormatTest : public testing::Test {
 };
 
 const std::vector<std::string> kHistogramIcons = {"\u2581", "\u2581", "\u2582", "\u2583", "\u2584",
-                                                   "\u2585", "\u2586", "\u2587", "\u2588"};
+                                                  "\u2585", "\u2586", "\u2587", "\u2588"};
 constexpr double kGiB = 1024.0 * 1024.0 * 1024.0;
 
 std::string histogramBar(double num, double lo, double hi) {
@@ -61,8 +61,8 @@ struct Thresholds {
   }
 };
 
-// Test-local strategy widget: the per-widget part of cpu.py / memory.py (data -> text and status class)
-// on top of the shared BaseWidget label machinery. U8's real widgets replace this.
+// Test-local strategy widget: the per-widget part of cpu.py / memory.py (data -> text and status
+// class) on top of the shared BaseWidget label machinery. U8's real widgets replace this.
 class VectorWidget : public BaseWidget {
  public:
   VectorWidget(bool memory, const json& options, QWidget* host)
@@ -74,7 +74,8 @@ class VectorWidget : public BaseWidget {
     const char* key = memory ? "memory_thresholds" : "cpu_thresholds";
     if (options.contains(key)) {
       const json& t = options.at(key);
-      thresholds_ = Thresholds{t.at("low").get<double>(), t.at("medium").get<double>(), t.at("high").get<double>()};
+      thresholds_ = Thresholds{t.at("low").get<double>(), t.at("medium").get<double>(),
+                               t.at("high").get<double>()};
     }
     buildWidgetLabel(label_, labelAlt_);
     history_.assign(10, 0.0);
@@ -88,11 +89,13 @@ class VectorWidget : public BaseWidget {
   void apply(const json& step) {
     if (step.contains("toggle")) {
       toggleAlt();
-      if (!memory_ && lastCpu_) renderCpu(*lastCpu_);  // memory's harness has no cached data to re-render
+      if (!memory_ && lastCpu_)
+        renderCpu(*lastCpu_);  // memory's harness has no cached data to re-render
       return;
     }
     if (!memory_) {
-      CpuData d{step.at("percent"), step.value("per_core", json::array({step.at("percent")})), 2400.0};
+      CpuData d{step.at("percent"), step.value("per_core", json::array({step.at("percent")})),
+                2400.0};
       lastCpu_ = d;
       renderCpu(d);
       return;
@@ -106,11 +109,15 @@ class VectorWidget : public BaseWidget {
     m.total = total;
     m.used = used;
     m.free = total - used;
-    m.percent = step.value("percent", total ? round1(static_cast<double>(used) / static_cast<double>(total) * 100) : 0.0);
+    m.percent = step.value(
+        "percent",
+        total ? round1(static_cast<double>(used) / static_cast<double>(total) * 100) : 0.0);
     m.swapTotal = swapTotal;
     m.swapFree = swapTotal - swapUsed;
     m.swapPercent = step.value(
-        "swap_percent", swapTotal ? round1(static_cast<double>(swapUsed) / static_cast<double>(swapTotal) * 100) : 0.0);
+        "swap_percent",
+        swapTotal ? round1(static_cast<double>(swapUsed) / static_cast<double>(swapTotal) * 100)
+                  : 0.0);
     renderMemory(m);
   }
 
@@ -139,7 +146,8 @@ class VectorWidget : public BaseWidget {
       } else {
         active[idx]->setText(fmt(part.text));
         const QString base = alt ? QStringLiteral("label alt") : QStringLiteral("label");
-        setLabelClass(active[idx], base + QStringLiteral(" status-") + qs(thresholds_.classify(percent)));
+        setLabelClass(active[idx],
+                      base + QStringLiteral(" status-") + qs(thresholds_.classify(percent)));
       }
       ++idx;
     }
@@ -155,11 +163,14 @@ class VectorWidget : public BaseWidget {
     json info = {{"percent", {{"core", cores}, {"total", roundIf(d.percent)}}},
                  {"freq", {{"current", roundIf(json(d.freq))}, {"min", 0}, {"max", 0}}},
                  {"histograms", {{"cpu_percent", hist}}}};
-    renderParts([&](QString t) { return qs(pyFormat(t.toStdString(), {{"info", info}})); }, d.percent.get<double>());
+    renderParts([&](QString t) { return qs(pyFormat(t.toStdString(), {{"info", info}})); },
+                d.percent.get<double>());
   }
 
   void renderMemory(const MemData& m) {
-    auto size = [&](long long v) { return qs(naturalSizeGnu(static_cast<double>(v), hideDecimal_ ? 0 : 1)); };
+    auto size = [&](long long v) {
+      return qs(naturalSizeGnu(static_cast<double>(v), hideDecimal_ ? 0 : 1));
+    };
     const QString percentText = qs(pyStr(roundIf(json(m.percent))));
     const QString swapPercentText = qs(pyStr(roundIf(json(m.swapPercent))));
     const std::vector<std::pair<QString, QString>> pairs = {
@@ -209,10 +220,10 @@ class BatteryVectorWidget : public BaseWidget {
 
  private:
   static json defaults() {
-    return {{"percent", 50},          {"is_charging", false},     {"power_plugged", false},
-            {"time_remaining", 7380}, {"rate", 8.25},             {"voltage", 12.345},
-            {"capacity", 40000},      {"full_capacity", 50000},   {"designed_capacity", 55000},
-            {"temperature", 31.26},   {"cycle_count", 212},       {"chemistry", "LION"},
+    return {{"percent", 50},          {"is_charging", false},   {"power_plugged", false},
+            {"time_remaining", 7380}, {"rate", 8.25},           {"voltage", 12.345},
+            {"capacity", 40000},      {"full_capacity", 50000}, {"designed_capacity", 55000},
+            {"temperature", 31.26},   {"cycle_count", 212},     {"chemistry", "LION"},
             {"health_percent", 90.9}};
   }
 
@@ -289,7 +300,9 @@ class BatteryVectorWidget : public BaseWidget {
         {"{temperature}", qs(fixedOrNa(s.at("temperature"), 1))},
         {"{cycle_count}", qs(strOrNa(s.at("cycle_count")))},
         {"{health}", qs(fixedOrNa(s.at("health_percent"), 1))},
-        {"{chemistry}", qs(s.at("chemistry").is_null() || s.at("chemistry") == "" ? "N/A" : strOrNa(s.at("chemistry")))},
+        {"{chemistry}",
+         qs(s.at("chemistry").is_null() || s.at("chemistry") == "" ? "N/A"
+                                                                   : strOrNa(s.at("chemistry")))},
     };
 
     auto joined = [](const QString& a) { return a.simplified(); };
@@ -310,7 +323,8 @@ class BatteryVectorWidget : public BaseWidget {
         } catch (const FormatError&) {
         }
         active[idx]->setText(out);
-        target = joined(QStringLiteral("label ") + (alt ? "alt" : "") + " status-" + qs(status) + " " + qs(powerClass));
+        target = joined(QStringLiteral("label ") + (alt ? "alt" : "") + " status-" + qs(status) +
+                        " " + qs(powerClass));
       }
       setLabelClass(active[idx], target);
       ++idx;
@@ -408,7 +422,8 @@ TEST(LabelFormat, NaturalSizeIsGnuBinary) {
 }
 
 TEST(LabelFormat, SplitsSpansIntoIconAndLabelParts) {
-  const auto parts = splitLabelParts(QStringLiteral("<span>\uea01</span> {a}% <span class='vpn'>V</span>"));
+  const auto parts =
+      splitLabelParts(QStringLiteral("<span>\uea01</span> {a}% <span class='vpn'>V</span>"));
   ASSERT_EQ(parts.size(), 3u);
   EXPECT_TRUE(parts[0].isIcon);
   EXPECT_EQ(parts[0].cssClass, "icon");

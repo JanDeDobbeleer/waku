@@ -1,8 +1,7 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
-
 #include <QString>
+#include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <string>
 #include <utility>

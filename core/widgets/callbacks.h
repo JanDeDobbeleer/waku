@@ -14,7 +14,8 @@ struct ParsedCallback {
   QStringList args;
 };
 
-// Mirrors BaseWidget._run_callback: split only when a space is present; quoted args lose their quotes.
+// Mirrors BaseWidget._run_callback: split only when a space is present; quoted args lose their
+// quotes.
 ParsedCallback parseCallback(const QString& callbackStr);
 
 // Windows list2cmdline quoting, as subprocess.Popen(list, shell=True) builds the command.

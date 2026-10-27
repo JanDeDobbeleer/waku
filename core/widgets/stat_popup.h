@@ -15,9 +15,11 @@
 namespace yasb::widgets {
 
 // Rolling area chart points for 0-100 history; x spans [0, width], y keeps `stroke/2` padding.
-std::vector<QPointF> graphPoints(const std::vector<double>& data, int width, int height, double stroke = 2.0);
+std::vector<QPointF> graphPoints(const std::vector<double>& data, int width, int height,
+                                 double stroke = 2.0);
 
-// Catmull-Rom style spline with y control points clamped between neighbours (GraphWidget._build_smooth_path).
+// Catmull-Rom style spline with y control points clamped between neighbours
+// (GraphWidget._build_smooth_path).
 QPainterPath buildSmoothPath(const std::vector<QPointF>& pts, double tension = 0.2);
 
 class GraphWidget : public QFrame {
@@ -44,7 +46,8 @@ class GraphWidget : public QFrame {
   QFrame* gridProxy_;
 };
 
-// Popup that stays open while pinned and can be dragged then; blur/round corners are applied on show.
+// Popup that stays open while pinned and can be dragged then; blur/round corners are applied on
+// show.
 class PinnablePopup : public PopupWidget {
   Q_OBJECT
 
@@ -98,8 +101,9 @@ struct StatRow {
   QString rightValue;
 };
 
-PinnablePopup* buildStatPopup(QWidget* anchor, const StatPopupMenuConfig& menu, const QString& popupClass,
-                              const QString& title, const std::vector<double>& history,
-                              const std::vector<StatRow>& rows, const QString& graphClass = QStringLiteral("graph"));
+PinnablePopup* buildStatPopup(QWidget* anchor, const StatPopupMenuConfig& menu,
+                              const QString& popupClass, const QString& title,
+                              const std::vector<double>& history, const std::vector<StatRow>& rows,
+                              const QString& graphClass = QStringLiteral("graph"));
 
 }  // namespace yasb::widgets
