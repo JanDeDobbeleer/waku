@@ -6,6 +6,7 @@
 #include <QProcess>
 #include <QRegularExpression>
 #include <iterator>
+#include <vector>
 
 namespace yasb::widgets {
 
@@ -78,11 +79,22 @@ SystemFunctionMap& systemFunctions() {
 }
 
 namespace {
+// Presses the keys in order and releases them in reverse, as one SendInput batch.
 void sendKeys(std::initializer_list<WORD> keys) {
-  for (WORD k : keys) keybd_event(static_cast<BYTE>(k), 0, 0, 0);
-  for (auto it = std::rbegin(keys); it != std::rend(keys); ++it) {
-    keybd_event(static_cast<BYTE>(*it), 0, KEYEVENTF_KEYUP, 0);
-  }
+  std::vector<INPUT> inputs;
+  inputs.reserve(keys.size() * 2);
+  const auto key = [](WORD vk, DWORD flags) {
+    INPUT input{};
+    input.type = INPUT_KEYBOARD;
+    input.ki.wVk = vk;
+    input.ki.dwFlags = flags;
+    return input;
+  };
+  for (WORD k : keys) inputs.push_back(key(k, 0));
+  for (auto it = std::rbegin(keys); it != std::rend(keys); ++it)
+    inputs.push_back(key(*it, KEYEVENTF_KEYUP));
+  const UINT sent = SendInput(static_cast<UINT>(inputs.size()), inputs.data(), sizeof(INPUT));
+  if (sent != inputs.size()) qWarning() << "SendInput injected" << sent << "of" << inputs.size();
 }
 }  // namespace
 
