@@ -186,11 +186,16 @@ EnvLookup defaultEnv() {
 std::vector<std::string> placedBarWidgets(
     const OJson& bars, std::vector<std::string>& order,
     std::map<std::string, std::vector<std::string>>& barsByWidget) {
+  if (!bars.is_object()) return order;
   for (auto bar = bars.begin(); bar != bars.end(); ++bar) {
-    if (!bar.value().value("enabled", true)) continue;
-    const auto& placement = bar.value()["widgets"];
+    if (!bar.value().is_object() || !bar.value().value("enabled", true)) continue;
+    const auto placement = bar.value().find("widgets");
+    if (placement == bar.value().end() || !placement->is_object()) continue;
     for (const char* column : {"left", "center", "right"}) {
-      for (const auto& name : placement[column]) {
+      const auto names = placement->find(column);
+      if (names == placement->end() || !names->is_array()) continue;
+      for (const auto& name : *names) {
+        if (!name.is_string()) continue;
         const auto widgetName = name.get<std::string>();
         auto& list = barsByWidget[widgetName];
         if (list.empty()) order.push_back(widgetName);
@@ -225,7 +230,8 @@ WidgetResult validateWidget(const SchemaValidator& validator, const OJson& widge
   if (result.type.find('.') == std::string::npos || !validator.knowsWidgetType(result.type))
     return result;
 
-  const OJson options = found->contains("options") ? (*found)["options"] : OJson::object();
+  const auto optionsIt = found->find("options");
+  const OJson options = optionsIt != found->end() ? *optionsIt : OJson::object();
   Validated validated = validator.validateWidgetOptions(result.type, options);
   warnings.insert(warnings.end(), validated.warnings.begin(), validated.warnings.end());
   if (!validated.ok()) {
@@ -304,9 +310,15 @@ LoadResult loadConfigText(std::string_view yaml, const EnvLookup& env) {
   result.config = json(root.value);
 
   std::map<std::string, std::vector<std::string>> barsByWidget;
-  placedBarWidgets(root.value["bars"], result.placedWidgets, barsByWidget);
+  const OJson& validated = root.value;
+  const auto barsIt = validated.find("bars");
+  const auto widgetsIt = validated.find("widgets");
+  const OJson noObjects = OJson::object();
+  placedBarWidgets(barsIt != validated.end() ? *barsIt : noObjects, result.placedWidgets,
+                   barsByWidget);
   for (const auto& name : result.placedWidgets) {
-    WidgetResult widget = validateWidget(validator, root.value["widgets"], name, result.warnings);
+    WidgetResult widget = validateWidget(
+        validator, widgetsIt != validated.end() ? *widgetsIt : noObjects, name, result.warnings);
     widget.bars = barsByWidget[name];
     switch (widget.status) {
       case WidgetStatus::InvalidOptions:

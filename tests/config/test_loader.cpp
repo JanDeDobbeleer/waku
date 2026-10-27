@@ -205,6 +205,36 @@ TEST(Loader, TypedOptionsFromNormalizedConfig) {
   EXPECT_EQ(cpu->histogram_icons.size(), 9u);
 }
 
+TEST(Loader, TypedOptionsTypeMismatchIsNulloptNotAThrow) {
+  LoadResult r;
+  WidgetResult w;
+  w.status = WidgetStatus::Ok;
+  w.type = "yasb.cpu.CpuWidget";
+  w.options = {{"update_interval", "fast"}};
+  r.widgets["cpu"] = w;
+  EXPECT_FALSE(r.widgetOptions<options::CpuConfig>("cpu").has_value());
+}
+
+// Model validators run on whatever the schema produced; a schema without the field they inspect
+// must not reach the const json::operator[] on a missing key.
+TEST(Loader, ModelValidatorsTolerateMissingFields) {
+  const SchemaValidator validator(OJson::parse(R"({
+    "$defs": {
+      "BarDimensions": {"type": "object", "properties": {"height": {"type": "integer"}}},
+      "QuickActionsSectionConfig": {"type": "object", "properties": {}}
+    },
+    "type": "object",
+    "properties": {
+      "dims": {"$ref": "#/$defs/BarDimensions"},
+      "actions": {"$ref": "#/$defs/QuickActionsSectionConfig"}
+    }
+  })"));
+  const Validated v =
+      validator.validateRoot(OJson::parse(R"({"dims": {"height": 5}, "actions": {}})"));
+  EXPECT_TRUE(v.ok());
+  EXPECT_FALSE(validator.knowsWidgetType("yasb.cpu.CpuWidget"));
+}
+
 TEST(Loader, ValidatorRejectsOutOfRangeAndWrongTypes) {
   const auto r = load(cpuConfig("      update_interval: 10\n      label: 5\n"));
   const auto* w = r.widget("cpu");

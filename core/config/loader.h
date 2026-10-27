@@ -1,6 +1,8 @@
 #pragma once
 
+#include <QDebug>
 #include <QLoggingCategory>
+#include <QString>
 #include <filesystem>
 #include <functional>
 #include <map>
@@ -55,11 +57,18 @@ struct LoadResult {
   const WidgetResult* widget(const std::string& name) const;
 
   // Typed options for a widget that validated, e.g. widgetOptions<options::CpuConfig>("cpu").
+  // A type mismatch the schema let through is logged and yields std::nullopt, never a throw.
   template <class T>
   std::optional<T> widgetOptions(const std::string& name) const {
     const auto* w = widget(name);
     if (!w || w->status != WidgetStatus::Ok) return std::nullopt;
-    return w->options.get<T>();
+    try {
+      return w->options.get<T>();
+    } catch (const nlohmann::json::exception& error) {
+      qCWarning(lcConfig).noquote() << "Widget" << QString::fromStdString(name)
+                                    << "options could not be read:" << error.what();
+      return std::nullopt;
+    }
   }
 };
 

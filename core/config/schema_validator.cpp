@@ -48,6 +48,12 @@ std::string trim(std::string_view s) {
   return std::string(s.substr(b, e - b + 1));
 }
 
+const OJson& defsOf(const OJson& schema) {
+  static const OJson kNone = OJson::object();
+  const auto it = schema.find("$defs");
+  return it != schema.end() && it->is_object() ? *it : kNone;
+}
+
 bool parseDouble(const std::string& s, double& out) {
   if (s.empty()) return false;
   char* end = nullptr;
@@ -70,17 +76,17 @@ class Walker {
       }
       return check(*def, v, strict, ctx, out, name);
     }
-    if (schema.contains("anyOf")) return checkUnion(schema["anyOf"], v, strict, ctx, out);
+    if (schema.contains("anyOf")) return checkUnion(schema.at("anyOf"), v, strict, ctx, out);
     if (schema.contains("const")) {
-      if (v == schema["const"]) {
+      if (v == schema.at("const")) {
         out = v;
         return true;
       }
-      report(ctx, "literal_error", literalMessage({schema["const"]}));
+      report(ctx, "literal_error", literalMessage({schema.at("const")}));
       return false;
     }
     if (schema.contains("enum")) {
-      const auto& options = schema["enum"];
+      const auto& options = schema.at("enum");
       if (std::find(options.begin(), options.end(), v) != options.end()) {
         out = v;
         return true;
@@ -184,12 +190,13 @@ class Walker {
   bool checkModel(const OJson& schema, const OJson& v, bool strict, Ctx& ctx, OJson& out,
                   std::string_view model) const {
     OJson data = v;
-    const auto& props = schema["properties"];
+    const auto& props = schema.at("properties");
     deprecation::apply(
         model, data, [&](const std::string& key) { return props.contains(key); }, *ctx.warnings);
 
     std::vector<std::string> required;
-    if (schema.contains("required")) required = schema["required"].get<std::vector<std::string>>();
+    if (schema.contains("required"))
+      required = schema.at("required").get<std::vector<std::string>>();
 
     out = OJson::object();
     bool ok = true;
@@ -205,7 +212,7 @@ class Walker {
         }
       } else if (it.value().contains("default")) {
         // pydantic runs with validate_default=True
-        if (check(it.value(), it.value()["default"], false, ctx, child)) {
+        if (check(it.value(), it.value().at("default"), false, ctx, child)) {
           out[name] = std::move(child);
         } else {
           ok = false;
@@ -238,14 +245,15 @@ class Walker {
   // Validators declared in the Python models that schema.json cannot express.
   static bool runModelValidators(std::string_view model, const OJson& value, Ctx& ctx) {
     if (model == "BarDimensions") {
-      const auto& width = value["width"];
+      const auto width = value.find("width");
+      if (width == value.end()) return true;
       constexpr auto kMessage =
           "Value error, Width must be an integer, 'auto', or a percentage string (e.g. '100%')";
       std::string error;
-      if (width.is_number_integer()) {
-        if (width.get<std::int64_t>() < 0) error = "Value error, Width must be non-negative";
-      } else if (width.is_string()) {
-        const auto s = width.get<std::string>();
+      if (width->is_number_integer()) {
+        if (width->get<std::int64_t>() < 0) error = "Value error, Width must be non-negative";
+      } else if (width->is_string()) {
+        const auto s = width->get<std::string>();
         const bool percent = s.size() > 1 && s.back() == '%' &&
                              std::all_of(s.begin(), s.end() - 1,
                                          [](unsigned char c) { return c >= '0' && c <= '9'; });
@@ -258,8 +266,11 @@ class Walker {
         return false;
       }
     } else if (model == "QuickActionsSectionConfig") {
+      const auto actions = value.find("actions");
+      if (actions == value.end() || !actions->is_array()) return true;
       std::vector<std::string> seen;
-      for (const auto& action : value["actions"]) {
+      for (const auto& action : *actions) {
+        if (!action.is_object()) continue;
         const auto id = action.value("id", std::string());
         if (std::find(seen.begin(), seen.end(), id) != seen.end()) {
           ctx.loc.push_back("actions");
@@ -296,15 +307,15 @@ class Walker {
       ctx.loc.pop_back();
     }
     if (!ok) return false;
-    if (schema.contains("minItems") && v.size() < schema["minItems"].get<std::size_t>()) {
+    if (schema.contains("minItems") && v.size() < schema.at("minItems").get<std::size_t>()) {
       report(ctx, "too_short",
-             "List should have at least " + schema["minItems"].dump() +
+             "List should have at least " + schema.at("minItems").dump() +
                  " items after validation, not " + std::to_string(v.size()));
       return false;
     }
-    if (schema.contains("maxItems") && v.size() > schema["maxItems"].get<std::size_t>()) {
+    if (schema.contains("maxItems") && v.size() > schema.at("maxItems").get<std::size_t>()) {
       report(ctx, "too_long",
-             "List should have at most " + schema["maxItems"].dump() +
+             "List should have at most " + schema.at("maxItems").dump() +
                  " items after validation, not " + std::to_string(v.size()));
       return false;
     }
@@ -312,19 +323,20 @@ class Walker {
   }
 
   static bool checkRange(const OJson& schema, double value, Ctx& ctx) {
-    if (schema.contains("minimum") && value < schema["minimum"].get<double>()) {
+    if (schema.contains("minimum") && value < schema.at("minimum").get<double>()) {
       report(ctx, "greater_than_equal",
-             "Input should be greater than or equal to " + schema["minimum"].dump());
+             "Input should be greater than or equal to " + schema.at("minimum").dump());
       return false;
     }
-    if (schema.contains("exclusiveMinimum") && value <= schema["exclusiveMinimum"].get<double>()) {
+    if (schema.contains("exclusiveMinimum") &&
+        value <= schema.at("exclusiveMinimum").get<double>()) {
       report(ctx, "greater_than",
-             "Input should be greater than " + schema["exclusiveMinimum"].dump());
+             "Input should be greater than " + schema.at("exclusiveMinimum").dump());
       return false;
     }
-    if (schema.contains("maximum") && value > schema["maximum"].get<double>()) {
+    if (schema.contains("maximum") && value > schema.at("maximum").get<double>()) {
       report(ctx, "less_than_equal",
-             "Input should be less than or equal to " + schema["maximum"].dump());
+             "Input should be less than or equal to " + schema.at("maximum").dump());
       return false;
     }
     return true;
@@ -449,17 +461,22 @@ SchemaValidator::SchemaValidator(OJson schema) : schema_(std::move(schema)) {
       {"additionalProperties", {{"anyOf", {{{"type", "string"}}, {{"type", "object"}}}}}},
   };
 
-  for (auto it = schema_["$defs"].begin(); it != schema_["$defs"].end(); ++it) {
+  const OJson& defs = defsOf(schema_);
+  for (auto it = defs.begin(); it != defs.end(); ++it) {
     const auto& def = it.value();
     if (it.key().size() < 6 || it.key().compare(it.key().size() - 5, 5, "Entry") != 0) continue;
-    if (!def.contains("properties")) continue;
-    const auto& props = def["properties"];
-    if (!props.contains("type") || !props["type"].contains("const") || !props.contains("options") ||
-        !props["options"].contains("$ref")) {
+    const auto props = def.find("properties");
+    if (props == def.end() || !props->is_object()) continue;
+    const auto type = props->find("type");
+    const auto options = props->find("options");
+    if (type == props->end() || options == props->end()) continue;
+    const auto typeConst = type->find("const");
+    const auto optionsRef = options->find("$ref");
+    if (typeConst == type->end() || optionsRef == options->end() || !typeConst->is_string() ||
+        !optionsRef->is_string()) {
       continue;
     }
-    optionsModelByType_[props["type"]["const"].get<std::string>()] =
-        props["options"]["$ref"].get<std::string>();
+    optionsModelByType_[typeConst->get<std::string>()] = optionsRef->get<std::string>();
   }
 }
 
@@ -471,7 +488,7 @@ const SchemaValidator& SchemaValidator::embedded() {
 }
 
 Validated SchemaValidator::validateRoot(const OJson& raw) const {
-  return run(schema_["$defs"], rootSchema_, raw, "YasbConfig");
+  return run(defsOf(schema_), rootSchema_, raw, "YasbConfig");
 }
 
 Validated SchemaValidator::validateWidgetOptions(std::string_view widgetType,
@@ -483,7 +500,7 @@ Validated SchemaValidator::validateWidgetOptions(std::string_view widgetType,
     return failed;
   }
   const OJson ref = {{"$ref", it->second}};
-  return run(schema_["$defs"], ref, options, {});
+  return run(defsOf(schema_), ref, options, {});
 }
 
 bool SchemaValidator::knowsWidgetType(std::string_view widgetType) const {
