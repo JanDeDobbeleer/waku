@@ -37,7 +37,10 @@ Notes on the current graph:
   WinRT call. Move them to the library that first uses a WinRT projection.
 
 All targets share the repo root as include directory (includes are written `"core/..."`), so the
-compiler alone does not reject a header-only include against the arrow.
+compiler alone does not reject a header-only include against the arrow. `tools\check.ps1` (also
+with `-Fast` and in the pre-commit hook) has a `layering` step that fails on any `#include "..."`
+from `platform/` into `core/`, `widgets/` or `app/`; from `core/` into `widgets/` or `app/`; between
+`core/css` and `core/config` or from either into ui; and from `widgets/` into `app/`.
 
 ## Startup and ownership
 

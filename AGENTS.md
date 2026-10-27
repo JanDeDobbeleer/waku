@@ -35,7 +35,8 @@ Parity vectors (needs the YASB virtualenv): see `tools/parity/README.md`.
 ## Definition of done
 
 `tools\check.ps1` exits 0. It runs the clang-format check, the generated-file drift check, the
-`arm64-debug` build and `ctest`. `tools\check.ps1 -Fast` runs only the first two.
+include-layering check, the `arm64-debug` build and `ctest`. `tools\check.ps1 -Fast` runs only the
+first three.
 
 Git hooks in `tools/hooks` run the fast checks on staged files and validate the commit message.
 Enable them once per clone:
@@ -50,7 +51,7 @@ git config blame.ignoreRevsFile .git-blame-ignore-revs
 ## Layering
 
 Dependencies point one way only. Each layer is its own static library and links only the layers
-below it.
+below it, and the `layering` step of `tools\check.ps1` rejects an include against the arrow.
 
 ```
 app  ->  widgets  ->  core/{widgets,bar,util} (ui)  ->  core/{css,config}  ->  platform

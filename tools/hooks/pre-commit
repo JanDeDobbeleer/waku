@@ -1,5 +1,5 @@
 #!/bin/sh
-# pre-commit: clang-format check of the staged .cpp/.h content and the generated-header drift check.
+# pre-commit: clang-format and include-layering checks of the staged .cpp/.h content and the generated-header drift check.
 # The full build and tests stay in tools/check.ps1 (definition of done), not in the hook.
 # Enable with: git config core.hooksPath tools/hooks
 exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/check.ps1 -Fast -Staged

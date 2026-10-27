@@ -9,18 +9,21 @@
       2. generated  runs core/config/options/generate_options.py into a scratch copy under build\
                     and compares the output with core/config/options/*.h. The working tree is never
                     rewritten.
-      3. configure  cmake --preset <Preset>       (skipped with -Fast)
-      4. build      cmake --build --preset <Preset> (skipped with -Fast)
-      5. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 (skipped with -Fast)
+      3. layering   fails on an #include "..." against the layer arrow
+                    app -> widgets -> ui (core/bar, core/widgets, core/util) -> css/config -> platform
+                    (with -Staged: only staged files, reading their staged content).
+      4. configure  cmake --preset <Preset>       (skipped with -Fast)
+      5. build      cmake --build --preset <Preset> (skipped with -Fast)
+      6. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 (skipped with -Fast)
     Configure, build and test each run in their own cmd.exe after the matching vcvars*.bat, with
     VCPKG_ROOT=C:\vcpkg (override with the VCPKG_ROOT_OVERRIDE environment variable).
     Exits 1 if any step fails. Compatible with Windows PowerShell 5.1.
 .PARAMETER Fast
-    Only the format and generated-file checks.
+    Only the format, generated-file and layering checks.
 .PARAMETER SkipFormat
     Skip the clang-format check.
 .PARAMETER Staged
-    Format-check only files staged in the index, reading their staged content.
+    Format- and layering-check only files staged in the index, reading their staged content.
 .PARAMETER Preset
     CMake configure/build preset. Default arm64-debug.
 .EXAMPLE
@@ -213,7 +216,58 @@ if (-not $python) {
     }
 }
 
-# 3-5. configure, build, test ----------------------------------------------------------------
+# 3. layering --------------------------------------------------------------------------------
+# All targets share the repo root as include directory, so CMake alone cannot stop a header from
+# being included against the arrow (app -> widgets -> ui -> {css, config} -> platform). The
+# first matching folder prefix wins; its list holds the include prefixes it must not use.
+Write-Step 'layering (#include directions)'
+$sw = [Diagnostics.Stopwatch]::StartNew()
+$layerRules = @(
+    @{ Dir = 'platform/';    Deny = @('core/', 'widgets/', 'app/') },
+    @{ Dir = 'core/config/'; Deny = @('core/css/', 'core/bar/', 'core/widgets/', 'core/util/', 'core/version.h', 'widgets/', 'app/') },
+    @{ Dir = 'core/css/';    Deny = @('core/config/', 'core/bar/', 'core/widgets/', 'core/util/', 'core/version.h', 'widgets/', 'app/') },
+    @{ Dir = 'core/';        Deny = @('widgets/', 'app/') },
+    @{ Dir = 'widgets/';     Deny = @('app/') }
+)
+$layerDirs = @('app', 'core', 'platform', 'widgets')
+if ($Staged) {
+    $layerFiles = @(git diff --cached --name-only --diff-filter=ACMR -- $layerDirs)
+} else {
+    $layerFiles = @(git ls-files --cached --others --exclude-standard -- $layerDirs)
+}
+$layerFiles = @($layerFiles | Where-Object { $_ -match '\.(cpp|h)$' } | Sort-Object -Unique)
+$violations = New-Object System.Collections.Generic.List[string]
+foreach ($f in $layerFiles) {
+    $rule = $layerRules | Where-Object { $f.StartsWith($_.Dir) } | Select-Object -First 1
+    if (-not $rule) { continue }
+    if ($Staged) {
+        $lines = @(git show ":$f" 2>$null)
+    } elseif (Test-Path -LiteralPath $f) {
+        $lines = @(Get-Content -LiteralPath $f)
+    } else {
+        continue
+    }
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ("$($lines[$i])" -match '^\s*#\s*include\s+"([^"]+)"') {
+            $inc = $Matches[1]
+            foreach ($deny in $rule.Deny) {
+                if ($inc.StartsWith($deny)) {
+                    $violations.Add("${f}:$($i + 1): includes `"$inc`" ($($rule.Dir) must not include $deny)")
+                    break
+                }
+            }
+        }
+    }
+}
+if ($violations.Count -eq 0) {
+    Add-Result 'layering' 'PASS' "$($layerFiles.Count) files respect app -> widgets -> ui -> css/config -> platform" $sw.Elapsed.TotalSeconds
+} else {
+    Write-Host 'Includes against the layering arrow (see AGENTS.md, Layering):'
+    $violations | ForEach-Object { Write-Host "  $_" }
+    Add-Result 'layering' 'FAIL' "$($violations.Count) include(s) against the arrow" $sw.Elapsed.TotalSeconds
+}
+
+# 4-6. configure, build, test ----------------------------------------------------------------
 if ($Fast) {
     Add-Result 'configure' 'SKIP' '-Fast' 0
     Add-Result 'build' 'SKIP' '-Fast' 0
