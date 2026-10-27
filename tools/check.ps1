@@ -87,6 +87,16 @@ function Find-Python {
     return $null
 }
 
+function Get-FileSha256([string]$Path) {
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [IO.File]::ReadAllBytes((Resolve-Path -LiteralPath $Path))
+        return [BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-', '')
+    } finally {
+        $sha.Dispose()
+    }
+}
+
 function Get-VcvarsScript([string]$PresetName) {
     $dir = $env:YASB_VCVARS_DIR
     if (-not $dir) {
@@ -200,8 +210,8 @@ if (-not $python) {
         foreach ($name in $expected) {
             $mine = Join-Path 'core\config\options' $name
             if (-not (Test-Path $mine)) { $drift.Add("$name (missing)"); continue }
-            $a = (Get-FileHash -Algorithm SHA256 (Join-Path $genDir $name)).Hash
-            $b = (Get-FileHash -Algorithm SHA256 $mine).Hash
+            $a = Get-FileSha256 (Join-Path $genDir $name)
+            $b = Get-FileSha256 $mine
             if ($a -ne $b) { $drift.Add("$name (differs)") }
         }
         foreach ($name in $actual) {
