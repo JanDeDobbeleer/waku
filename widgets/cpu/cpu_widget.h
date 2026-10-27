@@ -4,6 +4,7 @@
 #include <deque>
 #include <optional>
 
+#include "core/bar/theme_class.h"
 #include "core/widgets/base_widget.h"
 #include "core/widgets/registry.h"
 #include "core/widgets/stat_popup.h"
@@ -27,6 +28,7 @@ class CpuWidget final : public BaseWidget {
   void openPopup();
 
   nlohmann::json options_;
+  bar::GlobalState& globalState_;
   QString label_;
   QString labelAlt_;
   bool hideDecimal_ = false;

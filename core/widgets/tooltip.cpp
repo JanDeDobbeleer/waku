@@ -50,13 +50,12 @@ QPoint computeTooltipPosition(const QRect& widgetGeometry, const QRect& topLevel
   return {x, y};
 }
 
-CustomToolTip::CustomToolTip(QWidget* parent) : QFrame(parent) {
+CustomToolTip::CustomToolTip(bool darkMode, QWidget* parent) : QFrame(parent) {
   setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint);
   setAttribute(Qt::WA_TranslucentBackground);
 
   label_ = new QLabel;
-  label_->setProperty("class",
-                      yasb::bar::GlobalState::instance().isDark() ? "tooltip dark" : "tooltip");
+  label_->setProperty("class", darkMode ? "tooltip dark" : "tooltip");
   auto* layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(label_);
@@ -166,8 +165,13 @@ void CustomToolTip::checkHideComplete() {
 }
 
 TooltipEventFilter::TooltipEventFilter(QWidget* widget, const QString& text, int delayMs,
-                                       const QString& position)
-    : QObject(widget), widget_(widget), text_(text), position_(position), delay_(delayMs) {
+                                       const QString& position, bar::GlobalState& globalState)
+    : QObject(widget),
+      widget_(widget),
+      text_(text),
+      position_(position),
+      delay_(delayMs),
+      globalState_(globalState) {
   hideTimer_.setSingleShot(true);
   connect(&hideTimer_, &QTimer::timeout, this, &TooltipEventFilter::hideTooltip);
   hoverTimer_.setSingleShot(true);
@@ -189,7 +193,7 @@ void TooltipEventFilter::updateText(const QString& text) {
 
 void TooltipEventFilter::showNow() {
   if (!tip_) {
-    tip_ = new CustomToolTip;
+    tip_ = new CustomToolTip(globalState_.isDark());
     tip_->setPositionPreference(position_);
   }
   if (tip_->isVisible()) {
@@ -262,7 +266,8 @@ bool TooltipEventFilter::eventFilter(QObject* watched, QEvent* event) {
   return QObject::eventFilter(watched, event);
 }
 
-void setTooltip(QWidget* widget, const QString& text, int delayMs, const QString& position) {
+void setTooltip(QWidget* widget, const QString& text, bar::GlobalState& globalState, int delayMs,
+                const QString& position) {
   if (text.isEmpty()) return;
   if (auto* existing =
           widget->findChild<TooltipEventFilter*>(QString(), Qt::FindDirectChildrenOnly)) {
@@ -270,7 +275,7 @@ void setTooltip(QWidget* widget, const QString& text, int delayMs, const QString
     if (!position.isNull()) existing->setPosition(position);
     return;
   }
-  auto* filter = new TooltipEventFilter(widget, text, delayMs, position);
+  auto* filter = new TooltipEventFilter(widget, text, delayMs, position, globalState);
   widget->setMouseTracking(true);
   widget->installEventFilter(filter);
 }

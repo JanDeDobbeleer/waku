@@ -8,7 +8,6 @@
 #include <QVBoxLayout>
 #include <algorithm>
 
-#include "core/bar/theme_class.h"
 #include "core/widgets/backdrop.h"
 #include "core/widgets/tooltip.h"
 
@@ -140,9 +139,11 @@ void GraphWidget::paintEvent(QPaintEvent* event) {
   p.drawPath(line_);
 }
 
-PinnablePopup::PinnablePopup(QWidget* anchor, bool blur, bool roundCorners,
-                             const QString& roundCornersType, const QString& borderColor)
+PinnablePopup::PinnablePopup(QWidget* anchor, bar::GlobalState& globalState, bool blur,
+                             bool roundCorners, const QString& roundCornersType,
+                             const QString& borderColor)
     : PopupWidget(anchor),
+      globalState_(globalState),
       blur_(blur),
       roundCorners_(roundCorners),
       roundCornersType_(roundCornersType),
@@ -160,8 +161,7 @@ void PinnablePopup::setPinned(bool pinned) {
 void PinnablePopup::showEvent(QShowEvent* event) {
   PopupWidget::showEvent(event);
   if (blur_) {
-    enableBlur(winId(), yasb::bar::GlobalState::instance().isDark(), roundCorners_,
-               roundCornersType_, borderColor_);
+    enableBlur(winId(), globalState_.isDark(), roundCorners_, roundCornersType_, borderColor_);
   }
 }
 
@@ -192,12 +192,12 @@ void PinnablePopup::mouseReleaseEvent(QMouseEvent* event) {
   PopupWidget::mouseReleaseEvent(event);
 }
 
-PinnablePopup* buildStatPopup(QWidget* anchor, const StatPopupMenuConfig& menu,
-                              const QString& popupClass, const QString& title,
-                              const std::vector<double>& history, const std::vector<StatRow>& rows,
-                              const QString& graphClass) {
-  auto* popup = new PinnablePopup(anchor, menu.blur, menu.roundCorners, menu.roundCornersType,
-                                  menu.borderColor);
+PinnablePopup* buildStatPopup(QWidget* anchor, bar::GlobalState& globalState,
+                              const StatPopupMenuConfig& menu, const QString& popupClass,
+                              const QString& title, const std::vector<double>& history,
+                              const std::vector<StatRow>& rows, const QString& graphClass) {
+  auto* popup = new PinnablePopup(anchor, globalState, menu.blur, menu.roundCorners,
+                                  menu.roundCornersType, menu.borderColor);
   popup->setProperty("class", popupClass);
   auto* layout = new QVBoxLayout(popup);
   layout->setContentsMargins(0, 0, 0, 0);
@@ -216,15 +216,17 @@ PinnablePopup* buildStatPopup(QWidget* anchor, const StatPopupMenuConfig& menu,
   auto* pin = new QPushButton(menu.pinIcon);
   pin->setCheckable(true);
   pin->setProperty("class", "pin-btn");
-  setTooltip(pin, QStringLiteral("Pin this window"));
-  QObject::connect(pin, &QPushButton::toggled, popup, [popup, pin, menu](bool checked) {
-    pin->setText(checked ? menu.unpinIcon : menu.pinIcon);
-    pin->setProperty("class", checked ? "pin-btn pinned" : "pin-btn");
-    setTooltip(pin,
-               checked ? QStringLiteral("Unpin this window") : QStringLiteral("Pin this window"));
-    yasb::bar::refreshWidgetStyle(pin);
-    popup->setPinned(checked);
-  });
+  setTooltip(pin, QStringLiteral("Pin this window"), globalState);
+  QObject::connect(
+      pin, &QPushButton::toggled, popup, [popup, pin, menu, &globalState](bool checked) {
+        pin->setText(checked ? menu.unpinIcon : menu.pinIcon);
+        pin->setProperty("class", checked ? "pin-btn pinned" : "pin-btn");
+        setTooltip(
+            pin, checked ? QStringLiteral("Unpin this window") : QStringLiteral("Pin this window"),
+            globalState);
+        yasb::bar::refreshWidgetStyle(pin);
+        popup->setPinned(checked);
+      });
   popup->pinButton = pin;
   headerLayout->addWidget(pin);
   layout->addWidget(header);

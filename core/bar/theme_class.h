@@ -8,13 +8,12 @@
 
 namespace yasb::bar {
 
-// Process-wide UI state shared by bars and widgets (port of bar_helper.GlobalState, dark flag
-// only).
+// UI state shared by one application runtime's bars and widgets.
 class GlobalState : public QObject {
   Q_OBJECT
 
  public:
-  static GlobalState& instance();
+  GlobalState() = default;
   bool isDark() const { return dark_; }
   void setDark(bool dark);
 
@@ -22,7 +21,6 @@ class GlobalState : public QObject {
   void darkChanged(bool dark);
 
  private:
-  GlobalState() = default;
   bool dark_ = false;
 };
 
@@ -37,13 +35,15 @@ class OsThemeManager : public QObject {
  public:
   using Detector = std::function<bool()>;
   explicit OsThemeManager(QWidget* target, QObject* parent = nullptr,
-                          Detector detector = detectOsDarkTheme);
+                          Detector detector = detectOsDarkTheme,
+                          GlobalState* globalState = nullptr);
 
   void updateThemeClass();
 
  private:
   QPointer<QWidget> target_;
   Detector detector_;
+  GlobalState* globalState_;
   std::optional<bool> isDark_;
 };
 

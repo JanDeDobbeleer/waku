@@ -5,8 +5,14 @@
 
 namespace yasb::widgets {
 
-WidgetBuilder::WidgetBuilder(const config::LoadResult& config, const WidgetRegistry& registry)
-    : config_(config), registry_(registry) {}
+WidgetBuilder::WidgetBuilder(const config::LoadResult& config, const WidgetRegistry& registry,
+                             EventBus& eventBus, bar::GlobalState& globalState,
+                             PollingWorkerRegistry& pollingWorkers)
+    : config_(config),
+      registry_(registry),
+      eventBus_(eventBus),
+      globalState_(globalState),
+      pollingWorkers_(pollingWorkers) {}
 
 BaseWidget* WidgetBuilder::buildWidget(const std::string& name, const QString& screenName,
                                        const QString& barId) {
@@ -33,7 +39,8 @@ BaseWidget* WidgetBuilder::buildWidget(const std::string& name, const QString& s
     return skip(unknownTypes_, "has a type that is not registered");
   // Factories read options with nlohmann; a throw here must not unwind into Qt.
   try {
-    return registry_.create(config_, name, screenName, barId);
+    return registry_.create(WidgetContext{name, entry->type, entry->options, screenName, barId,
+                                          eventBus_, globalState_, pollingWorkers_});
   } catch (const std::exception& error) {
     qCritical().noquote() << "Widget" << QString::fromStdString(name)
                           << "could not be created:" << QString::fromUtf8(error.what());

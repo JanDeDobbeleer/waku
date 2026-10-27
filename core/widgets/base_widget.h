@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "core/widgets/callbacks.h"
+#include "core/widgets/event_bus.h"
 #include "core/widgets/label_format.h"
 
 namespace yasb::widgets {
@@ -25,8 +26,9 @@ struct CallbackBinding {
 class BaseWidget : public QWidget {
   Q_OBJECT
  public:
-  explicit BaseWidget(const QString& widgetName, const QString& className = QString(),
-                      int timerIntervalMs = 0, QWidget* parent = nullptr);
+  explicit BaseWidget(const QString& widgetName, EventBus& eventBus,
+                      const QString& className = QString(), int timerIntervalMs = 0,
+                      QWidget* parent = nullptr);
 
   const QString& widgetName() const { return widgetName_; }
   // screen_name / bar_id come from the properties BarWindow sets when it adds the widget.

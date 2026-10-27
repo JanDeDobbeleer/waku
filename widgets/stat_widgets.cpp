@@ -7,11 +7,7 @@
 
 namespace yasb::widgets {
 
-void registerStatWidgets() {
-  static bool registered = false;
-  if (registered) return;
-  registered = true;
-  auto& registry = WidgetRegistry::instance();
+void registerStatWidgets(WidgetRegistry& registry) {
   registry.add("yasb.cpu.CpuWidget",
                [](const WidgetContext& context) { return new CpuWidget(context); });
   registry.add("yasb.memory.MemoryWidget",

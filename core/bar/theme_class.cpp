@@ -7,11 +7,6 @@
 
 namespace yasb::bar {
 
-GlobalState& GlobalState::instance() {
-  static GlobalState state;
-  return state;
-}
-
 void GlobalState::setDark(bool dark) {
   if (dark_ == dark) return;
   dark_ = dark;
@@ -35,8 +30,9 @@ void refreshWidgetStyle(QWidget* widget) {
   }
 }
 
-OsThemeManager::OsThemeManager(QWidget* target, QObject* parent, Detector detector)
-    : QObject(parent), target_(target), detector_(std::move(detector)) {}
+OsThemeManager::OsThemeManager(QWidget* target, QObject* parent, Detector detector,
+                               GlobalState* globalState)
+    : QObject(parent), target_(target), detector_(std::move(detector)), globalState_(globalState) {}
 
 void OsThemeManager::updateThemeClass() {
   if (!target_) return;
@@ -53,7 +49,7 @@ void OsThemeManager::updateThemeClass() {
   refreshWidgetStyle(target_);
   for (QWidget* child : target_->findChildren<QWidget*>()) refreshWidgetStyle(child);
   isDark_ = dark;
-  GlobalState::instance().setDark(dark);
+  if (globalState_) globalState_->setDark(dark);
 }
 
 }  // namespace yasb::bar

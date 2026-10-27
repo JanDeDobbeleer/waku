@@ -23,11 +23,12 @@ class BarWindowTest : public testing::Test {
   }
   static void TearDownTestSuite() { app_.reset(); }
 
-  static BarDeps deps(std::function<bool()> dark = [] { return false; }) {
+  BarDeps deps(std::function<bool()> dark = [] { return false; }) {
     BarDeps d;
     d.appBar = std::make_unique<FakeAppBar>();
     d.themeDetector = std::move(dark);
     d.screenGeometry = [] { return QRect(0, 0, 800, 800); };
+    d.globalState = &globalState_;
     return d;
   }
 
@@ -43,6 +44,7 @@ class BarWindowTest : public testing::Test {
   static inline char arg0_[11] = "yasb_tests";
   static inline char* argv_[2] = {arg0_, nullptr};
   static inline std::unique_ptr<QApplication> app_;
+  GlobalState globalState_;
 };
 
 }  // namespace
@@ -99,19 +101,19 @@ TEST_F(BarWindowTest, DarkClassTogglesAndRepolishes) {
   bar->show();
   QTest::qWait(20);
   EXPECT_EQ(bar->adaptiveFrame()->islandRadius(), 16);
-  EXPECT_FALSE(GlobalState::instance().isDark());
+  EXPECT_FALSE(globalState_.isDark());
 
   dark = true;
   bar->themeManager()->updateThemeClass();
   EXPECT_EQ(bar->barFrame()->property("class").toString(),
             QStringLiteral("bar yasb-bar adaptive dark"));
   EXPECT_EQ(bar->adaptiveFrame()->islandRadius(), 7);
-  EXPECT_TRUE(GlobalState::instance().isDark());
+  EXPECT_TRUE(globalState_.isDark());
 
   dark = false;
   bar->themeManager()->updateThemeClass();
   EXPECT_EQ(bar->barFrame()->property("class").toString(), QStringLiteral("bar yasb-bar adaptive"));
-  EXPECT_FALSE(GlobalState::instance().isDark());
+  EXPECT_FALSE(globalState_.isDark());
   bar->close();
 }
 

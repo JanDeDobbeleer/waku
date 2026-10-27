@@ -24,35 +24,6 @@ struct MemoryListInformation {
 
 using NtQuerySystemInformationFn = LONG(NTAPI*)(ULONG, PVOID, ULONG, PULONG);
 
-std::mutex g_swapMutex;
-PDH_HQUERY g_swapQuery = nullptr;
-PDH_HCOUNTER g_swapCounter = nullptr;
-bool g_swapFailed = false;
-
-double swapPercent() {
-  std::lock_guard lock(g_swapMutex);
-  if (g_swapFailed) return 0;
-  if (!g_swapQuery) {
-    if (PdhOpenQueryW(nullptr, 0, &g_swapQuery) != ERROR_SUCCESS ||
-        PdhAddEnglishCounterW(g_swapQuery, L"\\Paging File(_Total)\\% Usage", 0, &g_swapCounter) !=
-            ERROR_SUCCESS) {
-      if (g_swapQuery) PdhCloseQuery(g_swapQuery);
-      g_swapQuery = nullptr;
-      g_swapCounter = nullptr;
-      g_swapFailed = true;
-      return 0;
-    }
-  }
-  if (PdhCollectQueryData(g_swapQuery) != ERROR_SUCCESS) return 0;
-  PDH_FMT_COUNTERVALUE value{};
-  if (PdhGetFormattedCounterValue(g_swapCounter, PDH_FMT_DOUBLE, nullptr, &value) !=
-          ERROR_SUCCESS ||
-      value.CStatus != ERROR_SUCCESS) {
-    return 0;
-  }
-  return std::clamp(value.doubleValue, 0.0, 100.0);
-}
-
 std::uint64_t cachedBytesFallback(std::uint64_t pageSize) {
   PERFORMANCE_INFORMATION perf{};
   perf.cb = sizeof(perf);
@@ -79,6 +50,45 @@ double roundOne(double value) { return std::nearbyint(value * 10.0) / 10.0; }
 
 }  // namespace
 
+struct WindowsMemoryDataSource::Impl {
+  ~Impl() {
+    if (swapQuery) PdhCloseQuery(swapQuery);
+  }
+
+  double swapPercent() {
+    std::lock_guard lock(swapMutex);
+    if (swapFailed) return 0;
+    if (!swapQuery) {
+      if (PdhOpenQueryW(nullptr, 0, &swapQuery) != ERROR_SUCCESS ||
+          PdhAddEnglishCounterW(swapQuery, L"\\Paging File(_Total)\\% Usage", 0, &swapCounter) !=
+              ERROR_SUCCESS) {
+        if (swapQuery) PdhCloseQuery(swapQuery);
+        swapQuery = nullptr;
+        swapCounter = nullptr;
+        swapFailed = true;
+        return 0;
+      }
+    }
+    if (PdhCollectQueryData(swapQuery) != ERROR_SUCCESS) return 0;
+    PDH_FMT_COUNTERVALUE value{};
+    if (PdhGetFormattedCounterValue(swapCounter, PDH_FMT_DOUBLE, nullptr, &value) !=
+            ERROR_SUCCESS ||
+        value.CStatus != ERROR_SUCCESS) {
+      return 0;
+    }
+    return std::clamp(value.doubleValue, 0.0, 100.0);
+  }
+
+  std::mutex swapMutex;
+  PDH_HQUERY swapQuery = nullptr;
+  PDH_HCOUNTER swapCounter = nullptr;
+  bool swapFailed = false;
+};
+
+WindowsMemoryDataSource::WindowsMemoryDataSource() : impl_(std::make_unique<Impl>()) {}
+
+WindowsMemoryDataSource::~WindowsMemoryDataSource() = default;
+
 MemorySample WindowsMemoryDataSource::sample() {
   MemorySample out;
   MEMORYSTATUSEX status{};
@@ -97,7 +107,7 @@ MemorySample WindowsMemoryDataSource::sample() {
     const std::uint64_t page = perf.PageSize;
     out.swapTotal =
         perf.CommitLimit > perf.PhysicalTotal ? (perf.CommitLimit - perf.PhysicalTotal) * page : 0;
-    out.swapPercent = out.swapTotal ? roundOne(swapPercent()) : 0;
+    out.swapPercent = out.swapTotal ? roundOne(impl_->swapPercent()) : 0;
     out.swapUsed = static_cast<std::uint64_t>(out.swapTotal * out.swapPercent / 100.0);
     out.swapFree = out.swapTotal - out.swapUsed;
   }

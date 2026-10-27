@@ -1,29 +1,15 @@
 #include "widgets/cpu/cpu_widget.h"
 
-#include <QCoreApplication>
 #include <QLabel>
-#include <QMutex>
 #include <QVBoxLayout>
 #include <algorithm>
 #include <cmath>
 
-#include "core/widgets/polling_worker.h"
+#include "core/widgets/polling_worker_registry.h"
 #include "widgets/system_widget_helpers.h"
 
 namespace yasb::widgets {
 namespace {
-
-PollingWorker* cpuWorker(int interval) {
-  static QMutex mutex;
-  static QPointer<PollingWorker> worker;
-  QMutexLocker lock(&mutex);
-  if (!worker && interval > 0 && QCoreApplication::instance()) {
-    auto source = platform::createCpuDataSource();
-    worker = new PollingWorker([source] { return QVariant::fromValue(source->sample()); }, interval,
-                               QCoreApplication::instance());
-  }
-  return worker;
-}
 
 nlohmann::json jsonValue(double value, bool hideDecimal) {
   return hideDecimal ? nlohmann::json(pyRound(value)) : nlohmann::json(value);
@@ -32,9 +18,10 @@ nlohmann::json jsonValue(double value, bool hideDecimal) {
 }  // namespace
 
 CpuWidget::CpuWidget(const WidgetContext& context, bool startPolling)
-    : BaseWidget(QString::fromStdString(context.name),
+    : BaseWidget(QString::fromStdString(context.name), context.eventBus,
                  detail::className(context.options, "cpu-widget ").trimmed() + " ", 0),
       options_(context.options),
+      globalState_(context.globalState),
       label_(detail::stringOption(options_, "label")),
       labelAlt_(detail::stringOption(options_, "label_alt")),
       hideDecimal_(options_.value("hide_decimal", false)),
@@ -56,7 +43,11 @@ CpuWidget::CpuWidget(const WidgetContext& context, bool startPolling)
   render();
 
   if (startPolling) {
-    if (PollingWorker* worker = cpuWorker(options_.value("update_interval", 1000))) {
+    const int interval = options_.value("update_interval", 1000);
+    if (PollingWorker* worker = context.pollingWorkers.get("cpu", interval, [] {
+          auto source = platform::createCpuDataSource();
+          return [source] { return QVariant::fromValue(source->sample()); };
+        })) {
       connect(worker, &PollingWorker::dataReady, this,
               [this](const QVariant& value) { applySample(value.value<platform::CpuSample>()); });
       worker->start();
@@ -165,9 +156,9 @@ void CpuWidget::openPopup() {
        QString::number(sampleData.coresPhysical) + " / " + QString::number(sampleData.coresLogical),
        QStringLiteral("Max frequency"), QStringLiteral("max_freq"),
        QString::number(pyRound(sampleData.frequencyMax)) + " MHz"}};
-  popup_ =
-      buildStatPopup(this, menu, QStringLiteral("cpu-popup"), QStringLiteral("<b>CPU</b> Usage"),
-                     detail::asVector(graphHistory_), rows, QStringLiteral("cpu-graph"));
+  popup_ = buildStatPopup(this, globalState_, menu, QStringLiteral("cpu-popup"),
+                          QStringLiteral("<b>CPU</b> Usage"), detail::asVector(graphHistory_), rows,
+                          QStringLiteral("cpu-graph"));
   if (menu.showGraph && popup_->graph) {
     auto* layout = qobject_cast<QVBoxLayout*>(popup_->layout());
     auto* graphContainer = popup_->graph->parentWidget();

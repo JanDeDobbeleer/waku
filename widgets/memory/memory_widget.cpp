@@ -1,31 +1,17 @@
 #include "widgets/memory/memory_widget.h"
 
-#include <QCoreApplication>
 #include <QLabel>
-#include <QMutex>
 #include <QVBoxLayout>
 #include <algorithm>
 #include <cmath>
 
-#include "core/widgets/polling_worker.h"
+#include "core/widgets/polling_worker_registry.h"
 #include "widgets/system_widget_helpers.h"
 
 namespace yasb::widgets {
 namespace {
 
 constexpr double kGiB = 1024.0 * 1024.0 * 1024.0;
-
-PollingWorker* memoryWorker(int interval) {
-  static QMutex mutex;
-  static QPointer<PollingWorker> worker;
-  QMutexLocker lock(&mutex);
-  if (!worker && interval > 0 && QCoreApplication::instance()) {
-    auto source = platform::createMemoryDataSource();
-    worker = new PollingWorker([source] { return QVariant::fromValue(source->sample()); }, interval,
-                               QCoreApplication::instance());
-  }
-  return worker;
-}
 
 QString popupSize(std::uint64_t bytes) {
   static const char* units[] = {"Bytes", "KB", "MB", "GB", "TB", "PB"};
@@ -59,9 +45,10 @@ QString histogram(double value, double minimum, double maximum, const nlohmann::
 }  // namespace
 
 MemoryWidget::MemoryWidget(const WidgetContext& context, bool startPolling)
-    : BaseWidget(QString::fromStdString(context.name),
+    : BaseWidget(QString::fromStdString(context.name), context.eventBus,
                  detail::className(context.options, "memory-widget ").trimmed() + " ", 0),
       options_(context.options),
+      globalState_(context.globalState),
       label_(detail::stringOption(options_, "label")),
       labelAlt_(detail::stringOption(options_, "label_alt")),
       hideDecimal_(options_.value("hide_decimal", false)),
@@ -74,7 +61,11 @@ MemoryWidget::MemoryWidget(const WidgetContext& context, bool startPolling)
   last_ = platform::MemorySample{};
   render();
   if (startPolling) {
-    if (PollingWorker* worker = memoryWorker(options_.value("update_interval", 5000))) {
+    const int interval = options_.value("update_interval", 5000);
+    if (PollingWorker* worker = context.pollingWorkers.get("memory", interval, [] {
+          auto source = platform::createMemoryDataSource();
+          return [source] { return QVariant::fromValue(source->sample()); };
+        })) {
       connect(worker, &PollingWorker::dataReady, this, [this](const QVariant& value) {
         applySample(value.value<platform::MemorySample>());
       });
@@ -153,7 +144,7 @@ void MemoryWidget::openPopup() {
        QStringLiteral("Available"), "avail", popupSize(sampleData.available)},
       {QStringLiteral("Swap used"), "swap", popupSize(sampleData.swapUsed),
        QStringLiteral("Utilization"), "util", QString::number(pyRound(sampleData.percent)) + "%"}};
-  popup_ = buildStatPopup(this, menu, QStringLiteral("memory-popup"),
+  popup_ = buildStatPopup(this, globalState_, menu, QStringLiteral("memory-popup"),
                           QStringLiteral("<b>Memory</b> Usage"), detail::asVector(graphHistory_),
                           rows, QStringLiteral("memory-graph"));
   if (menu.showGraph && popup_->graph) {

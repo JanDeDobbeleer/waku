@@ -8,7 +8,10 @@
 #include <string>
 #include <vector>
 
+#include "core/bar/theme_class.h"
 #include "core/config/loader.h"
+#include "core/widgets/event_bus.h"
+#include "core/widgets/polling_worker_registry.h"
 #include "core/widgets/registry.h"
 
 namespace yasb::widgets {
@@ -20,8 +23,9 @@ class WidgetBuilder {
   using Columns = QMap<QString, QList<QString>>;  // "left" | "center" | "right" -> names
   using Widgets = QMap<QString, QList<QWidget*>>;
 
-  WidgetBuilder(const config::LoadResult& config,
-                const WidgetRegistry& registry = WidgetRegistry::instance());
+  WidgetBuilder(const config::LoadResult& config, const WidgetRegistry& registry,
+                EventBus& eventBus, bar::GlobalState& globalState,
+                PollingWorkerRegistry& pollingWorkers);
 
   Widgets buildWidgets(const Columns& columns, const QString& screenName, const QString& barId);
   BaseWidget* buildWidget(const std::string& name, const QString& screenName, const QString& barId);
@@ -39,6 +43,9 @@ class WidgetBuilder {
  private:
   const config::LoadResult& config_;
   const WidgetRegistry& registry_;
+  EventBus& eventBus_;
+  bar::GlobalState& globalState_;
+  PollingWorkerRegistry& pollingWorkers_;
   std::set<std::string> invalid_;
   std::set<std::string> invalidOptions_;
   std::set<std::string> unknownTypes_;

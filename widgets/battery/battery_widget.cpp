@@ -1,31 +1,14 @@
 #include "widgets/battery/battery_widget.h"
 
-#include <QCoreApplication>
-#include <QMutex>
+#include <QEvent>
 #include <QRegularExpression>
 
 #include "core/util/natural_time.h"
-#include "core/widgets/polling_worker.h"
+#include "core/widgets/polling_worker_registry.h"
 #include "widgets/system_widget_helpers.h"
 
 namespace yasb::widgets {
 namespace {
-
-PollingWorker* batteryWorker(int interval) {
-  static QMutex mutex;
-  static QPointer<PollingWorker> worker;
-  QMutexLocker lock(&mutex);
-  if (!worker && interval > 0 && QCoreApplication::instance()) {
-    auto source = platform::createBatteryDataSource();
-    worker = new PollingWorker(
-        [source] {
-          const auto sample = source->sample();
-          return sample ? QVariant::fromValue(*sample) : QVariant{};
-        },
-        interval, QCoreApplication::instance());
-  }
-  return worker;
-}
 
 QString optionalString(const std::optional<std::string>& value) {
   return !value || value->empty() ? QStringLiteral("N/A") : QString::fromStdString(*value);
@@ -34,7 +17,7 @@ QString optionalString(const std::optional<std::string>& value) {
 }  // namespace
 
 BatteryWidget::BatteryWidget(const WidgetContext& context, bool startPolling)
-    : BaseWidget(QString::fromStdString(context.name),
+    : BaseWidget(QString::fromStdString(context.name), context.eventBus,
                  detail::className(context.options, "battery-widget ").trimmed() + " ", 0),
       options_(context.options),
       label_(detail::stringOption(options_, "label")),
@@ -48,7 +31,14 @@ BatteryWidget::BatteryWidget(const WidgetContext& context, bool startPolling)
                       detail::callbackOption(options_, "on_right"), QStringLiteral("do_nothing")});
   applySample(std::nullopt);
   if (startPolling) {
-    if (PollingWorker* worker = batteryWorker(options_.value("update_interval", 5000))) {
+    const int interval = options_.value("update_interval", 5000);
+    if (PollingWorker* worker = context.pollingWorkers.get("battery", interval, [] {
+          auto source = platform::createBatteryDataSource();
+          return [source] {
+            const auto sample = source->sample();
+            return sample ? QVariant::fromValue(*sample) : QVariant{};
+          };
+        })) {
       connect(worker, &PollingWorker::dataReady, this, [this](const QVariant& value) {
         if (value.canConvert<platform::BatterySample>())
           applySample(value.value<platform::BatterySample>());

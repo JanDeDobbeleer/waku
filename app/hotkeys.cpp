@@ -120,8 +120,8 @@ std::vector<HotkeyBinding> collectHotkeys(const nlohmann::json& config) {
   return bindings;
 }
 
-HotkeyService::HotkeyService(std::vector<HotkeyBinding> bindings)
-    : bindings_(std::move(bindings)) {}
+HotkeyService::HotkeyService(std::vector<HotkeyBinding> bindings, widgets::EventBus& eventBus)
+    : bindings_(std::move(bindings)), eventBus_(eventBus) {}
 HotkeyService::~HotkeyService() { stop(); }
 
 void HotkeyService::start() {
@@ -160,9 +160,10 @@ void HotkeyService::run() {
     const auto found = registered.find(static_cast<int>(message.wParam));
     if (found == registered.end()) continue;
     const HotkeyBinding binding = found->second;
+    widgets::EventBus* eventBus = &eventBus_;
     QMetaObject::invokeMethod(
-        QCoreApplication::instance(),
-        [binding] {
+        eventBus,
+        [binding, eventBus] {
           std::vector<ScreenTarget> screens;
           for (QScreen* screen : QGuiApplication::screens()) {
             screens.push_back({screen->name().toStdString(), screen->geometry()});
@@ -172,9 +173,9 @@ void HotkeyService::run() {
                                       : QString();
           const std::string target =
               routeHotkeyScreen(binding.screen, QCursor::pos(), screens, primary.toStdString());
-          emit widgets::EventBus::instance().widgetHotkey(QString::fromStdString(binding.widget),
-                                                          QString::fromStdString(binding.action),
-                                                          QString::fromStdString(target));
+          emit eventBus->widgetHotkey(QString::fromStdString(binding.widget),
+                                      QString::fromStdString(binding.action),
+                                      QString::fromStdString(target));
         },
         Qt::QueuedConnection);
   }

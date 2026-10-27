@@ -49,6 +49,7 @@ struct BarDeps {
   std::unique_ptr<IAppBar> appBar;  // null: no app-bar registration at all
   OsThemeManager::Detector themeDetector = detectOsDarkTheme;
   std::function<QRect()> screenGeometry;  // default: target screen geometry
+  GlobalState* globalState = nullptr;
 };
 
 // The bar window (port of core/bar.py Bar): a translucent frameless tool window holding the

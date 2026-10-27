@@ -6,10 +6,12 @@
 #include <atomic>
 #include <memory>
 
+#include "core/bar/theme_class.h"
 #include "core/widgets/base_widget.h"
 #include "core/widgets/callbacks.h"
 #include "core/widgets/event_bus.h"
 #include "core/widgets/polling_worker.h"
+#include "core/widgets/polling_worker_registry.h"
 #include "core/widgets/registry.h"
 
 using namespace yasb::widgets;
@@ -100,8 +102,9 @@ TEST_F(CallbacksTest, ExecPrefersSystemFunctionsThenLaunchesProcess) {
 }
 
 TEST_F(CallbacksTest, MouseButtonsRouteToBoundCallbacks) {
+  EventBus bus;
   QWidget host;
-  auto* w = new BaseWidget("cpu", "cpu-widget", 0, &host);
+  auto* w = new BaseWidget("cpu", bus, "cpu-widget", 0, &host);
   QString last;
   w->registerCallback("l", [&](const QStringList&) { last = "left"; });
   w->registerCallback("m", [&](const QStringList&) { last = "middle"; });
@@ -121,13 +124,13 @@ TEST_F(CallbacksTest, MouseButtonsRouteToBoundCallbacks) {
 }
 
 TEST_F(CallbacksTest, HotkeysRouteByWidgetNameAndScreen) {
+  EventBus bus;
   QWidget host;
-  auto* w = new BaseWidget("cpu", "", 0, &host);
+  auto* w = new BaseWidget("cpu", bus, "", 0, &host);
   int hits = 0;
   w->registerCallback("hit", [&](const QStringList&) { ++hits; });
   w->setScreenName("DISPLAY1");
 
-  auto& bus = EventBus::instance();
   emit bus.widgetHotkey("cpu", "hit", "DISPLAY1");
   EXPECT_EQ(hits, 1);
   emit bus.widgetHotkey("memory", "hit", "DISPLAY1");
@@ -140,8 +143,9 @@ TEST_F(CallbacksTest, HotkeysRouteByWidgetNameAndScreen) {
 }
 
 TEST_F(CallbacksTest, TimerCallbackRunsImmediatelyOnStart) {
+  EventBus bus;
   QWidget host;
-  auto* w = new BaseWidget("cpu", "", 0, &host);
+  auto* w = new BaseWidget("cpu", bus, "", 0, &host);
   int ticks = 0;
   w->registerCallback("update", [&](const QStringList&) { ++ticks; });
   CallbackBinding b;
@@ -152,11 +156,14 @@ TEST_F(CallbacksTest, TimerCallbackRunsImmediatelyOnStart) {
 }
 
 TEST_F(CallbacksTest, RegistryBuildsKnownTypesOnly) {
-  auto& reg = WidgetRegistry::instance();
+  EventBus bus;
+  WidgetRegistry reg;
   reg.add("test.Widget", [](const WidgetContext& ctx) {
-    return new BaseWidget(QString::fromStdString(ctx.name));
+    return new BaseWidget(QString::fromStdString(ctx.name), ctx.eventBus);
   });
-  WidgetContext ctx{"w1", "test.Widget", {}, "DISPLAY1", "bar-a"};
+  yasb::bar::GlobalState globalState;
+  PollingWorkerRegistry pollingWorkers;
+  WidgetContext ctx{"w1", "test.Widget", {}, "DISPLAY1", "bar-a", bus, globalState, pollingWorkers};
   std::unique_ptr<BaseWidget> w(reg.create(ctx));
   ASSERT_TRUE(w);
   EXPECT_EQ(w->screenName(), "DISPLAY1");

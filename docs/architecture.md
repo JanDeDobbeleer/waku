@@ -44,18 +44,22 @@ from `platform/` into `core/`, `widgets/` or `app/`; from `core/` into `widgets/
 
 ## Startup and ownership
 
-`app/main.cpp` is the composition root today, but much of the object graph lives in function
-statics rather than in one owner (plan unit R6 introduces an explicit runtime object):
+`app/main.cpp` creates an `app::Runtime` after `QApplication`; `Runtime` owns the application
+services and the mutable UI services they share. Its local lifetime ends before `QApplication`:
 
 1. `winrt::init_apartment` (single-threaded), then `--version` short-circuits.
 2. `setFontEngine()` sets `QT_QPA_PLATFORM=windows:fontengine=gdi` before `QApplication`, as Python
    YASB's `src/env.py` does.
-3. `--config-home` sets `YASB_CONFIG_HOME`; `runBar` loads and validates `config.yaml`, preprocesses
-   `styles.css` and installs the `TransitionEngine` on `qApp`.
-4. `AppServices` (owned by a `unique_ptr` in `runBar`) owns the single-instance mutex, the file
-   watcher, the hotkey service, the CLI server and weak `QPointer`s to the bar windows.
-5. `registerStatWidgets()` fills the `WidgetRegistry`; `WidgetBuilder` creates widgets; the
-   `BarWindow` takes ownership of them through Qt parenting.
+3. `--config-home` sets `YASB_CONFIG_HOME`; `runBar` loads and validates `config.yaml`, then uses
+   the runtime-owned `TransitionEngine` to preprocess `styles.css` and install the event filter.
+4. `Runtime` owns `AppServices`, `WidgetRegistry`, `EventBus`, `GlobalState`, and the polling-worker
+   registry. It populates its registry with `registerStatWidgets(registry)`.
+5. `WidgetBuilder` passes references to the event bus, global UI state and polling-worker registry
+   in each `WidgetContext`; `BarDeps` receives the same `GlobalState`. `BarWindow` owns its widgets
+   through Qt parenting.
+6. After `exec()` returns, `Runtime::stop()` destroys app services and stops polling workers;
+   `runBar` then destroys the bar and its widgets. The runtime and its `TransitionEngine` are
+   destroyed before `QApplication`.
 
 ## Threading
 
@@ -64,14 +68,14 @@ hand results back with queued signals or `QMetaObject::invokeMethod` on `qApp`.
 
 | Thread | Owner | Work | Stopped by |
 |---|---|---|---|
-| GUI | `QApplication` | widgets, bars, CSS engine, file watcher, tray | `exec()` returns |
-| `PollingWorker` (`QThread`) | one per stat type (cpu, memory, battery), parented to `QCoreApplication` | runs the platform `sample()` every `update_interval`, emits `dataReady` to the GUI thread | `PollingWorker::stop()` / destructor at app exit |
+| GUI | `QApplication` / `Runtime` | widgets, bars, CSS engine, file watcher, tray | `Runtime::stop()` and then `exec()` returns |
+| `PollingWorker` (`QThread`) | `Runtime`'s polling-worker registry, keyed by source and `update_interval` | runs the platform `sample()` at its configured interval, emits `dataReady` to the GUI thread | `Runtime::stop()` calls `stopAll()` before widgets are destroyed |
 | hotkey thread (`std::thread`) | `HotkeyService` | `RegisterHotKey` message loop; dispatches to the GUI thread | `stop()`: `PostThreadMessageW(WM_QUIT)` then `join` |
 | CLI command threads (`std::thread`) | `CliServer` | `\\.\pipe\yasb_pipe_cli` accept/read/reply | `stop()`: sets `stopping_`, unblocks, `join` |
 | CLI log thread (`std::thread`) | `CliServer` | `\\.\pipe\yasb_pipe_log` frames | `stop()`: `CancelSynchronousIo`, `join` |
 
 Platform data sources (`platform/`) are called from `PollingWorker` threads; anything they cache
-globally must be locked (`platform/memory.cpp` guards its PDH swap query with `g_swapMutex`).
+globally must be locked.
 
 ## Singletons and process-wide state
 
@@ -79,19 +83,15 @@ No new singleton without a row here and a reason.
 
 | What | Where | Notes |
 |---|---|---|
-| `EventBus::instance()` | `core/widgets/event_bus.h` | every `BaseWidget` connects in its constructor; tests share it across cases |
-| `WidgetRegistry::instance()` | `core/widgets/registry.cpp` | `registerStatWidgets()` guards with a function-static bool (`widgets/stat_widgets.cpp`) |
-| `GlobalState::instance()` | `core/bar/theme_class.cpp` | |
+| `Runtime` services | `app/runtime.h` | one app-owned instance each of the transition engine, widget registry, event bus, global UI state, polling-worker registry and app services |
 | `SchemaValidator::embedded()` | `core/config/schema_validator.cpp` | immutable after construction; fine |
 | log file, observer, debug flag | `app/log.cpp` | process-global by nature; guarded by a `QMutex` |
-| `tooltipOptions()` static | `core/widgets/tooltip.cpp` | also `CustomToolTip::active_` in `tooltip.h` |
+| `tooltipOptions()`, `CustomToolTip::active_` | `core/widgets/tooltip.{cpp,h}` | legacy process-wide tooltip settings and active-tooltip guard |
 | `processLauncher()`, `systemFunctions()` | `core/widgets/callbacks.cpp` | mutable from anywhere (test seam) |
-| one `PollingWorker` per stat type | `widgets/{cpu,memory,battery}/*_widget.cpp` | first widget's `update_interval` wins for all later ones |
-| PDH swap query | `platform/memory.cpp` (`g_swap*`) | mutex-guarded |
-| `static TransitionEngine engine` | `app/main.cpp` (`runBar`) | outlives `QApplication`; plan unit R4 fixes the lifetime |
 | cached Windows build number | `core/widgets/backdrop.cpp` (`windowsBuild()`) | immutable |
 
-Function-local `static const` regexes and lookup tables are immutable and not listed.
+Function-local `static const` regexes and lookup tables are immutable and not listed. Stat widget
+registration has no process-global guard; each runtime populates its own registry.
 
 ## Error handling
 

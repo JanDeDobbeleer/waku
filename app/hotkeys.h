@@ -12,6 +12,10 @@
 #include <thread>
 #include <vector>
 
+namespace yasb::widgets {
+class EventBus;
+}
+
 namespace yasb::app {
 
 struct HotkeyBinding {
@@ -37,7 +41,7 @@ std::vector<HotkeyBinding> collectHotkeys(const nlohmann::json& config);
 
 class HotkeyService {
  public:
-  explicit HotkeyService(std::vector<HotkeyBinding> bindings);
+  HotkeyService(std::vector<HotkeyBinding> bindings, widgets::EventBus& eventBus);
   ~HotkeyService();
   HotkeyService(const HotkeyService&) = delete;
   HotkeyService& operator=(const HotkeyService&) = delete;
@@ -48,6 +52,7 @@ class HotkeyService {
  private:
   void run();
   std::vector<HotkeyBinding> bindings_;
+  widgets::EventBus& eventBus_;
   std::atomic<DWORD> threadId_{0};
   std::binary_semaphore ready_{0};  // released by run() once threadId_ is set
   std::thread thread_;

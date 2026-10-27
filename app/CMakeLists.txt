@@ -2,6 +2,8 @@
 add_library(yasb_app STATIC
   app_services.h
   app_services.cpp
+  runtime.h
+  runtime.cpp
   cli_server.h
   cli_server.cpp
   file_watcher.h

@@ -2,7 +2,9 @@
 
 namespace yasb::widgets {
 
-// Registers the CPU, memory, and battery factories in WidgetRegistry. Call once during app startup.
-void registerStatWidgets();
+class WidgetRegistry;
+
+// Registers the stat widget factories in the application's registry.
+void registerStatWidgets(WidgetRegistry& registry);
 
 }  // namespace yasb::widgets

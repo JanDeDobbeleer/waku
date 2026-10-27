@@ -66,8 +66,9 @@ struct Thresholds {
 // class) on top of the shared BaseWidget label machinery. U8's real widgets replace this.
 class VectorWidget : public BaseWidget {
  public:
-  VectorWidget(bool memory, const json& options, QWidget* host)
-      : BaseWidget(memory ? "memory" : "cpu", memory ? "memory-widget " : "cpu-widget ", 0, host),
+  VectorWidget(bool memory, const json& options, EventBus& eventBus, QWidget* host)
+      : BaseWidget(memory ? "memory" : "cpu", eventBus, memory ? "memory-widget " : "cpu-widget ",
+                   0, host),
         memory_(memory),
         hideDecimal_(options.value("hide_decimal", false)),
         label_(qs(options.at("label"))),
@@ -201,8 +202,8 @@ class VectorWidget : public BaseWidget {
 // Strategy for battery.py (percent thresholds, charging icon, extended fields, N/A fallbacks).
 class BatteryVectorWidget : public BaseWidget {
  public:
-  BatteryVectorWidget(const json& options, const json& initial, QWidget* host)
-      : BaseWidget("battery", "battery-widget ", 0, host),
+  BatteryVectorWidget(const json& options, const json& initial, EventBus& eventBus, QWidget* host)
+      : BaseWidget("battery", eventBus, "battery-widget ", 0, host),
         o_(options),
         label_(qs(options.at("label"))),
         labelAlt_(qs(options.at("label_alt"))) {
@@ -371,14 +372,15 @@ void replay(const std::string& file, bool memory, bool battery = false) {
   for (const json& c : cases) {
     SCOPED_TRACE(file + " / " + c.at("scenario").get<std::string>());
     QWidget host;
+    EventBus eventBus;
     std::function<void(const json&)> apply;
     BaseWidget* w;
     if (battery) {
-      auto* b = new BatteryVectorWidget(c.at("options"), c.at("initial_data"), &host);
+      auto* b = new BatteryVectorWidget(c.at("options"), c.at("initial_data"), eventBus, &host);
       apply = [b](const json& s) { b->apply(s); };
       w = b;
     } else {
-      auto* v = new VectorWidget(memory, c.at("options"), &host);
+      auto* v = new VectorWidget(memory, c.at("options"), eventBus, &host);
       apply = [v](const json& s) { v->apply(s); };
       w = v;
     }

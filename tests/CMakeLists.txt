@@ -41,6 +41,7 @@ target_sources(yasb_tests PRIVATE
 
 # --- U7: app services and CLI protocol ---
 target_sources(yasb_tests PRIVATE
+  app/test_runtime.cpp
   app/test_cli_protocol.cpp
   app/test_file_watcher.cpp
   app/test_hotkeys.cpp

@@ -12,6 +12,7 @@
 #include "app/file_watcher.h"
 #include "app/hotkeys.h"
 #include "app/single_instance.h"
+#include "core/widgets/event_bus.h"
 
 namespace yasb::bar {
 class BarWindow;
@@ -27,7 +28,7 @@ class AppServices : public QObject {
   Q_OBJECT
 
  public:
-  explicit AppServices(nlohmann::json config, QObject* parent = nullptr);
+  AppServices(nlohmann::json config, widgets::EventBus& eventBus, QObject* parent = nullptr);
   ~AppServices() override;
 
   bool start(bool restartWait);
@@ -47,6 +48,7 @@ class AppServices : public QObject {
   void scheduleScreenRestart(const QString& reason);
 
   nlohmann::json config_;
+  widgets::EventBus& eventBus_;
   SingleInstance instance_;
   std::unique_ptr<FileWatcher> watcher_;
   std::unique_ptr<HotkeyService> hotkeys_;

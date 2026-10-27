@@ -6,11 +6,6 @@
 
 namespace yasb::widgets {
 
-WidgetRegistry& WidgetRegistry::instance() {
-  static WidgetRegistry registry;
-  return registry;
-}
-
 void WidgetRegistry::add(const std::string& type, WidgetFactory factory) {
   factories_[type] = std::move(factory);
 }
@@ -28,17 +23,6 @@ BaseWidget* WidgetRegistry::create(const WidgetContext& ctx) const {
     widget->setProperty("bar_id", ctx.barId);
   }
   return widget;
-}
-
-BaseWidget* WidgetRegistry::create(const config::LoadResult& config, const std::string& name,
-                                   const QString& screenName, const QString& barId) const {
-  const auto* entry = config.widget(name);
-  if (!entry || entry->status != config::WidgetStatus::Ok) {
-    qWarning().noquote() << "Widget" << QString::fromStdString(name)
-                         << "is undefined or has invalid options";
-    return nullptr;
-  }
-  return create(WidgetContext{name, entry->type, entry->options, screenName, barId});
 }
 
 }  // namespace yasb::widgets

@@ -10,6 +10,7 @@
 #include <optional>
 #include <vector>
 
+#include "core/bar/theme_class.h"
 #include "core/widgets/popup.h"
 
 namespace yasb::widgets {
@@ -52,8 +53,8 @@ class PinnablePopup : public PopupWidget {
   Q_OBJECT
 
  public:
-  PinnablePopup(QWidget* anchor, bool blur, bool roundCorners, const QString& roundCornersType,
-                const QString& borderColor);
+  PinnablePopup(QWidget* anchor, bar::GlobalState& globalState, bool blur, bool roundCorners,
+                const QString& roundCornersType, const QString& borderColor);
 
   bool isPinned() const { return pinned_; }
   void setPinned(bool pinned);
@@ -73,6 +74,7 @@ class PinnablePopup : public PopupWidget {
   bool roundCorners_;
   QString roundCornersType_;
   QString borderColor_;
+  bar::GlobalState& globalState_;
   std::optional<QPoint> dragOffset_;
 };
 
@@ -101,9 +103,10 @@ struct StatRow {
   QString rightValue;
 };
 
-PinnablePopup* buildStatPopup(QWidget* anchor, const StatPopupMenuConfig& menu,
-                              const QString& popupClass, const QString& title,
-                              const std::vector<double>& history, const std::vector<StatRow>& rows,
+PinnablePopup* buildStatPopup(QWidget* anchor, bar::GlobalState& globalState,
+                              const StatPopupMenuConfig& menu, const QString& popupClass,
+                              const QString& title, const std::vector<double>& history,
+                              const std::vector<StatRow>& rows,
                               const QString& graphClass = QStringLiteral("graph"));
 
 }  // namespace yasb::widgets

@@ -14,12 +14,12 @@
 #include <vector>
 
 #include "app/app_services.h"
+#include "app/runtime.h"
 #include "core/bar/bar_window.h"
 #include "core/bar/screens.h"
 #include "core/config/loader.h"
 #include "core/config/paths.h"
 #include "core/css/preprocessor.h"
-#include "core/css/transition_engine.h"
 #include "core/version.h"
 #include "core/widgets/widget_builder.h"
 #include "widgets/stat_widgets.h"
@@ -84,8 +84,7 @@ std::vector<std::string> stringList(const nlohmann::json& object, const char* ke
 // Builds the first configured bar. App-bar registration is opt-in so --config-home runs never
 // disturb the live desktop's work area.
 // --screenshot <png> renders the bar to a file without ever showing it.
-// `engine` is owned by main() so it is destroyed before QApplication.
-int runBar(int argc, char** argv, yasb::css::TransitionEngine& engine) {
+int runBar(int argc, char** argv, yasb::app::Runtime& runtime) {
   const auto result = yasb::config::loadConfigFile(yasb::config::configPath());
   if (!result.ok()) {
     qCritical().noquote() << "Config not loaded:" << QString::fromStdString(result.message);
@@ -93,18 +92,15 @@ int runBar(int argc, char** argv, yasb::css::TransitionEngine& engine) {
   }
 
   yasb::css::CssPreprocessor pre(QString::fromStdWString(yasb::config::stylesheetPath().wstring()));
+  auto& engine = runtime.transitionEngine();
   const QString stylesheet = engine.loadStyleSheet(pre.process());
   engine.install(qApp);
   const bool screenshot = optionValue(argc, argv, "--screenshot") != nullptr;
 
-  std::unique_ptr<yasb::app::AppServices> services;
-  if (!screenshot) {
-    services = std::make_unique<yasb::app::AppServices>(result.config);
-    if (!services->start(hasFlag(argc, argv, "--restart-wait"))) {
-      qCritical().noquote() << "Application services not started:"
-                            << QString::fromStdString(services->error());
-      return 1;
-    }
+  if (!screenshot && !runtime.startServices(result.config, hasFlag(argc, argv, "--restart-wait"))) {
+    qCritical().noquote() << "Application services not started:"
+                          << QString::fromStdString(runtime.appServices()->error());
+    return 1;
   }
 
   const nlohmann::json noBars = nlohmann::json::object();
@@ -142,9 +138,9 @@ int runBar(int argc, char** argv, yasb::css::TransitionEngine& engine) {
   const QString barId =
       QStringLiteral("%1_%2").arg(QString::fromStdString(pick.barName), screen->name());
   yasb::bar::BarDeps deps;
+  deps.globalState = &runtime.globalState();
   if (hasFlag(argc, argv, "--register-app-bar")) deps.appBar = yasb::bar::makeWin32AppBar();
 
-  yasb::widgets::registerStatWidgets();
   yasb::widgets::WidgetBuilder::Columns columns;
   const auto barIt = barsConfig.find(pick.barName);
   const nlohmann::json& barConfig = barIt != barsConfig.end() ? *barIt : noBars;
@@ -156,7 +152,8 @@ int runBar(int argc, char** argv, yasb::css::TransitionEngine& engine) {
         column.append(QString::fromStdString(name));
     }
   }
-  yasb::widgets::WidgetBuilder builder(result);
+  yasb::widgets::WidgetBuilder builder(result, runtime.widgetRegistry(), runtime.eventBus(),
+                                       runtime.globalState(), runtime.pollingWorkers());
   const auto widgets = builder.buildWidgets(columns, screen->name(), barId);
   auto* window = new yasb::bar::BarWindow(
       barId, QString::fromStdString(pick.barName), screen, stylesheet, widgets,
@@ -168,38 +165,40 @@ int runBar(int argc, char** argv, yasb::css::TransitionEngine& engine) {
     if (screenshotImage.isNull()) {
       qCritical().noquote() << "Failed to grab bar screenshot for" << QString::fromUtf8(png)
                             << "frame size:" << window->barFrame()->size();
+      runtime.stop();
       delete window;
       return 2;
     }
     if (!screenshotImage.save(QString::fromUtf8(png))) {
       qCritical().noquote() << "Failed to save bar screenshot:" << QString::fromUtf8(png);
+      runtime.stop();
       delete window;
       return 2;
     }
+    runtime.stop();
     delete window;
     return 0;
   }
+  auto* services = runtime.appServices();
   services->addBar(window);
   const QPointer<yasb::bar::BarWindow> bar(window);
-  QObject::connect(
-      services.get(), &yasb::app::AppServices::stylesheetChanged, qApp, [bar, &engine] {
-        if (!bar) return;
-        try {
-          yasb::css::CssPreprocessor updated(
-              QString::fromStdWString(yasb::config::stylesheetPath().wstring()));
-          bar->setStyleSheet(engine.loadStyleSheet(updated.process()));
-        } catch (const std::exception& error) {
-          qCritical().noquote() << "Stylesheet reload failed:" << QString::fromUtf8(error.what());
-        }
-      });
-  QObject::connect(services.get(), &yasb::app::AppServices::exitRequested, qApp,
-                   &QCoreApplication::quit);
+  QObject::connect(services, &yasb::app::AppServices::stylesheetChanged, qApp, [bar, &engine] {
+    if (!bar) return;
+    try {
+      yasb::css::CssPreprocessor updated(
+          QString::fromStdWString(yasb::config::stylesheetPath().wstring()));
+      bar->setStyleSheet(engine.loadStyleSheet(updated.process()));
+    } catch (const std::exception& error) {
+      qCritical().noquote() << "Stylesheet reload failed:" << QString::fromUtf8(error.what());
+    }
+  });
+  QObject::connect(services, &yasb::app::AppServices::exitRequested, qApp, &QCoreApplication::quit);
   qApp->setQuitOnLastWindowClosed(false);
   window->show();
   qInfo().noquote() << "Bar" << QString::fromStdString(pick.barName) << "Created on Screen"
                     << screen->name();
   const int code = QApplication::exec();
-  // Widgets go before the services and the engine that styles them.
+  runtime.stop();
   delete bar.data();
   return code;
 }
@@ -237,8 +236,8 @@ int main(int argc, char** argv) {
                             QString::fromUtf8(configHome).toStdWString().c_str());
   }
   try {
-    yasb::css::TransitionEngine engine;
-    return runBar(argc, argv, engine);
+    yasb::app::Runtime runtime;
+    return runBar(argc, argv, runtime);
   } catch (const std::exception& error) {
     qCritical().noquote() << "Unhandled exception:" << QString::fromUtf8(error.what());
   } catch (...) {

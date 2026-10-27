@@ -121,7 +121,7 @@ BarWindow::BarWindow(QString barId, QString barName, QScreen* screen, const QStr
 
   if (settings_.alwaysOnTop) setWindowFlag(Qt::WindowStaysOnTopHint);
 
-  theme_ = new OsThemeManager(frame_, this, deps_.themeDetector);
+  theme_ = new OsThemeManager(frame_, this, deps_.themeDetector, deps_.globalState);
   theme_->updateThemeClass();
 
   positionBar();

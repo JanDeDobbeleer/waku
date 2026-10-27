@@ -3,7 +3,10 @@
 #include <QApplication>
 #include <memory>
 
+#include "core/bar/theme_class.h"
 #include "core/widgets/backdrop.h"
+#include "core/widgets/event_bus.h"
+#include "core/widgets/polling_worker_registry.h"
 #include "core/widgets/stat_popup.h"
 #include "core/widgets/tooltip.h"
 #include "core/widgets/widget_builder.h"
@@ -65,6 +68,7 @@ TEST(StatPopup, BuildsStructureAndPinsOnToggle) {
   QWidget anchor;
   anchor.setGeometry(100, 100, 200, 30);
   StatPopupMenuConfig menu;
+  yasb::bar::GlobalState globalState;
   menu.blur = false;
   menu.pinIcon = "P";
   menu.unpinIcon = "U";
@@ -72,7 +76,7 @@ TEST(StatPopup, BuildsStructureAndPinsOnToggle) {
       {QString("Total"), "total", "1G", QString("Used"), "used", "2G"},
       {QString("Free"), "free", "3G", std::nullopt, "", ""}};
   PinnablePopup* popup =
-      buildStatPopup(&anchor, menu, "memory-popup", "Memory", {10, 20, 30}, rows);
+      buildStatPopup(&anchor, globalState, menu, "memory-popup", "Memory", {10, 20, 30}, rows);
 
   EXPECT_EQ(popup->property("class").toString(), "memory-popup");
   ASSERT_NE(popup->graph, nullptr);
@@ -105,10 +109,13 @@ TEST(WidgetBuilder, BuildsKnownWidgetsAndRemembersFailuresOnce) {
   add("unreg", yasb::config::WidgetStatus::Ok, "test.Unregistered");
 
   WidgetRegistry registry;
+  EventBus eventBus;
+  yasb::bar::GlobalState globalState;
+  PollingWorkerRegistry pollingWorkers;
   registry.add("test.Widget", [](const WidgetContext& c) {
-    return new BaseWidget(QString::fromStdString(c.name), "test-widget ", 0);
+    return new BaseWidget(QString::fromStdString(c.name), c.eventBus, "test-widget ", 0);
   });
-  WidgetBuilder builder(cfg, registry);
+  WidgetBuilder builder(cfg, registry, eventBus, globalState, pollingWorkers);
   const WidgetBuilder::Columns columns = {{"left", {"ok", "bad", "ghost"}},
                                           {"right", {"odd", "ok", "unreg", "bad"}}};
   auto built = builder.buildWidgets(columns, "DISPLAY1", "bar-1");
@@ -133,10 +140,13 @@ TEST(WidgetBuilder, ThrowingFactoryIsSkippedInsteadOfEscaping) {
   r.type = "test.Throwing";
   cfg.widgets["boom"] = r;
   WidgetRegistry registry;
+  EventBus eventBus;
+  yasb::bar::GlobalState globalState;
+  PollingWorkerRegistry pollingWorkers;
   registry.add("test.Throwing", [](const WidgetContext& c) -> BaseWidget* {
-    return new BaseWidget(QString::fromStdString(c.options.at("missing").get<std::string>()), "",
-                          0);
+    return new BaseWidget(QString::fromStdString(c.options.at("missing").get<std::string>()),
+                          c.eventBus, "", 0);
   });
-  WidgetBuilder builder(cfg, registry);
+  WidgetBuilder builder(cfg, registry, eventBus, globalState, pollingWorkers);
   EXPECT_EQ(builder.buildWidget("boom", "DISPLAY1", "bar-1"), nullptr);
 }

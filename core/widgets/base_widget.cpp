@@ -8,8 +8,8 @@
 
 namespace yasb::widgets {
 
-BaseWidget::BaseWidget(const QString& widgetName, const QString& className, int timerIntervalMs,
-                       QWidget* parent)
+BaseWidget::BaseWidget(const QString& widgetName, EventBus& eventBus, const QString& className,
+                       int timerIntervalMs, QWidget* parent)
     : QWidget(parent), widgetName_(widgetName), timerInterval_(timerIntervalMs) {
   // BarWindow's island code identifies container children by this property.
   setProperty("widget_name", widgetName);
@@ -34,7 +34,7 @@ BaseWidget::BaseWidget(const QString& widgetName, const QString& className, int 
   container_->setProperty("class", QStringLiteral("widget-container"));
   frameLayout->addWidget(container_);
 
-  connect(&EventBus::instance(), &EventBus::widgetHotkey, this, &BaseWidget::handleHotkey);
+  connect(&eventBus, &EventBus::widgetHotkey, this, &BaseWidget::handleHotkey);
   connect(&timer_, &QTimer::timeout, this, [this] { runCallback(binding_.timer); });
 }
 

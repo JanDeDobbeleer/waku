@@ -11,6 +11,8 @@ target_sources(yasb_ui PRIVATE
   label_format.cpp
   polling_worker.h
   polling_worker.cpp
+  polling_worker_registry.h
+  polling_worker_registry.cpp
   popup.h
   popup.cpp
   registry.h

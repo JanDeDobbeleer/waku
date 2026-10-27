@@ -22,8 +22,8 @@ constexpr int kScreenChangeDebounceMs = 250;
 
 }  // namespace
 
-AppServices::AppServices(nlohmann::json config, QObject* parent)
-    : QObject(parent), config_(std::move(config)), instance_(L"yasb_reborn") {
+AppServices::AppServices(nlohmann::json config, widgets::EventBus& eventBus, QObject* parent)
+    : QObject(parent), config_(std::move(config)), eventBus_(eventBus), instance_(L"yasb_reborn") {
   screenRestartTimer_.setSingleShot(true);
   screenRestartTimer_.setInterval(kScreenChangeDebounceMs);
   connect(&screenRestartTimer_, &QTimer::timeout, this,
@@ -74,7 +74,7 @@ bool AppServices::start(bool restartWait) {
     QMetaObject::invokeMethod(
         this, [this, command] { handleCommand(command); }, Qt::QueuedConnection);
   });
-  hotkeys_ = std::make_unique<HotkeyService>(collectHotkeys(config_));
+  hotkeys_ = std::make_unique<HotkeyService>(collectHotkeys(config_), eventBus_);
   hotkeys_->start();
   started_ = true;
   qInfo() << "Application services started";

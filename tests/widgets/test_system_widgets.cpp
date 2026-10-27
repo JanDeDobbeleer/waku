@@ -3,6 +3,8 @@
 #include <QApplication>
 #include <memory>
 
+#include "core/widgets/event_bus.h"
+#include "core/widgets/polling_worker_registry.h"
 #include "core/widgets/registry.h"
 #include "core/widgets/stat_popup.h"
 #include "widgets/battery/battery_widget.h"
@@ -18,8 +20,9 @@ namespace {
 
 std::unique_ptr<QApplication> g_app;
 
-WidgetContext context(const char* widget, const char* type, json options) {
-  return {widget, type, std::move(options), {}, {}};
+WidgetContext context(const char* widget, const char* type, json options, EventBus& eventBus,
+                      yasb::bar::GlobalState& globalState, PollingWorkerRegistry& pollingWorkers) {
+  return {widget, type, std::move(options), {}, {}, eventBus, globalState, pollingWorkers};
 }
 
 json cpuOptions(bool menu = false) {
@@ -79,6 +82,14 @@ class SystemWidgetTest : public testing::Test {
     g_app = std::make_unique<QApplication>(argc, argv);
   }
   static void TearDownTestSuite() { g_app.reset(); }
+
+  WidgetContext context(const char* widget, const char* type, json options) {
+    return ::context(widget, type, std::move(options), eventBus_, globalState_, pollingWorkers_);
+  }
+
+  EventBus eventBus_;
+  yasb::bar::GlobalState globalState_;
+  PollingWorkerRegistry pollingWorkers_;
 };
 
 TEST_F(SystemWidgetTest, CpuUsesConfiguredLabelAndStatusClass) {
@@ -178,8 +189,9 @@ TEST_F(SystemWidgetTest, StatPopupHasHistoryGraphAndPinControl) {
 }
 
 TEST_F(SystemWidgetTest, RegistersOnlyTheThreeStatWidgetFactories) {
-  registerStatWidgets();
-  const auto& registry = WidgetRegistry::instance();
+  WidgetRegistry registry;
+  registerStatWidgets(registry);
+  registerStatWidgets(registry);
   EXPECT_TRUE(registry.contains("yasb.cpu.CpuWidget"));
   EXPECT_TRUE(registry.contains("yasb.memory.MemoryWidget"));
   EXPECT_TRUE(registry.contains("yasb.battery.BatteryWidget"));

@@ -9,6 +9,10 @@
 #include <QString>
 #include <QTimer>
 
+namespace yasb::bar {
+class GlobalState;
+}
+
 namespace yasb::widgets {
 
 struct TooltipBlur {
@@ -40,7 +44,7 @@ class CustomToolTip : public QFrame {
   Q_PROPERTY(int slideOffset READ slideOffset WRITE setSlideOffset)
 
  public:
-  explicit CustomToolTip(QWidget* parent = nullptr);
+  explicit CustomToolTip(bool darkMode, QWidget* parent = nullptr);
 
   qreal opacity() const { return opacity_; }
   void setOpacity(qreal value);
@@ -80,7 +84,8 @@ class TooltipEventFilter : public QObject {
   Q_OBJECT
 
  public:
-  TooltipEventFilter(QWidget* widget, const QString& text, int delayMs, const QString& position);
+  TooltipEventFilter(QWidget* widget, const QString& text, int delayMs, const QString& position,
+                     bar::GlobalState& globalState);
   ~TooltipEventFilter() override;
 
   void updateText(const QString& text);
@@ -100,6 +105,7 @@ class TooltipEventFilter : public QObject {
   QString text_;
   QString position_;
   int delay_;
+  bar::GlobalState& globalState_;
   QPointer<CustomToolTip> tip_;
   QTimer hideTimer_;
   QTimer hoverTimer_;
@@ -109,8 +115,8 @@ class TooltipEventFilter : public QObject {
 
 // Declarative attach: an empty text does nothing; calling again updates the existing tooltip's
 // text.
-void setTooltip(QWidget* widget, const QString& text, int delayMs = 400,
-                const QString& position = QString());
+void setTooltip(QWidget* widget, const QString& text, bar::GlobalState& globalState,
+                int delayMs = 400, const QString& position = QString());
 void showTooltipNow(QWidget* widget);
 
 }  // namespace yasb::widgets
