@@ -39,6 +39,26 @@ dist\msvc2022_arm64\yasb-native.exe --version   # prints "yasb-native 0.1.0"
 dist\msvc2022_arm64\yasb-native.exe --smoke     # builds QApplication, exits 0
 ```
 
+## App services and CLI
+
+Normal startup owns the `yasb_reborn` single-instance mutex, watches `config.yaml` and `styles.css`
+when their `watch_config` / `watch_stylesheet` settings are enabled, and starts the tray and named
+pipes. A config change restarts with `--restart-wait`; a stylesheet change applies without restarting.
+Logs go to `yasb-native.log` in the selected config directory.
+
+`yasbc-native.exe` sends plain-text commands to `\\.\pipe\yasb_pipe_cli`:
+
+```powershell
+build\arm64-debug\yasbc-native.exe reload
+build\arm64-debug\yasbc-native.exe show-bar --screen DISPLAY1
+build\arm64-debug\yasbc-native.exe stop
+```
+
+The command pipe replies `ACK` for `reload`, `stop`, `show-bar`, `hide-bar`, and `toggle-bar`;
+other commands receive `CLI Unknown Command`. The separate `\\.\pipe\yasb_pipe_log` emits
+NUL-terminated JSON `DATA` frames and answers JSON `PING` messages with `PONG`.
+`--register-app-bar` remains opt-in; regular startup does not reserve screen work area.
+
 Render a bar offscreen to a PNG (no window, no app-bar registration; the unpackaged debug exe has no
 Qt DLLs, so reuse the ones deployed next to the tests):
 

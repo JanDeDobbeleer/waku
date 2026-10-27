@@ -4,12 +4,16 @@
 
 #include <QApplication>
 #include <QCoreApplication>
+#include <QPixmap>
+#include <QPointer>
 #include <QString>
 
 #include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "app/app_services.h"
 #include "core/bar/bar_window.h"
 #include "core/bar/screens.h"
 #include "core/config/loader.h"
@@ -64,6 +68,16 @@ int runBar(int argc, char** argv) {
   static yasb::css::TransitionEngine engine;
   const QString stylesheet = engine.loadStyleSheet(pre.process());
   engine.install(qApp);
+  const bool screenshot = optionValue(argc, argv, "--screenshot") != nullptr;
+
+  std::unique_ptr<yasb::app::AppServices> services;
+  if (!screenshot) {
+    services = std::make_unique<yasb::app::AppServices>(result.config);
+    if (!services->start(hasFlag(argc, argv, "--restart-wait"))) {
+      qCritical().noquote() << "Application services not started:" << QString::fromStdString(services->error());
+      return 1;
+    }
+  }
 
   std::vector<yasb::bar::BarScreens> bars;
   for (const auto& [name, bar] : result.config.at("bars").items()) {
@@ -88,12 +102,32 @@ int runBar(int argc, char** argv) {
                                           QString::fromStdString(pick.barName), screen, stylesheet, {},
                                           yasb::bar::BarSettings::fromJson(result.config["bars"][pick.barName]),
                                           std::move(deps));
-  if (const char* png = optionValue(argc, argv, "--screenshot")) {
+  if (screenshot) {
+    const char* png = optionValue(argc, argv, "--screenshot");
     window->ensurePolished();
-    window->barFrame()->grab().save(QString::fromUtf8(png));
+    const QPixmap image = window->barFrame()->grab();
+    if (image.isNull()) {
+      qCritical() << "Screenshot failed: bar frame grab returned an empty image";
+      delete window;
+      return 1;
+    }
+    if (!image.save(QString::fromUtf8(png))) {
+      qCritical().noquote() << "Screenshot failed: could not save" << QString::fromUtf8(png);
+      delete window;
+      return 1;
+    }
     delete window;
     return 0;
   }
+  services->addBar(window);
+  const QPointer<yasb::bar::BarWindow> bar(window);
+  QObject::connect(services.get(), &yasb::app::AppServices::stylesheetChanged, qApp, [bar] {
+    if (!bar) return;
+    yasb::css::CssPreprocessor updated(QString::fromStdWString(yasb::config::stylesheetPath().wstring()));
+    bar->setStyleSheet(engine.loadStyleSheet(updated.process()));
+  });
+  QObject::connect(services.get(), &yasb::app::AppServices::exitRequested, qApp, &QCoreApplication::quit);
+  qApp->setQuitOnLastWindowClosed(false);
   window->show();
   return QApplication::exec();
 }
