@@ -1,0 +1,444 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/amnweb/yasb/main/schema.json
+
+# For more information, visit https://github.com/amnweb/yasb/wiki
+watch_stylesheet: true
+watch_config: true
+debug: true
+update_check: true
+bars:
+  primary-bar:
+    enabled: true
+    screens: ["primary"]
+    class_name: yasb-bar
+    style: "adaptive"
+    alignment:
+      position: top
+      align: center
+    animation:
+      enabled: true
+      duration: 200
+    blur_effect:
+      enabled: false
+      dark_mode: false
+      round_corners: false
+      border_color: None
+    window_flags:
+      always_on_top: true
+      windows_app_bar: true
+      auto_hide: false
+    dimensions:
+      width: "100%"
+      height: 36
+    padding:
+      top: 0
+      left: 0
+      bottom: 0
+      right: 0
+    widgets:
+      left:
+      - control_center
+      - komorebi_workspaces
+      - komorebi_active_layout
+      center:
+      - taskbar
+      - clock
+      - media
+      right:
+      - systray
+      - wallpapers
+      - github
+      - notifications
+      - cpu
+      - memory
+      - bluetooth
+      - wifi
+      - battery
+widgets:
+  wallpapers:
+    type: "yasb.wallpapers.WallpapersWidget"
+    options:
+      # Empty label hides the bar icon; the widget stays loaded for the alt+e hotkey
+      label: ""
+      image_path: "C:/Users/jande/.config/wallpapers"
+      engine:
+        enabled: true
+        animation: "split"
+      gallery:
+        type: "strip"
+        image_width: 240
+        accent_color: "#fff"
+        orientation: "portrait"
+        image_corner_radius: 0
+      keybindings:
+      - keys: alt+e
+        action: toggle_gallery
+        screen: cursor
+  taskbar:
+    type: "yasb.taskbar.TaskbarWidget"
+    options:
+      icon_size: 16
+      tooltip: true
+      show_only_visible: false
+      strict_filtering: true
+      monitor_exclusive: false
+      hide_empty: true
+      grouping:
+        enabled: true
+        show_count: true
+      animation:
+        enabled: true
+        duration: 200
+      preview:
+        enabled: true
+        width: 180
+        delay: 400
+        padding: 8
+        margin: 8
+        blur: true
+        peek: true
+      title_label:
+        enabled: false
+  media:
+    type: "yasb.media.MediaWidget"
+    options:
+      label: "{title}{s}{artist}"
+      label_alt: "{title}"
+      separator: " - "
+      hide_empty: true
+      max_field_size:
+        label: 30
+        label_alt: 30
+      show_thumbnail: true
+      thumbnail_alpha: 80
+      thumbnail_padding: 8
+      thumbnail_corner_radius: 14
+      symmetric_corner_radius: true
+      icons:
+        prev_track: "\uE892"
+        next_track: "\uE893"
+        play: "\uE768"
+        pause: "\uE769"
+      progress_bar:
+        enabled: true
+        alignment: bottom
+      media_menu:
+        blur: true
+        round_corners: true
+        round_corners_type: normal
+        border_color: System
+        alignment: center
+        direction: down
+        offset_top: 6
+        thumbnail_size: 100
+        thumbnail_corner_radius: 8
+        max_title_size: 60
+        max_artist_size: 40
+        show_source: true
+      callbacks:
+        on_left: toggle_media_menu
+        on_middle: toggle_play_pause
+        on_right: toggle_label
+  control_center:
+    type: "yasb.control_center.ControlCenterWidget"
+    options:
+      label: "<span>\uE62A</span>"
+      tooltip: true
+      sections_order:
+        - "system_controls"
+        - "quick_actions"
+        - "sliders"
+        - "power"
+        - "media"
+      popup:
+        alignment: "left"
+        direction: "down"
+        border_color: System
+        round_corners: true
+        round_corners_type: normal
+        offset_top: 8
+      sections:
+        system_controls:
+          profile_image_size: 28
+          power_icon: "\uE7E8"
+          lock_icon: "\uE72E"
+          settings_icon: "\uE713"
+        quick_actions:
+          show: true
+          columns: 3
+          label_position: "default"
+          actions:
+            - id: "toggle_dnd"
+              label: "Do Not Disturb"
+              icon: "\uf285"
+            - id: "toggle_mute"
+              label: "Mute"
+              icon: "\ue74f"
+            - id: "toggle_mic_mute"
+              label: "Mic Mute"
+              icon: "\uF12E"
+            - id: "screenshot"
+              label: "Screenshot"
+              icon: "\ue91b"
+            - id: "touch_keyboard"
+              label: "Keyboard"
+              icon: "\uE765"
+            - id: "toggle_theme"
+              label: "Dark Mode"
+              icon: "\uE708"
+        sliders:
+          show: true
+          brightness:
+            show_slider: true
+            icon: "\uE706"
+            show_source_selector: true
+            source_selector_icon: "\uE972"
+          volume:
+            show_slider: true
+            icon: "\uE767"
+            show_source_selector: true
+            source_selector_icon: "\uE972"
+          microphone:
+            show_slider: true
+            icon: "\uE720"
+            show_source_selector: true
+            source_selector_icon: "\uE972"
+        media:
+          show: true
+          thumbnail_size: 36
+          thumbnail_radius: 4
+          icons:
+            prev_track: "\ue622"
+            next_track: "\ue623"
+            play: "\uf5b0"
+            pause: "\ue62e"
+        power:
+          show: true
+          power_plan_title: "Power Plan"
+          power_mode_title: "Power Mode"
+          button_menu_icon: "\ue76c"
+      callbacks:
+        on_left: "toggle_menu"
+  komorebi_workspaces:
+    type: "komorebi.workspaces.WorkspaceWidget"
+    options:
+      label_offline: ""
+      label_workspace_btn: ""
+      label_workspace_active_btn: ""
+      label_workspace_populated_btn: ""
+      hide_if_offline: true
+      hide_empty_workspaces: false
+      enable_scroll_switching: true
+  komorebi_active_layout:
+    type: "komorebi.active_layout.ActiveLayoutWidget"
+    options:
+      hide_if_offline: true
+      # Real layouts only; the default list also cycles through states like monocle that komorebic can't set as a layout
+      layouts:
+      - bsp
+      - columns
+      - rows
+      - grid
+      - scrolling
+      - vertical_stack
+      - horizontal_stack
+      - ultrawide_vertical_stack
+      - right_main_vertical_stack
+  clock:
+    type: yasb.clock.ClockWidget
+    options:
+      label: '{%a, %d %b %H:%M}<span>{alarm}</span>'
+      label_alt: '{%H:%M}'
+      timezones: []
+      calendar:
+        blur: true
+        round_corners: true
+        alignment: center
+        direction: down
+        extended: false
+        show_years: true
+        show_holidays: false
+        show_week_numbers: true
+      callbacks:
+        on_left: toggle_calendar
+        on_middle: toggle_label
+        on_right: context_menu
+  notifications:
+    type: yasb.notifications.NotificationsWidget
+    options:
+      label: "<span>{icon}</span>"
+      label_alt: '{count} notifications'
+      hide_empty: false
+      tooltip: false
+      icons:
+        new: "\ued0c"
+        default: "\ue91c"
+      callbacks:
+        on_left: "toggle_notification"
+        on_right: clear_notifications
+        on_middle: do_nothing
+  systray:
+    type: yasb.systray.SystrayWidget
+    options:
+      class_name: systray
+      label_collapsed: "\uE972"
+      label_expanded: "\uE971"
+      label_position: right
+      pin_click_modifier: ctrl
+      show_unpinned: false
+      show_battery: false
+      show_volume: false
+      icon_size: 16
+      use_hook: true
+      show_in_popup: true
+      icons_per_row: 5
+      popup:
+        blur: true
+        round_corners: true
+        round_corners_type: normal
+        border_color: System
+        alignment: center
+        direction: down
+        offset_top: 6
+        offset_left: 0
+  cpu:
+    type: yasb.cpu.CpuWidget
+    options:
+      label: "<span>\uEEA1</span> {info[percent][total]}%"
+      label_alt: "<span>\uEEA1</span> {info[freq][current]} MHz"
+      update_interval: 2000
+      hide_decimal: true
+      menu:
+        enabled: true
+        blur: true
+        round_corners: true
+        round_corners_type: normal
+        border_color: System
+        alignment: right
+        direction: down
+        offset_top: 6
+        show_graph: true
+        show_graph_grid: true
+        graph_history_size: 60
+      callbacks:
+        on_left: toggle_menu
+        on_right: toggle_label
+  memory:
+    type: yasb.memory.MemoryWidget
+    options:
+      label: "<span>\uEEA0</span> {virtual_mem_percent}%"
+      label_alt: "<span>\uEEA0</span> {virtual_mem_outof}"
+      update_interval: 5000
+      hide_decimal: true
+      menu:
+        enabled: true
+        blur: true
+        round_corners: true
+        round_corners_type: normal
+        border_color: System
+        alignment: right
+        direction: down
+        offset_top: 6
+        show_graph: true
+        show_graph_grid: true
+        graph_history_size: 60
+      callbacks:
+        on_left: toggle_menu
+        on_right: toggle_label
+  bluetooth:
+    type: yasb.bluetooth.BluetoothWidget
+    options:
+      label: "<span>{icon}</span>"
+      label_alt: "<span>{icon}</span> {device_name}"
+      max_length: 24
+      callbacks:
+        on_left: toggle_menu
+        on_right: toggle_label
+        on_middle: "exec cmd /c start ms-settings:bluetooth"
+      menu_config:
+        blur: true
+        round_corners: true
+        border_color: System
+        alignment: right
+        direction: down
+        offset_top: 6
+  wifi:
+    # {vpn_icon}/{vpn_name} come from the local 2.0.8 build (D:\yasb, branch feat/wifi-vpn-aware); their spans hide without a VPN
+    type: yasb.wifi.WifiWidget
+    options:
+      label: '<span>{wifi_icon}</span><span class="vpn">{vpn_icon}</span>'
+      label_alt: '<span>{wifi_icon}</span>{wifi_name}<span class="vpn-name">{vpn_name}</span>'
+      ethernet_label: '<span>{wifi_icon}</span><span class="vpn">{vpn_icon}</span>'
+      ethernet_label_alt: '<span>{wifi_icon}</span>{ip_addr}<span class="vpn-name">{vpn_name}</span>'
+      ethernet_icon: "\U000F0200"
+      update_interval: 5000
+      callbacks:
+        on_left: toggle_menu
+        on_right: toggle_label
+        on_middle: "exec cmd /c start ms-settings:network"
+      menu_config:
+        blur: true
+        round_corners: true
+        border_color: System
+        alignment: right
+        direction: down
+        offset_top: 6
+  battery:
+    type: yasb.battery.BatteryWidget
+    options:
+      label: "<span>{icon}</span> {percent}%"
+      label_alt: "<span>{icon}</span> {percent}% | {time_remaining}"
+      update_interval: 5000
+      time_remaining_natural: true
+      hide_unsupported: true
+      charging_options:
+        icon_format: "{charging_icon}"
+        blink_charging_icon: false
+      status_thresholds:
+        critical: 10
+        low: 25
+        medium: 75
+        high: 95
+        full: 100
+      status_icons:
+        icon_charging: "\uEA93"
+        icon_critical: "\uE850"
+        icon_low: "\uE852"
+        icon_medium: "\uE855"
+        icon_high: "\uE858"
+        icon_full: "\uE83F"
+      callbacks:
+        on_left: toggle_label
+        on_right: exec start ms-settings:batterysaver
+  github:
+    type: yasb.github.GithubWidget
+    options:
+      label: "<span>\ueb00</span>"
+      label_alt: Notifications {data}
+      max_notification: 30
+      notification_dot:
+        enabled: true
+        corner: top_right
+        color: '#ef4747'
+        margin:
+        - 0
+        - 5
+      only_unread: true
+      show_comment_count: true
+      max_field_size: 54
+      update_interval: 600
+      icons:
+        comment: "\uE90A"
+      menu:
+        blur: true
+        round_corners: true
+        round_corners_type: normal
+        border_color: System
+        alignment: left
+        direction: down
+        show_categories: true
+        categories_order:
+        - Issue
+        - PullRequest
+        - CheckSuite
+        - Release
+        - Discussion

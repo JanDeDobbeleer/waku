@@ -1,0 +1,9 @@
+/* the // comment pass also eats everything after the scheme slashes of a url */
+.a {
+    background-image: url(https://x/y.png); color: red;
+    margin: 1px; // trailing comment
+}
+.b { color: blue; }
+.c { image: url("https://example.com/a.png"); border: 1px solid green; }
+// whole-line comment
+.d { color: /* inline */ yellow; }

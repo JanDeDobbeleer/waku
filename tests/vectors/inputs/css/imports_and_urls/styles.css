@@ -1,0 +1,9 @@
+@import "parts/colors.css";
+@import url(parts/base.css);
+@import "missing.css";
+@import "parts/colors.css";
+.icon { background-image: url(img/icon.png); }
+.abs { background-image: url("C:/abs/icon.png"); }
+.data { background-image: url(data:image/png;base64,AAAA); }
+.web { background-image: url(qrc:/x.png); }
+.quoted { background-image: url('img/other.png'); }

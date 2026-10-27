@@ -1,0 +1,2 @@
+:root { --brand: #3366ff; --brand-soft: #3366ff80; }
+.colors { color: var(--brand); background: var(--brand-soft); }

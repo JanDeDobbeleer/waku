@@ -1,0 +1,29 @@
+# pydantic lax mode: numeric strings, yes/no strings and integral floats are coerced
+bars:
+  main:
+    widgets:
+      left: [cpu, memory, battery, cpu_fractional, memory_badbool]
+widgets:
+  cpu:
+    type: yasb.cpu.CpuWidget
+    options:
+      update_interval: "5000"
+      hide_decimal: "yes"
+  memory:
+    type: yasb.memory.MemoryWidget
+    options:
+      update_interval: 5000.0
+      hide_decimal: 1
+  battery:
+    type: yasb.battery.BatteryWidget
+    options:
+      update_interval: "0"
+      hide_unsupported: "false"
+  cpu_fractional:
+    type: yasb.cpu.CpuWidget
+    options:
+      update_interval: 5000.5
+  memory_badbool:
+    type: yasb.memory.MemoryWidget
+    options:
+      hide_decimal: "maybe"

@@ -1,0 +1,16 @@
+bars:
+  main:
+    widgets:
+      left: [ghost, nodots, notype, wrongclass, plain_string, empty_entry, cpu]
+widgets:
+  nodots:
+    type: cpu
+  notype:
+    options:
+      label: x
+  wrongclass:
+    type: yasb.cpu.NoSuchWidget
+  plain_string: "yasb.cpu.CpuWidget"
+  empty_entry: {}
+  cpu:
+    type: yasb.cpu.CpuWidget

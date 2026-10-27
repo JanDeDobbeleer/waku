@@ -1,0 +1,9 @@
+{
+  "_comment": "Regions ignored when comparing screenshots, in pixels relative to the captured bar image. Adjust per monitor after the first capture.",
+  "masks": [
+    { "name": "clock", "x": 0, "y": 0, "width": 0, "height": 0 },
+    { "name": "cpu-memory-values", "x": 0, "y": 0, "width": 0, "height": 0 },
+    { "name": "media-title", "x": 0, "y": 0, "width": 0, "height": 0 },
+    { "name": "tray-icons", "x": 0, "y": 0, "width": 0, "height": 0 }
+  ]
+}

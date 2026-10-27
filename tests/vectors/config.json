@@ -1,0 +1,3579 @@
+{
+  "coercion": {
+    "input": "inputs/config/coercion.yaml",
+    "normalized": {
+      "bars": {
+        "main": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [
+              "cpu",
+              "memory",
+              "battery",
+              "cpu_fractional",
+              "memory_badbool"
+            ],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        }
+      },
+      "debug": false,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {
+        "battery": {
+          "options": {
+            "hide_unsupported": "false",
+            "update_interval": "0"
+          },
+          "type": "yasb.battery.BatteryWidget"
+        },
+        "cpu": {
+          "options": {
+            "hide_decimal": "yes",
+            "update_interval": "5000"
+          },
+          "type": "yasb.cpu.CpuWidget"
+        },
+        "cpu_fractional": {
+          "options": {
+            "update_interval": 5000.5
+          },
+          "type": "yasb.cpu.CpuWidget"
+        },
+        "memory": {
+          "options": {
+            "hide_decimal": 1,
+            "update_interval": 5000.0
+          },
+          "type": "yasb.memory.MemoryWidget"
+        },
+        "memory_badbool": {
+          "options": {
+            "hide_decimal": "maybe"
+          },
+          "type": "yasb.memory.MemoryWidget"
+        }
+      }
+    },
+    "placed_widgets": [
+      "battery",
+      "cpu",
+      "cpu_fractional",
+      "memory",
+      "memory_badbool"
+    ],
+    "root_is_mapping": true,
+    "status": "ok",
+    "warnings": [],
+    "widget_bars": {
+      "battery": [
+        "main"
+      ],
+      "cpu": [
+        "main"
+      ],
+      "cpu_fractional": [
+        "main"
+      ],
+      "memory": [
+        "main"
+      ],
+      "memory_badbool": [
+        "main"
+      ]
+    },
+    "widgets": {
+      "battery": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_label",
+            "on_middle": "do_nothing",
+            "on_right": "do_nothing"
+          },
+          "charging_options": {
+            "blink_charging_icon": true,
+            "blink_interval": 500,
+            "icon_format": "{charging_icon} {icon}"
+          },
+          "class_name": "",
+          "hide_unsupported": false,
+          "keybindings": [],
+          "label": "{icon}",
+          "label_alt": "{percent}% | remaining: {time_remaining}",
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "status_icons": {
+            "icon_charging": "\uf0e7",
+            "icon_critical": "\uf244",
+            "icon_full": "\uf240",
+            "icon_high": "\uf241",
+            "icon_low": "\uf243",
+            "icon_medium": "\uf242"
+          },
+          "status_thresholds": {
+            "critical": 10,
+            "full": 100,
+            "high": 95,
+            "low": 25,
+            "medium": 75
+          },
+          "time_remaining_natural": false,
+          "time_remaining_unlimited_icon": "unlimited",
+          "update_interval": 0
+        },
+        "status": "ok",
+        "type": "yasb.battery.BatteryWidget"
+      },
+      "cpu": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_label",
+            "on_middle": "do_nothing",
+            "on_right": "do_nothing"
+          },
+          "class_name": "",
+          "cpu_thresholds": {
+            "high": 90,
+            "low": 25,
+            "medium": 50
+          },
+          "hide_decimal": true,
+          "histogram_icons": [
+            "\u2581",
+            "\u2581",
+            "\u2582",
+            "\u2583",
+            "\u2584",
+            "\u2585",
+            "\u2586",
+            "\u2587",
+            "\u2588"
+          ],
+          "histogram_num_columns": 10,
+          "keybindings": [],
+          "label": "\uf200 {info[histograms][cpu_percent]}",
+          "label_alt": "\uf200 CPU: {info[percent][total]}% | freq: {info[freq][current]:.2f} Mhz",
+          "menu": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "enabled": false,
+            "graph_history_size": 60,
+            "offset_left": 0,
+            "offset_top": 6,
+            "pin_icon": "\ue718",
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_graph": true,
+            "show_graph_grid": false,
+            "unpin_icon": "\ue77a"
+          },
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "update_interval": 5000
+        },
+        "status": "ok",
+        "type": "yasb.cpu.CpuWidget"
+      },
+      "cpu_fractional": {
+        "errors": [
+          {
+            "loc": [
+              "update_interval"
+            ],
+            "msg": "Input should be a valid integer, got a number with a fractional part",
+            "type": "int_from_float"
+          }
+        ],
+        "errors_indented": "\n      update_interval:\n      - Input should be a valid integer, got a number with a fractional part\n      ",
+        "errors_yaml": "update_interval:\n- Input should be a valid integer, got a number with a fractional part\n",
+        "status": "invalid_options",
+        "type": "yasb.cpu.CpuWidget"
+      },
+      "memory": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_label",
+            "on_middle": "do_nothing",
+            "on_right": "do_nothing"
+          },
+          "class_name": "",
+          "hide_decimal": true,
+          "histogram_icons": [
+            "\u2581",
+            "\u2581",
+            "\u2582",
+            "\u2583",
+            "\u2584",
+            "\u2585",
+            "\u2586",
+            "\u2587",
+            "\u2588"
+          ],
+          "keybindings": [],
+          "label": "\uf4bc {virtual_mem_free}/{virtual_mem_total}",
+          "label_alt": "\uf4bc VIRT: {virtual_mem_percent}% SWAP: {swap_mem_percent}%",
+          "memory_thresholds": {
+            "high": 90,
+            "low": 25,
+            "medium": 50
+          },
+          "menu": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "enabled": false,
+            "graph_history_size": 60,
+            "offset_left": 0,
+            "offset_top": 6,
+            "pin_icon": "\ue718",
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_graph": true,
+            "show_graph_grid": false,
+            "unpin_icon": "\ue77a"
+          },
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "update_interval": 5000
+        },
+        "status": "ok",
+        "type": "yasb.memory.MemoryWidget"
+      },
+      "memory_badbool": {
+        "errors": [
+          {
+            "loc": [
+              "hide_decimal"
+            ],
+            "msg": "Input should be a valid boolean, unable to interpret input",
+            "type": "bool_parsing"
+          }
+        ],
+        "errors_indented": "\n      hide_decimal:\n      - Input should be a valid boolean, unable to interpret input\n      ",
+        "errors_yaml": "hide_decimal:\n- Input should be a valid boolean, unable to interpret input\n",
+        "status": "invalid_options",
+        "type": "yasb.memory.MemoryWidget"
+      }
+    }
+  },
+  "deprecated_key": {
+    "input": "inputs/config/deprecated_key.yaml",
+    "normalized": {
+      "bars": {
+        "main": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [
+              "cpu"
+            ],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        }
+      },
+      "debug": false,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {
+        "cpu": {
+          "options": {
+            "container_padding": {
+              "top": 1
+            },
+            "label": "{info[percent][total]}%",
+            "label_shadow": {
+              "color": "black"
+            },
+            "update_interval": 2000
+          },
+          "type": "yasb.cpu.CpuWidget"
+        }
+      }
+    },
+    "placed_widgets": [
+      "cpu"
+    ],
+    "root_is_mapping": true,
+    "status": "ok",
+    "warnings": [
+      {
+        "level": "WARNING",
+        "logger": "deprecation",
+        "message": "[DEPRECATED] BarBlurEffect: 'acrylic' - No longer supported and can be removed from the config."
+      },
+      {
+        "level": "WARNING",
+        "logger": "deprecation",
+        "message": "[DEPRECATED] CpuConfig: 'label_shadow' - Use CSS text-shadow instead."
+      },
+      {
+        "level": "WARNING",
+        "logger": "deprecation",
+        "message": "[DEPRECATED] CpuConfig: 'container_padding' - Use CSS padding instead."
+      }
+    ],
+    "widget_bars": {
+      "cpu": [
+        "main"
+      ]
+    },
+    "widgets": {
+      "cpu": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_label",
+            "on_middle": "do_nothing",
+            "on_right": "do_nothing"
+          },
+          "class_name": "",
+          "cpu_thresholds": {
+            "high": 90,
+            "low": 25,
+            "medium": 50
+          },
+          "hide_decimal": false,
+          "histogram_icons": [
+            "\u2581",
+            "\u2581",
+            "\u2582",
+            "\u2583",
+            "\u2584",
+            "\u2585",
+            "\u2586",
+            "\u2587",
+            "\u2588"
+          ],
+          "histogram_num_columns": 10,
+          "keybindings": [],
+          "label": "{info[percent][total]}%",
+          "label_alt": "\uf200 CPU: {info[percent][total]}% | freq: {info[freq][current]:.2f} Mhz",
+          "menu": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "enabled": false,
+            "graph_history_size": 60,
+            "offset_left": 0,
+            "offset_top": 6,
+            "pin_icon": "\ue718",
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_graph": true,
+            "show_graph_grid": false,
+            "unpin_icon": "\ue77a"
+          },
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "update_interval": 2000
+        },
+        "status": "ok",
+        "type": "yasb.cpu.CpuWidget"
+      }
+    }
+  },
+  "empty": {
+    "input": "inputs/config/empty.yaml",
+    "normalized": {
+      "bars": {
+        "yasb-bar": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        }
+      },
+      "debug": false,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {}
+    },
+    "placed_widgets": [],
+    "root_is_mapping": true,
+    "status": "ok",
+    "warnings": [],
+    "widget_bars": {},
+    "widgets": {}
+  },
+  "env_expansion": {
+    "input": "inputs/config/env_expansion.yaml",
+    "normalized": {
+      "bars": {
+        "main": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "from-env",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [
+              "cpu"
+            ],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        }
+      },
+      "debug": false,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {
+        "cpu": {
+          "options": {
+            "class_name": "from-env",
+            "histogram_icons": [
+              "from-env",
+              "b",
+              "c",
+              "d",
+              "e",
+              "f",
+              "g",
+              "h",
+              "i"
+            ],
+            "label": "from-env / from-env / [] ${env:YASB_PARITY_VAR} $env:",
+            "label_alt": "x"
+          },
+          "type": "yasb.cpu.CpuWidget"
+        }
+      }
+    },
+    "placed_widgets": [
+      "cpu"
+    ],
+    "root_is_mapping": true,
+    "status": "ok",
+    "warnings": [],
+    "widget_bars": {
+      "cpu": [
+        "main"
+      ]
+    },
+    "widgets": {
+      "cpu": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_label",
+            "on_middle": "do_nothing",
+            "on_right": "do_nothing"
+          },
+          "class_name": "from-env",
+          "cpu_thresholds": {
+            "high": 90,
+            "low": 25,
+            "medium": 50
+          },
+          "hide_decimal": false,
+          "histogram_icons": [
+            "from-env",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i"
+          ],
+          "histogram_num_columns": 10,
+          "keybindings": [],
+          "label": "from-env / from-env / [] ${env:YASB_PARITY_VAR} $env:",
+          "label_alt": "x",
+          "menu": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "enabled": false,
+            "graph_history_size": 60,
+            "offset_left": 0,
+            "offset_top": 6,
+            "pin_icon": "\ue718",
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_graph": true,
+            "show_graph_grid": false,
+            "unpin_icon": "\ue77a"
+          },
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "update_interval": 1000
+        },
+        "status": "ok",
+        "type": "yasb.cpu.CpuWidget"
+      }
+    }
+  },
+  "invalid_root": {
+    "errors": [
+      {
+        "loc": [
+          "watch_config"
+        ],
+        "msg": "Input should be a valid boolean, unable to interpret input",
+        "type": "bool_parsing"
+      },
+      {
+        "loc": [
+          "bars",
+          "main",
+          "style"
+        ],
+        "msg": "Input should be 'bar' or 'adaptive'",
+        "type": "literal_error"
+      },
+      {
+        "loc": [
+          "bars",
+          "main",
+          "dimensions",
+          "width"
+        ],
+        "msg": "Value error, Width must be an integer, 'auto', or a percentage string (e.g. '100%')",
+        "type": "value_error"
+      }
+    ],
+    "errors_yaml": "watch_config:\n- Input should be a valid boolean, unable to interpret input\nbars:\n  main:\n    style:\n    - Input should be 'bar' or 'adaptive'\n    dimensions:\n      width:\n      - Value error, Width must be an integer, 'auto', or a percentage string (e.g.\n        '100%')\n",
+    "input": "inputs/config/invalid_root.yaml",
+    "root_is_mapping": true,
+    "status": "validation_error",
+    "warnings": []
+  },
+  "invalid_yaml": {
+    "exception": "ParserError",
+    "input": "inputs/config/invalid_yaml.yaml",
+    "status": "parse_error"
+  },
+  "list_root": {
+    "input": "inputs/config/list_root.yaml",
+    "normalized": {
+      "bars": {
+        "yasb-bar": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        }
+      },
+      "debug": false,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {}
+    },
+    "placed_widgets": [],
+    "root_is_mapping": false,
+    "status": "ok",
+    "warnings": [],
+    "widget_bars": {},
+    "widgets": {}
+  },
+  "missing_widgets_key": {
+    "input": "inputs/config/missing_widgets_key.yaml",
+    "normalized": {
+      "bars": {
+        "main": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [
+              "cpu"
+            ],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        }
+      },
+      "debug": false,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {}
+    },
+    "placed_widgets": [
+      "cpu"
+    ],
+    "root_is_mapping": true,
+    "status": "ok",
+    "warnings": [],
+    "widget_bars": {
+      "cpu": [
+        "main"
+      ]
+    },
+    "widgets": {
+      "cpu": {
+        "status": "undefined"
+      }
+    }
+  },
+  "renamed_key": {
+    "input": "inputs/config/renamed_key.yaml",
+    "normalized": {
+      "bars": {
+        "main": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [
+              "layout",
+              "layout_both"
+            ],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        }
+      },
+      "debug": false,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {
+        "layout": {
+          "options": {
+            "layout_icons": {
+              "maximised": "[MAX]"
+            }
+          },
+          "type": "komorebi.active_layout.ActiveLayoutWidget"
+        },
+        "layout_both": {
+          "options": {
+            "layout_icons": {
+              "maximised": "[OLD]",
+              "maximized": "[NEW]"
+            }
+          },
+          "type": "komorebi.active_layout.ActiveLayoutWidget"
+        }
+      }
+    },
+    "placed_widgets": [
+      "layout",
+      "layout_both"
+    ],
+    "root_is_mapping": true,
+    "status": "ok",
+    "warnings": [
+      {
+        "level": "WARNING",
+        "logger": "deprecation",
+        "message": "[DEPRECATED] ActiveLayoutIconsConfig: 'maximised' renamed to 'maximized' - Use 'maximized' instead."
+      },
+      {
+        "level": "WARNING",
+        "logger": "deprecation",
+        "message": "[DEPRECATED] ActiveLayoutIconsConfig: 'maximised' renamed to 'maximized' - Use 'maximized' instead."
+      }
+    ],
+    "widget_bars": {
+      "layout": [
+        "main"
+      ],
+      "layout_both": [
+        "main"
+      ]
+    },
+    "widgets": {
+      "layout": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "next_layout",
+            "on_middle": "toggle_monocle",
+            "on_right": "prev_layout"
+          },
+          "hide_if_offline": false,
+          "keybindings": [],
+          "label": "{icon}",
+          "layout_icons": {
+            "bsp": "[\\]",
+            "columns": "[||]",
+            "floating": "><>",
+            "grid": "[G]",
+            "horizontal_stack": "[H]=",
+            "maximized": "[MAX]",
+            "monocle": "[M]",
+            "paused": "[P]",
+            "right_main_vertical_stack": "=||",
+            "rows": "[==]",
+            "scrolling": "[SC]",
+            "tiling": "[T]",
+            "ultrawide_vertical_stack": "||=",
+            "vertical_stack": "[V]="
+          },
+          "layout_menu": {
+            "alignment": "left",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "offset_left": 0,
+            "offset_top": 6,
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_layout_icons": true
+          },
+          "layouts": [
+            "bsp",
+            "columns",
+            "rows",
+            "grid",
+            "scrolling",
+            "vertical_stack",
+            "horizontal_stack",
+            "ultrawide_vertical_stack",
+            "right_main_vertical_stack",
+            "monocle",
+            "maximized",
+            "floating",
+            "paused",
+            "tiling"
+          ]
+        },
+        "status": "ok",
+        "type": "komorebi.active_layout.ActiveLayoutWidget"
+      },
+      "layout_both": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "next_layout",
+            "on_middle": "toggle_monocle",
+            "on_right": "prev_layout"
+          },
+          "hide_if_offline": false,
+          "keybindings": [],
+          "label": "{icon}",
+          "layout_icons": {
+            "bsp": "[\\]",
+            "columns": "[||]",
+            "floating": "><>",
+            "grid": "[G]",
+            "horizontal_stack": "[H]=",
+            "maximized": "[NEW]",
+            "monocle": "[M]",
+            "paused": "[P]",
+            "right_main_vertical_stack": "=||",
+            "rows": "[==]",
+            "scrolling": "[SC]",
+            "tiling": "[T]",
+            "ultrawide_vertical_stack": "||=",
+            "vertical_stack": "[V]="
+          },
+          "layout_menu": {
+            "alignment": "left",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "offset_left": 0,
+            "offset_top": 6,
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_layout_icons": true
+          },
+          "layouts": [
+            "bsp",
+            "columns",
+            "rows",
+            "grid",
+            "scrolling",
+            "vertical_stack",
+            "horizontal_stack",
+            "ultrawide_vertical_stack",
+            "right_main_vertical_stack",
+            "monocle",
+            "maximized",
+            "floating",
+            "paused",
+            "tiling"
+          ]
+        },
+        "status": "ok",
+        "type": "komorebi.active_layout.ActiveLayoutWidget"
+      }
+    }
+  },
+  "unknown_option": {
+    "input": "inputs/config/unknown_option.yaml",
+    "normalized": {
+      "bars": {
+        "main": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [
+              "cpu",
+              "memory"
+            ],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        }
+      },
+      "debug": false,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {
+        "cpu": {
+          "options": {
+            "bogus_key": 1,
+            "label": "{info[percent][total]}%",
+            "menu": {
+              "also_bogus": true
+            }
+          },
+          "type": "yasb.cpu.CpuWidget"
+        },
+        "memory": {
+          "options": {
+            "label": "{virtual_mem_percent}%"
+          },
+          "type": "yasb.memory.MemoryWidget"
+        }
+      }
+    },
+    "placed_widgets": [
+      "cpu",
+      "memory"
+    ],
+    "root_is_mapping": true,
+    "status": "ok",
+    "warnings": [],
+    "widget_bars": {
+      "cpu": [
+        "main"
+      ],
+      "memory": [
+        "main"
+      ]
+    },
+    "widgets": {
+      "cpu": {
+        "errors": [
+          {
+            "loc": [
+              "menu",
+              "also_bogus"
+            ],
+            "msg": "Extra inputs are not permitted",
+            "type": "extra_forbidden"
+          },
+          {
+            "loc": [
+              "bogus_key"
+            ],
+            "msg": "Extra inputs are not permitted",
+            "type": "extra_forbidden"
+          }
+        ],
+        "errors_indented": "\n      menu:\n        also_bogus:\n        - Extra inputs are not permitted\n      bogus_key:\n      - Extra inputs are not permitted\n      ",
+        "errors_yaml": "menu:\n  also_bogus:\n  - Extra inputs are not permitted\nbogus_key:\n- Extra inputs are not permitted\n",
+        "status": "invalid_options",
+        "type": "yasb.cpu.CpuWidget"
+      },
+      "memory": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_label",
+            "on_middle": "do_nothing",
+            "on_right": "do_nothing"
+          },
+          "class_name": "",
+          "hide_decimal": false,
+          "histogram_icons": [
+            "\u2581",
+            "\u2581",
+            "\u2582",
+            "\u2583",
+            "\u2584",
+            "\u2585",
+            "\u2586",
+            "\u2587",
+            "\u2588"
+          ],
+          "keybindings": [],
+          "label": "{virtual_mem_percent}%",
+          "label_alt": "\uf4bc VIRT: {virtual_mem_percent}% SWAP: {swap_mem_percent}%",
+          "memory_thresholds": {
+            "high": 90,
+            "low": 25,
+            "medium": 50
+          },
+          "menu": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "enabled": false,
+            "graph_history_size": 60,
+            "offset_left": 0,
+            "offset_top": 6,
+            "pin_icon": "\ue718",
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_graph": true,
+            "show_graph_grid": false,
+            "unpin_icon": "\ue77a"
+          },
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "update_interval": 5000
+        },
+        "status": "ok",
+        "type": "yasb.memory.MemoryWidget"
+      }
+    }
+  },
+  "unknown_widget_type": {
+    "input": "inputs/config/unknown_widget_type.yaml",
+    "normalized": {
+      "bars": {
+        "main": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [
+              "ghost",
+              "nodots",
+              "notype",
+              "wrongclass",
+              "plain_string",
+              "empty_entry",
+              "cpu"
+            ],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        }
+      },
+      "debug": false,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {
+        "cpu": {
+          "type": "yasb.cpu.CpuWidget"
+        },
+        "empty_entry": {},
+        "nodots": {
+          "type": "cpu"
+        },
+        "notype": {
+          "options": {
+            "label": "x"
+          }
+        },
+        "plain_string": "yasb.cpu.CpuWidget",
+        "wrongclass": {
+          "type": "yasb.cpu.NoSuchWidget"
+        }
+      }
+    },
+    "placed_widgets": [
+      "cpu",
+      "empty_entry",
+      "ghost",
+      "nodots",
+      "notype",
+      "plain_string",
+      "wrongclass"
+    ],
+    "root_is_mapping": true,
+    "status": "ok",
+    "warnings": [],
+    "widget_bars": {
+      "cpu": [
+        "main"
+      ],
+      "empty_entry": [
+        "main"
+      ],
+      "ghost": [
+        "main"
+      ],
+      "nodots": [
+        "main"
+      ],
+      "notype": [
+        "main"
+      ],
+      "plain_string": [
+        "main"
+      ],
+      "wrongclass": [
+        "main"
+      ]
+    },
+    "widgets": {
+      "cpu": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_label",
+            "on_middle": "do_nothing",
+            "on_right": "do_nothing"
+          },
+          "class_name": "",
+          "cpu_thresholds": {
+            "high": 90,
+            "low": 25,
+            "medium": 50
+          },
+          "hide_decimal": false,
+          "histogram_icons": [
+            "\u2581",
+            "\u2581",
+            "\u2582",
+            "\u2583",
+            "\u2584",
+            "\u2585",
+            "\u2586",
+            "\u2587",
+            "\u2588"
+          ],
+          "histogram_num_columns": 10,
+          "keybindings": [],
+          "label": "\uf200 {info[histograms][cpu_percent]}",
+          "label_alt": "\uf200 CPU: {info[percent][total]}% | freq: {info[freq][current]:.2f} Mhz",
+          "menu": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "enabled": false,
+            "graph_history_size": 60,
+            "offset_left": 0,
+            "offset_top": 6,
+            "pin_icon": "\ue718",
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_graph": true,
+            "show_graph_grid": false,
+            "unpin_icon": "\ue77a"
+          },
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "update_interval": 1000
+        },
+        "status": "ok",
+        "type": "yasb.cpu.CpuWidget"
+      },
+      "empty_entry": {
+        "status": "undefined"
+      },
+      "ghost": {
+        "status": "undefined"
+      },
+      "nodots": {
+        "status": "unknown_type",
+        "type": "cpu"
+      },
+      "notype": {
+        "status": "missing_type"
+      },
+      "plain_string": {
+        "exception": "TypeError",
+        "status": "error"
+      },
+      "wrongclass": {
+        "status": "unknown_type",
+        "type": "yasb.cpu.NoSuchWidget"
+      }
+    }
+  },
+  "unplaced_widget": {
+    "input": "inputs/config/unplaced_widget.yaml",
+    "normalized": {
+      "bars": {
+        "disabled-bar": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": false,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [
+              "only_in_disabled_bar"
+            ],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        },
+        "main": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 500,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "System",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 30,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "*"
+          ],
+          "style": "bar",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [],
+            "left": [
+              "cpu"
+            ],
+            "right": []
+          },
+          "window_flags": {
+            "always_on_top": false,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": false
+          }
+        }
+      },
+      "debug": false,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {
+        "cpu": {
+          "type": "yasb.cpu.CpuWidget"
+        },
+        "only_in_disabled_bar": {
+          "options": {
+            "bogus_key": 1
+          },
+          "type": "yasb.memory.MemoryWidget"
+        },
+        "unplaced": {
+          "options": {
+            "bogus_key": 1
+          },
+          "type": "yasb.memory.MemoryWidget"
+        }
+      }
+    },
+    "placed_widgets": [
+      "cpu"
+    ],
+    "root_is_mapping": true,
+    "status": "ok",
+    "warnings": [],
+    "widget_bars": {
+      "cpu": [
+        "main"
+      ]
+    },
+    "widgets": {
+      "cpu": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_label",
+            "on_middle": "do_nothing",
+            "on_right": "do_nothing"
+          },
+          "class_name": "",
+          "cpu_thresholds": {
+            "high": 90,
+            "low": 25,
+            "medium": 50
+          },
+          "hide_decimal": false,
+          "histogram_icons": [
+            "\u2581",
+            "\u2581",
+            "\u2582",
+            "\u2583",
+            "\u2584",
+            "\u2585",
+            "\u2586",
+            "\u2587",
+            "\u2588"
+          ],
+          "histogram_num_columns": 10,
+          "keybindings": [],
+          "label": "\uf200 {info[histograms][cpu_percent]}",
+          "label_alt": "\uf200 CPU: {info[percent][total]}% | freq: {info[freq][current]:.2f} Mhz",
+          "menu": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "enabled": false,
+            "graph_history_size": 60,
+            "offset_left": 0,
+            "offset_top": 6,
+            "pin_icon": "\ue718",
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_graph": true,
+            "show_graph_grid": false,
+            "unpin_icon": "\ue77a"
+          },
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "update_interval": 1000
+        },
+        "status": "ok",
+        "type": "yasb.cpu.CpuWidget"
+      }
+    }
+  },
+  "user": {
+    "input": "inputs/config/user.yaml",
+    "normalized": {
+      "bars": {
+        "primary-bar": {
+          "alignment": {
+            "align": "center",
+            "position": "top"
+          },
+          "animation": {
+            "duration": 200,
+            "enabled": true,
+            "type": "slide"
+          },
+          "blur_effect": {
+            "border_color": "None",
+            "dark_mode": false,
+            "enabled": false,
+            "round_corners": false,
+            "round_corners_type": "normal"
+          },
+          "class_name": "yasb-bar",
+          "context_menu": true,
+          "dimensions": {
+            "height": 36,
+            "width": "100%"
+          },
+          "enabled": true,
+          "layouts": {
+            "center": {
+              "alignment": "center",
+              "stretch": true
+            },
+            "left": {
+              "alignment": "left",
+              "stretch": true
+            },
+            "right": {
+              "alignment": "right",
+              "stretch": true
+            }
+          },
+          "padding": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "screens": [
+            "primary"
+          ],
+          "style": "adaptive",
+          "style_adaptive_exclude": [],
+          "widgets": {
+            "center": [
+              "taskbar",
+              "clock",
+              "media"
+            ],
+            "left": [
+              "control_center",
+              "komorebi_workspaces",
+              "komorebi_active_layout"
+            ],
+            "right": [
+              "systray",
+              "wallpapers",
+              "github",
+              "notifications",
+              "cpu",
+              "memory",
+              "bluetooth",
+              "wifi",
+              "battery"
+            ]
+          },
+          "window_flags": {
+            "always_on_top": true,
+            "auto_hide": false,
+            "hide_on_fullscreen": false,
+            "hide_on_maximized": false,
+            "windows_app_bar": true
+          }
+        }
+      },
+      "debug": true,
+      "glazewm": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "komorebi": {
+        "reload_command": null,
+        "start_command": null,
+        "stop_command": null
+      },
+      "show_systray": true,
+      "system_colors": false,
+      "tooltip": {
+        "blur_effect": {
+          "border_color": "None",
+          "dark_mode": false,
+          "enabled": false,
+          "round_corners": false,
+          "round_corners_type": "normal"
+        },
+        "offset": 5
+      },
+      "update_check": true,
+      "watch_config": true,
+      "watch_stylesheet": true,
+      "widgets": {
+        "battery": {
+          "options": {
+            "callbacks": {
+              "on_left": "toggle_label",
+              "on_right": "exec start ms-settings:batterysaver"
+            },
+            "charging_options": {
+              "blink_charging_icon": false,
+              "icon_format": "{charging_icon}"
+            },
+            "hide_unsupported": true,
+            "label": "<span>{icon}</span> {percent}%",
+            "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+            "status_icons": {
+              "icon_charging": "\uea93",
+              "icon_critical": "\ue850",
+              "icon_full": "\ue83f",
+              "icon_high": "\ue858",
+              "icon_low": "\ue852",
+              "icon_medium": "\ue855"
+            },
+            "status_thresholds": {
+              "critical": 10,
+              "full": 100,
+              "high": 95,
+              "low": 25,
+              "medium": 75
+            },
+            "time_remaining_natural": true,
+            "update_interval": 5000
+          },
+          "type": "yasb.battery.BatteryWidget"
+        },
+        "bluetooth": {
+          "options": {
+            "callbacks": {
+              "on_left": "toggle_menu",
+              "on_middle": "exec cmd /c start ms-settings:bluetooth",
+              "on_right": "toggle_label"
+            },
+            "label": "<span>{icon}</span>",
+            "label_alt": "<span>{icon}</span> {device_name}",
+            "max_length": 24,
+            "menu_config": {
+              "alignment": "right",
+              "blur": true,
+              "border_color": "System",
+              "direction": "down",
+              "offset_top": 6,
+              "round_corners": true
+            }
+          },
+          "type": "yasb.bluetooth.BluetoothWidget"
+        },
+        "clock": {
+          "options": {
+            "calendar": {
+              "alignment": "center",
+              "blur": true,
+              "direction": "down",
+              "extended": false,
+              "round_corners": true,
+              "show_holidays": false,
+              "show_week_numbers": true,
+              "show_years": true
+            },
+            "callbacks": {
+              "on_left": "toggle_calendar",
+              "on_middle": "toggle_label",
+              "on_right": "context_menu"
+            },
+            "label": "{%a, %d %b %H:%M}<span>{alarm}</span>",
+            "label_alt": "{%H:%M}",
+            "timezones": []
+          },
+          "type": "yasb.clock.ClockWidget"
+        },
+        "control_center": {
+          "options": {
+            "callbacks": {
+              "on_left": "toggle_menu"
+            },
+            "label": "<span>\ue62a</span>",
+            "popup": {
+              "alignment": "left",
+              "border_color": "System",
+              "direction": "down",
+              "offset_top": 8,
+              "round_corners": true,
+              "round_corners_type": "normal"
+            },
+            "sections": {
+              "media": {
+                "icons": {
+                  "next_track": "\ue623",
+                  "pause": "\ue62e",
+                  "play": "\uf5b0",
+                  "prev_track": "\ue622"
+                },
+                "show": true,
+                "thumbnail_radius": 4,
+                "thumbnail_size": 36
+              },
+              "power": {
+                "button_menu_icon": "\ue76c",
+                "power_mode_title": "Power Mode",
+                "power_plan_title": "Power Plan",
+                "show": true
+              },
+              "quick_actions": {
+                "actions": [
+                  {
+                    "icon": "\uf285",
+                    "id": "toggle_dnd",
+                    "label": "Do Not Disturb"
+                  },
+                  {
+                    "icon": "\ue74f",
+                    "id": "toggle_mute",
+                    "label": "Mute"
+                  },
+                  {
+                    "icon": "\uf12e",
+                    "id": "toggle_mic_mute",
+                    "label": "Mic Mute"
+                  },
+                  {
+                    "icon": "\ue91b",
+                    "id": "screenshot",
+                    "label": "Screenshot"
+                  },
+                  {
+                    "icon": "\ue765",
+                    "id": "touch_keyboard",
+                    "label": "Keyboard"
+                  },
+                  {
+                    "icon": "\ue708",
+                    "id": "toggle_theme",
+                    "label": "Dark Mode"
+                  }
+                ],
+                "columns": 3,
+                "label_position": "default",
+                "show": true
+              },
+              "sliders": {
+                "brightness": {
+                  "icon": "\ue706",
+                  "show_slider": true,
+                  "show_source_selector": true,
+                  "source_selector_icon": "\ue972"
+                },
+                "microphone": {
+                  "icon": "\ue720",
+                  "show_slider": true,
+                  "show_source_selector": true,
+                  "source_selector_icon": "\ue972"
+                },
+                "show": true,
+                "volume": {
+                  "icon": "\ue767",
+                  "show_slider": true,
+                  "show_source_selector": true,
+                  "source_selector_icon": "\ue972"
+                }
+              },
+              "system_controls": {
+                "lock_icon": "\ue72e",
+                "power_icon": "\ue7e8",
+                "profile_image_size": 28,
+                "settings_icon": "\ue713"
+              }
+            },
+            "sections_order": [
+              "system_controls",
+              "quick_actions",
+              "sliders",
+              "power",
+              "media"
+            ],
+            "tooltip": true
+          },
+          "type": "yasb.control_center.ControlCenterWidget"
+        },
+        "cpu": {
+          "options": {
+            "callbacks": {
+              "on_left": "toggle_menu",
+              "on_right": "toggle_label"
+            },
+            "hide_decimal": true,
+            "label": "<span>\ueea1</span> {info[percent][total]}%",
+            "label_alt": "<span>\ueea1</span> {info[freq][current]} MHz",
+            "menu": {
+              "alignment": "right",
+              "blur": true,
+              "border_color": "System",
+              "direction": "down",
+              "enabled": true,
+              "graph_history_size": 60,
+              "offset_top": 6,
+              "round_corners": true,
+              "round_corners_type": "normal",
+              "show_graph": true,
+              "show_graph_grid": true
+            },
+            "update_interval": 2000
+          },
+          "type": "yasb.cpu.CpuWidget"
+        },
+        "github": {
+          "options": {
+            "icons": {
+              "comment": "\ue90a"
+            },
+            "label": "<span>\ueb00</span>",
+            "label_alt": "Notifications {data}",
+            "max_field_size": 54,
+            "max_notification": 30,
+            "menu": {
+              "alignment": "left",
+              "blur": true,
+              "border_color": "System",
+              "categories_order": [
+                "Issue",
+                "PullRequest",
+                "CheckSuite",
+                "Release",
+                "Discussion"
+              ],
+              "direction": "down",
+              "round_corners": true,
+              "round_corners_type": "normal",
+              "show_categories": true
+            },
+            "notification_dot": {
+              "color": "#ef4747",
+              "corner": "top_right",
+              "enabled": true,
+              "margin": [
+                0,
+                5
+              ]
+            },
+            "only_unread": true,
+            "show_comment_count": true,
+            "update_interval": 600
+          },
+          "type": "yasb.github.GithubWidget"
+        },
+        "komorebi_active_layout": {
+          "options": {
+            "hide_if_offline": true,
+            "layouts": [
+              "bsp",
+              "columns",
+              "rows",
+              "grid",
+              "scrolling",
+              "vertical_stack",
+              "horizontal_stack",
+              "ultrawide_vertical_stack",
+              "right_main_vertical_stack"
+            ]
+          },
+          "type": "komorebi.active_layout.ActiveLayoutWidget"
+        },
+        "komorebi_workspaces": {
+          "options": {
+            "enable_scroll_switching": true,
+            "hide_empty_workspaces": false,
+            "hide_if_offline": true,
+            "label_offline": "",
+            "label_workspace_active_btn": "",
+            "label_workspace_btn": "",
+            "label_workspace_populated_btn": ""
+          },
+          "type": "komorebi.workspaces.WorkspaceWidget"
+        },
+        "media": {
+          "options": {
+            "callbacks": {
+              "on_left": "toggle_media_menu",
+              "on_middle": "toggle_play_pause",
+              "on_right": "toggle_label"
+            },
+            "hide_empty": true,
+            "icons": {
+              "next_track": "\ue893",
+              "pause": "\ue769",
+              "play": "\ue768",
+              "prev_track": "\ue892"
+            },
+            "label": "{title}{s}{artist}",
+            "label_alt": "{title}",
+            "max_field_size": {
+              "label": 30,
+              "label_alt": 30
+            },
+            "media_menu": {
+              "alignment": "center",
+              "blur": true,
+              "border_color": "System",
+              "direction": "down",
+              "max_artist_size": 40,
+              "max_title_size": 60,
+              "offset_top": 6,
+              "round_corners": true,
+              "round_corners_type": "normal",
+              "show_source": true,
+              "thumbnail_corner_radius": 8,
+              "thumbnail_size": 100
+            },
+            "progress_bar": {
+              "alignment": "bottom",
+              "enabled": true
+            },
+            "separator": " - ",
+            "show_thumbnail": true,
+            "symmetric_corner_radius": true,
+            "thumbnail_alpha": 80,
+            "thumbnail_corner_radius": 14,
+            "thumbnail_padding": 8
+          },
+          "type": "yasb.media.MediaWidget"
+        },
+        "memory": {
+          "options": {
+            "callbacks": {
+              "on_left": "toggle_menu",
+              "on_right": "toggle_label"
+            },
+            "hide_decimal": true,
+            "label": "<span>\ueea0</span> {virtual_mem_percent}%",
+            "label_alt": "<span>\ueea0</span> {virtual_mem_outof}",
+            "menu": {
+              "alignment": "right",
+              "blur": true,
+              "border_color": "System",
+              "direction": "down",
+              "enabled": true,
+              "graph_history_size": 60,
+              "offset_top": 6,
+              "round_corners": true,
+              "round_corners_type": "normal",
+              "show_graph": true,
+              "show_graph_grid": true
+            },
+            "update_interval": 5000
+          },
+          "type": "yasb.memory.MemoryWidget"
+        },
+        "notifications": {
+          "options": {
+            "callbacks": {
+              "on_left": "toggle_notification",
+              "on_middle": "do_nothing",
+              "on_right": "clear_notifications"
+            },
+            "hide_empty": false,
+            "icons": {
+              "default": "\ue91c",
+              "new": "\ued0c"
+            },
+            "label": "<span>{icon}</span>",
+            "label_alt": "{count} notifications",
+            "tooltip": false
+          },
+          "type": "yasb.notifications.NotificationsWidget"
+        },
+        "systray": {
+          "options": {
+            "class_name": "systray",
+            "icon_size": 16,
+            "icons_per_row": 5,
+            "label_collapsed": "\ue972",
+            "label_expanded": "\ue971",
+            "label_position": "right",
+            "pin_click_modifier": "ctrl",
+            "popup": {
+              "alignment": "center",
+              "blur": true,
+              "border_color": "System",
+              "direction": "down",
+              "offset_left": 0,
+              "offset_top": 6,
+              "round_corners": true,
+              "round_corners_type": "normal"
+            },
+            "show_battery": false,
+            "show_in_popup": true,
+            "show_unpinned": false,
+            "show_volume": false,
+            "use_hook": true
+          },
+          "type": "yasb.systray.SystrayWidget"
+        },
+        "taskbar": {
+          "options": {
+            "animation": {
+              "duration": 200,
+              "enabled": true
+            },
+            "grouping": {
+              "enabled": true,
+              "show_count": true
+            },
+            "hide_empty": true,
+            "icon_size": 16,
+            "monitor_exclusive": false,
+            "preview": {
+              "blur": true,
+              "delay": 400,
+              "enabled": true,
+              "margin": 8,
+              "padding": 8,
+              "peek": true,
+              "width": 180
+            },
+            "show_only_visible": false,
+            "strict_filtering": true,
+            "title_label": {
+              "enabled": false
+            },
+            "tooltip": true
+          },
+          "type": "yasb.taskbar.TaskbarWidget"
+        },
+        "wallpapers": {
+          "options": {
+            "engine": {
+              "animation": "split",
+              "enabled": true
+            },
+            "gallery": {
+              "accent_color": "#fff",
+              "image_corner_radius": 0,
+              "image_width": 240,
+              "orientation": "portrait",
+              "type": "strip"
+            },
+            "image_path": "C:/Users/jande/.config/wallpapers",
+            "keybindings": [
+              {
+                "action": "toggle_gallery",
+                "keys": "alt+e",
+                "screen": "cursor"
+              }
+            ],
+            "label": ""
+          },
+          "type": "yasb.wallpapers.WallpapersWidget"
+        },
+        "wifi": {
+          "options": {
+            "callbacks": {
+              "on_left": "toggle_menu",
+              "on_middle": "exec cmd /c start ms-settings:network",
+              "on_right": "toggle_label"
+            },
+            "ethernet_icon": "\udb80\ude00",
+            "ethernet_label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+            "ethernet_label_alt": "<span>{wifi_icon}</span>{ip_addr}<span class=\"vpn-name\">{vpn_name}</span>",
+            "label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+            "label_alt": "<span>{wifi_icon}</span>{wifi_name}<span class=\"vpn-name\">{vpn_name}</span>",
+            "menu_config": {
+              "alignment": "right",
+              "blur": true,
+              "border_color": "System",
+              "direction": "down",
+              "offset_top": 6,
+              "round_corners": true
+            },
+            "update_interval": 5000
+          },
+          "type": "yasb.wifi.WifiWidget"
+        }
+      }
+    },
+    "placed_widgets": [
+      "battery",
+      "bluetooth",
+      "clock",
+      "control_center",
+      "cpu",
+      "github",
+      "komorebi_active_layout",
+      "komorebi_workspaces",
+      "media",
+      "memory",
+      "notifications",
+      "systray",
+      "taskbar",
+      "wallpapers",
+      "wifi"
+    ],
+    "root_is_mapping": true,
+    "status": "ok",
+    "warnings": [],
+    "widget_bars": {
+      "battery": [
+        "primary-bar"
+      ],
+      "bluetooth": [
+        "primary-bar"
+      ],
+      "clock": [
+        "primary-bar"
+      ],
+      "control_center": [
+        "primary-bar"
+      ],
+      "cpu": [
+        "primary-bar"
+      ],
+      "github": [
+        "primary-bar"
+      ],
+      "komorebi_active_layout": [
+        "primary-bar"
+      ],
+      "komorebi_workspaces": [
+        "primary-bar"
+      ],
+      "media": [
+        "primary-bar"
+      ],
+      "memory": [
+        "primary-bar"
+      ],
+      "notifications": [
+        "primary-bar"
+      ],
+      "systray": [
+        "primary-bar"
+      ],
+      "taskbar": [
+        "primary-bar"
+      ],
+      "wallpapers": [
+        "primary-bar"
+      ],
+      "wifi": [
+        "primary-bar"
+      ]
+    },
+    "widgets": {
+      "battery": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_label",
+            "on_middle": "do_nothing",
+            "on_right": "exec start ms-settings:batterysaver"
+          },
+          "charging_options": {
+            "blink_charging_icon": false,
+            "blink_interval": 500,
+            "icon_format": "{charging_icon}"
+          },
+          "class_name": "",
+          "hide_unsupported": true,
+          "keybindings": [],
+          "label": "<span>{icon}</span> {percent}%",
+          "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "status_icons": {
+            "icon_charging": "\uea93",
+            "icon_critical": "\ue850",
+            "icon_full": "\ue83f",
+            "icon_high": "\ue858",
+            "icon_low": "\ue852",
+            "icon_medium": "\ue855"
+          },
+          "status_thresholds": {
+            "critical": 10,
+            "full": 100,
+            "high": 95,
+            "low": 25,
+            "medium": 75
+          },
+          "time_remaining_natural": true,
+          "time_remaining_unlimited_icon": "unlimited",
+          "update_interval": 5000
+        },
+        "status": "ok",
+        "type": "yasb.battery.BatteryWidget"
+      },
+      "bluetooth": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_menu",
+            "on_middle": "exec cmd /c start ms-settings:bluetooth",
+            "on_right": "toggle_label"
+          },
+          "class_name": "",
+          "device_aliases": [],
+          "icons": {
+            "bluetooth_connected": "\ue702",
+            "bluetooth_off": "\ue702",
+            "bluetooth_on": "\ue702"
+          },
+          "keybindings": [],
+          "label": "<span>{icon}</span>",
+          "label_alt": "<span>{icon}</span> {device_name}",
+          "label_device_separator": ", ",
+          "label_no_device": "No devices connected",
+          "max_length": 24,
+          "max_length_ellipsis": "...",
+          "menu_config": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "device_icons": {
+              "battery": {
+                "empty": "\ueba0",
+                "full": "\uebaa",
+                "high": "\ueba8",
+                "low": "\ueba2",
+                "medium": "\ueba5"
+              },
+              "camera": "\ue722",
+              "computer": "\ue950",
+              "controller": "\ue7fc",
+              "generic": "\ue702",
+              "headphones": "\ue7f6",
+              "headset": "\ue95b",
+              "keyboard": "\ue765",
+              "laptop": "\ue7f8",
+              "mouse": "\ue962",
+              "phone": "\ue8ea",
+              "scan": "\ue72c",
+              "speaker": "\ue7f5",
+              "tablet": "\ue70a",
+              "watch": "\ue918"
+            },
+            "direction": "down",
+            "labels": {
+              "connect": "Connect",
+              "connected": "Connected",
+              "connecting": "Connecting",
+              "disconnect": "Disconnect",
+              "disconnecting": "Disconnecting",
+              "manage": "Manage",
+              "more_settings": "More Bluetooth settings",
+              "new_devices": "New devices",
+              "not_connected": "Not connected",
+              "pair": "Pair",
+              "power_off": "Off",
+              "power_on": "On",
+              "title": "Bluetooth",
+              "your_devices": "Your devices"
+            },
+            "offset_left": 0,
+            "offset_top": 6,
+            "round_corners": true,
+            "round_corners_type": "normal"
+          },
+          "tooltip": true
+        },
+        "status": "ok",
+        "type": "yasb.bluetooth.BluetoothWidget"
+      },
+      "clock": {
+        "normalized": {
+          "alarm_icons": {
+            "disabled": "\uf0a2",
+            "enabled": "\uf0f3",
+            "snooze": "\uf1f6"
+          },
+          "calendar": {
+            "alignment": "center",
+            "blur": true,
+            "border_color": "System",
+            "country_code": null,
+            "direction": "down",
+            "extended": false,
+            "holiday_color": "#FF6464",
+            "offset_left": 0,
+            "offset_top": 6,
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_holidays": false,
+            "show_week_numbers": true,
+            "show_years": true,
+            "subdivision": null
+          },
+          "callbacks": {
+            "on_left": "toggle_calendar",
+            "on_middle": "toggle_label",
+            "on_right": "context_menu"
+          },
+          "class_name": "",
+          "icons": {},
+          "keybindings": [],
+          "label": "{%a, %d %b %H:%M}<span>{alarm}</span>",
+          "label_alt": "{%H:%M}",
+          "locale": "",
+          "timezones": [],
+          "tooltip": true,
+          "update_interval": 1000
+        },
+        "status": "ok",
+        "type": "yasb.clock.ClockWidget"
+      },
+      "control_center": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_menu",
+            "on_middle": "do_nothing",
+            "on_right": "do_nothing"
+          },
+          "class_name": "",
+          "keybindings": [],
+          "label": "<span>\ue62a</span>",
+          "label_alt": "<span>\ue90a</span>",
+          "popup": {
+            "alignment": "left",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "offset_left": 0,
+            "offset_top": 8,
+            "round_corners": true,
+            "round_corners_type": "normal"
+          },
+          "sections": {
+            "media": {
+              "icons": {
+                "next_track": "\ue623",
+                "pause": "\ue62e",
+                "play": "\uf5b0",
+                "prev_track": "\ue622"
+              },
+              "show": true,
+              "thumbnail_radius": 4,
+              "thumbnail_size": 36
+            },
+            "power": {
+              "button_menu_icon": "\ue76c",
+              "power_mode_title": "Power Mode",
+              "power_plan_title": "Power Plan",
+              "show": true
+            },
+            "quick_actions": {
+              "actions": [
+                {
+                  "command": null,
+                  "icon": "\uf285",
+                  "id": "toggle_dnd",
+                  "label": "Do Not Disturb"
+                },
+                {
+                  "command": null,
+                  "icon": "\ue74f",
+                  "id": "toggle_mute",
+                  "label": "Mute"
+                },
+                {
+                  "command": null,
+                  "icon": "\uf12e",
+                  "id": "toggle_mic_mute",
+                  "label": "Mic Mute"
+                },
+                {
+                  "command": null,
+                  "icon": "\ue91b",
+                  "id": "screenshot",
+                  "label": "Screenshot"
+                },
+                {
+                  "command": null,
+                  "icon": "\ue765",
+                  "id": "touch_keyboard",
+                  "label": "Keyboard"
+                },
+                {
+                  "command": null,
+                  "icon": "\ue708",
+                  "id": "toggle_theme",
+                  "label": "Dark Mode"
+                }
+              ],
+              "columns": 3,
+              "label_position": "default",
+              "show": true
+            },
+            "sliders": {
+              "brightness": {
+                "icon": "\ue706",
+                "show_slider": true,
+                "show_source_selector": true,
+                "source_selector_icon": "\ue972"
+              },
+              "microphone": {
+                "icon": "\ue720",
+                "show_slider": true,
+                "show_source_selector": true,
+                "source_selector_icon": "\ue972"
+              },
+              "show": true,
+              "volume": {
+                "icon": "\ue767",
+                "show_slider": true,
+                "show_source_selector": true,
+                "source_selector_icon": "\ue972"
+              }
+            },
+            "system_controls": {
+              "lock_icon": "\ue72e",
+              "power_icon": "\ue7e8",
+              "profile_image_size": 28,
+              "settings_icon": "\ue713",
+              "show": true
+            }
+          },
+          "sections_order": [
+            "system_controls",
+            "quick_actions",
+            "sliders",
+            "power",
+            "media"
+          ],
+          "tooltip": true
+        },
+        "status": "ok",
+        "type": "yasb.control_center.ControlCenterWidget"
+      },
+      "cpu": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_menu",
+            "on_middle": "do_nothing",
+            "on_right": "toggle_label"
+          },
+          "class_name": "",
+          "cpu_thresholds": {
+            "high": 90,
+            "low": 25,
+            "medium": 50
+          },
+          "hide_decimal": true,
+          "histogram_icons": [
+            "\u2581",
+            "\u2581",
+            "\u2582",
+            "\u2583",
+            "\u2584",
+            "\u2585",
+            "\u2586",
+            "\u2587",
+            "\u2588"
+          ],
+          "histogram_num_columns": 10,
+          "keybindings": [],
+          "label": "<span>\ueea1</span> {info[percent][total]}%",
+          "label_alt": "<span>\ueea1</span> {info[freq][current]} MHz",
+          "menu": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "enabled": true,
+            "graph_history_size": 60,
+            "offset_left": 0,
+            "offset_top": 6,
+            "pin_icon": "\ue718",
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_graph": true,
+            "show_graph_grid": true,
+            "unpin_icon": "\ue77a"
+          },
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "update_interval": 2000
+        },
+        "status": "ok",
+        "type": "yasb.cpu.CpuWidget"
+      },
+      "github": {
+        "normalized": {
+          "hide_empty": false,
+          "icons": {
+            "checksuite": "\uf418",
+            "comment": "\ue90a",
+            "default": "\uea84",
+            "discussion": "\uf442",
+            "discussion_answered": "\uf4c0",
+            "github_logo": "\uea84",
+            "issue": "\uf41b",
+            "issue_closed": "\uf41d",
+            "pull_request": "\uea64",
+            "pull_request_closed": "\uebda",
+            "pull_request_draft": "\uebdb",
+            "pull_request_merged": "\uf17f",
+            "release": "\uea84"
+          },
+          "keybindings": [],
+          "label": "<span>\ueb00</span>",
+          "label_alt": "Notifications {data}",
+          "max_field_size": 54,
+          "max_notification": 30,
+          "menu": {
+            "alignment": "left",
+            "blur": true,
+            "border_color": "System",
+            "categories_order": [
+              "Issue",
+              "PullRequest",
+              "CheckSuite",
+              "Release",
+              "Discussion"
+            ],
+            "direction": "down",
+            "offset_left": 0,
+            "offset_top": 6,
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_categories": true
+          },
+          "notification_dot": {
+            "color": "#ef4747",
+            "corner": "top_right",
+            "enabled": true,
+            "margin": [
+              0,
+              5
+            ]
+          },
+          "only_unread": true,
+          "reason_filters": [],
+          "show_comment_count": true,
+          "token": "",
+          "tooltip": true,
+          "update_interval": 600
+        },
+        "status": "ok",
+        "type": "yasb.github.GithubWidget"
+      },
+      "komorebi_active_layout": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "next_layout",
+            "on_middle": "toggle_monocle",
+            "on_right": "prev_layout"
+          },
+          "hide_if_offline": true,
+          "keybindings": [],
+          "label": "{icon}",
+          "layout_icons": {
+            "bsp": "[\\]",
+            "columns": "[||]",
+            "floating": "><>",
+            "grid": "[G]",
+            "horizontal_stack": "[H]=",
+            "maximized": "[X]",
+            "monocle": "[M]",
+            "paused": "[P]",
+            "right_main_vertical_stack": "=||",
+            "rows": "[==]",
+            "scrolling": "[SC]",
+            "tiling": "[T]",
+            "ultrawide_vertical_stack": "||=",
+            "vertical_stack": "[V]="
+          },
+          "layout_menu": {
+            "alignment": "left",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "offset_left": 0,
+            "offset_top": 6,
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_layout_icons": true
+          },
+          "layouts": [
+            "bsp",
+            "columns",
+            "rows",
+            "grid",
+            "scrolling",
+            "vertical_stack",
+            "horizontal_stack",
+            "ultrawide_vertical_stack",
+            "right_main_vertical_stack"
+          ]
+        },
+        "status": "ok",
+        "type": "komorebi.active_layout.ActiveLayoutWidget"
+      },
+      "komorebi_workspaces": {
+        "normalized": {
+          "app_icons": {
+            "enabled_active": false,
+            "enabled_populated": false,
+            "hide_duplicates": false,
+            "hide_floating": false,
+            "hide_label": false,
+            "max_icons": 0,
+            "size": 16
+          },
+          "enable_scroll_switching": true,
+          "hide_empty_workspaces": false,
+          "hide_if_offline": true,
+          "label_default_name": "",
+          "label_float_override": "Override Active",
+          "label_offline": "",
+          "label_workspace_active_btn": "",
+          "label_workspace_btn": "",
+          "label_workspace_populated_btn": "",
+          "label_zero_index": false,
+          "reverse_scroll_direction": false,
+          "toggle_workspace_layer": {
+            "enabled": false,
+            "floating_label": "Floating",
+            "tiling_label": "Tiling"
+          }
+        },
+        "status": "ok",
+        "type": "komorebi.workspaces.WorkspaceWidget"
+      },
+      "media": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_media_menu",
+            "on_middle": "toggle_play_pause",
+            "on_right": "toggle_label"
+          },
+          "class_name": "",
+          "controls_hide": false,
+          "controls_left": true,
+          "controls_only": false,
+          "hide_empty": true,
+          "icons": {
+            "next_track": "\ue893",
+            "pause": "\ue769",
+            "play": "\ue768",
+            "prev_track": "\ue892"
+          },
+          "keybindings": [],
+          "label": "{title}{s}{artist}",
+          "label_alt": "{title}",
+          "max_field_size": {
+            "label": 30,
+            "label_alt": 30,
+            "truncate_whole_label": true
+          },
+          "media_menu": {
+            "alignment": "center",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "max_artist_size": 40,
+            "max_source_size": 16,
+            "max_title_size": 60,
+            "offset_left": 0,
+            "offset_top": 6,
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_source": true,
+            "show_volume_slider": false,
+            "thumbnail_corner_radius": 8,
+            "thumbnail_size": 100
+          },
+          "media_menu_icons": {
+            "mute": "\ue994",
+            "next_track": "\ue893",
+            "pause": "\ue769",
+            "play": "\ue768",
+            "prev_track": "\ue892",
+            "unmute": "\ue74f"
+          },
+          "progress_bar": {
+            "alignment": "bottom",
+            "enabled": true
+          },
+          "scrolling_label": {
+            "always_scroll": false,
+            "ease_min": 0.5,
+            "ease_pos": 0.8,
+            "ease_slope": 20,
+            "enabled": false,
+            "label_padding": 0,
+            "separator": " ",
+            "style": "left",
+            "update_interval_ms": 33
+          },
+          "separator": " - ",
+          "show_thumbnail": true,
+          "symmetric_corner_radius": true,
+          "thumbnail_alpha": 80,
+          "thumbnail_corner_radius": 14,
+          "thumbnail_edge_fade": false,
+          "thumbnail_padding": 8
+        },
+        "status": "ok",
+        "type": "yasb.media.MediaWidget"
+      },
+      "memory": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_menu",
+            "on_middle": "do_nothing",
+            "on_right": "toggle_label"
+          },
+          "class_name": "",
+          "hide_decimal": true,
+          "histogram_icons": [
+            "\u2581",
+            "\u2581",
+            "\u2582",
+            "\u2583",
+            "\u2584",
+            "\u2585",
+            "\u2586",
+            "\u2587",
+            "\u2588"
+          ],
+          "keybindings": [],
+          "label": "<span>\ueea0</span> {virtual_mem_percent}%",
+          "label_alt": "<span>\ueea0</span> {virtual_mem_outof}",
+          "memory_thresholds": {
+            "high": 90,
+            "low": 25,
+            "medium": 50
+          },
+          "menu": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "enabled": true,
+            "graph_history_size": 60,
+            "offset_left": 0,
+            "offset_top": 6,
+            "pin_icon": "\ue718",
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "show_graph": true,
+            "show_graph_grid": true,
+            "unpin_icon": "\ue77a"
+          },
+          "progress_bar": {
+            "animation": true,
+            "background_color": "#3C3C3C",
+            "color": "#00C800",
+            "enabled": false,
+            "position": "left",
+            "progress_type": "circular",
+            "radius": 0,
+            "size": 18,
+            "thickness": 3
+          },
+          "update_interval": 5000
+        },
+        "status": "ok",
+        "type": "yasb.memory.MemoryWidget"
+      },
+      "notifications": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_notification",
+            "on_middle": "do_nothing",
+            "on_right": "clear_notifications"
+          },
+          "class_name": "",
+          "hide_empty": false,
+          "icons": {
+            "default": "\ue91c",
+            "dismiss": "\uf00d",
+            "dnd_off": "\udb80\udc9a",
+            "dnd_on": "\udb80\udc9b",
+            "new": "\ued0c"
+          },
+          "keybindings": [],
+          "label": "<span>{icon}</span>",
+          "label_alt": "{count} notifications",
+          "menu": {
+            "alignment": "right",
+            "app_icon_size": 16,
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "offset_left": 0,
+            "offset_top": 6,
+            "round_corners": true,
+            "round_corners_type": "normal"
+          },
+          "tooltip": false
+        },
+        "status": "ok",
+        "type": "yasb.notifications.NotificationsWidget"
+      },
+      "systray": {
+        "normalized": {
+          "class_name": "systray",
+          "hide_icons": [],
+          "icon_size": 16,
+          "icons_per_row": 5,
+          "label_collapsed": "\ue972",
+          "label_expanded": "\ue971",
+          "label_position": "right",
+          "pin_click_modifier": "ctrl",
+          "popup": {
+            "alignment": "center",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "offset_left": 0,
+            "offset_top": 6,
+            "round_corners": true,
+            "round_corners_type": "normal"
+          },
+          "show_battery": false,
+          "show_in_popup": true,
+          "show_network": false,
+          "show_unpinned": false,
+          "show_unpinned_button": true,
+          "show_volume": false,
+          "tooltip": true,
+          "use_hook": true
+        },
+        "status": "ok",
+        "type": "yasb.systray.SystrayWidget"
+      },
+      "taskbar": {
+        "normalized": {
+          "animation": {
+            "duration": 200,
+            "enabled": true
+          },
+          "callbacks": {
+            "on_left": "toggle_window",
+            "on_middle": "do_nothing",
+            "on_right": "context_menu"
+          },
+          "grouping": {
+            "enabled": true,
+            "show_count": true
+          },
+          "hide_empty": true,
+          "icon_size": 16,
+          "ignore_apps": {
+            "classes": [],
+            "processes": [],
+            "titles": []
+          },
+          "keybindings": [],
+          "monitor_exclusive": false,
+          "preview": {
+            "blur": true,
+            "delay": 400,
+            "enabled": true,
+            "margin": 8,
+            "padding": 8,
+            "peek": true,
+            "width": 180
+          },
+          "show_only_visible": false,
+          "strict_filtering": true,
+          "title_label": {
+            "enabled": false,
+            "max_length": 30,
+            "min_length": 10,
+            "show": "focused"
+          },
+          "tooltip": true
+        },
+        "status": "ok",
+        "type": "yasb.taskbar.TaskbarWidget"
+      },
+      "wallpapers": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_gallery",
+            "on_middle": "do_nothing",
+            "on_right": "change_wallpaper"
+          },
+          "change_automatically": false,
+          "engine": {
+            "animation": "split",
+            "enabled": true
+          },
+          "gallery": {
+            "accent_color": "#fff",
+            "image_corner_radius": 0,
+            "image_width": 240,
+            "orientation": "portrait",
+            "type": "strip"
+          },
+          "image_path": "C:/Users/jande/.config/wallpapers",
+          "keybindings": [
+            {
+              "action": "toggle_gallery",
+              "keys": "alt+e",
+              "screen": "cursor"
+            }
+          ],
+          "label": "",
+          "run_after": [],
+          "tooltip": true,
+          "update_interval": 60
+        },
+        "status": "ok",
+        "type": "yasb.wallpapers.WallpapersWidget"
+      },
+      "wifi": {
+        "normalized": {
+          "callbacks": {
+            "on_left": "toggle_menu",
+            "on_middle": "exec cmd /c start ms-settings:network",
+            "on_right": "toggle_label"
+          },
+          "class_name": "",
+          "ethernet_icon": "\udb80\ude00",
+          "ethernet_label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+          "ethernet_label_alt": "<span>{wifi_icon}</span>{ip_addr}<span class=\"vpn-name\">{vpn_name}</span>",
+          "get_exact_wifi_strength": false,
+          "hide_if_ethernet": false,
+          "keybindings": [],
+          "label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+          "label_alt": "<span>{wifi_icon}</span>{wifi_name}<span class=\"vpn-name\">{vpn_name}</span>",
+          "menu_config": {
+            "alignment": "right",
+            "blur": true,
+            "border_color": "System",
+            "direction": "down",
+            "offset_left": 0,
+            "offset_top": 6,
+            "round_corners": true,
+            "round_corners_type": "normal",
+            "wifi_icons_secured": [
+              "\ue670",
+              "\ue671",
+              "\ue672",
+              "\ue673"
+            ],
+            "wifi_icons_unsecured": [
+              "\uec3c",
+              "\uec3d",
+              "\uec3e",
+              "\uec3f"
+            ]
+          },
+          "update_interval": 5000,
+          "vpn_icon": "\udb82\udd9d",
+          "wifi_icons": [
+            "\udb82\udd2e",
+            "\udb82\udd1f",
+            "\udb82\udd22",
+            "\udb82\udd25",
+            "\udb82\udd28"
+          ]
+        },
+        "status": "ok",
+        "type": "yasb.wifi.WifiWidget"
+      }
+    }
+  }
+}

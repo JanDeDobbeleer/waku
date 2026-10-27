@@ -1,0 +1,13 @@
+.widget {
+    background-color: #202020;
+    padding: 0 8px;
+    opacity: 1;
+    transition: background-color 0.3s ease-in-out, padding 150ms;
+}
+.widget:hover { background-color: #404040; padding: 0 12px; }
+.widget:pressed { opacity: 0.8; }
+.widget:clicked { opacity: 0.5; transition: opacity 100ms linear; }
+.button, .link { cursor: pointer; transition: none; }
+.item[active=true] { background-color: #00ff00; }
+.label::item { color: red; transition: color 1s; }
+.fancy { transition-property: width; transition-duration: 200ms; transition-timing-function: ease-out; transition-delay: 50ms; width: 10px; }

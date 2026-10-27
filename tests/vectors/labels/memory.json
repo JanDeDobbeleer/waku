@@ -1,0 +1,608 @@
+[
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "\ueea0"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{virtual_mem_outof}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget memory-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "\ueea0"
+        },
+        {
+          "class": "label status-low",
+          "hidden": false,
+          "text": "0%"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_right": "toggle_label"
+      },
+      "hide_decimal": true,
+      "label": "<span>\ueea0</span> {virtual_mem_percent}%",
+      "label_alt": "<span>\ueea0</span> {virtual_mem_outof}",
+      "menu": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "enabled": true,
+        "graph_history_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_graph": true,
+        "show_graph_grid": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "placeholder_only",
+    "steps": [],
+    "widget": "memory"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "\ueea0"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{virtual_mem_outof}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget memory-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "\ueea0"
+        },
+        {
+          "class": "label status-low",
+          "hidden": false,
+          "text": "0%"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_right": "toggle_label"
+      },
+      "hide_decimal": true,
+      "label": "<span>\ueea0</span> {virtual_mem_percent}%",
+      "label_alt": "<span>\ueea0</span> {virtual_mem_outof}",
+      "menu": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "enabled": true,
+        "graph_history_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_graph": true,
+        "show_graph_grid": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "user_options_12_3_of_31_6",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{virtual_mem_outof}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget memory-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label status-medium",
+              "hidden": false,
+              "text": "39%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "total_gb": 31.6,
+          "used_gb": 12.3
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "{virtual_mem_outof}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget memory-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label status-medium",
+              "hidden": true,
+              "text": "39%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label alt status-critical",
+              "hidden": false,
+              "text": "30G / 32G"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget memory-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label status-medium",
+              "hidden": true,
+              "text": "39%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "percent": 94.9,
+          "total_gb": 31.6,
+          "used_gb": 30
+        }
+      }
+    ],
+    "widget": "memory"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "\ueea0"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{virtual_mem_outof}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget memory-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "label status-low",
+          "hidden": false,
+          "text": "0B / 0B 0.0%"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_right": "toggle_label"
+      },
+      "hide_decimal": false,
+      "label": "{virtual_mem_outof} {virtual_mem_percent}%",
+      "label_alt": "<span>\ueea0</span> {virtual_mem_outof}",
+      "menu": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "enabled": true,
+        "graph_history_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_graph": true,
+        "show_graph_grid": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "hide_decimal_false",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{virtual_mem_outof}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget memory-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium",
+              "hidden": false,
+              "text": "12.3G / 31.6G 38.9%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "total_gb": 31.6,
+          "used_gb": 12.3
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{virtual_mem_outof}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget memory-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium",
+              "hidden": false,
+              "text": "8.0G / 16.0G 50.0%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "percent": 50.0,
+          "total_gb": 16,
+          "used_gb": 8
+        }
+      }
+    ],
+    "widget": "memory"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "\ueea0"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{virtual_mem_outof}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget memory-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "label status-low",
+          "hidden": false,
+          "text": "0B / 0B 0% 0B"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_right": "toggle_label"
+      },
+      "hide_decimal": true,
+      "label": "{virtual_mem_outof} {virtual_mem_percent}% {swap_mem_total}",
+      "label_alt": "<span>\ueea0</span> {virtual_mem_outof}",
+      "menu": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "enabled": true,
+        "graph_history_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_graph": true,
+        "show_graph_grid": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "hide_decimal_true",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{virtual_mem_outof}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget memory-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium",
+              "hidden": false,
+              "text": "12G / 32G 39% 4G"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "total_gb": 31.6,
+          "used_gb": 12.3
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{virtual_mem_outof}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget memory-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium",
+              "hidden": false,
+              "text": "256M / 512M 50% 4G"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "percent": 50.0,
+          "total_gb": 0.5,
+          "used_gb": 0.25
+        }
+      }
+    ],
+    "widget": "memory"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "\ueea0"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{virtual_mem_outof}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget memory-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "label status-low",
+          "hidden": false,
+          "text": "0B|0.0|0B|0B|0B|0B|0.0|0B|\u2581"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_right": "toggle_label"
+      },
+      "hide_decimal": false,
+      "label": "{virtual_mem_free}|{virtual_mem_percent}|{virtual_mem_total}|{virtual_mem_avail}|{virtual_mem_used}|{swap_mem_free}|{swap_mem_percent}|{swap_mem_total}|{histogram}",
+      "label_alt": "<span>\ueea0</span> {virtual_mem_outof}",
+      "menu": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "enabled": true,
+        "graph_history_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_graph": true,
+        "show_graph_grid": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "all_placeholders",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "\ueea0"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{virtual_mem_outof}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget memory-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium",
+              "hidden": false,
+              "text": "19.3G|38.9|31.6G|19.3G|12.3G|3.0G|25.0|4.0G|\u2583"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "total_gb": 31.6,
+          "used_gb": 12.3
+        }
+      }
+    ],
+    "widget": "memory"
+  }
+]

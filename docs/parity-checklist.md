@@ -1,0 +1,41 @@
+# Parity checklist
+
+Sign-off table for the 15 widgets of the user's config. A widget is **done** when all four shared criteria hold:
+
+1. **Label vectors pass.** The C++ test replaying `tests/vectors/labels/<widget>.json` (and the config/CSS vectors for its options) is green.
+2. **A/B capture matches.** `tools/ab/Switch-Bar.ps1` captures of the Python and native bars, compared with `tools/ab/Compare-Screenshots.ps1` and the widget's masks, pass at the agreed tolerance (see `docs/baseline.md`).
+3. **Manual checklist signed off by the user.** Every item in the widget's row below (popup content, hover, clicks, callbacks) behaves as in the Python build.
+4. **No new log errors over 30 minutes.** `yasb-native.log` has no `ERROR` or `CRITICAL` lines that `yasb.log` lacks over a 30-minute run with the user's config.
+
+Status values: `todo`, `in progress`, `done`. Dates are the sign-off date (YYYY-MM-DD). Plan unit in the last column.
+
+| Widget (type) | Label vectors | A/B capture | Manual checklist (user) | 30 min log clean | Manual checklist items | Unit |
+| --- | --- | --- | --- | --- | --- | --- |
+| cpu (`yasb.cpu.CpuWidget`) | todo | todo | todo | todo | Label text and status class at thresholds; click toggles alt label; stat popup rows and graph; right-click callback | U8 |
+| memory (`yasb.memory.MemoryWidget`) | todo | todo | todo | todo | Label sizes (binary, GNU style); alt label; stat popup; swap values | U8 |
+| battery (`yasb.battery.BatteryWidget`) | todo | todo | todo | todo | Icon per threshold; charging icon and blink; time remaining phrase; hidden when no battery | U8 |
+| clock (`yasb.clock.ClockWidget`) | todo | todo | todo | todo | Format and alt format; calendar popup; context menu; timezone cycling | U9 |
+| wifi (`yasb.wifi.WifiWidget`) | todo | todo | todo | todo | Icon by signal; VPN-aware icon; menu lists networks; connect to a second network | U10 |
+| bluetooth (`yasb.bluetooth.BluetoothWidget`) | todo | todo | todo | todo | Icon by state; menu lists devices; connect and disconnect; device icons | U10 |
+| komorebi_workspaces (`komorebi.workspaces.WorkspaceWidget`) | todo | todo | todo | todo | Workspace buttons and active state; click switches; app icons; follows whkd workspace changes | U11 |
+| komorebi_active_layout (`komorebi.active_layout.ActiveLayoutWidget`) | todo | todo | todo | todo | Layout icon and text; menu; changing layout with whkd | U11 |
+| media (`yasb.media.MediaWidget`) | todo | todo | todo | todo | Title and artist; thumbnail; progress bar; play/pause/next/prev; menu (Spotify and a browser tab) | U12 |
+| control_center (`yasb.control_center.ControlCenterWidget`) | todo | todo | todo | todo | Every section (volume, brightness, media, toggles, power); screenshot action (interim until U19) | U13 |
+| notifications (`yasb.notifications.NotificationsWidget`) | todo | todo | todo | todo | Count and icon; toggle; clear; do-not-disturb state | U14 |
+| github (`yasb.github.GithubWidget`) | todo | todo | todo | todo | Count, dot, category menu; open in browser; refresh; token handling | U15 |
+| systray (`yasb.systray.SystrayWidget`) | todo | todo | todo | todo | Icons appear through the hook; pin and unpin; popup; left/right click pass-through; Explorer restart | U16 |
+| taskbar (`yasb.taskbar.TaskbarWidget`) | todo | todo | todo | todo | Grouping and count badges; add/remove animation; thumbnail preview and peek; virtual desktops; a full working session | U17 |
+| wallpapers (`yasb.wallpapers.WallpapersWidget`) | todo | todo | todo | todo | Gallery opens with `alt+e`; split transition; apply a wallpaper; keyboard navigation | U18 |
+
+## Shared checks per widget
+
+- Hover and pressed styles come from the user's `styles.css` selectors for the widget.
+- Left, middle and right callbacks run the same actions as configured.
+- Deprecated or unknown options produce the same rejection text as the Python build (config vectors).
+- The widget keeps working after a config reload and after a monitor change.
+
+## Sign-off log
+
+| Widget | Criterion | Date | Notes |
+| --- | --- | --- | --- |
+| | | | |

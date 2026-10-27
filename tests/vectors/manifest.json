@@ -1,0 +1,19 @@
+{
+  "counts": {
+    "config_cases": 13,
+    "css_cases": 10,
+    "island_cases": 71,
+    "label_scenarios": {
+      "battery": 9,
+      "cpu": 6,
+      "memory": 5
+    }
+  },
+  "qt_css_engine": {
+    "commit": "fadd1a992edd79765556ef6a6ec7d8e62ff78973",
+    "version": "0.1.7.dev3+gfadd1a992"
+  },
+  "secrets_redacted": 0,
+  "yasb_commit": "0a756c07c33e462417ee95ac341b7fbe1dbc5fc3",
+  "yasb_version": "2.0.8"
+}

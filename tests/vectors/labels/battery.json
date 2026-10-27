@@ -1,0 +1,1825 @@
+[
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{percent}% | {time_remaining}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget battery-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon status-medium discharging",
+          "hidden": false,
+          "text": "\ue855"
+        },
+        {
+          "class": "label status-medium discharging",
+          "hidden": false,
+          "text": "50%"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": {
+      "percent": 50
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_label",
+        "on_right": "exec start ms-settings:batterysaver"
+      },
+      "charging_options": {
+        "blink_charging_icon": false,
+        "icon_format": "{charging_icon}"
+      },
+      "hide_unsupported": true,
+      "label": "<span>{icon}</span> {percent}%",
+      "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+      "status_icons": {
+        "icon_charging": "\uea93",
+        "icon_critical": "\ue850",
+        "icon_full": "\ue83f",
+        "icon_high": "\ue858",
+        "icon_low": "\ue852",
+        "icon_medium": "\ue855"
+      },
+      "status_thresholds": {
+        "critical": 10,
+        "full": 100,
+        "high": 95,
+        "low": 25,
+        "medium": 75
+      },
+      "time_remaining_natural": true,
+      "update_interval": 5000
+    },
+    "scenario": "threshold_boundaries",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-critical discharging",
+              "hidden": false,
+              "text": "\ue850"
+            },
+            {
+              "class": "label status-critical discharging",
+              "hidden": false,
+              "text": "0%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 0
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-critical discharging",
+              "hidden": false,
+              "text": "\ue850"
+            },
+            {
+              "class": "label status-critical discharging",
+              "hidden": false,
+              "text": "10%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 10
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-low discharging",
+              "hidden": false,
+              "text": "\ue852"
+            },
+            {
+              "class": "label status-low discharging",
+              "hidden": false,
+              "text": "11%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 11
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-low discharging",
+              "hidden": false,
+              "text": "\ue852"
+            },
+            {
+              "class": "label status-low discharging",
+              "hidden": false,
+              "text": "25%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 25
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-medium discharging",
+              "hidden": false,
+              "text": "\ue855"
+            },
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "26%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 26
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-medium discharging",
+              "hidden": false,
+              "text": "\ue855"
+            },
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "75%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 75
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-high discharging",
+              "hidden": false,
+              "text": "\ue858"
+            },
+            {
+              "class": "label status-high discharging",
+              "hidden": false,
+              "text": "76%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 76
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-high discharging",
+              "hidden": false,
+              "text": "\ue858"
+            },
+            {
+              "class": "label status-high discharging",
+              "hidden": false,
+              "text": "95%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 95
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-full discharging",
+              "hidden": false,
+              "text": "\ue83f"
+            },
+            {
+              "class": "label status-full discharging",
+              "hidden": false,
+              "text": "96%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 96
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-full discharging",
+              "hidden": false,
+              "text": "\ue83f"
+            },
+            {
+              "class": "label status-full discharging",
+              "hidden": false,
+              "text": "100%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 100
+          }
+        }
+      }
+    ],
+    "widget": "battery"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{percent}% | {time_remaining}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget battery-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon status-charging",
+          "hidden": false,
+          "text": "\uea93"
+        },
+        {
+          "class": "label status-charging",
+          "hidden": false,
+          "text": "40%"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": {
+      "is_charging": true,
+      "percent": 40,
+      "power_plugged": true
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_label",
+        "on_right": "exec start ms-settings:batterysaver"
+      },
+      "charging_options": {
+        "blink_charging_icon": false,
+        "icon_format": "{charging_icon}"
+      },
+      "hide_unsupported": true,
+      "label": "<span>{icon}</span> {percent}%",
+      "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+      "status_icons": {
+        "icon_charging": "\uea93",
+        "icon_critical": "\ue850",
+        "icon_full": "\ue83f",
+        "icon_high": "\ue858",
+        "icon_low": "\ue852",
+        "icon_medium": "\ue855"
+      },
+      "status_thresholds": {
+        "critical": 10,
+        "full": 100,
+        "high": 95,
+        "low": 25,
+        "medium": 75
+      },
+      "time_remaining_natural": true,
+      "update_interval": 5000
+    },
+    "scenario": "charging",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-charging",
+              "hidden": false,
+              "text": "\uea93"
+            },
+            {
+              "class": "label status-charging",
+              "hidden": false,
+              "text": "40%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "is_charging": true,
+            "percent": 40,
+            "power_plugged": true
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-charging",
+              "hidden": false,
+              "text": "\uea93"
+            },
+            {
+              "class": "label status-charging",
+              "hidden": false,
+              "text": "100%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "is_charging": true,
+            "percent": 100,
+            "power_plugged": true
+          }
+        }
+      }
+    ],
+    "widget": "battery"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{percent}% | {time_remaining}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget battery-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon status-full",
+          "hidden": false,
+          "text": "\uea93"
+        },
+        {
+          "class": "label status-full",
+          "hidden": false,
+          "text": "100%"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": {
+      "percent": 100,
+      "power_plugged": true,
+      "time_remaining": -2
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_label",
+        "on_right": "exec start ms-settings:batterysaver"
+      },
+      "charging_options": {
+        "blink_charging_icon": false,
+        "icon_format": "{charging_icon}"
+      },
+      "hide_unsupported": true,
+      "label": "<span>{icon}</span> {percent}%",
+      "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+      "status_icons": {
+        "icon_charging": "\uea93",
+        "icon_critical": "\ue850",
+        "icon_full": "\ue83f",
+        "icon_high": "\ue858",
+        "icon_low": "\ue852",
+        "icon_medium": "\ue855"
+      },
+      "status_thresholds": {
+        "critical": 10,
+        "full": 100,
+        "high": 95,
+        "low": 25,
+        "medium": 75
+      },
+      "time_remaining_natural": true,
+      "update_interval": 5000
+    },
+    "scenario": "plugged_not_charging",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-full",
+              "hidden": false,
+              "text": "\uea93"
+            },
+            {
+              "class": "label status-full",
+              "hidden": false,
+              "text": "100%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 100,
+            "power_plugged": true,
+            "time_remaining": -2
+          }
+        }
+      }
+    ],
+    "widget": "battery"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{percent}% | {time_remaining}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget battery-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "label status-medium discharging",
+          "hidden": false,
+          "text": "60% 2 hours"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": {
+      "percent": 60,
+      "time_remaining": 7380
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_label",
+        "on_right": "exec start ms-settings:batterysaver"
+      },
+      "charging_options": {
+        "blink_charging_icon": false,
+        "icon_format": "{charging_icon}"
+      },
+      "hide_unsupported": true,
+      "label": "{percent}% {time_remaining}",
+      "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+      "status_icons": {
+        "icon_charging": "\uea93",
+        "icon_critical": "\ue850",
+        "icon_full": "\ue83f",
+        "icon_high": "\ue858",
+        "icon_low": "\ue852",
+        "icon_medium": "\ue855"
+      },
+      "status_thresholds": {
+        "critical": 10,
+        "full": 100,
+        "high": 95,
+        "low": 25,
+        "medium": 75
+      },
+      "time_remaining_natural": true,
+      "update_interval": 5000
+    },
+    "scenario": "time_remaining_natural",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "60% 2 hours"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 60,
+            "time_remaining": 7380
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "60% 45 seconds"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 60,
+            "time_remaining": 45
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "60% 2 minutes"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 60,
+            "time_remaining": 90
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "60% 3 days"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 60,
+            "time_remaining": 259200
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "60% unknown"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 60,
+            "time_remaining": -1
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "60% unlimited"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 60,
+            "time_remaining": -2
+          }
+        }
+      }
+    ],
+    "widget": "battery"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{percent}% | {time_remaining}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget battery-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "label status-medium discharging",
+          "hidden": false,
+          "text": "60% 2:03:00"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": {
+      "percent": 60,
+      "time_remaining": 7380
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_label",
+        "on_right": "exec start ms-settings:batterysaver"
+      },
+      "charging_options": {
+        "blink_charging_icon": false,
+        "icon_format": "{charging_icon}"
+      },
+      "hide_unsupported": true,
+      "label": "{percent}% {time_remaining}",
+      "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+      "status_icons": {
+        "icon_charging": "\uea93",
+        "icon_critical": "\ue850",
+        "icon_full": "\ue83f",
+        "icon_high": "\ue858",
+        "icon_low": "\ue852",
+        "icon_medium": "\ue855"
+      },
+      "status_thresholds": {
+        "critical": 10,
+        "full": 100,
+        "high": 95,
+        "low": 25,
+        "medium": 75
+      },
+      "time_remaining_natural": false,
+      "update_interval": 5000
+    },
+    "scenario": "time_remaining_timedelta",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "60% 2:03:00"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 60,
+            "time_remaining": 7380
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "60% 3 days, 0:00:05"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 60,
+            "time_remaining": 259205
+          }
+        }
+      }
+    ],
+    "widget": "battery"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{percent}% | {time_remaining}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget battery-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "label status-medium discharging",
+          "hidden": false,
+          "text": "8.2|12.35|40000|50000|55000|31.3|212|90.9|LION|no"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": {
+      "percent": 50
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_label",
+        "on_right": "exec start ms-settings:batterysaver"
+      },
+      "charging_options": {
+        "blink_charging_icon": false,
+        "icon_format": "{charging_icon}"
+      },
+      "hide_unsupported": true,
+      "label": "{power}|{voltage}|{capacity}|{full_capacity}|{designed_capacity}|{temperature}|{cycle_count}|{health}|{chemistry}|{is_charging}",
+      "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+      "status_icons": {
+        "icon_charging": "\uea93",
+        "icon_critical": "\ue850",
+        "icon_full": "\ue83f",
+        "icon_high": "\ue858",
+        "icon_low": "\ue852",
+        "icon_medium": "\ue855"
+      },
+      "status_thresholds": {
+        "critical": 10,
+        "full": 100,
+        "high": 95,
+        "low": 25,
+        "medium": 75
+      },
+      "time_remaining_natural": true,
+      "update_interval": 5000
+    },
+    "scenario": "extended_fields",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "8.2|12.35|40000|50000|55000|31.3|212|90.9|LION|no"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 50
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "3.1|N/A|N/A|N/A|N/A|N/A|N/A|N/A|N/A|no"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "capacity": null,
+            "chemistry": null,
+            "cycle_count": null,
+            "designed_capacity": null,
+            "full_capacity": null,
+            "health_percent": null,
+            "percent": 50,
+            "rate": -3.14,
+            "temperature": null,
+            "voltage": null
+          }
+        }
+      }
+    ],
+    "widget": "battery"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{percent}% | {time_remaining}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget battery-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{percent}%"
+        }
+      ],
+      "widget_hidden": true
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_label",
+        "on_right": "exec start ms-settings:batterysaver"
+      },
+      "charging_options": {
+        "blink_charging_icon": false,
+        "icon_format": "{charging_icon}"
+      },
+      "hide_unsupported": true,
+      "label": "<span>{icon}</span> {percent}%",
+      "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+      "status_icons": {
+        "icon_charging": "\uea93",
+        "icon_critical": "\ue850",
+        "icon_full": "\ue83f",
+        "icon_high": "\ue858",
+        "icon_low": "\ue852",
+        "icon_medium": "\ue855"
+      },
+      "status_thresholds": {
+        "critical": 10,
+        "full": 100,
+        "high": 95,
+        "low": 25,
+        "medium": 75
+      },
+      "time_remaining_natural": true,
+      "update_interval": 5000
+    },
+    "scenario": "no_battery_hide_unsupported",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "{percent}%"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "battery": null
+        }
+      }
+    ],
+    "widget": "battery"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{percent}% | {time_remaining}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget battery-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "Battery info not available"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "Battery info not available"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_label",
+        "on_right": "exec start ms-settings:batterysaver"
+      },
+      "charging_options": {
+        "blink_charging_icon": false,
+        "icon_format": "{charging_icon}"
+      },
+      "hide_unsupported": false,
+      "label": "<span>{icon}</span> {percent}%",
+      "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+      "status_icons": {
+        "icon_charging": "\uea93",
+        "icon_critical": "\ue850",
+        "icon_full": "\ue83f",
+        "icon_high": "\ue858",
+        "icon_low": "\ue852",
+        "icon_medium": "\ue855"
+      },
+      "status_thresholds": {
+        "critical": 10,
+        "full": 100,
+        "high": 95,
+        "low": 25,
+        "medium": 75
+      },
+      "time_remaining_natural": true,
+      "update_interval": 5000
+    },
+    "scenario": "no_battery_show_message",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "Battery info not available"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Battery info not available"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": null
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{percent}% | {time_remaining}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-medium discharging",
+              "hidden": true,
+              "text": "\ue855"
+            },
+            {
+              "class": "label status-medium discharging",
+              "hidden": false,
+              "text": "50%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 50
+          }
+        }
+      }
+    ],
+    "widget": "battery"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{percent}% | {time_remaining}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget battery-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon status-high discharging",
+          "hidden": false,
+          "text": "\ue858"
+        },
+        {
+          "class": "label status-high discharging",
+          "hidden": false,
+          "text": "80%"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": {
+      "percent": 80
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_label",
+        "on_right": "exec start ms-settings:batterysaver"
+      },
+      "charging_options": {
+        "blink_charging_icon": false,
+        "icon_format": "{charging_icon}"
+      },
+      "hide_unsupported": true,
+      "label": "<span>{icon}</span> {percent}%",
+      "label_alt": "<span>{icon}</span> {percent}% | {time_remaining}",
+      "status_icons": {
+        "icon_charging": "\uea93",
+        "icon_critical": "\ue850",
+        "icon_full": "\ue83f",
+        "icon_high": "\ue858",
+        "icon_low": "\ue852",
+        "icon_medium": "\ue855"
+      },
+      "status_thresholds": {
+        "critical": 10,
+        "full": 100,
+        "high": 95,
+        "low": 25,
+        "medium": 75
+      },
+      "time_remaining_natural": true,
+      "update_interval": 5000
+    },
+    "scenario": "alt_label_toggle",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon status-high discharging",
+              "hidden": false,
+              "text": "\ue858"
+            },
+            {
+              "class": "label alt status-high discharging",
+              "hidden": false,
+              "text": "80% | 2 hours"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-high discharging",
+              "hidden": true,
+              "text": "\ue858"
+            },
+            {
+              "class": "label status-high discharging",
+              "hidden": true,
+              "text": "80%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon status-low discharging",
+              "hidden": false,
+              "text": "\ue852"
+            },
+            {
+              "class": "label alt status-low discharging",
+              "hidden": false,
+              "text": "20% | 2 hours"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-high discharging",
+              "hidden": true,
+              "text": "\ue858"
+            },
+            {
+              "class": "label status-high discharging",
+              "hidden": true,
+              "text": "80%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "battery": {
+            "percent": 20
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon status-low discharging",
+              "hidden": true,
+              "text": "\ue852"
+            },
+            {
+              "class": "label alt status-low discharging",
+              "hidden": true,
+              "text": "20% | 2 hours"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget battery-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon status-low discharging",
+              "hidden": false,
+              "text": "\ue852"
+            },
+            {
+              "class": "label status-low discharging",
+              "hidden": false,
+              "text": "20%"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "battery"
+  }
+]

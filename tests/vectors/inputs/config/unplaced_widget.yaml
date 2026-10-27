@@ -1,0 +1,20 @@
+# invalid widgets that are never placed in an enabled bar are never validated
+bars:
+  main:
+    widgets:
+      left: [cpu]
+  disabled-bar:
+    enabled: false
+    widgets:
+      left: [only_in_disabled_bar]
+widgets:
+  cpu:
+    type: yasb.cpu.CpuWidget
+  unplaced:
+    type: yasb.memory.MemoryWidget
+    options:
+      bogus_key: 1
+  only_in_disabled_bar:
+    type: yasb.memory.MemoryWidget
+    options:
+      bogus_key: 1

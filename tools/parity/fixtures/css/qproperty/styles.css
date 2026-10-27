@@ -1,0 +1,9 @@
+.bar {
+    -qproperty-railheight: 4;
+    -qproperty-islands: true;
+    -qproperty-bordercolor: #ff000080;
+    qproperty-edgeradius: 10;
+}
+.keep { --not-a-property: "-qproperty-foo: 1"; content: "x -qproperty-y: z"; }
+.nospace{-qproperty-islandradius:16;-qproperty-grouppadding:12}
+.novalue { -qproperty- : 1; margin: -qproperty-x; }
