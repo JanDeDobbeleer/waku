@@ -1,0 +1,4196 @@
+[
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": true,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {},
+    "scenario": "active_and_inactive_modes",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "pause"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "custom"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "custom"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "custom"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "connection": false
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "connection": true
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "pause"
+          }
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": false,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {
+      "hide_if_no_active": false
+    },
+    "scenario": "show_when_no_active",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon none",
+              "hidden": false,
+              "text": "<span></span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "No binding mode active"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon none",
+              "hidden": false,
+              "text": "<span></span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "No binding mode active"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon none",
+              "hidden": false,
+              "text": "<span></span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "No binding mode active"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "",
+            "name": ""
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon none",
+              "hidden": false,
+              "text": "<span></span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "No binding mode active"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "connection": false
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon none",
+              "hidden": false,
+              "text": "<span></span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "No binding mode active"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": true,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {},
+    "scenario": "alt_label_toggle",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Current mode: Resize"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": true,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_label"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Current mode: pause"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": true,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "pause"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon custom",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Current mode: custom"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": true,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "custom"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon custom",
+              "hidden": true,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: custom"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "custom"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_label"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon custom",
+              "hidden": true,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: custom"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "custom"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon custom",
+              "hidden": true,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: custom"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": false,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {
+      "hide_if_no_active": false
+    },
+    "scenario": "alt_label_toggle_when_inactive_is_shown",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon none",
+              "hidden": false,
+              "text": "<span></span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "No binding mode active"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon none",
+              "hidden": false,
+              "text": "<span></span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "Current mode: No binding mode active"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon none",
+              "hidden": true,
+              "text": "<span></span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": true,
+              "text": "No binding mode active"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_label"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Current mode: Resize"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon none",
+              "hidden": true,
+              "text": "<span></span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": true,
+              "text": "No binding mode active"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon resize",
+              "hidden": true,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Current mode: Resize"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_label"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon resize",
+              "hidden": true,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Current mode: Resize"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon none",
+              "hidden": false,
+              "text": "<span></span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "No binding mode active"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": true,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {},
+    "scenario": "toggle_before_first_event",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "{binding_mode}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_label"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Current mode: Resize"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "{binding_mode}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon resize",
+              "hidden": true,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: Resize"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_label"
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": true,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {},
+    "scenario": "cycling_next_prev",
+    "steps": [
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "{binding_mode}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_binding_mode"
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name pause"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "{binding_mode}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_binding_mode"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "{binding_mode}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_binding_mode"
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "{binding_mode}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_binding_mode"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "{binding_mode}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_binding_mode"
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name pause"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "{binding_mode}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_binding_mode"
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "{binding_mode}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_binding_mode"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "pause"
+          }
+        }
+      },
+      {
+        "commands": [
+          "command wm-disable-binding-mode --name pause"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_binding_mode"
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name pause"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_binding_mode"
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_binding_mode"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "callback": "next_binding_mode"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [
+          "command wm-disable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_binding_mode"
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name pause"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_binding_mode"
+        }
+      },
+      {
+        "commands": [
+          "command wm-disable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "disable_binding_mode"
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": true,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {},
+    "scenario": "cycling_with_active_mode_outside_list",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "custom"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "custom"
+          }
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "custom"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_binding_mode"
+        }
+      },
+      {
+        "commands": [
+          "command wm-disable-binding-mode --name custom"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "custom"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_binding_mode"
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": true,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {
+      "binding_modes_to_cycle_through": []
+    },
+    "scenario": "cycling_disabled_when_list_empty",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_binding_mode"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_binding_mode"
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": true,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {
+      "binding_modes_to_cycle_through": [
+        "resize",
+        "pause"
+      ]
+    },
+    "scenario": "cycling_without_none_entry",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name pause"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_binding_mode"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "callback": "next_binding_mode"
+        }
+      },
+      {
+        "commands": [
+          "command wm-enable-binding-mode --name pause"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "callback": "prev_binding_mode"
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": true,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {},
+    "scenario": "disable_binding_mode_callback",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{icon}"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "{binding_mode}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "disable_binding_mode"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [
+          "command wm-disable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "disable_binding_mode"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [
+          "command wm-disable-binding-mode --name resize"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>\uf071</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "callback": "disable_binding_mode"
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "Current mode: {binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": true,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}",
+      "label_alt": "<span>{icon}</span> Current mode: {binding_mode}",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {},
+    "scenario": "disable_after_hidden_none_uses_last_active_mode",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "pause"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [
+          "command wm-disable-binding-mode --name pause"
+        ],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Current mode: {binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>\uf28c</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "callback": "disable_binding_mode"
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "mode={binding_mode}"
+        },
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{binding_mode}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary",
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}!"
+        },
+        {
+          "class": "x",
+          "hidden": false,
+          "text": "fixed"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "?",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": false,
+      "icons": {
+        "none": "-",
+        "resize": "R"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {binding_mode}!<span class='x'>fixed</span>",
+      "label_alt": "mode={binding_mode} <span>{binding_mode}</span>",
+      "label_if_no_active": "idle"
+    },
+    "options": {
+      "default_icon": "?",
+      "hide_if_no_active": false,
+      "icons": {
+        "none": "-",
+        "resize": "R"
+      },
+      "label": "<span>{icon}</span> {binding_mode}!<span class='x'>fixed</span>",
+      "label_alt": "mode={binding_mode} <span>{binding_mode}</span>",
+      "label_if_no_active": "idle"
+    },
+    "scenario": "custom_label_and_icons",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "mode={binding_mode}"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon none",
+              "hidden": false,
+              "text": "<span>-</span>"
+            },
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "idle!"
+            },
+            {
+              "class": "x",
+              "hidden": false,
+              "text": "fixed"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "mode={binding_mode}"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>R</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize!"
+            },
+            {
+              "class": "x",
+              "hidden": false,
+              "text": "fixed"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "mode={binding_mode}"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>?</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "pause!"
+            },
+            {
+              "class": "x",
+              "hidden": false,
+              "text": "fixed"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "pause"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "mode={binding_mode}"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{binding_mode}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": false,
+              "text": "<span>?</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Shown Name!"
+            },
+            {
+              "class": "x",
+              "hidden": false,
+              "text": "fixed"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Shown Name",
+            "name": "custom"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "mode=Shown Name"
+            },
+            {
+              "class": "icon custom",
+              "hidden": false,
+              "text": "<span>Shown Name</span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": true,
+              "text": "<span>?</span>"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Shown Name!"
+            },
+            {
+              "class": "x",
+              "hidden": true,
+              "text": "fixed"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_label"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "mode=idle"
+            },
+            {
+              "class": "icon none",
+              "hidden": false,
+              "text": "<span>idle</span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": true,
+              "text": "<span>?</span>"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Shown Name!"
+            },
+            {
+              "class": "x",
+              "hidden": true,
+              "text": "fixed"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "mode=Resize"
+            },
+            {
+              "class": "icon resize",
+              "hidden": false,
+              "text": "<span>Resize</span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": true,
+              "text": "<span>?</span>"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Shown Name!"
+            },
+            {
+              "class": "x",
+              "hidden": true,
+              "text": "fixed"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "mode=pause"
+            },
+            {
+              "class": "icon pause",
+              "hidden": false,
+              "text": "<span>pause</span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon custom",
+              "hidden": true,
+              "text": "<span>?</span>"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Shown Name!"
+            },
+            {
+              "class": "x",
+              "hidden": true,
+              "text": "fixed"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "pause"
+          }
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  },
+  {
+    "initial": {
+      "alt": [],
+      "container_class": "widget-container",
+      "frame_class": "widget glazewm-binding-mode",
+      "layout_order": [
+        "primary"
+      ],
+      "primary": [
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "{binding_mode}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "binding_modes_to_cycle_through": [
+        "none",
+        "resize",
+        "pause"
+      ],
+      "callbacks": {
+        "on_left": "next_binding_mode",
+        "on_middle": "toggle_label",
+        "on_right": "disable_binding_mode"
+      },
+      "default_icon": "\uf071",
+      "glazewm_server_uri": "ws://localhost:6123",
+      "hide_if_no_active": false,
+      "icons": {
+        "none": "",
+        "pause": "\uf28c",
+        "resize": "\uf071"
+      },
+      "keybindings": [],
+      "label": "{binding_mode}",
+      "label_alt": "",
+      "label_if_no_active": "No binding mode active"
+    },
+    "options": {
+      "hide_if_no_active": false,
+      "label": "{binding_mode}",
+      "label_alt": ""
+    },
+    "scenario": "label_without_icon_or_placeholders",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary"
+          ],
+          "primary": [
+            {
+              "class": "label-offline",
+              "hidden": false,
+              "text": "No binding mode active"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": "Resize",
+            "name": "resize"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_label"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": "pause"
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "alt": [],
+          "container_class": "widget-container",
+          "frame_class": "widget glazewm-binding-mode",
+          "layout_order": [
+            "primary"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "Resize"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "mode": {
+            "display_name": null,
+            "name": null
+          }
+        }
+      }
+    ],
+    "widget": "glazewm_binding_mode"
+  }
+]
