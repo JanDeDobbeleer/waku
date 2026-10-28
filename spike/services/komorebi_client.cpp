@@ -4,7 +4,7 @@
 
 #include "widgets/komorebi/komorebi_state.h"
 
-namespace yasb::services {
+namespace barnacle::services {
 
 namespace kmb = widgets::komorebi;
 
@@ -87,4 +87,4 @@ void Komorebi::focusWorkspace(int monitorIndex, int workspaceIndex) {
                           QString::number(workspaceIndex)});
 }
 
-}  // namespace yasb::services
+}  // namespace barnacle::services

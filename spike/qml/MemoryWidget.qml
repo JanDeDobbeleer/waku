@@ -1,5 +1,5 @@
 import QtQuick
-import Yasb.Services
+import barnacle.services
 
 Rectangle {
     id: root

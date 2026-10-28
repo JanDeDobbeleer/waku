@@ -1,6 +1,6 @@
 // Output volume: wheel changes it, click toggles mute.
 import QtQuick
-import Yasb.Services
+import barnacle.services
 
 Rectangle {
     visible: AudioOutput.available

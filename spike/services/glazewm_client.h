@@ -9,7 +9,10 @@
 #include "core/widgets/event_bus.h"
 #include "widgets/glazewm/glazewm_service.h"
 
-namespace yasb::services {
+namespace barnacle::services {
+
+namespace platform = ::yasb::platform;
+namespace widgets = ::yasb::widgets;
 
 // GlazeWM as a QML singleton, shared by every widget. Wraps widgets::glazewm::GlazewmService
 // (the WebSocket client and its protocol) behind a private EventBus; the singleton subscribes to
@@ -65,4 +68,4 @@ class GlazeWM : public QObject {
   QString bindingMode_;
 };
 
-}  // namespace yasb::services
+}  // namespace barnacle::services

@@ -1,7 +1,7 @@
 // Now playing with the album art the player delivered. Click toggles play and pause. Hidden when
 // no media session exists.
 import QtQuick
-import Yasb.Services
+import barnacle.services
 
 Rectangle {
     visible: Media.available

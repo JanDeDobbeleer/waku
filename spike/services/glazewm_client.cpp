@@ -2,7 +2,7 @@
 
 #include <QDebug>
 
-namespace yasb::services {
+namespace barnacle::services {
 
 namespace gw = widgets::glazewm;
 
@@ -86,4 +86,4 @@ void GlazeWM::toggleTilingDirection() { gw::toggleTilingDirection(bus_); }
 void GlazeWM::enableBindingMode(const QString& name) { gw::enableBindingMode(bus_, name); }
 void GlazeWM::disableBindingMode(const QString& name) { gw::disableBindingMode(bus_, name); }
 
-}  // namespace yasb::services
+}  // namespace barnacle::services

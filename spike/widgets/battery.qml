@@ -1,6 +1,6 @@
 // Shows only when the machine has a battery.
 import QtQuick
-import Yasb.Services
+import barnacle.services
 
 Rectangle {
     visible: battery.available

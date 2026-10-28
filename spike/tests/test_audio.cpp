@@ -5,7 +5,7 @@
 
 #include "spike/services/audio_service.h"
 
-using namespace yasb::services;
+using namespace barnacle::services;
 namespace platform = yasb::platform;
 
 namespace {

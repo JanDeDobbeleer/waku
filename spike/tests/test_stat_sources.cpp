@@ -11,7 +11,7 @@
 
 #include "spike/services/system_stats.h"
 
-using namespace yasb::services;
+using namespace barnacle::services;
 namespace platform = yasb::platform;
 
 namespace {

@@ -7,7 +7,7 @@
 
 #include "spike/services/child_process.h"
 
-using namespace yasb::services;
+using namespace barnacle::services;
 
 namespace {
 

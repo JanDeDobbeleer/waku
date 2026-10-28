@@ -9,7 +9,9 @@
 
 #include "platform/media_session.h"
 
-namespace yasb::services {
+namespace barnacle::services {
+
+namespace platform = ::yasb::platform;
 
 // MIME type of encoded image bytes by their magic number; "application/octet-stream" when the
 // format is not recognised.
@@ -77,4 +79,4 @@ class Media : public QObject {
   QString thumbnailUrl_;
 };
 
-}  // namespace yasb::services
+}  // namespace barnacle::services

@@ -8,7 +8,9 @@
 #include "platform/system_stats.h"
 #include "spike/services/stat_source.h"
 
-namespace yasb::services {
+namespace barnacle::services {
+
+namespace platform = ::yasb::platform;
 
 class Memory : public StatSource {
   Q_OBJECT
@@ -90,4 +92,4 @@ class Battery : public StatSource {
   bool available_ = false;
 };
 
-}  // namespace yasb::services
+}  // namespace barnacle::services

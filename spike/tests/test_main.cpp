@@ -14,7 +14,7 @@ class QtEnvironment final : public testing::Environment {
 
  private:
   int argc_ = 1;
-  char name_[20] = "yasb_services_tests";
+  char name_[24] = "barnacle_services_tests";
   char* argv_[2] = {name_, nullptr};
   std::unique_ptr<QCoreApplication> app_;
 };

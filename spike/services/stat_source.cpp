@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace yasb::services {
+namespace barnacle::services {
 
 StatSource::StatSource(QObject* parent) : QObject(parent) {
   connect(&timer_, &QTimer::timeout, this, [this] { sample(); });
@@ -43,4 +43,4 @@ void StatSource::setReady() {
   emit readyChanged();
 }
 
-}  // namespace yasb::services
+}  // namespace barnacle::services

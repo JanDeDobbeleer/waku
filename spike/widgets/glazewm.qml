@@ -2,7 +2,7 @@
 // GlazeWM is not running.
 import QtQuick
 import QtQuick.Window
-import Yasb.Services
+import barnacle.services
 
 Row {
     id: root

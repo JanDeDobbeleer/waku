@@ -8,7 +8,10 @@
 #include "core/widgets/event_bus.h"
 #include "widgets/komorebi/komorebi_service.h"
 
-namespace yasb::services {
+namespace barnacle::services {
+
+namespace platform = ::yasb::platform;
+namespace widgets = ::yasb::widgets;
 
 // komorebi as a QML singleton, shared by every widget. Wraps widgets::komorebi::KomorebiService
 // (the named-pipe listener and `komorebic` commands) behind a private EventBus; the singleton
@@ -54,4 +57,4 @@ class Komorebi : public QObject {
   QVariantList monitors_;
 };
 
-}  // namespace yasb::services
+}  // namespace barnacle::services

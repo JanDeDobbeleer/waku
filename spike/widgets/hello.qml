@@ -1,6 +1,6 @@
 // A user widget: no C++, no registration. Edit and save; the bar reloads it.
 import QtQuick
-import Yasb.Services
+import barnacle.services
 
 Rectangle {
     implicitWidth: row.implicitWidth + 20

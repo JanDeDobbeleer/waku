@@ -1,7 +1,7 @@
 # Qt Quick bar: how layout and widget config are declared
 
 Status: proposal, for the `spike/qt-quick-bar` branch. Nothing here is implemented beyond the
-spike (`spike/`): a QML bar window, the `Yasb.Services` module and hot-reloaded user widgets.
+spike (`spike/`): a QML bar window, the `barnacle.services` module and hot-reloaded user widgets.
 
 ## Decision
 
@@ -23,7 +23,7 @@ generate QML later); a C++ builder API (no hot reload, no sharing).
 
 ## Files
 
-Config home (default `%USERPROFILE%\.config\yasb-native\`, overridable with `--config-home`):
+Config home (default `%USERPROFILE%\.config\barnacle\`, overridable with `--config-home`):
 
 ```
 bar.qml          entry point: declares the bars
@@ -35,14 +35,14 @@ widgets/         user widgets, one component per file
 
 `widgets/` is a normal QML directory import, so `Clock.qml` is usable as `Clock {}` after
 `import "widgets"`. There is no registry and no loader list: a widget exists because a file
-exists. Built-in widgets ship in the `Yasb.Widgets` module with the same shape, so a user widget
+exists. Built-in widgets ship in the `barnacle.widgets` module with the same shape, so a user widget
 can copy or wrap one.
 
 ## bar.qml
 
 ```qml
-import Yasb
-import Yasb.Widgets
+import barnacle
+import barnacle.widgets
 import "widgets"
 
 Config {
@@ -80,7 +80,7 @@ Config {
 
 A widget is any QML `Item` with an `implicitWidth` and `implicitHeight`. Conventions, not rules:
 
-- Take data from `Yasb.Services` (`Memory`, `Cpu`, `Battery`, `AudioOutput`, `Media`, `Komorebi`,
+- Take data from `barnacle.services` (`Memory`, `Cpu`, `Battery`, `AudioOutput`, `Media`, `Komorebi`,
   `GlazeWM`, `Process`). Polled sources are instantiated by the widget; shared event sources are
   singletons.
 - Expose options as `property` declarations with defaults. Document them in a comment at the top
@@ -114,14 +114,14 @@ explicit trust prompt per file; a QML sandbox is not practical.
 
 ## Versioning
 
-`import Yasb 1.0` and `import Yasb.Services 1.0` are the public API. Adding properties is
+`import barnacle 1.0` and `import barnacle.services 1.0` are the public API. Adding properties is
 compatible; removing or renaming one is a major bump with the old name kept for one release.
 
 ## Delivery order
 
-1. `Config`, `Bar`, `BarLayout` in a `Yasb` QML module; the host builds one window per screen from
+1. `Config`, `Bar`, `BarLayout` in a `barnacle` QML module; the host builds one window per screen from
    them; replace the spike's "load every file in `widgets/`" with the explicit layout. (Medium.)
-2. Built-in `Yasb.Widgets`: Clock, Cpu, Memory, Battery, Volume, Media, Workspaces (komorebi or
+2. Built-in `barnacle.widgets`: Clock, Cpu, Memory, Battery, Volume, Media, Workspaces (komorebi or
    GlazeWM, chosen by what is running). (Medium.)
 3. Transactional reload with the error pill, `--safe`, `yasbc reload`. (Small.)
 4. `Theme` singleton and `theme.qml`. (Small.)
@@ -131,9 +131,7 @@ compatible; removing or renaming one is a major bump with the old name kept for 
 ## Decisions taken
 
 - This is a new application with its own name; it is not a YASB fork and reads no YASB config.
-  The config home is `%USERPROFILE%\.config\<app>\` and the modules are `<App>` and
-  `<App>.Services`. `<app>` is a placeholder until the name is chosen (see
-  [Name](#name-open)); every path and import above changes with it.
+  The name is barnacle (see [Name](#name)), always written in lower case.
 - `Workspaces` is one shared model over komorebi and GlazeWM (below).
 - `Shell` is a small helper in the services module (below).
 
@@ -178,16 +176,14 @@ Shell.homeDir / Shell.configHome / Shell.env(name)
 that already exist (`launchHiddenShell`, `launchKomorebic`, `shell_open`). Notifications and power
 actions (lock, sleep) are not part of the first cut.
 
-## Name (open)
+## Name
 
-Candidates, checked only for collisions on GitHub (no trademark or domain search yet):
+barnacle. It clings to the edge of the screen. The official name is lower case, everywhere:
+the executable is `barnacle.exe`, the CLI is `barnacle reload`, the config home is
+`%USERPROFILE%\.config\barnacle\`, and the QML modules are `barnacle`, `barnacle.widgets` and
+`barnacle.services`.
 
-| Name | Meaning | GitHub collisions | Notes |
-|---|---|---|---|
-| Fascia | board along the top edge of a building; a shop's sign board | none relevant | recommended; pronounced "FAY-shuh", some will say "FASH-ee-uh" |
-| Transom | the beam across the top of a door or window | none relevant | clear to pronounce; a window-related meaning |
-| Soffit | underside of an eave | none relevant | less obviously a "bar" |
-| Lintel | beam over a door | a Windows "notch toolkit" (`lintel`, 14 stars) | too close to an existing Windows app |
-| Cornice, Gantry, Visor | | Pyramid library, many hardware repos, hypervisors | rejected |
-
-The name decides the executable, the CLI (`<app> reload`), the config home and the module names.
+It was checked only for collisions on GitHub (no software of that name among the top results; no
+trademark or domain search yet). fascia, transom, overbar and others were considered. The
+repository, the `yasb_*` targets and the `yasb::` C++ namespaces outside `spike/` still carry the
+old name; renaming them is a separate step.

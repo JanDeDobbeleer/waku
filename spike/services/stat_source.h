@@ -11,7 +11,7 @@
 #include <memory>
 #include <optional>
 
-namespace yasb::services {
+namespace barnacle::services {
 
 // Base of the polled data sources (Memory, Cpu, Battery). Once the QML component is complete it
 // samples every `interval` ms while `active`. The platform call runs on a QThreadPool thread, one
@@ -86,4 +86,4 @@ class StatSource : public QObject, public QQmlParserStatus {
   bool inFlight_ = false;
 };
 
-}  // namespace yasb::services
+}  // namespace barnacle::services

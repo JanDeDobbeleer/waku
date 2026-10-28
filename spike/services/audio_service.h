@@ -8,7 +8,9 @@
 
 #include "platform/audio.h"
 
-namespace yasb::services {
+namespace barnacle::services {
+
+namespace platform = ::yasb::platform;
 
 // Default audio endpoint of one direction as a QML singleton (AudioOutput, AudioInput). Created
 // by the engine on first use and shared by every widget. GUI thread only: platform::AudioEndpoints
@@ -67,4 +69,4 @@ class AudioInput : public AudioBase {
       : AudioBase(platform::createSystemAudio(platform::AudioFlow::Capture), parent) {}
 };
 
-}  // namespace yasb::services
+}  // namespace barnacle::services
