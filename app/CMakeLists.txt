@@ -26,5 +26,7 @@ target_link_libraries(yasb_app
 # stay on the executable.
 add_executable(yasb-native WIN32 main.cpp)
 target_link_libraries(yasb-native PRIVATE yasb_app yasb_options windowsapp runtimeobject)
+# The tray hook DLL ships next to the executable.
+add_dependencies(yasb-native YASBNativeTrayHook)
 # Keep build\<preset>\yasb-native.exe where docs and tools expect it.
 set_target_properties(yasb-native PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

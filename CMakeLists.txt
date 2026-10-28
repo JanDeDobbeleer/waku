@@ -52,6 +52,12 @@ target_link_options(yasb_options INTERFACE /GUARD:CF /DYNAMICBASE /NXCOMPAT)
 # Layered targets; each link line encodes one arrow (see docs/architecture.md):
 #   yasb-native -> yasb_app -> yasb_widgets -> yasb_ui -> {yasb_css, yasb_config}
 #                                           -> yasb_platform
+# Pipe and watchdog mutex names the host (platform/systray_hook) and the injected DLL (hook/)
+# must agree on; distinct from Python YASB's so both builds can coexist.
+set(YASB_TRAY_PIPE_NAME "yasb_native_systray_monitor")
+set(YASB_TRAY_MUTEX_NAME "YASBNativeTrayHookAlive")
+
+add_subdirectory(hook)
 add_subdirectory(platform)
 add_subdirectory(core)
 add_subdirectory(widgets)
@@ -72,6 +78,7 @@ set(_windeployqt_flags $<IF:$<CONFIG:Debug>,--debug,--release>
 add_custom_target(deploy
   COMMAND ${CMAKE_COMMAND} -E make_directory "${YASB_DIST_DIR}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:yasb-native> "${YASB_DIST_DIR}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:YASBNativeTrayHook> "${YASB_DIST_DIR}"
   COMMAND Qt6::windeployqt ${_windeployqt_flags} --dir "${YASB_DIST_DIR}"
           "${YASB_DIST_DIR}/$<TARGET_FILE_NAME:yasb-native>"
   DEPENDS yasb-native

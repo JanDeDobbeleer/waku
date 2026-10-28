@@ -72,6 +72,20 @@ Stat widget factories (CPU, memory, battery) are exposed through
 `yasb::widgets::registerStatWidgets()` in `widgets\stat_widgets.h`. `app\main.cpp` calls it once
 during startup, before `WidgetBuilder` constructs the configured widgets; repeated calls are no-ops.
 
+## Tray hook DLL
+
+`yasb-native.exe` ships `YASBNativeTrayHook.dll` (x64) or `YASBNativeTrayHook_arm64.dll` next to
+it; the systray widget injects it into Explorer to see tray icons. `hook/` builds it with a static
+CRT, and each preset builds the DLL for its own architecture, so an ARM64 host runs the ARM64
+preset's build. The DLL must match Explorer's architecture: an x64 build running under emulation
+on ARM64 cannot use it and falls back to the legacy tray window, as Python YASB does. The pipe and
+watchdog mutex names are set once in the root `CMakeLists.txt` (`YASB_TRAY_PIPE_NAME`,
+`YASB_TRAY_MUTEX_NAME`) and passed to both the DLL and `platform/`. The DLL detaches from Explorer
+by itself (up to 5 s) after the host exits, so wait for it to unload before starting another build
+that hooks the tray (the A/B harness does). Automated tests never inject it: they use a private
+pipe and fake injector, and the production systray widget creates no tray client on the
+`offscreen` platform.
+
 ## Checks
 
 `tools\check.ps1` is the definition of done: clang-format check, generated-file drift check,
