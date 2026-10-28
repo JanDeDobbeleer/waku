@@ -373,6 +373,6 @@ register(
     )
 )
 
-import vec_github  # noqa: E402,F401  (registers the github label exporter)
+import vec_komorebi  # noqa: E402,F401  (registers the komorebi exporters)
 
 __all__ = ["LABEL_EXPORTERS", "export_label_vectors"]

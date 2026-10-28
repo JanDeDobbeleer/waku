@@ -1,10 +1,14 @@
 #include "app/runtime.h"
 
+#include "widgets/komorebi/komorebi_widgets.h"
 #include "widgets/stat_widgets.h"
 
 namespace yasb::app {
 
-Runtime::Runtime() { widgets::registerStatWidgets(widgetRegistry_); }
+Runtime::Runtime() {
+  widgets::registerStatWidgets(widgetRegistry_);
+  widgets::registerKomorebiWidgets(widgetRegistry_);
+}
 
 Runtime::~Runtime() { stop(); }
 
@@ -21,6 +25,7 @@ void Runtime::stop() {
     appServices_.reset();
   }
   servicesStarted_ = false;
+  komorebiService_.stop();
   pollingWorkers_.stopAll();
 }
 

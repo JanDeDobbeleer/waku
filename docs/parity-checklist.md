@@ -17,8 +17,8 @@ Status values: `todo`, `in progress`, `done`. Dates are the sign-off date (YYYY-
 | clock (`yasb.clock.ClockWidget`) | todo | todo | todo | todo | Format and alt format; calendar popup; context menu; timezone cycling | U9 |
 | wifi (`yasb.wifi.WifiWidget`) | todo | todo | todo | todo | Icon by signal; VPN-aware icon; menu lists networks; connect to a second network | U10 |
 | bluetooth (`yasb.bluetooth.BluetoothWidget`) | todo | todo | todo | todo | Icon by state; menu lists devices; connect and disconnect; device icons | U10 |
-| komorebi_workspaces (`komorebi.workspaces.WorkspaceWidget`) | todo | todo | todo | todo | Workspace buttons and active state; click switches; app icons; follows whkd workspace changes | U11 |
-| komorebi_active_layout (`komorebi.active_layout.ActiveLayoutWidget`) | todo | todo | todo | todo | Layout icon and text; menu; changing layout with whkd | U11 |
+| komorebi_workspaces (`komorebi.workspaces.WorkspaceWidget`) | done 2026-10-28 | todo | todo | todo | Workspace buttons and active state (empty-label dots from CSS); click switches; scroll wraps; hides when komorebi is offline; follows whkd workspace changes; app icons are not ported (unused in the user config) | U11 |
+| komorebi_active_layout (`komorebi.active_layout.ActiveLayoutWidget`) | done 2026-10-28 | todo | todo | todo | Layout icon and text; left click next layout, right click previous, middle click toggles monocle; paused/floating/maximized/monocle icons; hides when komorebi is offline; layout menu (`toggle_layout_menu`); changing layout with whkd | U11 |
 | media (`yasb.media.MediaWidget`) | todo | todo | todo | todo | Title and artist; thumbnail; progress bar; play/pause/next/prev; menu (Spotify and a browser tab) | U12 |
 | control_center (`yasb.control_center.ControlCenterWidget`) | todo | todo | todo | todo | Every section (volume, brightness, media, toggles, power); screenshot action (interim until U19) | U13 |
 | notifications (`yasb.notifications.NotificationsWidget`) | todo | todo | todo | todo | Count and icon; toggle; clear; do-not-disturb state | U14 |

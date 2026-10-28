@@ -1,0 +1,2926 @@
+[
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget komorebi-active-layout",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "next_layout",
+        "on_middle": "toggle_monocle",
+        "on_right": "prev_layout"
+      },
+      "hide_if_offline": true,
+      "keybindings": [],
+      "label": "{icon}",
+      "layout_icons": {
+        "bsp": "[\\]",
+        "columns": "[||]",
+        "floating": "><>",
+        "grid": "[G]",
+        "horizontal_stack": "[H]=",
+        "maximized": "[X]",
+        "monocle": "[M]",
+        "paused": "[P]",
+        "right_main_vertical_stack": "=||",
+        "rows": "[==]",
+        "scrolling": "[SC]",
+        "tiling": "[T]",
+        "ultrawide_vertical_stack": "||=",
+        "vertical_stack": "[V]="
+      },
+      "layout_menu": {
+        "alignment": "left",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_layout_icons": true
+      },
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "options": {
+      "hide_if_offline": true,
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "scenario": "user_options_states_and_cycling",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[\\]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "connect": {
+            "float_override": false,
+            "is_paused": false,
+            "monitors": {
+              "elements": [
+                {
+                  "id": 65537,
+                  "name": "DISPLAY65537",
+                  "workspaces": {
+                    "elements": [
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "I",
+                        "tile": true
+                      },
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "II",
+                        "tile": true
+                      }
+                    ],
+                    "focused": 0
+                  }
+                }
+              ],
+              "focused": 0
+            }
+          }
+        }
+      },
+      {
+        "commands": [
+          [
+            "workspace-layout",
+            "0",
+            "0",
+            "right-main-vertical-stack"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[\\]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_layout"
+        }
+      },
+      {
+        "commands": [
+          [
+            "workspace-layout",
+            "0",
+            "0",
+            "ultrawide-vertical-stack"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[\\]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_layout"
+        }
+      },
+      {
+        "commands": [
+          [
+            "workspace-layout",
+            "0",
+            "0",
+            "right-main-vertical-stack"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[\\]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_layout"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[||]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "Columns"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[G]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "Grid"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[SC]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "Scrolling"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[V]="
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "VerticalStack"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[H]="
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "HorizontalStack"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "||="
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "UltrawideVerticalStack"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "=||"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "RightMainVerticalStack"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[==]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "Rows"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[==]"
+          },
+          "widget_hidden": true
+        },
+        "step": {
+          "disconnect": true
+        }
+      }
+    ],
+    "widget": "komorebi_active_layout"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget komorebi-active-layout",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "next_layout",
+        "on_middle": "toggle_monocle",
+        "on_right": "prev_layout"
+      },
+      "hide_if_offline": true,
+      "keybindings": [],
+      "label": "{icon}",
+      "layout_icons": {
+        "bsp": "[\\]",
+        "columns": "[||]",
+        "floating": "><>",
+        "grid": "[G]",
+        "horizontal_stack": "[H]=",
+        "maximized": "[X]",
+        "monocle": "[M]",
+        "paused": "[P]",
+        "right_main_vertical_stack": "=||",
+        "rows": "[==]",
+        "scrolling": "[SC]",
+        "tiling": "[T]",
+        "ultrawide_vertical_stack": "||=",
+        "vertical_stack": "[V]="
+      },
+      "layout_menu": {
+        "alignment": "left",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_layout_icons": true
+      },
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "options": {
+      "hide_if_offline": true,
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "scenario": "blocking_states_toggle_instead_of_cycling",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[\\]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "connect": {
+            "float_override": false,
+            "is_paused": false,
+            "monitors": {
+              "elements": [
+                {
+                  "id": 65537,
+                  "name": "DISPLAY65537",
+                  "workspaces": {
+                    "elements": [
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "I",
+                        "tile": true
+                      },
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "II",
+                        "tile": true
+                      }
+                    ],
+                    "focused": 0
+                  }
+                }
+              ],
+              "focused": 0
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[P]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "TogglePause"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": true,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [
+          [
+            "focus-monitor-at-cursor"
+          ],
+          [
+            "toggle-pause"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[P]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_layout"
+        }
+      },
+      {
+        "commands": [
+          [
+            "focus-monitor-at-cursor"
+          ],
+          [
+            "toggle-pause"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[P]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_layout"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "><>"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ToggleTiling"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": false
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [
+          [
+            "focus-monitor-at-cursor"
+          ],
+          [
+            "toggle-tiling"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "><>"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_layout"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[X]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ToggleMaximize"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": {
+                            "class": "App",
+                            "exe": "app.exe",
+                            "hwnd": 901,
+                            "title": ""
+                          },
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [
+          [
+            "focus-monitor-at-cursor"
+          ],
+          [
+            "toggle-maximize"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[X]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_layout"
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[M]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ToggleMonocle"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": {
+                            "id": "c900",
+                            "windows": {
+                              "elements": [
+                                {
+                                  "class": "App",
+                                  "exe": "app.exe",
+                                  "hwnd": 900,
+                                  "title": ""
+                                }
+                              ],
+                              "focused": 0
+                            }
+                          },
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [
+          [
+            "focus-monitor-at-cursor"
+          ],
+          [
+            "toggle-monocle"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[M]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_layout"
+        }
+      },
+      {
+        "commands": [
+          [
+            "focus-monitor-at-cursor"
+          ],
+          [
+            "toggle-monocle"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[M]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_monocle"
+        }
+      }
+    ],
+    "widget": "komorebi_active_layout"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget komorebi-active-layout",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "next_layout",
+        "on_middle": "toggle_monocle",
+        "on_right": "prev_layout"
+      },
+      "hide_if_offline": true,
+      "keybindings": [],
+      "label": "{icon}",
+      "layout_icons": {
+        "bsp": "[\\]",
+        "columns": "[||]",
+        "floating": "><>",
+        "grid": "[G]",
+        "horizontal_stack": "[H]=",
+        "maximized": "[X]",
+        "monocle": "[M]",
+        "paused": "[P]",
+        "right_main_vertical_stack": "=||",
+        "rows": "[==]",
+        "scrolling": "[SC]",
+        "tiling": "[T]",
+        "ultrawide_vertical_stack": "||=",
+        "vertical_stack": "[V]="
+      },
+      "layout_menu": {
+        "alignment": "left",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_layout_icons": true
+      },
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "options": {
+      "hide_if_offline": true,
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "scenario": "connect_aligns_cycling_list",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[V]="
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "connect": {
+            "float_override": false,
+            "is_paused": false,
+            "monitors": {
+              "elements": [
+                {
+                  "id": 65537,
+                  "name": "DISPLAY65537",
+                  "workspaces": {
+                    "elements": [
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "VerticalStack"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "I",
+                        "tile": true
+                      },
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "II",
+                        "tile": true
+                      }
+                    ],
+                    "focused": 0
+                  }
+                }
+              ],
+              "focused": 0
+            }
+          }
+        }
+      },
+      {
+        "commands": [
+          [
+            "workspace-layout",
+            "0",
+            "0",
+            "scrolling"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[V]="
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_layout"
+        }
+      },
+      {
+        "commands": [
+          [
+            "workspace-layout",
+            "0",
+            "0",
+            "bsp"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[V]="
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "first_layout"
+        }
+      },
+      {
+        "commands": [
+          [
+            "workspace-layout",
+            "0",
+            "0",
+            "columns"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[V]="
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "prev_layout"
+        }
+      }
+    ],
+    "widget": "komorebi_active_layout"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget komorebi-active-layout",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "next_layout",
+        "on_middle": "toggle_monocle",
+        "on_right": "prev_layout"
+      },
+      "hide_if_offline": true,
+      "keybindings": [],
+      "label": "{icon} {layout_name}",
+      "layout_icons": {
+        "bsp": "[\\]",
+        "columns": "[||]",
+        "floating": "><>",
+        "grid": "[G]",
+        "horizontal_stack": "[H]=",
+        "maximized": "[X]",
+        "monocle": "[M]",
+        "paused": "[P]",
+        "right_main_vertical_stack": "=||",
+        "rows": "[==]",
+        "scrolling": "[SC]",
+        "tiling": "[T]",
+        "ultrawide_vertical_stack": "||=",
+        "vertical_stack": "[V]="
+      },
+      "layout_menu": {
+        "alignment": "left",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_layout_icons": true
+      },
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "options": {
+      "hide_if_offline": true,
+      "label": "{icon} {layout_name}",
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "scenario": "label_template_and_flips",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[\\] BSP"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "connect": {
+            "float_override": false,
+            "is_paused": false,
+            "monitors": {
+              "elements": [
+                {
+                  "id": 65537,
+                  "name": "DISPLAY65537",
+                  "workspaces": {
+                    "elements": [
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "I",
+                        "tile": true
+                      },
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "II",
+                        "tile": true
+                      }
+                    ],
+                    "focused": 0
+                  }
+                }
+              ],
+              "focused": 0
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[P] Paused"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "TogglePause"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": true,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "><> Floating"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ToggleTiling"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": false
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[||] Columns"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "Columns"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [
+          [
+            "flip-layout",
+            "horizontal"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[||] Columns"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "flip_layout"
+        }
+      },
+      {
+        "commands": [
+          [
+            "flip-layout",
+            "vertical"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[||] Columns"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "flip_layout_vertical"
+        }
+      },
+      {
+        "commands": [
+          [
+            "flip-layout",
+            "horizontal-and-vertical"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[||] Columns"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "flip_layout_horizontal_and_vertical"
+        }
+      },
+      {
+        "commands": [
+          [
+            "focus-monitor-at-cursor"
+          ],
+          [
+            "toggle-float"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[||] Columns"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_float"
+        }
+      },
+      {
+        "commands": [
+          [
+            "focus-monitor-at-cursor"
+          ],
+          [
+            "toggle-pause"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[||] Columns"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "toggle_pause"
+        }
+      }
+    ],
+    "widget": "komorebi_active_layout"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget komorebi-active-layout",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "next_layout",
+        "on_middle": "toggle_monocle",
+        "on_right": "prev_layout"
+      },
+      "hide_if_offline": true,
+      "keybindings": [],
+      "label": "{icon}",
+      "layout_icons": {
+        "bsp": "[\\]",
+        "columns": "[||]",
+        "floating": "><>",
+        "grid": "[G]",
+        "horizontal_stack": "[H]=",
+        "maximized": "[X]",
+        "monocle": "[M]",
+        "paused": "[P]",
+        "right_main_vertical_stack": "=||",
+        "rows": "[==]",
+        "scrolling": "[SC]",
+        "tiling": "[T]",
+        "ultrawide_vertical_stack": "||=",
+        "vertical_stack": "[V]="
+      },
+      "layout_menu": {
+        "alignment": "left",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_layout_icons": true
+      },
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "options": {
+      "hide_if_offline": true,
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "scenario": "custom_layout_keeps_label",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[\\]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "connect": {
+            "float_override": false,
+            "is_paused": false,
+            "monitors": {
+              "elements": [
+                {
+                  "id": 65537,
+                  "name": "DISPLAY65537",
+                  "workspaces": {
+                    "elements": [
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "I",
+                        "tile": true
+                      },
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "II",
+                        "tile": true
+                      }
+                    ],
+                    "focused": 0
+                  }
+                }
+              ],
+              "focused": 0
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[\\]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Custom": []
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[||]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "update": {
+            "event": {
+              "content": null,
+              "type": "ChangeLayout"
+            },
+            "state": {
+              "float_override": false,
+              "is_paused": false,
+              "monitors": {
+                "elements": [
+                  {
+                    "id": 65537,
+                    "name": "DISPLAY65537",
+                    "workspaces": {
+                      "elements": [
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "Columns"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "I",
+                          "tile": true
+                        },
+                        {
+                          "containers": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "floating_windows": {
+                            "elements": [],
+                            "focused": 0
+                          },
+                          "layer": "Tiling",
+                          "layout": {
+                            "Default": "BSP"
+                          },
+                          "maximized_window": null,
+                          "monocle_container": null,
+                          "name": "II",
+                          "tile": true
+                        }
+                      ],
+                      "focused": 0
+                    }
+                  }
+                ],
+                "focused": 0
+              }
+            }
+          }
+        }
+      }
+    ],
+    "widget": "komorebi_active_layout"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget komorebi-active-layout",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "next_layout",
+        "on_middle": "toggle_monocle",
+        "on_right": "prev_layout"
+      },
+      "hide_if_offline": false,
+      "keybindings": [],
+      "label": "{icon}",
+      "layout_icons": {
+        "bsp": "[\\]",
+        "columns": "[||]",
+        "floating": "><>",
+        "grid": "[G]",
+        "horizontal_stack": "[H]=",
+        "maximized": "[X]",
+        "monocle": "[M]",
+        "paused": "[P]",
+        "right_main_vertical_stack": "=||",
+        "rows": "[==]",
+        "scrolling": "[SC]",
+        "tiling": "[T]",
+        "ultrawide_vertical_stack": "||=",
+        "vertical_stack": "[V]="
+      },
+      "layout_menu": {
+        "alignment": "left",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_layout_icons": true
+      },
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "options": {
+      "hide_if_offline": false,
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "scenario": "shown_after_disconnect_when_not_hiding",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "disconnect": true
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[\\]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "connect": {
+            "float_override": false,
+            "is_paused": false,
+            "monitors": {
+              "elements": [
+                {
+                  "id": 65537,
+                  "name": "DISPLAY65537",
+                  "workspaces": {
+                    "elements": [
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "I",
+                        "tile": true
+                      },
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "II",
+                        "tile": true
+                      }
+                    ],
+                    "focused": 0
+                  }
+                }
+              ],
+              "focused": 0
+            }
+          }
+        }
+      },
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[\\]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "disconnect": true
+        }
+      }
+    ],
+    "widget": "komorebi_active_layout"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget komorebi-active-layout",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "next_layout",
+        "on_middle": "toggle_monocle",
+        "on_right": "prev_layout"
+      },
+      "hide_if_offline": true,
+      "keybindings": [],
+      "label": "{icon}",
+      "layout_icons": {
+        "bsp": "[\\]",
+        "columns": "[||]",
+        "floating": "><>",
+        "grid": "[G]",
+        "horizontal_stack": "[H]=",
+        "maximized": "[X]",
+        "monocle": "[M]",
+        "paused": "[P]",
+        "right_main_vertical_stack": "=||",
+        "rows": "[==]",
+        "scrolling": "[SC]",
+        "tiling": "[T]",
+        "ultrawide_vertical_stack": "||=",
+        "vertical_stack": "[V]="
+      },
+      "layout_menu": {
+        "alignment": "left",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_layout_icons": true
+      },
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "options": {
+      "hide_if_offline": true,
+      "layouts": [
+        "bsp",
+        "columns",
+        "rows",
+        "grid",
+        "scrolling",
+        "vertical_stack",
+        "horizontal_stack",
+        "ultrawide_vertical_stack",
+        "right_main_vertical_stack"
+      ]
+    },
+    "scenario": "other_monitor_ignored",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "connect": {
+            "is_paused": false,
+            "monitors": {
+              "elements": [
+                {
+                  "id": 65539,
+                  "name": "DISPLAY65539",
+                  "workspaces": {
+                    "elements": [
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "A",
+                        "tile": true
+                      }
+                    ],
+                    "focused": 0
+                  }
+                }
+              ],
+              "focused": 0
+            }
+          }
+        }
+      }
+    ],
+    "widget": "komorebi_active_layout"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget komorebi-active-layout",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "next_layout",
+        "on_middle": "toggle_monocle",
+        "on_right": "prev_layout"
+      },
+      "hide_if_offline": true,
+      "keybindings": [],
+      "label": "{icon}",
+      "layout_icons": {
+        "bsp": "[\\]",
+        "columns": "[||]",
+        "floating": "><>",
+        "grid": "[G]",
+        "horizontal_stack": "[H]=",
+        "maximized": "[X]",
+        "monocle": "[M]",
+        "paused": "[P]",
+        "right_main_vertical_stack": "=||",
+        "rows": "[==]",
+        "scrolling": "[SC]",
+        "tiling": "[T]",
+        "ultrawide_vertical_stack": "||=",
+        "vertical_stack": "[V]="
+      },
+      "layout_menu": {
+        "alignment": "left",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_layout_icons": true
+      },
+      "layouts": [
+        "columns",
+        "rows"
+      ]
+    },
+    "options": {
+      "hide_if_offline": true,
+      "layouts": [
+        "columns",
+        "rows"
+      ]
+    },
+    "scenario": "layout_list_without_bsp",
+    "steps": [
+      {
+        "commands": [],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[==]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "connect": {
+            "float_override": false,
+            "is_paused": false,
+            "monitors": {
+              "elements": [
+                {
+                  "id": 65537,
+                  "name": "DISPLAY65537",
+                  "workspaces": {
+                    "elements": [
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "Rows"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "I",
+                        "tile": true
+                      },
+                      {
+                        "containers": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "floating_windows": {
+                          "elements": [],
+                          "focused": 0
+                        },
+                        "layer": "Tiling",
+                        "layout": {
+                          "Default": "BSP"
+                        },
+                        "maximized_window": null,
+                        "monocle_container": null,
+                        "name": "II",
+                        "tile": true
+                      }
+                    ],
+                    "focused": 0
+                  }
+                }
+              ],
+              "focused": 0
+            }
+          }
+        }
+      },
+      {
+        "commands": [
+          [
+            "workspace-layout",
+            "0",
+            "0",
+            "columns"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[==]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_layout"
+        }
+      },
+      {
+        "commands": [
+          [
+            "workspace-layout",
+            "0",
+            "0",
+            "rows"
+          ]
+        ],
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget komorebi-active-layout",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "[==]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "callback": "next_layout"
+        }
+      }
+    ],
+    "widget": "komorebi_active_layout"
+  }
+]

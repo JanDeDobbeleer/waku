@@ -53,7 +53,7 @@ services and the mutable UI services they share. Its local lifetime ends before 
 3. `--config-home` sets `YASB_CONFIG_HOME`; `runBar` loads and validates `config.yaml`, then uses
    the runtime-owned `TransitionEngine` to preprocess `styles.css` and install the event filter.
 4. `Runtime` owns `AppServices`, `WidgetRegistry`, `EventBus`, `GlobalState`, and the polling-worker
-   registry. It populates its registry with `registerStatWidgets(registry)`.
+   registry. It populates its registry with `registerStatWidgets(registry)` and `registerKomorebiWidgets(registry)`.
 5. `WidgetBuilder` passes references to the event bus, global UI state and polling-worker registry
    in each `WidgetContext`; `BarDeps` receives the same `GlobalState`. `BarWindow` owns its widgets
    through Qt parenting.
@@ -74,6 +74,7 @@ hand results back with queued signals or `QMetaObject::invokeMethod` on `qApp`.
 | hotkey thread (`std::thread`) | `HotkeyService` | `RegisterHotKey` message loop; dispatches to the GUI thread | `stop()`: `PostThreadMessageW(WM_QUIT)` then `join` |
 | CLI command threads (`std::thread`) | `CliServer` | `\\.\pipe\yasb_pipe_cli` accept/read/reply | `stop()`: sets `stopping_`, unblocks, `join` |
 | CLI log thread (`std::thread`) | `CliServer` | `\\.\pipe\yasb_pipe_log` frames | `stop()`: `CancelSynchronousIo`, `join` |
+| komorebi pipe thread (`std::thread`) | `KomorebiService` (member of `Runtime`) via `platform::KomorebiPipeListener` | owns the `\\.\pipe\yasb-native-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls | `stop()`: sets the stop event (cancels waits and overlapped I/O), `join`, then `komorebic unsubscribe-pipe`; started lazily by the first widget subscription; `Runtime::stop()` calls it |
 
 Platform data sources (`platform/`) are called from `PollingWorker` threads; anything they cache
 globally must be locked.
@@ -84,7 +85,7 @@ No new singleton without a row here and a reason.
 
 | What | Where | Notes |
 |---|---|---|
-| `Runtime` services | `app/runtime.h` | one app-owned instance each of the transition engine, widget registry, event bus, global UI state, polling-worker registry and app services |
+| `Runtime` services | `app/runtime.h` | one app-owned instance each of the transition engine, widget registry, event bus, global UI state, polling-worker registry, app services and komorebi service (the single komorebi client; widgets reach it only through the `komorebi_subscribe`, `komorebi` and `komorebi_command` `EventBus` events) |
 | `SchemaValidator::embedded()` | `core/config/schema_validator.cpp` | immutable after construction; fine |
 | log file, observer, debug flag | `app/log.cpp` | process-global by nature; guarded by a `QMutex` |
 | `tooltipOptions()`, `CustomToolTip::active_` | `core/widgets/tooltip.{cpp,h}` | legacy process-wide tooltip settings and active-tooltip guard |

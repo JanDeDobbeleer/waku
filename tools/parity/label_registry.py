@@ -32,6 +32,12 @@ class LabelExporter:
     setup: Callable[[], Callable[[], None]] | None = None
     teardown_widget: Callable[[Any], None] | None = None
     after_show: Callable[[Any], None] | None = None
+    # Widgets whose structure is not the standard label list supply their own snapshot and ask for
+    # the pydantic-normalized options (the C++ typed options need every default spelled out).
+    snapshot: Callable[[Any], dict[str, Any]] | None = None
+    include_normalized: bool = False
+    # Called after each step; its return value is stored as the step's "commands".
+    step_commands: Callable[[], list[Any]] | None = None
 
 
 def register(exporter: LabelExporter) -> None:
@@ -80,6 +86,9 @@ def _run(exporter: LabelExporter, scenario: Scenario, base_options: dict[str, An
         "steps": [],
     }
     config = widget_cls.validation_schema.model_validate(copy.deepcopy(options))
+    if exporter.include_normalized:
+        entry["normalized_options"] = config.model_dump()
+    take = exporter.snapshot or snapshot
     try:
         widget = exporter.build(config, scenario)
     except Exception as error:
@@ -89,14 +98,16 @@ def _run(exporter: LabelExporter, scenario: Scenario, base_options: dict[str, An
         widget.show()
         if exporter.after_show:
             exporter.after_show(widget)
-        entry["initial"] = snapshot(widget)
+        entry["initial"] = take(widget)
         for step in scenario.steps:
             record: dict[str, Any] = {"step": step}
             try:
                 exporter.apply_step(widget, step)
             except Exception as error:
                 record["error"] = type(error).__name__
-            record["snapshot"] = snapshot(widget)
+            record["snapshot"] = take(widget)
+            if exporter.step_commands:
+                record["commands"] = exporter.step_commands()
             entry["steps"].append(record)
     finally:
         if exporter.teardown_widget:
