@@ -18,6 +18,7 @@
 #include "widgets/clock/clock_state.h"
 #include "widgets/clock/clock_widget.h"
 #include "widgets/clock/py_strftime.h"
+#include "widgets/clock/tz_abbreviation.h"
 
 using nlohmann::json;
 using namespace yasb::widgets;
@@ -124,6 +125,13 @@ json dumpLabels(const std::vector<QLabel*>& labels) {
   return arr;
 }
 
+bool inSet(ClockWidget& w, QLabel* label) {
+  const auto in = [&](const std::vector<QLabel*>& set) {
+    return std::find(set.begin(), set.end(), label) != set.end();
+  };
+  return in(w.labels()) || in(w.labelsAlt());
+}
+
 json snapshot(ClockWidget& w) {
   json order = json::array();
   QLayout* layout = w.labelContainer()->layout();
@@ -134,7 +142,17 @@ json snapshot(ClockWidget& w) {
     };
     order.push_back(in(w.labels()) ? "primary" : in(w.labelsAlt()) ? "alt" : "other");
   }
+  json timer;
+  for (QLabel* label :
+       w.labelContainer()->findChildren<QLabel*>(QString(), Qt::FindDirectChildrenOnly)) {
+    if (!inSet(w, label)) {
+      timer = {{"class", label->property("class").toString().toStdString()},
+               {"hidden", label->isHidden()},
+               {"text", label->text().toStdString()}};
+    }
+  }
   return {{"alt", dumpLabels(w.labelsAlt())},
+          {"timer", timer},
           {"container_class", w.labelContainer()->property("class").toString().toStdString()},
           {"frame_class", w.widgetFrame()->property("class").toString().toStdString()},
           {"layout_order", order},
@@ -222,6 +240,23 @@ TEST(ClockStrftime, UtcOffsetFormatsSecondsAndMicroseconds) {
 }
 
 // ---- alarms.json ----------------------------------------------------------------------------
+
+TEST(ClockZoneAbbreviation, MatchesTzdataNames) {
+  const QDateTime winter = utcAt(2026, 1, 15, 12, 0, 0);
+  const QDateTime summer = utcAt(2026, 7, 15, 12, 0, 0);
+  EXPECT_EQ(pythonZoneAbbreviation("Asia/Kolkata", summer), "IST");
+  EXPECT_EQ(pythonZoneAbbreviation("America/New_York", winter), "EST");
+  EXPECT_EQ(pythonZoneAbbreviation("America/New_York", summer), "EDT");
+  EXPECT_EQ(pythonZoneAbbreviation("Europe/London", winter), "GMT");
+  EXPECT_EQ(pythonZoneAbbreviation("Europe/London", summer), "BST");
+  EXPECT_EQ(pythonZoneAbbreviation("Europe/Paris", summer), "CEST");
+  EXPECT_EQ(pythonZoneAbbreviation("Australia/Sydney", winter), "AEDT");
+  EXPECT_EQ(pythonZoneAbbreviation("Asia/Tokyo", winter), "JST");
+  EXPECT_EQ(pythonZoneAbbreviation("UTC", winter), "UTC");
+  EXPECT_EQ(pythonZoneAbbreviation("Asia/Dubai", winter), "+04");
+  EXPECT_EQ(pythonZoneAbbreviation("Asia/Kathmandu", winter), "+0545");
+  EXPECT_TRUE(pythonZoneAbbreviation("Not/AZone", winter).isEmpty());
+}
 
 TEST_F(ClockTest, AlarmsFileWrittenByPythonRoundTripsByteForByte) {
   // json.dumps(indent=2, ensure_ascii=False) + int-list collapsing, CRLF from a text-mode write.

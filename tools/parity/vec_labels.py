@@ -454,6 +454,18 @@ def _clock_step(widget: Any, step: dict[str, Any]) -> None:
     widget.update_label()
 
 
+def _clock_snapshot(widget: Any) -> dict[str, Any]:
+    from label_registry import snapshot as base_snapshot
+
+    snap = base_snapshot(widget)
+    snap["timer"] = _label_state_of(widget._timer_label)
+    return snap
+
+
+def _label_state_of(label: Any) -> dict[str, Any]:
+    return {"text": label.text(), "class": label.property("class"), "hidden": label.isHidden()}
+
+
 def _clock_teardown(widget: Any) -> None:
     widget.timer.stop()
 
@@ -497,6 +509,7 @@ register(
         apply_step=_clock_step,
         setup=_clock_setup,
         teardown_widget=_clock_teardown,
+        snapshot=_clock_snapshot,
         scenarios=[
             Scenario(
                 "user_options",
@@ -507,6 +520,39 @@ register(
                     {"time": "2026-10-29T00:01:00.500000"},
                     {"toggle": True},
                 ],
+            ),
+            Scenario(
+                "timer_label",
+                steps=[
+                    {"timer": 65},
+                    {"timer": 3725},
+                    {"toggle": True},
+                    {"timer": 59},
+                    {"timer": 0},
+                    {"timer": None},
+                    {"toggle": True},
+                    {"timer": 36000},
+                ],
+            ),
+            Scenario(
+                "timezone_abbreviations",
+                {
+                    "label": "{%H:%M %Z}",
+                    "label_alt": "{%Z %z}",
+                    "timezones": [
+                        "Asia/Kolkata",
+                        "America/New_York",
+                        "Europe/London",
+                        "Europe/Paris",
+                        "Australia/Sydney",
+                        "Asia/Tokyo",
+                        "Asia/Dubai",
+                        "UTC",
+                    ],
+                },
+                steps=[{"next_timezone": True}] * 8
+                + [{"time": "2026-01-15T12:00:00"}]
+                + [{"next_timezone": True}] * 8,
             ),
             Scenario(
                 "alarm_states",

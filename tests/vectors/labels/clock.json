@@ -28,6 +28,11 @@
           "text": ""
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -82,6 +87,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -117,6 +127,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -152,6 +167,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -187,6 +207,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -222,6 +247,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -260,6 +290,1036 @@
           "text": ""
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%a, %d %b %H:%M}<span>{alarm}</span>",
+      "label_alt": "{%H:%M}",
+      "timezones": []
+    },
+    "scenario": "timer_label",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": false,
+            "text": "[01:05]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "timer": 65
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": false,
+            "text": "[01:02:05]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "timer": 3725
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "23:59"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "timer": {
+            "class": "label alt timer",
+            "hidden": false,
+            "text": "[01:02:05]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "23:59"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "timer": {
+            "class": "label alt timer",
+            "hidden": false,
+            "text": "[00:59]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "timer": 59
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "23:59"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "timer": {
+            "class": "label alt timer",
+            "hidden": false,
+            "text": "[00:00]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "timer": 0
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "23:59"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "timer": {
+            "class": "label alt timer",
+            "hidden": true,
+            "text": "[00:00]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "timer": null
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": true,
+              "text": "23:59"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "timer": {
+            "class": "label alt timer",
+            "hidden": true,
+            "text": "[00:00]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": true,
+              "text": "23:59"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": false,
+            "text": "[10:00:00]"
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "timer": 36000
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%Z %z}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_05",
+          "hidden": false,
+          "text": "05:29 IST"
+        }
+      ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%H:%M %Z}",
+      "label_alt": "{%Z %z}",
+      "timezones": [
+        "Asia/Kolkata",
+        "America/New_York",
+        "Europe/London",
+        "Europe/Paris",
+        "Australia/Sydney",
+        "Asia/Tokyo",
+        "Asia/Dubai",
+        "UTC"
+      ]
+    },
+    "scenario": "timezone_abbreviations",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_19",
+              "hidden": false,
+              "text": "19:59 EDT"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "23:59 GMT"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_00",
+              "hidden": false,
+              "text": "00:59 CET"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_10",
+              "hidden": false,
+              "text": "10:59 AEDT"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_08",
+              "hidden": false,
+              "text": "08:59 JST"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "03:59 +04"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "23:59 UTC"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_05",
+              "hidden": false,
+              "text": "05:29 IST"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_17",
+              "hidden": false,
+              "text": "17:30 IST"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-15T12:00:00"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_07",
+              "hidden": false,
+              "text": "07:00 EST"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_12",
+              "hidden": false,
+              "text": "12:00 GMT"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_13",
+              "hidden": false,
+              "text": "13:00 CET"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "23:00 AEDT"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_21",
+              "hidden": false,
+              "text": "21:00 JST"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_16",
+              "hidden": false,
+              "text": "16:00 +04"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_12",
+              "hidden": false,
+              "text": "12:00 UTC"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%Z %z}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_17",
+              "hidden": false,
+              "text": "17:30 IST"
+            }
+          ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%H:%M}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "Wed, 28 Oct 23:59"
+        },
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": ""
+        }
+      ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -314,6 +1374,11 @@
               "text": "\uf0f3"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -359,6 +1424,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -404,6 +1474,11 @@
               "text": "\uf0f3"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -443,6 +1518,11 @@
               "text": "\uf1f6"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -499,6 +1579,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -535,6 +1620,11 @@
               "text": "\uf0f3"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -580,6 +1670,11 @@
               "text": "\uf0f3"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -615,6 +1710,11 @@
               "text": "\uf0f3"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -653,6 +1753,11 @@
           "text": " 23:59"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -707,6 +1812,11 @@
               "text": "\uf0f3 23:59"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -752,6 +1862,11 @@
               "text": "\uf1f6 23:59"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -797,6 +1912,11 @@
               "text": " 23:59"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -833,6 +1953,11 @@
               "text": " 23:59"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -868,6 +1993,11 @@
               "text": " 23:59"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -916,6 +2046,11 @@
           "text": "23"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -975,6 +2110,11 @@
               "text": "23"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1020,6 +2160,11 @@
               "text": "23"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1068,6 +2213,11 @@
           "text": "23:59"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -1128,6 +2278,11 @@
               "text": "00:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1163,6 +2318,11 @@
               "text": "01:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1198,6 +2358,11 @@
               "text": "02:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1233,6 +2398,11 @@
               "text": "11:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1268,6 +2438,11 @@
               "text": "12:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1303,6 +2478,11 @@
               "text": "13:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1338,6 +2518,11 @@
               "text": "14:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1373,6 +2558,11 @@
               "text": "23:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1408,6 +2598,11 @@
               "text": "23:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1443,6 +2638,11 @@
               "text": "23:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1475,6 +2675,11 @@
           "text": "23:59 +0000 +00:00"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -1527,6 +2732,11 @@
               "text": "05:29 +0530 +05:30"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1556,6 +2766,11 @@
               "text": "19:59 -0400 -04:00"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1585,6 +2800,11 @@
               "text": "23:59 +0000 +00:00"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1614,6 +2834,11 @@
               "text": "23:59 +0000 +00:00"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1643,6 +2868,11 @@
               "text": "23:59 +0000 +00:00"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1675,6 +2905,11 @@
           "text": "23:59 +0000"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -1726,6 +2961,11 @@
               "text": "23:59 +0000"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1758,6 +2998,11 @@
           "text": "23:59"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -1808,6 +3053,11 @@
               "text": "23:59"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1840,6 +3090,11 @@
           "text": "woensdag 28 oktober wo okt "
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -1889,6 +3144,11 @@
               "text": "woensdag 28 oktober wo okt "
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1918,6 +3178,11 @@
               "text": "woensdag 28 oktober wo okt "
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1947,6 +3212,11 @@
               "text": "donderdag 05 maart do mrt "
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -1979,6 +3249,11 @@
           "text": "Wednesday October 10/28/2026 23:59:05"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -2028,6 +3303,11 @@
               "text": "Thursday March 03/05/2026 03:09:05"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2060,6 +3340,11 @@
           "text": "Wednesday Wed October Oct 28 28 23 11 59 05 PM 301 26 2026 10"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -2110,6 +3395,11 @@
               "text": "Wednesday Wed October Oct 28 28 23 11 59 05 PM 301 26 2026 10"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2139,6 +3429,11 @@
               "text": "Wednesday Wed October Oct 28 28 23 11 59 05 PM 301 26 2026 10"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2168,6 +3463,11 @@
               "text": "Friday Fri January Jan 02  2 03 03 04 05 AM 002 26 2026 01"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2200,6 +3500,11 @@
           "text": "43 43 3 3 44 2026 26 20"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -2250,6 +3555,11 @@
               "text": "43 43 3 3 44 2026 26 20"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2279,6 +3589,11 @@
               "text": "43 43 3 3 44 2026 26 20"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2308,6 +3623,11 @@
               "text": "00 00 5 5 01 2026 26 20"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2340,6 +3660,11 @@
           "text": "10/28/26|2026-10-28|23:59:05|23:59|11:59:05 PM|Wed Oct 28 23:59:05 2026|10/28/26|23:59:05|%|Oct|\n|\t"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -2390,6 +3715,11 @@
               "text": "10/28/26|2026-10-28|23:59:05|23:59|11:59:05 PM|Wed Oct 28 23:59:05 2026|10/28/26|23:59:05|%|Oct|\n|\t"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2419,6 +3749,11 @@
               "text": "10/28/26|2026-10-28|23:59:05|23:59|11:59:05 PM|Wed Oct 28 23:59:05 2026|10/28/26|23:59:05|%|Oct|\n|\t"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2448,6 +3783,11 @@
               "text": "01/02/26|2026-01-02|03:04:05|03:04|03:04:05 AM|Fri Jan  2 03:04:05 2026|01/02/26|03:04:05|%|Jan|\n|\t"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2480,6 +3820,11 @@
           "text": "28 23 11 301 10 59 5 26 PM"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -2530,6 +3875,11 @@
               "text": "28 23 11 301 10 59 5 26 PM"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2559,6 +3909,11 @@
               "text": "28 23 11 301 10 59 5 26 PM"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2588,6 +3943,11 @@
               "text": "2 3 3 2 1 4 5 26 AM"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2620,6 +3980,11 @@
           "text": "26 28 2026 Wed Oct 28 23:59:05 2026 10/28/26 23:59:05 23 28"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -2670,6 +4035,11 @@
               "text": "26 28 2026 Wed Oct 28 23:59:05 2026 10/28/26 23:59:05 23 28"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2699,6 +4069,11 @@
               "text": "26 28 2026 Wed Oct 28 23:59:05 2026 10/28/26 23:59:05 23 28"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2728,6 +4103,11 @@
               "text": "26 02 2026 Fri Jan  2 03:04:05 2026 01/02/26 03:04:05 03  2"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2760,6 +4140,11 @@
           "text": "123456"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -2810,6 +4195,11 @@
               "text": "123456"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2839,6 +4229,11 @@
               "text": "123456"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2868,6 +4263,11 @@
               "text": "000007"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2900,6 +4300,11 @@
           "text": "+0000|+00:00|UTC"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -2950,6 +4355,11 @@
               "text": "+0000|+00:00|UTC"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -2979,6 +4389,11 @@
               "text": "+0000|+00:00|UTC"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3008,6 +4423,11 @@
               "text": "+0000|+00:00|UTC"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3040,6 +4460,11 @@
           "text": "{%-d}"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -3090,6 +4515,11 @@
               "text": "{%-d}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3119,6 +4549,11 @@
               "text": "{%-d}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3148,6 +4583,11 @@
               "text": "{%-d}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3180,6 +4620,11 @@
           "text": "{%}"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -3230,6 +4675,11 @@
               "text": "{%}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3259,6 +4709,11 @@
               "text": "{%}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3288,6 +4743,11 @@
               "text": "{%}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3320,6 +4780,11 @@
           "text": "{%Q}"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -3370,6 +4835,11 @@
               "text": "{%Q}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3399,6 +4869,11 @@
               "text": "{%Q}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3428,6 +4903,11 @@
               "text": "{%Q}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3460,6 +4940,11 @@
           "text": "{%k %l %s %P}"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -3510,6 +4995,11 @@
               "text": "{%k %l %s %P}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3539,6 +5029,11 @@
               "text": "{%k %l %s %P}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3568,6 +5063,11 @@
               "text": "{%k %l %s %P}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3600,6 +5100,11 @@
           "text": "{%E}"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -3650,6 +5155,11 @@
               "text": "{%E}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3679,6 +5189,11 @@
               "text": "{%E}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3708,6 +5223,11 @@
               "text": "{%E}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3740,6 +5260,11 @@
           "text": "{%:}"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -3790,6 +5315,11 @@
               "text": "{%:}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3819,6 +5349,11 @@
               "text": "{%:}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3848,6 +5383,11 @@
               "text": "{%:}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3880,6 +5420,11 @@
           "text": "{%d %-m}"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -3930,6 +5475,11 @@
               "text": "{%d %-m}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3959,6 +5509,11 @@
               "text": "{%d %-m}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -3988,6 +5543,11 @@
               "text": "{%d %-m}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4020,6 +5580,11 @@
           "text": "28} and {10"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -4070,6 +5635,11 @@
               "text": "28} and {10"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4099,6 +5669,11 @@
               "text": "28} and {10"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4128,6 +5703,11 @@
               "text": "02} and {01"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4160,6 +5740,11 @@
           "text": "{28}"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -4210,6 +5795,11 @@
               "text": "{28}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4239,6 +5829,11 @@
               "text": "{28}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4268,6 +5863,11 @@
               "text": "{02}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4300,6 +5900,11 @@
           "text": ""
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -4350,6 +5955,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4379,6 +5989,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4408,6 +6023,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4440,6 +6060,11 @@
           "text": " "
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -4490,6 +6115,11 @@
               "text": " "
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4519,6 +6149,11 @@
               "text": " "
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4548,6 +6183,11 @@
               "text": " "
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4580,6 +6220,11 @@
           "text": "no braces %d"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -4630,6 +6275,11 @@
               "text": "no braces %d"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4659,6 +6309,11 @@
               "text": "no braces %d"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4688,6 +6343,11 @@
               "text": "no braces %d"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4744,6 +6404,11 @@
           "text": "c 05"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -4818,6 +6483,11 @@
               "text": "c 05"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4871,6 +6541,11 @@
               "text": "c 05"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4924,6 +6599,11 @@
               "text": "c 05"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -4956,6 +6636,11 @@
           "text": "{%H:%M}"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -5006,6 +6691,11 @@
               "text": "{%H:%M}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5035,6 +6725,11 @@
               "text": "{%H:%M}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5064,6 +6759,11 @@
               "text": "{%H:%M}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5108,6 +6808,11 @@
           "text": ""
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -5170,6 +6875,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5211,6 +6921,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5252,6 +6967,11 @@
               "text": ""
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5284,6 +7004,11 @@
           "text": " 23:59"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -5334,6 +7059,11 @@
               "text": " 23:59"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5363,6 +7093,11 @@
               "text": " 23:59"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5392,6 +7127,11 @@
               "text": " 03:04"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5424,6 +7164,11 @@
           "text": "23"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -5474,6 +7219,11 @@
               "text": "23"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5503,6 +7253,11 @@
               "text": "23"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5532,6 +7287,11 @@
               "text": "03"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5564,6 +7324,11 @@
           "text": "{%Y\n%m}"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -5614,6 +7379,11 @@
               "text": "{%Y\n%m}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5643,6 +7413,11 @@
               "text": "{%Y\n%m}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5672,6 +7447,11 @@
               "text": "{%Y\n%m}"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5704,6 +7484,11 @@
           "text": "26%28"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -5754,6 +7539,11 @@
               "text": "26%28"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5783,6 +7573,11 @@
               "text": "26%28"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5812,6 +7607,11 @@
               "text": "26%02"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5844,6 +7644,11 @@
           "text": "Wednesday, October 28, 2026\u00e9"
         }
       ],
+      "timer": {
+        "class": "label timer",
+        "hidden": true,
+        "text": ""
+      },
       "widget_hidden": false
     },
     "initial_data": null,
@@ -5894,6 +7699,11 @@
               "text": "Wednesday, October 28, 2026\u00e9"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5923,6 +7733,11 @@
               "text": "Wednesday, October 28, 2026\u00e9"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {
@@ -5952,6 +7767,11 @@
               "text": "Friday, January 02, 2026\u00e9"
             }
           ],
+          "timer": {
+            "class": "label timer",
+            "hidden": true,
+            "text": ""
+          },
           "widget_hidden": false
         },
         "step": {

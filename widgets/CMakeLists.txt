@@ -15,6 +15,8 @@ add_library(yasb_widgets STATIC
   clock/clock_widget.h
   clock/py_strftime.cpp
   clock/py_strftime.h
+  clock/tz_abbreviation.cpp
+  clock/tz_abbreviation.h
   control_center/control_center_sections.cpp
   control_center/control_center_sections.h
   control_center/control_center_system.cpp

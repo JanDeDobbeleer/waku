@@ -19,13 +19,8 @@ or hardware; tests use fakes. Remove an item when it is done.
 ## clock
 
 - `show_holidays` / `country_code`: not ported (no C++ `holidays` equivalent). Config has it off.
-- `%Z` for named IANA zones gives Qt's abbreviation (`GMT+5:30` vs Python `IST`). Config has no zones.
-- Label updates on a plain `update_interval` timer, not minute/second aligned.
-- Alarm/timer sound looks for `<exe dir>\assets\sound\notification02.wav`, else `SystemNotification`.
-  Copy the Python asset next to the exe for the same sound.
 - Calendar popup focus/click-outside comes from shared `PopupWidget`, not Python's `Qt.Popup`.
-- Right-click menu top/bottom placement is inferred from screen halves (no bar-position property).
-- Timer label is covered by unit tests only (no vector).
+- `%Z` uses a table of common IANA zones plus a numeric fallback (`+04`), not the full tzdata.
 
 ## github
 

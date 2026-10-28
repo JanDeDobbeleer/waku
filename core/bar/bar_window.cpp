@@ -274,6 +274,7 @@ void BarWindow::addWidgets(const Widgets& widgets) {
     for (QWidget* w : widgets.value(QLatin1String(col.name))) {
       w->setProperty("yasb_layout_type", QLatin1String(col.name));
       w->setProperty("bar_id", barId_);
+      w->setProperty("bar_position", QString::fromStdString(settings_.position));
       layout->addWidget(w, 0);
     }
 

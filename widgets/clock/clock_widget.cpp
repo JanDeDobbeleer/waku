@@ -8,7 +8,6 @@
 #include <QPalette>
 #include <QPushButton>
 #include <QRegularExpression>
-#include <QScreen>
 #include <QStyleFactory>
 #include <QTableView>
 #include <QTextCharFormat>
@@ -23,6 +22,7 @@
 #include "core/widgets/backdrop.h"
 #include "core/widgets/tooltip.h"
 #include "platform/sound.h"
+#include "widgets/clock/tz_abbreviation.h"
 
 namespace yasb::widgets {
 namespace {
@@ -123,7 +123,19 @@ ClockWidget::ClockWidget(const WidgetContext& context, ClockSharedState* state, 
 
 ClockWidget::~ClockWidget() { state_.unregisterClient(this); }
 
-void ClockWidget::startTicking() { startTimer(); }
+// Python starts a plain QTimer, so its labels drift against the wall clock. Here the repeating
+// timer is re-armed on the next interval boundary (the second for a 1000 ms interval) so a minute
+// rolls over on the :00 tick. The first refresh still runs at once.
+void ClockWidget::startTicking() {
+  startTimer();
+  const int interval = options_.update_interval;
+  if (interval <= 0 || 60000 % interval != 0) return;
+  const qint64 millis = clock_().utc.toMSecsSinceEpoch();
+  const int delay = interval - static_cast<int>(millis % interval);
+  if (delay == interval) return;
+  stopTimer();
+  QTimer::singleShot(delay, this, [this] { startTimer(); });
+}
 
 void ClockWidget::refreshClock(bool updateTooltipToo) {
   render();
@@ -141,7 +153,7 @@ ClockWidget::Moment ClockWidget::now() const {
   if (activeTz_) {
     const QTimeZone zone(QByteArray::fromStdString(*activeTz_));
     moment.when = instant.utc.toTimeZone(zone);
-    moment.tzName = zone.abbreviation(instant.utc);
+    moment.tzName = pythonZoneAbbreviation(QByteArray::fromStdString(*activeTz_), instant.utc);
   } else {
     moment.when = instant.utc.toLocalTime();
     moment.tzName = localZoneName(moment.when.isDaylightTime());
@@ -510,9 +522,7 @@ void ClockWidget::showContextMenu() {
     const int barHeight = bar ? bar->height() : 0;
     const QPoint center = mapToGlobal(rect().center());
     const int x = center.x() - size.width() / 2;
-    const QScreen* screen = QApplication::screenAt(center);
-    const bool barOnTop =
-        screen && bar && bar->frameGeometry().center().y() < screen->geometry().center().y();
+    const bool barOnTop = property("bar_position").toString() == QLatin1String("top");
     const int y =
         barOnTop ? barTopLeft.y() + barHeight + margin : barTopLeft.y() - size.height() - margin;
     menu->popup(QPoint(x, y));

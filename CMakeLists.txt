@@ -80,6 +80,7 @@ add_custom_target(deploy
   COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:yasb-native> "${YASB_DIST_DIR}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:yasbc-native> "${YASB_DIST_DIR}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:YASBNativeTrayHook> "${YASB_DIST_DIR}"
+  COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets" "${YASB_DIST_DIR}/assets"
   COMMAND Qt6::windeployqt ${_windeployqt_flags} --dir "${YASB_DIST_DIR}"
           "${YASB_DIST_DIR}/$<TARGET_FILE_NAME:yasb-native>"
   DEPENDS yasb-native yasbc-native

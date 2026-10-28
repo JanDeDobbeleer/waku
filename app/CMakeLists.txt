@@ -30,3 +30,7 @@ target_link_libraries(yasb-native PRIVATE yasb_app yasb_options windowsapp runti
 add_dependencies(yasb-native YASBNativeTrayHook)
 # Keep build\<preset>\yasb-native.exe where docs and tools expect it.
 set_target_properties(yasb-native PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+# Sounds and other runtime assets sit in assets\ next to the executable (the clock's alarm sound).
+add_custom_command(TARGET yasb-native POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:yasb-native>/assets"
+  VERBATIM)
