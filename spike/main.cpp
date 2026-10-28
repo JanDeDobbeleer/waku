@@ -48,12 +48,13 @@ int main(int argc, char* argv[]) {
   options.hooks = tidy::BarHost::NativeHooks::win32();
   tidy::BarHost host(&engine, std::move(options));
 
-  // One bar per config home: `tidyc` finds it by the same name, and a second start would put
+  // One bar per config home: `tidybarc` finds it by the same name, and a second start would put
   // a second bar over the first.
   tidy::ControlServer control(tidy::controlPipeName(configHome),
                               tidy::makeControlHandler(host, parser.isSet(safeOpt)));
   if (!control.listen()) {
-    qCritical().noquote() << "tidy is already running for" << configHome << "(tidyc quit stops it)";
+    qCritical().noquote() << "tidybar is already running for" << configHome
+                          << "(tidybarc quit stops it)";
     return 1;
   }
 

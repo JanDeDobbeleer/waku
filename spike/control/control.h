@@ -7,7 +7,7 @@
 
 namespace tidy {
 
-// The control channel: how `tidyc` (reload, status, quit) talks to the running bar. A named
+// The control channel: how `tidybarc` (reload, status, quit) talks to the running bar. A named
 // pipe (QLocalServer) per config home, so two instances with different config homes do not meet,
 // and a running instance doubles as the single-instance guard for its config home.
 //

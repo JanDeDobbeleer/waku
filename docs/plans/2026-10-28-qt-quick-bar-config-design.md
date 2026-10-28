@@ -225,32 +225,32 @@ Pill {
   outlive an edit.
 - `qmllint` works on the config home, so editors give completion and diagnostics for free.
 - `--safe`: see below.
-- `tidyc reload`: see below.
+- `tidybarc reload`: see below.
 
 ### Safe mode and the command line
 
-- **`tidy.exe --safe`** starts the built-in bar (`tidy.widgets/SafeConfig.qml`: Clock,
+- **`tidybar.exe --safe`** starts the built-in bar (`tidy.widgets/SafeConfig.qml`: Clock,
   Workspaces, Volume, Battery, Cpu, Memory) with the default theme. Nothing in the config home is
   read, so a broken `bar.qml`, a broken `theme.qml` or a missing folder cannot get in the way, and
   nothing is watched. It is the way back to a bar when the config is wrong: fix the files, then
-  start normally. `tidyc reload` in safe mode rebuilds the same bar.
-- **`tidyc.exe`** is a separate console program, as `komorebic` is to komorebi: the bar is a
+  start normally. `tidybarc reload` in safe mode rebuilds the same bar.
+- **`tidybarc.exe`** is a separate console program, as `komorebic` is to komorebi: the bar is a
   Windows (GUI) program with no console to print to or exit code to return. It talks to the
   running bar over a named pipe:
 
   | Command | Answer | Exit code |
   |---|---|---|
-  | `tidyc reload` | `ok`, or `error: bar.qml:12:5: ...` (the previous bars stay) | 0, or 1 |
-  | `tidyc status` | `running; bars=1; safe=no; error=none` | 0 |
-  | `tidyc quit` | `ok`, then the bar exits | 0 |
-  | no bar running | `tidyc: no bar is running for <config home>` | 2 |
+  | `tidybarc reload` | `ok`, or `error: bar.qml:12:5: ...` (the previous bars stay) | 0, or 1 |
+  | `tidybarc status` | `running; bars=1; safe=no; error=none` | 0 |
+  | `tidybarc quit` | `ok`, then the bar exits | 0 |
+  | no bar running | `tidybarc: no bar is running for <config home>` | 2 |
   | bad command, no answer | usage or the reason | 3 |
 
 - The instance is named by the config home: `--config-home <dir>` or `$TIDY_CONFIG_HOME` on
   both programs picks it, and the pipe name is a short hash of the folder (case and trailing
   slashes do not matter), so two bars with different config homes do not meet.
 - One bar per config home: a named mutex held by the running bar refuses a second start with
-  `tidy is already running for <config home> (tidyc quit stops it)` and exit code 1. (Two
+  `tidybar is already running for <config home> (tidybarc quit stops it)` and exit code 1. (Two
   `QLocalServer`s can listen on one pipe name on Windows, so the pipe alone cannot tell.)
 - Protocol: one line in, one line out, then the connection closes. A line over 1 KiB is refused
   and a client that stalls is dropped after 3 s, so a stray process cannot hold the bar.
@@ -272,7 +272,7 @@ compatible; removing or renaming one is a major bump with the old name kept for 
    them; replace the spike's "load every file in `widgets/`" with the explicit layout. (Medium.)
 2. Built-in `tidy.widgets`: Clock, Cpu, Memory, Battery, Volume, Media, Workspaces (komorebi or
    GlazeWM, chosen by what is running). (Medium.)
-3. Transactional reload with the error pill, `--safe`, `tidyc reload`. (Small; done.)
+3. Transactional reload with the error pill, `--safe`, `tidybarc reload`. (Small; done.)
 4. `Theme` singleton and `theme.qml`. (Small.)
 5. Popups (`PopupWindow`) and tooltips, then systray and taskbar, which need native-window work.
    (Large.)
@@ -327,21 +327,18 @@ actions (lock, sleep) are not part of the first cut.
 
 ## Name
 
-tidy. A bar keeps the desktop tidy: one thin strip with everything in its place. The official
-name is lower case, everywhere: the executable is `tidy.exe`, the command-line client is
-`tidyc.exe` (`tidyc reload`; a console program, so it is separate from the GUI executable), the
-config home is `%USERPROFILE%\.config\tidy\`, and the QML modules are `tidy`, `tidy.widgets` and
-`tidy.services`. The environment variable is `TIDY_CONFIG_HOME` and the control pipe is named
-`tidy-<hash of the config home>`.
+The product is tidy: a bar keeps the desktop tidy, one thin strip with everything in its place.
+The name is lower case everywhere. The application is the executable **`tidybar.exe`**; its
+command-line client is **`tidybarc.exe`** (`tidybarc reload`; a console program, so it is separate
+from the GUI executable). The config home is `%USERPROFILE%\.config\tidy\`, the QML modules are
+`tidy`, `tidy.widgets` and `tidy.services`, the environment variable is `TIDY_CONFIG_HOME` and the
+control pipe is named `tidy-<hash of the config home>`.
 
-History: the working name was barnacle until this step; fascia, transom, overbar and others were
-considered before it. The spike was renamed in one commit (modules, C++ namespace, targets,
-executables, pipe, environment variable and these docs). The repository, the `yasb_*` targets and
-the `yasb::` C++ namespaces outside `spike/` still carry the old name; renaming them is a separate
-step.
+The executable carries "bar" because `tidy.exe` is already taken: HTML Tidy (`htacg/tidy-html5`) is
+a widely installed command-line program with that file name, and a second `tidy.exe` on the PATH
+would shadow one of the two. Nothing else is called tidy or tidybar on GitHub among the top results
+(checked on GitHub only; no trademark or domain search yet).
 
-Collisions, checked only on GitHub (no trademark or domain search yet): no Windows bar is called
-tidy. The word is also HTML Tidy (`htacg/tidy-html5`), a widely installed command-line program whose
-executable is `tidy.exe`; on a machine that has it on PATH the two would clash. Neither is a
-blocker (the PATH order decides, and the executable could ship as `tidybar.exe` while the product
-stays tidy), but it should be decided before anything is published or installed.
+History: the working name was barnacle until the rename to tidy; fascia, transom, overbar and
+others were considered before it. The repository, the `yasb_*` targets and the `yasb::` C++
+namespaces outside `spike/` still carry the old name; renaming them is a separate step.

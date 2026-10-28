@@ -1,4 +1,4 @@
-# tidy_control: the named-pipe channel between a running bar and `tidyc`. Qt Core and
+# tidy_control: the named-pipe channel between a running bar and `tidybarc`. Qt Core and
 # Network only, so the command-line client stays small.
 qt_add_library(tidy_control STATIC
   control.h

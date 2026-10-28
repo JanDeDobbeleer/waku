@@ -1,8 +1,8 @@
-// tidyc: the command-line client of a running bar.
+// tidybarc: the command-line client of a running bar.
 //
-//     tidyc reload     reload the config of the running bar
-//     tidyc status     what the running bar is doing
-//     tidyc quit       stop the running bar
+//     tidybarc reload     reload the config of the running bar
+//     tidybarc status     what the running bar is doing
+//     tidybarc quit       stop the running bar
 //
 // A separate console program, as komorebic is to komorebi: the bar itself is a Windows (GUI)
 // program with no console to print to. `--config-home <dir>` (or $TIDY_CONFIG_HOME) selects
@@ -32,7 +32,7 @@ void print(FILE* stream, const QString& text) {
 
 int main(int argc, char* argv[]) {
   QCoreApplication app(argc, argv);
-  QCoreApplication::setApplicationName(QStringLiteral("tidyc"));
+  QCoreApplication::setApplicationName(QStringLiteral("tidybarc"));
 
   QCommandLineParser parser;
   parser.setApplicationDescription(
@@ -48,14 +48,15 @@ int main(int argc, char* argv[]) {
 
   const QStringList positional = parser.positionalArguments();
   if (positional.size() != 1) {
-    print(stderr, QStringLiteral("usage: tidyc [--config-home <dir>] reload|status|quit"));
+    print(stderr, QStringLiteral("usage: tidybarc [--config-home <dir>] reload|status|quit"));
     return kUsage;
   }
   const QString command = positional.first();
   if (command != QLatin1String("reload") && command != QLatin1String("status") &&
       command != QLatin1String("quit")) {
-    print(stderr,
-          QStringLiteral("tidyc: unknown command '%1' (try: reload, status, quit)").arg(command));
+    print(
+        stderr,
+        QStringLiteral("tidybarc: unknown command '%1' (try: reload, status, quit)").arg(command));
     return kUsage;
   }
 
@@ -67,10 +68,10 @@ int main(int argc, char* argv[]) {
 
   switch (reply.status) {
     case tidy::ControlReply::NotRunning:
-      print(stderr, QStringLiteral("tidyc: no bar is running for %1").arg(configHome));
+      print(stderr, QStringLiteral("tidybarc: no bar is running for %1").arg(configHome));
       return kNotRunning;
     case tidy::ControlReply::Failed:
-      print(stderr, QStringLiteral("tidyc: %1").arg(reply.text));
+      print(stderr, QStringLiteral("tidybarc: %1").arg(reply.text));
       return kUsage;
     case tidy::ControlReply::Ok:
       break;

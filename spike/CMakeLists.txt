@@ -34,7 +34,7 @@ target_compile_definitions(tidy_services PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_link_libraries(tidy_services PUBLIC Qt6::Qml yasb_platform yasb_widgets)
 
-# tidy_control: the pipe between a running bar and tidyc.
+# tidy_control: the pipe between a running bar and tidybarc.
 add_subdirectory(control)
 
 # tidy: Config, Bar, BarLayout and the host.
@@ -43,19 +43,19 @@ add_subdirectory(bar)
 # tidy.widgets: the built-in widgets.
 add_subdirectory(widgets)
 
-qt_add_executable(tidy-spike WIN32 main.cpp)
-target_compile_definitions(tidy-spike PRIVATE
+qt_add_executable(tidybar WIN32 main.cpp)
+target_compile_definitions(tidybar PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX
   SPIKE_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config")
-target_link_libraries(tidy-spike PRIVATE
+target_link_libraries(tidybar PRIVATE
   tidy_bar tidy_barplugin tidy_widgets tidy_widgetsplugin
   tidy_services tidy_servicesplugin)
-set_target_properties(tidy-spike PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set_target_properties(tidybar PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-# tidyc: the console client (reload, status, quit).
-add_executable(tidyc-spike cli/main.cpp)
-target_compile_definitions(tidyc-spike PRIVATE
+# tidybarc: the console client (reload, status, quit).
+add_executable(tidybarc cli/main.cpp)
+target_compile_definitions(tidybarc PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX
   SPIKE_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config")
-target_link_libraries(tidyc-spike PRIVATE tidy_control)
-set_target_properties(tidyc-spike PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+target_link_libraries(tidybarc PRIVATE tidy_control)
+set_target_properties(tidybarc PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
