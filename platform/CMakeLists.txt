@@ -71,6 +71,8 @@ add_library(yasb_platform STATIC
   user_info.h
   user_info.cpp
   system_stats.h
+  systray_click.h
+  systray_click.cpp
   systray_hook.h
   systray_hook.cpp
   systray_host.h

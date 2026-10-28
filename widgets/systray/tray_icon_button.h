@@ -35,6 +35,8 @@ class TrayIconButton : public QPushButton {
   platform::TrayIconData info;
   bool hasData = false;
   bool isPinned = false;
+  // The id of this icon in the systray widget's TrayIconRegistry.
+  int registryId = -1;
 
   // IconWidget.drag_in_progress (shared by all buttons: only one drag runs at a time).
   static bool dragInProgress() { return dragInProgress_; }
@@ -60,8 +62,6 @@ class TrayIconButton : public QPushButton {
   void mouseDoubleClickEvent(QMouseEvent* event) override;
 
  private:
-  void sendNotify(std::uint32_t message);
-
   TrayIconSettings settings_;
   platform::TrayWindowApi* api_;
   bar::GlobalState* globalState_;

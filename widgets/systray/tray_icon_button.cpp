@@ -8,20 +8,19 @@
 #include <QPointer>
 
 #include "core/widgets/tooltip.h"
-#include "platform/systray_pipe.h"
+#include "platform/systray_click.h"
 #include "widgets/systray/tray_drop_widget.h"
 
 namespace yasb::widgets {
 namespace {
 
-// winuser.h mouse messages; spelled out so this file needs no Win32 headers.
-constexpr std::uint32_t kWmLButtonDown = 0x0201;
-constexpr std::uint32_t kWmLButtonUp = 0x0202;
-constexpr std::uint32_t kWmLButtonDblClk = 0x0203;
-constexpr std::uint32_t kWmRButtonDown = 0x0204;
-constexpr std::uint32_t kWmRButtonUp = 0x0205;
-constexpr std::uint32_t kWmMButtonDown = 0x0207;
-constexpr std::uint32_t kWmMButtonUp = 0x0208;
+using platform::kWmLButtonDblClk;
+using platform::kWmLButtonDown;
+using platform::kWmLButtonUp;
+using platform::kWmMButtonDown;
+using platform::kWmMButtonUp;
+using platform::kWmRButtonDown;
+using platform::kWmRButtonUp;
 
 }  // namespace
 
@@ -116,37 +115,8 @@ void TrayIconButton::mouseDoubleClickEvent(QMouseEvent* event) {
 }
 
 void TrayIconButton::sendAction(std::uint32_t action) {
-  if (!hasData || !api_ || !api_->isWindow(info.hWnd)) return;
-
-  const bool isMouseClick = action == kWmLButtonDown || action == kWmRButtonDown ||
-                            action == kWmMButtonDown || action == kWmLButtonUp ||
-                            action == kWmRButtonUp || action == kWmMButtonUp ||
-                            action == kWmLButtonDblClk;
-  if (isMouseClick) api_->allowSetForeground(info.hWnd);
-  sendNotify(action);
-
-  if (info.uVersion >= 3) {
-    if (action == kWmLButtonUp)
-      sendNotify(platform::kNinSelect);
-    else if (action == kWmRButtonUp)
-      sendNotify(platform::kNinContextMenu);
-  }
-}
-
-void TrayIconButton::sendNotify(std::uint32_t message) {
-  if (!hasData || !api_ || info.uCallbackMessage == 0) return;
-  std::uint64_t wParam = 0;
-  std::int32_t lParam = 0;
-  if (info.uVersion > 3) {
-    const auto [x, y] = api_->cursorPos();
-    wParam = static_cast<std::uint32_t>(platform::packI32(x, y));
-    lParam =
-        platform::packI32(static_cast<std::int32_t>(message), static_cast<std::int32_t>(info.uID));
-  } else {
-    wParam = info.uID;
-    lParam = platform::packI32(static_cast<std::int32_t>(message), 0);
-  }
-  api_->sendNotifyMessage(info.hWnd, info.uCallbackMessage, wParam, lParam);
+  if (!hasData || !api_) return;
+  platform::sendTrayAction(info, *api_, action);
 }
 
 void TrayIconButton::updateIcon() {
