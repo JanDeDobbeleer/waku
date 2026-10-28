@@ -8,6 +8,7 @@
 #include "core/config/options/battery.h"
 #include "core/config/options/bluetooth.h"
 #include "core/config/options/clock.h"
+#include "core/config/options/control_center.h"
 #include "core/config/options/cpu.h"
 #include "core/config/options/github.h"
 #include "core/config/options/komorebi_active_layout.h"
@@ -34,8 +35,7 @@ using TypedWidgetOptions =
                  config::options::KomorebiWorkspacesConfig, config::options::ActiveLayoutConfig,
                  config::options::ClockConfig, config::options::MediaWidgetConfig,
                  config::options::WifiConfig, config::options::BluetoothConfig,
-                 config::options::NotificationsConfig, config::options::WallpapersConfig,
-                 config::options::TaskbarConfig>;
+                 config::options::ControlCenterConfig>;
 
 struct WidgetContext {
   std::string name;

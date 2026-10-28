@@ -15,6 +15,15 @@ add_library(yasb_widgets STATIC
   clock/clock_widget.h
   clock/py_strftime.cpp
   clock/py_strftime.h
+  control_center/control_center_sections.cpp
+  control_center/control_center_sections.h
+  control_center/control_center_system.cpp
+  control_center/control_center_system.h
+  control_center/control_center_widget.cpp
+  control_center/control_center_widget.h
+  control_center/media_section.cpp
+  control_center/power_section.cpp
+  control_center/sliders_section.cpp
   cpu/cpu_widget.cpp
   github/github_auth_dialog.h
   github/github_auth_dialog.cpp

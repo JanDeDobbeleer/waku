@@ -1,5 +1,6 @@
 #include "app/runtime.h"
 
+#include "widgets/control_center/control_center_widget.h"
 #include "widgets/komorebi/komorebi_widgets.h"
 #include "widgets/media/media_widget.h"
 #include "widgets/network_widgets.h"
@@ -15,9 +16,7 @@ Runtime::Runtime() {
   widgets::registerNetworkWidgets(widgetRegistry_);
   widgets::registerKomorebiWidgets(widgetRegistry_);
   widgets::registerMediaWidgets(widgetRegistry_);
-  widgets::registerNotificationsWidgets(widgetRegistry_);
-  widgets::registerWallpaperWidgets(widgetRegistry_);
-  widgets::registerTaskbarWidget(widgetRegistry_);
+  widgets::registerControlCenterWidgets(widgetRegistry_);
 }
 
 Runtime::~Runtime() { stop(); }
