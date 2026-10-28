@@ -75,3 +75,19 @@ TEST(PopupWidgetTest, PaintsStylesheetBackgroundFromClassRule) {
   EXPECT_EQ(px.name(), QStringLiteral("#282c34"));
   EXPECT_EQ(px.alpha(), 255);
 }
+
+#include "core/widgets/tooltip.h"
+
+TEST(PopupWidgetTest, TooltipPaintsStylesheetBackground) {
+  yasb::css::TransitionEngine engine;
+  QWidget bar;
+  bar.setStyleSheet(
+      engine.loadStyleSheet(QStringLiteral(".tooltip { background-color: rgb(35, 38, 52); border: "
+                                           "1px solid #414559; padding: 5px 10px; }")));
+  bar.show();
+  CustomToolTip tip(false, &bar);
+  tip.showTooltip(QStringLiteral("hello"), QRect(10, 10, 20, 20), QRect(0, 0, 200, 30), 0);
+  const QColor px = tip.grab().toImage().pixelColor(4, 4);
+  EXPECT_EQ(px.name(), QStringLiteral("#232634"));
+  EXPECT_EQ(px.alpha(), 255);
+}
