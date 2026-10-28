@@ -90,6 +90,7 @@ No new singleton without a row here and a reason.
 | log file, observer, debug flag | `app/log.cpp` | process-global by nature; guarded by a `QMutex` |
 | `tooltipOptions()`, `CustomToolTip::active_` | `core/widgets/tooltip.{cpp,h}` | legacy process-wide tooltip settings and active-tooltip guard |
 | `processLauncher()`, `systemFunctions()` | `core/widgets/callbacks.cpp` | mutable from anywhere (test seam) |
+| `ClockSharedState::instance()` | `widgets/clock/clock_state.cpp` | alarms, snoozes and the countdown timer that every clock widget shows; one `alarms.json` per config folder, as in Python's `ClockWidgetSharedState`. Parented to `qApp`, GUI thread only, replaceable in tests via `resetInstance` |
 | cached Windows build number | `core/widgets/backdrop.cpp` (`windowsBuild()`) | immutable |
 
 Function-local `static const` regexes and lookup tables are immutable and not listed. Stat widget

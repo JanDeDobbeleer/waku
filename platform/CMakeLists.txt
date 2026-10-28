@@ -10,12 +10,11 @@ add_library(yasb_platform STATIC
   memory.cpp
   pdh.h
   pdh.cpp
+  sound.h
+  sound.cpp
   system_stats.h
 )
 target_include_directories(yasb_platform PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(yasb_platform
   PUBLIC Qt6::Core
-  PRIVATE yasb_options pdh setupapi psapi)
-# GitHub widget HTTPS (github_api.cpp); headers stay QtCore-only.
-find_package(Qt6 REQUIRED COMPONENTS Network)
-target_link_libraries(yasb_platform PRIVATE Qt6::Network)
+  PRIVATE yasb_options pdh setupapi psapi winmm)

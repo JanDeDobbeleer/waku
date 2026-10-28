@@ -6,6 +6,13 @@ add_library(yasb_widgets STATIC
   battery/battery_widget.h
   battery/battery_widget.cpp
   cpu/cpu_widget.h
+  clock/clock_dialogs.cpp
+  clock/clock_state.cpp
+  clock/clock_state.h
+  clock/clock_widget.cpp
+  clock/clock_widget.h
+  clock/py_strftime.cpp
+  clock/py_strftime.h
   cpu/cpu_widget.cpp
   github/github_auth_dialog.h
   github/github_auth_dialog.cpp

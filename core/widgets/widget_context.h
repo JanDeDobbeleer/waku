@@ -6,6 +6,7 @@
 #include <variant>
 
 #include "core/config/options/battery.h"
+#include "core/config/options/clock.h"
 #include "core/config/options/cpu.h"
 #include "core/config/options/github.h"
 #include "core/config/options/komorebi_active_layout.h"
@@ -23,8 +24,7 @@ class PollingWorkerRegistry;
 
 using TypedWidgetOptions =
     std::variant<std::monostate, config::options::CpuConfig, config::options::MemoryConfig,
-                 config::options::BatteryConfig, config::options::GithubConfig,
-                 config::options::KomorebiWorkspacesConfig, config::options::ActiveLayoutConfig>;
+                 config::options::BatteryConfig, config::options::ClockConfig>;
 
 struct WidgetContext {
   std::string name;

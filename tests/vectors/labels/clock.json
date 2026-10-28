@@ -1,0 +1,5964 @@
+[
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%H:%M}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "Wed, 28 Oct 23:59"
+        },
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": ""
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%a, %d %b %H:%M}<span>{alarm}</span>",
+      "label_alt": "{%H:%M}",
+      "timezones": []
+    },
+    "scenario": "user_options",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-28T23:59:59.999999"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_00",
+              "hidden": false,
+              "text": "Thu, 29 Oct 00:00"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-29T00:00:00.000000"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_00",
+              "hidden": false,
+              "text": "00:00"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_00",
+              "hidden": true,
+              "text": "Thu, 29 Oct 00:00"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_00",
+              "hidden": false,
+              "text": "00:01"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_00",
+              "hidden": true,
+              "text": "Thu, 29 Oct 00:00"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-29T00:01:00.500000"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_00",
+              "hidden": true,
+              "text": "00:01"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_00",
+              "hidden": false,
+              "text": "Thu, 29 Oct 00:01"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%H:%M}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "Wed, 28 Oct 23:59"
+        },
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": ""
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%a, %d %b %H:%M}<span>{alarm}</span>",
+      "label_alt": "{%H:%M}",
+      "timezones": []
+    },
+    "scenario": "alarm_states",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon alarm",
+              "hidden": false,
+              "text": "\uf0f3"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "alarms": [
+            {
+              "days": [
+                0,
+                1
+              ],
+              "enabled": true,
+              "time": "07:00",
+              "title": "Wake up"
+            }
+          ]
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon alarm",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "alarms": [
+            {
+              "days": [
+                0,
+                1
+              ],
+              "enabled": false,
+              "time": "07:00",
+              "title": "Wake up"
+            }
+          ]
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon alarm",
+              "hidden": false,
+              "text": "\uf0f3"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "alarms": [
+            {
+              "time": "08:00"
+            }
+          ]
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon alarm snooze",
+              "hidden": false,
+              "text": "\uf1f6"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "alarms": [
+            {
+              "days": [
+                0,
+                1
+              ],
+              "enabled": false,
+              "time": "07:00",
+              "title": "Wake up"
+            }
+          ],
+          "snoozed": [
+            {
+              "days": [
+                0,
+                1
+              ],
+              "enabled": true,
+              "time": "07:00",
+              "title": "Wake up"
+            }
+          ]
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon alarm snooze",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "alarms": [],
+          "snoozed": []
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon alarm",
+              "hidden": false,
+              "text": "\uf0f3"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "alarms": [
+            {
+              "days": [
+                0,
+                1
+              ],
+              "enabled": true,
+              "time": "07:00",
+              "title": "Wake up"
+            }
+          ]
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "23:59"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon alarm",
+              "hidden": true,
+              "text": "\uf0f3"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": true,
+              "text": "23:59"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "Wed, 28 Oct 23:59"
+            },
+            {
+              "class": "icon alarm",
+              "hidden": false,
+              "text": "\uf0f3"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{alarm}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{alarm}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": " 23:59"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{alarm} {%H:%M}",
+      "label_alt": "<span>{alarm}</span> {alarm}",
+      "timezones": []
+    },
+    "scenario": "alarm_in_plain_text",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{alarm}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{alarm}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label alarm",
+              "hidden": false,
+              "text": "\uf0f3 23:59"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "alarms": [
+            {
+              "days": [
+                0,
+                1
+              ],
+              "enabled": true,
+              "time": "07:00",
+              "title": "Wake up"
+            }
+          ]
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{alarm}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{alarm}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label alarm snooze",
+              "hidden": false,
+              "text": "\uf1f6 23:59"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "snoozed": [
+            {
+              "days": [
+                0,
+                1
+              ],
+              "enabled": true,
+              "time": "07:00",
+              "title": "Wake up"
+            }
+          ]
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{alarm}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{alarm}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": " 23:59"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "alarms": [],
+          "snoozed": []
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": ""
+            },
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": ""
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": " 23:59"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon alt alarm",
+              "hidden": false,
+              "text": "\uf0f3"
+            },
+            {
+              "class": "label alt alarm",
+              "hidden": false,
+              "text": "\uf0f3"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": " 23:59"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "alarms": [
+            {
+              "days": [
+                0,
+                1
+              ],
+              "enabled": true,
+              "time": "07:00",
+              "title": "Wake up"
+            }
+          ]
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%H:%M}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": ""
+        },
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "23"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "alarm_icons": {
+        "disabled": "OFF",
+        "enabled": "ON",
+        "snooze": "ZZ"
+      },
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "<span>{alarm}</span> {%H}",
+      "label_alt": "{%H:%M}",
+      "timezones": []
+    },
+    "scenario": "alarm_icons_custom",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon alarm",
+              "hidden": false,
+              "text": "ON"
+            },
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "23"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "alarms": [
+            {
+              "days": [
+                0,
+                1
+              ],
+              "enabled": true,
+              "time": "07:00",
+              "title": "Wake up"
+            }
+          ]
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon alarm snooze",
+              "hidden": false,
+              "text": "ZZ"
+            },
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "23"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "snoozed": [
+            {
+              "days": [
+                0,
+                1
+              ],
+              "enabled": true,
+              "time": "07:00",
+              "title": "Wake up"
+            }
+          ]
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "icon clock_23",
+          "hidden": false,
+          "text": "C"
+        },
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "23:59"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "icons": {
+        "clock_00": "A",
+        "clock_01": "B",
+        "clock_11": "C",
+        "clock_12": "D"
+      },
+      "label": "<span>{icon}</span> {%H:%M}",
+      "label_alt": "<span>{icon}</span>",
+      "timezones": []
+    },
+    "scenario": "icons_by_hour",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon clock_00",
+              "hidden": false,
+              "text": "A"
+            },
+            {
+              "class": "label clock_00",
+              "hidden": false,
+              "text": "00:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-28T00:30:00"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon clock_01",
+              "hidden": false,
+              "text": "B"
+            },
+            {
+              "class": "label clock_01",
+              "hidden": false,
+              "text": "01:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-28T01:30:00"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon clock_02",
+              "hidden": false,
+              "text": ""
+            },
+            {
+              "class": "label clock_02",
+              "hidden": false,
+              "text": "02:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-28T02:30:00"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon clock_11",
+              "hidden": false,
+              "text": "C"
+            },
+            {
+              "class": "label clock_11",
+              "hidden": false,
+              "text": "11:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-28T11:30:00"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon clock_12",
+              "hidden": false,
+              "text": "D"
+            },
+            {
+              "class": "label clock_12",
+              "hidden": false,
+              "text": "12:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-28T12:30:00"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon clock_13",
+              "hidden": false,
+              "text": "B"
+            },
+            {
+              "class": "label clock_13",
+              "hidden": false,
+              "text": "13:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-28T13:30:00"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon clock_14",
+              "hidden": false,
+              "text": ""
+            },
+            {
+              "class": "label clock_14",
+              "hidden": false,
+              "text": "14:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-28T14:30:00"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{icon}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon clock_23",
+              "hidden": false,
+              "text": "C"
+            },
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "23:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-28T23:30:00"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon alt clock_23",
+              "hidden": false,
+              "text": "C"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon clock_23",
+              "hidden": true,
+              "text": "C"
+            },
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "23:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon alt clock_13",
+              "hidden": false,
+              "text": "B"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon clock_23",
+              "hidden": true,
+              "text": "C"
+            },
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "23:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-10-28T13:30:00"
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%A}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "23:59 +0000 +00:00"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%H:%M %z %:z}",
+      "label_alt": "{%A}",
+      "timezones": [
+        "UTC",
+        "Asia/Kolkata",
+        "America/New_York"
+      ]
+    },
+    "scenario": "timezones_cycle",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%A}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_05",
+              "hidden": false,
+              "text": "05:29 +0530 +05:30"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%A}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_19",
+              "hidden": false,
+              "text": "19:59 -0400 -04:00"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%A}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "23:59 +0000 +00:00"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "Wednesday"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "23:59 +0000 +00:00"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_05",
+              "hidden": false,
+              "text": "Thursday"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "23:59 +0000 +00:00"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%H:%M}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "23:59 +0000"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%H:%M %z}",
+      "label_alt": "{%H:%M}",
+      "timezones": [
+        "Not/AZone",
+        "UTC"
+      ]
+    },
+    "scenario": "timezones_invalid_ignored",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "23:59 +0000"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%H:%M}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "23:59"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%H:%M}",
+      "label_alt": "{%H:%M}",
+      "timezones": [
+        "Not/AZone"
+      ]
+    },
+    "scenario": "timezones_all_invalid",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": false,
+              "text": "23:59"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "next_timezone": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%c|%x|%X}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "woensdag 28 oktober wo okt "
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%A %d %B %a %b %p}",
+      "label_alt": "{%c|%x|%X}",
+      "locale": "nl-BE",
+      "timezones": []
+    },
+    "scenario": "locale_dutch",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "28/10/2026 23:59:05|28/10/2026|23:59:05"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "woensdag 28 oktober wo okt "
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "5/03/2026 3:09:05|5/03/2026|3:09:05"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "woensdag 28 oktober wo okt "
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-03-05T03:09:05"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "5/03/2026 3:09:05|5/03/2026|3:09:05"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "donderdag 05 maart do mrt "
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%H:%M}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "Wednesday October 10/28/2026 23:59:05"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%A %B %c}",
+      "label_alt": "{%H:%M}",
+      "locale": "zz-nope",
+      "timezones": []
+    },
+    "scenario": "locale_invalid_falls_back",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "Thursday March 03/05/2026 03:09:05"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-03-05T03:09:05"
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%A %a %B %b %d %e %H %I %M %S %p %j %y %Y %m}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "Wednesday Wed October Oct 28 28 23 11 59 05 PM 301 26 2026 10"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%A %a %B %b %d %e %H %I %M %S %p %j %y %Y %m}",
+      "label_alt": "{%A %a %B %b %d %e %H %I %M %S %p %j %y %Y %m}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_00",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "Wednesday Wed October Oct 28 28 23 11 59 05 PM 301 26 2026 10"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "Wednesday Wed October Oct 28 28 23 11 59 05 PM 301 26 2026 10"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "Friday Fri January Jan 02  2 03 03 04 05 AM 002 26 2026 01"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "Wednesday Wed October Oct 28 28 23 11 59 05 PM 301 26 2026 10"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "Friday Fri January Jan 02  2 03 03 04 05 AM 002 26 2026 01"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "Friday Fri January Jan 02  2 03 03 04 05 AM 002 26 2026 01"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%U %W %w %u %V %G %g %C}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "43 43 3 3 44 2026 26 20"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%U %W %w %u %V %G %g %C}",
+      "label_alt": "{%U %W %w %u %V %G %g %C}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_01",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "43 43 3 3 44 2026 26 20"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "43 43 3 3 44 2026 26 20"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "00 00 5 5 01 2026 26 20"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "43 43 3 3 44 2026 26 20"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "00 00 5 5 01 2026 26 20"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "00 00 5 5 01 2026 26 20"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%D|%F|%T|%R|%r|%c|%x|%X|%%|%h|%n|%t}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "10/28/26|2026-10-28|23:59:05|23:59|11:59:05 PM|Wed Oct 28 23:59:05 2026|10/28/26|23:59:05|%|Oct|\n|\t"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%D|%F|%T|%R|%r|%c|%x|%X|%%|%h|%n|%t}",
+      "label_alt": "{%D|%F|%T|%R|%r|%c|%x|%X|%%|%h|%n|%t}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_02",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "10/28/26|2026-10-28|23:59:05|23:59|11:59:05 PM|Wed Oct 28 23:59:05 2026|10/28/26|23:59:05|%|Oct|\n|\t"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "10/28/26|2026-10-28|23:59:05|23:59|11:59:05 PM|Wed Oct 28 23:59:05 2026|10/28/26|23:59:05|%|Oct|\n|\t"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "01/02/26|2026-01-02|03:04:05|03:04|03:04:05 AM|Fri Jan  2 03:04:05 2026|01/02/26|03:04:05|%|Jan|\n|\t"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "10/28/26|2026-10-28|23:59:05|23:59|11:59:05 PM|Wed Oct 28 23:59:05 2026|10/28/26|23:59:05|%|Oct|\n|\t"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "01/02/26|2026-01-02|03:04:05|03:04|03:04:05 AM|Fri Jan  2 03:04:05 2026|01/02/26|03:04:05|%|Jan|\n|\t"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "01/02/26|2026-01-02|03:04:05|03:04|03:04:05 AM|Fri Jan  2 03:04:05 2026|01/02/26|03:04:05|%|Jan|\n|\t"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%#d %#H %#I %#j %#m %#M %#S %#y %#p}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "28 23 11 301 10 59 5 26 PM"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%#d %#H %#I %#j %#m %#M %#S %#y %#p}",
+      "label_alt": "{%#d %#H %#I %#j %#m %#M %#S %#y %#p}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_03",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "28 23 11 301 10 59 5 26 PM"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "28 23 11 301 10 59 5 26 PM"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "2 3 3 2 1 4 5 26 AM"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "28 23 11 301 10 59 5 26 PM"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "2 3 3 2 1 4 5 26 AM"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "2 3 3 2 1 4 5 26 AM"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%Ey %Od %EY %Ec %Ex %EX %OH %Oe}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "26 28 2026 Wed Oct 28 23:59:05 2026 10/28/26 23:59:05 23 28"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%Ey %Od %EY %Ec %Ex %EX %OH %Oe}",
+      "label_alt": "{%Ey %Od %EY %Ec %Ex %EX %OH %Oe}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_04",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "26 28 2026 Wed Oct 28 23:59:05 2026 10/28/26 23:59:05 23 28"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "26 28 2026 Wed Oct 28 23:59:05 2026 10/28/26 23:59:05 23 28"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "26 02 2026 Fri Jan  2 03:04:05 2026 01/02/26 03:04:05 03  2"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "26 28 2026 Wed Oct 28 23:59:05 2026 10/28/26 23:59:05 23 28"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "26 02 2026 Fri Jan  2 03:04:05 2026 01/02/26 03:04:05 03  2"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "26 02 2026 Fri Jan  2 03:04:05 2026 01/02/26 03:04:05 03  2"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%f}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "123456"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%f}",
+      "label_alt": "{%f}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_05",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "123456"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "123456"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "000007"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "123456"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "000007"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "000007"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%z|%:z|%Z}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "+0000|+00:00|UTC"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%z|%:z|%Z}",
+      "label_alt": "{%z|%:z|%Z}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_06",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "+0000|+00:00|UTC"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "+0000|+00:00|UTC"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "+0000|+00:00|UTC"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "+0000|+00:00|UTC"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "+0000|+00:00|UTC"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "+0000|+00:00|UTC"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%-d}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "{%-d}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%-d}",
+      "label_alt": "{%-d}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_07",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "{%-d}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%-d}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "{%-d}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%-d}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "{%-d}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "{%-d}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "{%}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%}",
+      "label_alt": "{%}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_08",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "{%}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "{%}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "{%}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "{%}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%Q}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "{%Q}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%Q}",
+      "label_alt": "{%Q}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_09",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "{%Q}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%Q}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "{%Q}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%Q}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "{%Q}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "{%Q}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%k %l %s %P}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "{%k %l %s %P}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%k %l %s %P}",
+      "label_alt": "{%k %l %s %P}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_10",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "{%k %l %s %P}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%k %l %s %P}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "{%k %l %s %P}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%k %l %s %P}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "{%k %l %s %P}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "{%k %l %s %P}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%E}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "{%E}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%E}",
+      "label_alt": "{%E}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_11",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "{%E}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%E}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "{%E}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%E}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "{%E}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "{%E}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%:}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "{%:}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%:}",
+      "label_alt": "{%:}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_12",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "{%:}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%:}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "{%:}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%:}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "{%:}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "{%:}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%d %-m}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "{%d %-m}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%d %-m}",
+      "label_alt": "{%d %-m}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_13",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "{%d %-m}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%d %-m}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "{%d %-m}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%d %-m}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "{%d %-m}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "{%d %-m}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%d} and {%m}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "28} and {10"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%d} and {%m}",
+      "label_alt": "{%d} and {%m}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_14",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "28} and {10"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "28} and {10"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "02} and {01"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "28} and {10"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "02} and {01"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "02} and {01"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{{%d}}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "{28}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{{%d}}",
+      "label_alt": "{{%d}}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_15",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "{28}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{28}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "{02}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{28}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "{02}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "{02}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": ""
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{}",
+      "label_alt": "{}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_16",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": ""
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": ""
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{ }"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": " "
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{ }",
+      "label_alt": "{ }",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_17",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": " "
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": " "
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": " "
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": " "
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": " "
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": " "
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "no braces %d"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "no braces %d"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "no braces %d",
+      "label_alt": "no braces %d",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_18",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "no braces %d"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "no braces %d"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "no braces %d"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "no braces %d"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "no braces %d"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "no braces %d"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "a {%H} b"
+        },
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{%M}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "c {%S}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "primary",
+        "alt",
+        "alt",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "a 23 b"
+        },
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{%M}"
+        },
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "c 05"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "a {%H} b <span>{%M}</span> c {%S}",
+      "label_alt": "a {%H} b <span>{%M}</span> c {%S}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_19",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "a 23 b"
+            },
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{%M}"
+            },
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "c 05"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "a 23 b"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{%M}"
+            },
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "c 05"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "a 03 b"
+            },
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{%M}"
+            },
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "c 05"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "a 23 b"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{%M}"
+            },
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "c 05"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "a 03 b"
+            },
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{%M}"
+            },
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "c 05"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "a 03 b"
+            },
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{%M}"
+            },
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "c 05"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{%H:%M}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{%H:%M}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "<span>{%H:%M}</span>",
+      "label_alt": "<span>{%H:%M}</span>",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_20",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{%H:%M}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "{%H:%M}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%H:%M}"
+        },
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{icon}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "23:59"
+        },
+        {
+          "class": "icon clock_23",
+          "hidden": false,
+          "text": ""
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%H:%M}<span>{icon}</span>",
+      "label_alt": "{%H:%M}<span>{icon}</span>",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_21",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "23:59"
+            },
+            {
+              "class": "icon alt clock_23",
+              "hidden": false,
+              "text": ""
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "23:59"
+            },
+            {
+              "class": "icon clock_23",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "03:04"
+            },
+            {
+              "class": "icon alt clock_03",
+              "hidden": false,
+              "text": ""
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "23:59"
+            },
+            {
+              "class": "icon clock_23",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "03:04"
+            },
+            {
+              "class": "icon alt clock_03",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "03:04"
+            },
+            {
+              "class": "icon clock_03",
+              "hidden": false,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{alarm} {%H:%M}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": " 23:59"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{alarm} {%H:%M}",
+      "label_alt": "{alarm} {%H:%M}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_22",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": " 23:59"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": " 23:59"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": " 03:04"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": " 23:59"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": " 03:04"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": " 03:04"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{icon}{%H}{alarm}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "23"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{icon}{%H}{alarm}",
+      "label_alt": "{icon}{%H}{alarm}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_23",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "23"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "23"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "03"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "23"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "03"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "03"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%Y\n%m}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "{%Y\n%m}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%Y\n%m}",
+      "label_alt": "{%Y\n%m}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_24",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "{%Y\n%m}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%Y\n%m}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "{%Y\n%m}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "{%Y\n%m}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "{%Y\n%m}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "{%Y\n%m}"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%y%%%d}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "26%28"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%y%%%d}",
+      "label_alt": "{%y%%%d}",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_25",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "26%28"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "26%28"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "26%02"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "26%28"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "26%02"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "26%02"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{%A, %B %d, %Y}\u00e9"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget clock-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label clock_23",
+          "hidden": false,
+          "text": "Wednesday, October 28, 2026\u00e9"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "calendar": {
+        "alignment": "center",
+        "blur": true,
+        "direction": "down",
+        "extended": false,
+        "round_corners": true,
+        "show_holidays": false,
+        "show_week_numbers": true,
+        "show_years": true
+      },
+      "callbacks": {
+        "on_left": "toggle_calendar",
+        "on_middle": "toggle_label",
+        "on_right": "context_menu"
+      },
+      "label": "{%A, %B %d, %Y}\u00e9",
+      "label_alt": "{%A, %B %d, %Y}\u00e9",
+      "timezones": [
+        "UTC"
+      ]
+    },
+    "scenario": "format_26",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_23",
+              "hidden": false,
+              "text": "Wednesday, October 28, 2026\u00e9"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "Wednesday, October 28, 2026\u00e9"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": false,
+              "text": "Friday, January 02, 2026\u00e9"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_23",
+              "hidden": true,
+              "text": "Wednesday, October 28, 2026\u00e9"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "time": "2026-01-02T03:04:05.000007"
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt clock_03",
+              "hidden": true,
+              "text": "Friday, January 02, 2026\u00e9"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget clock-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label clock_03",
+              "hidden": false,
+              "text": "Friday, January 02, 2026\u00e9"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      }
+    ],
+    "widget": "clock"
+  }
+]
