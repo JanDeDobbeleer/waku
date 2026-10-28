@@ -102,3 +102,22 @@ Captures were visually identical except for the live values (the island width fo
 Python was restored on the live config afterwards. Popups, clicks and the 30-minute log comparison are
 still not signed off.
 | Full parity | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING |
+
+### Full-config run (2026-10-28)
+
+All 14 configured widgets, live `config.yaml` and `styles.css` (hashes unchanged afterwards), release
+build from `dist\msvc2022_arm64` at `0da59e5`, on **battery** (not AC), one 5-minute run each after
+the swap settled, native launched through Explorer so the systray hook injected.
+
+| Metric | Python 2.0.8 | Native |
+| --- | --- | --- |
+| Private bytes, median (MiB) | 126.0 | 49.9 |
+| Idle CPU (% of one core) | 2.57 | 1.41 |
+| Handles / threads at end | 1,155 / 47 | 1,321 / 37 |
+| Readiness line after start (s) | 2.8 | 3.0 |
+
+The native bar rendered all widgets (workspaces, taskbar icons, clock, github, notifications, cpu,
+memory, bluetooth, systray) and the tray hook loaded in `explorer.exe`. No warnings other than
+DirectWrite font-fallback lines for bitmap fonts. Not checked: popups, clicks, the 30-minute log,
+and AC power. `yasbc-native.exe` is not in `dist`, so the swap force-killed native instead of
+stopping it through its CLI.
