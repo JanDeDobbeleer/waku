@@ -132,7 +132,7 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 
 | # | Phase | Delivers | Touches Explorer | Size |
 |---|---|---|---|---|
-| 1 | Extract and test | `platform/systray_click` (pure message function), `TrayIconRegistry` (identity, filter, stale sweep), `appDataDir` parameter. The Widgets build switches to them; its tests stay green. | no | M |
+| 1 | Extract and test | **Done** (`d74eff5`, `93eff1f`). `platform/systray_click` (`sendTrayAction`, `sendTrayNotify`), `TrayIconRegistry` (identity, filter, stale sweep), `savedStateFor`, `appDataDir(folder)`. The Widgets build uses them; its 49 systray tests and the full suite (832) pass unchanged; 42 new tests. | no | M |
 | 2 | `Systray` and the model | singleton, `TrayIconModel`, the image provider (with a changing-icon test), "unavailable" states; tests with a fake `TrayHost` and `TrayWindowApi` (add, update, delete, filter, stale, click messages). | no | M |
 | 3 | `TrayPins` | pinned and unpinned models, order, move, per-screen persistence; tests with a temp state dir and the existing state vectors. | no | S |
 | 4 | `Tray` widget | pinned row, unpinned inline and popup, chevron, tooltips, click, modifier pin, the icon menu (pin, unpin, move, refresh); offscreen tests with the fake host injected through a test seam. | no | L |
