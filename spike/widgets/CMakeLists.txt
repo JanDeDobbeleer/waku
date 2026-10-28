@@ -15,4 +15,4 @@ qt_add_qml_module(barnacle_widgets
     Media.qml
     Workspaces.qml
 )
-target_link_libraries(barnacle_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE barnacle_services)
+target_link_libraries(barnacle_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE barnacle_bar barnacle_services)

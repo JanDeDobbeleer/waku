@@ -12,6 +12,7 @@
 
 #include "core/bar/app_bar.h"
 #include "spike/bar/bar_config.h"
+#include "spike/bar/bar_theme.h"
 
 class QQmlEngine;
 class QQuickWindow;
@@ -21,8 +22,9 @@ namespace barnacle {
 
 // Builds the bars declared in <config home>\bar.qml and keeps them up to date.
 //
-// reload() first checks bar.qml in a throwaway engine (it compiles, its types exist, its root is a
-// Config). Only then are the current windows replaced by one window per bar and matching screen.
+// reload() first checks bar.qml and theme.qml in a throwaway engine (they compile, their types
+// exist, their roots are a Config and a ThemeSpec). Only then are the Theme singleton filled and
+// the current windows replaced by one window per bar and matching screen.
 // A file that fails the check leaves the previous bars in place: `error` holds the first message
 // (BarWindow shows it as a pill) and the full list goes to the log. If the very first load fails,
 // or the check passes but building the windows still fails, there are no bars to keep, so a
@@ -51,6 +53,8 @@ class BarHost : public QObject {
   struct Options {
     QString configHome;
     QString entryFile = QStringLiteral("bar.qml");
+    // Optional: a ThemeSpec that sets the look; missing means the defaults.
+    QString themeFile = QStringLiteral("theme.qml");
     // Reserving the work area changes the user's desktop, so it needs this on top of a bar's own
     // `reserveSpace` (the `--register-app-bar` switch).
     bool allowReserve = false;
@@ -97,14 +101,19 @@ class BarHost : public QObject {
     std::vector<Entry> entries;
   };
 
-  // Loads `url` in a throwaway engine and checks it: compiles, root is a Config.
-  bool validate(const QUrl& url, QString* error);
+  // Loads `url` in a throwaway engine and checks it: it compiles and its root is an `expected`.
+  bool validate(const QUrl& url, const QMetaObject& expected, QString* error);
+  // theme.qml, when there is one, passes the same check (as a ThemeSpec).
+  bool validateTheme(QString* error);
+  // Copies theme.qml (or the defaults, when there is none) into the Theme singleton.
+  void applyTheme();
   std::unique_ptr<Loaded> build(const QUrl& url, QString* error);
   void install(std::unique_ptr<Loaded> loaded);
   void present(Entry& entry);
   void setError(const QString& error);
   void refreshWatches();
   QString entryPath() const;
+  QString themePath() const;
 
   QQmlEngine* engine_;
   Options options_;

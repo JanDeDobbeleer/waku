@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Window
+import barnacle
 import barnacle.services as S
 
 // The workspaces of this bar's monitor, from whichever tiling window manager is running (komorebi
@@ -11,13 +12,13 @@ import barnacle.services as S
 Row {
     id: root
 
-    property int pillWidth: 26
+    property int pillWidth: Theme.pillHeight + 2
     property bool hideEmpty: false
     property bool scrollable: true
-    property color focusedFill: "#885b8def"
-    property color activeFill: "#55ffffff"
-    property color usedFill: "#33ffffff"
-    property color emptyFill: "#18ffffff"
+    property color focusedFill: Theme.accentFill
+    property color activeFill: Theme.fillActive
+    property color usedFill: Theme.fillUsed
+    property color emptyFill: Theme.fillEmpty
 
     // HMONITOR of the bar this widget is in (set on the bar's window by the host).
     readonly property real handle: Window.window ? Window.window.monitorHandle : 0
@@ -38,8 +39,8 @@ Row {
 
             visible: !root.hideEmpty || modelData.active || modelData.hasWindows
             width: root.pillWidth
-            height: 24
-            radius: height / 2
+            height: Theme.pillHeight
+            radius: Theme.radius >= 0 ? Math.min(Theme.radius, height / 2) : height / 2
             color: modelData.focused ? root.focusedFill
                    : modelData.active ? root.activeFill
                    : modelData.hasWindows ? root.usedFill : root.emptyFill
@@ -52,8 +53,9 @@ Row {
 
             Text {
                 anchors.centerIn: parent
-                color: "white"
-                font.pixelSize: 12
+                color: Theme.text
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.smallFontSize
                 text: modelData.label
             }
 

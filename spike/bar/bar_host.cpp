@@ -73,6 +73,10 @@ QString BarHost::entryPath() const {
   return QDir(options_.configHome).filePath(options_.entryFile);
 }
 
+QString BarHost::themePath() const {
+  return QDir(options_.configHome).filePath(options_.themeFile);
+}
+
 QList<QQuickWindow*> BarHost::windows() const {
   QList<QQuickWindow*> list;
   if (loaded_) {
@@ -89,7 +93,7 @@ void BarHost::setError(const QString& error) {
   emit errorChanged();
 }
 
-bool BarHost::validate(const QUrl& url, QString* error) {
+bool BarHost::validate(const QUrl& url, const QMetaObject& expected, QString* error) {
   // A throwaway engine: no cache can serve a stale file, and nothing the current bars use is
   // touched. The layouts are lazy components, so creating the config builds no widgets and starts
   // no service; it only proves the file compiles, its types exist and its root is a Config.
@@ -109,12 +113,38 @@ bool BarHost::validate(const QUrl& url, QString* error) {
     *error = lines.value(0, QStringLiteral("the config could not be created"));
     return false;
   }
-  if (!qobject_cast<Config*>(root.get())) {
-    *error = QStringLiteral("%1 must declare a Config at its root").arg(options_.entryFile);
+  if (!root->metaObject()->inherits(&expected)) {
+    *error = QStringLiteral("%1 must declare a %2 at its root")
+                 .arg(QFileInfo(url.toLocalFile()).fileName(),
+                      QString::fromLatin1(expected.className()).section(QStringLiteral("::"), -1));
     qWarning().noquote() << "barnacle:" << *error;
     return false;
   }
   return true;
+}
+
+bool BarHost::validateTheme(QString* error) {
+  if (!QFileInfo::exists(themePath())) return true;
+  return validate(QUrl::fromLocalFile(themePath()), ThemeSpec::staticMetaObject, error);
+}
+
+void BarHost::applyTheme() {
+  auto* theme =
+      engine_->singletonInstance<Theme*>(QStringLiteral("barnacle"), QStringLiteral("Theme"));
+  if (!theme) return;
+  const ThemeSpec defaults;
+  if (!QFileInfo::exists(themePath())) {
+    theme->assignFrom(defaults);
+    return;
+  }
+  // Declared in this order so the object is destroyed before its component.
+  QQmlComponent component(engine_, QUrl::fromLocalFile(themePath()));
+  std::unique_ptr<QObject> root(component.isError() ? nullptr : component.create());
+  if (auto* spec = qobject_cast<ThemeSpec*>(root.get())) {
+    theme->assignFrom(*spec);
+  } else {
+    theme->assignFrom(defaults);
+  }
 }
 
 bool BarHost::reload() {
@@ -124,11 +154,13 @@ bool BarHost::reload() {
     error = QStringLiteral("%1 not found in %2")
                 .arg(options_.entryFile, QDir::toNativeSeparators(options_.configHome));
     qWarning().noquote() << "barnacle:" << error;
-  } else if (validate(QUrl::fromLocalFile(entryPath()), &error)) {
+  } else if (validate(QUrl::fromLocalFile(entryPath()), Config::staticMetaObject, &error) &&
+             validateTheme(&error)) {
     // The config is good, so the old bars can go. Qt only reloads changed files when no object
     // made from the old ones is alive (see QQmlEngine::clearComponentCache).
     loaded_.reset();
     engine_->clearComponentCache();
+    applyTheme();
     next = build(QUrl::fromLocalFile(entryPath()), &error);
   }
 

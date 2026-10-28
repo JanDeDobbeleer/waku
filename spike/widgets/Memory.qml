@@ -1,4 +1,5 @@
 import QtQuick
+import barnacle
 import barnacle.services as S
 
 // Memory use.
@@ -13,7 +14,7 @@ Pill {
     property int interval: 2000
     property string format: "RAM %1%"
     property real warnAbove: 90
-    property color warnFill: "#55e5484d"
+    property color warnFill: Theme.warnFill
 
     property S.Memory source: S.Memory {
         interval: root.interval
@@ -24,7 +25,7 @@ Pill {
     }
 
     interactive: false
-    fill: source.percent >= warnAbove ? warnFill : "#22ffffff"
+    fill: source.percent >= warnAbove ? warnFill : Theme.fill
     text: source.ready
           ? format.replace("%1", Math.round(source.percent)).replace("%2", gib(source.used)).replace("%3", gib(source.total))
           : format.replace("%1", "…").replace("%2", "…").replace("%3", "…")

@@ -21,8 +21,9 @@ Window {
     visible: false
 
     Rectangle {
+        objectName: "background"
         anchors.fill: parent
-        color: win.spec.background
+        color: win.spec.hasBackground ? win.spec.background : Theme.surface
     }
 
     Loader {
@@ -40,7 +41,7 @@ Window {
         width: Math.min(errorText.implicitWidth + 20, parent.width - 24)
         height: 24
         radius: 12
-        color: "#e5484d"
+        color: Theme.warn
 
         Text {
             id: errorText
@@ -48,7 +49,8 @@ Window {
             width: parent.width - 20
             elide: Text.ElideRight
             color: "white"
-            font.pixelSize: 12
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.smallFontSize
             text: "config error: " + win.host.error
         }
     }

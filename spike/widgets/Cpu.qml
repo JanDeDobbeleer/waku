@@ -1,4 +1,5 @@
 import QtQuick
+import barnacle
 import barnacle.services as S
 
 // Processor load.
@@ -12,13 +13,13 @@ Pill {
     property int interval: 2000
     property string format: "CPU %1%"
     property real warnAbove: 90
-    property color warnFill: "#55e5484d"
+    property color warnFill: Theme.warnFill
 
     property S.Cpu source: S.Cpu {
         interval: root.interval
     }
 
     interactive: false
-    fill: source.percent >= warnAbove ? warnFill : "#22ffffff"
+    fill: source.percent >= warnAbove ? warnFill : Theme.fill
     text: format.replace("%1", source.ready ? Math.round(source.percent) : "…")
 }

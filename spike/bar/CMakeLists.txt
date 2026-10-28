@@ -10,6 +10,8 @@ qt_add_qml_module(barnacle_bar
     FallbackConfig.qml
   SOURCES
     bar_config.h
+    bar_theme.h
+    bar_theme.cpp
     screen_match.h
     screen_match.cpp
     bar_host.h

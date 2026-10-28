@@ -1,4 +1,5 @@
 import QtQuick
+import barnacle
 
 // The building block of the built-in widgets, and of yours: a rounded background with optional
 // text and any extra items beside it.
@@ -10,16 +11,16 @@ import QtQuick
 //
 // Items declared inside a Pill sit in a row after the text; give them
 // `anchors.verticalCenter: parent.verticalCenter`. Static widgets set `interactive: false` to
-// drop the hover highlight and the click handlers.
+// drop the hover highlight and the click handlers. Colours, font and size come from Theme.
 Rectangle {
     id: root
 
     property string text: ""
-    property color textColor: "white"
-    property int fontSize: 13
-    property int padding: 10
-    property color fill: "#22ffffff"
-    property color hoverFill: "#44ffffff"
+    property color textColor: Theme.text
+    property int fontSize: Theme.fontSize
+    property int padding: Theme.padding
+    property color fill: Theme.fill
+    property color hoverFill: Theme.fillHover
     property bool interactive: true
 
     default property alias content: row.data
@@ -30,8 +31,8 @@ Rectangle {
     signal scrolled(int delta)
 
     implicitWidth: row.implicitWidth + 2 * padding
-    implicitHeight: 24
-    radius: height / 2
+    implicitHeight: Theme.pillHeight
+    radius: Theme.radius >= 0 ? Math.min(Theme.radius, height / 2) : height / 2
     color: interactive && hover.hovered ? hoverFill : fill
 
     Behavior on color {
@@ -49,6 +50,7 @@ Rectangle {
             visible: root.text !== ""
             anchors.verticalCenter: parent.verticalCenter
             color: root.textColor
+            font.family: Theme.fontFamily
             font.pixelSize: root.fontSize
             text: root.text
         }

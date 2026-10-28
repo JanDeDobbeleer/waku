@@ -7,8 +7,9 @@ Config {
         layout: BarLayout {
             start: [
                 Text {
-                    color: "white"
-                    font.pixelSize: 13
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSize
                     text: "barnacle"
                 }
             ]

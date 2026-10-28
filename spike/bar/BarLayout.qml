@@ -8,11 +8,12 @@ import QtQuick
 //         end:    [ Volume {}, Battery {} ]
 //     }
 //
-// A widget that sets `visible: false` takes no space. `spacing` and `padding` are in pixels.
+// A widget that sets `visible: false` takes no space. `spacing` (default Theme.spacing) and
+// `padding` are in pixels.
 Item {
     id: root
 
-    property int spacing: 12
+    property int spacing: Theme.spacing
     property int padding: 12
 
     // The widgets are parented straight into the rows, so they behave like ordinary children.

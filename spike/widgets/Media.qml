@@ -1,4 +1,5 @@
 import QtQuick
+import barnacle
 import barnacle.services as S
 
 // What is playing, with the album art the player delivered. A click plays or pauses, a right
@@ -35,6 +36,7 @@ Pill {
         width: Math.min(implicitWidth, root.maxWidth)
         elide: Text.ElideRight
         color: root.textColor
+        font.family: Theme.fontFamily
         font.pixelSize: root.fontSize
         text: (S.Media.playing ? root.playingGlyph : root.pausedGlyph) + " " + S.Media.title
               + (S.Media.artist ? " - " + S.Media.artist : "")

@@ -24,7 +24,9 @@ class Bar : public QObject {
   // Register as an app bar and reserve the work area (only when the host allows it).
   Q_PROPERTY(bool reserveSpace MEMBER reserveSpace_ NOTIFY changed FINAL)
   Q_PROPERTY(Backdrop backdrop MEMBER backdrop_ NOTIFY changed FINAL)
+  // Unset: the bar uses Theme.surface.
   Q_PROPERTY(QColor background MEMBER background_ NOTIFY changed FINAL)
+  Q_PROPERTY(bool hasBackground READ hasBackground NOTIFY changed FINAL)
   Q_PROPERTY(bool enabled MEMBER enabled_ NOTIFY changed FINAL)
   // What fills the bar; built once per screen. Usually a BarLayout.
   Q_PROPERTY(QQmlComponent* layout MEMBER layout_ NOTIFY changed FINAL)
@@ -43,6 +45,7 @@ class Bar : public QObject {
   bool reserveSpace() const { return reserveSpace_; }
   Backdrop backdrop() const { return backdrop_; }
   QColor background() const { return background_; }
+  bool hasBackground() const { return background_.isValid(); }
   bool enabled() const { return enabled_; }
   QQmlComponent* layout() const { return layout_; }
 
@@ -55,7 +58,7 @@ class Bar : public QObject {
   int height_ = 40;
   bool reserveSpace_ = false;
   Backdrop backdrop_ = None;
-  QColor background_{0x10, 0x10, 0x18, 0x66};
+  QColor background_;
   bool enabled_ = true;
   QQmlComponent* layout_ = nullptr;
 };

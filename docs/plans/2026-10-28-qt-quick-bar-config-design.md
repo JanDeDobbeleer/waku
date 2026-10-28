@@ -117,10 +117,41 @@ Rules the set follows:
 
 ## Theme
 
-`theme.qml` is an object with plain properties (`accent`, `surface`, `text`, `fontFamily`,
-`radius`, ...). The host loads it into a `Theme` singleton before any bar is built, so widgets
-read `Theme.accent`. Missing properties fall back to built-in defaults. This replaces CSS for
-colours and fonts; per-widget styling is a property on that widget.
+`theme.qml` is optional. Its root is a `ThemeSpec` with plain properties; the host copies them into
+the `Theme` singleton before it builds the bars, so widgets read `Theme.accent` and so on. A
+property the file does not name keeps its default, and removing the file (or a line) restores the
+default on the next reload. This replaces CSS for colours and fonts; per-widget styling is a
+property on that widget.
+
+```qml
+import barnacle
+ThemeSpec { accent: "#ff8800"; fontFamily: "Cascadia Code"; radius: 6 }
+```
+
+`spike/config/theme.qml` lists every property with its default.
+
+| Property | Default | Used for |
+|---|---|---|
+| `text`, `surface` | `#ffffff`, `#66101018` | text; the bar background (a `Bar` can set its own `background`) |
+| `accent`, `warn`, `good`, `caution` | `#5b8def`, `#e5484d`, `#38c172`, `#f0c36d` | focus; high load, low battery, errors; charging; a mode |
+| `fill`, `fillHover`, `fillActive`, `fillUsed`, `fillEmpty` | white at 13%, 27%, 33%, 20%, 9% | a widget's background: normal, hovered, shown, holding something, empty |
+| `accentFill`, `warnFill`, `goodFill`, `cautionFill` | read only | the colour above at a translucent alpha, for a widget background |
+| `fontFamily` | the system font | all text |
+| `fontSize`, `smallFontSize` | 13, 12 | text; workspace labels, error pill |
+| `pillHeight` | 24 | height of a `Pill` and of a workspace button |
+| `radius` | -1 | corner radius in pixels; negative is fully rounded, a large value is clamped to a full pill |
+| `padding`, `spacing` | 10, 12 | inside a widget; between widgets in a `BarLayout` |
+
+Design notes:
+
+- `Theme` and `ThemeSpec` share one base class that holds the properties, so a name exists once.
+  The host copies every writable property from the spec, which is why a removed line resets.
+- The theme is applied after the bars are checked and before they are built, and widgets bind to
+  it, so a change to the singleton also restyles live bars without a rebuild (the tests do this).
+- A broken `theme.qml` is a failed reload like a broken `bar.qml`: the previous bars and the
+  previous theme stay and the error pill says `theme.qml:LINE:COL: ...`.
+- Not in the theme yet: per-widget colours of custom widgets (they read `Theme.*` themselves),
+  light and dark variants, and named theme files to switch between.
 
 ## Errors and reload
 
