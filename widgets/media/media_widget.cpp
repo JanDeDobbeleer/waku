@@ -260,7 +260,7 @@ MediaMenuPopup::MediaMenuPopup(QWidget* anchor, bar::GlobalState& globalState, b
       roundCornersType_(roundCornersType),
       borderColor_(borderColor),
       globalState_(globalState) {
-  setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
+  setWindowFlags(Qt::Popup | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
                  Qt::NoDropShadowWindowHint);
   setAttribute(Qt::WA_DeleteOnClose);
 }

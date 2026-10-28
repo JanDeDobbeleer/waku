@@ -15,7 +15,10 @@ QPoint computePopupPosition(const QPoint& parentTopLeft, const QSize& parentSize
                             const QSize& popupSize, const QRect& screen, const QString& alignment,
                             const QString& direction, int offsetLeft, int offsetTop);
 
-// Frameless tool window anchored to a bar widget; position is recomputed when it resizes.
+// Frameless popup window anchored to a bar widget; position is recomputed when it resizes. It is a
+// Qt::Popup like Python's non-pinnable PopupWidget, so Qt grabs the mouse and a click anywhere
+// outside dismisses it (the click on the anchor only closes it). Pinnable subclasses switch to
+// Qt::Tool and close on WindowDeactivate unless pinned.
 class PopupWidget : public QWidget {
   Q_OBJECT
  public:

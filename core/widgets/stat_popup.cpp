@@ -5,6 +5,7 @@
 #include <QLinearGradient>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <algorithm>
 
@@ -163,6 +164,13 @@ void PinnablePopup::showEvent(QShowEvent* event) {
   if (blur_) {
     enableBlur(winId(), globalState_.isDark(), roundCorners_, roundCornersType_, borderColor_);
   }
+  // A Tool window only dismisses on WindowDeactivate, which never fires if it was not activated.
+  QTimer::singleShot(0, this, [this] {
+    if (isVisible()) {
+      raise();
+      activateWindow();
+    }
+  });
 }
 
 void PinnablePopup::mousePressEvent(QMouseEvent* event) {

@@ -33,7 +33,8 @@ QPoint computePopupPosition(const QPoint& parentTopLeft, const QSize& parentSize
 }
 
 PopupWidget::PopupWidget(QWidget* anchor)
-    : QWidget(anchor, Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint),
+    : QWidget(anchor, Qt::Popup | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint |
+                          Qt::NoDropShadowWindowHint),
       anchor_(anchor) {
   setAttribute(Qt::WA_TranslucentBackground);
   setProperty("class", "popup");
