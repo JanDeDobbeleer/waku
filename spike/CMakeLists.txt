@@ -37,10 +37,14 @@ target_link_libraries(barnacle_services PUBLIC Qt6::Qml yasb_platform yasb_widge
 # barnacle: Config, Bar, BarLayout and the host.
 add_subdirectory(bar)
 
+# barnacle.widgets: the built-in widgets.
+add_subdirectory(widgets)
+
 qt_add_executable(barnacle-spike WIN32 main.cpp)
 target_compile_definitions(barnacle-spike PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX
   SPIKE_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config")
 target_link_libraries(barnacle-spike PRIVATE
-  barnacle_bar barnacle_barplugin barnacle_services barnacle_servicesplugin)
+  barnacle_bar barnacle_barplugin barnacle_widgets barnacle_widgetsplugin
+  barnacle_services barnacle_servicesplugin)
 set_target_properties(barnacle-spike PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

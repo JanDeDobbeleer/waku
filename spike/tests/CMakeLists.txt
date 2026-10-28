@@ -14,12 +14,14 @@ add_executable(barnacle_services_tests
   test_workspaces.cpp
   test_screen_match.cpp
   test_bar_host.cpp
+  test_builtin_widgets.cpp
 )
 target_compile_definitions(barnacle_services_tests PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 # The static QML plugins are linked so `import barnacle` resolves in the test engines.
 target_link_libraries(barnacle_services_tests PRIVATE
-  barnacle_bar barnacle_barplugin barnacle_services barnacle_servicesplugin
+  barnacle_bar barnacle_barplugin barnacle_widgets barnacle_widgetsplugin
+  barnacle_services barnacle_servicesplugin
   GTest::gtest Qt6::Test nlohmann_json::nlohmann_json)
 set_target_properties(barnacle_services_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
@@ -30,6 +32,7 @@ add_custom_command(TARGET barnacle_services_tests POST_BUILD
           --no-translations --no-system-d3d-compiler --no-opengl-sw --no-compiler-runtime
           --include-plugins qoffscreen
           --qmldir "${CMAKE_SOURCE_DIR}/spike/bar"
+          --qmldir "${CMAKE_SOURCE_DIR}/spike/widgets"
           --dir "$<TARGET_FILE_DIR:barnacle_services_tests>" "$<TARGET_FILE:barnacle_services_tests>"
   VERBATIM)
 

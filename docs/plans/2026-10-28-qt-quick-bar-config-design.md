@@ -88,6 +88,33 @@ A widget is any QML `Item` with an `implicitWidth` and `implicitHeight`. Convent
 - Use `Theme` for colours and fonts so a theme change restyles every widget.
 - Do not block: long work goes through `Process` or a service.
 
+### Built-in widgets (`barnacle.widgets`)
+
+Plain QML on top of `barnacle.services`; a user can copy one into `widgets/` and change it.
+
+| Widget | Shows | Options |
+|---|---|---|
+| `Pill` | the building block: rounded background, optional text, extra items | `text`, `fill`, `hoverFill`, `textColor`, `fontSize`, `padding`, `interactive`; signals `clicked`, `rightClicked`, `scrolled(delta)` |
+| `Clock` | date and time | `format` (Qt date-time format); redraws each minute, or each second if the format has seconds |
+| `Cpu` | processor load | `format` (`%1` percent), `interval`, `warnAbove`, `warnFill` |
+| `Memory` | memory use | `format` (`%1` percent, `%2` used GiB, `%3` total GiB), `interval`, `warnAbove`, `warnFill` |
+| `Battery` | charge; hidden without a battery | `format`, `chargingFormat` (`%1` percent), `interval`, `lowBelow`, `lowFill`, `chargingFill` |
+| `Volume` | output volume; wheel changes it, click mutes, right click opens the sound settings | `step`, `format` (`%1` percent), `mutedFormat` |
+| `Media` | now playing with album art; click plays or pauses, right click skips, wheel steps; hidden without a player | `maxWidth`, `showArt`, `playingGlyph`, `pausedGlyph` |
+| `Workspaces` | this monitor's workspaces from komorebi or GlazeWM | `hideEmpty`, `scrollable`, `pillWidth`, the four fills |
+
+Rules the set follows:
+
+- A widget is a `Pill` (or a row of them) so that spacing, height (24 px) and the hover highlight
+  are the same everywhere. Colours are properties with defaults today; the `Theme` singleton will
+  feed those defaults later without changing any config.
+- Text options are format strings with `%1`, `%2`, `%3` placeholders, not a template language.
+- A widget that has nothing to show hides itself with `visible: false` and leaves the layout.
+- The widgets share names with services (`Cpu`, `Memory`, `Battery`, `Media`, `Workspaces`), so the
+  module imports the services as `import barnacle.services as S` and writes `S.Cpu {}`. A user
+  config imports `barnacle.widgets`; a custom widget that needs services imports
+  `barnacle.services` and avoids those five names, or imports it `as S` too.
+
 ## Theme
 
 `theme.qml` is an object with plain properties (`accent`, `surface`, `text`, `fontFamily`,
