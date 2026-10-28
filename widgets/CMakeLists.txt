@@ -53,24 +53,12 @@ add_library(yasb_widgets STATIC
   media/media_widget.h
   media/media_widget.cpp
   media/media.qrc
-  notifications/notifications_widget.h
-  notifications/notifications_widget.cpp
-  wallpapers/gallery.h
-  wallpapers/gallery.cpp
-  wallpapers/gallery_layout.h
-  wallpapers/gallery_layout.cpp
-  wallpapers/thumbnail_cache.h
-  wallpapers/thumbnail_cache.cpp
-  wallpapers/wallpaper_engine.h
-  wallpapers/wallpaper_engine.cpp
-  wallpapers/wallpaper_files.h
-  wallpapers/wallpaper_files.cpp
-  wallpapers/wallpaper_layout.h
-  wallpapers/wallpaper_layout.cpp
-  wallpapers/wallpaper_manager.h
-  wallpapers/wallpaper_manager.cpp
-  wallpapers/wallpapers_widget.h
-  wallpapers/wallpapers_widget.cpp
+  taskbar/taskbar_icons.h
+  taskbar/taskbar_icons.cpp
+  taskbar/taskbar_preview.h
+  taskbar/taskbar_preview.cpp
+  taskbar/taskbar_widget.h
+  taskbar/taskbar_widget.cpp
 )
 set_target_properties(yasb_widgets PROPERTIES AUTORCC ON)
 target_include_directories(yasb_widgets PUBLIC ${CMAKE_SOURCE_DIR})

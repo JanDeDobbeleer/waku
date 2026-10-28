@@ -5,7 +5,7 @@
 #include "widgets/network_widgets.h"
 #include "widgets/notifications/notifications_widget.h"
 #include "widgets/stat_widgets.h"
-#include "widgets/wallpapers/wallpapers_widget.h"
+#include "widgets/taskbar/taskbar_widget.h"
 
 namespace yasb::app {
 
@@ -14,8 +14,7 @@ Runtime::Runtime() {
   widgets::registerNetworkWidgets(widgetRegistry_);
   widgets::registerKomorebiWidgets(widgetRegistry_);
   widgets::registerMediaWidgets(widgetRegistry_);
-  widgets::registerNotificationsWidgets(widgetRegistry_);
-  widgets::registerWallpaperWidgets(widgetRegistry_);
+  widgets::registerTaskbarWidget(widgetRegistry_);
 }
 
 Runtime::~Runtime() { stop(); }
