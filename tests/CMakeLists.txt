@@ -67,3 +67,8 @@ target_sources(yasb_tests PRIVATE
   app/test_log.cpp
   app/test_single_instance.cpp
 )
+
+# --- platform: GlazeWM WebSocket client against a loopback fake server ---
+find_package(Qt6 REQUIRED COMPONENTS Network)
+target_sources(yasb_tests PRIVATE platform/test_glazewm_socket.cpp)
+target_link_libraries(yasb_tests PRIVATE Qt6::Network)
