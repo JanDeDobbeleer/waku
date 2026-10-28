@@ -11,6 +11,9 @@
 #include "core/config/options/control_center.h"
 #include "core/config/options/cpu.h"
 #include "core/config/options/github.h"
+#include "core/config/options/glazewm_binding_mode.h"
+#include "core/config/options/glazewm_tiling_direction.h"
+#include "core/config/options/glazewm_workspaces.h"
 #include "core/config/options/komorebi_active_layout.h"
 #include "core/config/options/komorebi_workspaces.h"
 #include "core/config/options/media.h"
@@ -38,7 +41,9 @@ using TypedWidgetOptions =
                  config::options::WifiConfig, config::options::BluetoothConfig,
                  config::options::NotificationsConfig, config::options::WallpapersConfig,
                  config::options::TaskbarConfig, config::options::ControlCenterConfig,
-                 config::options::SystrayWidgetConfig>;
+                 config::options::SystrayWidgetConfig, config::options::GlazewmWorkspacesConfig,
+                 config::options::GlazewmBindingModeConfig,
+                 config::options::GlazewmTilingDirectionConfig>;
 
 struct WidgetContext {
   std::string name;

@@ -65,6 +65,18 @@ BaseWidget* WidgetBuilder::buildWidget(const std::string& name, const QString& s
       auto options = config_.widgetOptions<config::options::ActiveLayoutConfig>(name);
       if (!options) return skip(invalidOptions_, "has invalid options");
       typedOptions = std::move(*options);
+    } else if (entry->type == "glazewm.workspaces.GlazewmWorkspacesWidget") {
+      auto options = config_.widgetOptions<config::options::GlazewmWorkspacesConfig>(name);
+      if (!options) return skip(invalidOptions_, "has invalid options");
+      typedOptions = std::move(*options);
+    } else if (entry->type == "glazewm.binding_mode.GlazewmBindingModeWidget") {
+      auto options = config_.widgetOptions<config::options::GlazewmBindingModeConfig>(name);
+      if (!options) return skip(invalidOptions_, "has invalid options");
+      typedOptions = std::move(*options);
+    } else if (entry->type == "glazewm.tiling_direction.GlazewmTilingDirectionWidget") {
+      auto options = config_.widgetOptions<config::options::GlazewmTilingDirectionConfig>(name);
+      if (!options) return skip(invalidOptions_, "has invalid options");
+      typedOptions = std::move(*options);
     } else if (entry->type == "yasb.clock.ClockWidget") {
       auto options = config_.widgetOptions<config::options::ClockConfig>(name);
       if (!options) return skip(invalidOptions_, "has invalid options");
