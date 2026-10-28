@@ -2,21 +2,28 @@
 #include <crtdbg.h>
 #include <gtest/gtest.h>
 
-#include <QCoreApplication>
+#include <QGuiApplication>
 #include <memory>
 
 namespace {
 
+// QGuiApplication on the offscreen platform with the software scene graph: the bar tests build
+// real QQuickWindows without a display or a GPU.
 class QtEnvironment final : public testing::Environment {
  public:
-  void SetUp() override { app_ = std::make_unique<QCoreApplication>(argc_, argv_); }
+  void SetUp() override {
+    qputenv("QT_QPA_PLATFORM", "offscreen");
+    qputenv("QT_QUICK_BACKEND", "software");
+    qputenv("QML_DISABLE_DISK_CACHE", "1");  // as the app: edits reload from the source file
+    app_ = std::make_unique<QGuiApplication>(argc_, argv_);
+  }
   void TearDown() override { app_.reset(); }
 
  private:
   int argc_ = 1;
   char name_[24] = "barnacle_services_tests";
   char* argv_[2] = {name_, nullptr};
-  std::unique_ptr<QCoreApplication> app_;
+  std::unique_ptr<QGuiApplication> app_;
 };
 
 }  // namespace

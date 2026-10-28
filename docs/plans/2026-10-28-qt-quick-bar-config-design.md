@@ -54,9 +54,9 @@ Config {
         backdrop: Bar.Blur            // Bar.None | Bar.Blur | Bar.Mica
 
         layout: BarLayout {           // instantiated once per matching screen
-            left:   [ Workspaces {}, ActiveWindow {} ]
+            start:  [ Workspaces {}, ActiveWindow {} ]
             center: [ Clock { format: "ddd d MMM  HH:mm" } ]
-            right:  [
+            end:    [
                 Media {},
                 Volume { step: 5 },
                 Battery { visible: Battery.available },
@@ -71,7 +71,7 @@ Config {
 - `Bar` is a declaration, not a window. For each matching screen the host creates one frameless
   window and builds `layout` inside it. `Window.window.monitorHandle` and `screen` are available
   to anything inside.
-- `BarLayout` is an `Item` with three list properties, `left`, `center` and `right`. A widget
+- `BarLayout` is an `Item` with three list properties, `start`, `center` and `end`. A widget
   that sets `visible: false` leaves the layout (the spike already does this).
 - Widget options are ordinary QML properties and signal handlers:
   `Clock { format: "HH:mm"; onClicked: Shell.run("calc.exe") }`.
@@ -97,14 +97,29 @@ colours and fonts; per-widget styling is a property on that widget.
 
 ## Errors and reload
 
-- The host watches the config home. On any change it re-evaluates `bar.qml` in a new engine
-  context and swaps the bars only when that succeeds. A syntax or type error keeps the previous
-  bars and shows a `ConfigError` pill (and logs the file, line and message) instead of leaving
-  the desktop without a bar.
-- A single broken widget file fails only that widget: its `Loader` shows an error placeholder.
+- The host watches the config home (every `*.qml` file and folder under it, debounced). On a
+  change it first checks `bar.qml` in a throwaway engine: it must compile (so every widget file it
+  imports compiles too), every type must exist and the root must be a `Config`. Creating the
+  config there builds no widgets and starts no service, because a `Bar`'s `layout` is a lazy
+  component. Only a config that passes replaces the current bars.
+- A config that fails the check keeps the previous bars. The first error (`bar.qml:32:1: ...`)
+  shows as a pill in them and the full list goes to the log. Fixing the file clears the pill.
+- If the very first load fails there are no bars to keep, so a built-in fallback bar shows the
+  error. The same happens in the rare case that the check passes but building the windows fails.
+- Why a throwaway engine and not "build the new bars next to the old ones": Qt reloads a changed
+  file only when no object made from the old components is alive (`clearComponentCache()` drops
+  unreferenced components only). Measured in the spike: a directory-imported widget file kept its
+  old content while the old bars were alive. So the old bars are torn down after the check, not
+  before it.
+- A broken widget file is a broken config (the whole reload is rejected), not one broken widget:
+  widgets are instantiated by the layout, so a missing or invalid widget type fails the compile.
+  Errors that only appear at run time inside a widget are logged by the QML engine and do not stop
+  the bar.
+- The QML disk cache is off: a config is edited by hand and a cached compilation must never
+  outlive an edit.
 - `qmllint` works on the config home, so editors give completion and diagnostics for free.
-- `--safe` starts with the built-in layout and ignores the config home.
-- `yasbc reload` forces a reload.
+- `--safe` starts with the built-in layout and ignores the config home (not built yet).
+- `barnacle reload` forces a reload (not built yet).
 
 ## Trust and safety
 
