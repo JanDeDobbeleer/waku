@@ -1,0 +1,69 @@
+#include <QCommandLineParser>
+#include <QGuiApplication>
+#include <QQmlComponent>
+#include <QQmlContext>
+#include <QQmlEngine>
+#include <QQuickWindow>
+#include <QScreen>
+#include <memory>
+#include <vector>
+
+#include "core/bar/app_bar.h"
+#include "core/widgets/backdrop.h"
+#include "spike/host.h"
+
+namespace {
+constexpr int kBarHeight = 40;
+}
+
+int main(int argc, char* argv[]) {
+  // A transparent, blurred window needs an alpha swap chain.
+  QQuickWindow::setDefaultAlphaBuffer(true);
+  QGuiApplication app(argc, argv);
+
+  QCommandLineParser parser;
+  QCommandLineOption widgetsOpt(QStringLiteral("widgets"), QStringLiteral("User widget folder."),
+                                QStringLiteral("dir"), QStringLiteral(SPIKE_WIDGETS_DIR));
+  QCommandLineOption appBarOpt(QStringLiteral("register-app-bar"),
+                               QStringLiteral("Reserve screen work area."));
+  parser.addOption(widgetsOpt);
+  parser.addOption(appBarOpt);
+  parser.process(app);
+
+  QQmlEngine engine;
+  spike::Host host(&engine, parser.value(widgetsOpt));
+  engine.rootContext()->setContextProperty(QStringLiteral("Host"), &host);
+
+  QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/YasbSpike/qml/Bar.qml")));
+  std::vector<std::unique_ptr<QObject>> bars;
+  std::vector<std::unique_ptr<yasb::bar::IAppBar>> appBars;
+
+  for (QScreen* screen : QGuiApplication::screens()) {
+    std::unique_ptr<QObject> obj(component.createWithInitialProperties(
+        {{QStringLiteral("screen"), QVariant::fromValue(screen)},
+         {QStringLiteral("barHeight"), kBarHeight}}));
+    auto* window = qobject_cast<QQuickWindow*>(obj.get());
+    if (!window) {
+      qCritical().noquote() << component.errorString();
+      return 1;
+    }
+    window->show();
+    const auto hwnd = static_cast<quintptr>(window->winId());
+    yasb::widgets::enableBlur(hwnd, true, true);
+
+    auto appBar = yasb::bar::makeWin32AppBar();
+    yasb::bar::AppBarRequest req;
+    req.hwnd = hwnd;
+    req.height = kBarHeight;
+    req.screen = screen;
+    req.reserveSpace = parser.isSet(appBarOpt);
+    req.alwaysOnTop = true;
+    appBar->create(req);
+    appBars.push_back(std::move(appBar));
+    bars.push_back(std::move(obj));
+  }
+
+  const int rc = app.exec();
+  for (auto& appBar : appBars) appBar->remove();
+  return rc;
+}

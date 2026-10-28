@@ -62,6 +62,7 @@ add_subdirectory(platform)
 add_subdirectory(core)
 add_subdirectory(widgets)
 add_subdirectory(app)
+add_subdirectory(spike)
 
 add_executable(yasbc-native tools/yasbc-native/main.cpp)
 target_link_libraries(yasbc-native PRIVATE yasb_options)
