@@ -5,7 +5,7 @@
 
 #include "widgets/systray/icon_scale.h"
 
-using yasb::widgets::lanczosResize;
+using yasb::widgets::lanczosScaleIcon;
 using yasb::widgets::scaleTrayIcon;
 using yasb::widgets::sharpen;
 
@@ -33,7 +33,7 @@ TEST(TrayIconScale, SolidColourSurvivesUpscale) {
 }
 
 TEST(TrayIconScale, TransparentPixelsKeepZeroAlpha) {
-  const QImage scaled = lanczosResize(solid(48, QColor(0, 0, 0, 0)), 32, 32);
+  const QImage scaled = lanczosScaleIcon(solid(48, QColor(0, 0, 0, 0)), 32, 32);
   EXPECT_EQ(scaled.pixelColor(10, 10).alpha(), 0);
 }
 

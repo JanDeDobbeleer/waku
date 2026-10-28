@@ -13,7 +13,7 @@ namespace yasb::widgets {
 QImage scaleTrayIcon(const QImage& source, int size = 32);
 
 // The two stages, exposed for tests.
-QImage lanczosResize(const QImage& source, int width, int height);
+QImage lanczosScaleIcon(const QImage& source, int width, int height);
 QImage sharpen(const QImage& source);
 
 }  // namespace yasb::widgets

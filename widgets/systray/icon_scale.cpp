@@ -132,7 +132,7 @@ QImage resampleAxis(const QImage& in, int newSize, bool horizontal) {
 
 }  // namespace
 
-QImage lanczosResize(const QImage& source, int width, int height) {
+QImage lanczosScaleIcon(const QImage& source, int width, int height) {
   QImage image = source.convertToFormat(QImage::Format_RGBA8888);
   premultiply(image);
   image = resampleAxis(image, width, true);
@@ -168,7 +168,7 @@ QImage sharpen(const QImage& source) {
 
 QImage scaleTrayIcon(const QImage& source, int size) {
   if (source.width() == size && source.height() == size) return source;
-  return sharpen(lanczosResize(source, size, size));
+  return sharpen(lanczosScaleIcon(source, size, size));
 }
 
 }  // namespace yasb::widgets
