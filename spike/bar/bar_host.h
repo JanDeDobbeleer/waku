@@ -19,7 +19,7 @@ class QQmlEngine;
 class QQuickWindow;
 class QScreen;
 
-namespace barnacle {
+namespace tidy {
 
 // Builds the bars declared in <config home>\bar.qml and keeps them up to date.
 //
@@ -150,4 +150,4 @@ class BarHost : public QObject {
   bool watching_ = false;
 };
 
-}  // namespace barnacle
+}  // namespace tidy

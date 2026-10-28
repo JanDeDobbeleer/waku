@@ -1,8 +1,8 @@
 // The active GlazeWM binding mode (for example "resize"); a click leaves it. Hidden when there is
 // none. GlazeWM-only, so it uses that service directly; the Workspaces widget needs no such thing.
-import barnacle
-import barnacle.widgets
-import barnacle.services
+import tidy
+import tidy.widgets
+import tidy.services
 
 Pill {
     visible: GlazeWM.connected && GlazeWM.bindingMode !== ""

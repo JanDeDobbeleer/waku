@@ -1,9 +1,9 @@
-# Unit tests of barnacle.services and of the barnacle module (Config, Bar, BarLayout, BarHost).
+# Unit tests of tidy.services and of the tidy module (Config, Bar, BarLayout, BarHost).
 # Widgets (QML) are out of scope.
 include(GoogleTest)
 find_package(Qt6 REQUIRED COMPONENTS Test)
 
-add_executable(barnacle_services_tests
+add_executable(tidy_services_tests
   test_main.cpp
   test_stat_sources.cpp
   test_process.cpp
@@ -20,25 +20,25 @@ add_executable(barnacle_services_tests
   test_control.cpp
   test_safe_mode.cpp
 )
-target_compile_definitions(barnacle_services_tests PRIVATE
+target_compile_definitions(tidy_services_tests PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-# The static QML plugins are linked so `import barnacle` resolves in the test engines.
-target_link_libraries(barnacle_services_tests PRIVATE
-  barnacle_bar barnacle_barplugin barnacle_widgets barnacle_widgetsplugin
-  barnacle_services barnacle_servicesplugin
+# The static QML plugins are linked so `import tidy` resolves in the test engines.
+target_link_libraries(tidy_services_tests PRIVATE
+  tidy_bar tidy_barplugin tidy_widgets tidy_widgetsplugin
+  tidy_services tidy_servicesplugin
   GTest::gtest Qt6::Test nlohmann_json::nlohmann_json)
-set_target_properties(barnacle_services_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set_target_properties(tidy_services_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Qt DLLs, the offscreen platform plugin and the QtQuick QML modules the tests import sit next to
 # the test exe so ctest runs without PATH.
-add_custom_command(TARGET barnacle_services_tests POST_BUILD
+add_custom_command(TARGET tidy_services_tests POST_BUILD
   COMMAND Qt6::windeployqt $<IF:$<CONFIG:Debug>,--debug,--release>
           --no-translations --no-system-d3d-compiler --no-opengl-sw --no-compiler-runtime
           --include-plugins qoffscreen
           --qmldir "${CMAKE_SOURCE_DIR}/spike/bar"
           --qmldir "${CMAKE_SOURCE_DIR}/spike/widgets"
-          --dir "$<TARGET_FILE_DIR:barnacle_services_tests>" "$<TARGET_FILE:barnacle_services_tests>"
+          --dir "$<TARGET_FILE_DIR:tidy_services_tests>" "$<TARGET_FILE:tidy_services_tests>"
   VERBATIM)
 
-gtest_discover_tests(barnacle_services_tests DISCOVERY_MODE PRE_TEST
+gtest_discover_tests(tidy_services_tests DISCOVERY_MODE PRE_TEST
   PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

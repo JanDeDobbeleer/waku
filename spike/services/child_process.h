@@ -9,7 +9,7 @@
 #include <QStringList>
 #include <QTimer>
 
-namespace barnacle::services {
+namespace tidy::services {
 
 // Runs a command without a console window and exposes its output to QML. `run()` starts it once;
 // `interval > 0` also reruns it every interval ms (a run still in progress is not restarted).
@@ -78,4 +78,4 @@ class Process : public QObject, public QQmlParserStatus {
   QTimer timeoutTimer_;
 };
 
-}  // namespace barnacle::services
+}  // namespace tidy::services

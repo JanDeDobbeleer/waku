@@ -1,6 +1,6 @@
 #include "spike/bar/screen_match.h"
 
-namespace barnacle {
+namespace tidy {
 
 namespace {
 
@@ -31,4 +31,4 @@ std::vector<int> matchScreens(const QStringList& patterns, const std::vector<Scr
   return selected;
 }
 
-}  // namespace barnacle
+}  // namespace tidy

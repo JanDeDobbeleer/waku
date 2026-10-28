@@ -1,5 +1,5 @@
 import QtQuick
-import barnacle
+import tidy
 
 // A month grid for popups. The wheel (or the arrows) changes the month; the week starts on the
 // system locale's first day.

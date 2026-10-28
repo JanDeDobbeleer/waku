@@ -9,8 +9,8 @@ namespace {
 QString pillConfig(const QString& barProperties = QString()) {
   return QStringLiteral(R"(
 import QtQuick
-import barnacle
-import barnacle.widgets
+import tidy
+import tidy.widgets
 Config {
     Bar {
         %1
@@ -24,7 +24,7 @@ Config {
 }
 
 QString themeText(const QString& properties) {
-  return QStringLiteral("import barnacle\nThemeSpec { %1 }\n").arg(properties);
+  return QStringLiteral("import tidy\nThemeSpec { %1 }\n").arg(properties);
 }
 
 QColor colorOf(Harness& h, const QString& name, const char* property) {
@@ -33,7 +33,7 @@ QColor colorOf(Harness& h, const QString& name, const char* property) {
 }
 
 Theme* themeOf(Harness& h) {
-  return h.engine.singletonInstance<Theme*>(QStringLiteral("barnacle"), QStringLiteral("Theme"));
+  return h.engine.singletonInstance<Theme*>(QStringLiteral("tidy"), QStringLiteral("Theme"));
 }
 
 void writeTheme(Harness& h, const QString& text) {
@@ -237,7 +237,7 @@ TEST(ThemeHost, ABrokenThemeKeepsThePreviousBarsAndTheme) {
   ASSERT_TRUE(h.host->reload());
   QQuickWindow* before = h.window();
 
-  writeTheme(h, QStringLiteral("import barnacle\nThemeSpec { fill: "));
+  writeTheme(h, QStringLiteral("import tidy\nThemeSpec { fill: "));
   EXPECT_FALSE(h.host->reload());
   EXPECT_TRUE(h.host->error().startsWith(QStringLiteral("theme.qml:")))
       << qPrintable(h.host->error());

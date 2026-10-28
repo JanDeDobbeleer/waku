@@ -1,6 +1,6 @@
 import QtQuick
-import barnacle
-import barnacle.services as S
+import tidy
+import tidy.services as S
 
 // Battery charge. Hidden on a machine without a battery.
 //

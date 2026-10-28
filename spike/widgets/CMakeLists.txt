@@ -1,9 +1,9 @@
-# barnacle.widgets: the built-in widgets, plain QML on top of barnacle.services. Inside the module
+# tidy.widgets: the built-in widgets, plain QML on top of tidy.services. Inside the module
 # the services are imported under the name S because the widgets share names with them (Cpu,
 # Memory, Battery, Media, Workspaces).
-qt_add_library(barnacle_widgets STATIC)
-qt_add_qml_module(barnacle_widgets
-  URI barnacle.widgets
+qt_add_library(tidy_widgets STATIC)
+qt_add_qml_module(tidy_widgets
+  URI tidy.widgets
   VERSION 1.0
   QML_FILES
     Pill.qml
@@ -18,4 +18,4 @@ qt_add_qml_module(barnacle_widgets
     Workspaces.qml
     SafeConfig.qml
 )
-target_link_libraries(barnacle_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE barnacle_bar barnacle_services)
+target_link_libraries(tidy_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE tidy_bar tidy_services)

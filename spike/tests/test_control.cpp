@@ -10,13 +10,13 @@
 #include "spike/control/control.h"
 #include "spike/tests/bar_fixtures.h"
 
-using namespace barnacle;
+using namespace tidy;
 
 namespace {
 
 // A pipe name no other test or running bar uses.
 QString uniqueName() {
-  return QStringLiteral("barnacle-test-") + QUuid::createUuid().toString(QUuid::Id128).left(12);
+  return QStringLiteral("tidy-test-") + QUuid::createUuid().toString(QUuid::Id128).left(12);
 }
 
 // The blocking client runs on its own thread, because the server needs this thread's event loop.
@@ -51,10 +51,10 @@ ControlReply askAndWait(const QString& name, const QString& command) {
 // ---- names and config home ----
 
 TEST(ControlNames, ThePipeNameIsStableAndIgnoresCaseSlashesAndTrailingSeparators) {
-  const QString a = controlPipeName(QStringLiteral("C:\\Users\\me\\.config\\barnacle"));
-  EXPECT_TRUE(a.startsWith(QStringLiteral("barnacle-")));
-  EXPECT_EQ(a, controlPipeName(QStringLiteral("c:/users/ME/.config/barnacle/")));
-  EXPECT_EQ(a, controlPipeName(QStringLiteral("C:\\Users\\me\\.config\\barnacle\\")));
+  const QString a = controlPipeName(QStringLiteral("C:\\Users\\me\\.config\\tidy"));
+  EXPECT_TRUE(a.startsWith(QStringLiteral("tidy-")));
+  EXPECT_EQ(a, controlPipeName(QStringLiteral("c:/users/ME/.config/tidy/")));
+  EXPECT_EQ(a, controlPipeName(QStringLiteral("C:\\Users\\me\\.config\\tidy\\")));
 }
 
 TEST(ControlNames, DifferentConfigHomesGetDifferentPipes) {
@@ -62,13 +62,13 @@ TEST(ControlNames, DifferentConfigHomesGetDifferentPipes) {
 }
 
 TEST(ControlNames, TheConfigHomeIsTheOptionThenTheEnvironmentThenTheFallback) {
-  qunsetenv("BARNACLE_CONFIG_HOME");
+  qunsetenv("TIDY_CONFIG_HOME");
   EXPECT_EQ(resolveConfigHome(QString(), QStringLiteral("fallback")), QStringLiteral("fallback"));
-  qputenv("BARNACLE_CONFIG_HOME", "from-env");
+  qputenv("TIDY_CONFIG_HOME", "from-env");
   EXPECT_EQ(resolveConfigHome(QString(), QStringLiteral("fallback")), QStringLiteral("from-env"));
   EXPECT_EQ(resolveConfigHome(QStringLiteral("from-option"), QStringLiteral("fallback")),
             QStringLiteral("from-option"));
-  qunsetenv("BARNACLE_CONFIG_HOME");
+  qunsetenv("TIDY_CONFIG_HOME");
 }
 
 // ---- the transport ----

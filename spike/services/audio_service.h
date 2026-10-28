@@ -8,7 +8,7 @@
 
 #include "platform/audio.h"
 
-namespace barnacle::services {
+namespace tidy::services {
 
 namespace platform = ::yasb::platform;
 
@@ -69,4 +69,4 @@ class AudioInput : public AudioBase {
       : AudioBase(platform::createSystemAudio(platform::AudioFlow::Capture), parent) {}
 };
 
-}  // namespace barnacle::services
+}  // namespace tidy::services

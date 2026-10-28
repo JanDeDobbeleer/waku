@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-namespace barnacle::services {
+namespace tidy::services {
 
 Process::Process(QObject* parent) : QObject(parent) {
   connect(&intervalTimer_, &QTimer::timeout, this, [this] { run(); });
@@ -96,4 +96,4 @@ void Process::finish(int exitCode) {
   emit finished();
 }
 
-}  // namespace barnacle::services
+}  // namespace tidy::services

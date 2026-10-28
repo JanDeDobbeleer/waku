@@ -9,7 +9,7 @@ QString popupConfig(const QString& barProperties = QString(),
                     const QString& group = QStringLiteral("start")) {
   return QStringLiteral(R"(
 import QtQuick
-import barnacle
+import tidy
 Config {
     Bar {
         %1
@@ -37,7 +37,7 @@ Config {
 QString tooltipConfig(const QString& text = QStringLiteral("hello tip")) {
   return QStringLiteral(R"(
 import QtQuick
-import barnacle
+import tidy
 Config {
     Bar {
         layout: BarLayout {
@@ -290,7 +290,7 @@ TEST(PopupWindowTest, ItDoesNotOpenWithoutAnAnchor) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import barnacle
+import tidy
 Config { Bar { layout: BarLayout { start: [ Item { PopupWindow { objectName: "orphan" } } ] } } }
 )"));
   ASSERT_TRUE(started(h));

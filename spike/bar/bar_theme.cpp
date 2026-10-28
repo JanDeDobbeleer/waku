@@ -3,7 +3,7 @@
 #include <QFontDatabase>
 #include <QMetaProperty>
 
-namespace barnacle {
+namespace tidy {
 
 ThemeValues::ThemeValues(QObject* parent)
     : QObject(parent),
@@ -18,4 +18,4 @@ void ThemeValues::assignFrom(const ThemeValues& other) {
   }
 }
 
-}  // namespace barnacle
+}  // namespace tidy

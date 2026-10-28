@@ -5,7 +5,7 @@
 
 #include "spike/tests/bar_fixtures.h"
 
-// The built-in widgets (barnacle.widgets), instantiated in a real bar on the offscreen platform.
+// The built-in widgets (tidy.widgets), instantiated in a real bar on the offscreen platform.
 // Volume, Media and Workspaces are left out on purpose: creating them starts real audio,
 // media-session, komorebi and GlazeWM clients, which a test must not do on a developer's machine.
 // They are covered by the build (qmlcachegen type-checks them) and by running the sample config.
@@ -15,8 +15,8 @@ namespace {
 QString widgetConfig(const QString& widgets) {
   return QStringLiteral(R"(
 import QtQuick
-import barnacle
-import barnacle.widgets
+import tidy
+import tidy.widgets
 Config {
     Bar {
         layout: BarLayout {

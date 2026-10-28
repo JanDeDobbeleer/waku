@@ -7,7 +7,7 @@
 #include <QStringList>
 #include <functional>
 
-namespace barnacle::services {
+namespace tidy::services {
 
 // What a widget does on click, as a QML singleton: start a program, run a command line, open a
 // URL, file or folder. Nothing is returned from a launch beyond whether it started; use Process
@@ -29,7 +29,7 @@ class Shell : public QObject {
     std::function<void(const QString& target)> open;
   };
 
-  // Real launches; the config home is $BARNACLE_CONFIG_HOME or <home>\.config\barnacle.
+  // Real launches; the config home is $TIDY_CONFIG_HOME or <home>\.config\tidy.
   explicit Shell(QObject* parent = nullptr);
   Shell(Launcher launcher, QString configHome, QObject* parent);
 
@@ -50,4 +50,4 @@ class Shell : public QObject {
   QString configHome_;
 };
 
-}  // namespace barnacle::services
+}  // namespace tidy::services

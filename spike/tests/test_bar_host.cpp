@@ -8,7 +8,7 @@ TEST(BarConfig, ABarHasUsableDefaults) {
   QQmlEngine engine;
   QTemporaryDir dir;
   write(dir.filePath(QStringLiteral("bar.qml")),
-        QStringLiteral("import barnacle\nConfig { Bar {} }\n"));
+        QStringLiteral("import tidy\nConfig { Bar {} }\n"));
   QQmlComponent component(&engine, QUrl::fromLocalFile(dir.filePath(QStringLiteral("bar.qml"))));
   ASSERT_FALSE(component.isError()) << qPrintable(component.errorString());
   std::unique_ptr<QObject> root(component.create());
@@ -29,7 +29,7 @@ TEST(BarConfig, BarsAreReadInDeclarationOrderWithTheirProperties) {
   QQmlEngine engine;
   QTemporaryDir dir;
   write(dir.filePath(QStringLiteral("bar.qml")), QStringLiteral(R"(
-import barnacle
+import tidy
 Config {
     Bar { height: 28; position: Bar.Bottom; backdrop: Bar.Mica; reserveSpace: true
           screens: ["all"]; background: "#112233"; enabled: false }
@@ -127,7 +127,7 @@ TEST(BarLayoutTest, AHiddenWidgetTakesNoSpace) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import barnacle
+import tidy
 Config {
     Bar {
         layout: BarLayout {
@@ -268,7 +268,7 @@ TEST(BarHostTest, AnUnknownWidgetTypeIsAnError) {
   h.start(barConfig(QStringLiteral("good")));
   ASSERT_TRUE(h.host->reload());
   write(h.barFile(), QStringLiteral(R"(
-import barnacle
+import tidy
 Config { Bar { layout: BarLayout { start: [ NoSuchWidget {} ] } } }
 )"));
   EXPECT_FALSE(h.host->reload());
@@ -317,7 +317,7 @@ TEST(BarHostTest, ChangingAWidgetFileInASubfolderReloads) {
   const QString widget = h.dir.filePath(QStringLiteral("widgets/Label.qml"));
   write(widget, QStringLiteral("import QtQuick\nText { objectName: \"w\"; text: \"first\" }\n"));
   h.start(QStringLiteral(R"(
-import barnacle
+import tidy
 import "widgets"
 Config { Bar { layout: BarLayout { start: [ Label {} ] } } }
 )"));

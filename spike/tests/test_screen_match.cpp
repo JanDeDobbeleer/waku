@@ -2,7 +2,7 @@
 
 #include "spike/bar/screen_match.h"
 
-using namespace barnacle;
+using namespace tidy;
 
 namespace {
 

@@ -1,7 +1,7 @@
 // A custom widget: any command's output on a Pill. No C++, no registration; the file name is the
 // type name, so bar.qml uses it as `Whoami {}` after `import "widgets"`.
-import barnacle.widgets
-import barnacle.services
+import tidy.widgets
+import tidy.services
 
 Pill {
     interactive: false

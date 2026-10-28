@@ -9,7 +9,7 @@
 
 #include "platform/media_session.h"
 
-namespace barnacle::services {
+namespace tidy::services {
 
 namespace platform = ::yasb::platform;
 
@@ -79,4 +79,4 @@ class Media : public QObject {
   QString thumbnailUrl_;
 };
 
-}  // namespace barnacle::services
+}  // namespace tidy::services

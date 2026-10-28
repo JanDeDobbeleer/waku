@@ -1,6 +1,6 @@
 import QtQuick
-import barnacle
-import barnacle.services as S
+import tidy
+import tidy.services as S
 
 // Processor load.
 //

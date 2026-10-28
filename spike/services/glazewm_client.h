@@ -9,7 +9,7 @@
 #include "core/widgets/event_bus.h"
 #include "widgets/glazewm/glazewm_service.h"
 
-namespace barnacle::services {
+namespace tidy::services {
 
 namespace platform = ::yasb::platform;
 namespace widgets = ::yasb::widgets;
@@ -68,4 +68,4 @@ class GlazeWM : public QObject {
   QString bindingMode_;
 };
 
-}  // namespace barnacle::services
+}  // namespace tidy::services

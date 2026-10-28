@@ -1,6 +1,6 @@
 #include "spike/services/system_stats.h"
 
-namespace barnacle::services {
+namespace tidy::services {
 
 Memory::Memory(QObject* parent) : Memory(platform::createMemoryDataSource(), parent) {}
 
@@ -38,4 +38,4 @@ void Battery::sample() {
   });
 }
 
-}  // namespace barnacle::services
+}  // namespace tidy::services

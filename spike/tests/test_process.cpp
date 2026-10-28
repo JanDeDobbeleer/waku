@@ -7,7 +7,7 @@
 
 #include "spike/services/child_process.h"
 
-using namespace barnacle::services;
+using namespace tidy::services;
 
 namespace {
 

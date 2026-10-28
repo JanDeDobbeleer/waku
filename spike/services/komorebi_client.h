@@ -8,7 +8,7 @@
 #include "core/widgets/event_bus.h"
 #include "widgets/komorebi/komorebi_service.h"
 
-namespace barnacle::services {
+namespace tidy::services {
 
 namespace platform = ::yasb::platform;
 namespace widgets = ::yasb::widgets;
@@ -58,4 +58,4 @@ class Komorebi : public QObject {
   QVariantList monitors_;
 };
 
-}  // namespace barnacle::services
+}  // namespace tidy::services

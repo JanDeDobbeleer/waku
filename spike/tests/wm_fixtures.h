@@ -15,7 +15,7 @@
 #include "spike/services/komorebi_client.h"
 
 using nlohmann::json;
-using namespace barnacle::services;
+using namespace tidy::services;
 namespace gw = yasb::widgets::glazewm;
 namespace kmb = yasb::widgets::komorebi;
 namespace platform = yasb::platform;

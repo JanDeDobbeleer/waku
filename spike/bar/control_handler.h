@@ -4,7 +4,7 @@
 
 #include "spike/control/control.h"
 
-namespace barnacle {
+namespace tidy {
 
 class BarHost;
 
@@ -16,4 +16,4 @@ class BarHost;
 // `quit` defaults to QCoreApplication::quit.
 ControlHandler makeControlHandler(BarHost& host, bool safe, std::function<void()> quit = {});
 
-}  // namespace barnacle
+}  // namespace tidy

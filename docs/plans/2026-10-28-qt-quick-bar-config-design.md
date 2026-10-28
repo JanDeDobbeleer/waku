@@ -1,7 +1,7 @@
 # Qt Quick bar: how layout and widget config are declared
 
 Status: proposal, for the `spike/qt-quick-bar` branch. Nothing here is implemented beyond the
-spike (`spike/`): a QML bar window, the `barnacle.services` module and hot-reloaded user widgets.
+spike (`spike/`): a QML bar window, the `tidy.services` module and hot-reloaded user widgets.
 
 ## Decision
 
@@ -23,7 +23,7 @@ generate QML later); a C++ builder API (no hot reload, no sharing).
 
 ## Files
 
-Config home (default `%USERPROFILE%\.config\barnacle\`, overridable with `--config-home`):
+Config home (default `%USERPROFILE%\.config\tidy\`, overridable with `--config-home`):
 
 ```
 bar.qml          entry point: declares the bars
@@ -35,14 +35,14 @@ widgets/         user widgets, one component per file
 
 `widgets/` is a normal QML directory import, so `Clock.qml` is usable as `Clock {}` after
 `import "widgets"`. There is no registry and no loader list: a widget exists because a file
-exists. Built-in widgets ship in the `barnacle.widgets` module with the same shape, so a user widget
+exists. Built-in widgets ship in the `tidy.widgets` module with the same shape, so a user widget
 can copy or wrap one.
 
 ## bar.qml
 
 ```qml
-import barnacle
-import barnacle.widgets
+import tidy
+import tidy.widgets
 import "widgets"
 
 Config {
@@ -80,7 +80,7 @@ Config {
 
 A widget is any QML `Item` with an `implicitWidth` and `implicitHeight`. Conventions, not rules:
 
-- Take data from `barnacle.services` (`Memory`, `Cpu`, `Battery`, `AudioOutput`, `Media`, `Komorebi`,
+- Take data from `tidy.services` (`Memory`, `Cpu`, `Battery`, `AudioOutput`, `Media`, `Komorebi`,
   `GlazeWM`, `Process`). Polled sources are instantiated by the widget; shared event sources are
   singletons.
 - Expose options as `property` declarations with defaults. Document them in a comment at the top
@@ -88,9 +88,9 @@ A widget is any QML `Item` with an `implicitWidth` and `implicitHeight`. Convent
 - Use `Theme` for colours and fonts so a theme change restyles every widget.
 - Do not block: long work goes through `Process` or a service.
 
-### Built-in widgets (`barnacle.widgets`)
+### Built-in widgets (`tidy.widgets`)
 
-Plain QML on top of `barnacle.services`; a user can copy one into `widgets/` and change it.
+Plain QML on top of `tidy.services`; a user can copy one into `widgets/` and change it.
 
 | Widget | Shows | Options |
 |---|---|---|
@@ -111,9 +111,9 @@ Rules the set follows:
 - Text options are format strings with `%1`, `%2`, `%3` placeholders, not a template language.
 - A widget that has nothing to show hides itself with `visible: false` and leaves the layout.
 - The widgets share names with services (`Cpu`, `Memory`, `Battery`, `Media`, `Workspaces`), so the
-  module imports the services as `import barnacle.services as S` and writes `S.Cpu {}`. A user
-  config imports `barnacle.widgets`; a custom widget that needs services imports
-  `barnacle.services` and avoids those five names, or imports it `as S` too.
+  module imports the services as `import tidy.services as S` and writes `S.Cpu {}`. A user
+  config imports `tidy.widgets`; a custom widget that needs services imports
+  `tidy.services` and avoids those five names, or imports it `as S` too.
 
 ## Theme
 
@@ -124,7 +124,7 @@ default on the next reload. This replaces CSS for colours and fonts; per-widget 
 property on that widget.
 
 ```qml
-import barnacle
+import tidy
 ThemeSpec { accent: "#ff8800"; fontFamily: "Cascadia Code"; radius: 6 }
 ```
 
@@ -156,7 +156,7 @@ Design notes:
 
 ## Popups and tooltips
 
-Two types in the `barnacle` module; both are plain QML and both are windows of their own, because
+Two types in the `tidy` module; both are plain QML and both are windows of their own, because
 the bar window is only as tall as the bar.
 
 ```qml
@@ -225,32 +225,32 @@ Pill {
   outlive an edit.
 - `qmllint` works on the config home, so editors give completion and diagnostics for free.
 - `--safe`: see below.
-- `barnaclec reload`: see below.
+- `tidyc reload`: see below.
 
 ### Safe mode and the command line
 
-- **`barnacle.exe --safe`** starts the built-in bar (`barnacle.widgets/SafeConfig.qml`: Clock,
+- **`tidy.exe --safe`** starts the built-in bar (`tidy.widgets/SafeConfig.qml`: Clock,
   Workspaces, Volume, Battery, Cpu, Memory) with the default theme. Nothing in the config home is
   read, so a broken `bar.qml`, a broken `theme.qml` or a missing folder cannot get in the way, and
   nothing is watched. It is the way back to a bar when the config is wrong: fix the files, then
-  start normally. `barnaclec reload` in safe mode rebuilds the same bar.
-- **`barnaclec.exe`** is a separate console program, as `komorebic` is to komorebi: the bar is a
+  start normally. `tidyc reload` in safe mode rebuilds the same bar.
+- **`tidyc.exe`** is a separate console program, as `komorebic` is to komorebi: the bar is a
   Windows (GUI) program with no console to print to or exit code to return. It talks to the
   running bar over a named pipe:
 
   | Command | Answer | Exit code |
   |---|---|---|
-  | `barnaclec reload` | `ok`, or `error: bar.qml:12:5: ...` (the previous bars stay) | 0, or 1 |
-  | `barnaclec status` | `running; bars=1; safe=no; error=none` | 0 |
-  | `barnaclec quit` | `ok`, then the bar exits | 0 |
-  | no bar running | `barnaclec: no bar is running for <config home>` | 2 |
+  | `tidyc reload` | `ok`, or `error: bar.qml:12:5: ...` (the previous bars stay) | 0, or 1 |
+  | `tidyc status` | `running; bars=1; safe=no; error=none` | 0 |
+  | `tidyc quit` | `ok`, then the bar exits | 0 |
+  | no bar running | `tidyc: no bar is running for <config home>` | 2 |
   | bad command, no answer | usage or the reason | 3 |
 
-- The instance is named by the config home: `--config-home <dir>` or `$BARNACLE_CONFIG_HOME` on
+- The instance is named by the config home: `--config-home <dir>` or `$TIDY_CONFIG_HOME` on
   both programs picks it, and the pipe name is a short hash of the folder (case and trailing
   slashes do not matter), so two bars with different config homes do not meet.
 - One bar per config home: a named mutex held by the running bar refuses a second start with
-  `barnacle is already running for <config home> (barnaclec quit stops it)` and exit code 1. (Two
+  `tidy is already running for <config home> (tidyc quit stops it)` and exit code 1. (Two
   `QLocalServer`s can listen on one pipe name on Windows, so the pipe alone cannot tell.)
 - Protocol: one line in, one line out, then the connection closes. A line over 1 KiB is refused
   and a client that stalls is dropped after 3 s, so a stray process cannot hold the bar.
@@ -263,16 +263,16 @@ explicit trust prompt per file; a QML sandbox is not practical.
 
 ## Versioning
 
-`import barnacle 1.0` and `import barnacle.services 1.0` are the public API. Adding properties is
+`import tidy 1.0` and `import tidy.services 1.0` are the public API. Adding properties is
 compatible; removing or renaming one is a major bump with the old name kept for one release.
 
 ## Delivery order
 
-1. `Config`, `Bar`, `BarLayout` in a `barnacle` QML module; the host builds one window per screen from
+1. `Config`, `Bar`, `BarLayout` in a `tidy` QML module; the host builds one window per screen from
    them; replace the spike's "load every file in `widgets/`" with the explicit layout. (Medium.)
-2. Built-in `barnacle.widgets`: Clock, Cpu, Memory, Battery, Volume, Media, Workspaces (komorebi or
+2. Built-in `tidy.widgets`: Clock, Cpu, Memory, Battery, Volume, Media, Workspaces (komorebi or
    GlazeWM, chosen by what is running). (Medium.)
-3. Transactional reload with the error pill, `--safe`, `barnaclec reload`. (Small; done.)
+3. Transactional reload with the error pill, `--safe`, `tidyc reload`. (Small; done.)
 4. `Theme` singleton and `theme.qml`. (Small.)
 5. Popups (`PopupWindow`) and tooltips, then systray and taskbar, which need native-window work.
    (Large.)
@@ -280,7 +280,7 @@ compatible; removing or renaming one is a major bump with the old name kept for 
 ## Decisions taken
 
 - This is a new application with its own name; it is not a YASB fork and reads no YASB config.
-  The name is barnacle (see [Name](#name)), always written in lower case.
+  The name is tidy (see [Name](#name)), always written in lower case.
 - `Workspaces` is one shared model over komorebi and GlazeWM (below).
 - `Shell` is a small helper in the services module (below).
 
@@ -327,13 +327,21 @@ actions (lock, sleep) are not part of the first cut.
 
 ## Name
 
-barnacle. It clings to the edge of the screen. The official name is lower case, everywhere:
-the executable is `barnacle.exe`, the command-line client is `barnaclec.exe` (`barnaclec reload`;
-a console program, so it is separate from the GUI executable), the config home is
-`%USERPROFILE%\.config\barnacle\`, and the QML modules are `barnacle`, `barnacle.widgets` and
-`barnacle.services`.
+tidy. A bar keeps the desktop tidy: one thin strip with everything in its place. The official
+name is lower case, everywhere: the executable is `tidy.exe`, the command-line client is
+`tidyc.exe` (`tidyc reload`; a console program, so it is separate from the GUI executable), the
+config home is `%USERPROFILE%\.config\tidy\`, and the QML modules are `tidy`, `tidy.widgets` and
+`tidy.services`. The environment variable is `TIDY_CONFIG_HOME` and the control pipe is named
+`tidy-<hash of the config home>`.
 
-It was checked only for collisions on GitHub (no software of that name among the top results; no
-trademark or domain search yet). fascia, transom, overbar and others were considered. The
-repository, the `yasb_*` targets and the `yasb::` C++ namespaces outside `spike/` still carry the
-old name; renaming them is a separate step.
+History: the working name was barnacle until this step; fascia, transom, overbar and others were
+considered before it. The spike was renamed in one commit (modules, C++ namespace, targets,
+executables, pipe, environment variable and these docs). The repository, the `yasb_*` targets and
+the `yasb::` C++ namespaces outside `spike/` still carry the old name; renaming them is a separate
+step.
+
+Collisions, checked only on GitHub (no trademark or domain search yet): no Windows bar is called
+tidy. The word is also HTML Tidy (`htacg/tidy-html5`), a widely installed command-line program whose
+executable is `tidy.exe`; on a machine that has it on PATH the two would clash. Neither is a
+blocker (the PATH order decides, and the executable could ship as `tidybar.exe` while the product
+stays tidy), but it should be decided before anything is published or installed.

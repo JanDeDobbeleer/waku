@@ -1,7 +1,7 @@
-// The sample barnacle config. Point the spike at another folder with --config-home <dir>.
+// The sample tidy config. Point the spike at another folder with --config-home <dir>.
 // Edit and save: the bars reload. A mistake keeps the previous bars and shows an error pill.
-import barnacle
-import barnacle.widgets    // the built-in widgets
+import tidy
+import tidy.widgets          // the built-in widgets
 import "widgets"           // your own, one component per file (see widgets/)
 
 Config {

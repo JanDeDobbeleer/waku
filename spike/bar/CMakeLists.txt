@@ -1,8 +1,8 @@
-# barnacle: the QML module a config imports (Config, Bar, BarLayout) and the host that builds
+# tidy: the QML module a config imports (Config, Bar, BarLayout) and the host that builds
 # windows from it.
-qt_add_library(barnacle_bar STATIC)
-qt_add_qml_module(barnacle_bar
-  URI barnacle
+qt_add_library(tidy_bar STATIC)
+qt_add_qml_module(tidy_bar
+  URI tidy
   VERSION 1.0
   QML_FILES
     BarLayout.qml
@@ -25,8 +25,8 @@ qt_add_qml_module(barnacle_bar
     control_handler.cpp
 )
 # The generated type registration includes headers by name, hence the private include directory.
-target_include_directories(barnacle_bar PUBLIC ${CMAKE_SOURCE_DIR}
+target_include_directories(tidy_bar PUBLIC ${CMAKE_SOURCE_DIR}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(barnacle_bar PRIVATE
+target_compile_definitions(tidy_bar PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(barnacle_bar PUBLIC Qt6::Quick Qt6::Qml barnacle_control yasb_ui)
+target_link_libraries(tidy_bar PUBLIC Qt6::Quick Qt6::Qml tidy_control yasb_ui)

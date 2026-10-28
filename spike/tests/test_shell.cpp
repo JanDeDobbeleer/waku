@@ -8,7 +8,7 @@
 
 #include "spike/services/shell_service.h"
 
-using namespace barnacle::services;
+using namespace tidy::services;
 
 namespace {
 
@@ -75,30 +75,30 @@ TEST(ShellService, CommandAndOpenReachTheLauncher) {
 
 TEST(ShellService, ExposesPathsAndEnvironment) {
   Launches l;
-  Shell shell(l.launcher(), QStringLiteral("C:\\cfg\\barnacle"), nullptr);
-  EXPECT_EQ(shell.configHome(), QStringLiteral("C:\\cfg\\barnacle"));
+  Shell shell(l.launcher(), QStringLiteral("C:\\cfg\\tidy"), nullptr);
+  EXPECT_EQ(shell.configHome(), QStringLiteral("C:\\cfg\\tidy"));
   EXPECT_FALSE(shell.homeDir().isEmpty());
   EXPECT_EQ(shell.homeDir(), QDir::toNativeSeparators(QDir::homePath()));
 
-  qputenv("BARNACLE_TEST_VALUE", "hello");
-  EXPECT_EQ(shell.env(QStringLiteral("BARNACLE_TEST_VALUE")), QStringLiteral("hello"));
-  EXPECT_TRUE(shell.env(QStringLiteral("BARNACLE_TEST_UNSET_VALUE")).isEmpty());
-  qunsetenv("BARNACLE_TEST_VALUE");
+  qputenv("TIDY_TEST_VALUE", "hello");
+  EXPECT_EQ(shell.env(QStringLiteral("TIDY_TEST_VALUE")), QStringLiteral("hello"));
+  EXPECT_TRUE(shell.env(QStringLiteral("TIDY_TEST_UNSET_VALUE")).isEmpty());
+  qunsetenv("TIDY_TEST_VALUE");
 }
 
 TEST(ShellService, DefaultConfigHomeFollowsTheEnvironmentOrTheHomeFolder) {
-  qunsetenv("BARNACLE_CONFIG_HOME");
+  qunsetenv("TIDY_CONFIG_HOME");
   {
     Shell shell;
-    EXPECT_TRUE(shell.configHome().endsWith(QStringLiteral("\\.config\\barnacle")))
+    EXPECT_TRUE(shell.configHome().endsWith(QStringLiteral("\\.config\\tidy")))
         << qPrintable(shell.configHome());
   }
-  qputenv("BARNACLE_CONFIG_HOME", "D:/somewhere/else");
+  qputenv("TIDY_CONFIG_HOME", "D:/somewhere/else");
   {
     Shell shell;
     EXPECT_EQ(shell.configHome(), QStringLiteral("D:\\somewhere\\else"));
   }
-  qunsetenv("BARNACLE_CONFIG_HOME");
+  qunsetenv("TIDY_CONFIG_HOME");
 }
 
 // The real launches, writing into a temp folder: they start hidden detached processes.
@@ -124,5 +124,5 @@ TEST(ShellServiceReal, StartRunsADetachedProgram) {
 
 TEST(ShellServiceReal, StartOfAMissingProgramFails) {
   Shell shell;
-  EXPECT_FALSE(shell.start(QStringLiteral("definitely-not-a-program-barnacle.exe")));
+  EXPECT_FALSE(shell.start(QStringLiteral("definitely-not-a-program-tidy.exe")));
 }

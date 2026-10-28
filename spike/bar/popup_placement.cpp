@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace barnacle {
+namespace tidy {
 
 namespace {
 
@@ -37,4 +37,4 @@ QPointF PopupPlacement::place(const QRectF& anchor, const QSizeF& size, const QR
   return {x, y};
 }
 
-}  // namespace barnacle
+}  // namespace tidy

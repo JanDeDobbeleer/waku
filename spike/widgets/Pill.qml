@@ -1,5 +1,5 @@
 import QtQuick
-import barnacle
+import tidy
 
 // The building block of the built-in widgets, and of yours: a rounded background with optional
 // text and any extra items beside it.

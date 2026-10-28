@@ -10,7 +10,7 @@
 
 #include "spike/services/media_service.h"
 
-using namespace barnacle::services;
+using namespace tidy::services;
 namespace platform = yasb::platform;
 
 namespace {
