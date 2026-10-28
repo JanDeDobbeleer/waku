@@ -50,6 +50,7 @@ target_sources(yasb_tests PRIVATE
   widgets/test_wallpapers.cpp
   widgets/test_taskbar.cpp
   widgets/test_control_center.cpp
+  widgets/test_brightness_policy.cpp
   widgets/test_systray.cpp
   widgets/test_systray_pipe.cpp)
 

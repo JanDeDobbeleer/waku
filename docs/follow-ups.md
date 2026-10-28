@@ -68,13 +68,16 @@ or hardware; tests use fakes. Remove an item when it is done.
 ## control_center
 
 - Screenshot quick action only opens `ms-screenclip:` until U19.
-- Brightness: no contrast, no periodic DDC poll, no power-policy watcher; internal panel is
-  re-read when the popup opens.
-- DND and power-plan change listeners (WNF/registry) not ported; state re-read on open and after
-  each action.
+- Brightness contrast (VCP 0x12) is read, written and polled by the service but, as in Python, the
+  control center has no contrast slider. The 60 s DDC poll and the power-policy watcher are ported;
+  neither has run against a real DDC monitor or a live scheme change.
+- DND and power-plan state are re-read on popup open and after each action. Python's control center
+  does not subscribe to WNF or the registry either (only the dnd, notifications and power_plan
+  widgets do), so no listener is added.
 - `lock_icon` parsed but unused (as Python).
-- Brightness monitor menu connector label comes from WinRT `DisplayMonitor`; built-in panel shows
-  "Monitor 1 · Unknown". Not compared with Python on real hardware.
+- Brightness monitor menu connector label matches Python's enum names (checked against the winrt
+  projection: Unknown, Hd15, Analog T V, Dvi, Hdmi, Lvds, Sdi, Display Port); the built-in panel
+  shows "Monitor 1 · Unknown" in Python too.
 - Live: only read-only reads ran. Setters (default device, DND, power mode, touch keyboard, DDC)
   and the popup rendering are unverified.
 

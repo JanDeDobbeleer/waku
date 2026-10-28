@@ -20,7 +20,8 @@ qulonglong monitorForWindow(quintptr hwnd);
 //
 // Threading: the object lives on the GUI thread. The system implementation runs detection, DDC
 // reads and slider writes on one worker thread (slider drags coalesce to the newest value per
-// monitor) and re-posts results to the GUI thread. stop() joins the worker.
+// monitor) and re-posts results to the GUI thread. A second thread owns a message-only window that
+// watches the video-brightness power setting. stop() joins both.
 class BrightnessControl : public QObject {
   Q_OBJECT
  public:
@@ -34,13 +35,22 @@ class BrightnessControl : public QObject {
   // Re-reads DDC monitors in the background; the scheme panel is re-read at once.
   virtual void refreshNow() = 0;
 
+  // DDC contrast (VCP 0x12). Only DDC monitors that answer the read support it; the default
+  // implementation reports none (BrightnessService.get_contrast / set_contrast /
+  // supports_contrast).
+  virtual bool supportsContrast(qulonglong) { return false; }
+  virtual std::optional<int> contrast(qulonglong) { return std::nullopt; }
+  virtual void setContrast(qulonglong, int) {}
+
   Q_INVOKABLE virtual void stop() {}
 
  signals:
   void brightnessChanged(qulonglong id, int percent);
+  void contrastChanged(qulonglong id, int percent);
 };
 
-// DDC/CI + power-scheme implementation. Never null.
-BrightnessControl* createSystemBrightness(QObject* parent = nullptr);
+// DDC/CI + power-scheme implementation. Never null. `ddcPollSeconds` is the background DDC re-read
+// period (0 disables it); the control center uses the Python default of 60.
+BrightnessControl* createSystemBrightness(QObject* parent = nullptr, int ddcPollSeconds = 60);
 
 }  // namespace yasb::platform

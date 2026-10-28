@@ -1,6 +1,6 @@
 // Monitor brightness: DDC/CI through dxva2 for external panels, the active power scheme for the
-// internal panel. Port of services/brightness (service.py, displays.py, scheme.py), without the
-// contrast feature, the periodic DDC poll and the power-policy notification window.
+// internal panel. Port of services/brightness (service.py, displays.py, scheme.py): DDC contrast,
+// the periodic DDC poll and the power-policy notification window.
 #include "platform/brightness.h"
 
 #include <windows.h>
@@ -15,6 +15,7 @@
 #include <QDebug>
 #include <QMetaObject>
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
@@ -25,6 +26,7 @@
 #include <mutex>
 #include <thread>
 
+#include "platform/brightness_policy.h"
 #include "platform/winrt_apartment.h"
 
 namespace yasb::platform {
@@ -33,6 +35,8 @@ namespace {
 constexpr int kDdcAttempts = 5;
 constexpr auto kDdcRetrySleep = std::chrono::milliseconds(100);
 constexpr BYTE kVcpBrightness = 0x10;
+constexpr BYTE kVcpContrast = 0x12;
+constexpr wchar_t kPolicyWindowClass[] = L"YasbBrightnessPolicyWatcher";
 
 // {7516b95f-f776-4464-8c53-06167f40cc99}
 const GUID kVideoSubgroup = {
@@ -238,14 +242,19 @@ struct MonitorInfo {
   bool tested = false;
   bool reported = false;
   std::optional<int> brightness;
+  bool supportsContrast = false;
+  bool contrastTested = false;
+  std::optional<int> contrast;
 };
 
 class SystemBrightness final : public BrightnessControl {
  public:
-  explicit SystemBrightness(QObject* parent) : BrightnessControl(parent) {
+  SystemBrightness(QObject* parent, int ddcPollSeconds)
+      : BrightnessControl(parent), pollSeconds_(std::max(ddcPollSeconds, 0)) {
     enumerate();
     worker_ = std::thread([this] { run(); });
     enqueue([this] { detect(); });
+    startPolicyWatcher();
   }
 
   ~SystemBrightness() override { stop(); }
@@ -257,6 +266,7 @@ class SystemBrightness final : public BrightnessControl {
       stopped_ = true;
     }
     cv_.notify_all();
+    stopPolicyWatcher();
     if (worker_.joinable()) worker_.join();
   }
 
@@ -301,15 +311,40 @@ class SystemBrightness final : public BrightnessControl {
     enqueue([this] { drainWrites(); }, &drainQueued_);
   }
 
-  void refreshNow() override {
-    // The scheme panel is a cheap powrprof read; DDC monitors are re-read on the worker.
-    std::optional<qulonglong> owner;
+  bool supportsContrast(qulonglong id) override {
+    std::lock_guard lock(mutex_);
+    const MonitorInfo* info = find(id);
+    return info && info->supportsContrast;
+  }
+
+  std::optional<int> contrast(qulonglong id) override {
+    std::lock_guard lock(mutex_);
+    const MonitorInfo* info = find(id);
+    return info ? info->contrast : std::nullopt;
+  }
+
+  void setContrast(qulonglong id, int percent) override {
+    percent = std::clamp(percent, 0, 100);
     {
       std::lock_guard lock(mutex_);
-      owner = schemeOwner_;
+      wantedContrast_[id] = percent;
+      if (MonitorInfo* info = find(id)) info->contrast = percent;
     }
-    if (owner) {
-      if (const auto value = schemeBrightness()) update(*owner, *value);
+    enqueue([this] { drainWrites(); }, &drainQueued_);
+  }
+
+  void refreshNow() override {
+    // The scheme panel is served from the power-policy cache. Only without the watcher (its
+    // window could not be created) is it re-read here; DDC monitors are re-read on the worker.
+    if (!policyActive_.load()) {
+      std::optional<qulonglong> owner;
+      {
+        std::lock_guard lock(mutex_);
+        owner = schemeOwner_;
+      }
+      if (owner) {
+        if (const auto value = schemeBrightness()) update(*owner, *value);
+      }
     }
     bool anyDdc = false;
     {
@@ -353,17 +388,37 @@ class SystemBrightness final : public BrightnessControl {
       std::function<void()> task;
       {
         std::unique_lock lock(mutex_);
-        cv_.wait(lock, [this] { return stopped_ || !tasks_.empty(); });
+        const auto ready = [this] { return stopped_ || !tasks_.empty(); };
+        // service.py _ddc_poll_loop: after detection, re-read DDC monitors every interval.
+        const bool polling = pollSeconds_ > 0 && detected_ && hasDdcLocked();
+        if (polling) {
+          if (!cv_.wait_for(lock, std::chrono::seconds(pollSeconds_), ready)) {
+            lock.unlock();
+            guarded([this] { refreshDdc(); });
+            continue;
+          }
+        } else {
+          cv_.wait(lock, ready);
+        }
         if (stopped_) return;
         task = std::move(tasks_.front());
         tasks_.pop_front();
       }
-      try {
-        task();
-      } catch (...) {
-        qWarning() << "Brightness task failed";
-      }
+      guarded(task);
     }
+  }
+
+  static void guarded(const std::function<void()>& task) {
+    try {
+      task();
+    } catch (...) {
+      qWarning() << "Brightness task failed";
+    }
+  }
+
+  bool hasDdcLocked() const {
+    return std::any_of(monitors_.begin(), monitors_.end(),
+                       [](const MonitorInfo& info) { return info.tested && info.ddc; });
   }
 
   // `flag` (guarded by mutex_) collapses repeated requests while one is still queued.
@@ -398,7 +453,7 @@ class SystemBrightness final : public BrightnessControl {
     QMetaObject::invokeMethod(this, std::move(fn), Qt::QueuedConnection);
   }
 
-  void detect() {
+  void detectMonitors() {
     std::vector<std::pair<qulonglong, std::wstring>> targets;
     {
       std::lock_guard lock(mutex_);
@@ -467,6 +522,18 @@ class SystemBrightness final : public BrightnessControl {
         }
         post([this, id = id, v = *value] { emit brightnessChanged(id, v); });
       }
+      const auto contrastValue = vcpRead(reinterpret_cast<HMONITOR>(id), kVcpContrast);
+      bool announce = false;
+      {
+        std::lock_guard lock(mutex_);
+        if (MonitorInfo* info = find(id); info && !info->contrastTested) {
+          info->contrastTested = true;
+          info->supportsContrast = contrastValue.has_value();
+          info->contrast = contrastValue;
+          announce = contrastValue.has_value();
+        }
+      }
+      if (announce) post([this, id = id, v = *contrastValue] { emit contrastChanged(id, v); });
     }
     for (const qulonglong id : pendingScheme) {
       bool canScheme = false;
@@ -499,6 +566,12 @@ class SystemBrightness final : public BrightnessControl {
     }
   }
 
+  void detect() {
+    detectMonitors();
+    std::lock_guard lock(mutex_);
+    detected_ = true;
+  }
+
   void refreshDdc() {
     std::vector<qulonglong> targets;
     {
@@ -513,24 +586,53 @@ class SystemBrightness final : public BrightnessControl {
       jobs.push_back(std::async(std::launch::async, [this, id] {
         if (const auto value = vcpRead(reinterpret_cast<HMONITOR>(id), kVcpBrightness))
           update(id, *value);
+        refreshContrast(id);
       }));
     }
     for (auto& job : jobs) job.wait();
+  }
+
+  // service.py _refresh_monitor, contrast half: skipped while a contrast write is pending.
+  void refreshContrast(qulonglong id) {
+    {
+      std::lock_guard lock(mutex_);
+      if (wantedContrast_.count(id)) return;
+    }
+    const auto value = vcpRead(reinterpret_cast<HMONITOR>(id), kVcpContrast);
+    bool changed = false;
+    {
+      std::lock_guard lock(mutex_);
+      MonitorInfo* info = find(id);
+      if (!info) return;
+      if (!info->contrastTested) {
+        info->contrastTested = true;
+        info->supportsContrast = value.has_value();
+      }
+      if (info->supportsContrast && info->contrast != value) {
+        info->contrast = value;
+        changed = value.has_value();
+      }
+    }
+    if (changed) post([this, id, v = *value] { emit contrastChanged(id, v); });
   }
 
   // Applies the newest slider value per monitor (keeps only the latest while writes are slow).
   void drainWrites() {
     for (;;) {
       std::map<qulonglong, int> batch;
+      std::map<qulonglong, int> contrastBatch;
       {
         std::lock_guard lock(mutex_);
         batch.swap(wanted_);
-        if (batch.empty()) {
+        contrastBatch.swap(wantedContrast_);
+        if (batch.empty() && contrastBatch.empty()) {
           drainQueued_ = false;
           return;
         }
       }
       for (const auto& [id, value] : batch) apply(id, value);
+      for (const auto& [id, value] : contrastBatch)
+        vcpWrite(reinterpret_cast<HMONITOR>(id), kVcpContrast, value);
     }
   }
 
@@ -545,7 +647,102 @@ class SystemBrightness final : public BrightnessControl {
       scheme = info->scheme;
     }
     if (ddc && vcpWrite(reinterpret_cast<HMONITOR>(id), kVcpBrightness, value)) return;
-    if (scheme) setSchemeBrightness(value);
+    if (scheme) {
+      // Our own write triggers a power-setting notification; ignore it (service.py).
+      ignorePolicy_.arm(PolicyIgnoreWindow::Clock::now());
+      setSchemeBrightness(value);
+    }
+  }
+
+  // --- power-policy watcher (service.py _policy_message_loop / _policy_wnd_proc) -----------------
+
+  void startPolicyWatcher() {
+    std::promise<void> ready;
+    auto readyFuture = ready.get_future();
+    policyThread_ = std::thread([this, ready = std::move(ready)]() mutable { policyLoop(ready); });
+    readyFuture.wait();
+  }
+
+  void stopPolicyWatcher() {
+    if (HWND hwnd = policyWindow_.load()) PostMessageW(hwnd, WM_CLOSE, 0, 0);
+    if (policyThread_.joinable()) policyThread_.join();
+  }
+
+  // Owns the message-only window and the power-setting registration; fails soft (no watcher).
+  void policyLoop(std::promise<void>& ready) {
+    WNDCLASSW wc{};
+    wc.lpfnWndProc = &SystemBrightness::policyProc;
+    wc.hInstance = GetModuleHandleW(nullptr);
+    wc.lpszClassName = kPolicyWindowClass;
+    if (!RegisterClassW(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) {
+      qWarning() << "Brightness policy watcher: RegisterClassW failed";
+      ready.set_value();
+      return;
+    }
+    HWND hwnd = CreateWindowExW(0, kPolicyWindowClass, L"YASB brightness policy", 0, 0, 0, 0, 0,
+                                HWND_MESSAGE, nullptr, wc.hInstance, this);
+    if (!hwnd) {
+      qWarning() << "Brightness policy watcher: CreateWindowExW failed";
+      ready.set_value();
+      return;
+    }
+    HPOWERNOTIFY notify =
+        RegisterPowerSettingNotification(hwnd, &kVideoBrightness, DEVICE_NOTIFY_WINDOW_HANDLE);
+    if (!notify) {
+      qWarning() << "Brightness policy watcher: RegisterPowerSettingNotification failed";
+      DestroyWindow(hwnd);
+      ready.set_value();
+      return;
+    }
+    policyWindow_.store(hwnd);
+    policyActive_.store(true);
+    ready.set_value();
+    MSG msg;
+    while (GetMessageW(&msg, nullptr, 0, 0) > 0) {
+      TranslateMessage(&msg);
+      DispatchMessageW(&msg);
+    }
+    policyActive_.store(false);
+    policyWindow_.store(nullptr);
+    UnregisterPowerSettingNotification(notify);
+  }
+
+  static LRESULT CALLBACK policyProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
+    if (message == WM_NCCREATE) {
+      const auto* create = reinterpret_cast<const CREATESTRUCTW*>(lparam);
+      SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(create->lpCreateParams));
+    } else if (message == WM_POWERBROADCAST && wparam == PBT_POWERSETTINGCHANGE && lparam) {
+      auto* self = reinterpret_cast<SystemBrightness*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+      if (self) {
+        try {
+          self->onPolicyChange(*reinterpret_cast<const POWERBROADCAST_SETTING*>(lparam));
+        } catch (...) {
+          qWarning() << "Brightness policy handler failed";
+        }
+      }
+      return TRUE;
+    } else if (message == WM_CLOSE) {
+      DestroyWindow(hwnd);
+      return 0;
+    } else if (message == WM_DESTROY) {
+      PostQuitMessage(0);
+      return 0;
+    }
+    return DefWindowProcW(hwnd, message, wparam, lparam);
+  }
+
+  void onPolicyChange(const POWERBROADCAST_SETTING& setting) {
+    if (ignorePolicy_.active(PolicyIgnoreWindow::Clock::now())) return;
+    const int value = policyBrightnessFromBytes(setting.Data, setting.DataLength);
+    qulonglong owner = 0;
+    {
+      std::lock_guard lock(mutex_);
+      if (!schemeOwner_) return;
+      owner = *schemeOwner_;
+      const MonitorInfo* info = find(owner);
+      if (!info || !info->scheme) return;
+    }
+    update(owner, value);  // skips the monitor while a slider write is pending
   }
 
   std::mutex mutex_;
@@ -558,6 +755,13 @@ class SystemBrightness final : public BrightnessControl {
   std::vector<MonitorInfo> monitors_;
   std::optional<qulonglong> schemeOwner_;
   std::map<qulonglong, int> wanted_;
+  std::map<qulonglong, int> wantedContrast_;
+  bool detected_ = false;
+  int pollSeconds_ = kDefaultDdcPollSeconds;
+  std::thread policyThread_;
+  std::atomic<HWND> policyWindow_{nullptr};
+  std::atomic<bool> policyActive_{false};
+  PolicyIgnoreWindow ignorePolicy_;
 };
 
 }  // namespace
@@ -568,6 +772,8 @@ qulonglong monitorForWindow(quintptr hwnd) {
       MonitorFromWindow(reinterpret_cast<HWND>(hwnd), MONITOR_DEFAULTTONEAREST));
 }
 
-BrightnessControl* createSystemBrightness(QObject* parent) { return new SystemBrightness(parent); }
+BrightnessControl* createSystemBrightness(QObject* parent, int ddcPollSeconds) {
+  return new SystemBrightness(parent, ddcPollSeconds);
+}
 
 }  // namespace yasb::platform
