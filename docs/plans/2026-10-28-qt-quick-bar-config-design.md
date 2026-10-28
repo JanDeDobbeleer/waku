@@ -128,10 +128,66 @@ compatible; removing or renaming one is a major bump with the old name kept for 
 5. Popups (`PopupWindow`) and tooltips, then systray and taskbar, which need native-window work.
    (Large.)
 
-## Open questions
+## Decisions taken
 
-- Default config home name, and whether to read `%USERPROFILE%\.config\yasb` as a fallback
-  (recommended: no, never touch Python YASB's folder).
-- Whether `Workspaces` should abstract komorebi and GlazeWM behind one model, or stay two widgets.
-- Whether to ship a small `Shell` helper (`run`, `openUrl`, `notify`) in `Yasb.Services` or leave
-  everything to `Process`.
+- This is a new application with its own name; it is not a YASB fork and reads no YASB config.
+  The config home is `%USERPROFILE%\.config\<app>\` and the modules are `<App>` and
+  `<App>.Services`. `<app>` is a placeholder until the name is chosen (see
+  [Name](#name-open)); every path and import above changes with it.
+- `Workspaces` is one shared model over komorebi and GlazeWM (below).
+- `Shell` is a small helper in the services module (below).
+
+### Shared `Workspaces` model
+
+One singleton, `Workspaces`, hides the window manager. Widgets never mention komorebi or GlazeWM.
+
+```
+Workspaces.provider     "komorebi" | "glazewm" | ""        which one is connected
+Workspaces.connected    bool
+Workspaces.monitors     [{ handle, name, workspaces: [
+                           { id, label, focused, active, hasWindows, windowCount } ] }]
+Workspaces.focus(monitorHandle, workspaceId)
+Workspaces.focusNext(monitorHandle) / focusPrevious(monitorHandle)
+```
+
+- `active`: the workspace shown on its monitor. `focused`: active on the focused monitor.
+  komorebi gives the first directly (per-monitor focused index); GlazeWM gives `isDisplayed` and a
+  global focus flag. Both map onto the pair without loss.
+- `id` is opaque to widgets. For komorebi it is the workspace index, for GlazeWM the workspace
+  name; `focus()` translates it (komorebi also needs the monitor index, found from `handle`).
+- `label` is the workspace name, or its 1-based index when komorebi's name is empty.
+- When both are connected, `Workspaces.prefer` (a string property, default `"komorebi"`) decides.
+- Things that exist in only one manager (GlazeWM binding modes and tiling direction, komorebi
+  layouts) stay available on `GlazeWM` and `Komorebi`; the shared model is the common subset,
+  not a lowest common denominator that hides them.
+- The existing `GlazeWM` and `Komorebi` singletons become the backends and keep their tests;
+  `Workspaces` is added on top with its own tests against fakes of both.
+
+### `Shell` helper
+
+A singleton for the things a widget does on click, so that most widgets need no `Process`:
+
+```
+Shell.start(program, args)     detached, no console window, nothing returned
+Shell.command(commandLine)     `cmd /c <commandLine>`, hidden, detached
+Shell.open(target)             ShellExecute "open": URL, file or folder
+Shell.homeDir / Shell.configHome / Shell.env(name)
+```
+
+`Process` stays for commands whose output a widget displays. `Shell` reuses the platform helpers
+that already exist (`launchHiddenShell`, `launchKomorebic`, `shell_open`). Notifications and power
+actions (lock, sleep) are not part of the first cut.
+
+## Name (open)
+
+Candidates, checked only for collisions on GitHub (no trademark or domain search yet):
+
+| Name | Meaning | GitHub collisions | Notes |
+|---|---|---|---|
+| Fascia | board along the top edge of a building; a shop's sign board | none relevant | recommended; pronounced "FAY-shuh", some will say "FASH-ee-uh" |
+| Transom | the beam across the top of a door or window | none relevant | clear to pronounce; a window-related meaning |
+| Soffit | underside of an eave | none relevant | less obviously a "bar" |
+| Lintel | beam over a door | a Windows "notch toolkit" (`lintel`, 14 stars) | too close to an existing Windows app |
+| Cornice, Gantry, Visor | | Pyramid library, many hardware repos, hypervisors | rejected |
+
+The name decides the executable, the CLI (`<app> reload`), the config home and the module names.
