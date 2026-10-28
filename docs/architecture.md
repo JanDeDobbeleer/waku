@@ -75,7 +75,8 @@ hand results back with queued signals or `QMetaObject::invokeMethod` on `qApp`.
 | hotkey thread (`std::thread`) | `HotkeyService` | `RegisterHotKey` message loop; dispatches to the GUI thread | `stop()`: `PostThreadMessageW(WM_QUIT)` then `join` |
 | CLI command threads (`std::thread`) | `CliServer` | `\\.\pipe\yasb_pipe_cli` accept/read/reply | `stop()`: sets `stopping_`, unblocks, `join` |
 | CLI log thread (`std::thread`) | `CliServer` | `\\.\pipe\yasb_pipe_log` frames | `stop()`: `CancelSynchronousIo`, `join` |
-| komorebi pipe thread (`std::thread`) | `KomorebiService` (member of `Runtime`) via `platform::KomorebiPipeListener` | owns the `\\.\pipe\yasb-native-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls | `stop()`: sets the stop event (cancels waits and overlapped I/O), `join`, then `komorebic unsubscribe-pipe`; started lazily by the first widget subscription; `Runtime::stop()` calls it |
+| `WlanBackend` (`QThread`) | `WifiMenu` (created on first menu open) | wlanapi scan, connection query, profile edits, `Windows.Devices.WiFi` connect and disconnect; results return as queued signals | `~WlanBackend`: unregister notifications, `quit`, `wait` |
+| `RealBluetoothBackend` (`QThread`) | shared by the Bluetooth widgets (see singletons) | BluetoothAPIs and WinRT enumeration, battery reads, radio power, device watchers, audio connect/disconnect; results return as queued signals | destructor: cancel connect, `shutdown`, `quit`, `wait` |
 
 Platform data sources (`platform/`) are called from `PollingWorker` threads; anything they cache
 globally must be locked.
@@ -95,6 +96,7 @@ No new singleton without a row here and a reason.
 | media source-app name cache, shell-app cache | `platform/media_source_apps.cpp` | AUMID to display name; `QMutex`-guarded, written from the media session thread only |
 | shared services map | `core/widgets/polling_worker_registry.h` (`service<T>(key, make)`) | not process-global: owned by the runtime's registry; the media widget and the next-wave control center share one `MediaSessionService` under key `media` |
 | cached Windows build number | `core/widgets/backdrop.cpp` (`windowsBuild()`) | immutable |
+| shared Bluetooth backend (`std::weak_ptr`) | `widgets/bluetooth/bluetooth_widget.cpp` (`acquireBackend`) | one enumeration thread and one set of WinRT watchers for all Bluetooth widgets, as Python's `BluetoothManager.acquire`; mutex-guarded first use, destroyed with the last widget |
 
 Function-local `static const` regexes and lookup tables are immutable and not listed. Stat widget
 registration has no process-global guard; each runtime populates its own registry.
@@ -125,5 +127,7 @@ with the build it was verified on and its fallback. Add a row in the same commit
 | `ntdll!NtQuerySystemInformation` class 80 (`SystemMemoryListInformation`), local `MemoryListInformation` struct | `platform/memory.cpp` (`cachedBytes`) | Windows 11 build 26300, ARM64 | `GetPerformanceInfo` `SystemCache` when the symbol is missing or the call fails |
 | `ntdll!RtlGetVersion` (documented for drivers; used because `GetVersionEx` lies to unmanifested apps) | `core/widgets/backdrop.cpp` (`windowsBuild`), `platform/pdh.cpp` (CPU counter choice) | Windows 11 build 26300, ARM64 | build 0: backdrop takes the pre-Windows 11 paths, PDH uses `% Processor Utility` and falls back to `% Processor Time` |
 | Numeric DWM attributes: `DWMWA_USE_IMMERSIVE_DARK_MODE` (20), `DWMWA_WINDOW_CORNER_PREFERENCE` (33), `DWMWA_BORDER_COLOR` (34), `DWMWA_SYSTEMBACKDROP_TYPE` (38), undocumented Mica attribute 1029, colour sentinels `0xFFFFFFFF`/`0xFFFFFFFE` | `core/widgets/backdrop.cpp` | Windows 11 build 26300, ARM64 | gated on `windowsBuild()` (22000 / 22621); `DwmSetWindowAttribute` failures are caught and logged |
+| `DEVPKEY_Bluetooth_Battery` ({104EA319-6EE2-4701-BD47-8DDBF425BBE5}, 2), a PnP property key read with `CM_Get_DevNode_PropertyW` | `platform/bluetooth.cpp` (`readBattery`) | Windows 11 build 26300, ARM64 (key and layout from Python YASB) | read failure or non-byte type gives no battery value; the menu then shows no battery |
+| `KSPROPSETID_BtAudio` ({7FA06C40-B8F6-4C7E-8556-E8C33A12E54D}) one-shot ids 0 (reconnect) and 1 (disconnect) sent through `IKsControl::KsProperty` | `platform/bluetooth.cpp` (`setAudioConnection`) | key and ids from Python YASB; not exercised live on build 26300 | no KS filter or a refusing driver returns `no_ks_controls` / `oneshot_failed`; the menu shows "Failed to connect/disconnect device" |
 
 The plan lists more coming with control_center, taskbar and wallpapers; each one gets a row.

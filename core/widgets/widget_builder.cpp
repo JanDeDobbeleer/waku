@@ -53,24 +53,12 @@ BaseWidget* WidgetBuilder::buildWidget(const std::string& name, const QString& s
       auto options = config_.widgetOptions<config::options::BatteryConfig>(name);
       if (!options) return skip(invalidOptions_, "has invalid options");
       typedOptions = std::move(*options);
-    } else if (entry->type == "yasb.github.GithubWidget") {
-      auto options = config_.widgetOptions<config::options::GithubConfig>(name);
+    } else if (entry->type == "yasb.wifi.WifiWidget") {
+      auto options = config_.widgetOptions<config::options::WifiConfig>(name);
       if (!options) return skip(invalidOptions_, "has invalid options");
       typedOptions = std::move(*options);
-    } else if (entry->type == "komorebi.workspaces.WorkspaceWidget") {
-      auto options = config_.widgetOptions<config::options::KomorebiWorkspacesConfig>(name);
-      if (!options) return skip(invalidOptions_, "has invalid options");
-      typedOptions = std::move(*options);
-    } else if (entry->type == "komorebi.active_layout.ActiveLayoutWidget") {
-      auto options = config_.widgetOptions<config::options::ActiveLayoutConfig>(name);
-      if (!options) return skip(invalidOptions_, "has invalid options");
-      typedOptions = std::move(*options);
-    } else if (entry->type == "yasb.clock.ClockWidget") {
-      auto options = config_.widgetOptions<config::options::ClockConfig>(name);
-      if (!options) return skip(invalidOptions_, "has invalid options");
-      typedOptions = std::move(*options);
-    } else if (entry->type == "yasb.media.MediaWidget") {
-      auto options = config_.widgetOptions<config::options::MediaWidgetConfig>(name);
+    } else if (entry->type == "yasb.bluetooth.BluetoothWidget") {
+      auto options = config_.widgetOptions<config::options::BluetoothConfig>(name);
       if (!options) return skip(invalidOptions_, "has invalid options");
       typedOptions = std::move(*options);
     }

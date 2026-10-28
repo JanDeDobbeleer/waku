@@ -5,13 +5,10 @@
     "island_cases": 71,
     "label_scenarios": {
       "battery": 9,
-      "clock": 37,
+      "bluetooth": 7,
       "cpu": 6,
-      "github": 7,
-      "komorebi_active_layout": 8,
-      "komorebi_workspaces": 14,
-      "media": 17,
-      "memory": 5
+      "memory": 5,
+      "wifi": 9
     }
   },
   "qt_css_engine": {

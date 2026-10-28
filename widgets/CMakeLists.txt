@@ -1,5 +1,7 @@
 # widgets: concrete widgets and their registration (registerStatWidgets, called from app/main.cpp).
 add_library(yasb_widgets STATIC
+  network_widgets.h
+  network_widgets.cpp
   stat_widgets.h
   stat_widgets.cpp
   system_widget_helpers.h
@@ -24,19 +26,20 @@ add_library(yasb_widgets STATIC
   github/github_widget.cpp
   memory/memory_widget.h
   memory/memory_widget.cpp
-  komorebi/active_layout_widget.h
-  komorebi/active_layout_widget.cpp
-  komorebi/komorebi_service.h
-  komorebi/komorebi_service.cpp
-  komorebi/komorebi_state.h
-  komorebi/komorebi_state.cpp
-  komorebi/komorebi_widgets.h
-  komorebi/komorebi_widgets.cpp
-  komorebi/workspaces_widget.h
-  komorebi/workspaces_widget.cpp
-  media/media_widget.h
-  media/media_widget.cpp
-  media/media.qrc
+  menu_support/elided_label.h
+  menu_support/label_parts.h
+  menu_support/loader_line.h
+  menu_support/loader_line.cpp
+  menu_support/menu_popup.h
+  menu_support/menu_popup.cpp
+  wifi/wifi_menu.h
+  wifi/wifi_menu.cpp
+  wifi/wifi_widget.h
+  wifi/wifi_widget.cpp
+  bluetooth/bluetooth_menu.h
+  bluetooth/bluetooth_menu.cpp
+  bluetooth/bluetooth_widget.h
+  bluetooth/bluetooth_widget.cpp
 )
 set_target_properties(yasb_widgets PROPERTIES AUTORCC ON)
 target_include_directories(yasb_widgets PUBLIC ${CMAKE_SOURCE_DIR})

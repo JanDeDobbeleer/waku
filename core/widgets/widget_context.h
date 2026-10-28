@@ -6,13 +6,14 @@
 #include <variant>
 
 #include "core/config/options/battery.h"
-#include "core/config/options/clock.h"
+#include "core/config/options/bluetooth.h"
 #include "core/config/options/cpu.h"
 #include "core/config/options/github.h"
 #include "core/config/options/komorebi_active_layout.h"
 #include "core/config/options/komorebi_workspaces.h"
 #include "core/config/options/media.h"
 #include "core/config/options/memory.h"
+#include "core/config/options/wifi.h"
 
 namespace yasb::bar {
 class GlobalState;
@@ -25,9 +26,8 @@ class PollingWorkerRegistry;
 
 using TypedWidgetOptions =
     std::variant<std::monostate, config::options::CpuConfig, config::options::MemoryConfig,
-                 config::options::BatteryConfig, config::options::GithubConfig,
-                 config::options::KomorebiWorkspacesConfig, config::options::ActiveLayoutConfig,
-                 config::options::ClockConfig, config::options::MediaWidgetConfig>;
+                 config::options::BatteryConfig, config::options::WifiConfig,
+                 config::options::BluetoothConfig>;
 
 struct WidgetContext {
   std::string name;

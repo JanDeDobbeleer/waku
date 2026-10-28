@@ -61,7 +61,7 @@ def _label_state(label: Any) -> dict[str, Any]:
 def snapshot(widget: Any) -> dict[str, Any]:
     layout = widget._widget_container_layout
     ordered = [layout.itemAt(i).widget() for i in range(layout.count())]
-    return {
+    snap = {
         "widget_hidden": widget.isHidden(),
         "frame_class": widget._widget_frame.property("class"),
         "container_class": widget._widget_container.property("class"),
@@ -72,6 +72,11 @@ def snapshot(widget: Any) -> dict[str, Any]:
             for label in ordered
         ],
     }
+    # The wifi widget has two more label groups for Ethernet.
+    for key, attribute in (("ethernet", "_widgets_ethernet"), ("ethernet_alt", "_widgets_ethernet_alt")):
+        if hasattr(widget, attribute):
+            snap[key] = [_label_state(label) for label in getattr(widget, attribute)]
+    return snap
 
 
 def _run(exporter: LabelExporter, scenario: Scenario, base_options: dict[str, Any]) -> dict[str, Any]:

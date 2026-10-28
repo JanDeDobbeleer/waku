@@ -1,15 +1,13 @@
 #include "app/runtime.h"
 
-#include "widgets/komorebi/komorebi_widgets.h"
-#include "widgets/media/media_widget.h"
+#include "widgets/network_widgets.h"
 #include "widgets/stat_widgets.h"
 
 namespace yasb::app {
 
 Runtime::Runtime() {
   widgets::registerStatWidgets(widgetRegistry_);
-  widgets::registerKomorebiWidgets(widgetRegistry_);
-  widgets::registerMediaWidgets(widgetRegistry_);
+  widgets::registerNetworkWidgets(widgetRegistry_);
 }
 
 Runtime::~Runtime() { stop(); }

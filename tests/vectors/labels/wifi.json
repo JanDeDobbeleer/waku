@@ -1,0 +1,4531 @@
+[
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{wifi_name}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "container_class": "widget-container",
+      "ethernet": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "{vpn_icon}"
+        }
+      ],
+      "ethernet_alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{ip_addr}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "frame_class": "widget wifi-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt",
+        "alt",
+        "other",
+        "other",
+        "other",
+        "other",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "<span>\udb82\udd2e</span>"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "<span class=\"vpn\"></span>"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_middle": "exec cmd /c start ms-settings:network",
+        "on_right": "toggle_label"
+      },
+      "ethernet_icon": "\udb80\ude00",
+      "ethernet_label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "ethernet_label_alt": "<span>{wifi_icon}</span>{ip_addr}<span class=\"vpn-name\">{vpn_name}</span>",
+      "label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "label_alt": "<span>{wifi_icon}</span>{wifi_name}<span class=\"vpn-name\">{vpn_name}</span>",
+      "menu_config": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_top": 6,
+        "round_corners": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "placeholder_only",
+    "steps": [],
+    "widget": "wifi"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{wifi_name}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "container_class": "widget-container",
+      "ethernet": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "{vpn_icon}"
+        }
+      ],
+      "ethernet_alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{ip_addr}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "frame_class": "widget wifi-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt",
+        "alt",
+        "other",
+        "other",
+        "other",
+        "other",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "<span>\udb82\udd2e</span>"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "<span class=\"vpn\"></span>"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_middle": "exec cmd /c start ms-settings:network",
+        "on_right": "toggle_label"
+      },
+      "ethernet_icon": "\udb80\ude00",
+      "ethernet_label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "ethernet_label_alt": "<span>{wifi_icon}</span>{ip_addr}<span class=\"vpn-name\">{vpn_name}</span>",
+      "label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "label_alt": "<span>{wifi_icon}</span>{wifi_name}<span class=\"vpn-name\">{vpn_name}</span>",
+      "menu_config": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_top": 6,
+        "round_corners": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "user_options_connection_states",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 4,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd25</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 3,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd22</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "name": "Office"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd1f</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 1,
+            "name": "Cafe"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd2e</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 0,
+            "name": "Disconnected"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": false,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 4,
+            "name": "Home",
+            "vpn": "ProtonVPN"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 4,
+            "ethernet": true,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": false,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 4,
+            "ethernet": true,
+            "name": "Home",
+            "vpn": "ProtonVPN"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 9,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 4,
+            "name": "Home"
+          }
+        }
+      }
+    ],
+    "widget": "wifi"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{wifi_name}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "container_class": "widget-container",
+      "ethernet": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "{vpn_icon}"
+        }
+      ],
+      "ethernet_alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{ip_addr}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "frame_class": "widget wifi-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt",
+        "alt",
+        "other",
+        "other",
+        "other",
+        "other",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "<span>\udb82\udd2e</span>"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "<span class=\"vpn\"></span>"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_middle": "exec cmd /c start ms-settings:network",
+        "on_right": "toggle_label"
+      },
+      "ethernet_icon": "\udb80\ude00",
+      "ethernet_label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "ethernet_label_alt": "<span>{wifi_icon}</span>{ip_addr}<span class=\"vpn-name\">{vpn_name}</span>",
+      "label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "label_alt": "<span>{wifi_icon}</span>{wifi_name}<span class=\"vpn-name\">{vpn_name}</span>",
+      "menu_config": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_top": 6,
+        "round_corners": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "user_options_alt_label_toggle",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": false,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 4,
+            "name": "Home",
+            "vpn": "ProtonVPN"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Home"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": false,
+              "text": "<span class=\"vpn-name\">ProtonVPN</span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd22</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Office"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "name": "Office"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd22</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Office"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "192.0.2.10"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": false,
+              "text": "<span class=\"vpn-name\">ProtonVPN</span>"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "ethernet": true,
+            "name": "Office",
+            "vpn": "ProtonVPN"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd22</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Office"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "198.51.100.7"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "ethernet": true,
+            "ip": "198.51.100.7",
+            "name": "Office"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd22</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Office"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "198.51.100.7"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\">\udb82\udd9d</span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd22</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Office"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "198.51.100.7"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd25</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 3,
+            "name": "Home"
+          }
+        }
+      }
+    ],
+    "widget": "wifi"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{wifi_name} {wifi_strength}"
+        }
+      ],
+      "container_class": "widget-container",
+      "ethernet": [
+        {
+          "class": "label",
+          "hidden": true,
+          "text": "{wifi_icon}|{wifi_name}|{wifi_strength}|{ip_addr}|{vpn_icon}|{vpn_name}"
+        }
+      ],
+      "ethernet_alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{ip_addr}"
+        }
+      ],
+      "frame_class": "widget wifi-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt",
+        "other",
+        "other",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "\udb82\udd2e|Disconnected|0|192.0.2.10||"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_middle": "exec cmd /c start ms-settings:network",
+        "on_right": "toggle_label"
+      },
+      "ethernet_icon": "\udb80\ude00",
+      "ethernet_label": "{wifi_icon}|{wifi_name}|{wifi_strength}|{ip_addr}|{vpn_icon}|{vpn_name}",
+      "ethernet_label_alt": "<span>{wifi_icon}</span> {ip_addr}",
+      "label": "{wifi_icon}|{wifi_name}|{wifi_strength}|{ip_addr}|{vpn_icon}|{vpn_name}",
+      "label_alt": "<span>{wifi_icon}</span> {wifi_name} {wifi_strength}",
+      "menu_config": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_top": 6,
+        "round_corners": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "all_placeholders",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name} {wifi_strength}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "{wifi_icon}|{wifi_name}|{wifi_strength}|{ip_addr}|{vpn_icon}|{vpn_name}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd25|Home|75|192.0.2.10|\udb82\udd9d|ProtonVPN"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 3,
+            "name": "Home",
+            "vpn": "ProtonVPN"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name} {wifi_strength}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb80\ude00|Ethernet|N/A|192.0.2.10|\udb82\udd9d|ProtonVPN"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "\udb82\udd25|Home|75|192.0.2.10|\udb82\udd9d|ProtonVPN"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 3,
+            "ethernet": true,
+            "name": "Home",
+            "vpn": "ProtonVPN"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name} {wifi_strength}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "\udb80\ude00|Ethernet|N/A|192.0.2.10|\udb82\udd9d|ProtonVPN"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "192.0.2.10"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "\udb82\udd25|Home|75|192.0.2.10|\udb82\udd9d|ProtonVPN"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd1f</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Cafe 25"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "\udb80\ude00|Ethernet|N/A|192.0.2.10|\udb82\udd9d|ProtonVPN"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "192.0.2.10"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "\udb82\udd25|Home|75|192.0.2.10|\udb82\udd9d|ProtonVPN"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 1,
+            "name": "Cafe"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd1f</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "Cafe 25"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "\udb80\ude00|Ethernet|N/A|192.0.2.10|\udb82\udd9d|ProtonVPN"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb80\ude00</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "192.0.2.10"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": true,
+              "text": "\udb82\udd25|Home|75|192.0.2.10|\udb82\udd9d|ProtonVPN"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 0,
+            "ethernet": true,
+            "name": "Disconnected"
+          }
+        }
+      }
+    ],
+    "widget": "wifi"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{wifi_name}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "container_class": "widget-container",
+      "ethernet": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "{vpn_icon}"
+        }
+      ],
+      "ethernet_alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{ip_addr}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "frame_class": "widget wifi-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt",
+        "alt",
+        "other",
+        "other",
+        "other",
+        "other",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "\udb82\udd2e 0"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_middle": "exec cmd /c start ms-settings:network",
+        "on_right": "toggle_label"
+      },
+      "ethernet_icon": "\udb80\ude00",
+      "ethernet_label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "ethernet_label_alt": "<span>{wifi_icon}</span>{ip_addr}<span class=\"vpn-name\">{vpn_name}</span>",
+      "get_exact_wifi_strength": true,
+      "label": "{wifi_icon} {wifi_strength}",
+      "label_alt": "<span>{wifi_icon}</span>{wifi_name}<span class=\"vpn-name\">{vpn_name}</span>",
+      "menu_config": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_top": 6,
+        "round_corners": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "exact_strength_thresholds",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd22 50"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": -1,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd2e 0"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": 0,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd2e 19"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": 19,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd1f 20"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": 20,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd1f 39"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": 39,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd22 40"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": 40,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd22 59"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": 59,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd25 60"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": 60,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd25 79"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": 79,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd28 80"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": 80,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd28 100"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "exact": 100,
+            "name": "Home"
+          }
+        }
+      }
+    ],
+    "widget": "wifi"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{wifi_name}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "container_class": "widget-container",
+      "ethernet": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "{vpn_icon}"
+        }
+      ],
+      "ethernet_alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{ip_addr}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "frame_class": "widget wifi-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt",
+        "alt",
+        "other",
+        "other",
+        "other",
+        "other",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "<span>\udb82\udd2e</span>"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "<span class=\"vpn\"></span>"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_middle": "exec cmd /c start ms-settings:network",
+        "on_right": "toggle_label"
+      },
+      "ethernet_icon": "\udb80\ude00",
+      "ethernet_label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "ethernet_label_alt": "<span>{wifi_icon}</span>{ip_addr}<span class=\"vpn-name\">{vpn_name}</span>",
+      "hide_if_ethernet": true,
+      "label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "label_alt": "<span>{wifi_icon}</span>{wifi_name}<span class=\"vpn-name\">{vpn_name}</span>",
+      "menu_config": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_top": 6,
+        "round_corners": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "hide_if_ethernet",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd25</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 3,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd25</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "wifi": {
+            "bars": 3,
+            "ethernet": true,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd25</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd25</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Home"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd25</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 3,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd25</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Home"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd25</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "wifi": {
+            "bars": 3,
+            "ethernet": true,
+            "name": "Home",
+            "vpn": "ProtonVPN"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "<span>\udb82\udd22</span>"
+            },
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "Home"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "<span class=\"vpn-name\"></span>"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "<span>\udb82\udd25</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 2,
+            "name": "Home"
+          }
+        }
+      }
+    ],
+    "widget": "wifi"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{wifi_name}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "container_class": "widget-container",
+      "ethernet": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "{vpn_icon}"
+        }
+      ],
+      "ethernet_alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{ip_addr}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "frame_class": "widget wifi-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt",
+        "alt",
+        "other",
+        "other",
+        "other",
+        "other",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "\udb82\udd2e Disconnected 192.0.2.10"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_middle": "exec cmd /c start ms-settings:network",
+        "on_right": "toggle_label"
+      },
+      "ethernet_icon": "\udb80\ude00",
+      "ethernet_label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "ethernet_label_alt": "<span>{wifi_icon}</span>{ip_addr}<span class=\"vpn-name\">{vpn_name}</span>",
+      "label": "{wifi_icon} {wifi_name} {ip_addr}",
+      "label_alt": "<span>{wifi_icon}</span>{wifi_name}<span class=\"vpn-name\">{vpn_name}</span>",
+      "menu_config": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_top": 6,
+        "round_corners": true
+      },
+      "update_interval": 5000
+    },
+    "scenario": "host_lookup_fails",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "N/A N/A N/A"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 3,
+            "ip": null,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "\udb82\udd25 Home 192.0.2.10"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 3,
+            "name": "Home"
+          }
+        }
+      }
+    ],
+    "widget": "wifi"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{wifi_name}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "container_class": "widget-container",
+      "ethernet": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "{vpn_icon}"
+        }
+      ],
+      "ethernet_alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{ip_addr}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "frame_class": "widget wifi-widget ",
+      "layout_order": [
+        "primary",
+        "alt",
+        "alt",
+        "alt",
+        "other",
+        "other",
+        "other",
+        "other",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "a Disconnected"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_middle": "exec cmd /c start ms-settings:network",
+        "on_right": "toggle_label"
+      },
+      "ethernet_icon": "\udb80\ude00",
+      "ethernet_label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "ethernet_label_alt": "<span>{wifi_icon}</span>{ip_addr}<span class=\"vpn-name\">{vpn_name}</span>",
+      "label": "{wifi_icon} {wifi_name}",
+      "label_alt": "<span>{wifi_icon}</span>{wifi_name}<span class=\"vpn-name\">{vpn_name}</span>",
+      "menu_config": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_top": 6,
+        "round_corners": true
+      },
+      "update_interval": 5000,
+      "wifi_icons": [
+        "a",
+        "b"
+      ]
+    },
+    "scenario": "too_few_wifi_icons",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "b Home"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 1,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "N/A N/A"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 4,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget ",
+          "layout_order": [
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "a Home"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 0,
+            "name": "Home"
+          }
+        }
+      }
+    ],
+    "widget": "wifi"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{wifi_name}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "container_class": "widget-container",
+      "ethernet": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "{vpn_icon}"
+        }
+      ],
+      "ethernet_alt": [
+        {
+          "class": "icon",
+          "hidden": true,
+          "text": "{wifi_icon}"
+        },
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{ip_addr}"
+        },
+        {
+          "class": "vpn-name",
+          "hidden": true,
+          "text": "{vpn_name}"
+        }
+      ],
+      "frame_class": "widget wifi-widget extra",
+      "layout_order": [
+        "primary",
+        "primary",
+        "primary",
+        "alt",
+        "alt",
+        "alt",
+        "other",
+        "other",
+        "other",
+        "other",
+        "other"
+      ],
+      "primary": [
+        {
+          "class": "net",
+          "hidden": false,
+          "text": "<span class=\"net\">\udb82\udd2e</span>"
+        },
+        {
+          "class": "vpn",
+          "hidden": true,
+          "text": "<span class=\"vpn\"></span>"
+        },
+        {
+          "class": "label",
+          "hidden": true,
+          "text": ""
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_menu",
+        "on_middle": "exec cmd /c start ms-settings:network",
+        "on_right": "toggle_label"
+      },
+      "class_name": "extra",
+      "ethernet_icon": "\udb80\ude00",
+      "ethernet_label": "<span>{wifi_icon}</span><span class=\"vpn\">{vpn_icon}</span>",
+      "ethernet_label_alt": "<span>{wifi_icon}</span>{ip_addr}<span class=\"vpn-name\">{vpn_name}</span>",
+      "label": "<span class=\"net\">{wifi_icon}</span> <span class=\"vpn\">{vpn_icon}</span> {vpn_name}",
+      "label_alt": "<span>{wifi_icon}</span>{wifi_name}<span class=\"vpn-name\">{vpn_name}</span>",
+      "menu_config": {
+        "alignment": "right",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_top": 6,
+        "round_corners": true
+      },
+      "update_interval": 5000,
+      "vpn_icon": "V"
+    },
+    "scenario": "custom_vpn_icon_and_classes",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget extra",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "net",
+              "hidden": false,
+              "text": "<span class=\"net\">\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "<span class=\"vpn\"></span>"
+            },
+            {
+              "class": "label",
+              "hidden": true,
+              "text": ""
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 4,
+            "name": "Home"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{wifi_name}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "container_class": "widget-container",
+          "ethernet": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "vpn",
+              "hidden": true,
+              "text": "{vpn_icon}"
+            }
+          ],
+          "ethernet_alt": [
+            {
+              "class": "icon",
+              "hidden": true,
+              "text": "{wifi_icon}"
+            },
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{ip_addr}"
+            },
+            {
+              "class": "vpn-name",
+              "hidden": true,
+              "text": "{vpn_name}"
+            }
+          ],
+          "frame_class": "widget wifi-widget extra",
+          "layout_order": [
+            "primary",
+            "primary",
+            "primary",
+            "alt",
+            "alt",
+            "alt",
+            "other",
+            "other",
+            "other",
+            "other",
+            "other"
+          ],
+          "primary": [
+            {
+              "class": "net",
+              "hidden": false,
+              "text": "<span class=\"net\">\udb82\udd28</span>"
+            },
+            {
+              "class": "vpn",
+              "hidden": false,
+              "text": "<span class=\"vpn\">V</span>"
+            },
+            {
+              "class": "label",
+              "hidden": false,
+              "text": "Work VPN"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "wifi": {
+            "bars": 4,
+            "name": "Home",
+            "vpn": "Work VPN"
+          }
+        }
+      }
+    ],
+    "widget": "wifi"
+  }
+]
