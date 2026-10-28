@@ -602,5 +602,6 @@ import vec_komorebi  # noqa: E402,F401  (registers the komorebi exporters)
 import vec_media  # noqa: E402,F401  (registers the media exporter)
 import vec_notifications  # noqa: E402,F401  (registers the notifications exporter)
 import vec_labels_network  # noqa: E402,F401  (registers the wifi and bluetooth exporters)
+import vec_wallpapers  # noqa: E402,F401  (registers the wallpapers exporter)
 
 __all__ = ["LABEL_EXPORTERS", "export_label_vectors"]
