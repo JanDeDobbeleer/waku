@@ -81,6 +81,9 @@ SystemFunctionMap& systemFunctions() {
 namespace {
 // Presses the keys in order and releases them in reverse, as one SendInput batch.
 void sendKeys(std::initializer_list<WORD> keys) {
+  // Python ensure_non_elevated_foreground: focus the desktop first so UIPI does not drop the keys
+  // when an elevated window is in front.
+  if (HWND desktop = FindWindowW(L"Progman", nullptr)) SetForegroundWindow(desktop);
   std::vector<INPUT> inputs;
   inputs.reserve(keys.size() * 2);
   const auto key = [](WORD vk, DWORD flags) {

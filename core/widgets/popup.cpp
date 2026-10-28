@@ -37,6 +37,10 @@ PopupWidget::PopupWidget(QWidget* anchor)
                           Qt::NoDropShadowWindowHint),
       anchor_(anchor) {
   setAttribute(Qt::WA_TranslucentBackground);
+  // A plain QWidget subclass paints no stylesheet background without this, so the popup's own
+  // `background-color` rule (e.g. `.github-menu`, `.cpu-popup`) was ignored and it stayed
+  // see-through.
+  setAttribute(Qt::WA_StyledBackground);
   setProperty("class", "popup");
 }
 

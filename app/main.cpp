@@ -21,6 +21,7 @@
 #include "core/config/paths.h"
 #include "core/css/preprocessor.h"
 #include "core/version.h"
+#include "core/widgets/callbacks.h"
 #include "core/widgets/widget_builder.h"
 #include "widgets/stat_widgets.h"
 
@@ -234,6 +235,7 @@ int main(int argc, char** argv) {
   setFontEngine();
   std::set_terminate(logTerminate);
   QApplication app(argc, argv);
+  yasb::widgets::registerDefaultSystemFunctions();
   QCoreApplication::setApplicationName(QStringLiteral("yasb-native"));
   QCoreApplication::setApplicationVersion(QString::fromLatin1(yasb::version()));
 

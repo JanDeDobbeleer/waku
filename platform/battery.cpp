@@ -116,6 +116,14 @@ std::optional<BatterySample> WindowsBatteryDataSource::sample() {
     if (state.Capacity != BATTERY_UNKNOWN_CAPACITY) out.capacity = state.Capacity;
   }
 
+  // GetSystemPowerStatus often reports no estimate on modern-standby hardware. Derive one from
+  // the discharge rate (W, negative when draining) and remaining capacity (mWh) instead.
+  if (out.timeRemaining == kPowerTimeUnknown && !out.plugged && out.rate && out.capacity &&
+      *out.rate < 0) {
+    out.timeRemaining =
+        static_cast<int>(static_cast<double>(*out.capacity) / (-*out.rate * 1000.0) * 3600.0);
+  }
+
   ULONG temperature = 0;
   if (queryValue(battery, tag, BatteryTemperature, &temperature, sizeof(temperature)) &&
       temperature > 0) {
