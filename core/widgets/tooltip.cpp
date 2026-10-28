@@ -193,7 +193,8 @@ void TooltipEventFilter::updateText(const QString& text) {
 
 void TooltipEventFilter::showNow() {
   if (!tip_) {
-    tip_ = new CustomToolTip(globalState_.isDark());
+    // Parented to the bar window so the tooltip inherits the bar's stylesheet (.tooltip rules).
+    tip_ = new CustomToolTip(globalState_.isDark(), widget_->window());
     tip_->setPositionPreference(position_);
   }
   if (tip_->isVisible()) {

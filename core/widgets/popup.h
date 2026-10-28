@@ -32,6 +32,7 @@ class PopupWidget : public QWidget {
  protected:
   void resizeEvent(QResizeEvent* event) override;
   bool event(QEvent* event) override;
+  void paintEvent(QPaintEvent* event) override;
 
  private:
   QWidget* anchor_;

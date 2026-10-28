@@ -2,7 +2,10 @@
 
 #include <QApplication>
 #include <QEvent>
+#include <QPaintEvent>
+#include <QPainter>
 #include <QScreen>
+#include <QStyleOption>
 #include <algorithm>
 
 namespace yasb::widgets {
@@ -63,6 +66,14 @@ void PopupWidget::setPosition(const QString& alignment, const QString& direction
 void PopupWidget::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
   if (positioned_) setPosition(alignment_, direction_, offsetLeft_, offsetTop_);
+}
+
+void PopupWidget::paintEvent(QPaintEvent*) {
+  // Draws the stylesheet background/border; a plain QWidget subclass paints nothing by itself.
+  QStyleOption option;
+  option.initFrom(this);
+  QPainter painter(this);
+  style()->drawPrimitive(QStyle::PE_Widget, &option, &painter, this);
 }
 
 bool PopupWidget::event(QEvent* e) {

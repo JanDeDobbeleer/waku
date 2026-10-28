@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <memory>
 
+#include "core/css/transition_engine.h"
 #include "core/widgets/popup.h"
 
 using namespace yasb::widgets;
@@ -57,4 +58,20 @@ TEST(PopupWidgetTest, AnchorsToParentGlobalPosition) {
   popup->resize(120, 60);  // resize re-applies the stored placement
   popup->setPosition("right", "down", 0, 6);
   EXPECT_EQ(popup->pos(), QPoint(180, 136));
+}
+
+TEST(PopupWidgetTest, PaintsStylesheetBackgroundFromClassRule) {
+  yasb::css::TransitionEngine engine;
+  QWidget anchor;
+  anchor.setStyleSheet(
+      engine.loadStyleSheet(QStringLiteral(".probe-menu { background-color: #282c34; }")));
+  anchor.resize(100, 30);
+  anchor.show();
+  PopupWidget popup(&anchor);
+  popup.setProperty("class", QStringLiteral("probe-menu"));
+  popup.resize(120, 80);
+  popup.show();
+  const QColor px = popup.grab().toImage().pixelColor(5, 5);
+  EXPECT_EQ(px.name(), QStringLiteral("#282c34"));
+  EXPECT_EQ(px.alpha(), 255);
 }
