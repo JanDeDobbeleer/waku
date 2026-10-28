@@ -71,12 +71,23 @@ class BarHost : public QObject {
   // Reloads whenever a file in the config home changes.
   void watch();
 
+  // Gives a window the native look of a bar (the backdrop). PopupWindow and Tooltip call this for
+  // their own windows with the backdrop of the bar they belong to. `window` is a QWindow;
+  // `backdrop` is a Bar::Backdrop value.
+  Q_INVOKABLE void decorate(QObject* window, int backdrop);
+
+  // Every bar window is a click target that does not take focus, so a popup cannot rely on losing
+  // activation to know the user clicked elsewhere in the bar: the host reports those presses.
+  bool eventFilter(QObject* watched, QEvent* event) override;
+
   QString error() const { return error_; }
   QList<QQuickWindow*> windows() const;
   Config* config() const;
 
  signals:
   void errorChanged();
+  // A mouse button went down in one of the bar windows.
+  void barPressed();
   void reloaded(bool ok);
 
  private:

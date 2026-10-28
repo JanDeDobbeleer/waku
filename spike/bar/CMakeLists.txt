@@ -8,10 +8,14 @@ qt_add_qml_module(barnacle_bar
     BarLayout.qml
     BarWindow.qml
     FallbackConfig.qml
+    PopupWindow.qml
+    Tooltip.qml
   SOURCES
     bar_config.h
     bar_theme.h
     bar_theme.cpp
+    popup_placement.h
+    popup_placement.cpp
     screen_match.h
     screen_match.cpp
     bar_host.h

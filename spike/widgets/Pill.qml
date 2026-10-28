@@ -11,7 +11,8 @@ import barnacle
 //
 // Items declared inside a Pill sit in a row after the text; give them
 // `anchors.verticalCenter: parent.verticalCenter`. Static widgets set `interactive: false` to
-// drop the hover highlight and the click handlers. Colours, font and size come from Theme.
+// drop the hover highlight and the click handlers. `tooltip` is the hover text. Colours, font and
+// size come from Theme.
 Rectangle {
     id: root
 
@@ -19,9 +20,13 @@ Rectangle {
     property color textColor: Theme.text
     property int fontSize: Theme.fontSize
     property int padding: Theme.padding
+    // The widest the text may be, in pixels; longer text is elided. 0 means no limit.
+    property int maxTextWidth: 0
     property color fill: Theme.fill
     property color hoverFill: Theme.fillHover
     property bool interactive: true
+    // Hover text; empty for none.
+    property string tooltip: ""
 
     default property alias content: row.data
 
@@ -49,11 +54,17 @@ Rectangle {
         Text {
             visible: root.text !== ""
             anchors.verticalCenter: parent.verticalCenter
+            width: root.maxTextWidth > 0 ? Math.min(implicitWidth, root.maxTextWidth) : implicitWidth
+            elide: Text.ElideRight
             color: root.textColor
             font.family: Theme.fontFamily
             font.pixelSize: root.fontSize
             text: root.text
         }
+    }
+
+    Tooltip {
+        text: root.tooltip
     }
 
     HoverHandler {

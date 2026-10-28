@@ -7,6 +7,8 @@ qt_add_qml_module(barnacle_widgets
   VERSION 1.0
   QML_FILES
     Pill.qml
+    Slider.qml
+    Calendar.qml
     Clock.qml
     Cpu.qml
     Memory.qml

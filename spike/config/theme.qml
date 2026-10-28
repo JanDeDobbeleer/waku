@@ -18,6 +18,10 @@ ThemeSpec {
     fillUsed: "#33ffffff"
     fillEmpty: "#18ffffff"
 
+    // Popups and tooltips sit over arbitrary windows, so they are nearly opaque
+    popupSurface: "#f0181820"
+    popupBorder: "#33ffffff"
+
     // Type and size in pixels; a negative radius is fully rounded (a pill)
     // fontFamily: "Segoe UI Variable"     // default: the system font
     fontSize: 13

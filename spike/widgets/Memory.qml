@@ -7,7 +7,7 @@ import barnacle.services as S
 //     Memory { format: "RAM %2 / %3 GiB" }
 //
 // `format`: %1 is the use in percent, %2 the used and %3 the total memory in GiB. The pill turns
-// `warnFill` at `warnAbove` percent and above.
+// `warnFill` at `warnAbove` percent and above. Hovering shows used and total memory and the swap.
 Pill {
     id: root
 
@@ -25,6 +25,7 @@ Pill {
     }
 
     interactive: false
+    tooltip: !source.ready ? "" : "Used " + gib(source.used) + " of " + gib(source.total) + " GiB\nSwap " + Math.round(source.swapPercent) + "%"
     fill: source.percent >= warnAbove ? warnFill : Theme.fill
     text: source.ready
           ? format.replace("%1", Math.round(source.percent)).replace("%2", gib(source.used)).replace("%3", gib(source.total))

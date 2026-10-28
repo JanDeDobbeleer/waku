@@ -32,6 +32,10 @@ class ThemeValues : public QObject {
   Q_PROPERTY(QColor fillUsed MEMBER fillUsed_ NOTIFY changed FINAL)
   Q_PROPERTY(QColor fillEmpty MEMBER fillEmpty_ NOTIFY changed FINAL)
 
+  // Popups and tooltips: nearly opaque, because they sit over arbitrary windows.
+  Q_PROPERTY(QColor popupSurface MEMBER popupSurface_ NOTIFY changed FINAL)
+  Q_PROPERTY(QColor popupBorder MEMBER popupBorder_ NOTIFY changed FINAL)
+
   // Derived from the colours above, read only: a translucent version for a widget background.
   Q_PROPERTY(QColor accentFill READ accentFill NOTIFY changed FINAL)
   Q_PROPERTY(QColor warnFill READ warnFill NOTIFY changed FINAL)
@@ -80,6 +84,8 @@ class ThemeValues : public QObject {
   QColor fillActive_{0xff, 0xff, 0xff, 0x55};
   QColor fillUsed_{0xff, 0xff, 0xff, 0x33};
   QColor fillEmpty_{0xff, 0xff, 0xff, 0x18};
+  QColor popupSurface_{0x18, 0x18, 0x20, 0xf0};
+  QColor popupBorder_{0xff, 0xff, 0xff, 0x33};
   QString fontFamily_;
   int fontSize_ = 13;
   int smallFontSize_ = 12;

@@ -135,6 +135,7 @@ ThemeSpec { accent: "#ff8800"; fontFamily: "Cascadia Code"; radius: 6 }
 | `text`, `surface` | `#ffffff`, `#66101018` | text; the bar background (a `Bar` can set its own `background`) |
 | `accent`, `warn`, `good`, `caution` | `#5b8def`, `#e5484d`, `#38c172`, `#f0c36d` | focus; high load, low battery, errors; charging; a mode |
 | `fill`, `fillHover`, `fillActive`, `fillUsed`, `fillEmpty` | white at 13%, 27%, 33%, 20%, 9% | a widget's background: normal, hovered, shown, holding something, empty |
+| `popupSurface`, `popupBorder` | `#f0181820`, white at 20% | popups and tooltips: nearly opaque, because they sit over other windows |
 | `accentFill`, `warnFill`, `goodFill`, `cautionFill` | read only | the colour above at a translucent alpha, for a widget background |
 | `fontFamily` | the system font | all text |
 | `fontSize`, `smallFontSize` | 13, 12 | text; workspace labels, error pill |
@@ -152,6 +153,53 @@ Design notes:
   previous theme stay and the error pill says `theme.qml:LINE:COL: ...`.
 - Not in the theme yet: per-widget colours of custom widgets (they read `Theme.*` themselves),
   light and dark variants, and named theme files to switch between.
+
+## Popups and tooltips
+
+Two types in the `barnacle` module; both are plain QML and both are windows of their own, because
+the bar window is only as tall as the bar.
+
+```qml
+Pill {
+    id: pill
+    text: "Volume"
+    tooltip: "hover text"              // a Pill has this built in
+    onClicked: popup.toggle()
+
+    PopupWindow {
+        id: popup
+        anchorItem: pill
+        Text { text: "anything"; color: Theme.text }
+    }
+}
+```
+
+- **`PopupWindow`**: `anchorItem`, `open()`, `close()`, `toggle()`, `opened` and `closed`. What is
+  declared inside is stacked in a column and sizes the window; `padding`, `spacing`, `gap` and
+  `margin` tune it. It opens just outside the bar (below a top bar, above a bottom bar), centred
+  on the widget.
+- **`Tooltip`**: `text`, `delay` (600 ms). Declared as a direct child of the item to watch (not
+  inside a Row or Column, because it fills its parent). Shown after the delay, hidden when the
+  pointer leaves or a button is pressed. It never takes focus or input.
+- **Placement** is a pure function (`PopupPlacement.place`, with tests): centre on the anchor,
+  slide sideways to stay `margin` inside the screen, flip to the other side when the preferred
+  side has no room, clamp when neither fits. The anchor is the widget's width and the bar's
+  height, so a popup never overlaps the bar.
+- **Look**: both take `Theme.popupSurface`, `Theme.popupBorder`, the radius and the font, and get
+  the bar's backdrop (blur or mica) through `BarHost.decorate`, so they match the bar.
+- **Dismissal** is explicit, not `Qt.Popup`: measured on Windows, a `Qt.Popup` window did not close
+  on a click elsewhere. A popup closes on Escape, on a press in any bar window (the host watches
+  presses with an application event filter and emits `barPressed`, because bar windows never take
+  activation), and when it loses activation (a click in another application). A press that
+  closes a popup on its own widget does not reopen it: `toggle()` ignores a call within 250 ms of
+  closing.
+- **Built-in widgets using them**: `Clock` (calendar, full date), `Volume` (slider, mute, output
+  devices, current device), `Media` (art, track, seek bar, controls, track), `Cpu`, `Memory`,
+  `Battery` (tooltips with per-core load, memory and swap, charge and time left). The calendar
+  and the slider are public widgets too (`Calendar`, `Slider`).
+- **Not done**: keyboard navigation inside a popup, a popup that stays open while another opens
+  (one opens, the press that opens the next closes it), and anchoring to a screen edge instead of
+  a widget (for example a control centre).
 
 ## Errors and reload
 

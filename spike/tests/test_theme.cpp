@@ -53,6 +53,8 @@ TEST(ThemeValuesTest, DefaultsAreTheShippedLook) {
   EXPECT_EQ(spec.property("surface").value<QColor>(), kDefaultSurface);
   EXPECT_EQ(spec.property("accent").value<QColor>(), QColor(0x5b, 0x8d, 0xef));
   EXPECT_EQ(spec.property("fill").value<QColor>(), kDefaultFill);
+  EXPECT_EQ(spec.property("popupSurface").value<QColor>(), QColor(0x18, 0x18, 0x20, 0xf0));
+  EXPECT_EQ(spec.property("popupBorder").value<QColor>(), QColor(0xff, 0xff, 0xff, 0x33));
   EXPECT_EQ(spec.property("fontSize").toInt(), 13);
   EXPECT_EQ(spec.property("smallFontSize").toInt(), 12);
   EXPECT_EQ(spec.property("pillHeight").toInt(), 24);

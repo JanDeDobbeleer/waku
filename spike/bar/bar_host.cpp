@@ -1,14 +1,17 @@
 #include "spike/bar/bar_host.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
 #include <QDirIterator>
+#include <QEvent>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QQmlEngine>
 #include <QQuickWindow>
 #include <QScreen>
 #include <QUrl>
+#include <QWindow>
 
 #include "spike/bar/screen_match.h"
 
@@ -62,9 +65,26 @@ BarHost::BarHost(QQmlEngine* engine, Options options, QObject* parent)
   connect(&watcher_, &QFileSystemWatcher::directoryChanged, &debounce_,
           qOverload<>(&QTimer::start));
   connect(&watcher_, &QFileSystemWatcher::fileChanged, &debounce_, qOverload<>(&QTimer::start));
+  if (QCoreApplication::instance()) QCoreApplication::instance()->installEventFilter(this);
+}
+
+bool BarHost::eventFilter(QObject* watched, QEvent* event) {
+  if (event->type() != QEvent::MouseButtonPress && event->type() != QEvent::TouchBegin) {
+    return false;
+  }
+  auto* window = qobject_cast<QQuickWindow*>(watched);
+  if (!window || !loaded_) return false;
+  for (const Entry& entry : loaded_->entries) {
+    if (entry.window == window) {
+      emit barPressed();
+      break;
+    }
+  }
+  return false;  // observe only
 }
 
 BarHost::~BarHost() {
+  if (QCoreApplication::instance()) QCoreApplication::instance()->removeEventFilter(this);
   // Windows (and their app bars) go before the config object and component they refer to.
   loaded_.reset();
 }
@@ -270,6 +290,13 @@ void BarHost::present(Entry& entry) {
     request.alwaysOnTop = true;
     entry.appBar->create(request);
   }
+}
+
+void BarHost::decorate(QObject* window, int backdrop) {
+  auto* target = qobject_cast<QWindow*>(window);
+  if (!target || !options_.hooks.applyBackdrop) return;
+  const auto hwnd = static_cast<quintptr>(target->winId());
+  options_.hooks.applyBackdrop(hwnd, static_cast<Bar::Backdrop>(backdrop));
 }
 
 void BarHost::watch() {

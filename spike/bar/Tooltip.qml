@@ -1,0 +1,130 @@
+import QtQuick
+import QtQuick.Window
+
+// Hover text for the item it is declared in.
+//
+//     Rectangle {
+//         Tooltip { text: "what this does" }
+//     }
+//
+// It appears after `delay` ms of hovering, just outside the bar (below a top bar, above a bottom
+// bar), and goes when the pointer leaves or any button is pressed. It never takes focus or input.
+// Declare it as a direct child of the item to watch, not inside a Row, Column or other
+// positioner (it fills its parent). A Pill has `tooltip: "..."` for this.
+Item {
+    id: root
+
+    property string text: ""
+    property int delay: 600
+    property real gap: 6
+    property real margin: 8
+
+    readonly property Item target: parent
+    readonly property var bar: target ? target.Window.window : null
+    readonly property bool shown: tip.visible
+
+    function show() {
+        if (!hover.hovered || text === "" || !bar)
+            return;
+        reposition();
+        tip.visible = true;
+    }
+
+    function hide() {
+        timer.stop();
+        tip.visible = false;
+    }
+
+    function reposition() {
+        const origin = target.mapToGlobal(0, 0);
+        const screenInfo = bar.screen;
+        const edge = bar.spec && bar.spec.position === Bar.Bottom ? PopupPlacement.Above : PopupPlacement.Below;
+        const spot = PopupPlacement.position(Qt.rect(origin.x, bar.y, target.width, bar.height),
+                                             Qt.size(tip.width, tip.height),
+                                             Qt.rect(screenInfo.virtualX, screenInfo.virtualY, screenInfo.width, screenInfo.height),
+                                             edge, gap, margin);
+        tip.x = spot.x;
+        tip.y = spot.y;
+    }
+
+    anchors.fill: parent
+
+    onTextChanged: {
+        if (text === "")
+            hide();
+        else if (tip.visible)
+            reposition();
+    }
+
+    HoverHandler {
+        id: hover
+    }
+
+    // Any press (a click that opens a popup, say) hides the tip.
+    TapHandler {
+        acceptedButtons: Qt.AllButtons
+        onPressedChanged: if (pressed) root.hide()
+    }
+
+    Connections {
+        target: hover
+        function onHoveredChanged() {
+            if (hover.hovered && root.text !== "")
+                timer.restart();
+            else
+                root.hide();
+        }
+    }
+
+    Timer {
+        id: timer
+        interval: root.delay
+        onTriggered: root.show()
+    }
+
+    Window {
+        id: tip
+
+        objectName: "tooltipWindow"
+        flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowDoesNotAcceptFocus | Qt.WindowTransparentForInput
+        color: "transparent"
+        screen: root.bar ? root.bar.screen : null
+        width: box.implicitWidth
+        height: box.implicitHeight
+        visible: false
+
+        onVisibleChanged: {
+            if (visible && root.bar && root.bar.host && root.bar.spec)
+                root.bar.host.decorate(tip, root.bar.spec.backdrop);
+        }
+
+        Rectangle {
+            id: box
+
+            implicitWidth: label.implicitWidth + 2 * Theme.padding
+            implicitHeight: label.implicitHeight + 12
+            width: tip.width
+            height: tip.height
+            color: Theme.popupSurface
+            border.color: Theme.popupBorder
+            border.width: 1
+            radius: Theme.radius >= 0 ? Math.min(Theme.radius, 10) : 8
+            opacity: tip.visible ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 100
+                }
+            }
+
+            Text {
+                id: label
+                anchors.centerIn: parent
+                color: Theme.text
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.smallFontSize
+                text: root.text
+            }
+        }
+    }
+}

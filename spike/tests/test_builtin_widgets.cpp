@@ -127,11 +127,13 @@ TEST(ClockWidget, KeepsTicking) {
             clock->property("now").toDateTime().toString(QStringLiteral("ss")));
 }
 
-TEST(ClockWidget, IsNotInteractiveByDefault) {
+TEST(ClockWidget, IsInteractiveOnlyWithItsCalendar) {
   Harness h;
-  h.start(widgetConfig(QStringLiteral(R"(Clock { objectName: "clock" })")));
+  h.start(widgetConfig(QStringLiteral(
+      R"(Clock { objectName: "with" }, Clock { objectName: "without"; calendar: false })")));
   ASSERT_TRUE(started(h));
-  EXPECT_FALSE(item(h, QStringLiteral("clock"))->property("interactive").toBool());
+  EXPECT_TRUE(item(h, QStringLiteral("with"))->property("interactive").toBool());
+  EXPECT_FALSE(item(h, QStringLiteral("without"))->property("interactive").toBool());
 }
 
 TEST(CpuWidget, ShowsTheLoadOnceSampled) {
@@ -178,4 +180,119 @@ TEST(BatteryWidget, IsHiddenExactlyWhenThereIsNoBattery) {
   // The first sample decides; afterwards the widget follows the service.
   ASSERT_TRUE(QTest::qWaitFor([&] { return source->property("ready").toBool(); }, 5000));
   EXPECT_EQ(battery->property("visible").toBool(), source->property("available").toBool());
+}
+
+TEST(ClockWidget, AClickOpensTheCalendarAndASecondClickClosesIt) {
+  Harness h;
+  h.start(widgetConfig(QStringLiteral(R"(Clock { objectName: "clock" })")));
+  ASSERT_TRUE(started(h));
+  QQuickWindow* popup = findWindow(QStringLiteral("calendarPopup"));
+  ASSERT_NE(popup, nullptr);
+  EXPECT_FALSE(popup->isVisible());
+
+  const QPoint at = centerOf(h, QStringLiteral("clock"));
+  QTest::mouseClick(h.window(), Qt::LeftButton, Qt::NoModifier, at);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return popup->isVisible(); }, 2000));
+
+  QTest::qWait(300);  // past the debounce of the press that closes it
+  QTest::mouseClick(h.window(), Qt::LeftButton, Qt::NoModifier, at);
+  EXPECT_TRUE(QTest::qWaitFor([&] { return !popup->isVisible(); }, 2000));
+  QTest::qWait(400);
+  EXPECT_FALSE(popup->isVisible());  // the click that closed it did not reopen it
+}
+
+TEST(ClockWidget, TheCalendarOpensOnTheCurrentMonthAndStepsAndResets) {
+  Harness h;
+  h.start(widgetConfig(QStringLiteral(R"(Clock { objectName: "clock" })")));
+  ASSERT_TRUE(started(h));
+  QQuickWindow* popup = findWindow(QStringLiteral("calendarPopup"));
+  ASSERT_TRUE(QMetaObject::invokeMethod(popup, "open"));
+  QQuickItem* calendar = findItem(popup, QStringLiteral("calendar"));
+  ASSERT_NE(calendar, nullptr);
+  const QDate today = QDate::currentDate();
+  EXPECT_EQ(calendar->property("year").toInt(), today.year());
+  EXPECT_EQ(calendar->property("month").toInt(), today.month() - 1);  // JavaScript months
+
+  ASSERT_TRUE(QMetaObject::invokeMethod(calendar, "step", Q_ARG(QVariant, 1)));
+  EXPECT_EQ(calendar->property("month").toInt(), today.addMonths(1).month() - 1);
+
+  ASSERT_TRUE(QMetaObject::invokeMethod(popup, "close"));
+  QTest::qWait(300);
+  ASSERT_TRUE(QMetaObject::invokeMethod(popup, "open"));
+  EXPECT_EQ(calendar->property("month").toInt(), today.month() - 1);  // reopened: back to now
+}
+
+TEST(CalendarWidget, ShowsSixWeeksStartingOnTheLocalesFirstDay) {
+  Harness h;
+  h.start(widgetConfig(
+      QStringLiteral(R"(Calendar { objectName: "cal"; year: 2026; month: 9 })")));  // October 2026
+  ASSERT_TRUE(started(h));
+  QQuickItem* calendar = item(h, QStringLiteral("cal"));
+  const QDate first = calendar->property("firstShown").toDate();
+  // The first cell is on the first day of the week and the 1st of the month is in the first row.
+  const int firstDayOfWeek = calendar->property("firstDay").toInt();  // 0 = Sunday
+  EXPECT_EQ(first.dayOfWeek() % 7, firstDayOfWeek);
+  const qint64 offset = first.daysTo(QDate(2026, 10, 1));
+  EXPECT_GE(offset, 0);
+  EXPECT_LE(offset, 6);
+}
+
+TEST(SliderWidget, AClickMovesToThePositionAndReportsIt) {
+  Harness h;
+  h.start(widgetConfig(QStringLiteral(R"(
+Slider {
+    objectName: "s"; width: 200; from: 0; to: 100; value: 10
+    property real got: -1
+    onMoved: v => got = v
+})")));
+  ASSERT_TRUE(started(h));
+  QQuickItem* slider = item(h, QStringLiteral("s"));
+  const QPointF origin = slider->mapToScene(QPointF(0, 0));
+  QTest::mouseClick(h.window(), Qt::LeftButton, Qt::NoModifier,
+                    QPoint(qRound(origin.x() + 50), qRound(origin.y() + slider->height() / 2)));
+  EXPECT_NEAR(slider->property("got").toDouble(), 25, 1.0);    // a quarter of 200 px
+  EXPECT_DOUBLE_EQ(slider->property("value").toDouble(), 10);  // the owner decides the value
+}
+
+TEST(SliderWidget, TheRatioIsClampedIntoTheRange) {
+  Harness h;
+  h.start(
+      widgetConfig(QStringLiteral(R"(Slider { objectName: "s"; from: 10; to: 20; value: 50 })")));
+  ASSERT_TRUE(started(h));
+  EXPECT_DOUBLE_EQ(item(h, QStringLiteral("s"))->property("ratio").toDouble(), 1.0);
+}
+
+TEST(Tooltips, TheBuiltInWidgetsDescribeThemselves) {
+  Harness h;
+  h.start(widgetConfig(QStringLiteral(R"(
+Clock { objectName: "clock"; tooltipFormat: "yyyy" },
+Cpu { objectName: "cpu"; interval: 200 },
+Memory { objectName: "mem"; interval: 200 })")));
+  ASSERT_TRUE(started(h));
+  EXPECT_EQ(item(h, QStringLiteral("clock"))->property("tooltip").toString(),
+            QString::number(QDate::currentDate().year()));
+  ASSERT_TRUE(QTest::qWaitFor(
+      [&] { return !item(h, QStringLiteral("cpu"))->property("tooltip").toString().isEmpty(); },
+      5000));
+  const QString cpu = item(h, QStringLiteral("cpu"))->property("tooltip").toString();
+  EXPECT_TRUE(cpu.contains(QStringLiteral("cores"))) << qPrintable(cpu);
+  EXPECT_TRUE(cpu.contains(QLatin1Char('\n'))) << qPrintable(cpu);  // the per-core line
+  ASSERT_TRUE(QTest::qWaitFor(
+      [&] { return !item(h, QStringLiteral("mem"))->property("tooltip").toString().isEmpty(); },
+      5000));
+  const QString mem = item(h, QStringLiteral("mem"))->property("tooltip").toString();
+  EXPECT_TRUE(mem.startsWith(QStringLiteral("Used "))) << qPrintable(mem);
+  EXPECT_TRUE(mem.contains(QStringLiteral("Swap"))) << qPrintable(mem);
+}
+
+TEST(Tooltips, APillShowsItsTooltipOnHover) {
+  Harness h;
+  h.start(widgetConfig(QStringLiteral(R"(Pill { objectName: "p"; text: "x"; tooltip: "hello" })")));
+  ASSERT_TRUE(started(h));
+  QQuickWindow* tip = findWindow(QStringLiteral("tooltipWindow"));
+  ASSERT_NE(tip, nullptr);
+  QTest::mouseMove(h.window(), QPoint(h.window()->width() - 5, h.window()->height() - 3));
+  QTest::qWait(20);
+  QTest::mouseMove(h.window(), centerOf(h, QStringLiteral("p")));
+  EXPECT_TRUE(QTest::qWaitFor([&] { return tip->isVisible(); }, 3000));
 }

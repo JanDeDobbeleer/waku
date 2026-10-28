@@ -55,6 +55,14 @@ void write(const QString& path, const QString& text) {
   file.write(text.toUtf8());
 }
 
+// A top-level window by objectName (popups and tooltips are windows of their own).
+QQuickWindow* findWindow(const QString& name) {
+  for (QWindow* window : QGuiApplication::allWindows()) {
+    if (window->objectName() == name) return qobject_cast<QQuickWindow*>(window);
+  }
+  return nullptr;
+}
+
 // ---- finding things in a window ----
 
 QQuickItem* findItem(QQuickItem* root, const QString& name) {
