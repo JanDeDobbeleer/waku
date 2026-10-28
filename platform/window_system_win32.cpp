@@ -447,4 +447,9 @@ std::shared_ptr<WindowSystem> makeWin32WindowSystem() {
   return std::make_shared<Win32WindowSystem>();
 }
 
+IconBitmap shellItemIcon(const QString& parsingName, int size) {
+  ComScope com;
+  return shellIcon(parsingName, size);
+}
+
 }  // namespace yasb::platform

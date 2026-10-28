@@ -48,6 +48,7 @@ target_sources(yasb_tests PRIVATE
   widgets/test_media.cpp
   widgets/test_scrolling_label.cpp
   widgets/test_notifications.cpp
+  widgets/test_notifications_menu.cpp
   widgets/test_wallpapers.cpp
   widgets/test_taskbar.cpp
   widgets/test_control_center.cpp

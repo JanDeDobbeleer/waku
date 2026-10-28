@@ -4,6 +4,10 @@
 #include <QString>
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <vector>
+
+#include "platform/toast_xml.h"
 
 namespace yasb::platform {
 
@@ -13,6 +17,8 @@ class NotificationSink {
   virtual ~NotificationSink() = default;
   // Number of toasts in the Action Center (Windows 11 total, Windows 10 unread badge).
   virtual void countChanged(std::uint32_t count) = 0;
+  // The toast list after a read, newest first; nullopt while notification access is turned off.
+  virtual void itemsChanged(std::optional<std::vector<NotificationItem>> items) { (void)items; }
 };
 
 class NotificationSource {
@@ -23,10 +29,18 @@ class NotificationSource {
   virtual void stop() = 0;
   // Removes every toast from the Action Center. Asynchronous; the new count arrives via the sink.
   virtual void clearAll() = 0;
+  // The operations below are asynchronous too; each ends in a refresh that reports through the
+  // sink. The defaults do nothing so a count-only source (tests) need not implement them.
+  // Reads the toast list now (after the debounce delay).
+  virtual void refresh() {}
+  virtual void remove(std::uint32_t id) { (void)id; }
+  virtual void clearApp(const QString& aumid) { (void)aumid; }
+  // Hands the toast to its app, then removes it when the app took it.
+  virtual void activate(const NotificationItem& item) { (void)item; }
 };
 
 // WNF count subscription plus a UserNotificationListener worker (port of
-// services/notifications/windows_notification.py, count and clear-all only).
+// services/notifications/windows_notification.py: count, toast list, remove, clear, activate).
 std::unique_ptr<NotificationSource> createSystemNotificationSource();
 
 // Shared notification count service (the notifications widget and, later, the control center
@@ -51,12 +65,24 @@ class NotificationService final : public QObject {
   int count() const { return count_; }
   void clearAll();
 
+  // The toast list; nullopt while notification access is turned off (Python `None`).
+  const std::optional<std::vector<NotificationItem>>& items() const { return items_; }
+  // Asks the source to re-read the list (the menu opens).
+  void refresh();
+  void remove(std::uint32_t id);
+  void clearApp(const QString& aumid);
+  void activate(const NotificationItem& item);
+
+  // Applies the toast list on the GUI thread; emits itemsChanged only when it differs.
+  void applyItems(std::optional<std::vector<NotificationItem>> items);
+
   // Applies a count on the GUI thread; emits countChanged only when it differs (the source's
   // sink posts here).
   void applyCount(std::uint32_t count);
 
  signals:
   void countChanged(int count);
+  void itemsChanged();
 
  private:
   class Sink;
@@ -64,6 +90,7 @@ class NotificationService final : public QObject {
   std::unique_ptr<NotificationSource> source_;
   std::unique_ptr<Sink> sink_;
   int count_ = 0;
+  std::optional<std::vector<NotificationItem>> items_ = std::vector<NotificationItem>{};
   bool started_ = false;
 };
 

@@ -4,22 +4,30 @@
 
 #include "core/widgets/base_widget.h"
 #include "core/widgets/registry.h"
+#include "platform/dnd.h"
 #include "platform/notifications.h"
+#include "widgets/notifications/notifications_menu.h"
 
 namespace yasb::widgets {
 
 // yasb.notifications.NotificationsWidget. The count service is shared (see
 // platform/notifications.h); every slot here runs on the GUI thread.
 //
-// Not ported: the toggle_menu popup (grouped toast list, per-app and per-toast dismiss, toast
-// activation, do-not-disturb button). Its `menu` options are accepted and ignored.
+// toggle_menu opens NotificationsMenu: the toast list grouped per app with per-app and per-toast
+// dismiss, toast activation and a do-not-disturb button.
 class NotificationsWidget final : public BaseWidget {
   Q_OBJECT
 
  public:
   static constexpr int kMaxCount = 9;
 
-  NotificationsWidget(const WidgetContext& context, platform::NotificationService* service);
+  // `dndWatcher` (optional) reports external Focus Assist changes to the menu; empty hook members
+  // fall back to the real system calls.
+  NotificationsWidget(const WidgetContext& context, platform::NotificationService* service,
+                      platform::DndWatcher* dndWatcher = nullptr,
+                      NotificationsMenuHooks hooks = {});
+
+  NotificationsMenu* menu() const { return menu_; }
 
   int count() const { return count_; }
   // Test hook: the name of the system function toggle_notification runs.
@@ -36,6 +44,7 @@ class NotificationsWidget final : public BaseWidget {
 
   config::options::NotificationsConfig options_;
   QPointer<platform::NotificationService> service_;
+  NotificationsMenu* menu_ = nullptr;
   int count_ = 0;
   bool hiddenWhenEmpty_ = false;
   bool hiddenByUs_ = false;

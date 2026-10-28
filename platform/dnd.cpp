@@ -4,6 +4,7 @@
 #include <combaseapi.h>
 
 #include <QDebug>
+#include <QMetaObject>
 #include <functional>
 
 namespace yasb::platform {
@@ -83,5 +84,73 @@ bool setDndStatus(const QString& mode) {
     return SUCCEEDED(settings->put_UserSelectedProfile(id));
   });
 }
+
+namespace {
+
+// Undocumented WNF state name (docs/architecture.md allowlist).
+constexpr ULONGLONG kWnfQuietHoursActiveProfileChanged = 0x0D83063EA3BF1C75ull;
+
+using WnfCallback = LONG(NTAPI*)(ULONGLONG stateName, ULONG changeStamp, void* typeId,
+                                 void* context, const void* buffer, ULONG bufferSize);
+using RtlSubscribeFn = LONG(NTAPI*)(void** subscription, ULONGLONG stateName, ULONG changeStamp,
+                                    WnfCallback callback, void* context, void* typeId,
+                                    ULONG serializationGroup, ULONG unknown);
+using RtlUnsubscribeFn = LONG(NTAPI*)(void* subscription);
+
+RtlUnsubscribeFn g_unsubscribe = nullptr;
+
+LONG NTAPI onQuietHoursChanged(ULONGLONG, ULONG, void*, void* context, const void*, ULONG) {
+  auto* watcher = static_cast<DndWatcher*>(context);
+  if (!watcher) return 0;
+  try {
+    const QString status = dndStatus();
+    QMetaObject::invokeMethod(
+        watcher, [watcher, status] { watcher->deliver(status); }, Qt::QueuedConnection);
+  } catch (...) {
+    // Never let an exception cross into the system thread.
+  }
+  return 0;
+}
+
+}  // namespace
+
+DndWatcher::DndWatcher(QObject* parent) : QObject(parent) {}
+
+DndWatcher::~DndWatcher() { stop(); }
+
+bool DndWatcher::start() {
+  if (active_) return true;
+  HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+  if (!ntdll) return false;
+  const auto subscribe = reinterpret_cast<RtlSubscribeFn>(
+      GetProcAddress(ntdll, "RtlSubscribeWnfStateChangeNotification"));
+  g_unsubscribe = reinterpret_cast<RtlUnsubscribeFn>(
+      GetProcAddress(ntdll, "RtlUnsubscribeWnfStateChangeNotification"));
+  if (!subscribe || !g_unsubscribe) {
+    qWarning() << "WNF is not available, the Do Not Disturb button updates only on its own clicks";
+    return false;
+  }
+  void* subscription = nullptr;
+  const LONG status = subscribe(&subscription, kWnfQuietHoursActiveProfileChanged, 0,
+                                &onQuietHoursChanged, this, nullptr, 0, 0);
+  if (status != 0) {
+    qWarning().noquote() << "DndService failed with status" << Qt::hex
+                         << static_cast<ULONG>(status);
+    return false;
+  }
+  subscription_ = subscription;
+  active_ = true;
+  qInfo() << "DndService initialized";
+  return true;
+}
+
+void DndWatcher::stop() {
+  if (!active_ || !subscription_ || !g_unsubscribe) return;
+  g_unsubscribe(subscription_);
+  subscription_ = nullptr;
+  active_ = false;
+}
+
+void DndWatcher::deliver(const QString& status) { emit statusChanged(status); }
 
 }  // namespace yasb::platform

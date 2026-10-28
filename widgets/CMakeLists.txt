@@ -66,6 +66,10 @@ add_library(yasb_widgets STATIC
   media/media_widget.h
   media/media_widget.cpp
   media/media.qrc
+  notifications/notification_widgets.h
+  notifications/notification_widgets.cpp
+  notifications/notifications_menu.h
+  notifications/notifications_menu.cpp
   notifications/notifications_widget.h
   notifications/notifications_widget.cpp
   wallpapers/gallery.h

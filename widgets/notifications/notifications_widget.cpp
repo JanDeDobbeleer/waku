@@ -5,12 +5,15 @@
 
 #include "core/widgets/backdrop.h"
 #include "core/widgets/polling_worker_registry.h"
+#include "platform/shell_open.h"
 #include "widgets/system_widget_helpers.h"
 
 namespace yasb::widgets {
 
 NotificationsWidget::NotificationsWidget(const WidgetContext& context,
-                                         platform::NotificationService* service)
+                                         platform::NotificationService* service,
+                                         platform::DndWatcher* dndWatcher,
+                                         NotificationsMenuHooks hooks)
     : BaseWidget(
           QString::fromStdString(context.name), context.eventBus,
           detail::className(std::get<config::options::NotificationsConfig>(context.typedOptions),
@@ -27,10 +30,38 @@ NotificationsWidget::NotificationsWidget(const WidgetContext& context,
                       QString::fromStdString(options_.callbacks.on_right),
                       QStringLiteral("do_nothing")});
   registerCallback(QStringLiteral("toggle_label"), [this](const QStringList&) { toggleLabel(); });
+  registerCallback(QStringLiteral("toggle_menu"), [this](const QStringList&) {
+    if (menu_) menu_->toggle();
+  });
   registerCallback(QStringLiteral("toggle_notification"),
                    [this](const QStringList&) { toggleNotification(); });
   registerCallback(QStringLiteral("clear_notifications"),
                    [this](const QStringList&) { clearNotifications(); });
+
+  const auto& menu = options_.menu;
+  NotificationsMenuOptions menuOptions;
+  menuOptions.blur = menu.blur;
+  menuOptions.roundCorners = menu.round_corners;
+  menuOptions.roundCornersType = QString::fromStdString(menu.round_corners_type);
+  menuOptions.borderColor = QString::fromStdString(menu.border_color);
+  menuOptions.alignment = QString::fromStdString(menu.alignment);
+  menuOptions.direction = QString::fromStdString(menu.direction);
+  menuOptions.offsetLeft = menu.offset_left;
+  menuOptions.offsetTop = menu.offset_top;
+  menuOptions.appIconSize = menu.app_icon_size;
+  menuOptions.iconDefault = QString::fromStdString(options_.icons.default_);
+  menuOptions.iconDndOn = QString::fromStdString(options_.icons.dnd_on);
+  menuOptions.iconDndOff = QString::fromStdString(options_.icons.dnd_off);
+  menuOptions.iconDismiss = QString::fromStdString(options_.icons.dismiss);
+  menuOptions.tooltip = options_.tooltip;
+  if (!hooks.dndStatus) hooks.dndStatus = [] { return platform::dndStatus(); };
+  if (!hooks.setDndStatus)
+    hooks.setDndStatus = [](const QString& mode) { platform::setDndStatus(mode); };
+  if (!hooks.openUri) hooks.openUri = [](const QString& uri) { platform::shellOpen(uri); };
+  if (!hooks.toggleNotificationCenter)
+    hooks.toggleNotificationCenter = [this] { toggleNotification(); };
+  menu_ = new NotificationsMenu(this, service_, dndWatcher, std::move(menuOptions),
+                                std::move(hooks), context.globalState);
 
   if (service_) {
     count_ = service_->count();
@@ -141,7 +172,14 @@ void registerNotificationsWidgets(WidgetRegistry& registry) {
           created->start();
           return created;
         });
-    return new NotificationsWidget(context, service);
+    // DndService.initialize_wnf_listener: one subscription shared by every notifications widget.
+    auto* watcher =
+        context.pollingWorkers.service<platform::DndWatcher>(platform::DndWatcher::kServiceKey, [] {
+          auto* created = new platform::DndWatcher;
+          created->start();
+          return created;
+        });
+    return new NotificationsWidget(context, service, watcher);
   });
 }
 

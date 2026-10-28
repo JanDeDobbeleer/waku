@@ -85,12 +85,14 @@ or hardware; tests use fakes. Remove an item when it is done.
 
 ## notifications
 
-- `toggle_menu` popup not ported (toast list, per-app/per-toast dismiss, activation, DND button,
-  app icons/images). `menu`, `icons.dnd_*`, `icons.dismiss` are accepted and ignored. Config never
-  calls `toggle_menu`.
-- Toast list is read only when clearing, not on every WNF change.
-- Live: WNF subscription, `UserNotificationListener` and clear-all never run on real toasts;
-  permission-denied path has no test.
+- App icons in the menu come from `IShellItemImageFactory` for `shell:AppsFolder\<aumid>`,
+  not Python's `IconService`; a header built before its icon arrived is rebuilt once the
+  icon is ready (Python waits for the next refresh).
+- Toast activation (`INotificationActivationCallback`, `show_app`), per-toast/per-app
+  dismiss, the Focus Assist write and the quiet-hours WNF subscription never ran on real
+  toasts. Live: WNF subscription, `UserNotificationListener` and clear-all too.
+- The menu has no parity vector (the Python exporter only covers the label); the tests
+  are hand-written from the Python source.
 
 ## systray
 

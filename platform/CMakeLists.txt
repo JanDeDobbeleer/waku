@@ -38,6 +38,10 @@ add_library(yasb_platform STATIC
   notifications.h
   notifications.cpp
   notifications_system.cpp
+  toast_activation.h
+  toast_activation.cpp
+  toast_xml.h
+  toast_xml.cpp
   pdh.h
   pdh.cpp
   window_focus.h

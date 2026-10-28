@@ -44,6 +44,10 @@ struct IconBitmap {
   bool isNull() const { return width <= 0 || height <= 0 || bgra.isEmpty(); }
 };
 
+// The shell icon of a parsing name (a path, or "shell:AppsFolder\<aumid>") at about `size` pixels,
+// null when the shell has none. Blocking; call it off the GUI thread.
+IconBitmap shellItemIcon(const QString& parsingName, int size);
+
 // Every OS fact and action the taskbar needs. The Win32 implementation is stateless and safe to
 // call from any thread; tests substitute a fake so nothing real is ever activated or closed.
 class WindowSystem {
