@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
   spike::Host host(&engine, parser.value(widgetsOpt));
   engine.rootContext()->setContextProperty(QStringLiteral("Host"), &host);
 
-  QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/YasbSpike/qml/Bar.qml")));
+  QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/qt/qml/YasbSpike/qml/Bar.qml")));
   std::vector<std::unique_ptr<QObject>> bars;
   std::vector<std::unique_ptr<yasb::bar::IAppBar>> appBars;
 

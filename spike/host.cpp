@@ -14,11 +14,6 @@ Host::Host(QQmlEngine* engine, const QString& widgetsDir, QObject* parent)
   connect(&watcher_, &QFileSystemWatcher::directoryChanged, &debounce_,
           qOverload<>(&QTimer::start));
   connect(&watcher_, &QFileSystemWatcher::fileChanged, &debounce_, qOverload<>(&QTimer::start));
-
-  memoryTimer_.setInterval(2000);
-  connect(&memoryTimer_, &QTimer::timeout, this, &Host::sampleMemory);
-  memoryTimer_.start();
-  sampleMemory();
   rescan();
 }
 
@@ -46,14 +41,6 @@ void Host::rescan() {
     widgetFiles_ = urls;
     emit widgetFilesChanged();
   });
-}
-
-void Host::sampleMemory() {
-  try {
-    memoryPercent_ = memory_.sample().percent;
-    emit memoryChanged();
-  } catch (...) {
-  }
 }
 
 }  // namespace spike

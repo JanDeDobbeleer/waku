@@ -1,4 +1,5 @@
 import QtQuick
+import Yasb.Services
 
 Rectangle {
     id: root
@@ -10,12 +11,14 @@ Rectangle {
 
     Behavior on color { ColorAnimation { duration: 150 } }
 
+    Memory { id: memory }
+
     Text {
         id: label
         anchors.centerIn: parent
         color: "white"
         font.pixelSize: 13
-        text: "RAM " + Math.round(Host.memoryPercent) + "%"
+        text: memory.ready ? "RAM " + Math.round(memory.percent) + "%" : "RAM …"
     }
 
     HoverHandler { id: hover }
