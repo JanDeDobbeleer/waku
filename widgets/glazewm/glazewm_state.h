@@ -1,0 +1,58 @@
+#pragma once
+
+#include <QString>
+#include <nlohmann/json.hpp>
+#include <optional>
+#include <vector>
+
+// Non-throwing parsers for GlazeWM IPC replies (port of GlazewmClient._process_workspaces,
+// _process_binding_modes and _read_windows in glazewm/client.py).
+namespace yasb::widgets::glazewm {
+
+using Json = nlohmann::json;
+
+struct Window {
+  QString id;
+  QString title;
+  long long handle = 0;
+  QString className;
+  QString processName;
+  QString displayState;
+  bool isFloating = false;
+};
+
+struct Workspace {
+  QString name;
+  QString displayName;
+  bool focus = false;  // global focus: only one workspace has it
+  bool isDisplayed = false;
+  int numWindows = 0;  // every child of the workspace, windows or not (Python len(children))
+  std::vector<Window> windows;
+};
+
+struct Monitor {
+  QString name;
+  long long hwnd = 0;
+  std::vector<Workspace> workspaces;
+};
+
+struct BindingMode {
+  std::optional<QString> name;
+  std::optional<QString> displayName;
+};
+
+enum class TilingDirection { Horizontal, Vertical };
+
+// `data` is the "data" object of a `query monitors` reply. A missing "monitors" key is an empty
+// list; null or a non-array value yields nullopt (the message is ignored). Monitors without a
+// non-zero integer handle are skipped.
+std::optional<std::vector<Monitor>> parseMonitors(const Json& data);
+
+// `data` is the "data" object of a `query binding-modes` reply. Only the first mode counts; an
+// empty list means no active mode. Null or a non-array "bindingModes" yields nullopt.
+std::optional<BindingMode> parseBindingModes(const Json& data);
+
+// "vertical" is Vertical; a missing or unknown value is Horizontal.
+TilingDirection parseTilingDirection(const Json& data);
+
+}  // namespace yasb::widgets::glazewm

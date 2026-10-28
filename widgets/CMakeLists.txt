@@ -55,6 +55,12 @@ add_library(yasb_widgets STATIC
   bluetooth/bluetooth_menu.cpp
   bluetooth/bluetooth_widget.h
   bluetooth/bluetooth_widget.cpp
+  glazewm/glazewm_service.h
+  glazewm/glazewm_service.cpp
+  glazewm/glazewm_state.h
+  glazewm/glazewm_state.cpp
+  glazewm/glazewm_widgets.h
+  glazewm/glazewm_widgets.cpp
   komorebi/active_layout_widget.h
   komorebi/active_layout_widget.cpp
   komorebi/komorebi_service.h

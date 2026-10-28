@@ -1,6 +1,7 @@
 #include "app/runtime.h"
 
 #include "widgets/control_center/control_center_widget.h"
+#include "widgets/glazewm/glazewm_widgets.h"
 #include "widgets/komorebi/komorebi_widgets.h"
 #include "widgets/media/media_widget.h"
 #include "widgets/network_widgets.h"
@@ -16,6 +17,7 @@ Runtime::Runtime() {
   widgets::registerStatWidgets(widgetRegistry_);
   widgets::registerNetworkWidgets(widgetRegistry_);
   widgets::registerKomorebiWidgets(widgetRegistry_);
+  widgets::registerGlazewmWidgets(widgetRegistry_);
   widgets::registerMediaWidgets(widgetRegistry_);
   widgets::registerNotificationsWidgets(widgetRegistry_);
   widgets::registerWallpaperWidgets(widgetRegistry_);
@@ -40,6 +42,7 @@ void Runtime::stop() {
   }
   servicesStarted_ = false;
   komorebiService_.stop();
+  glazewmService_.stop();
   pollingWorkers_.stopAll();
 }
 

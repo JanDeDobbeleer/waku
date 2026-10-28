@@ -44,6 +44,7 @@ target_sources(yasb_tests PRIVATE
   widgets/test_network_widgets.cpp
   widgets/test_github.cpp
   widgets/test_komorebi.cpp
+  widgets/test_glazewm_state.cpp
   widgets/test_clock.cpp
   widgets/test_media.cpp
   widgets/test_scrolling_label.cpp
