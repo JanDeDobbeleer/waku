@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <memory>
+#include <nlohmann/json.hpp>
 
 #include "core/css/transition_engine.h"
 #include "core/widgets/popup.h"
@@ -90,4 +91,25 @@ TEST(PopupWidgetTest, TooltipPaintsStylesheetBackground) {
   const QColor px = tip.grab().toImage().pixelColor(4, 4);
   EXPECT_EQ(px.name(), QStringLiteral("#232634"));
   EXPECT_EQ(px.alpha(), 255);
+}
+
+TEST(TooltipOptionsTest, ParsesTopLevelTooltipBlock) {
+  const auto root = nlohmann::json::parse(
+      R"({"tooltip":{"offset":9,"blur_effect":{"enabled":true,"dark_mode":true,)"
+      R"("round_corners":true,"round_corners_type":"small","border_color":"#112233"}}})");
+  const auto options = yasb::widgets::parseTooltipOptions(root);
+  EXPECT_EQ(options.offset, 9);
+  EXPECT_TRUE(options.blur.enabled);
+  EXPECT_TRUE(options.blur.darkMode);
+  EXPECT_TRUE(options.blur.roundCorners);
+  EXPECT_EQ(options.blur.roundCornersType, QStringLiteral("small"));
+  EXPECT_EQ(options.blur.borderColor, QStringLiteral("#112233"));
+}
+
+TEST(TooltipOptionsTest, MissingBlockUsesPythonDefaults) {
+  const auto options = yasb::widgets::parseTooltipOptions(nlohmann::json::object());
+  EXPECT_EQ(options.offset, 5);
+  EXPECT_FALSE(options.blur.enabled);
+  EXPECT_EQ(options.blur.roundCornersType, QStringLiteral("normal"));
+  EXPECT_EQ(options.blur.borderColor, QStringLiteral("None"));
 }

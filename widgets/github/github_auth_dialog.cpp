@@ -7,10 +7,15 @@
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QPalette>
 #include <QPushButton>
 #include <QTimer>
 #include <QUrl>
 #include <QVBoxLayout>
+
+#include "core/widgets/backdrop.h"
+#include "widgets/fluent/fluent_button.h"
+#include "widgets/fluent/fluent_theme.h"
 
 namespace yasb::widgets {
 
@@ -21,23 +26,26 @@ GithubAuthDialog::GithubAuthDialog(QString tokenFilePath, QWidget* parent)
   setWindowFlag(Qt::WindowStaysOnTopHint, true);
   setAttribute(Qt::WA_DeleteOnClose);
   setFixedSize(420, 260);
+  buildView();
 
   auto* layout = new QVBoxLayout(this);
   layout->setContentsMargins(24, 20, 24, 16);
   layout->setSpacing(6);
 
-  title_ = new QLabel(QStringLiteral("Sign in to GitHub"), this);
+  title_ =
+      fluent::makeTextBlock(QStringLiteral("Sign in to GitHub"), QStringLiteral("subtitle"), this);
   layout->addWidget(title_);
-  instructions_ = new QLabel(QStringLiteral("Requesting authorization code..."), this);
+  instructions_ = fluent::makeTextBlock(QStringLiteral("Requesting authorization code..."),
+                                        QStringLiteral("caption"), this);
   instructions_->setWordWrap(true);
   layout->addWidget(instructions_);
 
-  auto* codeFrame = new QFrame(this);
-  codeFrame->setFixedHeight(56);
-  auto* codeLayout = new QHBoxLayout(codeFrame);
+  codeFrame_ = new QFrame(this);
+  codeFrame_->setFixedHeight(56);
+  auto* codeLayout = new QHBoxLayout(codeFrame_);
   codeLayout->setContentsMargins(16, 0, 8, 0);
   codeLayout->setSpacing(8);
-  codeLabel_ = new QLabel(QString(10, QChar(0x2013)), codeFrame);
+  codeLabel_ = new QLabel(QString(10, QChar(0x2013)), codeFrame_);
   QFont codeFont = codeLabel_->font();
   codeFont.setStyleHint(QFont::Monospace);
   codeFont.setPointSize(16);
@@ -45,7 +53,8 @@ GithubAuthDialog::GithubAuthDialog(QString tokenFilePath, QWidget* parent)
   codeFont.setLetterSpacing(QFont::AbsoluteSpacing, 3);
   codeLabel_->setFont(codeFont);
   codeLayout->addWidget(codeLabel_, 1);
-  copyButton_ = new QPushButton(QStringLiteral("Copy"), codeFrame);
+  copyButton_ = new fluent::FluentButton(QStringLiteral("Copy"), QStringLiteral("default"), 12,
+                                         QStringLiteral("demibold"), this);
   copyButton_->setFixedSize(80, 30);
   copyButton_->setEnabled(false);
   connect(copyButton_, &QPushButton::clicked, this, [this] {
@@ -56,21 +65,29 @@ GithubAuthDialog::GithubAuthDialog(QString tokenFilePath, QWidget* parent)
   });
   codeLayout->addWidget(copyButton_);
   layout->addSpacing(4);
-  layout->addWidget(codeFrame);
+  layout->addWidget(codeFrame_);
 
-  status_ = new QLabel(QStringLiteral("Connecting to GitHub..."), this);
+  status_ = fluent::makeTextBlock(QStringLiteral("Connecting to GitHub..."),
+                                  QStringLiteral("caption"), this);
   layout->addWidget(status_);
   layout->addStretch();
+
+  separator_ = new QFrame(this);
+  separator_->setFixedHeight(1);
+  layout->addWidget(separator_);
+  layout->addSpacing(4);
 
   auto* buttons = new QHBoxLayout;
   buttons->setSpacing(8);
   buttons->addStretch();
-  openButton_ = new QPushButton(QStringLiteral("Open Browser"), this);
+  openButton_ = new fluent::FluentButton(QStringLiteral("Open Browser"), QStringLiteral("accent"),
+                                         12, QStringLiteral("demibold"), this);
   connect(openButton_, &QPushButton::clicked, this, [] {
     QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/login/device")));
   });
   buttons->addWidget(openButton_);
-  cancelButton_ = new QPushButton(QStringLiteral("Cancel"), this);
+  cancelButton_ = new fluent::FluentButton(QStringLiteral("Cancel"), QStringLiteral("default"), 12,
+                                           QStringLiteral("demibold"), this);
   connect(cancelButton_, &QPushButton::clicked, this, &QDialog::reject);
   buttons->addWidget(cancelButton_);
   layout->addLayout(buttons);
@@ -80,6 +97,41 @@ GithubAuthDialog::GithubAuthDialog(QString tokenFilePath, QWidget* parent)
   connect(pollTimer_, &QTimer::timeout, this, &GithubAuthDialog::poll);
 
   QTimer::singleShot(100, this, &GithubAuthDialog::startDeviceFlow);
+}
+
+// ViewBase.build_view: Mica backdrop with a transparent base on Windows 11, a solid base fill
+// elsewhere.
+void GithubAuthDialog::buildView() {
+  const bool dark = fluent::isDark();
+  const bool mica = isMicaSupported();
+  const QString background =
+      mica ? QStringLiteral("transparent") : fluent::token(QStringLiteral("solid_bg_base"), dark);
+  setStyleSheet(QStringLiteral("QDialog { background-color: %1; } QLabel { color: %2; }")
+                    .arg(background, fluent::token(QStringLiteral("text_primary"), dark)));
+  if (!mica) return;
+  setAttribute(Qt::WA_TranslucentBackground, true);
+  enableMica(winId());
+}
+
+// GitHubAuthDialog._apply_frame_styles: frame tints derived from the window text colour.
+void GithubAuthDialog::applyFrameStyles() {
+  QColor border = palette().color(QPalette::WindowText);
+  border.setAlphaF(0.12f);
+  QColor fill = palette().color(QPalette::WindowText);
+  fill.setAlphaF(0.04f);
+  QColor separator = palette().color(QPalette::WindowText);
+  separator.setAlphaF(0.08f);
+  codeFrame_->setStyleSheet(
+      QStringLiteral("QFrame { border-radius: 6px; border: 1px solid %1; background-color: %2; }")
+          .arg(border.name(QColor::HexArgb), fill.name(QColor::HexArgb)));
+  codeLabel_->setStyleSheet(QStringLiteral("background: transparent; border: none;"));
+  separator_->setStyleSheet(
+      QStringLiteral("background-color: %1;").arg(separator.name(QColor::HexArgb)));
+}
+
+void GithubAuthDialog::showEvent(QShowEvent* event) {
+  applyFrameStyles();
+  QDialog::showEvent(event);
 }
 
 void GithubAuthDialog::startDeviceFlow() {
@@ -100,6 +152,7 @@ void GithubAuthDialog::onDeviceCode(const platform::HttpResponse& response) {
   pollIntervalSeconds_ = code.interval;
   codeLabel_->setText(userCode_);
   copyButton_->setEnabled(true);
+  applyFrameStyles();
   status_->setText(QStringLiteral("Waiting for authorization..."));
   instructions_->setText(QStringLiteral(
       "Your browser has been opened. Enter the code below at github.com/login/device:"));
@@ -141,11 +194,12 @@ void GithubAuthDialog::poll() {
 void GithubAuthDialog::showResult(const QString& message) {
   title_->hide();
   instructions_->hide();
-  codeLabel_->parentWidget()->hide();
+  codeFrame_->hide();
   status_->hide();
+  separator_->hide();
   openButton_->hide();
   if (!result_) {
-    result_ = new QLabel(this);
+    result_ = fluent::makeTextBlock(QString(), QStringLiteral("subtitle"), this);
     result_->setWordWrap(true);
     result_->setAlignment(Qt::AlignCenter);
     static_cast<QVBoxLayout*>(layout())->insertWidget(0, result_, 1);

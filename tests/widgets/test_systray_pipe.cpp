@@ -218,9 +218,31 @@ TEST(TrayPipeParser, MalformedMessagesAreInvalidNotFatal) {
   EXPECT_EQ(parseTrayPipeMessage(truncated).kind, ParsedTrayMessage::Kind::Invalid);
 }
 
-TEST(TrayPipeParser, IconPixelsOfTheWrongSizeAreDropped) {
+TEST(TrayPipeParser, OnlyPythonExceptionsEndTheSession) {
+  // Python returns silently from these two; the session goes on.
+  EXPECT_FALSE(parseTrayPipeMessage(QByteArray(3, 'x')).fatal);
+  const std::uint32_t type = 2;
+  QByteArray shortCopy(reinterpret_cast<const char*>(&type), 4);
+  shortCopy.append(QByteArray(10, '\0'));
+  EXPECT_FALSE(parseTrayPipeMessage(shortCopy).fatal);
+
+  // from_buffer_copy on a short payload raises.
+  QByteArray truncated = pipeMessage(makeTray(kNimAdd, 0));
+  truncated.chop(200);
+  const auto cutPayload = parseTrayPipeMessage(truncated);
+  EXPECT_EQ(cutPayload.kind, ParsedTrayMessage::Kind::Invalid);
+  EXPECT_TRUE(cutPayload.fatal);
+
+  // Image.frombytes on short pixel data raises.
+  const auto shortPixels =
+      parseTrayPipeMessage(pipeMessage(makeTray(kNimAdd, kNifIcon), QByteArray(10, 'x'), 2, 2));
+  EXPECT_EQ(shortPixels.kind, ParsedTrayMessage::Kind::Invalid);
+  EXPECT_TRUE(shortPixels.fatal);
+}
+
+TEST(TrayPipeParser, SurplusIconPixelsAreDropped) {
   const ShellTrayData tray = makeTray(kNimAdd, kNifIcon);
-  const auto parsed = parseTrayPipeMessage(pipeMessage(tray, QByteArray(10, 'x'), 2, 2));
+  const auto parsed = parseTrayPipeMessage(pipeMessage(tray, QByteArray(20, 'x'), 2, 2));
   ASSERT_EQ(parsed.kind, ParsedTrayMessage::Kind::IconModified);
   EXPECT_TRUE(parsed.data.iconRgba.isEmpty());
   EXPECT_EQ(parsed.data.hIcon, 0u);
@@ -298,10 +320,11 @@ class RecordingHook : public SystrayHook {
   }
 
  protected:
-  void handleMessage(const QByteArray& message) override {
+  bool handleMessage(const QByteArray& message) override {
     std::lock_guard lock(mutex_);
     messages_.push_back(message);
     cv_.notify_all();
+    return true;
   }
 
  private:

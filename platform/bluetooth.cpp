@@ -433,9 +433,12 @@ void enrichDevices(std::vector<BluetoothDevice>& devices) {
 std::optional<std::vector<BluetoothDevice>> listLeDevices() {
   try {
     std::map<QString, BluetoothDevice> found;
-    const auto selector = bt::BluetoothLEDevice::GetDeviceSelectorFromPairingState(true);
-    for (const auto& info : enumeration::DeviceInformation::FindAllAsync(selector).get()) {
+    // Unfiltered enumeration like Python's find_all_async(), keeping only BLE device ids.
+    for (const auto& info : enumeration::DeviceInformation::FindAllAsync().get()) {
       const QString id = toQString(info.Id());
+      if (!id.contains(QLatin1String("BTHLEDEVICE#"), Qt::CaseInsensitive) &&
+          !id.contains(QLatin1String("BTHLE#DEV_"), Qt::CaseInsensitive))
+        continue;
       try {
         const auto le = bt::BluetoothLEDevice::FromIdAsync(info.Id()).get();
         if (!le) continue;
@@ -444,8 +447,9 @@ std::optional<std::vector<BluetoothDevice>> listLeDevices() {
         const QString text = formatBtAddress(address);
         if (found.count(text)) continue;
         BluetoothDevice device;
-        QString name = toQString(le.Name()).trimmed();
-        if (name.isEmpty()) name = toQString(info.Name()).trimmed();
+        QString name = toQString(le.Name());
+        if (name.isEmpty()) name = toQString(info.Name());
+        name = name.trimmed();
         device.name = name.isEmpty() ? text : name;
         device.address = text;
         device.addressInt = address;

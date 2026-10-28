@@ -6,6 +6,7 @@
 #include <QHBoxLayout>
 #include <QScreen>
 #include <algorithm>
+#include <nlohmann/json.hpp>
 
 #include "core/bar/bar_window.h"
 #include "core/bar/theme_class.h"
@@ -21,6 +22,37 @@ TooltipOptions& options() {
 
 void setTooltipOptions(const TooltipOptions& o) { options() = o; }
 const TooltipOptions& tooltipOptions() { return options(); }
+
+TooltipOptions parseTooltipOptions(const nlohmann::json& root) {
+  TooltipOptions result;
+  // Python's TooltipBlurEffect defaults border_color to "None" (not "System").
+  result.blur.borderColor = QStringLiteral("None");
+  const auto tipIt = root.find("tooltip");
+  if (tipIt == root.end() || !tipIt->is_object()) return result;
+  const auto& tip = *tipIt;
+  const auto offsetIt = tip.find("offset");
+  if (offsetIt != tip.end() && offsetIt->is_number_integer()) result.offset = offsetIt->get<int>();
+  const auto blurIt = tip.find("blur_effect");
+  if (blurIt == tip.end() || !blurIt->is_object()) return result;
+  const auto& blur = *blurIt;
+  const auto boolOf = [&blur](const char* key, bool fallback) {
+    const auto it = blur.find(key);
+    return it != blur.end() && it->is_boolean() ? it->get<bool>() : fallback;
+  };
+  result.blur.enabled = boolOf("enabled", result.blur.enabled);
+  result.blur.darkMode = boolOf("dark_mode", result.blur.darkMode);
+  result.blur.roundCorners = boolOf("round_corners", result.blur.roundCorners);
+  const auto typeIt = blur.find("round_corners_type");
+  if (typeIt != blur.end() && typeIt->is_string()) {
+    const QString type = QString::fromStdString(typeIt->get<std::string>());
+    if (type == QLatin1String("normal") || type == QLatin1String("small"))
+      result.blur.roundCornersType = type;
+  }
+  const auto colorIt = blur.find("border_color");
+  if (colorIt != blur.end() && colorIt->is_string())
+    result.blur.borderColor = QString::fromStdString(colorIt->get<std::string>());
+  return result;
+}
 
 QPoint computeTooltipPosition(const QRect& widgetGeometry, const QRect& topLevelGeometry,
                               const QSize& tipSize, const QRect& screen, const QString& position,

@@ -54,6 +54,7 @@ target_sources(yasb_tests PRIVATE
   widgets/test_control_center.cpp
   widgets/test_brightness_policy.cpp
   widgets/test_systray.cpp
+  widgets/test_systray_icon_scale.cpp
   widgets/test_systray_pipe.cpp)
 
 # --- U7: app services and CLI protocol ---

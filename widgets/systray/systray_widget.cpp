@@ -13,6 +13,7 @@
 #include "core/widgets/backdrop.h"
 #include "core/widgets/polling_worker_registry.h"
 #include "widgets/system_widget_helpers.h"
+#include "widgets/systray/icon_scale.h"
 #include "widgets/systray/systray_service.h"
 
 namespace yasb::widgets {
@@ -34,7 +35,8 @@ Qt::KeyboardModifier pinModifier(const std::string& name) {
   return Qt::AltModifier;  // "alt" and anything unknown
 }
 
-// The 32x32 image Python builds in validate_icon_data (any other size is resized to 32x32).
+// The 32x32 image Python builds in validate_icon_data (any other size is resized to 32x32 with
+// Lanczos plus SHARPEN).
 QImage imageFromData(const platform::TrayIconData& tray) {
   if (tray.iconRgba.isEmpty() || tray.iconWidth <= 0 || tray.iconHeight <= 0) return {};
   if (tray.iconRgba.size() < static_cast<qsizetype>(tray.iconWidth) * tray.iconHeight * 4)
@@ -42,9 +44,7 @@ QImage imageFromData(const platform::TrayIconData& tray) {
   QImage image(reinterpret_cast<const uchar*>(tray.iconRgba.constData()), tray.iconWidth,
                tray.iconHeight, tray.iconWidth * 4, QImage::Format_RGBA8888);
   image = image.copy();
-  if (image.width() != 32 || image.height() != 32)
-    image = image.scaled(32, 32, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-  return image;
+  return scaleTrayIcon(image, 32);
 }
 
 SystrayDeps acquireDeps(const WidgetContext& context,
@@ -209,8 +209,9 @@ void SystrayWidget::showContextMenu(const QPoint& position) {
 
 void SystrayWidget::refreshSystray() {
   try {
-    // The Python widget also suppresses the app bar manager around the broadcast; the native app
-    // bar does not react to TaskbarCreated, so there is nothing to suppress.
+    // The Python widget suppresses AppBarManager around the broadcast so its own TaskbarCreated
+    // does not re-register the app bar. The native bar has no TaskbarCreated handler, so there is
+    // nothing to suppress.
     if (deps_.windowApi) deps_.windowApi->broadcastTaskbarCreated();
     qDebug() << "Systray icons refreshed";
   } catch (const std::exception& error) {

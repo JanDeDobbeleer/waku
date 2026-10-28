@@ -305,7 +305,10 @@ void SystrayHook::runPipeSession(Io& io) {
         }
         break;
       }
-      handleMessage(message);
+      if (!handleMessage(message)) {
+        if (running_) qCritical() << "Tray hook: worker error: malformed message, ending session";
+        break;
+      }
     }
   } catch (const std::exception& error) {
     // A handler that throws must not unwind out of the worker thread.
@@ -387,7 +390,7 @@ bool SystrayHook::waitForIo(Io& io, void* overlappedPtr) {
   return completed;
 }
 
-void SystrayHook::handleMessage(const QByteArray& message) {
+bool SystrayHook::handleMessage(const QByteArray& message) {
   ParsedTrayMessage parsed = parseTrayPipeMessage(message, exePathFromHwnd);
   switch (parsed.kind) {
     case ParsedTrayMessage::Kind::Text:
@@ -403,11 +406,12 @@ void SystrayHook::handleMessage(const QByteArray& message) {
       emit iconDeleted(parsed.data);
       break;
     case ParsedTrayMessage::Kind::Invalid:
-      qWarning().noquote() << "Tray hook: dropped a malformed message:" << parsed.invalidReason;
-      break;
+      qWarning().noquote() << "Tray hook: malformed message:" << parsed.invalidReason;
+      return !parsed.fatal;
     case ParsedTrayMessage::Kind::Ignored:
       break;
   }
+  return true;
 }
 
 }  // namespace yasb::platform

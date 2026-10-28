@@ -27,6 +27,10 @@ add_library(yasb_widgets STATIC
   control_center/power_section.cpp
   control_center/sliders_section.cpp
   cpu/cpu_widget.cpp
+  fluent/fluent_button.h
+  fluent/fluent_button.cpp
+  fluent/fluent_theme.h
+  fluent/fluent_theme.cpp
   github/github_auth_dialog.h
   github/github_auth_dialog.cpp
   github/github_data_store.h
@@ -94,6 +98,8 @@ add_library(yasb_widgets STATIC
   taskbar/taskbar_preview.cpp
   taskbar/taskbar_widget.h
   taskbar/taskbar_widget.cpp
+  systray/icon_scale.h
+  systray/icon_scale.cpp
   systray/systray_popup.h
   systray/systray_popup.cpp
   systray/systray_service.h

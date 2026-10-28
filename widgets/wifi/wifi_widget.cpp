@@ -49,9 +49,10 @@ WifiWidget::WifiWidget(const WidgetContext& context, bool startPolling,
   setCallbackBinding({qs(options_.callbacks.on_left), qs(options_.callbacks.on_middle),
                       qs(options_.callbacks.on_right), QStringLiteral("do_nothing")});
 
-  // Python resolves the host address on every update; here the first render looks it up once and
-  // the poll worker keeps it fresh.
-  ip_ = ipResolver ? ipResolver() : platform::localIpAddress();
+  // Python resolves the host address on every label update (poll result or label toggle): the
+  // first render and each toggle resolve it here, each poll sample carries a fresh lookup.
+  ipResolver_ = ipResolver ? std::move(ipResolver) : IpResolver(platform::localIpAddress);
+  ip_ = ipResolver_();
   render();
 
   if (startPolling) {
@@ -100,6 +101,7 @@ void WifiWidget::applySample(const platform::ConnectivitySample& sample) {
 
 void WifiWidget::toggleLabel() {
   showAltLabel_ = !showAltLabel_;
+  ip_ = ipResolver_();
   render();
 }
 

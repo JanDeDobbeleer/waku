@@ -24,6 +24,9 @@ struct ParsedTrayMessage {
   QString text;           // Kind::Text
   TrayIconData data;      // IconModified (validated) and IconDeleted (hWnd, uID, guid only)
   QString invalidReason;  // Kind::Invalid
+  // Kind::Invalid only: Python's _process_message raised (ctypes/PIL error), which ends the pipe
+  // session. Short messages Python returns from silently are Invalid but not fatal.
+  bool fatal = false;
 };
 
 // Resolves the executable behind a window; null function means "do not resolve".

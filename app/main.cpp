@@ -22,6 +22,7 @@
 #include "core/css/preprocessor.h"
 #include "core/version.h"
 #include "core/widgets/callbacks.h"
+#include "core/widgets/tooltip.h"
 #include "core/widgets/widget_builder.h"
 #include "widgets/stat_widgets.h"
 
@@ -108,6 +109,7 @@ int runBar(int argc, char** argv, yasb::app::Runtime& runtime) {
   const QString stylesheet = engine.loadStyleSheet(pre.process());
   engine.install(qApp);
   const bool screenshot = optionValue(argc, argv, "--screenshot") != nullptr;
+  yasb::widgets::setTooltipOptions(yasb::widgets::parseTooltipOptions(result.config));
 
   if (!screenshot && !runtime.startServices(result.config, hasFlag(argc, argv, "--restart-wait"))) {
     qCritical().noquote() << "Application services not started:"

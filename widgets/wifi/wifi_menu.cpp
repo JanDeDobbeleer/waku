@@ -5,12 +5,15 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QSizePolicy>
+#include <QStyle>
+#include <QStyleFactory>
 #include <QTimer>
 #include <QUrl>
 #include <QWidgetAction>
 #include <algorithm>
 
 #include "core/bar/theme_class.h"
+#include "core/widgets/backdrop.h"
 
 namespace yasb::widgets {
 namespace {
@@ -192,6 +195,17 @@ void WifiItem::mousePressEvent(QMouseEvent* event) {
 void WifiItem::showContextMenu(const QPoint& pos) {
   QMenu menu(this);
   menu.setProperty("class", QStringLiteral("context-menu"));
+  // apply_qmenu_style: Fusion removes the menu shadow, blur and round corners on show.
+  if (QStyle* fusion = QStyleFactory::create(QStringLiteral("Fusion"))) {
+    fusion->setParent(&menu);
+    menu.setStyle(fusion);
+  }
+  connect(&menu, &QMenu::aboutToShow, &menu, [&menu] {
+    try {
+      enableBlur(menu.winId(), false, true, QStringLiteral("normal"), QStringLiteral("None"));
+    } catch (...) {
+    }
+  });
 
   autoConnectBox_ = new QCheckBox(QStringLiteral("Auto-connect"));
   autoConnectBox_->setChecked(data_.autoConnect);

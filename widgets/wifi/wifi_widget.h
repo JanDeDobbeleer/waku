@@ -52,6 +52,7 @@ class WifiWidget final : public BaseWidget {
   platform::WifiInfo info_{0, "Disconnected", -1, false, {}};
   // A failed lookup (nullopt) takes Python's error path.
   std::optional<std::string> ip_;
+  IpResolver ipResolver_;
   WifiMenu* menu_ = nullptr;
 };
 

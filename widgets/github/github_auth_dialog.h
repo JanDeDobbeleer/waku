@@ -6,8 +6,10 @@
 
 #include "platform/github_api.h"
 
+class QFrame;
 class QLabel;
 class QPushButton;
+class QShowEvent;
 class QTimer;
 
 namespace yasb::widgets {
@@ -26,8 +28,11 @@ class GithubAuthDialog final : public QDialog {
 
  protected:
   void closeEvent(QCloseEvent* event) override;
+  void showEvent(QShowEvent* event) override;
 
  private:
+  void buildView();
+  void applyFrameStyles();
   void startDeviceFlow();
   void onDeviceCode(const platform::HttpResponse& response);
   void schedulePoll();
@@ -45,6 +50,8 @@ class GithubAuthDialog final : public QDialog {
   QLabel* codeLabel_ = nullptr;
   QLabel* status_ = nullptr;
   QLabel* result_ = nullptr;
+  QFrame* codeFrame_ = nullptr;
+  QFrame* separator_ = nullptr;
   QPushButton* copyButton_ = nullptr;
   QPushButton* openButton_ = nullptr;
   QPushButton* cancelButton_ = nullptr;

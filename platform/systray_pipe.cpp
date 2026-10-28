@@ -171,6 +171,23 @@ ParsedTrayMessage parseTrayPipeMessage(const QByteArray& message, const ExePathR
     rgba = payload + cbData;
     rgbaSize = std::min<std::int64_t>(iconDataSize, available - cbData);
   }
+  // Python builds the PIL image whenever iconDataSize > 0 and Image.frombytes raises on short
+  // pixel data; SHELLTRAYDATA.from_buffer_copy raises on a short payload. Both end the session.
+  const std::int64_t pixelsAvailable =
+      std::min<std::int64_t>(iconDataSize, std::max<std::int64_t>(0, available - cbData));
+  const std::int64_t pixelsNeeded = static_cast<std::int64_t>(iconWidth) * iconHeight * 4;
+  if (payloadSize < kShellTrayDataSize || (iconDataSize > 0 && pixelsAvailable < pixelsNeeded)) {
+    ParsedTrayMessage fatal;
+    fatal.fatal = true;
+    fatal.invalidReason = payloadSize < kShellTrayDataSize
+                              ? QStringLiteral("tray data is %1 bytes, expected %2")
+                                    .arg(payloadSize)
+                                    .arg(kShellTrayDataSize)
+                              : QStringLiteral("icon data is %1 bytes, expected %2")
+                                    .arg(pixelsAvailable)
+                                    .arg(pixelsNeeded);
+    return fatal;
+  }
   return parseShellTrayData(payload, payloadSize, rgba, rgbaSize, static_cast<int>(iconWidth),
                             static_cast<int>(iconHeight), exePath);
 }

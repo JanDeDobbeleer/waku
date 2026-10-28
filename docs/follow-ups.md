@@ -9,9 +9,6 @@ or hardware; tests use fakes. Remove an item when it is done.
 
 - Live A/B (screenshots, 30-minute log check, manual checklist) is still `todo` for every widget
   except cpu, memory and battery. Track it in `docs/parity-checklist.md`.
-- `toggle_notification` and other `sendKeys` callbacks do not move foreground focus to Progman
-  first (Python `ensure_non_elevated_foreground`); an elevated foreground window can swallow keys.
-  Gap is in the shared `sendKeys` in `core/widgets/callbacks.cpp`.
 - `PinnablePopup` is used for several menus; it can be pinned and dragged, which Python's cannot.
 - Screenshot editor (plan unit U19) is not started.
 - Undocumented-API rows in `docs/architecture.md` say "not exercised live on 26300" until verified.
@@ -25,7 +22,8 @@ or hardware; tests use fakes. Remove an item when it is done.
 ## github
 
 - Menu structure has no Python vector; menu tests are hand-written from the Python source.
-- Auth device-flow dialog is a plain `QDialog`, not styled like Python's ViewBase.
+- Auth dialog approximates ViewBase: no window icon, no dark title bar on Windows 10, no live
+  theme switch while open.
 - Live: real API, the token file and the login flow were never run.
 
 ## komorebi (workspaces, active_layout)
@@ -55,14 +53,13 @@ or hardware; tests use fakes. Remove an item when it is done.
 
 - WinRT connect path does not request location access (same as Python).
 - No Wi-Fi interface: menu says "Wi-Fi is not available" (Python spins forever).
-- Auto-connect right-click `QMenu` has no `apply_qmenu_style` equivalent.
-- Host IPv4 lookup runs once at construction and then in the poll worker, not on every update.
 - Live: connect, disconnect, forget, scan and the menu were never run or rendered.
 
 ## bluetooth
 
-- LE listing uses the paired-LE selector (`FindAllAsync`), Python enumerates unfiltered; the
-  listed set may differ.
+- Device order in the menu and the "Connected devices" tooltip is sorted by address; Python keeps
+  enumeration order (classic first, then LE). Duplicate names in the tooltip come from distinct
+  addresses (a device that is both classic and LE) and match Python's dedupe-by-address.
 - Device enrichment runs in batches of 6 and serially with refresh/connect on one backend thread.
 - Live: connect/disconnect (KS audio), radio power toggle and battery reads never run; the connect
   path is the riskiest and unproven. Menu never rendered.
@@ -98,10 +95,9 @@ or hardware; tests use fakes. Remove an item when it is done.
 
 - Live: hook DLL injection into Explorer, the legacy `Shell_TrayWnd` fallback and an Explorer
   restart were never run. Allowlist rows say "pending live run".
-- "Refresh Systray" does not suppress the app bar around the broadcast (native bar ignores
-  `TaskbarCreated`).
-- Icons scale to 32x32 with Qt smooth scaling, not PIL Lanczos plus sharpen.
-- Malformed pipe messages are dropped with a warning; Python ends the session.
+- "Refresh Systray" has nothing to suppress: the native bar has no `TaskbarCreated` handler, so
+  it also does not re-register the app bar after an Explorer restart (Python does).
+- Icon scaling follows Pillow's Lanczos plus SHARPEN but is not verified pixel-exact against PIL.
 - `stop()` releases the watchdog mutex on the creating thread.
 - Each preset builds only its own architecture's hook DLL; x64 under emulation uses the legacy
   window (as Python).
@@ -126,8 +122,8 @@ or hardware; tests use fakes. Remove an item when it is done.
 
 - Overlay stays on WorkerW after a transition until the next change or shutdown (as Python); watch
   it live.
-- Thumbnail queue cancels and re-queues instead of Python's `tryTake` re-prioritisation (order may
-  differ slightly). Cache keys differ from Python's, so the two builds never share thumbnails.
+- Cache keys differ from Python's, so the two builds never share thumbnails. (Queued thumbnail
+  jobs are re-prioritised by cancelling and restarting them, which matches `tryTake` + `start`.)
 - `set_wallpaper_signal` event hook not ported (nothing emits it in Python).
 - `accent_color: auto` uses WinRT `UISettings`, falls back to white; config uses `#fff`.
 - Live: real `IDesktopWallpaper`, WorkerW attach, `foregroundMonitorRect` and

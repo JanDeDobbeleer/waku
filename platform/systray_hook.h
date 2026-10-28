@@ -86,7 +86,8 @@ class SystrayHook : public TrayHost {
 
  protected:
   // One complete pipe message. Runs on the worker thread.
-  virtual void handleMessage(const QByteArray& message);
+  // Returns false to end the session (Python: a malformed message raises out of the read loop).
+  virtual bool handleMessage(const QByteArray& message);
 
  private:
   enum class Connect { Connected, Stopped, Broken };

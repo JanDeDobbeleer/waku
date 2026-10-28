@@ -8,6 +8,7 @@
 #include <QRect>
 #include <QString>
 #include <QTimer>
+#include <nlohmann/json_fwd.hpp>
 
 namespace yasb::bar {
 class GlobalState;
@@ -30,6 +31,9 @@ struct TooltipOptions {
 };
 void setTooltipOptions(const TooltipOptions& options);
 const TooltipOptions& tooltipOptions();
+// Parses the top-level `tooltip` config block (Python TooltipOptions defaults); `root` is the
+// whole config. Missing or malformed values keep the defaults.
+TooltipOptions parseTooltipOptions(const nlohmann::json& root);
 
 // Pure port of CustomToolTip.calculate_position. `position` is "top", "bottom" or empty (auto).
 QPoint computeTooltipPosition(const QRect& widgetGeometry, const QRect& topLevelGeometry,
