@@ -39,6 +39,10 @@ class IconStateMap {
 // Key an icon is saved under: str(guid) when it has one, else the executable path.
 QString iconStateKey(const platform::TrayIconData& data);
 
+// What was saved for an icon: looked up by its key (guid, else executable path), then by
+// executable path; unpinned at no particular position (index -1) when nothing was saved.
+IconState savedStateFor(const IconStateMap& state, const platform::TrayIconData& data);
+
 // SystrayWidget.update_current_state: renumbers the saved order so the icons currently on screen
 // (in screen order) take the slots of the saved ones. `pinned` and `unpinned` are the visible keys
 // of each container, in layout order, without duplicates.
@@ -49,8 +53,10 @@ void updateCurrentState(IconStateMap& state, const QStringList& pinned,
 // data, honouring the NIF_* flags.
 void updateIconData(platform::TrayIconData& old, const platform::TrayIconData& incoming);
 
-// %LOCALAPPDATA%\YASB, created on demand (core/utils/system.py app_data_path).
-QString appDataDir();
+// %LOCALAPPDATA%\<folder>, created on demand (core/utils/system.py app_data_path). The Widgets
+// build keeps its state in "YASB" (Python YASB's folder, so the two share pins); tidy passes
+// "tidy".
+QString appDataDir(const QString& folder = QStringLiteral("YASB"));
 
 // "systray_state_<screen id>.json" in `dir`, in Python YASB's format: a JSON object of key ->
 // {"is_pinned": bool, "index": int}, indent 2, non-ASCII escaped. Saving merges into whatever the

@@ -16,6 +16,7 @@
 #include "widgets/systray/systray_state.h"
 #include "widgets/systray/tray_drop_widget.h"
 #include "widgets/systray/tray_icon_button.h"
+#include "widgets/systray/tray_icon_registry.h"
 
 namespace yasb::widgets {
 
@@ -73,9 +74,7 @@ class SystrayWidget final : public BaseWidget {
   void onDragEnded();
   void onIconPinnedChanged(TrayIconButton* icon);
   void onIconMoved(TrayIconButton* icon);
-  bool isHiddenIcon(const platform::TrayIconData& data) const;
-  TrayIconButton* findIcon(const std::optional<QUuid>& guid, std::uint64_t hwnd,
-                           std::uint32_t uid) const;
+  TrayIconButton* buttonFor(TrayIconRegistry::Id id) const;
   static bool isLayoutEmpty(QLayout* layout);
   std::vector<TrayIconButton*> iconsInLayout(QLayout* layout) const;
   QStringList visibleStateKeys(QLayout* layout) const;
@@ -90,8 +89,7 @@ class SystrayWidget final : public BaseWidget {
   SystrayDeps deps_;
   TrayIconSettings iconSettings_;
   bar::GlobalState* globalState_;
-  QSet<QUuid> filteredGuids_;
-  QStringList hiddenIconsLower_;
+  TrayIconRegistry registry_;
   std::vector<QPointer<TrayIconButton>> icons_;
   IconStateMap currentState_;
   std::optional<QString> screenId_;

@@ -123,10 +123,16 @@ void updateIconData(TrayIconData& old, const TrayIconData& incoming) {
   }
 }
 
-QString appDataDir() {
+IconState savedStateFor(const IconStateMap& state, const platform::TrayIconData& data) {
+  const IconState* saved = state.find(iconStateKey(data));
+  if (!saved) saved = state.find(data.exePath);
+  return saved ? *saved : IconState{false, -1};
+}
+
+QString appDataDir(const QString& folder) {
   QString base = qEnvironmentVariable("LOCALAPPDATA");
   if (base.isEmpty()) base = QDir::homePath() + QStringLiteral("/AppData/Local");
-  const QString dir = QDir(base).filePath(QStringLiteral("YASB"));
+  const QString dir = QDir(base).filePath(folder);
   QDir().mkpath(dir);
   return dir;
 }

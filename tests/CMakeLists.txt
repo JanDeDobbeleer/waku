@@ -59,7 +59,8 @@ target_sources(yasb_tests PRIVATE
   widgets/test_brightness_policy.cpp
   widgets/test_systray.cpp
   widgets/test_systray_icon_scale.cpp
-  widgets/test_systray_pipe.cpp)
+  widgets/test_systray_pipe.cpp
+  widgets/test_tray_icon_registry.cpp)
 
 # --- U7: app services and CLI protocol ---
 target_sources(yasb_tests PRIVATE
@@ -74,5 +75,5 @@ target_sources(yasb_tests PRIVATE
 
 # --- platform: GlazeWM WebSocket client against a loopback fake server ---
 find_package(Qt6 REQUIRED COMPONENTS Network)
-target_sources(yasb_tests PRIVATE platform/test_glazewm_socket.cpp)
+target_sources(yasb_tests PRIVATE platform/test_glazewm_socket.cpp platform/test_systray_click.cpp)
 target_link_libraries(yasb_tests PRIVATE Qt6::Network)

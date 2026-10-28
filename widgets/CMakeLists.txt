@@ -133,6 +133,8 @@ add_library(yasb_widgets STATIC
   systray/tray_drop_widget.h
   systray/tray_drop_widget.cpp
   systray/tray_icon_button.h
+  systray/tray_icon_registry.h
+  systray/tray_icon_registry.cpp
   systray/tray_icon_button.cpp
 )
 set_target_properties(yasb_widgets PROPERTIES AUTORCC ON)

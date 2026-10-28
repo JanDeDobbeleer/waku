@@ -77,10 +77,13 @@ SystrayWidget::SystrayWidget(const WidgetContext& context, std::optional<Systray
       refreshTimer_(this),
       sortTimer_(this),
       pinnedVisibilityTimer_(this) {
-  if (!options_.show_battery) filteredGuids_.insert(platform::kTrayBatteryIconGuid);
-  if (!options_.show_volume) filteredGuids_.insert(platform::kTrayVolumeIconGuid);
-  if (!options_.show_network) filteredGuids_.insert(platform::kTrayNetworkIconGuid);
-  for (const std::string& name : options_.hide_icons) hiddenIconsLower_ << qs(name).toLower();
+  QSet<QUuid> filteredGuids;
+  if (!options_.show_battery) filteredGuids.insert(platform::kTrayBatteryIconGuid);
+  if (!options_.show_volume) filteredGuids.insert(platform::kTrayVolumeIconGuid);
+  if (!options_.show_network) filteredGuids.insert(platform::kTrayNetworkIconGuid);
+  QStringList hiddenIcons;
+  for (const std::string& name : options_.hide_icons) hiddenIcons << qs(name);
+  registry_.setFilter(std::move(filteredGuids), hiddenIcons);
 
   iconSettings_.iconSize = options_.icon_size;
   iconSettings_.enableTooltips = options_.tooltip;
@@ -288,25 +291,29 @@ void SystrayWidget::onDragEnded() {
   updatePinnedWidgetVisibility();
 }
 
-bool SystrayWidget::isHiddenIcon(const platform::TrayIconData& tray) const {
-  if (hiddenIconsLower_.isEmpty()) return false;
-  return hiddenIconsLower_.contains(tray.exe.toLower());
-}
-
-void SystrayWidget::applyIconData(TrayIconButton* icon, const platform::TrayIconData& tray) {
-  updateIconData(icon->info, tray);
+void SystrayWidget::applyIconData(TrayIconButton* icon, const platform::TrayIconData& merged) {
+  icon->info = merged;
   icon->hasData = true;
   icon->setIconImage(imageFromData(icon->info));
 }
 
-void SystrayWidget::onIconModified(const platform::TrayIconData& tray) {
-  if (tray.guid && filteredGuids_.contains(*tray.guid)) return;
-  if (isHiddenIcon(tray)) return;
+TrayIconButton* SystrayWidget::buttonFor(TrayIconRegistry::Id id) const {
+  for (const auto& icon : icons_) {
+    if (icon && icon->registryId == id) return icon;
+  }
+  return nullptr;
+}
 
-  TrayIconButton* icon = findIcon(tray.guid, tray.hWnd, tray.uID);
+void SystrayWidget::onIconModified(const platform::TrayIconData& tray) {
+  const TrayIconRegistry::Result change = registry_.modified(tray);
+  if (change.change == TrayIconRegistry::Change::Ignored) return;
+
+  TrayIconButton* icon =
+      change.change == TrayIconRegistry::Change::Added ? nullptr : buttonFor(change.id);
   if (!icon) {
     icon = new TrayIconButton(iconSettings_, deps_.windowApi, globalState_);
     icon->hasData = true;
+    icon->registryId = change.id;
     connect(icon, &TrayIconButton::pinnedChanged, this,
             [this](TrayIconButton* button) { onIconPinnedChanged(button); });
     connect(icon, &TrayIconButton::iconMoved, this,
@@ -314,10 +321,7 @@ void SystrayWidget::onIconModified(const platform::TrayIconData& tray) {
     icons_.push_back(icon);
 
     // The saved pin state and position are looked up by guid, then by executable path.
-    const QString id = iconStateKey(tray);
-    const IconState* saved = currentState_.find(id);
-    if (!saved) saved = currentState_.find(tray.exePath);
-    const IconState state = saved ? *saved : IconState{false, -1};
+    const IconState state = savedStateFor(currentState_, tray);
 
     // Place the new icon in the right container.
     icon->isPinned = state.isPinned;
@@ -329,7 +333,7 @@ void SystrayWidget::onIconModified(const platform::TrayIconData& tray) {
     // Once no more icons are arriving, sort them in one go.
     sortTimer_.start(1000);
   }
-  applyIconData(icon, tray);
+  applyIconData(icon, *registry_.data(change.id));
   icon->updateIcon();
   const bool wasHidden = icon->isHidden();
   icon->setHidden((tray.uFlags & platform::kNifState) != 0 && tray.dwState == 1);
@@ -338,7 +342,9 @@ void SystrayWidget::onIconModified(const platform::TrayIconData& tray) {
 }
 
 void SystrayWidget::onIconDeleted(const platform::TrayIconData& tray) {
-  TrayIconButton* icon = findIcon(tray.guid, tray.hWnd, tray.uID);
+  const std::optional<TrayIconRegistry::Id> id = registry_.deleted(tray);
+  if (!id) return;
+  TrayIconButton* icon = buttonFor(*id);
   if (!icon) return;
   icons_.erase(std::remove(icons_.begin(), icons_.end(), icon), icons_.end());
   icon->hide();
@@ -376,27 +382,12 @@ void SystrayWidget::onIconMoved(TrayIconButton* icon) {
   saveState();
 }
 
-TrayIconButton* SystrayWidget::findIcon(const std::optional<QUuid>& guid, std::uint64_t hwnd,
-                                        std::uint32_t uid) const {
-  if (guid) {
-    for (const auto& icon : icons_) {
-      if (!icon || !icon->hasData || !icon->info.guid) continue;
-      if (*icon->info.guid == *guid) return icon;
-    }
-  }
-  for (const auto& icon : icons_) {
-    if (!icon || !icon->hasData) continue;
-    if (icon->info.hWnd == hwnd && icon->info.uID == uid) return icon;
-  }
-  return nullptr;
-}
-
 void SystrayWidget::checkIcons() {
+  if (!deps_.windowApi) return;
   bool changed = false;
-  const std::vector<QPointer<TrayIconButton>> snapshot = icons_;
-  for (const auto& icon : snapshot) {
-    if (!icon || !icon->hasData || !deps_.windowApi) continue;
-    if (deps_.windowApi->isWindow(icon->info.hWnd)) continue;
+  for (const TrayIconRegistry::Id id : registry_.sweepStale(*deps_.windowApi)) {
+    TrayIconButton* icon = buttonFor(id);
+    if (!icon) continue;
     icons_.erase(std::remove(icons_.begin(), icons_.end(), icon), icons_.end());
     icon->hide();
     icon->deleteLater();
