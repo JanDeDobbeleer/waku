@@ -19,6 +19,11 @@ constexpr int kBarHeight = 40;
 }
 
 int main(int argc, char* argv[]) {
+  // As app/main.cpp setFontEngine(): Qt's DirectWrite font database maps every installed font
+  // (about 1.7k handles and 100 MiB working set). Respect a platform the caller chose.
+  if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORM")) {
+    qputenv("QT_QPA_PLATFORM", "windows:fontengine=gdi");
+  }
   // A transparent, blurred window needs an alpha swap chain.
   QQuickWindow::setDefaultAlphaBuffer(true);
   QGuiApplication app(argc, argv);
