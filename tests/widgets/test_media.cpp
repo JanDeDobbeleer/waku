@@ -17,7 +17,10 @@
 #include "core/widgets/event_bus.h"
 #include "core/widgets/polling_worker_registry.h"
 #include "core/widgets/registry.h"
+#include "core/widgets/scrolling_label.h"
+#include "platform/app_volume.h"
 #include "platform/media_session.h"
+#include "widgets/media/lanczos.h"
 #include "widgets/media/media_widget.h"
 
 using nlohmann::json;
@@ -131,6 +134,56 @@ yasb::config::options::MediaWidgetConfig mediaOptions(const json& options) {
   return typed.value_or(yasb::config::options::MediaWidgetConfig{});
 }
 
+// Per-app audio session fake: state lives in a struct shared with the test.
+struct FakeVolumeState {
+  float volume = 0.4f;
+  bool muted = false;
+  bool fail = false;
+  QString boundAumid;
+  bool hasSession = true;
+};
+
+class FakeVolumeSession final : public AppVolumeSession {
+ public:
+  explicit FakeVolumeSession(std::shared_ptr<FakeVolumeState> state) : state_(std::move(state)) {}
+  bool volume(float* out) override {
+    if (state_->fail) return false;
+    *out = state_->volume;
+    return true;
+  }
+  bool setVolume(float level) override {
+    if (state_->fail) return false;
+    state_->volume = level;
+    return true;
+  }
+  bool muted(bool* out) override {
+    if (state_->fail) return false;
+    *out = state_->muted;
+    return true;
+  }
+  bool setMuted(bool muted) override {
+    if (state_->fail) return false;
+    state_->muted = muted;
+    return true;
+  }
+
+ private:
+  std::shared_ptr<FakeVolumeState> state_;
+};
+
+class FakeVolumeSource final : public AppVolumeSource {
+ public:
+  explicit FakeVolumeSource(std::shared_ptr<FakeVolumeState> state) : state_(std::move(state)) {}
+  std::unique_ptr<AppVolumeSession> bind(const QString& aumid) override {
+    state_->boundAumid = aumid;
+    if (!state_->hasSession) return nullptr;
+    return std::make_unique<FakeVolumeSession>(state_);
+  }
+
+ private:
+  std::shared_ptr<FakeVolumeState> state_;
+};
+
 class MediaTest : public testing::Test {
  protected:
   void SetUp() override {
@@ -146,12 +199,12 @@ class MediaTest : public testing::Test {
     service_.reset();
   }
 
-  MediaWidget& build(const json& options) {
+  MediaWidget& build(const json& options, std::shared_ptr<AppVolumeSource> volumeSource = nullptr) {
     TypedWidgetOptions typed = mediaOptions(options);
     WidgetContext context{
         "media",      "yasb.media.MediaWidget", options,         {}, {}, eventBus_,
         globalState_, pollingWorkers_,          std::move(typed)};
-    widget_.reset(new MediaWidget(context, service_.get()));
+    widget_.reset(new MediaWidget(context, service_.get(), std::move(volumeSource)));
     return *widget_;
   }
 
@@ -507,6 +560,146 @@ TEST(MediaHelpers, PopupThumbnailIsASquareCrop) {
   wide.fill(Qt::blue);
   const QImage square = renderPopupThumbnail(wide, 50);
   EXPECT_EQ(square.size(), QSize(50, 50));
+}
+
+TEST(MediaHelpers, LanczosResizeKeepsFlatColourAndAlpha) {
+  QImage flat(37, 23, QImage::Format_RGBA8888);
+  flat.fill(QColor(200, 100, 50, 128));
+  for (const QSize target : {QSize(10, 6), QSize(80, 50)}) {
+    const QImage out = lanczosResize(flat, target.width(), target.height());
+    ASSERT_EQ(out.size(), target);
+    for (int y = 0; y < out.height(); y += 3) {
+      for (int x = 0; x < out.width(); x += 3) {
+        const QColor c = out.pixelColor(x, y);
+        EXPECT_NEAR(c.red(), 200, 1);
+        EXPECT_NEAR(c.green(), 100, 1);
+        EXPECT_NEAR(c.blue(), 50, 1);
+        EXPECT_NEAR(c.alpha(), 128, 1);
+      }
+    }
+  }
+  EXPECT_TRUE(lanczosResize(flat, 0, 5).isNull());
+  EXPECT_TRUE(lanczosResize(QImage(), 5, 5).isNull());
+}
+
+TEST(MediaHelpers, LanczosDownscaleKeepsEdges) {
+  // Left half black, right half white: a 2x downscale keeps the transition centred.
+  QImage half(40, 4, QImage::Format_RGBA8888);
+  for (int y = 0; y < 4; ++y)
+    for (int x = 0; x < 40; ++x) half.setPixelColor(x, y, x < 20 ? Qt::black : Qt::white);
+  const QImage out = lanczosResize(half, 20, 2);
+  EXPECT_LE(out.pixelColor(2, 0).red(), 5);
+  EXPECT_GE(out.pixelColor(17, 0).red(), 250);
+  EXPECT_LT(out.pixelColor(9, 0).red(), 128);
+  EXPECT_GT(out.pixelColor(10, 0).red(), 128);
+}
+
+TEST_F(MediaTest, VolumeSliderIsAbsentUnlessConfigured) {
+  auto state = std::make_shared<FakeVolumeState>();
+  MediaWidget& widget = build(json::object(), std::make_shared<FakeVolumeSource>(state));
+  show(Spec{});
+  widget.showMenu();
+  EXPECT_EQ(widget.appVolumeSlider(), nullptr);
+  EXPECT_TRUE(state->boundAumid.isEmpty());
+}
+
+TEST_F(MediaTest, VolumeSliderBindsCurrentAppAndWritesVolume) {
+  auto state = std::make_shared<FakeVolumeState>();
+  MediaWidget& widget = build({{"media_menu", {{"show_volume_slider", true}}},
+                               {"media_menu_icons", {{"mute", "M"}, {"unmute", "U"}}}},
+                              std::make_shared<FakeVolumeSource>(state));
+  show(Spec{});
+  widget.showMenu();
+  ASSERT_NE(widget.appVolumeSlider(), nullptr);
+  EXPECT_EQ(state->boundAumid, QStringLiteral("Fake.Player.App"));
+  EXPECT_EQ(widget.appVolumeSlider()->property("class").toString(),
+            QStringLiteral("volume-slider"));
+  EXPECT_EQ(widget.appVolumeSlider()->orientation(), Qt::Vertical);
+  EXPECT_EQ(widget.appVolumeSlider()->value(), 40);
+  EXPECT_TRUE(widget.appVolumeSlider()->isEnabled());
+  EXPECT_EQ(widget.appVolumeContainer()->property("class").toString(),
+            QStringLiteral("app-volume-container"));
+  EXPECT_EQ(widget.appMuteButton()->text(), QStringLiteral("M"));
+  EXPECT_EQ(widget.appMuteButton()->property("class").toString(), QStringLiteral("mute-button"));
+
+  widget.appVolumeSlider()->setValue(75);
+  EXPECT_FLOAT_EQ(state->volume, 0.75f);
+}
+
+TEST_F(MediaTest, MuteButtonTogglesAndRaisingVolumeDoesNotUnmuteTheSession) {
+  auto state = std::make_shared<FakeVolumeState>();
+  MediaWidget& widget = build({{"media_menu", {{"show_volume_slider", true}}},
+                               {"media_menu_icons", {{"mute", "M"}, {"unmute", "U"}}}},
+                              std::make_shared<FakeVolumeSource>(state));
+  show(Spec{});
+  widget.showMenu();
+  QLabel* button = widget.appMuteButton();
+  ASSERT_NE(button, nullptr);
+
+  QMouseEvent press(QEvent::MouseButtonPress, QPointF(2, 2), QPointF(2, 2), Qt::LeftButton,
+                    Qt::LeftButton, Qt::NoModifier);
+  QMouseEvent release(QEvent::MouseButtonRelease, QPointF(2, 2), QPointF(2, 2), Qt::LeftButton,
+                      Qt::NoButton, Qt::NoModifier);
+  QApplication::sendEvent(button, &press);
+  QApplication::sendEvent(button, &release);
+  EXPECT_TRUE(state->muted);
+  EXPECT_EQ(button->text(), QStringLiteral("U"));
+  EXPECT_EQ(button->property("class").toString(), QStringLiteral("unmute-button"));
+
+  // Python only refreshes its flag and the button after a slider write; the session stays muted.
+  widget.appVolumeSlider()->setValue(60);
+  EXPECT_FLOAT_EQ(state->volume, 0.6f);
+  EXPECT_TRUE(state->muted);
+}
+
+TEST_F(MediaTest, VolumeSliderHidesWithoutAMatchingSession) {
+  auto state = std::make_shared<FakeVolumeState>();
+  state->hasSession = false;
+  MediaWidget& widget = build({{"media_menu", {{"show_volume_slider", true}}}},
+                              std::make_shared<FakeVolumeSource>(state));
+  show(Spec{});
+  widget.showMenu();
+  ASSERT_NE(widget.appVolumeSlider(), nullptr);
+  EXPECT_TRUE(widget.appVolumeContainer()->isHidden());
+  EXPECT_FALSE(widget.appVolumeSlider()->isEnabled());
+  EXPECT_FALSE(widget.appMuteButton()->isEnabled());
+}
+
+TEST_F(MediaTest, VolumeReadFailureDisablesTheSlider) {
+  auto state = std::make_shared<FakeVolumeState>();
+  state->fail = true;
+  MediaWidget& widget = build({{"media_menu", {{"show_volume_slider", true}}}},
+                              std::make_shared<FakeVolumeSource>(state));
+  show(Spec{});
+  widget.showMenu();
+  EXPECT_FALSE(widget.appVolumeSlider()->isEnabled());
+  EXPECT_FALSE(widget.appMuteButton()->isEnabled());
+}
+
+TEST_F(MediaTest, ScrollingLabelReplacesTheLabelsWhenEnabled) {
+  MediaWidget& plain = build(json::object());
+  EXPECT_EQ(qobject_cast<ScrollingLabel*>(plain.label()), nullptr);
+  MediaWidget& widget = build({{"scrolling_label", {{"enabled", true}, {"style", "bounce"}}}});
+  auto* label = qobject_cast<ScrollingLabel*>(widget.label());
+  ASSERT_NE(label, nullptr);
+  ASSERT_NE(qobject_cast<ScrollingLabel*>(widget.labelAlt()), nullptr);
+  Spec spec;
+  spec.title = QStringLiteral("A very very very long track title that never fits the bar at all");
+  show(spec);
+  // A scrolling label shows the untruncated text.
+  EXPECT_TRUE(label->displayText().contains(spec.title));
+}
+
+TEST_F(MediaTest, ScrollingLabelPassesItsOptionsThrough) {
+  MediaWidget& widget = build(
+      {{"scrolling_label",
+        {{"enabled", true}, {"style", "right"}, {"always_scroll", true}, {"separator", " | "}}}});
+  auto* label = qobject_cast<ScrollingLabel*>(widget.label());
+  ASSERT_NE(label, nullptr);
+  widget.show();
+  show(Spec{});
+  EXPECT_TRUE(label->scrollingNeeded());
+  EXPECT_EQ(label->displayText(), QStringLiteral("Song | "));
 }
 
 TEST(MediaServiceRegistry, SharesOneServiceAndStopsItOnStopAll) {

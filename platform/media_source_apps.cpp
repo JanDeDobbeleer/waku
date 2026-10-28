@@ -317,6 +317,10 @@ QString resolveSourceAppName(const QString& aumid) {
   return name;
 }
 
+QString aumidForPid(unsigned long pid) { return processAumid(static_cast<DWORD>(pid)); }
+
+QString exeNameForAumid(const QString& aumid) { return processNameForAumid(aumid); }
+
 QString sourceAppClassName(const QString& displayName) {
   return displayName.toLower().replace(u' ', u'-');
 }

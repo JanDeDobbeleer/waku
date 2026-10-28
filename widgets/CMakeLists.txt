@@ -61,6 +61,8 @@ add_library(yasb_widgets STATIC
   komorebi/komorebi_widgets.cpp
   komorebi/workspaces_widget.h
   komorebi/workspaces_widget.cpp
+  media/lanczos.h
+  media/lanczos.cpp
   media/media_widget.h
   media/media_widget.cpp
   media/media.qrc

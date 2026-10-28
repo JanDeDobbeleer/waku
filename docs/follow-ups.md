@@ -41,10 +41,12 @@ or hardware; tests use fakes. Remove an item when it is done.
 
 ## media
 
-- Flyout `show_volume_slider` (per-app volume) not ported (off by default, not in config).
-- `scrolling_label` not ported (no scrolling-label widget in C++).
-- Thumbnails use Qt smooth scaling, not PIL Lanczos; pixels differ slightly. Vectors record only
-  pixmap presence.
+- Thumbnails use a Pillow-style Lanczos-3 resample (`widgets/media/lanczos.cpp`); pixels can still
+  differ by rounding. Vectors record only pixmap presence.
+- `show_volume_slider` and `scrolling_label` are ported but only covered by fakes (no live audio
+  session or bar check). `scrolling_label.ease_min` is honoured; Python reads the wrong key
+  (`ease_min_value`) and always uses 0.5. An explicit empty `scrolling_label.separator` becomes a
+  space (the generated struct cannot keep the schema's `" "` default).
 - Beyond Python: `timelineInfoChanged` is re-emitted after a session switch.
 - Live: only a read-only smoke test (`YASB_LIVE_MEDIA_SMOKE=1`), no session playing. Thumbnails,
   event handling and play/pause/skip commands untested.

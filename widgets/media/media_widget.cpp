@@ -17,6 +17,8 @@
 #include "core/widgets/backdrop.h"
 #include "core/widgets/label_format.h"
 #include "core/widgets/polling_worker_registry.h"
+#include "core/widgets/scrolling_label.h"
+#include "widgets/media/lanczos.h"
 
 namespace yasb::widgets {
 namespace {
@@ -72,7 +74,7 @@ QImage cornerMask(const QSize& size, int alpha, int radius, bool controlsLeft, b
   painter.drawPath(
       roundedRectPath(QRectF(QPointF(0, 0), QSizeF(hr.size())), radius * scale, tl, tr, br, bl));
   painter.end();
-  return hr.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+  return lanczosResize(hr, size.width(), size.height()).convertToFormat(QImage::Format_Grayscale8);
 }
 
 QImage edgeFadeMask(const QSize& size, int alpha) {
@@ -168,9 +170,7 @@ QImage renderBarThumbnail(const QImage& source, const ThumbnailStyle& style) {
   const double aspect = static_cast<double>(source.width()) / source.height();
   const int newHeight = static_cast<int>(availableWidth / aspect);
   if (availableWidth <= 0 || newHeight <= 0) return {};
-  QImage image =
-      source.convertToFormat(QImage::Format_RGBA8888)
-          .scaled(availableWidth, newHeight, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+  QImage image = lanczosResize(source, availableWidth, newHeight);
   const int availableHeight = std::max(1, style.containerHeight);
   if (image.height() > availableHeight) {
     const int y1 = (image.height() - availableHeight) / 2;
@@ -205,13 +205,11 @@ QImage renderPopupThumbnail(const QImage& source, int size) {
     newHeight = static_cast<int>(size / aspect);
   }
   if (newWidth <= 0 || newHeight <= 0) return {};
-  QImage resized =
-      source.convertToFormat(QImage::Format_RGBA8888)
-          .scaled(newWidth, newHeight, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+  QImage resized = lanczosResize(source, newWidth, newHeight);
   if (resized.width() >= size && resized.height() >= size) {
     return resized.copy((resized.width() - size) / 2, (resized.height() - size) / 2, size, size);
   }
-  return resized.scaled(size, size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+  return lanczosResize(resized, size, size);
 }
 
 // --- small widgets ------------------------------------------------------------------------------
@@ -309,11 +307,21 @@ class WheelFilter final : public QObject {
   QWidget* dialog_;
 };
 
+// QLabel::setText is not virtual; a ScrollingLabel must see the new text to rebuild its metrics.
+void setLabelText(QLabel* label, const QString& text) {
+  if (auto* scrolling = qobject_cast<ScrollingLabel*>(label)) {
+    scrolling->setText(text);
+  } else {
+    label->setText(text);
+  }
+}
+
 }  // namespace
 
 // --- MediaWidget --------------------------------------------------------------------------------
 
-MediaWidget::MediaWidget(const WidgetContext& context, platform::MediaSessionService* service)
+MediaWidget::MediaWidget(const WidgetContext& context, platform::MediaSessionService* service,
+                         std::shared_ptr<platform::AppVolumeSource> volumeSource)
     : BaseWidget(
           QString::fromStdString(context.name), context.eventBus,
           QStringLiteral("media-widget ") +
@@ -322,7 +330,8 @@ MediaWidget::MediaWidget(const WidgetContext& context, platform::MediaSessionSer
           0),
       options_(std::get<config::options::MediaWidgetConfig>(context.typedOptions)),
       globalState_(context.globalState),
-      service_(service) {
+      service_(service),
+      volumeSource_(std::move(volumeSource)) {
   if (options_.hide_empty) hide();
 
   // The media.png fallback is a Qt resource compiled into yasb_widgets.
@@ -331,9 +340,7 @@ MediaWidget::MediaWidget(const WidgetContext& context, platform::MediaSessionSer
     QImage fallback(QStringLiteral(":/yasb/media/media.png"));
     if (!fallback.isNull()) {
       const int size = options_.media_menu.thumbnail_size;
-      emptyThumb_ = QPixmap::fromImage(
-          fallback.convertToFormat(QImage::Format_RGBA8888)
-              .scaled(size, size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+      emptyThumb_ = QPixmap::fromImage(lanczosResize(fallback, size, size));
     }
   }
 
@@ -364,9 +371,28 @@ MediaWidget::MediaWidget(const WidgetContext& context, platform::MediaSessionSer
     createButtons();
   }
 
-  label_ = new QLabel(this);
+  // ScrollingLabel is a QLabel, so the rest of the widget treats both kinds alike.
+  auto makeLabel = [&](int maxChars) -> QLabel* {
+    const auto& scrolling = options_.scrolling_label;
+    if (!scrolling.enabled) return new QLabel(this);
+    ScrollingLabelOptions scrollOptions;
+    scrollOptions.updateIntervalMs = scrolling.update_interval_ms;
+    scrollOptions.style =
+        ScrollingLabelOptions::parseStyle(QString::fromStdString(scrolling.style));
+    scrollOptions.alwaysScroll = scrolling.always_scroll;
+    // The generated struct cannot carry the schema's " " default for an absent key.
+    scrollOptions.separator = scrolling.separator.empty()
+                                  ? QStringLiteral(" ")
+                                  : QString::fromStdString(scrolling.separator);
+    scrollOptions.labelPadding = scrolling.label_padding;
+    scrollOptions.easeSlope = scrolling.ease_slope;
+    scrollOptions.easePos = scrolling.ease_pos;
+    scrollOptions.easeMin = scrolling.ease_min;
+    return new ScrollingLabel(this, maxChars, scrollOptions);
+  };
+  label_ = makeLabel(options_.max_field_size.label);
   label_->setAlignment(Qt::AlignCenter);
-  labelAlt_ = new QLabel(this);
+  labelAlt_ = makeLabel(options_.max_field_size.label_alt);
   labelAlt_->setAlignment(Qt::AlignCenter);
   thumbnailLabel_ = new QLabel(this);
   thumbnailLabel_->setAlignment(Qt::AlignCenter);
@@ -542,7 +568,7 @@ void MediaWidget::onSessionStatusChanged() {
   }
   thumbnailLabel_->hide();
   active->hide();
-  active->setText(QString());
+  setLabelText(active, QString());
   if (!options_.controls_hide) {
     if (play_) {
       play_->setText(QString::fromStdString(options_.icons.play));
@@ -671,7 +697,7 @@ void MediaWidget::onMediaPropertiesChanged() {
       formatted = session->title.isEmpty() ? QStringLiteral("No media")
                                            : formatMaxFieldSize(session->title);
     }
-    active->setText(formatted);
+    setLabelText(active, formatted);
   }
 
   if (!options_.show_thumbnail) return;
@@ -782,6 +808,10 @@ void MediaWidget::showMenu() {
   popupPrev_.clear();
   popupPlay_.clear();
   popupNext_.clear();
+  appVolumeSession_.reset();
+  appVolumeSlider_.clear();
+  appVolumeContainer_.clear();
+  appMuteButton_.clear();
   if (session) {
     auto* thumbnail = new MediaThumbnailLabel(dialog, menuOptions.thumbnail_corner_radius);
     popupThumbnail_ = thumbnail;
@@ -864,6 +894,41 @@ void MediaWidget::showMenu() {
       }
       textLayout->addLayout(controls);
       contentLayout->addLayout(textLayout);
+
+      // Per-app vertical volume slider.
+      if (menuOptions.show_volume_slider) {
+        try {
+          auto* container = new QFrame;
+          appVolumeContainer_ = container;
+          container->setProperty("class", QStringLiteral("app-volume-container"));
+          auto* volumeLayout = new QVBoxLayout(container);
+          volumeLayout->setContentsMargins(0, 0, 0, 0);
+          volumeLayout->setSpacing(0);
+
+          auto* volumeSlider = new QSlider(Qt::Vertical);
+          appVolumeSlider_ = volumeSlider;
+          volumeSlider->setProperty("class", QStringLiteral("volume-slider"));
+          volumeSlider->setMinimum(0);
+          volumeSlider->setMaximum(100);
+          connect(volumeSlider, &QSlider::valueChanged, this,
+                  [this](int value) { onAppVolumeSliderChanged(value); });
+          volumeLayout->addWidget(volumeSlider, 0, Qt::AlignCenter);
+
+          auto* muteButton = new MediaButton(dialog);
+          appMuteButton_ = muteButton;
+          muteButton->setAlignment(Qt::AlignCenter);
+          muteButton->setProperty("class", QStringLiteral("mute-button"));
+          muteButton->action = [this] { toggleAppMute(); };
+          volumeLayout->addWidget(muteButton, 0, Qt::AlignCenter);
+          contentLayout->addWidget(container, 0, Qt::AlignRight | Qt::AlignTop);
+
+          bindAppVolumeSession();
+          updateAppVolumeSlider();
+          updateAppMuteButton();
+        } catch (const std::exception& error) {
+          qWarning().noquote() << "Error creating app volume slider:" << error.what();
+        }
+      }
     } catch (const std::exception& error) {
       qWarning().noquote() << "Error setting thumbnail in menu:" << error.what();
     }
@@ -934,6 +999,81 @@ void MediaWidget::showMenu() {
   updatePopupMenuButtons();
   dialog->show();
   if (service_) dialog->installEventFilter(new WheelFilter(this, service_, dialog));
+
+  if (menuOptions.show_volume_slider) {
+    updateAppVolumeSlider();
+    updateAppMuteButton();
+  }
+}
+
+QLabel* MediaWidget::appMuteButton() const { return appMuteButton_; }
+
+void MediaWidget::bindAppVolumeSession() {
+  appVolumeSession_.reset();
+  const platform::MediaSessionState* session = current();
+  if (!session || session->appId.isEmpty()) return;
+  if (!volumeSource_) volumeSource_ = platform::createSystemAppVolumeSource();
+  appVolumeSession_ = volumeSource_->bind(session->appId);
+}
+
+void MediaWidget::updateAppVolumeSlider() {
+  if (!appVolumeSlider_) return;
+  float level = 0;
+  if (!appVolumeSession_) {
+    if (appVolumeContainer_) appVolumeContainer_->hide();
+    appVolumeSlider_->setEnabled(false);
+    return;
+  }
+  if (!appVolumeSession_->volume(&level)) {
+    qWarning() << "Failed to read app volume";
+    appVolumeSlider_->setEnabled(false);
+    return;
+  }
+  const QSignalBlocker blocker(appVolumeSlider_);
+  appVolumeSlider_->setValue(static_cast<int>(std::lround(static_cast<double>(level) * 100)));
+  appVolumeSlider_->setEnabled(true);
+}
+
+void MediaWidget::onAppVolumeSliderChanged(int value) {
+  if (!appVolumeSession_) return;
+  if (!appVolumeSession_->setVolume(static_cast<float>(value) / 100.0f)) {
+    qWarning() << "Failed to set app volume";
+    return;
+  }
+  // Raising the volume unmutes in the UI (Python only refreshes its flag and the button).
+  if (value > 0 && appIsMuted_) {
+    appIsMuted_ = false;
+    updateAppMuteButton();
+  }
+}
+
+void MediaWidget::toggleAppMute() {
+  if (!appVolumeSession_) return;
+  bool current = false;
+  appVolumeSession_->muted(&current);  // default to unmuted when the read fails
+  const bool next = !current;
+  if (!appVolumeSession_->setMuted(next)) {
+    qWarning() << "Failed to toggle app mute";
+    return;
+  }
+  appIsMuted_ = next;
+  updateAppMuteButton();
+}
+
+void MediaWidget::updateAppMuteButton() {
+  if (!appMuteButton_) return;
+  bool isMuted = false;
+  if (!appVolumeSession_ || !appVolumeSession_->muted(&isMuted)) {
+    appMuteButton_->setEnabled(false);
+    return;
+  }
+  appIsMuted_ = isMuted;
+  const char* key = isMuted ? "unmute" : "mute";
+  appMuteButton_->setText(QString::fromStdString(isMuted ? options_.media_menu_icons.unmute
+                                                         : options_.media_menu_icons.mute));
+  appMuteButton_->setProperty("class", QString::fromLatin1(key) + QStringLiteral("-button"));
+  appMuteButton_->setEnabled(true);
+  bar::refreshWidgetStyle(appMuteButton_);
 }
 
 void registerMediaWidgets(WidgetRegistry& registry) {

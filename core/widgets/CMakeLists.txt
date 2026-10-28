@@ -17,6 +17,8 @@ target_sources(yasb_ui PRIVATE
   popup.cpp
   registry.h
   registry.cpp
+  scrolling_label.h
+  scrolling_label.cpp
   stat_popup.h
   stat_popup.cpp
   tooltip.h

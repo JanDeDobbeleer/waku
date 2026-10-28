@@ -175,6 +175,10 @@ class MediaSessionService final : public QObject {
 QString resolveSourceAppName(const QString& aumid);
 // source_apps.get_source_app_class_name.
 QString sourceAppClassName(const QString& displayName);
+// Application User Model ID of a process (aumid.get_aumid_for_process); empty when it has none.
+QString aumidForPid(unsigned long pid);
+// Executable name of the process behind an AUMID (aumid_process.get_process_name_for_aumid).
+QString exeNameForAumid(const QString& aumid);
 // Brings a window of the app to the foreground (aumid.activate_app_by_aumid).
 bool activateAppByAumid(const QString& aumid);
 

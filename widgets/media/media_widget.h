@@ -9,11 +9,13 @@
 #include <QSlider>
 #include <QString>
 #include <functional>
+#include <memory>
 
 #include "core/bar/theme_class.h"
 #include "core/widgets/base_widget.h"
 #include "core/widgets/popup.h"
 #include "core/widgets/registry.h"
+#include "platform/app_volume.h"
 #include "platform/media_session.h"
 
 namespace yasb::widgets {
@@ -81,7 +83,10 @@ class MediaWidget final : public BaseWidget {
  public:
   static constexpr double kMaxTimelineDuration = 604800;  // 7 days
 
-  MediaWidget(const WidgetContext& context, platform::MediaSessionService* service);
+  // `volumeSource` finds the per-app audio session for the flyout volume slider; null uses the
+  // Core Audio implementation (tests pass a fake).
+  MediaWidget(const WidgetContext& context, platform::MediaSessionService* service,
+              std::shared_ptr<platform::AppVolumeSource> volumeSource = nullptr);
 
   // Test and parity hooks.
   QLabel* label() const { return label_; }
@@ -93,6 +98,9 @@ class MediaWidget final : public BaseWidget {
   QLabel* playButton() const;
   QLabel* nextButton() const;
   MediaMenuPopup* menu() const;
+  QSlider* appVolumeSlider() const { return appVolumeSlider_; }
+  QWidget* appVolumeContainer() const { return appVolumeContainer_; }
+  QLabel* appMuteButton() const;
   bool showingAltLabel() const { return showAltLabel_; }
 
   void showMenu();
@@ -119,6 +127,11 @@ class MediaWidget final : public BaseWidget {
   void applyButtonState(QLabel* button, const char* base, bool enabled) const;
   void onSliderReleased();
   void onSliderValueChanged(int value);
+  void bindAppVolumeSession();
+  void updateAppVolumeSlider();
+  void onAppVolumeSliderChanged(int value);
+  void toggleAppMute();
+  void updateAppMuteButton();
 
   config::options::MediaWidgetConfig options_;
   bar::GlobalState& globalState_;
@@ -150,6 +163,14 @@ class MediaWidget final : public BaseWidget {
   QPointer<QLabel> popupCurrentTime_;
   QPointer<QLabel> popupTotalTime_;
   QPointer<QSlider> progressSlider_;
+
+  // Flyout per-app volume (media_menu.show_volume_slider). GUI thread only.
+  std::shared_ptr<platform::AppVolumeSource> volumeSource_;
+  std::unique_ptr<platform::AppVolumeSession> appVolumeSession_;
+  QPointer<QWidget> appVolumeContainer_;
+  QPointer<QSlider> appVolumeSlider_;
+  QPointer<MediaButton> appMuteButton_;
+  bool appIsMuted_ = false;
 };
 
 // Frameless media flyout (class "media-menu"); blur and rounded corners are applied on show.

@@ -11,6 +11,8 @@ add_library(yasb_platform STATIC
   window_tracker.h
   window_tracker.cpp
   window_tracker_hooks_win32.cpp
+  app_volume.h
+  app_volume.cpp
   audio.h
   audio.cpp
   battery.h
