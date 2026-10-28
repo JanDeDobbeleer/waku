@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "platform/app_identity.h"
+#include "platform/pin_support.h"
 #include "platform/window_system.h"
 
 namespace yasb::platform {
@@ -442,6 +443,19 @@ class Win32WindowSystem final : public WindowSystem {
 };
 
 }  // namespace
+
+IconBitmap shellItemIcon(const QString& parsingName, int size) {
+  ComScope com;
+  return shellIcon(parsingName, size);
+}
+
+IconBitmap iconBitmapFromHicon(void* hicon) { return bitmapFromHicon(static_cast<HICON>(hicon)); }
+
+IconBitmap defaultAppIcon() {
+  const int metric = GetSystemMetrics(SM_CXICON);
+  return bitmapFromHicon(static_cast<HICON>(
+      LoadImageW(nullptr, IDI_APPLICATION, IMAGE_ICON, metric, metric, LR_SHARED)));
+}
 
 std::shared_ptr<WindowSystem> makeWin32WindowSystem() {
   return std::make_shared<Win32WindowSystem>();

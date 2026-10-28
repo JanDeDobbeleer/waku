@@ -2,11 +2,20 @@
 
 #include <QApplication>
 #include <QCoreApplication>
+#include <QDateTime>
+#include <QDir>
 #include <QEvent>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLabel>
 #include <QMenu>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QTest>
+#include <atomic>
 #include <map>
 #include <nlohmann/json.hpp>
 
@@ -17,9 +26,14 @@
 #include "core/widgets/widget_context.h"
 #include "platform/app_identity.h"
 #include "platform/dwm_thumbnail.h"
+#include "platform/pin_support.h"
 #include "platform/window_system.h"
 #include "platform/window_tracker.h"
+#include "widgets/taskbar/pin_store.h"
+#include "widgets/taskbar/recycle_bin_monitor.h"
+#include "widgets/taskbar/taskbar_drop.h"
 #include "widgets/taskbar/taskbar_icons.h"
+#include "widgets/taskbar/taskbar_menu.h"
 #include "widgets/taskbar/taskbar_preview.h"
 #include "widgets/taskbar/taskbar_widget.h"
 
@@ -154,6 +168,45 @@ class FakeLivePreview final : public LivePreviewBackend {
   bool available_;
 };
 
+// Shell operations that never touch the start menu, the registry or the recycle bin.
+class FakePins final : public PinSupport {
+ public:
+  PinMetadata resolveMetadata(const WindowInfo& info, const QString&) const override {
+    return {info.title, QStringLiteral("C:\\lnk\\") + info.title + QStringLiteral(".lnk")};
+  }
+  IconBitmap pinnedIcon(const QString& uniqueId, const PinMetadata&, int size) const override {
+    iconLoads << uniqueId;
+    if (noShellIcon) return {};
+    return filled(size, '\x30');
+  }
+  std::optional<QString> toastIconPath(const QString&) const override { return toastPath; }
+  IconBitmap defaultIcon() const override { return filled(16, '\x77'); }
+  IconBitmap recycleBinIcon(bool empty, int size) const override {
+    return filled(size, empty ? '\x40' : '\xC0');
+  }
+  void launch(const QString& uniqueId, const PinMetadata& metadata, const QString& extra) override {
+    launches << uniqueId + QLatin1Char('|') + extra + QLatin1Char('|') + metadata.shortcutPath;
+  }
+  RecycleBinInfo recycleBinInfo() const override { return bin; }
+  void emptyRecycleBin() override { ++emptied; }
+  std::vector<QuickAccessFolder> quickAccessFolders() const override { return folders; }
+
+  static IconBitmap filled(int size, char value) {
+    IconBitmap bitmap;
+    bitmap.width = bitmap.height = size;
+    bitmap.bgra = QByteArray(size * size * 4, value);
+    return bitmap;
+  }
+
+  mutable QStringList iconLoads;
+  QStringList launches;
+  bool noShellIcon = false;
+  std::optional<QString> toastPath;
+  RecycleBinInfo bin;
+  std::atomic<int> emptied = 0;
+  std::vector<QuickAccessFolder> folders;
+};
+
 yasb::config::options::TaskbarConfig taskbarOptions(const json& options) {
   const json config = {
       {"bars", {{"main", {{"widgets", {{"left", {"taskbar"}}}}}}}},
@@ -170,6 +223,7 @@ class TaskbarTest : public testing::Test {
   void SetUp() override {
     system_ = std::make_shared<FakeSystem>();
     thumbnails_ = std::make_shared<FakeThumbnails>();
+    pins_ = std::make_shared<FakePins>();
   }
 
   void TearDown() override {
@@ -187,6 +241,11 @@ class TaskbarTest : public testing::Test {
     deps.icons = new TaskbarIcons(system_, /*async=*/false);
     deps.thumbnails = thumbnails_;
     deps.livePreview = live_;
+    // Never the real %LOCALAPPDATA%\\YASB\\taskbar_pinned.json.
+    deps.pins = pins_;
+    deps.pinStore = sharedStore_;
+    deps.pinFile = pinFile();
+    deps.asyncRecycleBin = false;
     WidgetContext context{
         "taskbar",       "yasb.taskbar.TaskbarWidget", options, {}, {}, eventBus_, globalState_,
         pollingWorkers_, taskbarOptions(options)};
@@ -198,10 +257,34 @@ class TaskbarTest : public testing::Test {
 
   static QString classOf(const QWidget* widget) { return widget->property("class").toString(); }
 
+  QString pinFile() const { return pinDir_.filePath(QStringLiteral("taskbar_pinned.json")); }
+
+  // Writes a taskbar_pinned.json with the given (id, title) pairs, in that order.
+  void writePinned(const std::vector<std::pair<QString, QString>>& apps) {
+    QJsonObject map;
+    QJsonArray order;
+    for (const auto& [id, title] : apps) {
+      map[id] = QJsonObject{{"title", title}, {"shortcut_path", "C:\\lnk\\" + title + ".lnk"}};
+      order.append(id);
+    }
+    QFile file(pinFile());
+    ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+    file.write(QJsonDocument(QJsonObject{{"pinned_apps", map}, {"pinned_order", order}}).toJson());
+  }
+
+  QJsonObject readPinned() const {
+    QFile file(pinFile());
+    if (!file.open(QIODevice::ReadOnly)) return {};
+    return QJsonDocument::fromJson(file.readAll()).object();
+  }
+
   void addTo(TaskbarWidget& taskbar, WindowHandle hwnd) {
     taskbar.onWindowAdded(hwnd, system_->query(hwnd));
   }
 
+  QTemporaryDir pinDir_;
+  PinStore* sharedStore_ = nullptr;
+  std::shared_ptr<FakePins> pins_;
   std::shared_ptr<FakeSystem> system_;
   std::shared_ptr<FakeThumbnails> thumbnails_;
   std::shared_ptr<FakeLivePreview> live_ = std::make_shared<FakeLivePreview>(true);
@@ -542,12 +625,18 @@ TEST_F(TaskbarTest, ContextMenuClosesAndKillsThroughTheWindowSystem) {
   ASSERT_NE(menu, nullptr);
   EXPECT_TRUE(taskbar.contextMenuOpen());
   QStringList titles;
-  for (QAction* action : menu->actions()) titles << action->text();
-  EXPECT_EQ(titles, (QStringList{"End task", "Close window", "Close all windows"}));
+  QList<QAction*> actions;
+  for (QAction* action : menu->actions()) {
+    if (action->isSeparator()) continue;
+    titles << action->text();
+    actions << action;
+  }
+  EXPECT_EQ(titles,
+            (QStringList{"Pin to taskbar", "End task", "Close window", "Close all windows"}));
 
-  menu->actions()[0]->trigger();
-  menu->actions()[1]->trigger();
-  menu->actions()[2]->trigger();
+  actions[1]->trigger();
+  actions[2]->trigger();
+  actions[3]->trigger();
   EXPECT_EQ(system_->log, (QStringList{"kill 101", "close 101", "close 101", "close 102"}));
   menu->hide();
   EXPECT_FALSE(taskbar.contextMenuOpen());
@@ -918,4 +1007,729 @@ TEST(TaskbarIcons, SynchronousLoadScalesToThePhysicalSize) {
   EXPECT_EQ(pixmap.width(), 24);
   EXPECT_DOUBLE_EQ(pixmap.devicePixelRatio(), 1.5);
   EXPECT_TRUE(icons.icon(kFirst, 0, 1.0).isNull());
+}
+
+// --- pinned apps (PinManager, TaskbarDropWidget, app_menu)
+
+namespace {
+
+constexpr const char* kRecycleBinId = "explorer:::{645FF040-5081-101B-9F08-00AA002F954E}";
+
+QList<QAction*> actionsOf(QMenu* menu) {
+  QList<QAction*> actions;
+  for (QAction* action : menu->actions()) {
+    if (!action->isSeparator()) actions << action;
+  }
+  return actions;
+}
+
+QStringList titlesOf(QMenu* menu) {
+  QStringList titles;
+  for (QAction* action : actionsOf(menu)) titles << action->text();
+  return titles;
+}
+
+class TaskbarPinTest : public TaskbarTest {
+ protected:
+  void TearDown() override {
+    second_.reset();
+    TaskbarTest::TearDown();
+    store_.reset();
+  }
+
+  static json plain() {
+    return {{"animation", {{"enabled", false}}}, {"grouping", {{"enabled", true}}}};
+  }
+
+  // A taskbar over the pinned file written from `apps`, shown (so its pinned buttons exist).
+  TaskbarWidget& buildPinned(const std::vector<std::pair<QString, QString>>& apps,
+                             const json& options = plain()) {
+    writePinned(apps);
+    TaskbarWidget& taskbar = build(options, false);
+    taskbar.resize(400, 30);
+    taskbar.show();
+    QCoreApplication::processEvents();
+    return taskbar;
+  }
+
+  // Two taskbars over one shared store, as the app wires them. The first is widget_.
+  TaskbarWidget& buildShared(const std::vector<std::pair<QString, QString>>& apps) {
+    writePinned(apps);
+    store_ = std::make_unique<PinStore>(pinFile());
+    sharedStore_ = store_.get();
+    TaskbarWidget& first = build(plain(), false);
+    first.show();
+
+    TaskbarDeps deps;
+    deps.system = system_;
+    deps.icons = new TaskbarIcons(system_, /*async=*/false);
+    deps.pins = pins_;
+    deps.pinStore = sharedStore_;
+    const json options = plain();
+    WidgetContext context{
+        "taskbar2",      "yasb.taskbar.TaskbarWidget", options, {}, {}, eventBus_, globalState_,
+        pollingWorkers_, taskbarOptions(options)};
+    second_.reset(new TaskbarWidget(context, std::move(deps)));
+    second_->setDevicePixelRatio(1.0);
+    second_->show();
+    return first;
+  }
+
+  static QString pinnedId(const QJsonValue& value) { return value.toString(); }
+
+  std::unique_ptr<PinStore> store_;
+  std::unique_ptr<TaskbarWidget> second_;
+};
+
+}  // namespace
+
+TEST_F(TaskbarPinTest, PinnedAppsShowAsButtonsInTheStoredOrder) {
+  TaskbarWidget& taskbar = buildPinned({{"app-a", "A"}, {"app-b", "B"}});
+  EXPECT_EQ(taskbar.layoutUniqueIds(), (QStringList{"app-a", "app-b"}));
+
+  AppButton* a = taskbar.pinnedOnlyButton(QStringLiteral("app-a"));
+  ASSERT_NE(a, nullptr);
+  EXPECT_TRUE(isPseudoHwnd(a->hwnd()));
+  EXPECT_EQ(classOf(a), QStringLiteral("app-container"));
+  EXPECT_TRUE(a->property("pinned").toBool());
+  EXPECT_EQ(a->titleLabel, nullptr);
+  ASSERT_NE(a->iconLabel, nullptr);
+  EXPECT_FALSE(a->iconLabel->pixmap().isNull());
+
+  // Clicking a pinned app that does not run launches it, with the stored shortcut.
+  taskbar.onButtonClicked(a->hwnd(), a);
+  EXPECT_EQ(pins_->launches, (QStringList{"app-a||C:\\lnk\\A.lnk"}));
+  // Nothing was asked of the window system.
+  EXPECT_TRUE(system_->log.isEmpty());
+}
+
+TEST_F(TaskbarPinTest, TheRealFileIsNeverTouched) {
+  // The fixture points every taskbar at a temp file; a missing file means nothing is pinned.
+  TaskbarWidget& taskbar = build(plain(), false);
+  taskbar.show();
+  EXPECT_TRUE(taskbar.pinStore()->isEmpty());
+  EXPECT_EQ(taskbar.pinStore()->filePath(), pinFile());
+}
+
+TEST_F(TaskbarPinTest, ARunningPinnedAppTakesItsPinnedButtonsPlace) {
+  TaskbarWidget& taskbar = buildPinned({{"a", "A"}, {"b", "B"}, {"c", "C"}});
+  system_->add(kFirst).uniqueId = QStringLiteral("b");
+  addTo(taskbar, kFirst);
+
+  EXPECT_EQ(taskbar.layoutUniqueIds(), (QStringList{"a", "b", "c"}));
+  EXPECT_EQ(taskbar.pinnedOnlyButton(QStringLiteral("b")), nullptr);
+  AppButton* running = taskbar.buttonFor(kFirst);
+  ASSERT_NE(running, nullptr);
+  EXPECT_TRUE(taskbar.isAppPinned(kFirst));
+  EXPECT_TRUE(classOf(running).contains(QLatin1String("pinned")));
+  EXPECT_TRUE(running->property("pinned").toBool());
+}
+
+TEST_F(TaskbarPinTest, ClosingAPinnedAppBringsItsButtonBackWhereItWas) {
+  TaskbarWidget& taskbar = buildPinned({{"a", "A"}, {"b", "B"}, {"c", "C"}});
+  system_->add(kFirst).uniqueId = QStringLiteral("b");
+  addTo(taskbar, kFirst);
+
+  taskbar.onWindowRemoved(kFirst, system_->query(kFirst));
+  QCoreApplication::processEvents();
+  QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+
+  EXPECT_EQ(taskbar.layoutUniqueIds(), (QStringList{"a", "b", "c"}));
+  EXPECT_NE(taskbar.pinnedOnlyButton(QStringLiteral("b")), nullptr);
+  EXPECT_FALSE(taskbar.isAppPinned(kFirst));
+}
+
+TEST_F(TaskbarPinTest, ASecondWindowKeepsThePinnedButtonAwayWhileTheAppRuns) {
+  TaskbarWidget& taskbar = buildPinned({{"a", "A"}});
+  system_->add(kFirst).uniqueId = QStringLiteral("a");
+  system_->add(kSecond).uniqueId = QStringLiteral("a");
+  addTo(taskbar, kFirst);
+  addTo(taskbar, kSecond);
+  EXPECT_EQ(taskbar.buttons().size(), 1u);
+
+  taskbar.onWindowRemoved(kFirst, system_->query(kFirst));
+  QCoreApplication::processEvents();
+  EXPECT_EQ(taskbar.pinnedOnlyButton(QStringLiteral("a")), nullptr);
+  EXPECT_EQ(taskbar.buttons().size(), 1u);
+
+  taskbar.onWindowRemoved(kSecond, system_->query(kSecond));
+  QCoreApplication::processEvents();
+  EXPECT_NE(taskbar.pinnedOnlyButton(QStringLiteral("a")), nullptr);
+}
+
+TEST_F(TaskbarPinTest, UnpinnedWindowsGoAfterThePinnedButtons) {
+  TaskbarWidget& taskbar = buildPinned({{"a", "A"}, {"b", "B"}});
+  system_->add(kFirst).uniqueId = QStringLiteral("other");
+  addTo(taskbar, kFirst);
+  EXPECT_EQ(taskbar.layoutUniqueIds(), (QStringList{"a", "b", ""}));
+  EXPECT_FALSE(taskbar.isAppPinned(kFirst));
+}
+
+TEST_F(TaskbarPinTest, PinningARunningAppWritesTheFileAndMarksItsButton) {
+  TaskbarWidget& taskbar = build(plain(), false);
+  system_->add(kFirst, QStringLiteral("Notes"), QStringLiteral("notes.exe")).uniqueId =
+      QStringLiteral("path:c:\\notes.exe");
+  system_->add(kSecond).uniqueId = QStringLiteral("other");
+  addTo(taskbar, kSecond);
+  addTo(taskbar, kFirst);
+  QSignalSpy spy(taskbar.pinStore(), &PinStore::pinnedAppsChanged);
+
+  taskbar.pinApp(kFirst);
+
+  const QJsonObject file = readPinned();
+  const QJsonObject apps = file.value("pinned_apps").toObject();
+  ASSERT_TRUE(apps.contains("path:c:\\notes.exe"));
+  const QJsonObject entry = apps.value("path:c:\\notes.exe").toObject();
+  EXPECT_EQ(entry.value("title").toString(), QStringLiteral("Notes"));
+  EXPECT_EQ(entry.value("shortcut_path").toString(), QStringLiteral("C:\\lnk\\Notes.lnk"));
+  EXPECT_EQ(file.value("pinned_order").toArray().size(), 1);
+  EXPECT_TRUE(taskbar.isAppPinned(kFirst));
+  EXPECT_TRUE(classOf(taskbar.buttonFor(kFirst)).contains(QLatin1String("pinned")));
+  ASSERT_GE(spy.count(), 1);
+  EXPECT_EQ(spy.first().at(0).toString(), QStringLiteral("pin"));
+  // The pinned app moved ahead of the unpinned window.
+  EXPECT_EQ(taskbar.layoutUniqueIds(), (QStringList{"path:c:\\notes.exe", ""}));
+
+  taskbar.unpinApp(kFirst);
+  EXPECT_TRUE(readPinned().value("pinned_apps").toObject().isEmpty());
+  EXPECT_FALSE(taskbar.isAppPinned(kFirst));
+  EXPECT_FALSE(classOf(taskbar.buttonFor(kFirst)).contains(QLatin1String("pinned")));
+}
+
+TEST_F(TaskbarPinTest, PinsAndUnpinsReachEveryTaskbar) {
+  TaskbarWidget& first = buildShared({});
+  system_->add(kFirst).uniqueId = QStringLiteral("app");
+  addTo(first, kFirst);
+
+  first.pinApp(kFirst);
+  EXPECT_NE(second_->pinnedOnlyButton(QStringLiteral("app")), nullptr);
+  EXPECT_EQ(second_->layoutUniqueIds(), (QStringList{"app"}));
+
+  first.unpinApp(kFirst);
+  EXPECT_EQ(second_->pinnedOnlyButton(QStringLiteral("app")), nullptr);
+  EXPECT_TRUE(second_->layoutUniqueIds().isEmpty());
+}
+
+TEST_F(TaskbarPinTest, UnpinningFromAnotherTaskbarClearsARunningPinnedWindow) {
+  TaskbarWidget& first = buildShared({{"app", "App"}});
+  system_->add(kFirst).uniqueId = QStringLiteral("app");
+  addTo(first, kFirst);
+  ASSERT_TRUE(first.isAppPinned(kFirst));
+
+  second_->unpinPinnedOnlyApp(QStringLiteral("app"), pseudoHwndFor(QStringLiteral("app")));
+  EXPECT_FALSE(first.isAppPinned(kFirst));
+  EXPECT_FALSE(classOf(first.buttonFor(kFirst)).contains(QLatin1String("pinned")));
+}
+
+TEST_F(TaskbarPinTest, ReorderingReachesEveryTaskbar) {
+  TaskbarWidget& first = buildShared({{"a", "A"}, {"b", "B"}, {"c", "C"}});
+  system_->add(kFirst).uniqueId = QStringLiteral("other");
+  addTo(first, kFirst);
+  ASSERT_EQ(first.layoutUniqueIds(), (QStringList{"a", "b", "c", ""}));
+
+  sharedStore_->updateOrder({"c", "a", "b"});
+  EXPECT_EQ(first.layoutUniqueIds(), (QStringList{"c", "a", "b", ""}));
+  EXPECT_EQ(second_->layoutUniqueIds(), (QStringList{"c", "a", "b"}));
+  EXPECT_EQ(readPinned().value("pinned_order").toArray().at(0).toString(), QStringLiteral("c"));
+}
+
+TEST_F(TaskbarPinTest, HideEmptyKeepsATaskbarWithPinnedAppsVisible) {
+  json options = plain();
+  options["hide_empty"] = true;
+  TaskbarWidget& taskbar = buildPinned({{"a", "A"}}, options);
+  QCoreApplication::processEvents();
+  EXPECT_TRUE(taskbar.isVisible());
+}
+
+// --- drag reorder and drop hover
+
+TEST_F(TaskbarPinTest, DraggingAPinnedButtonReordersAndSavesTheOrder) {
+  TaskbarWidget& taskbar = buildPinned({{"a", "A"}, {"b", "B"}, {"c", "C"}});
+  TaskbarDropHandler* drop = taskbar.dropHandler();
+  AppButton* a = taskbar.pinnedOnlyButton(QStringLiteral("a"));
+  AppButton* c = taskbar.pinnedOnlyButton(QStringLiteral("c"));
+  ASSERT_TRUE(a && c);
+
+  ASSERT_TRUE(drop->dragEnterInternal(a));
+  EXPECT_TRUE(a->property("dragging").toBool());
+  const QPoint overC = c->geometry().center();
+  EXPECT_TRUE(drop->dragMoveInternal(a, overC));
+  // Dragged from the left of c: it goes after c.
+  EXPECT_EQ(drop->currentIndicatorIndex(), 3);
+  EXPECT_TRUE(drop->dropInternal(a, overC));
+
+  EXPECT_EQ(taskbar.layoutUniqueIds(), (QStringList{"b", "c", "a"}));
+  EXPECT_FALSE(a->property("dragging").toBool());
+  const QJsonArray order = readPinned().value("pinned_order").toArray();
+  ASSERT_EQ(order.size(), 3);
+  EXPECT_EQ(order.at(0).toString(), QStringLiteral("b"));
+  EXPECT_EQ(order.at(2).toString(), QStringLiteral("a"));
+}
+
+TEST_F(TaskbarPinTest, DraggingBackwardsPutsTheButtonBeforeTheHoveredOne) {
+  TaskbarWidget& taskbar = buildPinned({{"a", "A"}, {"b", "B"}, {"c", "C"}});
+  TaskbarDropHandler* drop = taskbar.dropHandler();
+  AppButton* c = taskbar.pinnedOnlyButton(QStringLiteral("c"));
+  AppButton* a = taskbar.pinnedOnlyButton(QStringLiteral("a"));
+  ASSERT_TRUE(drop->dragEnterInternal(c));
+  const QPoint overA = a->geometry().center();
+  EXPECT_TRUE(drop->dragMoveInternal(c, overA));
+  EXPECT_EQ(drop->currentIndicatorIndex(), 0);
+  EXPECT_TRUE(drop->dropInternal(c, overA));
+  EXPECT_EQ(taskbar.layoutUniqueIds(), (QStringList{"c", "a", "b"}));
+}
+
+TEST_F(TaskbarPinTest, DroppingOnTheSameSlotChangesNothing) {
+  TaskbarWidget& taskbar = buildPinned({{"a", "A"}, {"b", "B"}});
+  TaskbarDropHandler* drop = taskbar.dropHandler();
+  AppButton* a = taskbar.pinnedOnlyButton(QStringLiteral("a"));
+  const QFileInfo before(pinFile());
+  const QDateTime stamp = before.lastModified();
+
+  ASSERT_TRUE(drop->dragEnterInternal(a));
+  const QPoint overSelf = a->geometry().center();
+  EXPECT_TRUE(drop->dragMoveInternal(a, overSelf));
+  EXPECT_EQ(drop->currentIndicatorIndex(), -1);
+  EXPECT_TRUE(drop->dropInternal(a, overSelf));
+  EXPECT_EQ(taskbar.layoutUniqueIds(), (QStringList{"a", "b"}));
+  EXPECT_EQ(QFileInfo(pinFile()).lastModified(), stamp);
+}
+
+TEST_F(TaskbarPinTest, WindowEventsAreHeldBackWhileAButtonIsDragged) {
+  TaskbarWidget& taskbar = buildPinned({{"a", "A"}});
+  TaskbarDropHandler* drop = taskbar.dropHandler();
+  AppButton* a = taskbar.pinnedOnlyButton(QStringLiteral("a"));
+  system_->add(kFirst).uniqueId = QStringLiteral("other");
+
+  ASSERT_TRUE(drop->dragEnterInternal(a));
+  addTo(taskbar, kFirst);
+  EXPECT_FALSE(taskbar.hasWindow(kFirst));
+  drop->dragLeave();
+  taskbar.setDragging(false);
+  addTo(taskbar, kFirst);
+  EXPECT_TRUE(taskbar.hasWindow(kFirst));
+}
+
+TEST_F(TaskbarPinTest, HoveringAFileOverAButtonRaisesItsWindowAfter200Ms) {
+  system_->add(kFirst);
+  TaskbarWidget& taskbar = build(plain(), false);
+  addTo(taskbar, kFirst);
+  taskbar.resize(300, 30);
+  taskbar.show();
+  QCoreApplication::processEvents();
+  TaskbarDropHandler* drop = taskbar.dropHandler();
+  AppButton* button = taskbar.buttonFor(kFirst);
+  const QPoint over = button->geometry().center();
+
+  drop->dragHoverExternal(over);
+  EXPECT_TRUE(drop->hoverTimerActive());
+  EXPECT_EQ(drop->hoverTarget(), kFirst);
+  EXPECT_TRUE(system_->log.isEmpty());
+  QTest::qWait(300);
+  EXPECT_TRUE(system_->log.contains(QStringLiteral("foreground 101")));
+
+  // Leaving cancels a pending raise.
+  system_->log.clear();
+  drop->dragHoverExternal(over);
+  drop->dragLeave();
+  EXPECT_FALSE(drop->hoverTimerActive());
+  EXPECT_EQ(drop->hoverTarget(), 0u);
+  QTest::qWait(300);
+  EXPECT_TRUE(system_->log.isEmpty());
+
+  // Dropping raises at once.
+  drop->dragHoverExternal(over);
+  drop->dropExternal();
+  EXPECT_TRUE(system_->log.contains(QStringLiteral("foreground 101")));
+}
+
+// --- context menu
+
+TEST_F(TaskbarPinTest, PinnedOnlyMenuOpensAndUnpins) {
+  TaskbarWidget& taskbar = buildPinned({{"path:c:\\x.exe", "X"}});
+  AppButton* button = taskbar.pinnedOnlyButton(QStringLiteral("path:c:\\x.exe"));
+  QMenu* menu = taskbar.showContextMenu(button->hwnd(), QPoint(10, 10));
+  ASSERT_NE(menu, nullptr);
+  EXPECT_EQ(titlesOf(menu), (QStringList{"Open app", "Unpin from taskbar"}));
+
+  actionsOf(menu)[0]->trigger();
+  EXPECT_EQ(pins_->launches, (QStringList{"path:c:\\x.exe||C:\\lnk\\X.lnk"}));
+  actionsOf(menu)[1]->trigger();
+  EXPECT_TRUE(readPinned().value("pinned_apps").toObject().isEmpty());
+  EXPECT_EQ(taskbar.pinnedOnlyButton(QStringLiteral("path:c:\\x.exe")), nullptr);
+  menu->close();
+}
+
+TEST_F(TaskbarPinTest, RunningPinnedMenuOffersUnpinAndEndTask) {
+  TaskbarWidget& taskbar = buildPinned({{"a", "A"}});
+  system_->add(kFirst).uniqueId = QStringLiteral("a");
+  addTo(taskbar, kFirst);
+  QMenu* menu = taskbar.showContextMenu(kFirst, QPoint(10, 10));
+  ASSERT_NE(menu, nullptr);
+  EXPECT_EQ(titlesOf(menu),
+            (QStringList{"Open app", "Unpin from taskbar", "End task", "Close window"}));
+  menu->close();
+}
+
+TEST_F(TaskbarPinTest, MenuPinsARunningApp) {
+  TaskbarWidget& taskbar = build(plain(), false);
+  system_->add(kFirst).uniqueId = QStringLiteral("app");
+  addTo(taskbar, kFirst);
+  QMenu* menu = taskbar.showContextMenu(kFirst, QPoint(10, 10));
+  ASSERT_NE(menu, nullptr);
+  actionsOf(menu)[0]->trigger();
+  EXPECT_TRUE(taskbar.isAppPinned(kFirst));
+  EXPECT_TRUE(readPinned().value("pinned_apps").toObject().contains("app"));
+  menu->close();
+}
+
+TEST_F(TaskbarPinTest, BrowserMenusLaunchTheirPrivateModes) {
+  struct Case {
+    QString id;
+    QStringList first;
+    QString privateArgs;
+    QString privateTarget;
+    QString firstArgs = QString();
+  };
+  const std::vector<Case> cases = {
+      {"path:c:\\edge\\msedge.exe", {"New Window", "New InPrivate Window"}, "--inprivate", ""},
+      {"path:c:\\chrome\\chrome.exe", {"New Window", "New Incognito Window"}, "--incognito", ""},
+      {"path:c:\\ff\\firefox.exe",
+       {"New Window", "New Private Window"},
+       "-private-window",
+       "",
+       "-new-window"},
+      {"aumid:308046B0AF4A39CB",
+       {"New Window", "New Private Window"},
+       "",
+       "aumid:308046B0AF4A39CB;PrivateBrowsingAUMID"},
+  };
+  for (const Case& test : cases) {
+    SCOPED_TRACE(test.id.toStdString());
+    pins_->launches.clear();
+    TaskbarWidget& taskbar = build(plain(), false);
+    system_->rows.clear();
+    system_->add(kFirst).uniqueId = test.id;
+    addTo(taskbar, kFirst);
+    QMenu* menu = taskbar.showContextMenu(kFirst, QPoint(10, 10));
+    ASSERT_NE(menu, nullptr);
+    const QStringList titles = titlesOf(menu);
+    ASSERT_GE(titles.size(), test.first.size());
+    EXPECT_EQ(titles.mid(0, test.first.size()), test.first);
+
+    const QList<QAction*> actions = actionsOf(menu);
+    actions[0]->trigger();
+    ASSERT_EQ(pins_->launches.size(), 1);
+    EXPECT_EQ(pins_->launches[0], test.id + QLatin1Char('|') + test.firstArgs + QLatin1Char('|'));
+    actions[1]->trigger();
+    const QString expected = test.privateTarget.isEmpty() ? test.id : test.privateTarget;
+    ASSERT_EQ(pins_->launches.size(), 2);
+    EXPECT_EQ(pins_->launches[1],
+              expected + QLatin1Char('|') + test.privateArgs + QLatin1Char('|'));
+    menu->close();
+  }
+}
+
+TEST_F(TaskbarPinTest, VsCodeNewWindowPassesDashN) {
+  TaskbarWidget& taskbar = build(plain(), false);
+  system_->add(kFirst).uniqueId = QStringLiteral("path:c:\\code\\Code.exe");
+  addTo(taskbar, kFirst);
+  QMenu* menu = taskbar.showContextMenu(kFirst, QPoint(10, 10));
+  ASSERT_NE(menu, nullptr);
+  actionsOf(menu)[0]->trigger();
+  EXPECT_EQ(pins_->launches, (QStringList{"path:c:\\code\\Code.exe|-n|"}));
+  menu->close();
+}
+
+TEST_F(TaskbarPinTest, ExplorerMenuListsQuickAccessFoldersThenFileExplorer) {
+  pins_->folders = {{"Downloads", "C:\\Users\\u\\Downloads"}, {"Docs", "C:\\Users\\u\\Docs"}};
+  TaskbarWidget& taskbar = build(plain(), false);
+  system_->add(kFirst, QStringLiteral("Folder"), QStringLiteral("explorer.exe")).uniqueId =
+      QStringLiteral("explorer:C:\\Work");
+  addTo(taskbar, kFirst);
+  QMenu* menu = taskbar.showContextMenu(kFirst, QPoint(10, 10));
+  ASSERT_NE(menu, nullptr);
+  EXPECT_EQ(titlesOf(menu), (QStringList{"Downloads", "Docs", "File Explorer", "Pin to taskbar",
+                                         "End task", "Close window"}));
+  actionsOf(menu)[0]->trigger();
+  actionsOf(menu)[2]->trigger();
+  EXPECT_EQ(pins_->launches, (QStringList{"explorer:C:\\Users\\u\\Downloads||",
+                                          "explorer:::{20D04FE0-3AEA-1069-A2D8-08002B30309D}||"}));
+  menu->close();
+}
+
+TEST_F(TaskbarPinTest, TerminalMenuListsTheVisibleProfiles) {
+  QTemporaryDir appData;
+  const QString settings = appData.filePath(
+      QStringLiteral("Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"));
+  ASSERT_TRUE(QDir().mkpath(QFileInfo(settings).absolutePath()));
+  QFile file(settings);
+  ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+  file.write(R"({"profiles":{"list":[{"name":"PowerShell","guid":"{aaa}"},
+      {"name":"Hidden","guid":"{bbb}","hidden":true},{"name":"Ubuntu","guid":"{ccc}"}]}})");
+  file.close();
+
+  const QByteArray previous = qgetenv("LOCALAPPDATA");
+  qputenv("LOCALAPPDATA", appData.path().toUtf8());
+  TaskbarWidget& taskbar = build(plain(), false);
+  system_->add(kFirst).uniqueId =
+      QStringLiteral("aumid:Microsoft.WindowsTerminal_8wekyb3d8bbwe!App");
+  addTo(taskbar, kFirst);
+  QMenu* menu = taskbar.showContextMenu(kFirst, QPoint(10, 10));
+  qputenv("LOCALAPPDATA", previous);
+  ASSERT_NE(menu, nullptr);
+  EXPECT_EQ(titlesOf(menu).mid(0, 3), (QStringList{"PowerShell", "Ubuntu", "New Window"}));
+  actionsOf(menu)[1]->trigger();
+  EXPECT_EQ(pins_->launches,
+            (QStringList{"aumid:Microsoft.WindowsTerminal_8wekyb3d8bbwe!App|-p {ccc}|"}));
+  menu->close();
+}
+
+TEST(TaskbarMenuHelpers, TerminalProfilesComeFromTheInstallsSettingsFile) {
+  QTemporaryDir appData;
+  const auto write = [&](const QString& relative, const QByteArray& json) {
+    const QString path = appData.filePath(relative);
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    QFile file(path);
+    EXPECT_TRUE(file.open(QIODevice::WriteOnly));
+    file.write(json);
+  };
+  write(QStringLiteral("Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"),
+        R"({"profiles":{"list":[{"name":"Stable","guid":"{1}"},{"guid":"{2}"},{"name":"NoGuid"},
+            {"name":"Gone","guid":"{3}","hidden":true}]}})");
+  write(QStringLiteral(
+            "Packages/Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe/LocalState/settings.json"),
+        R"({"profiles":{"list":[{"name":"Preview","guid":"{4}"}]}})");
+  write(QStringLiteral("Microsoft/Windows Terminal/settings.json"),
+        R"({"profiles":{"list":[{"name":"Portable","guid":"{5}"}]}})");
+
+  const QString dir = appData.path();
+  const auto stable =
+      windowsTerminalProfiles(QStringLiteral("aumid:Microsoft.WindowsTerminal"), dir);
+  ASSERT_EQ(stable.size(), 2u);
+  EXPECT_EQ(stable[0].name, QStringLiteral("Stable"));
+  EXPECT_EQ(stable[1].name, QStringLiteral("Unknown"));
+  EXPECT_EQ(stable[1].guid, QStringLiteral("{2}"));
+  EXPECT_EQ(windowsTerminalProfiles(QStringLiteral("aumid:Microsoft.WindowsTerminalPreview"), dir)
+                .at(0)
+                .name,
+            QStringLiteral("Preview"));
+  EXPECT_EQ(
+      windowsTerminalProfiles(QStringLiteral("path:c:\\wt\\WindowsTerminal.exe"), dir).at(0).name,
+      QStringLiteral("Portable"));
+  EXPECT_TRUE(windowsTerminalProfiles(QStringLiteral("aumid:Microsoft.WindowsTerminal"),
+                                      dir + QStringLiteral("/missing"))
+                  .empty());
+}
+
+TEST(TaskbarMenuHelpers, MenuOpensOutsideTheBarByItsPosition) {
+  const QRect bar(100, 0, 800, 40);
+  // Below a top bar: 6 px under it, centred on the button.
+  EXPECT_EQ(contextMenuPosition(bar, QPoint(300, 20), QSize(120, 200), true), QPoint(240, 46));
+  // Above a bottom bar.
+  const QRect bottom(100, 1000, 800, 40);
+  EXPECT_EQ(contextMenuPosition(bottom, QPoint(300, 1020), QSize(120, 200), false),
+            QPoint(240, 794));
+}
+
+TEST(TaskbarMenuHelpers, SizesFormatLikeHumanize) {
+  EXPECT_EQ(naturalSizeBinary(0), QStringLiteral("0 Bytes"));
+  EXPECT_EQ(naturalSizeBinary(1), QStringLiteral("1 Byte"));
+  EXPECT_EQ(naturalSizeBinary(12), QStringLiteral("12 Bytes"));
+  EXPECT_EQ(naturalSizeBinary(1536), QStringLiteral("1.50 KiB"));
+  EXPECT_EQ(naturalSizeBinary(5 * 1024 * 1024), QStringLiteral("5.00 MiB"));
+}
+
+// --- Recycle Bin
+
+TEST_F(TaskbarPinTest, RecycleBinButtonShowsTheBinsStateAndItsMenu) {
+  TaskbarWidget& taskbar = buildPinned({{kRecycleBinId, "Recycle Bin"}});
+  AppButton* button = taskbar.pinnedOnlyButton(QString::fromLatin1(kRecycleBinId));
+  ASSERT_NE(button, nullptr);
+  ASSERT_NE(taskbar.recycleBinMonitor(), nullptr);
+  EXPECT_TRUE(taskbar.recycleBinMonitor()->active());
+
+  // The empty bin's stock icon first, the full one once the monitor sees items.
+  EXPECT_EQ(qAlpha(button->iconLabel->pixmap().toImage().pixel(0, 0)), 0x40);
+  pins_->bin = {1536, 3};  // size, then item count
+  taskbar.recycleBinMonitor()->refresh();
+  ASSERT_EQ(taskbar.recycleBinMonitor()->last().numItems, 3);
+  EXPECT_EQ(qAlpha(button->iconLabel->pixmap().toImage().pixel(0, 0)), 0xC0);
+
+  QMenu* menu = taskbar.showContextMenu(button->hwnd(), QPoint(10, 10));
+  ASSERT_NE(menu, nullptr);
+  EXPECT_EQ(titlesOf(menu),
+            (QStringList{"3 items (1.50 KiB)", "Open", "Empty Recycle Bin", "Unpin from taskbar"}));
+  EXPECT_FALSE(actionsOf(menu)[0]->isEnabled());
+  EXPECT_TRUE(actionsOf(menu)[2]->isEnabled());
+  actionsOf(menu)[1]->trigger();
+  EXPECT_EQ(
+      pins_->launches,
+      (QStringList{"explorer:::{645FF040-5081-101B-9F08-00AA002F954E}||C:\\lnk\\Recycle Bin.lnk"}));
+  actionsOf(menu)[2]->trigger();
+  for (int i = 0; i < 100 && pins_->emptied == 0; ++i) QTest::qWait(20);
+  EXPECT_EQ(pins_->emptied, 1);
+  menu->close();
+
+  // Unpinning stops the monitor.
+  taskbar.unpinPinnedOnlyApp(QString::fromLatin1(kRecycleBinId), button->hwnd());
+  EXPECT_FALSE(taskbar.recycleBinMonitor()->active());
+}
+
+TEST_F(TaskbarPinTest, EmptyRecycleBinIsDisabledWhenThereIsNothingToEmpty) {
+  TaskbarWidget& taskbar = buildPinned({{kRecycleBinId, "Recycle Bin"}});
+  AppButton* button = taskbar.pinnedOnlyButton(QString::fromLatin1(kRecycleBinId));
+  QMenu* menu = taskbar.showContextMenu(button->hwnd(), QPoint(10, 10));
+  ASSERT_NE(menu, nullptr);
+  EXPECT_EQ(titlesOf(menu), (QStringList{"Open", "Empty Recycle Bin", "Unpin from taskbar"}));
+  EXPECT_FALSE(actionsOf(menu)[1]->isEnabled());
+  menu->close();
+}
+
+TEST_F(TaskbarPinTest, ARunningRecycleBinWindowKeepsTheBinsIconWhenPinned) {
+  TaskbarWidget& taskbar = buildPinned({{kRecycleBinId, "Recycle Bin"}});
+  system_->add(kFirst, QStringLiteral("Recycle Bin"), QStringLiteral("explorer.exe")).uniqueId =
+      QString::fromLatin1(kRecycleBinId);
+  addTo(taskbar, kFirst);
+  AppButton* running = taskbar.buttonFor(kFirst);
+  ASSERT_NE(running, nullptr);
+  EXPECT_EQ(qAlpha(running->iconLabel->pixmap().toImage().pixel(0, 0)), 0x40);
+}
+
+// --- icons
+
+TEST(TaskbarPinIcons, ToastAumidIconIsCroppedAndPaddedWhenTheShellHasNone) {
+  QTemporaryDir dir;
+  QImage tile(40, 40, QImage::Format_ARGB32);
+  tile.fill(Qt::transparent);
+  // A 20x10 drawing inside a transparent tile margin.
+  for (int y = 15; y < 25; ++y)
+    for (int x = 10; x < 30; ++x) tile.setPixel(x, y, qRgba(255, 0, 0, 255));
+  const QString path = dir.filePath(QStringLiteral("toast.png"));
+  ASSERT_TRUE(tile.save(path));
+
+  FakePins pins;
+  pins.noShellIcon = true;
+  pins.toastPath = path;
+  const IconBitmap bitmap =
+      loadPinnedIcon(pins, QStringLiteral("aumid:Unpackaged.Toast"), PinMetadata{}, 16);
+  ASSERT_EQ(bitmap.width, 16);
+  ASSERT_EQ(bitmap.height, 16);
+  const QImage image(reinterpret_cast<const uchar*>(bitmap.bgra.constData()), 16, 16, 64,
+                     QImage::Format_ARGB32);
+  // The drawing fills the width and is centred vertically: 16x8 on a 16x16 canvas.
+  EXPECT_EQ(qAlpha(image.pixel(8, 8)), 255);
+  EXPECT_EQ(qAlpha(image.pixel(1, 8)), 255);
+  EXPECT_EQ(qAlpha(image.pixel(8, 0)), 0);
+  EXPECT_EQ(qAlpha(image.pixel(8, 15)), 0);
+
+  // The shell's own icon wins, and only AUMID apps look at the toast registration.
+  pins.noShellIcon = false;
+  EXPECT_EQ(
+      loadPinnedIcon(pins, QStringLiteral("aumid:Unpackaged.Toast"), PinMetadata{}, 16).bgra.at(0),
+      '\x30');
+  pins.noShellIcon = true;
+  EXPECT_EQ(loadPinnedIcon(pins, QStringLiteral("path:c:\\x.exe"), PinMetadata{}, 16).bgra.at(0),
+            '\x77');
+  // No toast icon either: the generic application icon.
+  pins.toastPath.reset();
+  EXPECT_EQ(loadPinnedIcon(pins, QStringLiteral("aumid:Nothing"), PinMetadata{}, 16).bgra.at(0),
+            '\x77');
+}
+
+// --- store and id helpers
+
+TEST(TaskbarPinStore, SavesLoadsAndSignalsEveryChange) {
+  QTemporaryDir dir;
+  const QString file = dir.filePath(QStringLiteral("sub/taskbar_pinned.json"));
+  PinStore store(file);
+  store.load();
+  EXPECT_TRUE(store.isEmpty());
+  QSignalSpy spy(&store, &PinStore::pinnedAppsChanged);
+
+  store.pin(QStringLiteral("a"), QJsonObject{{"title", "A"}});
+  store.pin(QStringLiteral("b"), QJsonObject{{"title", "B"}, {"shortcut_path", "C:\\b.lnk"}}, 0);
+  EXPECT_EQ(store.order(), (QStringList{"b", "a"}));
+  EXPECT_EQ(store.shortcutPath(QStringLiteral("b")), QStringLiteral("C:\\b.lnk"));
+  EXPECT_EQ(store.title(QStringLiteral("a")), QStringLiteral("A"));
+
+  store.updateOrder({"b", "a"});  // unchanged: no signal
+  store.updateOrder({"a", "b"});
+  EXPECT_FALSE(store.unpin(QStringLiteral("missing")));
+  EXPECT_TRUE(store.unpin(QStringLiteral("a")));
+
+  ASSERT_EQ(spy.count(), 4);
+  EXPECT_EQ(spy.at(0).at(0).toString(), QStringLiteral("pin"));
+  EXPECT_EQ(spy.at(2).at(0).toString(), QStringLiteral("reorder"));
+  EXPECT_EQ(spy.at(2).at(1).toString(), QString());
+  EXPECT_EQ(spy.at(3).at(0).toString(), QStringLiteral("unpin"));
+  // Pinning an id again moves it to the requested position.
+  store.pin(QStringLiteral("c"), QJsonObject{{"title", "C"}});
+  store.pin(QStringLiteral("c"), QJsonObject{{"title", "C"}}, 0);
+  EXPECT_EQ(store.order(), (QStringList{"c", "b"}));
+
+  PinStore reloaded(file);
+  reloaded.load();
+  EXPECT_EQ(reloaded.order(), (QStringList{"c", "b"}));
+  EXPECT_TRUE(reloaded.contains(QStringLiteral("b")));
+  EXPECT_FALSE(reloaded.contains(QStringLiteral("a")));
+}
+
+TEST(TaskbarPinStore, AnUnreadableFileMeansNothingIsPinned) {
+  QTemporaryDir dir;
+  const QString file = dir.filePath(QStringLiteral("taskbar_pinned.json"));
+  QFile broken(file);
+  ASSERT_TRUE(broken.open(QIODevice::WriteOnly));
+  broken.write("{not json");
+  broken.close();
+  PinStore store(file);
+  store.load();
+  EXPECT_TRUE(store.isEmpty());
+  EXPECT_TRUE(store.order().isEmpty());
+}
+
+TEST(TaskbarPinIds, UniqueIdsSplitIntoTypeValueAndArguments) {
+  const UniqueIdParts mmc = parseUniqueId(QStringLiteral("path:C:\\Windows\\mmc.exe|eventvwr.msc"));
+  EXPECT_EQ(mmc.type, QStringLiteral("path"));
+  EXPECT_EQ(mmc.value, QStringLiteral("C:\\Windows\\mmc.exe"));
+  EXPECT_EQ(mmc.args, QStringLiteral("eventvwr.msc"));
+  const UniqueIdParts shell = parseUniqueId(QStringLiteral("explorer:shell:RecycleBinFolder"));
+  EXPECT_EQ(shell.value, QStringLiteral("shell:RecycleBinFolder"));
+  const UniqueIdParts clsid = parseUniqueId(QString::fromLatin1(kRecycleBinId));
+  EXPECT_EQ(clsid.type, QStringLiteral("explorer"));
+  EXPECT_EQ(clsid.value, QStringLiteral("::{645FF040-5081-101B-9F08-00AA002F954E}"));
+  EXPECT_EQ(parseUniqueId(QStringLiteral("whatever")).type, QStringLiteral("unknown"));
+  EXPECT_TRUE(isRecycleBinId(QStringLiteral("explorer:::{645ff040-5081-101b-9f08-00aa002f954e}")));
+  EXPECT_FALSE(isRecycleBinId(QStringLiteral("explorer:C:\\Work")));
+}
+
+TEST(TaskbarPinIds, ToolFilesComeFromHostArguments) {
+  QTemporaryDir dir;
+  const QString tool = dir.filePath(QStringLiteral("tool.msc"));
+  QFile file(tool);
+  ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+  file.close();
+  QFile applet(dir.filePath(QStringLiteral("main.cpl")));
+  ASSERT_TRUE(applet.open(QIODevice::WriteOnly));
+  applet.close();
+  const QString system32 = dir.path();
+
+  EXPECT_EQ(QDir::cleanPath(toolFileFromArguments(
+                QStringLiteral("\"") + tool + QStringLiteral("\" /s"), system32)),
+            tool);
+  // Relative names resolve against System32; a rundll32 argument lists the file after a comma.
+  EXPECT_EQ(QDir::cleanPath(toolFileFromArguments(QStringLiteral("tool.msc"), system32)), tool);
+  EXPECT_EQ(QDir::cleanPath(toolFileFromArguments(
+                QStringLiteral("shell32.dll,Control_RunDLL main.cpl,,1"), system32)),
+            dir.filePath(QStringLiteral("main.cpl")));
+  EXPECT_TRUE(toolFileFromArguments(QStringLiteral("missing.msc"), system32).isEmpty());
+  EXPECT_TRUE(toolFileFromArguments(QString(), system32).isEmpty());
+}
+
+TEST(TaskbarPinIds, PseudoHandlesAreStableNegativeAndDistinct) {
+  const WindowHandle a = pseudoHwndFor(QStringLiteral("a"));
+  EXPECT_TRUE(isPseudoHwnd(a));
+  EXPECT_EQ(a, pseudoHwndFor(QStringLiteral("a")));
+  EXPECT_NE(a, pseudoHwndFor(QStringLiteral("b")));
+  EXPECT_FALSE(isPseudoHwnd(static_cast<WindowHandle>(0x1234)));
 }

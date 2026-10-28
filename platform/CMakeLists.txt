@@ -6,6 +6,8 @@ add_library(yasb_platform STATIC
   app_identity.cpp
   dwm_thumbnail.h
   dwm_thumbnail.cpp
+  pin_support.h
+  pin_support.cpp
   window_system.h
   window_system_win32.cpp
   window_tracker.h

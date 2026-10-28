@@ -11,6 +11,7 @@
 #include <shobjidl.h>
 #include <shellapi.h>
 #include <propvarutil.h>
+#include <shldisp.h>
 #include <shlobj.h>
 #include <winternl.h>
 // clang-format on
@@ -34,15 +35,6 @@ HWND toHwnd(WindowHandle hwnd) { return reinterpret_cast<HWND>(hwnd); }
 
 QString fromWide(const wchar_t* text) { return QString::fromWCharArray(text); }
 
-// os.path.normcase(Path.resolve()): absolute, symlinks resolved when the file exists, lower case,
-// backslashes.
-QString normalizePath(const QString& path) {
-  const QFileInfo info(path);
-  QString resolved = info.canonicalFilePath();
-  if (resolved.isEmpty()) resolved = info.absoluteFilePath();
-  return QDir::toNativeSeparators(resolved).toLower();
-}
-
 std::optional<QString> processAumid(std::uint32_t pid) {
   if (pid == 0) return std::nullopt;
   HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
@@ -59,7 +51,47 @@ std::optional<QString> processAumid(std::uint32_t pid) {
   return result;
 }
 
+// Python's fallback for windows without a LocationURL: Document.Folder.Self.Path, kept only when it
+// is a CLSID path ("::{645FF040-...}" for the Recycle Bin), which is language independent.
+std::optional<QString> documentFolderPath(IWebBrowser2* browser) {
+  IDispatch* document = nullptr;
+  if (FAILED(browser->get_Document(&document)) || !document) return std::nullopt;
+  std::optional<QString> result;
+  IShellFolderViewDual* view = nullptr;
+  if (SUCCEEDED(document->QueryInterface(IID_PPV_ARGS(&view))) && view) {
+    ::Folder* folder = nullptr;
+    if (SUCCEEDED(view->get_Folder(&folder)) && folder) {
+      // Self lives on Folder2.
+      ::Folder2* folder2 = nullptr;
+      if (SUCCEEDED(folder->QueryInterface(IID_PPV_ARGS(&folder2))) && folder2) {
+        ::FolderItem* self = nullptr;
+        if (SUCCEEDED(folder2->get_Self(&self)) && self) {
+          BSTR path = nullptr;
+          if (SUCCEEDED(self->get_Path(&path)) && path) {
+            const QString text = QString::fromWCharArray(path);
+            if (text.contains(QLatin1String("::{"))) result = text;
+            SysFreeString(path);
+          }
+          self->Release();
+        }
+        folder2->Release();
+      }
+      folder->Release();
+    }
+    view->Release();
+  }
+  document->Release();
+  return result;
+}
+
 }  // namespace
+
+QString normalizePath(const QString& path) {
+  const QFileInfo info(path);
+  QString resolved = info.canonicalFilePath();
+  if (resolved.isEmpty()) resolved = info.absoluteFilePath();
+  return QDir::toNativeSeparators(resolved).toLower();
+}
 
 ComScope::ComScope() {
   const HRESULT result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
@@ -124,6 +156,7 @@ std::optional<QString> explorerLocation(WindowHandle hwnd) {
             }
           }
           if (url) SysFreeString(url);
+          if (!result) result = documentFolderPath(browser);
         }
         browser->Release();
       }

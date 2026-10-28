@@ -104,19 +104,21 @@ or hardware; tests use fakes. Remove an item when it is done.
 
 ## taskbar
 
-- Pinned apps (pin/unpin, pinned-only buttons, `taskbar_pinned.json`, `pinned_apps_changed`) not
-  ported. The owner's `%LOCALAPPDATA%\YASB` has no pinned file.
-- Button drag reorder and drop-hover-to-raise (`TaskbarDropWidget`) not ported.
-- Context menu has only End task, Close window, Close all windows; app-specific entries and
-  "Pin to taskbar" missing. Menu position uses screen halves, not the bar position.
-- Recycle Bin special icon and monitor not ported.
-- Explorer special folders: `Document.Folder.Self.Path` fallback missing; id comes from
-  `LocationURL` only.
-- Exe icons come from the shell item image factory, not Python's resource/`.ico` extraction;
-  toast-AUMID registry icon fallback skipped.
+- Pinned apps: the title and start-menu shortcut lookup skips Python's command line hints
+  (`AppName=` / `--title` from the process command line) and `get_app_name_from_pid`; a Store app's
+  name comes from `shell:AppsFolder`. The shortcut cache is per session (Python also fills it from
+  the pinned file). `taskbar_pinned.json` keys are written in alphabetical order, not insertion
+  order (the order list is exact).
+- The Recycle Bin monitor polls `SHQueryRecycleBin` every 2 s on a worker while a Recycle Bin
+  button exists; Python watches the bin folders and polls in bursts.
+- "Empty Recycle Bin" and the Explorer Quick Access list are untested live (shell calls behind
+  `PinSupport`).
+- Exe icons come from the shell item image factory, not Python's resource/`.ico` extraction (a
+  shortcut that names an icon file uses `PrivateExtractIconsW`).
 - No label text, so no label vector; only `test_taskbar_animation.py` cases are ported.
 - Live: real hooks, DWM thumbnails and peek untested. Ordinal 113 `DwmpActivateLivePreview` and
-  `NtQueryInformationProcess` class 60 unverified on build 26300.
+  `NtQueryInformationProcess` class 60 unverified on build 26300. The context menu position uses the
+  bar's `alignment.position` (untested with a real bar in the unit tests; the geometry is).
 
 ## wallpapers
 

@@ -92,6 +92,14 @@ add_library(yasb_widgets STATIC
   wallpapers/wallpaper_manager.cpp
   wallpapers/wallpapers_widget.h
   wallpapers/wallpapers_widget.cpp
+  taskbar/pin_store.h
+  taskbar/pin_store.cpp
+  taskbar/recycle_bin_monitor.h
+  taskbar/recycle_bin_monitor.cpp
+  taskbar/taskbar_drop.h
+  taskbar/taskbar_drop.cpp
+  taskbar/taskbar_menu.h
+  taskbar/taskbar_menu.cpp
   taskbar/taskbar_icons.h
   taskbar/taskbar_icons.cpp
   taskbar/taskbar_preview.h

@@ -27,8 +27,13 @@ std::optional<QString> aumidForWindow(WindowHandle hwnd, std::uint32_t pid);
 
 // The folder an Explorer window shows, as Python's collect_window_context reads it from
 // Shell.Application: a file-system path, or the raw LocationURL for shell folders. nullopt when
-// the window is not found or the shell does not answer.
+// the window is not found or the shell does not answer. Windows without a LocationURL fall back to
+// Document.Folder.Self.Path when that is a CLSID path (the Recycle Bin).
 std::optional<QString> explorerLocation(WindowHandle hwnd);
+
+// os.path.normcase(Path.resolve()): absolute, symlinks resolved when the file exists, lower case,
+// backslashes.
+QString normalizePath(const QString& path);
 
 // Path variants for versioned apps: {normalized, stable} where stable drops an Electron "app-x.y"
 // or a Scoop version directory. One entry when the path is not versioned (normalizedTargets).
