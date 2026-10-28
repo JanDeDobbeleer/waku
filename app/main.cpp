@@ -81,8 +81,19 @@ std::vector<std::string> stringList(const nlohmann::json& object, const char* ke
   return out;
 }
 
-// Builds the first configured bar. App-bar registration is opt-in so --config-home runs never
-// disturb the live desktop's work area.
+// A regular start reserves the screen work area (the config's `windows_app_bar` decides whether the
+// space is held back, as in Python YASB). Runs that must not disturb the live desktop never
+// register: --screenshot, --config-home and the offscreen platform, unless --register-app-bar
+// forces it. --no-app-bar opts out of a regular start.
+bool shouldRegisterAppBar(int argc, char** argv) {
+  if (hasFlag(argc, argv, "--register-app-bar")) return true;
+  if (hasFlag(argc, argv, "--no-app-bar")) return false;
+  if (optionValue(argc, argv, "--screenshot") != nullptr) return false;
+  if (optionValue(argc, argv, "--config-home") != nullptr) return false;
+  return QGuiApplication::platformName() != QStringLiteral("offscreen");
+}
+
+// Builds the first configured bar.
 // --screenshot <png> renders the bar to a file without ever showing it.
 int runBar(int argc, char** argv, yasb::app::Runtime& runtime) {
   const auto result = yasb::config::loadConfigFile(yasb::config::configPath());
@@ -139,7 +150,7 @@ int runBar(int argc, char** argv, yasb::app::Runtime& runtime) {
       QStringLiteral("%1_%2").arg(QString::fromStdString(pick.barName), screen->name());
   yasb::bar::BarDeps deps;
   deps.globalState = &runtime.globalState();
-  if (hasFlag(argc, argv, "--register-app-bar")) deps.appBar = yasb::bar::makeWin32AppBar();
+  if (shouldRegisterAppBar(argc, argv)) deps.appBar = yasb::bar::makeWin32AppBar();
 
   yasb::widgets::WidgetBuilder::Columns columns;
   const auto barIt = barsConfig.find(pick.barName);

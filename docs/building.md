@@ -57,7 +57,7 @@ build\arm64-debug\yasbc-native.exe stop
 The command pipe replies `ACK` for `reload`, `stop`, `show-bar`, `hide-bar`, and `toggle-bar`;
 other commands receive `CLI Unknown Command`. The separate `\\.\pipe\yasb_pipe_log` emits
 NUL-terminated JSON `DATA` frames and answers JSON `PING` messages with `PONG`.
-`--register-app-bar` remains opt-in; regular startup does not reserve screen work area.
+A regular start registers the app bar and reserves the work area when the bar's `windows_app_bar` is true, as Python does. `--screenshot`, `--config-home` and the offscreen platform never register it; `--register-app-bar` forces it and `--no-app-bar` suppresses it.
 
 Render a bar offscreen to a PNG (no window, no app-bar registration; the unpackaged debug exe has no
 Qt DLLs, so reuse the ones deployed next to the tests):

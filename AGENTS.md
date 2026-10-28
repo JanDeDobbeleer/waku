@@ -122,7 +122,7 @@ vector. Vectors and fixtures are LF and byte-exact; never let an editor re-save 
 
 - Tests and tooling always pass `--config-home <dir>` to `yasb-native.exe`. Never run it against the
   user's real config (`%USERPROFILE%\.config\yasb`) and never write to that folder.
-- `--register-app-bar` reserves screen work area. Only `tools/ab` passes it.
+- A regular start (no `--config-home`, `--screenshot` or offscreen platform) reserves screen work area. `--register-app-bar` forces that for isolated runs and only `tools/ab` passes it; `--no-app-bar` suppresses it.
 - Prefer `--smoke`, `--version` and `--screenshot <png>` with `QT_QPA_PLATFORM=offscreen` for checks.
 
 ## Python parity of startup

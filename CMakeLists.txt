@@ -78,9 +78,10 @@ set(_windeployqt_flags $<IF:$<CONFIG:Debug>,--debug,--release>
 add_custom_target(deploy
   COMMAND ${CMAKE_COMMAND} -E make_directory "${YASB_DIST_DIR}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:yasb-native> "${YASB_DIST_DIR}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:yasbc-native> "${YASB_DIST_DIR}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:YASBNativeTrayHook> "${YASB_DIST_DIR}"
   COMMAND Qt6::windeployqt ${_windeployqt_flags} --dir "${YASB_DIST_DIR}"
           "${YASB_DIST_DIR}/$<TARGET_FILE_NAME:yasb-native>"
-  DEPENDS yasb-native
+  DEPENDS yasb-native yasbc-native
   COMMENT "Deploying to ${YASB_DIST_DIR}"
   VERBATIM)
