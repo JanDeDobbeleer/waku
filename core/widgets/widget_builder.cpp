@@ -81,6 +81,10 @@ BaseWidget* WidgetBuilder::buildWidget(const std::string& name, const QString& s
       auto options = config_.widgetOptions<config::options::BluetoothConfig>(name);
       if (!options) return skip(invalidOptions_, "has invalid options");
       typedOptions = std::move(*options);
+    } else if (entry->type == "yasb.notifications.NotificationsWidget") {
+      auto options = config_.widgetOptions<config::options::NotificationsConfig>(name);
+      if (!options) return skip(invalidOptions_, "has invalid options");
+      typedOptions = std::move(*options);
     }
     return registry_.create(WidgetContext{name, entry->type, entry->options, screenName, barId,
                                           eventBus_, globalState_, pollingWorkers_,

@@ -1,0 +1,1182 @@
+[
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{count} notifications"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget notification-widget ",
+      "layout_order": [
+        "primary",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "\ue91c"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "toggle_notification",
+        "on_middle": "do_nothing",
+        "on_right": "clear_notifications"
+      },
+      "class_name": "",
+      "hide_empty": false,
+      "icons": {
+        "default": "\ue91c",
+        "dismiss": "\uf00d",
+        "dnd_off": "\udb80\udc9a",
+        "dnd_on": "\udb80\udc9b",
+        "new": "\ued0c"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span>",
+      "label_alt": "{count} notifications",
+      "menu": {
+        "alignment": "right",
+        "app_icon_size": 16,
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal"
+      },
+      "tooltip": false
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_notification",
+        "on_middle": "do_nothing",
+        "on_right": "clear_notifications"
+      },
+      "hide_empty": false,
+      "icons": {
+        "default": "\ue91c",
+        "new": "\ued0c"
+      },
+      "label": "<span>{icon}</span>",
+      "label_alt": "{count} notifications",
+      "tooltip": false
+    },
+    "scenario": "user_options_counts",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 1
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 5
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 9
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 10
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 250
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "\ue91c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 0
+        }
+      }
+    ],
+    "widget": "notifications"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{count} notifications"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget notification-widget ",
+      "layout_order": [
+        "primary",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "\ue91c"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "toggle_notification",
+        "on_middle": "do_nothing",
+        "on_right": "clear_notifications"
+      },
+      "class_name": "",
+      "hide_empty": false,
+      "icons": {
+        "default": "\ue91c",
+        "dismiss": "\uf00d",
+        "dnd_off": "\udb80\udc9a",
+        "dnd_on": "\udb80\udc9b",
+        "new": "\ued0c"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span>",
+      "label_alt": "{count} notifications",
+      "menu": {
+        "alignment": "right",
+        "app_icon_size": 16,
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal"
+      },
+      "tooltip": false
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_notification",
+        "on_middle": "do_nothing",
+        "on_right": "clear_notifications"
+      },
+      "hide_empty": false,
+      "icons": {
+        "default": "\ue91c",
+        "new": "\ued0c"
+      },
+      "label": "<span>{icon}</span>",
+      "label_alt": "{count} notifications",
+      "tooltip": false
+    },
+    "scenario": "user_options_alt_label_toggle",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 3
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt new-notification",
+              "hidden": false,
+              "text": "3 notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": true,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt new-notification",
+              "hidden": false,
+              "text": "9+ notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": true,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 12
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "0 notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": true,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 0
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "0 notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon",
+              "hidden": false,
+              "text": "\ue91c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "0 notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 2
+        }
+      }
+    ],
+    "widget": "notifications"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{count} notifications"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget notification-widget ",
+      "layout_order": [
+        "primary",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "{icon}"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "toggle_notification",
+        "on_middle": "do_nothing",
+        "on_right": "clear_notifications"
+      },
+      "class_name": "",
+      "hide_empty": true,
+      "icons": {
+        "default": "\ue91c",
+        "dismiss": "\uf00d",
+        "dnd_off": "\udb80\udc9a",
+        "dnd_on": "\udb80\udc9b",
+        "new": "\ued0c"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span>",
+      "label_alt": "{count} notifications",
+      "menu": {
+        "alignment": "right",
+        "app_icon_size": 16,
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal"
+      },
+      "tooltip": false
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_notification",
+        "on_middle": "do_nothing",
+        "on_right": "clear_notifications"
+      },
+      "hide_empty": true,
+      "icons": {
+        "default": "\ue91c",
+        "new": "\ued0c"
+      },
+      "label": "<span>{icon}</span>",
+      "label_alt": "{count} notifications",
+      "tooltip": false
+    },
+    "scenario": "hide_empty",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 2
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "count": 0
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 4
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt new-notification",
+              "hidden": false,
+              "text": "4 notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": true,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt new-notification",
+              "hidden": false,
+              "text": "4 notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": true,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": true
+        },
+        "step": {
+          "count": 0
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt new-notification",
+              "hidden": false,
+              "text": "1 notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": true,
+              "text": "\ued0c"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 1
+        }
+      }
+    ],
+    "widget": "notifications"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{count}+"
+        },
+        {
+          "class": "extra",
+          "hidden": true,
+          "text": "{icon}"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget notification-widget ",
+      "layout_order": [
+        "primary",
+        "primary",
+        "alt",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "icon",
+          "hidden": false,
+          "text": "\ue91c"
+        },
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "0 new"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "toggle_notification",
+        "on_middle": "do_nothing",
+        "on_right": "clear_notifications"
+      },
+      "class_name": "",
+      "hide_empty": false,
+      "icons": {
+        "default": "\ue91c",
+        "dismiss": "\uf00d",
+        "dnd_off": "\udb80\udc9a",
+        "dnd_on": "\udb80\udc9b",
+        "new": "\ued0c"
+      },
+      "keybindings": [],
+      "label": "<span>{icon}</span> {count} new",
+      "label_alt": "{count}+ <span class=\"extra\">{icon}</span>",
+      "menu": {
+        "alignment": "right",
+        "app_icon_size": 16,
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal"
+      },
+      "tooltip": false
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_notification",
+        "on_middle": "do_nothing",
+        "on_right": "clear_notifications"
+      },
+      "hide_empty": false,
+      "icons": {
+        "default": "\ue91c",
+        "new": "\ued0c"
+      },
+      "label": "<span>{icon}</span> {count} new",
+      "label_alt": "{count}+ <span class=\"extra\">{icon}</span>",
+      "tooltip": false
+    },
+    "scenario": "text_and_icon_label",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count}+"
+            },
+            {
+              "class": "extra",
+              "hidden": true,
+              "text": "{icon}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            },
+            {
+              "class": "label new-notification",
+              "hidden": false,
+              "text": "1 new"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 1
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count}+"
+            },
+            {
+              "class": "extra",
+              "hidden": true,
+              "text": "{icon}"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            },
+            {
+              "class": "label new-notification",
+              "hidden": false,
+              "text": "9+ new"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 11
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt new-notification",
+              "hidden": false,
+              "text": "9++"
+            },
+            {
+              "class": "extra new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": true,
+              "text": "\ued0c"
+            },
+            {
+              "class": "label new-notification",
+              "hidden": true,
+              "text": "9+ new"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "0+"
+            },
+            {
+              "class": "extra",
+              "hidden": false,
+              "text": "\ue91c"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": true,
+              "text": "\ued0c"
+            },
+            {
+              "class": "label new-notification",
+              "hidden": true,
+              "text": "9+ new"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 0
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt new-notification",
+              "hidden": false,
+              "text": "7+"
+            },
+            {
+              "class": "extra new-notification",
+              "hidden": false,
+              "text": "\ued0c"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "primary",
+            "alt",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "icon new-notification",
+              "hidden": true,
+              "text": "\ued0c"
+            },
+            {
+              "class": "label new-notification",
+              "hidden": true,
+              "text": "9+ new"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 7
+        }
+      }
+    ],
+    "widget": "notifications"
+  },
+  {
+    "initial": {
+      "alt": [
+        {
+          "class": "label alt",
+          "hidden": true,
+          "text": "{count} new notifications"
+        }
+      ],
+      "container_class": "widget-container",
+      "frame_class": "widget notification-widget ",
+      "layout_order": [
+        "primary",
+        "alt"
+      ],
+      "primary": [
+        {
+          "class": "label",
+          "hidden": false,
+          "text": "0 new notifications"
+        }
+      ],
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "normalized_options": {
+      "callbacks": {
+        "on_left": "toggle_notification",
+        "on_middle": "do_nothing",
+        "on_right": "clear_notifications"
+      },
+      "class_name": "",
+      "hide_empty": false,
+      "icons": {
+        "default": "D",
+        "dismiss": "\uf00d",
+        "dnd_off": "\udb80\udc9a",
+        "dnd_on": "\udb80\udc9b",
+        "new": "N"
+      },
+      "keybindings": [],
+      "label": "{count} new notifications",
+      "label_alt": "{count} new notifications",
+      "menu": {
+        "alignment": "right",
+        "app_icon_size": 16,
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "offset_left": 0,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal"
+      },
+      "tooltip": false
+    },
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_notification",
+        "on_middle": "do_nothing",
+        "on_right": "clear_notifications"
+      },
+      "hide_empty": false,
+      "icons": {
+        "default": "D",
+        "new": "N"
+      },
+      "label": "{count} new notifications",
+      "label_alt": "{count} new notifications",
+      "tooltip": false
+    },
+    "scenario": "default_options",
+    "steps": [
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": true,
+              "text": "{count} new notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label new-notification",
+              "hidden": false,
+              "text": "2 new notifications"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 2
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt new-notification",
+              "hidden": false,
+              "text": "2 new notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label new-notification",
+              "hidden": true,
+              "text": "2 new notifications"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "alt": [
+            {
+              "class": "label alt",
+              "hidden": false,
+              "text": "0 new notifications"
+            }
+          ],
+          "container_class": "widget-container",
+          "frame_class": "widget notification-widget ",
+          "layout_order": [
+            "primary",
+            "alt"
+          ],
+          "primary": [
+            {
+              "class": "label new-notification",
+              "hidden": true,
+              "text": "2 new notifications"
+            }
+          ],
+          "widget_hidden": false
+        },
+        "step": {
+          "count": 0
+        }
+      }
+    ],
+    "widget": "notifications"
+  }
+]

@@ -16,6 +16,9 @@ add_library(yasb_platform STATIC
   media_source_apps.cpp
   memory.h
   memory.cpp
+  notifications.h
+  notifications.cpp
+  notifications_system.cpp
   pdh.h
   pdh.cpp
   winrt_apartment.h

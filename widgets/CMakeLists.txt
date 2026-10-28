@@ -53,6 +53,8 @@ add_library(yasb_widgets STATIC
   media/media_widget.h
   media/media_widget.cpp
   media/media.qrc
+  notifications/notifications_widget.h
+  notifications/notifications_widget.cpp
 )
 set_target_properties(yasb_widgets PROPERTIES AUTORCC ON)
 target_include_directories(yasb_widgets PUBLIC ${CMAKE_SOURCE_DIR})
