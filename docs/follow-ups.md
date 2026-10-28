@@ -35,11 +35,12 @@ or hardware; tests use fakes. Remove an item when it is done.
 
 ## komorebi (workspaces, active_layout)
 
-- `app_icons` (workspaces) not ported; enabling it logs a warning. Config does not use it.
-- Layout menu reuses `PinnablePopup` (pinnable/draggable). Not viewed live.
+- `app_icons` (workspaces) is covered by C++ tests with a fake window system only; the Python
+  vectors have no icon scenario (they need real windows). Icons load through `TaskbarIcons`, so a
+  window shows nothing (not a blank pixmap) until its icon arrives. Not viewed live.
+- The layout menu now uses `MenuPopup` (Python's non-pinnable `PopupWidget`). Not viewed live.
 - Two Python crash paths intentionally not reproduced (layout list missing the connected layout;
   missing `["Default"]` layout).
-- A bar created before the komorebi service exists waits for the next connect to get state.
 - Vectors use synthetic states, no recorded `komorebic state` fixture.
 - Live: `komorebic` and the subscribe pipe were never run.
 

@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string_view>
+#include <vector>
 
 // Non-throwing reads of `komorebic state` JSON (port of the KomorebiClient getters).
 namespace yasb::widgets::komorebi {
@@ -37,5 +38,10 @@ bool hasWindows(const Json* workspace);
 // len(_get_all_windows_in_workspace): container windows, monocle windows and (unless hidden)
 // floating windows.
 int windowCount(const Json* workspace, bool hideFloating);
+
+// _get_all_windows_in_workspace as hwnds, in Python's order: container windows, the monocle
+// container's windows, then (unless hidden) floating windows. Windows without a numeric hwnd are
+// skipped.
+std::vector<long long> windowHwnds(const Json* workspace, bool hideFloating);
 
 }  // namespace yasb::widgets::komorebi

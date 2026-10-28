@@ -2,7 +2,10 @@
 
 #include <QBoxLayout>
 #include <QDebug>
+#include <QEvent>
 #include <QLabel>
+#include <QMouseEvent>
+#include <QScreen>
 #include <QStyle>
 #include <QWheelEvent>
 #include <algorithm>
@@ -12,6 +15,7 @@
 #include "core/widgets/label_format.h"
 #include "platform/komorebi.h"
 #include "widgets/komorebi/komorebi_state.h"
+#include "widgets/taskbar/taskbar_icons.h"
 
 namespace yasb::widgets {
 namespace {
@@ -68,16 +72,52 @@ QString statusClass(WorkspaceStatus status) {
 
 }  // namespace
 
-WorkspaceButton::WorkspaceButton(int workspaceIndex, const QString& defaultLabel,
-                                 const QString& activeLabel, const QString& populatedLabel,
-                                 QWidget* parent)
-    : QPushButton(parent), workspaceIndex_(workspaceIndex) {
-  setProperty("class", QStringLiteral("ws-btn"));
+WorkspaceButtonBase::WorkspaceButtonBase(int workspaceIndex, const QString& defaultLabel,
+                                         const QString& activeLabel, const QString& populatedLabel)
+    : workspaceIndex_(workspaceIndex) {
   // Python: `label if label else str(index + 1)`; empty active/populated fall back to the default.
   defaultLabel_ = defaultLabel.isEmpty() ? QString::number(workspaceIndex + 1) : defaultLabel;
   activeLabel_ = activeLabel.isEmpty() ? defaultLabel_ : activeLabel;
   populatedLabel_ = populatedLabel.isEmpty() ? defaultLabel_ : populatedLabel;
+}
+
+void WorkspaceButtonBase::setLabels(const QString& defaultLabel, const QString& activeLabel,
+                                    const QString& populatedLabel) {
+  defaultLabel_ = defaultLabel;
+  activeLabel_ = activeLabel;
+  populatedLabel_ = populatedLabel;
+}
+
+void WorkspaceButtonBase::setClass(const QString& cssClass) {
+  widget()->setProperty("class", cssClass);
+  repolish(widget());
+}
+
+void WorkspaceButtonBase::setStatusClass(WorkspaceStatus status) {
+  status_ = status;
+  widget()->setProperty("class", QStringLiteral("ws-btn ") + statusClass(status));
+}
+
+const QString& WorkspaceButtonBase::labelFor(WorkspaceStatus status) const {
+  switch (status) {
+    case WorkspaceStatus::Active:
+      return activeLabel_;
+    case WorkspaceStatus::Populated:
+      return populatedLabel_;
+    case WorkspaceStatus::Empty:
+      break;
+  }
+  return defaultLabel_;
+}
+
+WorkspaceButton::WorkspaceButton(int workspaceIndex, const QString& defaultLabel,
+                                 const QString& activeLabel, const QString& populatedLabel,
+                                 QWidget* parent)
+    : QPushButton(parent),
+      WorkspaceButtonBase(workspaceIndex, defaultLabel, activeLabel, populatedLabel) {
+  setProperty("class", QStringLiteral("ws-btn"));
   setText(defaultLabel_);
+  connect(this, &QPushButton::clicked, this, [this] { runActivate(); });
   QSizePolicy policy = sizePolicy();
   policy.setHorizontalPolicy(QSizePolicy::Fixed);
   setSizePolicy(policy);
@@ -85,33 +125,120 @@ WorkspaceButton::WorkspaceButton(int workspaceIndex, const QString& defaultLabel
   updateAndRedraw(status_);
 }
 
-void WorkspaceButton::setLabels(const QString& defaultLabel, const QString& activeLabel,
-                                const QString& populatedLabel) {
-  defaultLabel_ = defaultLabel;
-  activeLabel_ = activeLabel;
-  populatedLabel_ = populatedLabel;
-}
-
-void WorkspaceButton::setClass(const QString& cssClass) {
-  setProperty("class", cssClass);
-  repolish(this);
-}
-
 void WorkspaceButton::updateAndRedraw(WorkspaceStatus status) {
-  status_ = status;
-  setProperty("class", QStringLiteral("ws-btn ") + statusClass(status));
-  switch (status) {
-    case WorkspaceStatus::Active:
-      setText(activeLabel_);
-      break;
-    case WorkspaceStatus::Populated:
-      setText(populatedLabel_);
-      break;
-    case WorkspaceStatus::Empty:
-      setText(defaultLabel_);
-      break;
-  }
+  setStatusClass(status);
+  setText(labelFor(status));
   repolish(this);
+}
+
+WorkspaceIconButton::WorkspaceIconButton(int workspaceIndex, const QString& defaultLabel,
+                                         const QString& activeLabel, const QString& populatedLabel,
+                                         const config::options::KomorebiAppIconsConfig& options,
+                                         IconSource allIcons, IconLookup oneIcon,
+                                         CurrentIndex currentIndex, QWidget* parent)
+    : QFrame(parent),
+      WorkspaceButtonBase(workspaceIndex, defaultLabel, activeLabel, populatedLabel),
+      options_(options),
+      allIcons_(std::move(allIcons)),
+      oneIcon_(std::move(oneIcon)),
+      currentIndex_(std::move(currentIndex)) {
+  setProperty("class", QStringLiteral("ws-btn"));
+  QSizePolicy policy = sizePolicy();
+  policy.setHorizontalPolicy(QSizePolicy::Fixed);
+  setSizePolicy(policy);
+
+  layout_ = new QHBoxLayout(this);
+  layout_->setContentsMargins(0, 0, 0, 0);
+  layout_->setSpacing(0);
+
+  text_ = new QLabel(defaultLabel_);
+  text_->setProperty("class", QStringLiteral("label"));
+  text_->setAlignment(Qt::AlignCenter);
+  layout_->addWidget(text_);
+
+  hide();
+  updateIcons();
+  updateAndRedraw(status_);
+}
+
+QString WorkspaceIconButton::labelText() const { return text_->text(); }
+
+void WorkspaceIconButton::mousePressEvent(QMouseEvent* event) {
+  if (event && event->button() == Qt::LeftButton) runActivate();
+}
+
+void WorkspaceIconButton::updateAndRedraw(WorkspaceStatus status) {
+  setStatusClass(status);
+  text_->setText(labelFor(status));
+  repolish(this);
+}
+
+void WorkspaceIconButton::updateIcons(const WorkspaceIcons* icons) {
+  if (icons && !icons->empty()) {
+    for (const auto& [hwnd, pixmap] : *icons) {
+      auto found = std::find_if(icons_.begin(), icons_.end(),
+                                [hwnd = hwnd](const auto& entry) { return entry.first == hwnd; });
+      if (found != icons_.end()) {
+        found->second = pixmap;
+      } else {
+        icons_.emplace_back(hwnd, pixmap);
+      }
+    }
+  } else {
+    icons_ = allIcons_ ? allIcons_(workspaceIndex_) : WorkspaceIcons();
+  }
+
+  const bool isCurrent = currentIndex_ && currentIndex_() == workspaceIndex_;
+  std::vector<QPixmap> list;
+  if (!options_.enabled_active && isCurrent) {
+    // no icons on the focused workspace
+  } else if (!options_.enabled_populated && !isCurrent) {
+    // no icons on the other workspaces
+  } else {
+    for (const auto& entry : icons_) {
+      if (!entry.second.isNull()) list.push_back(entry.second);
+    }
+    if (options_.max_icons > 0 && list.size() > static_cast<size_t>(options_.max_icons)) {
+      list.resize(static_cast<size_t>(options_.max_icons));
+    }
+  }
+
+  // Remove extra QLabels if there are more than needed.
+  while (iconLabels_.size() > list.size()) {
+    QLabel* extra = iconLabels_.back();
+    iconLabels_.pop_back();
+    layout_->removeWidget(extra);
+    extra->hide();
+    extra->deleteLater();
+  }
+  // Add or update icons.
+  for (size_t index = 0; index < list.size(); ++index) {
+    if (index < iconLabels_.size()) {
+      iconLabels_[index]->setPixmap(list[index]);
+    } else {
+      auto* label = new QLabel();
+      label->setProperty("class", QStringLiteral("icon icon-%1").arg(index + 1));
+      label->setPixmap(list[index]);
+      layout_->addWidget(label);
+      iconLabels_.push_back(label);
+    }
+  }
+
+  if (options_.hide_label && !iconLabels_.empty()) {
+    text_->hide();
+  } else {
+    text_->show();
+  }
+}
+
+void WorkspaceIconButton::updateIconByHwnd(long long hwnd) {
+  const bool known = std::any_of(icons_.begin(), icons_.end(),
+                                 [hwnd](const auto& entry) { return entry.first == hwnd; });
+  if (!known || !oneIcon_) return;
+  const QPixmap pixmap = oneIcon_(hwnd);
+  if (pixmap.isNull()) return;
+  const WorkspaceIcons update = {{hwnd, pixmap}};
+  updateIcons(&update);
 }
 
 KomorebiWorkspacesWidget::KomorebiWorkspacesWidget(const WidgetContext& context, bool subscribe)
@@ -138,13 +265,46 @@ KomorebiWorkspacesWidget::KomorebiWorkspacesWidget(const WidgetContext& context,
     frameLayout->addWidget(layerLabel_);
   }
 
-  if (options_.app_icons.enabled_populated || options_.app_icons.enabled_active) {
-    qWarning() << "komorebi workspaces: app_icons are not supported by the native build yet;"
-                  " showing plain workspace buttons";
-  }
+  if (appIconsEnabled()) setWindowSystem(platform::makeWin32WindowSystem(), /*async=*/true);
 
   connect(&bus_, &EventBus::event, this, &KomorebiWorkspacesWidget::onBusEvent);
   if (subscribe) emit bus_.event(komorebi::kSubscribeEvent, {});
+}
+
+KomorebiWorkspacesWidget::~KomorebiWorkspacesWidget() = default;
+
+bool KomorebiWorkspacesWidget::appIconsEnabled() const {
+  return options_.app_icons.enabled_populated || options_.app_icons.enabled_active;
+}
+
+void KomorebiWorkspacesWidget::setWindowSystem(std::shared_ptr<platform::WindowSystem> system,
+                                               bool async) {
+  windowSystem_ = std::move(system);
+  if (icons_) {
+    icons_->disconnect(this);
+    icons_->deleteLater();
+    icons_ = nullptr;
+  }
+  if (!windowSystem_) return;
+  icons_ = new TaskbarIcons(windowSystem_, async, this);
+  connect(icons_, &TaskbarIcons::iconsChanged, this, &KomorebiWorkspacesWidget::refreshIcons);
+}
+
+bool KomorebiWorkspacesWidget::event(QEvent* event) {
+  const bool handled = BaseWidget::event(event);
+  if (event->type() == QEvent::ParentChange || event->type() == QEvent::Show) retryPending();
+  return handled;
+}
+
+void KomorebiWorkspacesWidget::retryPending() {
+  if (!pending_ || !resolveMonitor()) return;
+  JsonPtr state = std::move(pending_);
+  pending_.reset();
+  try {
+    onConnect(std::move(state));
+  } catch (const std::exception& error) {
+    qWarning().noquote() << "komorebi workspaces update failed:" << error.what();
+  }
 }
 
 void KomorebiWorkspacesWidget::onBusEvent(const QString& name, const QVariantMap& payload) {
@@ -167,11 +327,19 @@ void KomorebiWorkspacesWidget::onBusEvent(const QString& name, const QVariantMap
 void KomorebiWorkspacesWidget::onConnect(JsonPtr state) {
   reset();
   hideOffline();
-  if (updateState(state)) addOrUpdateButtons();
+  pending_.reset();
+  if (updateState(state)) {
+    addOrUpdateButtons();
+  } else if (!resolveMonitor() && state && komorebi::truthy(state.get())) {
+    // The widget is not in a bar window yet, so the monitor is unknown: keep the state and
+    // replay it once the widget is parented or shown.
+    pending_ = state;
+  }
   if (options_.hide_if_offline) show();
 }
 
 void KomorebiWorkspacesWidget::onDisconnect() {
+  pending_.reset();
   showOffline();
   if (options_.hide_if_offline) hide();
 }
@@ -198,13 +366,16 @@ void KomorebiWorkspacesWidget::clearContainer() {
   }
 }
 
-bool KomorebiWorkspacesWidget::updateState(const JsonPtr& state) {
-  std::optional<long long> monitor;
-  if (monitorResolver_) {
-    monitor = monitorResolver_();
-  } else if (QWidget* top = window(); top && top != this) {
-    monitor = platform::monitorFromWindow(top->winId());
+std::optional<long long> KomorebiWorkspacesWidget::resolveMonitor() const {
+  if (monitorResolver_) return monitorResolver_();
+  if (QWidget* top = window(); top && top != this) {
+    return platform::monitorFromWindow(top->winId());
   }
+  return std::nullopt;
+}
+
+bool KomorebiWorkspacesWidget::updateState(const JsonPtr& state) {
+  const std::optional<long long> monitor = resolveMonitor();
   if (!monitor) return false;
   if (!state || !komorebi::truthy(state.get())) return false;
   state_ = state;
@@ -229,18 +400,21 @@ bool KomorebiWorkspacesWidget::updateState(const JsonPtr& state) {
 void KomorebiWorkspacesWidget::onUpdate(JsonPtr event, JsonPtr state) {
   const std::string type = eventType(event.get());
   const QString typeText = QString::fromStdString(type);
-  if (updateState(state) && screen_) {
+  const bool updated = updateState(state);
+  if (!updated && !resolveMonitor() && state && komorebi::truthy(state.get())) pending_ = state;
+  if (updated && screen_) {
+    if (appIconsEnabled()) updateIconsForEvent(type, event.get());
     if (type == "MoveWorkspaceToMonitorNumber") {
       if (komorebi::integer(child(event.get(), "content")) != screenIndex_) hideUnknownButtons();
       addOrUpdateButtons();
     } else if (focusEvents().count(type) || indexChanged()) {
       sendWorkspaceUpdate(typeText);
-      WorkspaceButton* previous = buttonAt(previous_);
+      WorkspaceButtonBase* previous = buttonAt(previous_);
       if (!previous) {
         addOrUpdateButtons();
       } else {
         updateButton(previous);
-        if (WorkspaceButton* current = buttonAt(current_)) {
+        if (WorkspaceButtonBase* current = buttonAt(current_)) {
           updateButton(current);
         } else {
           addOrUpdateButtons();
@@ -283,12 +457,12 @@ void KomorebiWorkspacesWidget::sendWorkspaceUpdate(const QString& eventType) {
   emit bus_.event(QStringLiteral("workspace_update"), {{QStringLiteral("type"), eventType}});
 }
 
-WorkspaceButton* KomorebiWorkspacesWidget::buttonAt(std::optional<int> index) const {
+WorkspaceButtonBase* KomorebiWorkspacesWidget::buttonAt(std::optional<int> index) const {
   if (!index || *index < 0 || *index >= static_cast<int>(buttons_.size())) return nullptr;
   return buttons_[static_cast<size_t>(*index)];
 }
 
-void KomorebiWorkspacesWidget::updateButton(WorkspaceButton* button) {
+void KomorebiWorkspacesWidget::updateButton(WorkspaceButtonBase* button) {
   if (!button || !screen_) return;
   refreshButtonLabels(button);
   const int index = button->workspaceIndex();
@@ -301,16 +475,16 @@ void KomorebiWorkspacesWidget::updateButton(WorkspaceButton* button) {
     status = WorkspaceStatus::Populated;
   }
   if (options_.hide_empty_workspaces && status == WorkspaceStatus::Empty) {
-    button->hide();
+    button->widget()->hide();
   } else {
     if (button->status() != status) button->updateAndRedraw(status);
-    button->show();
+    button->widget()->show();
     updateVisibleButtons();
   }
   updateWorkspaceLayer(index);
 }
 
-void KomorebiWorkspacesWidget::refreshButtonLabels(WorkspaceButton* button) {
+void KomorebiWorkspacesWidget::refreshButtonLabels(WorkspaceButtonBase* button) {
   // Names can change at runtime (`komorebic workspace-name`), so cached labels are refreshed.
   const auto labels = workspaceLabels(button->workspaceIndex());
   if (!labels) return;
@@ -367,47 +541,55 @@ void KomorebiWorkspacesWidget::addOrUpdateButtons() {
   }
   if (!added) return;
   std::stable_sort(buttons_.begin(), buttons_.end(),
-                   [](const WorkspaceButton* a, const WorkspaceButton* b) {
+                   [](const WorkspaceButtonBase* a, const WorkspaceButtonBase* b) {
                      return a->workspaceIndex() < b->workspaceIndex();
                    });
   auto* layout = static_cast<QBoxLayout*>(labelContainer()->layout());
   for (int i = 0; i < static_cast<int>(buttons_.size()); ++i) {
-    WorkspaceButton* button = buttons_[static_cast<size_t>(i)];
-    if (layout->indexOf(button) != i) layout->insertWidget(i, button);
+    WorkspaceButtonBase* button = buttons_[static_cast<size_t>(i)];
+    if (layout->indexOf(button->widget()) != i) layout->insertWidget(i, button->widget());
     updateButton(button);
   }
 }
 
-WorkspaceButton* KomorebiWorkspacesWidget::tryAddButton(int workspaceIndex) {
-  for (const WorkspaceButton* existing : buttons_) {
+WorkspaceButtonBase* KomorebiWorkspacesWidget::tryAddButton(int workspaceIndex) {
+  for (const WorkspaceButtonBase* existing : buttons_) {
     if (existing->workspaceIndex() == workspaceIndex) return nullptr;
   }
   Labels labels;
   if (const auto computed = workspaceLabels(workspaceIndex)) labels = *computed;
-  auto* button = new WorkspaceButton(workspaceIndex, labels.normal, labels.active, labels.populated,
-                                     labelContainer());
-  connect(button, &QPushButton::clicked, this,
-          [this, workspaceIndex] { activateWorkspace(workspaceIndex); });
+  WorkspaceButtonBase* button = nullptr;
+  if (appIconsEnabled()) {
+    button = new WorkspaceIconButton(
+        workspaceIndex, labels.normal, labels.active, labels.populated, options_.app_icons,
+        [this](int index) { return allIconsInWorkspace(index); },
+        [this](long long hwnd) { return appIcon(hwnd); }, [this] { return current_; },
+        labelContainer());
+  } else {
+    button = new WorkspaceButton(workspaceIndex, labels.normal, labels.active, labels.populated,
+                                 labelContainer());
+  }
+  button->setActivateHandler([this, workspaceIndex] { activateWorkspace(workspaceIndex); });
   buttons_.push_back(button);
   return button;
 }
 
 void KomorebiWorkspacesWidget::hideUnknownButtons() {
-  for (const WorkspaceButton* button : std::vector<WorkspaceButton*>(buttons_)) {
+  for (const WorkspaceButtonBase* button : std::vector<WorkspaceButtonBase*>(buttons_)) {
     const int index = button->workspaceIndex();
     if (index < workspaceCount_) continue;
-    if (WorkspaceButton* target = buttonAt(index)) target->hide();
+    if (WorkspaceButtonBase* target = buttonAt(index)) target->widget()->hide();
   }
 }
 
 void KomorebiWorkspacesWidget::updateVisibleButtons() {
   int number = 0;
-  for (WorkspaceButton* button : buttons_) {
-    if (button->isHidden()) continue;
+  for (WorkspaceButtonBase* button : buttons_) {
+    if (button->widget()->isHidden()) continue;
     ++number;
     QStringList classes;
-    for (const QString& cls :
-         button->property("class").toString().split(QLatin1Char(' '), Qt::SkipEmptyParts)) {
+    for (const QString& cls : button->widget()->property("class").toString().split(
+             QLatin1Char(' '), Qt::SkipEmptyParts)) {
       if (!cls.startsWith(QStringLiteral("button-"))) classes.append(cls);
     }
     classes.append(QStringLiteral("button-%1").arg(number));
@@ -464,6 +646,102 @@ void KomorebiWorkspacesWidget::scrollWorkspaces(int deltaY) {
   const int next = ((*current_ + direction) % count + count) % count;
   komorebi::sendCommand(bus_, {QStringLiteral("focus-monitor-workspace"),
                                QString::number(screenIndex_), QString::number(next)});
+}
+
+WorkspaceIconButton* KomorebiWorkspacesWidget::iconButtonAt(std::optional<int> index) const {
+  return dynamic_cast<WorkspaceIconButton*>(buttonAt(index));
+}
+
+void KomorebiWorkspacesWidget::updateIconsForEvent(const std::string& type, const Json* event) {
+  // Python wraps this block in try/except (IndexError, TypeError): the first failing lookup
+  // abandons the rest of the block.
+  const auto at = [this](std::optional<int> index) { return iconButtonAt(index); };
+  if (type == "ToggleFloat") {
+    WorkspaceIconButton* button = at(current_);
+    if (!button) return;
+    button->updateIcons();
+  }
+  if (indexChanged()) {
+    WorkspaceIconButton* previous = at(previous_);
+    if (!previous) return;
+    previous->updateIcons();
+    WorkspaceIconButton* current = at(current_);
+    if (!current) return;
+    current->updateIcons();
+  }
+  for (int i = 0; i < workspaceCount_; ++i) {
+    const auto index = static_cast<size_t>(i);
+    if (index >= previousWindows_.size() || index >= currentWindows_.size()) return;
+    if (previousWindows_[index] != currentWindows_[index]) {
+      WorkspaceIconButton* button = at(i);
+      if (!button) return;
+      button->updateIcons();
+    } else if (type == "TitleUpdate") {
+      WorkspaceIconButton* button = at(i);
+      if (!button) return;
+      const Json* content = child(event, "content");
+      if (!content || !content->is_array() || content->size() < 2) return;
+      const auto hwnd = komorebi::integer(child(&content->at(1), "hwnd"));
+      if (!hwnd) return;
+      button->updateIconByHwnd(*hwnd);
+    }
+  }
+}
+
+WorkspaceIcons KomorebiWorkspacesWidget::allIconsInWorkspace(int workspaceIndex) {
+  WorkspaceIcons pixmaps;
+  const Json* workspace = screen_ ? komorebi::workspaceAt(screen_, workspaceIndex) : nullptr;
+  if (!workspace) return pixmaps;
+  uniquePids_.clear();
+  for (const long long hwnd : komorebi::windowHwnds(workspace, options_.app_icons.hide_floating)) {
+    QPixmap pixmap = appIcon(hwnd);
+    // dict semantics: a repeated hwnd keeps its first position.
+    auto found = std::find_if(pixmaps.begin(), pixmaps.end(),
+                              [hwnd](const auto& entry) { return entry.first == hwnd; });
+    if (found != pixmaps.end()) {
+      found->second = pixmap;
+    } else {
+      pixmaps.emplace_back(hwnd, pixmap);
+    }
+  }
+  // A window whose icon is still loading (or missing) keeps what the button already shows.
+  if (const auto* existing = dynamic_cast<WorkspaceIconButton*>(
+          workspaceIndex >= 0 && workspaceIndex < static_cast<int>(buttons_.size())
+              ? buttons_[static_cast<size_t>(workspaceIndex)]
+              : nullptr)) {
+    for (auto& [hwnd, pixmap] : pixmaps) {
+      if (!pixmap.isNull()) continue;
+      for (const auto& [oldHwnd, oldPixmap] : existing->icons()) {
+        if (oldHwnd == hwnd) pixmap = oldPixmap;
+      }
+    }
+  }
+  return pixmaps;
+}
+
+QPixmap KomorebiWorkspacesWidget::appIcon(long long hwnd) {
+  try {
+    if (!icons_ || !windowSystem_) return {};
+    const auto handle = static_cast<platform::WindowHandle>(hwnd);
+    if (options_.app_icons.hide_duplicates) {
+      const std::uint32_t pid = windowSystem_->query(handle).pid;
+      if (!uniquePids_.insert(pid).second) return {};
+    }
+    const QScreen* targetScreen = screen();
+    if (!targetScreen) return {};
+    return icons_->icon(handle, options_.app_icons.size, targetScreen->devicePixelRatio());
+  } catch (const std::exception& error) {
+    qDebug().noquote() << "komorebi workspaces: failed to get icon for window" << hwnd
+                       << error.what();
+    return {};
+  }
+}
+
+void KomorebiWorkspacesWidget::refreshIcons() {
+  for (WorkspaceButtonBase* button : buttons_) {
+    auto* iconButton = dynamic_cast<WorkspaceIconButton*>(button);
+    if (iconButton && iconButton->workspaceIndex() < workspaceCount_) iconButton->updateIcons();
+  }
 }
 
 void KomorebiWorkspacesWidget::wheelEvent(QWheelEvent* event) {

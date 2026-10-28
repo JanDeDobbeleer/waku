@@ -2,6 +2,7 @@
 
 #include <QBoxLayout>
 #include <QDebug>
+#include <QEvent>
 #include <QFrame>
 #include <QLabel>
 #include <QMouseEvent>
@@ -10,6 +11,7 @@
 
 #include "platform/komorebi.h"
 #include "widgets/komorebi/komorebi_state.h"
+#include "widgets/menu_support/menu_popup.h"
 
 namespace yasb::widgets {
 namespace {
@@ -77,7 +79,6 @@ KomorebiActiveLayoutWidget::KomorebiActiveLayoutWidget(const WidgetContext& cont
     : BaseWidget(QString::fromStdString(context.name), context.eventBus,
                  QStringLiteral("komorebi-active-layout"), 0),
       bus_(context.eventBus),
-      globalState_(context.globalState),
       options_(std::get<config::options::ActiveLayoutConfig>(context.typedOptions)) {
   resetLayouts();
 
@@ -138,25 +139,52 @@ void KomorebiActiveLayoutWidget::resetLayouts() {
 }
 
 void KomorebiActiveLayoutWidget::onConnect(JsonPtr state) {
+  pending_.reset();
   updateActiveLayout(state, true);
+  notePending(state);
   if (isHidden()) show();
 }
 
 void KomorebiActiveLayoutWidget::onUpdate(JsonPtr, JsonPtr state) {
   updateActiveLayout(state, false);
+  notePending(state);
+}
+
+void KomorebiActiveLayoutWidget::notePending(const JsonPtr& state) {
+  // Without a window the monitor is unknown: keep the state and replay it as a connect once the
+  // widget is parented or shown.
+  if (!resolveMonitor() && state && komorebi::truthy(state.get())) pending_ = state;
+}
+
+bool KomorebiActiveLayoutWidget::event(QEvent* event) {
+  const bool handled = BaseWidget::event(event);
+  if (pending_ && (event->type() == QEvent::ParentChange || event->type() == QEvent::Show) &&
+      resolveMonitor()) {
+    JsonPtr state = std::move(pending_);
+    pending_.reset();
+    try {
+      onConnect(std::move(state));
+    } catch (const std::exception& error) {
+      qWarning().noquote() << "komorebi active layout update failed:" << error.what();
+    }
+  }
+  return handled;
 }
 
 void KomorebiActiveLayoutWidget::onDisconnect() {
   if (options_.hide_if_offline) hide();
 }
 
-bool KomorebiActiveLayoutWidget::updateState(const JsonPtr& state) {
-  std::optional<long long> monitor;
-  if (monitorResolver_) {
-    monitor = monitorResolver_();
-  } else if (QWidget* top = window(); top && top != this) {
-    monitor = platform::monitorFromWindow(top->winId());
+std::optional<long long> KomorebiActiveLayoutWidget::resolveMonitor() const {
+  if (monitorResolver_) return monitorResolver_();
+  if (QWidget* top = window(); top && top != this) {
+    return platform::monitorFromWindow(top->winId());
   }
+  return std::nullopt;
+}
+
+bool KomorebiActiveLayoutWidget::updateState(const JsonPtr& state) {
+  const std::optional<long long> monitor = resolveMonitor();
   state_ = state;
   if (!state || !komorebi::truthy(state.get())) return false;
   if (!monitor) {
@@ -322,12 +350,16 @@ void KomorebiActiveLayoutWidget::flip(const QString& direction) {
 
 void KomorebiActiveLayoutWidget::showLayoutMenu() {
   const auto& menuOptions = options_.layout_menu;
-  if (menu_) menu_->deleteLater();
-  auto* menu = new PinnablePopup(this, globalState_, menuOptions.blur, menuOptions.round_corners,
-                                 QString::fromStdString(menuOptions.round_corners_type),
-                                 QString::fromStdString(menuOptions.border_color));
-  menu->setAttribute(Qt::WA_DeleteOnClose);
-  menu->setProperty("class", QStringLiteral("komorebi-layout-menu"));
+  // Python's PopupWidget (not pinnable): a Qt::Popup that a click outside dismisses, deleted when
+  // hidden. Opening it while one is open fades that one out instead (PopupWidget.show toggle).
+  if (MenuPopup* open = MenuPopup::openFor(this)) {
+    open->hideAnimated();
+    return;
+  }
+  auto* menu = new MenuPopup(this, menuOptions.blur, menuOptions.round_corners,
+                             QString::fromStdString(menuOptions.round_corners_type),
+                             QString::fromStdString(menuOptions.border_color), /*darkMode=*/false);
+  menu->setCssClass(QStringLiteral("komorebi-layout-menu"));
   menu_ = menu;
 
   auto* mainLayout = new QVBoxLayout(menu);
@@ -358,7 +390,7 @@ void KomorebiActiveLayoutWidget::showLayoutMenu() {
     const QString name = QString::fromStdString(layout);
     addItem(QString::fromStdString(iconFor(layout)), titleCase(name), [this, name, menu] {
       changeLayout(QString(name).replace(QLatin1Char('_'), QLatin1Char('-')));
-      menu->hide();
+      menu->hideNow();
     });
   }
 
@@ -371,7 +403,7 @@ void KomorebiActiveLayoutWidget::showLayoutMenu() {
   const auto addToggle = [&](const QString& label, const std::string& icon, const QString& what) {
     addItem(QString::fromStdString(icon), label, [this, what, menu] {
       toggle(what);
-      menu->hide();
+      menu->hideNow();
     });
   };
   addToggle(QStringLiteral("Toggle Tiling"), options_.layout_icons.tiling,
@@ -384,7 +416,7 @@ void KomorebiActiveLayoutWidget::showLayoutMenu() {
   menu->setPosition(QString::fromStdString(menuOptions.alignment),
                     QString::fromStdString(menuOptions.direction), menuOptions.offset_left,
                     menuOptions.offset_top);
-  menu->show();
+  menu->showToggled();
 }
 
 }  // namespace yasb::widgets

@@ -107,4 +107,29 @@ int windowCount(const Json* workspace, bool hideFloating) {
   return count;
 }
 
+std::vector<long long> windowHwnds(const Json* workspace, bool hideFloating) {
+  std::vector<long long> result;
+  const auto add = [&result](const Json& window) {
+    if (const auto hwnd = integer(child(&window, "hwnd"))) result.push_back(*hwnd);
+  };
+  const auto addContainer = [&add](const Json& container) {
+    if (const Json* windows = elements(&container, "windows")) {
+      for (const Json& window : *windows) add(window);
+    }
+  };
+  if (const Json* containers = elements(workspace, "containers")) {
+    for (const Json& container : *containers) addContainer(container);
+  }
+  if (const Json* monocle = child(workspace, "monocle_container");
+      monocle && monocle->is_object() && !monocle->empty()) {
+    addContainer(*monocle);
+  }
+  if (!hideFloating) {
+    if (const Json* floating = elements(workspace, "floating_windows")) {
+      for (const Json& window : *floating) add(window);
+    }
+  }
+  return result;
+}
+
 }  // namespace yasb::widgets::komorebi
