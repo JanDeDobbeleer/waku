@@ -645,6 +645,7 @@ register(
 
 import vec_control_center  # noqa: E402,F401  (registers the control center exporter)
 import vec_github  # noqa: E402,F401  (registers the github label exporter)
+import vec_glazewm_tiling_direction  # noqa: E402,F401  (registers the glazewm tiling_direction exporter)
 import vec_komorebi  # noqa: E402,F401  (registers the komorebi exporters)
 import vec_media  # noqa: E402,F401  (registers the media exporter)
 import vec_notifications  # noqa: E402,F401  (registers the notifications exporter)
