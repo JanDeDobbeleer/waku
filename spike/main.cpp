@@ -1,3 +1,5 @@
+#include <windows.h>
+
 #include <QCommandLineParser>
 #include <QGuiApplication>
 #include <QQmlComponent>
@@ -50,6 +52,11 @@ int main(int argc, char* argv[]) {
     window->show();
     const auto hwnd = static_cast<quintptr>(window->winId());
     yasb::widgets::enableBlur(hwnd, true, true);
+    // Widgets match their window manager's monitor by this handle (Window.window.monitorHandle).
+    // MONITOR_DEFAULTTONEAREST: the window was only just shown, so it may not be on a monitor yet.
+    window->setProperty("monitorHandle",
+                        static_cast<qlonglong>(reinterpret_cast<quintptr>(MonitorFromWindow(
+                            reinterpret_cast<HWND>(hwnd), MONITOR_DEFAULTTONEAREST))));
 
     auto appBar = yasb::bar::makeWin32AppBar();
     yasb::bar::AppBarRequest req;

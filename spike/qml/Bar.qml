@@ -6,6 +6,8 @@ Window {
     id: bar
 
     property int barHeight: 40
+    // HMONITOR of the screen this bar is on, set by the host.
+    property var monitorHandle: 0
 
     flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool
     color: "transparent"
@@ -24,7 +26,7 @@ Window {
         anchors.fill: parent
         anchors.leftMargin: 12
         anchors.rightMargin: 12
-        spacing: 12
+        spacing: 0
 
         Clock {}
 
@@ -35,10 +37,15 @@ Window {
             model: Host.widgetFiles
             delegate: Loader {
                 source: modelData
+                // A widget that hides itself (`visible: false`) also leaves the layout. The
+                // Loader itself stays visible, so item.visible is the widget's own setting.
+                readonly property bool shown: status === Loader.Ready && item.visible
+                Layout.preferredWidth: shown ? item.implicitWidth : 0
+                Layout.leftMargin: shown ? 12 : 0
                 onStatusChanged: if (status === Loader.Error) console.warn("widget failed:", modelData)
             }
         }
 
-        MemoryWidget {}
+        MemoryWidget { Layout.leftMargin: 12 }
     }
 }

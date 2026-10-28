@@ -15,12 +15,20 @@ qt_add_qml_module(yasb_services
     services/system_stats.cpp
     services/child_process.h
     services/child_process.cpp
+    services/audio_service.h
+    services/audio_service.cpp
+    services/media_service.h
+    services/media_service.cpp
+    services/glazewm_client.h
+    services/glazewm_client.cpp
+    services/komorebi_client.h
+    services/komorebi_client.cpp
 )
 target_include_directories(yasb_services PUBLIC ${CMAKE_SOURCE_DIR}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/services)  # generated type registration includes headers by name
 target_compile_definitions(yasb_services PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(yasb_services PUBLIC Qt6::Qml yasb_platform)
+target_link_libraries(yasb_services PUBLIC Qt6::Qml yasb_platform yasb_widgets)
 
 qt_add_executable(yasb-qml-spike WIN32
   main.cpp
