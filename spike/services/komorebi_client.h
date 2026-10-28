@@ -19,8 +19,9 @@ namespace widgets = ::yasb::widgets;
 // posts results to the GUI thread. The service unsubscribes and joins the pipe thread when the
 // engine destroys the singleton.
 //
-// `monitors`: [{index, id, name, workspaces: [{index, name, focused, hasWindows,
-// windowCount}]}]; `id` is the monitor handle (HMONITOR).
+// `monitors`: [{index, id, name, focused, workspaces: [{index, name, focused, hasWindows,
+// windowCount}]}]; `id` is the monitor handle (HMONITOR). A monitor is `focused` when it is the
+// focused one; a workspace is `focused` when it is the one shown on its monitor.
 class Komorebi : public QObject {
   Q_OBJECT
   QML_ELEMENT

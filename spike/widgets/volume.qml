@@ -20,6 +20,11 @@ Rectangle {
 
     HoverHandler { id: hover }
     TapHandler { onTapped: AudioOutput.muted = !AudioOutput.muted }
+    // Right click opens the sound settings.
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        onTapped: Shell.open("ms-settings:sound")
+    }
     WheelHandler {
         onWheel: event => AudioOutput.volume += event.angleDelta.y > 0 ? 5 : -5
     }

@@ -20,6 +20,8 @@ QVariantList toVariant(const kmb::Json& state) {
   QVariantList list;
   const kmb::Json* screens = kmb::elements(&state, "monitors");
   if (!screens || !screens->is_array()) return list;
+  const std::optional<long long> focusedMonitor =
+      kmb::integer(kmb::child(kmb::child(&state, "monitors"), "focused"));
   int monitorIndex = 0;
   for (const kmb::Json& screen : *screens) {
     const std::optional<int> focused = kmb::focusedWorkspaceIndex(&screen);
@@ -34,7 +36,8 @@ QVariantList toVariant(const kmb::Json& state) {
           {QStringLiteral("windowCount"), kmb::windowCount(workspace, false)}};
     }
     list << QVariantMap{
-        {QStringLiteral("index"), monitorIndex++},
+        {QStringLiteral("index"), monitorIndex},
+        {QStringLiteral("focused"), focusedMonitor == monitorIndex++},
         {QStringLiteral("id"),
          static_cast<qlonglong>(kmb::integer(kmb::child(&screen, "id")).value_or(0))},
         {QStringLiteral("name"), stringOf(&screen, "name")},

@@ -9,6 +9,8 @@ add_executable(barnacle_services_tests
   test_audio.cpp
   test_media.cpp
   test_wm_clients.cpp
+  test_shell.cpp
+  test_workspaces.cpp
 )
 target_compile_definitions(barnacle_services_tests PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)

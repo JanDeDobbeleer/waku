@@ -23,6 +23,10 @@ qt_add_qml_module(barnacle_services
     services/glazewm_client.cpp
     services/komorebi_client.h
     services/komorebi_client.cpp
+    services/shell_service.h
+    services/shell_service.cpp
+    services/workspaces_service.h
+    services/workspaces_service.cpp
 )
 target_include_directories(barnacle_services PUBLIC ${CMAKE_SOURCE_DIR}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/services)  # generated type registration includes headers by name
