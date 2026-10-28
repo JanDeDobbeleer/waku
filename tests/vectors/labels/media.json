@@ -1,0 +1,4959 @@
+[
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "user_label_truncation",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {}
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "A very long song title that..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "Some Artist With A Long Name",
+            "title": "A very long song title that keeps going and going"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Exactly thirty characters l..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "",
+            "title": "Exactly thirty characters long!"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Only Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "Only Artist",
+            "title": ""
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "",
+            "title": ""
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "\u65e5\u672c\u8a9e\u306e\u30bf\u30a4\u30c8\u30eb\ud83d\ude00\ud83d\ude00 and some more te..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "\u00dcn\u00efcode \u00c4rtist",
+            "title": "\u65e5\u672c\u8a9e\u306e\u30bf\u30a4\u30c8\u30eb\ud83d\ude00\ud83d\ude00 and some more text to cut"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": "\u65e5\u672c\u8a9e\u306e\u30bf\u30a4\u30c8\u30eb\ud83d\ude00\ud83d\ude00 and some more te..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": false,
+            "text": "\u65e5\u672c\u8a9e\u306e\u30bf\u30a4\u30c8\u30eb\ud83d\ude00\ud83d\ude00 and some more te..."
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": "\u65e5\u672c\u8a9e\u306e\u30bf\u30a4\u30c8\u30eb\ud83d\ude00\ud83d\ude00 and some more te..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": false,
+            "text": "A very long song title that..."
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "Some Artist With A Long Name",
+            "title": "A very long song title that keeps going and going"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "A very long song title that..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": "A very long song title that..."
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": "A very long song title that..."
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": true
+        },
+        "step": {
+          "session": null
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "[{artist}] {title}",
+      "max_field_size": {
+        "label": 10,
+        "label_alt": 12,
+        "truncate_whole_label": false
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " | ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "per_field_truncation",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "A very ... | Some Ar..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "Some Artist With A Long Name",
+            "title": "A very long song title that keeps going and going"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Short"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "",
+            "title": "Short"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Short"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "Short",
+            "title": ""
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": "Short"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": false,
+            "text": "[Short] "
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": "Short"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": false,
+            "text": "[Some Arti...] A very lo..."
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "Some Artist With A Long Name",
+            "title": "A very long song title that keeps going and going"
+          }
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 2,
+        "label_alt": 3,
+        "truncate_whole_label": true
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "tiny_max_field_size",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "abcde... - xy....."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "xyz",
+            "title": "abcdef"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": "abcde... - xy....."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": false,
+            "text": "..."
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": "abcde... - xy....."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": false,
+            "text": "..."
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "xyz",
+            "title": "abcdef"
+          }
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{unknown}{s}{title}{s}{artist}{s}",
+      "label_alt": "Now playing: {title:>8}{s}{artist}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " ~ ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "label_placeholders",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song ~ Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "Artist",
+            "title": "Song"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "",
+            "title": "Song"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": "Song"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": false,
+            "text": "Now playing: "
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "toggle": true
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": "Song"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": false,
+            "text": "Now playing: Artist"
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {}
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "playback_controls",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "playing": true
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "playing": false
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "playing": true,
+            "prev_enabled": false
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "next_enabled": false,
+            "play_enabled": false,
+            "playing": false
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": true
+        },
+        "step": {
+          "session": null
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "playing": true
+          }
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "stack",
+        "prev",
+        "play",
+        "next"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "controls_left": false,
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "controls_right",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "stack",
+            "prev",
+            "play",
+            "next"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {}
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "stack",
+            "prev",
+            "play",
+            "next"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": true
+        },
+        "step": {
+          "session": null
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "stack"
+      ],
+      "menu": null,
+      "next": null,
+      "play": null,
+      "prev": null,
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "controls_hide": true,
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "controls_hidden",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "stack"
+          ],
+          "menu": null,
+          "next": null,
+          "play": null,
+          "prev": null,
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {}
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "stack"
+          ],
+          "menu": null,
+          "next": null,
+          "play": null,
+          "prev": null,
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": true
+        },
+        "step": {
+          "session": null
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": true,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": true,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": true,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "controls_only": true,
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "controls_only",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": true,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {}
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": true,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "playing": false
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": true,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": true
+        },
+        "step": {
+          "session": null
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": false,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "hide_empty_off",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": false,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": null
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {}
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": null
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "progress_bar",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": false,
+          "progress_value": 250,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "duration": 200.0,
+            "position": 50.0,
+            "timeline_enabled": true
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": false,
+          "progress_value": 1000,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "duration": 200.0,
+            "position": 250.0,
+            "timeline_enabled": true
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 1000,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "duration": 200.0,
+            "position": 50.0,
+            "timeline_enabled": false
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 1000,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "duration": 0.0,
+            "position": 0.0,
+            "timeline_enabled": true
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 1000,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "duration": 700000.0,
+            "position": 10.0,
+            "timeline_enabled": true
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": false,
+          "progress_value": 333,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "duration": 3.0,
+            "position": 1.0,
+            "timeline_enabled": true
+          }
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": true,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "top",
+        "enabled": false
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "progress_bar_disabled",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": true,
+          "progress_hidden": false,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "duration": 200.0,
+            "position": 100.0,
+            "timeline_enabled": true
+          }
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "thumbnail",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": true,
+          "thumbnail_hidden": false,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "thumbnail": true
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": true,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "thumbnail": false
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": true,
+          "thumbnail_hidden": false,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "thumbnail": true,
+            "title": ""
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": true,
+          "thumbnail_hidden": true,
+          "widget_hidden": true
+        },
+        "step": {
+          "session": null
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": true,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": false,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "thumbnail_off",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": false,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "thumbnail": true
+          }
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": false,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "menu_with_session",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "A very long song title that..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": false,
+          "progress_value": 16,
+          "thumbnail_has_pixmap": true,
+          "thumbnail_hidden": false,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "Some Artist With A Long NameSome Artist With A Long NameSome Artist With A Long Name",
+            "duration": 3725.0,
+            "position": 61.0,
+            "thumbnail": true,
+            "timeline_enabled": true,
+            "title": "A very long song title that keeps going and goingA very long song title that keeps going and goingA very long song title that keeps going and goingA very long song title that keeps going and going"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "A very long song title that..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": {
+            "artist": {
+              "class": "artist",
+              "hidden": false,
+              "text": "Some Artist With A Long NameSome Arti..."
+            },
+            "class": "media-menu",
+            "current_time": {
+              "class": "playback-time current",
+              "hidden": false,
+              "text": "1:01"
+            },
+            "next": {
+              "class": "btn next ",
+              "hidden": false,
+              "text": "\ue893"
+            },
+            "no_media": null,
+            "play": {
+              "class": "btn play ",
+              "hidden": false,
+              "text": "\ue769"
+            },
+            "prev": {
+              "class": "btn prev ",
+              "hidden": false,
+              "text": "\ue892"
+            },
+            "slider_value": 16,
+            "source": {
+              "class": "source fake-player",
+              "hidden": false,
+              "text": "Fake Player"
+            },
+            "thumbnail_has_pixmap": true,
+            "timeline_hidden": false,
+            "title": {
+              "class": "title",
+              "hidden": false,
+              "text": "A very long song title that keeps going and goingA very l..."
+            },
+            "total_time": {
+              "class": "playback-time total",
+              "hidden": false,
+              "text": "1:02:05"
+            }
+          },
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": false,
+          "progress_value": 16,
+          "thumbnail_has_pixmap": true,
+          "thumbnail_hidden": false,
+          "widget_hidden": false
+        },
+        "step": {
+          "menu": true
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Next"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": {
+            "artist": {
+              "class": "artist",
+              "hidden": false,
+              "text": ""
+            },
+            "class": "media-menu",
+            "current_time": {
+              "class": "playback-time current",
+              "hidden": false,
+              "text": "0:00"
+            },
+            "next": {
+              "class": "btn next ",
+              "hidden": false,
+              "text": "\ue893"
+            },
+            "no_media": null,
+            "play": {
+              "class": "btn play ",
+              "hidden": false,
+              "text": "\ue768"
+            },
+            "prev": {
+              "class": "btn prev disabled",
+              "hidden": false,
+              "text": "\ue892"
+            },
+            "slider_value": 16,
+            "source": {
+              "class": "source fake-player",
+              "hidden": false,
+              "text": "Fake Player"
+            },
+            "thumbnail_has_pixmap": true,
+            "timeline_hidden": false,
+            "title": {
+              "class": "title",
+              "hidden": false,
+              "text": "Next"
+            },
+            "total_time": {
+              "class": "playback-time total",
+              "hidden": false,
+              "text": "0:00"
+            }
+          },
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 16,
+          "thumbnail_has_pixmap": true,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "",
+            "playing": false,
+            "prev_enabled": false,
+            "thumbnail": false,
+            "title": "Next"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": {
+            "artist": {
+              "class": "artist",
+              "hidden": false,
+              "text": ""
+            },
+            "class": "media-menu",
+            "current_time": {
+              "class": "playback-time current",
+              "hidden": false,
+              "text": "0:00"
+            },
+            "next": {
+              "class": "btn next ",
+              "hidden": false,
+              "text": "\ue893"
+            },
+            "no_media": null,
+            "play": {
+              "class": "btn play ",
+              "hidden": false,
+              "text": "\ue768"
+            },
+            "prev": {
+              "class": "btn prev disabled",
+              "hidden": false,
+              "text": "\ue892"
+            },
+            "slider_value": 16,
+            "source": {
+              "class": "source fake-player",
+              "hidden": false,
+              "text": "Fake Player"
+            },
+            "thumbnail_has_pixmap": true,
+            "timeline_hidden": false,
+            "title": {
+              "class": "title",
+              "hidden": false,
+              "text": "Next"
+            },
+            "total_time": {
+              "class": "playback-time total",
+              "hidden": false,
+              "text": "0:00"
+            }
+          },
+          "next": {
+            "class": "btn next disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 16,
+          "thumbnail_has_pixmap": true,
+          "thumbnail_hidden": true,
+          "widget_hidden": true
+        },
+        "step": {
+          "session": null
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": true,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn prev disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 16,
+          "thumbnail_has_pixmap": true,
+          "thumbnail_hidden": true,
+          "widget_hidden": true
+        },
+        "step": {
+          "close_menu": true
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": false,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "menu_no_timeline",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "duration": 0.0,
+            "timeline_enabled": false
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Song - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": {
+            "artist": {
+              "class": "artist",
+              "hidden": false,
+              "text": "Artist"
+            },
+            "class": "media-menu",
+            "current_time": {
+              "class": "playback-time current",
+              "hidden": false,
+              "text": "0:00"
+            },
+            "next": {
+              "class": "btn next ",
+              "hidden": false,
+              "text": "\ue893"
+            },
+            "no_media": null,
+            "play": {
+              "class": "btn play ",
+              "hidden": false,
+              "text": "\ue769"
+            },
+            "prev": {
+              "class": "btn prev ",
+              "hidden": false,
+              "text": "\ue892"
+            },
+            "slider_value": 0,
+            "source": {
+              "class": "source fake-player",
+              "hidden": false,
+              "text": "Fake Player"
+            },
+            "thumbnail_has_pixmap": true,
+            "timeline_hidden": true,
+            "title": {
+              "class": "title",
+              "hidden": false,
+              "text": "Song"
+            },
+            "total_time": {
+              "class": "playback-time total",
+              "hidden": false,
+              "text": "0:00"
+            }
+          },
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "menu": true
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Other - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": {
+            "artist": {
+              "class": "artist",
+              "hidden": false,
+              "text": "Artist"
+            },
+            "class": "media-menu",
+            "current_time": {
+              "class": "playback-time current",
+              "hidden": false,
+              "text": "0:05"
+            },
+            "next": {
+              "class": "btn next ",
+              "hidden": false,
+              "text": "\ue893"
+            },
+            "no_media": null,
+            "play": {
+              "class": "btn play ",
+              "hidden": false,
+              "text": "\ue769"
+            },
+            "prev": {
+              "class": "btn prev ",
+              "hidden": false,
+              "text": "\ue892"
+            },
+            "slider_value": 55,
+            "source": {
+              "class": "source other-player",
+              "hidden": false,
+              "text": "Other Player"
+            },
+            "thumbnail_has_pixmap": true,
+            "timeline_hidden": true,
+            "title": {
+              "class": "title",
+              "hidden": false,
+              "text": "Other"
+            },
+            "total_time": {
+              "class": "playback-time total",
+              "hidden": false,
+              "text": "1:30"
+            }
+          },
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": false,
+          "progress_value": 55,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "app_id": "Other.Player.App",
+            "duration": 90.0,
+            "position": 5.0,
+            "timeline_enabled": true,
+            "title": "Other"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Other - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": false,
+          "progress_value": 55,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "close_menu": true
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "Other - Artist"
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": {
+            "artist": {
+              "class": "artist",
+              "hidden": false,
+              "text": "Artist"
+            },
+            "class": "media-menu",
+            "current_time": {
+              "class": "playback-time current",
+              "hidden": false,
+              "text": "0:05"
+            },
+            "next": {
+              "class": "btn next ",
+              "hidden": false,
+              "text": "\ue893"
+            },
+            "no_media": null,
+            "play": {
+              "class": "btn play ",
+              "hidden": false,
+              "text": "\ue769"
+            },
+            "prev": {
+              "class": "btn prev ",
+              "hidden": false,
+              "text": "\ue892"
+            },
+            "slider_value": 55,
+            "source": {
+              "class": "source other-player",
+              "hidden": false,
+              "text": "Other Player"
+            },
+            "thumbnail_has_pixmap": true,
+            "timeline_hidden": false,
+            "title": {
+              "class": "title",
+              "hidden": false,
+              "text": "Other"
+            },
+            "total_time": {
+              "class": "playback-time total",
+              "hidden": false,
+              "text": "1:30"
+            }
+          },
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": false,
+          "progress_value": 55,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "menu": true
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": false,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 8,
+        "max_title_size": 10,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": false,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "menu_hide_source",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "A very long song title that..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": null,
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "session": {
+            "artist": "Some Artist With A Long Name",
+            "title": "A very long song title that keeps going and going"
+          }
+        }
+      },
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": "A very long song title that..."
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": {
+            "artist": {
+              "class": "artist",
+              "hidden": false,
+              "text": "Some ..."
+            },
+            "class": "media-menu",
+            "current_time": {
+              "class": "playback-time current",
+              "hidden": false,
+              "text": "0:00"
+            },
+            "next": {
+              "class": "btn next ",
+              "hidden": false,
+              "text": "\ue893"
+            },
+            "no_media": null,
+            "play": {
+              "class": "btn play ",
+              "hidden": false,
+              "text": "\ue769"
+            },
+            "prev": {
+              "class": "btn prev ",
+              "hidden": false,
+              "text": "\ue892"
+            },
+            "slider_value": 0,
+            "source": null,
+            "thumbnail_has_pixmap": true,
+            "timeline_hidden": true,
+            "title": {
+              "class": "title",
+              "hidden": false,
+              "text": "A very ..."
+            },
+            "total_time": {
+              "class": "playback-time total",
+              "hidden": false,
+              "text": "0:00"
+            }
+          },
+          "next": {
+            "class": "btn next ",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn play ",
+            "hidden": false,
+            "text": "\ue769"
+          },
+          "prev": {
+            "class": "btn prev ",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": true,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": true,
+          "widget_hidden": false
+        },
+        "step": {
+          "menu": true
+        }
+      }
+    ],
+    "widget": "media"
+  },
+  {
+    "initial": {
+      "container_class": "widget-container",
+      "frame_class": "widget media-widget ",
+      "label": {
+        "class": "label",
+        "hidden": false,
+        "text": ""
+      },
+      "label_alt": {
+        "class": "label alt",
+        "hidden": true,
+        "text": ""
+      },
+      "layout_order": [
+        "prev",
+        "play",
+        "next",
+        "stack"
+      ],
+      "menu": null,
+      "next": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue893"
+      },
+      "play": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue768"
+      },
+      "prev": {
+        "class": "btn disabled",
+        "hidden": false,
+        "text": "\ue892"
+      },
+      "progress_container_hidden": false,
+      "progress_hidden": false,
+      "progress_value": 500,
+      "thumbnail_has_pixmap": false,
+      "thumbnail_hidden": false,
+      "widget_hidden": false
+    },
+    "initial_data": null,
+    "options": {
+      "callbacks": {
+        "on_left": "toggle_media_menu",
+        "on_middle": "toggle_play_pause",
+        "on_right": "toggle_label"
+      },
+      "hide_empty": true,
+      "icons": {
+        "next_track": "\ue893",
+        "pause": "\ue769",
+        "play": "\ue768",
+        "prev_track": "\ue892"
+      },
+      "label": "{title}{s}{artist}",
+      "label_alt": "{title}",
+      "max_field_size": {
+        "label": 30,
+        "label_alt": 30
+      },
+      "media_menu": {
+        "alignment": "center",
+        "blur": false,
+        "border_color": "System",
+        "direction": "down",
+        "max_artist_size": 40,
+        "max_title_size": 60,
+        "offset_top": 6,
+        "round_corners": true,
+        "round_corners_type": "normal",
+        "show_source": true,
+        "thumbnail_corner_radius": 8,
+        "thumbnail_size": 100
+      },
+      "progress_bar": {
+        "alignment": "bottom",
+        "enabled": true
+      },
+      "separator": " - ",
+      "show_thumbnail": true,
+      "symmetric_corner_radius": true,
+      "thumbnail_alpha": 80,
+      "thumbnail_corner_radius": 14,
+      "thumbnail_padding": 8
+    },
+    "scenario": "menu_no_media",
+    "steps": [
+      {
+        "snapshot": {
+          "container_class": "widget-container",
+          "frame_class": "widget media-widget ",
+          "label": {
+            "class": "label",
+            "hidden": false,
+            "text": ""
+          },
+          "label_alt": {
+            "class": "label alt",
+            "hidden": true,
+            "text": ""
+          },
+          "layout_order": [
+            "prev",
+            "play",
+            "next",
+            "stack"
+          ],
+          "menu": {
+            "artist": null,
+            "class": "media-menu",
+            "current_time": {
+              "class": "playback-time current",
+              "hidden": false,
+              "text": "00:00"
+            },
+            "next": null,
+            "no_media": "No media playing",
+            "play": null,
+            "prev": null,
+            "slider_value": 0,
+            "source": null,
+            "thumbnail_has_pixmap": null,
+            "timeline_hidden": true,
+            "title": null,
+            "total_time": {
+              "class": "playback-time total",
+              "hidden": false,
+              "text": "00:00"
+            }
+          },
+          "next": {
+            "class": "btn disabled",
+            "hidden": false,
+            "text": "\ue893"
+          },
+          "play": {
+            "class": "btn disabled",
+            "hidden": false,
+            "text": "\ue768"
+          },
+          "prev": {
+            "class": "btn disabled",
+            "hidden": false,
+            "text": "\ue892"
+          },
+          "progress_container_hidden": false,
+          "progress_hidden": false,
+          "progress_value": 500,
+          "thumbnail_has_pixmap": false,
+          "thumbnail_hidden": false,
+          "widget_hidden": false
+        },
+        "step": {
+          "menu": true
+        }
+      }
+    ],
+    "widget": "media"
+  }
+]

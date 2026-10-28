@@ -32,12 +32,8 @@ class LabelExporter:
     setup: Callable[[], Callable[[], None]] | None = None
     teardown_widget: Callable[[Any], None] | None = None
     after_show: Callable[[Any], None] | None = None
-    # Widgets whose structure is not the standard label list supply their own snapshot and ask for
-    # the pydantic-normalized options (the C++ typed options need every default spelled out).
+    # Widgets without `_widgets`/`_widgets_alt` (e.g. media) provide their own snapshot.
     snapshot: Callable[[Any], dict[str, Any]] | None = None
-    include_normalized: bool = False
-    # Called after each step; its return value is stored as the step's "commands".
-    step_commands: Callable[[], list[Any]] | None = None
 
 
 def register(exporter: LabelExporter) -> None:
@@ -98,6 +94,7 @@ def _run(exporter: LabelExporter, scenario: Scenario, base_options: dict[str, An
         widget.show()
         if exporter.after_show:
             exporter.after_show(widget)
+        take = exporter.snapshot or snapshot
         entry["initial"] = take(widget)
         for step in scenario.steps:
             record: dict[str, Any] = {"step": step}
@@ -106,8 +103,6 @@ def _run(exporter: LabelExporter, scenario: Scenario, base_options: dict[str, An
             except Exception as error:
                 record["error"] = type(error).__name__
             record["snapshot"] = take(widget)
-            if exporter.step_commands:
-                record["commands"] = exporter.step_commands()
             entry["steps"].append(record)
     finally:
         if exporter.teardown_widget:
