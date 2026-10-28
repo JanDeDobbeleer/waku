@@ -70,6 +70,7 @@ hand results back with queued signals or `QMetaObject::invokeMethod` on `qApp`.
 |---|---|---|---|
 | GUI | `QApplication` / `Runtime` | widgets, bars, CSS engine, file watcher, tray | `Runtime::stop()` and then `exec()` returns |
 | `PollingWorker` (`QThread`) | `Runtime`'s polling-worker registry, keyed by source and `update_interval` | runs the platform `sample()` at its configured interval, emits `dataReady` to the GUI thread | `Runtime::stop()` calls `stopAll()` before widgets are destroyed |
+| `QThreadPool` threads (github) | `platform::sendHttpAsync` (github mark-as-read, device-flow login, post-login fetch) | one blocking QtNetwork request each with its own `QNetworkAccessManager`; the result is posted back to the GUI thread and dropped if its context object is gone | finishes on its own (15 s transfer timeout); no join needed |
 | hotkey thread (`std::thread`) | `HotkeyService` | `RegisterHotKey` message loop; dispatches to the GUI thread | `stop()`: `PostThreadMessageW(WM_QUIT)` then `join` |
 | CLI command threads (`std::thread`) | `CliServer` | `\\.\pipe\yasb_pipe_cli` accept/read/reply | `stop()`: sets `stopping_`, unblocks, `join` |
 | CLI log thread (`std::thread`) | `CliServer` | `\\.\pipe\yasb_pipe_log` frames | `stop()`: `CancelSynchronousIo`, `join` |

@@ -22,7 +22,7 @@ Status values: `todo`, `in progress`, `done`. Dates are the sign-off date (YYYY-
 | media (`yasb.media.MediaWidget`) | todo | todo | todo | todo | Title and artist; thumbnail; progress bar; play/pause/next/prev; menu (Spotify and a browser tab) | U12 |
 | control_center (`yasb.control_center.ControlCenterWidget`) | todo | todo | todo | todo | Every section (volume, brightness, media, toggles, power); screenshot action (interim until U19) | U13 |
 | notifications (`yasb.notifications.NotificationsWidget`) | todo | todo | todo | todo | Count and icon; toggle; clear; do-not-disturb state | U14 |
-| github (`yasb.github.GithubWidget`) | todo | todo | todo | todo | Count, dot, category menu; open in browser; refresh; token handling | U15 |
+| github (`yasb.github.GithubWidget`) | done 2026-10-28 | todo | todo | todo | Count and dot (top_right, 0/5 margin); category menu in configured order with comment counts; click opens URL and marks read; Mark all as read; right-click alt label; token from `%LOCALAPPDATA%\YASB\github_token`, device-flow login when missing. Menu structure is covered by hand-written tests (no menu vector) | U15 |
 | systray (`yasb.systray.SystrayWidget`) | todo | todo | todo | todo | Icons appear through the hook; pin and unpin; popup; left/right click pass-through; Explorer restart | U16 |
 | taskbar (`yasb.taskbar.TaskbarWidget`) | todo | todo | todo | todo | Grouping and count badges; add/remove animation; thumbnail preview and peek; virtual desktops; a full working session | U17 |
 | wallpapers (`yasb.wallpapers.WallpapersWidget`) | todo | todo | todo | todo | Gallery opens with `alt+e`; split transition; apply a wallpaper; keyboard navigation | U18 |

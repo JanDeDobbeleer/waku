@@ -41,7 +41,7 @@ In `css.json`, `${DIR}` is the entry stylesheet's folder and `${CONFIG_HOME}` th
 
 ## Adding a widget's label vectors
 
-Label exporters register in `vec_labels.py` through `label_registry.register(LabelExporter(...))`: a `build` that makes the real widget with fake service data, an `apply_step` that feeds new data, and a list of `Scenario`s. Only cpu, memory and battery exist today. Options come from the user's config for the widget type, with per-scenario patches.
+Label exporters register in `vec_labels.py` through `label_registry.register(LabelExporter(...))`: a `build` that makes the real widget with fake service data, an `apply_step` that feeds new data, and a list of `Scenario`s. cpu, memory and battery live in `vec_labels.py`; github is its own module (`vec_github.py`, imported at the end of `vec_labels.py`). Options come from the user's config for the widget type, with per-scenario patches.
 
 ## Secrets
 

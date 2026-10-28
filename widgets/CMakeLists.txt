@@ -7,6 +7,14 @@ add_library(yasb_widgets STATIC
   battery/battery_widget.cpp
   cpu/cpu_widget.h
   cpu/cpu_widget.cpp
+  github/github_auth_dialog.h
+  github/github_auth_dialog.cpp
+  github/github_data_store.h
+  github/github_data_store.cpp
+  github/github_format.h
+  github/github_format.cpp
+  github/github_widget.h
+  github/github_widget.cpp
   memory/memory_widget.h
   memory/memory_widget.cpp
 )

@@ -40,7 +40,8 @@ target_sources(yasb_tests PRIVATE
   widgets/test_callbacks.cpp
   widgets/test_popup.cpp
   widgets/test_stat_popup.cpp
-  widgets/test_system_widgets.cpp)
+  widgets/test_system_widgets.cpp
+  widgets/test_github.cpp)
 
 # --- U7: app services and CLI protocol ---
 target_sources(yasb_tests PRIVATE
