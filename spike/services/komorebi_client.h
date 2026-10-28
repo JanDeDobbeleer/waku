@@ -27,10 +27,17 @@ class Komorebi : public QObject {
 
  public:
   explicit Komorebi(QObject* parent = nullptr);
+  // Test seam: a fake komorebi backend, command runner and pipe name.
+  Komorebi(platform::KomorebiBackend backend,
+           widgets::komorebi::KomorebiService::CommandRunner runner, QString pipeName,
+           platform::KomorebiPipeListener::Timing timing, QObject* parent);
   ~Komorebi() override;
 
   bool connected() const { return connected_; }
   QVariantList monitors() const { return monitors_; }
+
+  // Test seam: the bus the service publishes its state on.
+  widgets::EventBus& bus() { return bus_; }
 
   Q_INVOKABLE void focusWorkspace(int monitorIndex, int workspaceIndex);
 
@@ -38,6 +45,7 @@ class Komorebi : public QObject {
   void changed();
 
  private:
+  void subscribe();
   void onEvent(const QString& name, const QVariantMap& payload);
 
   widgets::EventBus bus_;

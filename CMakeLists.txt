@@ -70,6 +70,7 @@ target_link_libraries(yasbc-native PRIVATE yasb_options)
 include(CTest)
 if(BUILD_TESTING)
   add_subdirectory(tests)
+  add_subdirectory(spike/tests)
 endif()
 
 # Portable folder: cmake --build <dir> --target deploy  ->  dist/<YASB_QT_DIR>-<config>

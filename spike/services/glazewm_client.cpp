@@ -33,7 +33,15 @@ QVariantList toVariant(const std::vector<gw::Monitor>& monitors) {
 
 }  // namespace
 
-GlazeWM::GlazeWM(QObject* parent) : QObject(parent), service_(bus_) {
+GlazeWM::GlazeWM(QObject* parent) : QObject(parent), service_(bus_) { subscribeAll(); }
+
+GlazeWM::GlazeWM(gw::GlazewmService::Sender sender, gw::GlazewmService::Opener opener,
+                 QObject* parent)
+    : QObject(parent), service_(bus_, std::move(sender), std::move(opener)) {
+  subscribeAll();
+}
+
+void GlazeWM::subscribeAll() {
   connect(&bus_, &widgets::EventBus::event, this, &GlazeWM::onEvent);
   const QString uri = QString::fromLatin1(kDefaultUri);
   gw::subscribe(bus_, gw::kTopicWorkspaces, uri);

@@ -40,7 +40,8 @@ class AudioBase : public QObject {
   void changed();
 
  protected:
-  AudioBase(platform::AudioFlow flow, QObject* parent);
+  // Takes ownership of `endpoints` (also the test seam: pass a fake).
+  AudioBase(platform::AudioEndpoints* endpoints, QObject* parent);
 
  private:
   platform::AudioEndpoints* endpoints_;
@@ -53,7 +54,7 @@ class AudioOutput : public AudioBase {
 
  public:
   explicit AudioOutput(QObject* parent = nullptr)
-      : AudioBase(platform::AudioFlow::Render, parent) {}
+      : AudioBase(platform::createSystemAudio(platform::AudioFlow::Render), parent) {}
 };
 
 class AudioInput : public AudioBase {
@@ -63,7 +64,7 @@ class AudioInput : public AudioBase {
 
  public:
   explicit AudioInput(QObject* parent = nullptr)
-      : AudioBase(platform::AudioFlow::Capture, parent) {}
+      : AudioBase(platform::createSystemAudio(platform::AudioFlow::Capture), parent) {}
 };
 
 }  // namespace yasb::services

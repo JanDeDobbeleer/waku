@@ -2,18 +2,28 @@
 
 #include <QtQml/qqmlregistration.h>
 
+#include <QByteArray>
 #include <QObject>
 #include <QString>
+#include <memory>
 
 #include "platform/media_session.h"
 
 namespace yasb::services {
 
+// MIME type of encoded image bytes by their magic number; "application/octet-stream" when the
+// format is not recognised.
+QString imageMimeType(const QByteArray& bytes);
+// `data:<mime>;base64,<bytes>`, or an empty string for no bytes. A QML Image loads it directly.
+QString imageDataUrl(const QByteArray& bytes);
+
 // The current system media session (GSMTC) as a QML singleton, shared by every widget. Wraps
 // platform::MediaSessionService, which owns the session thread; this object lives on the GUI
 // thread and re-emits the service's change signals as one `changed`. The engine destroys it,
 // which stops the service and joins the session thread. `position` is interpolated by the service
-// on a GUI-thread timer while a session plays. Album art is not exposed yet.
+// on a GUI-thread timer while a session plays. `thumbnailUrl` is the album art the player
+// delivered, as a data URL (empty when the player gave none); it is rebuilt only when the bytes
+// change.
 class Media : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -23,6 +33,7 @@ class Media : public QObject {
   Q_PROPERTY(QString artist READ artist NOTIFY changed FINAL)
   Q_PROPERTY(QString album READ album NOTIFY changed FINAL)
   Q_PROPERTY(QString sourceName READ sourceName NOTIFY changed FINAL)
+  Q_PROPERTY(QString thumbnailUrl READ thumbnailUrl NOTIFY changed FINAL)
   Q_PROPERTY(bool playing READ playing NOTIFY changed FINAL)
   Q_PROPERTY(double position READ position NOTIFY changed FINAL)
   Q_PROPERTY(double duration READ duration NOTIFY changed FINAL)
@@ -32,6 +43,8 @@ class Media : public QObject {
 
  public:
   explicit Media(QObject* parent = nullptr);
+  // Test seam: a fake session source.
+  Media(std::unique_ptr<platform::MediaSessionSource> source, QObject* parent);
   ~Media() override;
 
   bool available() const { return current() != nullptr; }
@@ -39,6 +52,7 @@ class Media : public QObject {
   QString artist() const;
   QString album() const;
   QString sourceName() const;
+  QString thumbnailUrl() const { return thumbnailUrl_; }
   bool playing() const;
   double position() const;
   double duration() const;
@@ -56,8 +70,11 @@ class Media : public QObject {
 
  private:
   const platform::MediaSessionState* current() const { return service_.currentSession(); }
+  void onServiceChanged();
 
   platform::MediaSessionService service_;
+  QByteArray thumbnailBytes_;
+  QString thumbnailUrl_;
 };
 
 }  // namespace yasb::services

@@ -30,12 +30,18 @@ class GlazeWM : public QObject {
 
  public:
   explicit GlazeWM(QObject* parent = nullptr);
+  // Test seam: `sender` replaces the socket send, `opener` replaces opening the socket.
+  GlazeWM(widgets::glazewm::GlazewmService::Sender sender,
+          widgets::glazewm::GlazewmService::Opener opener, QObject* parent);
   ~GlazeWM() override;
 
   bool connected() const { return connected_; }
   QVariantList monitors() const { return monitors_; }
   QString tilingDirection() const { return tilingDirection_; }
   QString bindingMode() const { return bindingMode_; }
+
+  // Test seam: feed connection and messages as the socket would.
+  widgets::glazewm::GlazewmService& service() { return service_; }
 
   Q_INVOKABLE void activateWorkspace(const QString& name);
   Q_INVOKABLE void focusNextWorkspace();
@@ -48,6 +54,7 @@ class GlazeWM : public QObject {
   void changed();
 
  private:
+  void subscribeAll();
   void onEvent(const QString& name, const QVariantMap& payload);
 
   widgets::EventBus bus_;

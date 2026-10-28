@@ -2,19 +2,47 @@
 
 namespace yasb::services {
 
-Media::Media(QObject* parent)
-    : QObject(parent), service_(platform::createSystemMediaSource(), this) {
+QString imageMimeType(const QByteArray& bytes) {
+  if (bytes.startsWith("\x89PNG\r\n\x1a\n")) return QStringLiteral("image/png");
+  if (bytes.startsWith("\xff\xd8\xff")) return QStringLiteral("image/jpeg");
+  if (bytes.startsWith("GIF8")) return QStringLiteral("image/gif");
+  if (bytes.startsWith("BM")) return QStringLiteral("image/bmp");
+  if (bytes.size() >= 12 && bytes.startsWith("RIFF") && bytes.mid(8, 4) == "WEBP") {
+    return QStringLiteral("image/webp");
+  }
+  return QStringLiteral("application/octet-stream");
+}
+
+QString imageDataUrl(const QByteArray& bytes) {
+  if (bytes.isEmpty()) return {};
+  return QStringLiteral("data:%1;base64,%2")
+      .arg(imageMimeType(bytes), QString::fromLatin1(bytes.toBase64()));
+}
+
+Media::Media(QObject* parent) : Media(platform::createSystemMediaSource(), parent) {}
+
+Media::Media(std::unique_ptr<platform::MediaSessionSource> source, QObject* parent)
+    : QObject(parent), service_(std::move(source), this) {
   using platform::MediaSessionService;
   for (auto signal :
        {&MediaSessionService::mediaDataChanged, &MediaSessionService::currentSessionChanged,
         &MediaSessionService::mediaPropertiesChanged, &MediaSessionService::timelineInfoChanged,
         &MediaSessionService::playbackInfoChanged}) {
-    connect(&service_, signal, this, &Media::changed);
+    connect(&service_, signal, this, &Media::onServiceChanged);
   }
   service_.start();
 }
 
 Media::~Media() { service_.stop(); }
+
+void Media::onServiceChanged() {
+  const QByteArray bytes = current() ? current()->thumbnail : QByteArray();
+  if (bytes != thumbnailBytes_) {
+    thumbnailBytes_ = bytes;
+    thumbnailUrl_ = imageDataUrl(bytes);
+  }
+  emit changed();
+}
 
 QString Media::title() const { return current() ? current()->title : QString(); }
 QString Media::artist() const { return current() ? current()->artist : QString(); }

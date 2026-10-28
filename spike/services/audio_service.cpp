@@ -4,8 +4,9 @@
 
 namespace yasb::services {
 
-AudioBase::AudioBase(platform::AudioFlow flow, QObject* parent)
-    : QObject(parent), endpoints_(platform::createSystemAudio(flow, this)) {
+AudioBase::AudioBase(platform::AudioEndpoints* endpoints, QObject* parent)
+    : QObject(parent), endpoints_(endpoints) {
+  endpoints_->setParent(this);
   connect(endpoints_, &platform::AudioEndpoints::volumeChanged, this, &AudioBase::changed);
   connect(endpoints_, &platform::AudioEndpoints::deviceChanged, this, &AudioBase::changed);
 }

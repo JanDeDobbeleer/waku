@@ -21,6 +21,7 @@ class Memory : public StatSource {
 
  public:
   explicit Memory(QObject* parent = nullptr);
+  Memory(std::shared_ptr<platform::MemoryDataSource> source, QObject* parent);
 
   double percent() const { return sample_.percent; }
   qlonglong used() const { return static_cast<qlonglong>(sample_.used); }
@@ -46,6 +47,7 @@ class Cpu : public StatSource {
 
  public:
   explicit Cpu(QObject* parent = nullptr);
+  Cpu(std::shared_ptr<platform::CpuDataSource> source, QObject* parent);
 
   double percent() const { return sample_.percent; }
   QVariantList perCore() const;
@@ -71,6 +73,7 @@ class Battery : public StatSource {
 
  public:
   explicit Battery(QObject* parent = nullptr);
+  Battery(std::shared_ptr<platform::BatteryDataSource> source, QObject* parent);
 
   bool available() const { return available_; }
   int percent() const { return sample_.percent; }

@@ -45,7 +45,16 @@ QVariantList toVariant(const kmb::Json& state) {
 
 }  // namespace
 
-Komorebi::Komorebi(QObject* parent) : QObject(parent), service_(bus_) {
+Komorebi::Komorebi(QObject* parent) : QObject(parent), service_(bus_) { subscribe(); }
+
+Komorebi::Komorebi(platform::KomorebiBackend backend, kmb::KomorebiService::CommandRunner runner,
+                   QString pipeName, platform::KomorebiPipeListener::Timing timing, QObject* parent)
+    : QObject(parent),
+      service_(bus_, std::move(backend), std::move(runner), std::move(pipeName), timing) {
+  subscribe();
+}
+
+void Komorebi::subscribe() {
   connect(&bus_, &widgets::EventBus::event, this, &Komorebi::onEvent);
   emit bus_.event(kmb::kSubscribeEvent, {});
 }
