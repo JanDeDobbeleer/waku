@@ -21,6 +21,7 @@ namespace {
 
 constexpr auto kWindowUrl = "qrc:/qt/qml/barnacle/BarWindow.qml";
 constexpr auto kFallbackUrl = "qrc:/qt/qml/barnacle/FallbackConfig.qml";
+constexpr auto kSafeUrl = "qrc:/qt/qml/barnacle/widgets/SafeConfig.qml";
 
 // "file:line:col: message", with the file name only.
 QString describe(const QQmlError& error) {
@@ -153,7 +154,7 @@ void BarHost::applyTheme() {
       engine_->singletonInstance<Theme*>(QStringLiteral("barnacle"), QStringLiteral("Theme"));
   if (!theme) return;
   const ThemeSpec defaults;
-  if (!QFileInfo::exists(themePath())) {
+  if (options_.safe || !QFileInfo::exists(themePath())) {
     theme->assignFrom(defaults);
     return;
   }
@@ -167,7 +168,39 @@ void BarHost::applyTheme() {
   }
 }
 
+QUrl BarHost::safeConfigUrl() { return QUrl(QString::fromLatin1(kSafeUrl)); }
+
+bool BarHost::checkConfig(const QUrl& url, QString* error) {
+  return validate(url, Config::staticMetaObject, error);
+}
+
+bool BarHost::reloadSafe() {
+  // Nothing in the config home is read: the built-in bar and the default theme, always.
+  loaded_.reset();
+  engine_->clearComponentCache();
+  applyTheme();
+  QString error;
+  std::unique_ptr<Loaded> next =
+      build(options_.safeUrl.isValid() ? options_.safeUrl : safeConfigUrl(), &error);
+  if (!next) {
+    setError(error);
+    QString fallbackError;
+    if (auto fallback = build(QUrl(QString::fromLatin1(kFallbackUrl)), &fallbackError)) {
+      install(std::move(fallback));
+    } else {
+      qCritical().noquote() << "barnacle: the fallback bar failed:" << fallbackError;
+    }
+    emit reloaded(false);
+    return false;
+  }
+  setError({});
+  install(std::move(next));
+  emit reloaded(true);
+  return true;
+}
+
 bool BarHost::reload() {
+  if (options_.safe) return reloadSafe();
   QString error;
   std::unique_ptr<Loaded> next;
   if (!QFileInfo::exists(entryPath())) {
@@ -300,6 +333,7 @@ void BarHost::decorate(QObject* window, int backdrop) {
 }
 
 void BarHost::watch() {
+  if (options_.safe) return;
   watching_ = true;
   refreshWatches();
 }

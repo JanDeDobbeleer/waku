@@ -16,5 +16,6 @@ qt_add_qml_module(barnacle_widgets
     Volume.qml
     Media.qml
     Workspaces.qml
+    SafeConfig.qml
 )
 target_link_libraries(barnacle_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE barnacle_bar barnacle_services)

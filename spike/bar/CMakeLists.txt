@@ -21,10 +21,12 @@ qt_add_qml_module(barnacle_bar
     bar_host.h
     bar_host.cpp
     bar_host_win32.cpp
+    control_handler.h
+    control_handler.cpp
 )
 # The generated type registration includes headers by name, hence the private include directory.
 target_include_directories(barnacle_bar PUBLIC ${CMAKE_SOURCE_DIR}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(barnacle_bar PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(barnacle_bar PUBLIC Qt6::Quick Qt6::Qml yasb_ui)
+target_link_libraries(barnacle_bar PUBLIC Qt6::Quick Qt6::Qml barnacle_control yasb_ui)

@@ -224,8 +224,36 @@ Pill {
 - The QML disk cache is off: a config is edited by hand and a cached compilation must never
   outlive an edit.
 - `qmllint` works on the config home, so editors give completion and diagnostics for free.
-- `--safe` starts with the built-in layout and ignores the config home (not built yet).
-- `barnacle reload` forces a reload (not built yet).
+- `--safe`: see below.
+- `barnaclec reload`: see below.
+
+### Safe mode and the command line
+
+- **`barnacle.exe --safe`** starts the built-in bar (`barnacle.widgets/SafeConfig.qml`: Clock,
+  Workspaces, Volume, Battery, Cpu, Memory) with the default theme. Nothing in the config home is
+  read, so a broken `bar.qml`, a broken `theme.qml` or a missing folder cannot get in the way, and
+  nothing is watched. It is the way back to a bar when the config is wrong: fix the files, then
+  start normally. `barnaclec reload` in safe mode rebuilds the same bar.
+- **`barnaclec.exe`** is a separate console program, as `komorebic` is to komorebi: the bar is a
+  Windows (GUI) program with no console to print to or exit code to return. It talks to the
+  running bar over a named pipe:
+
+  | Command | Answer | Exit code |
+  |---|---|---|
+  | `barnaclec reload` | `ok`, or `error: bar.qml:12:5: ...` (the previous bars stay) | 0, or 1 |
+  | `barnaclec status` | `running; bars=1; safe=no; error=none` | 0 |
+  | `barnaclec quit` | `ok`, then the bar exits | 0 |
+  | no bar running | `barnaclec: no bar is running for <config home>` | 2 |
+  | bad command, no answer | usage or the reason | 3 |
+
+- The instance is named by the config home: `--config-home <dir>` or `$BARNACLE_CONFIG_HOME` on
+  both programs picks it, and the pipe name is a short hash of the folder (case and trailing
+  slashes do not matter), so two bars with different config homes do not meet.
+- One bar per config home: a named mutex held by the running bar refuses a second start with
+  `barnacle is already running for <config home> (barnaclec quit stops it)` and exit code 1. (Two
+  `QLocalServer`s can listen on one pipe name on Windows, so the pipe alone cannot tell.)
+- Protocol: one line in, one line out, then the connection closes. A line over 1 KiB is refused
+  and a client that stalls is dropped after 3 s, so a stray process cannot hold the bar.
 
 ## Trust and safety
 
@@ -244,7 +272,7 @@ compatible; removing or renaming one is a major bump with the old name kept for 
    them; replace the spike's "load every file in `widgets/`" with the explicit layout. (Medium.)
 2. Built-in `barnacle.widgets`: Clock, Cpu, Memory, Battery, Volume, Media, Workspaces (komorebi or
    GlazeWM, chosen by what is running). (Medium.)
-3. Transactional reload with the error pill, `--safe`, `yasbc reload`. (Small.)
+3. Transactional reload with the error pill, `--safe`, `barnaclec reload`. (Small; done.)
 4. `Theme` singleton and `theme.qml`. (Small.)
 5. Popups (`PopupWindow`) and tooltips, then systray and taskbar, which need native-window work.
    (Large.)
@@ -300,7 +328,8 @@ actions (lock, sleep) are not part of the first cut.
 ## Name
 
 barnacle. It clings to the edge of the screen. The official name is lower case, everywhere:
-the executable is `barnacle.exe`, the CLI is `barnacle reload`, the config home is
+the executable is `barnacle.exe`, the command-line client is `barnaclec.exe` (`barnaclec reload`;
+a console program, so it is separate from the GUI executable), the config home is
 `%USERPROFILE%\.config\barnacle\`, and the QML modules are `barnacle`, `barnacle.widgets` and
 `barnacle.services`.
 

@@ -6,6 +6,7 @@
 #include <QQmlComponent>
 #include <QString>
 #include <QTimer>
+#include <QUrl>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -61,15 +62,27 @@ class BarHost : public QObject {
     NativeHooks hooks;
     // Screens to build bars for; default: every screen of the application.
     std::function<QList<QScreen*>()> screens;
+    // Safe mode (`--safe`): the built-in bar and the default theme; the config home is ignored,
+    // not read and not watched. For getting a bar back when the config is broken.
+    bool safe = false;
+    // The config safe mode builds; default: the built-in one (safeConfigUrl()).
+    QUrl safeUrl;
   };
+
+  // The built-in bar of safe mode: Clock, Workspaces, Volume, Battery, Cpu and Memory.
+  static QUrl safeConfigUrl();
 
   BarHost(QQmlEngine* engine, Options options, QObject* parent = nullptr);
   ~BarHost() override;
 
   // True when the config was applied. False leaves the previous bars in place.
   bool reload();
-  // Reloads whenever a file in the config home changes.
+  // Reloads whenever a file in the config home changes. Does nothing in safe mode.
   void watch();
+
+  // Whether `url` is a config that would load: it compiles and its root is a Config. Builds no
+  // widget and starts no service. `error` gets the first message when it does not.
+  bool checkConfig(const QUrl& url, QString* error);
 
   // Gives a window the native look of a bar (the backdrop). PopupWindow and Tooltip call this for
   // their own windows with the backdrop of the bar they belong to. `window` is a QWindow;
@@ -118,6 +131,7 @@ class BarHost : public QObject {
   bool validateTheme(QString* error);
   // Copies theme.qml (or the defaults, when there is none) into the Theme singleton.
   void applyTheme();
+  bool reloadSafe();
   std::unique_ptr<Loaded> build(const QUrl& url, QString* error);
   void install(std::unique_ptr<Loaded> loaded);
   void present(Entry& entry);

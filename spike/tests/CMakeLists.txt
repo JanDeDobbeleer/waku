@@ -17,6 +17,8 @@ add_executable(barnacle_services_tests
   test_builtin_widgets.cpp
   test_theme.cpp
   test_popups.cpp
+  test_control.cpp
+  test_safe_mode.cpp
 )
 target_compile_definitions(barnacle_services_tests PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)

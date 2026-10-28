@@ -127,6 +127,8 @@ struct Harness {
   std::unique_ptr<BarHost> host;
   int screenCount = 1;
   bool allowReserve = false;
+  bool safe = false;
+  QUrl safeUrl;
 
   QString barFile() const { return dir.filePath(QStringLiteral("bar.qml")); }
 
@@ -140,6 +142,8 @@ struct Harness {
     BarHost::Options options;
     options.configHome = dir.path();
     options.allowReserve = allowReserve;
+    options.safe = safe;
+    options.safeUrl = safeUrl;
     options.hooks = native.hooks();
     const int count = screenCount;
     options.screens = [count] {

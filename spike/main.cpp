@@ -4,6 +4,8 @@
 #include <QQuickWindow>
 
 #include "spike/bar/bar_host.h"
+#include "spike/bar/control_handler.h"
+#include "spike/control/control.h"
 
 int main(int argc, char* argv[]) {
   // As app/main.cpp setFontEngine(): Qt's DirectWrite font database maps every installed font
@@ -19,24 +21,44 @@ int main(int argc, char* argv[]) {
   QGuiApplication app(argc, argv);
 
   QCommandLineParser parser;
+  parser.addHelpOption();
   QCommandLineOption configHomeOpt(
       QStringLiteral("config-home"),
-      QStringLiteral("Folder with bar.qml (default: the sample config of the repository)."),
-      QStringLiteral("dir"), QStringLiteral(SPIKE_CONFIG_DIR));
+      QStringLiteral("Folder with bar.qml (default: $BARNACLE_CONFIG_HOME, else the sample config "
+                     "of the repository)."),
+      QStringLiteral("dir"));
   QCommandLineOption appBarOpt(QStringLiteral("register-app-bar"),
                                QStringLiteral("Reserve screen work area for bars that ask."));
+  QCommandLineOption safeOpt(
+      QStringLiteral("safe"),
+      QStringLiteral("Start the built-in bar with the default theme and ignore the config home."));
   parser.addOption(configHomeOpt);
   parser.addOption(appBarOpt);
+  parser.addOption(safeOpt);
   parser.process(app);
+
+  const QString configHome =
+      barnacle::resolveConfigHome(parser.value(configHomeOpt), QStringLiteral(SPIKE_CONFIG_DIR));
 
   QQmlEngine engine;
   barnacle::BarHost::Options options;
-  options.configHome = parser.value(configHomeOpt);
+  options.configHome = configHome;
   options.allowReserve = parser.isSet(appBarOpt);
+  options.safe = parser.isSet(safeOpt);
   options.hooks = barnacle::BarHost::NativeHooks::win32();
   barnacle::BarHost host(&engine, std::move(options));
+
+  // One bar per config home: `barnaclec` finds it by the same name, and a second start would put
+  // a second bar over the first.
+  barnacle::ControlServer control(barnacle::controlPipeName(configHome),
+                                  barnacle::makeControlHandler(host, parser.isSet(safeOpt)));
+  if (!control.listen()) {
+    qCritical().noquote() << "barnacle is already running for" << configHome
+                          << "(barnaclec quit stops it)";
+    return 1;
+  }
+
   host.reload();
   host.watch();
-
   return app.exec();
 }
