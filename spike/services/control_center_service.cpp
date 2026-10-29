@@ -65,10 +65,11 @@ QString idString(const QUuid& id) { return id.toString(QUuid::WithoutBraces); }
 }  // namespace
 
 ControlCenter::ControlCenter(QObject* parent)
-    : ControlCenter(kernel::liveDesktop() ? systemBackend() : Backend{},
-                    kernel::liveDesktop() ? systemLauncher() : Launcher{},
-                    kernel::liveDesktop() ? platform::createSystemBrightness(nullptr) : nullptr,
-                    parent) {
+    : ControlCenter(
+          kernel::liveDesktop() ? systemBackend() : Backend{},
+          kernel::liveDesktop() ? systemLauncher() : Launcher{},
+          kernel::liveDesktop() ? wabar::brightness::createSystemBrightness(nullptr) : nullptr,
+          parent) {
   available_ = kernel::liveDesktop();
   if (!available_) return;
   // Focus Assist changes made outside the bar (Settings, the action centre).
@@ -78,7 +79,7 @@ ControlCenter::ControlCenter(QObject* parent)
 }
 
 ControlCenter::ControlCenter(Backend backend, Launcher launcher,
-                             platform::BrightnessControl* brightness, QObject* parent)
+                             wabar::brightness::BrightnessControl* brightness, QObject* parent)
     : QObject(parent),
       backend_(std::move(backend)),
       launcher_(std::move(launcher)),
@@ -89,7 +90,7 @@ ControlCenter::ControlCenter(Backend backend, Launcher launcher,
   if (brightnessControl_) {
     brightnessControl_->setParent(this);
     // A slider write, a power-setting notification or a DDC re-read.
-    connect(brightnessControl_, &platform::BrightnessControl::brightnessChanged, this,
+    connect(brightnessControl_, &wabar::brightness::BrightnessControl::brightnessChanged, this,
             [this](qulonglong, int) {
               readBrightness();
               emit changed();

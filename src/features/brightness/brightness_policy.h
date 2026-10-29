@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace yasb::platform {
+namespace wabar::brightness {
 
 // Pure helpers of the brightness service (services/brightness/service.py), kept free of Win32 so
 // tests can replay them with injected time and payloads.
@@ -42,4 +42,4 @@ class PolicyIgnoreWindow {
   std::atomic<Clock::rep> until_{0};
 };
 
-}  // namespace yasb::platform
+}  // namespace wabar::brightness

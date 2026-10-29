@@ -4,10 +4,12 @@
 #include <QVariantMap>
 #include <memory>
 
+#include "features/brightness/testing/fake_brightness.h"
 #include "spike/services/control_center_service.h"
 
 using namespace wabar::services;
 namespace platform = yasb::platform;
+using wabar::brightness::FakeBrightness;
 
 namespace {
 
@@ -15,34 +17,6 @@ const QUuid kBalanced(QStringLiteral("{381b4222-f694-41f0-9685-ff5bb260df2e}"));
 const QUuid kSaver(QStringLiteral("{a1841308-3541-4fab-bc81-f71556f20b4a}"));
 const QUuid kBetter(QStringLiteral("{00000000-0000-0000-0000-000000000000}"));
 const QUuid kBest(QStringLiteral("{ded574b5-45a0-4f42-8737-46345c09c238}"));
-
-class FakeBrightness final : public platform::BrightnessControl {
- public:
-  std::vector<platform::BrightnessMonitor> monitors() override { return list; }
-  QString monitorSubtitle(qulonglong id, int index) override {
-    return QStringLiteral("Monitor %1 #%2").arg(index + 1).arg(id);
-  }
-  std::optional<int> brightness(qulonglong id) override {
-    const auto it = values.find(id);
-    return it == values.end() ? std::nullopt : std::optional<int>(it->second);
-  }
-  void setBrightness(qulonglong id, int percent) override {
-    values[id] = percent;
-    writes.emplace_back(id, percent);
-  }
-  void refreshNow() override { ++refreshes; }
-  void stop() override {
-    ++stops;
-    if (stopCounter) ++*stopCounter;
-  }
-
-  std::vector<platform::BrightnessMonitor> list{{7, QStringLiteral("a")}, {9, QStringLiteral("b")}};
-  std::map<qulonglong, int> values{{7, 40}, {9, 80}};
-  std::vector<std::pair<qulonglong, int>> writes;
-  int refreshes = 0;
-  int stops = 0;
-  int* stopCounter = nullptr;
-};
 
 struct World {
   QString dnd = QStringLiteral("disabled");

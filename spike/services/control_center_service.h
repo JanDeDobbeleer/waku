@@ -11,7 +11,7 @@
 #include <optional>
 #include <vector>
 
-#include "platform/brightness.h"
+#include "features/brightness/brightness.h"
 #include "platform/power.h"
 
 namespace wabar::services {
@@ -23,8 +23,8 @@ namespace platform = ::yasb::platform;
 // the user's name and picture, and the session and power actions. Volume and microphone live in
 // AudioOutput and AudioInput, the player in Media; this object does not repeat them. GUI thread
 // only. The brightness object lives on this object (QObject child) and owns its own worker
-// threads (see platform::BrightnessControl); the DND watcher is the platform's WNF subscription.
-// The engine destroys the singleton, which stops both.
+// threads (see wabar::brightness::BrightnessControl); the DND watcher is the platform's WNF
+// subscription. The engine destroys the singleton, which stops both.
 //
 // Every state change a widget can see is announced with `changed`; `refresh()` re-reads everything
 // and is meant to run when the popup opens.
@@ -89,8 +89,8 @@ class ControlCenter : public QObject {
   // Real system. On the offscreen platform every control is inert and nothing touches the machine.
   explicit ControlCenter(QObject* parent = nullptr);
   // Test seam. `brightness` may be null (no brightness control); it is reparented to this object.
-  ControlCenter(Backend backend, Launcher launcher, platform::BrightnessControl* brightness,
-                QObject* parent);
+  ControlCenter(Backend backend, Launcher launcher,
+                wabar::brightness::BrightnessControl* brightness, QObject* parent);
   ~ControlCenter() override;
 
   bool available() const { return available_; }
@@ -143,7 +143,7 @@ class ControlCenter : public QObject {
 
   Backend backend_;
   Launcher launcher_;
-  platform::BrightnessControl* brightnessControl_ = nullptr;
+  wabar::brightness::BrightnessControl* brightnessControl_ = nullptr;
   QTimer pendingTimer_;
   bool available_ = true;
 

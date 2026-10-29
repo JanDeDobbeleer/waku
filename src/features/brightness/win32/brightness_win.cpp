@@ -1,8 +1,6 @@
 // Monitor brightness: DDC/CI through dxva2 for external panels, the active power scheme for the
 // internal panel. Port of services/brightness (service.py, displays.py, scheme.py): DDC contrast,
 // the periodic DDC poll and the power-policy notification window.
-#include "platform/brightness.h"
-
 #include <windows.h>
 #include <highlevelmonitorconfigurationapi.h>
 #include <lowlevelmonitorconfigurationapi.h>
@@ -26,10 +24,11 @@
 #include <mutex>
 #include <thread>
 
+#include "features/brightness/brightness.h"
+#include "features/brightness/brightness_policy.h"
 #include "kernel/win32/winrt_apartment.h"
-#include "platform/brightness_policy.h"
 
-namespace yasb::platform {
+namespace wabar::brightness {
 namespace {
 
 constexpr int kDdcAttempts = 5;
@@ -776,4 +775,4 @@ BrightnessControl* createSystemBrightness(QObject* parent, int ddcPollSeconds) {
   return new SystemBrightness(parent, ddcPollSeconds);
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::brightness

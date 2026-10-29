@@ -4,8 +4,24 @@ add_library(yasb_platform STATIC
   audio.cpp
   bluetooth.h
   bluetooth.cpp
-  brightness.h
-  brightness.cpp
+  command_line.h
+  command_line.cpp
+  connectivity.h
+  connectivity.cpp
+  desktop_wallpaper.h
+  desktop_wallpaper.cpp
+  github_api.h
+  github_api.cpp
+  glazewm.h
+  glazewm.cpp
+  komorebi.h
+  komorebi.cpp
+  media_session.h
+  media_session.cpp
+  media_session_winrt.cpp
+  media_source_apps.cpp
+  memory.h
+  memory.cpp
   notifications.h
   notifications.cpp
   notifications_system.cpp

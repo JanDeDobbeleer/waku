@@ -2,9 +2,9 @@
 
 #include <chrono>
 
-#include "platform/brightness_policy.h"
+#include "features/brightness/brightness_policy.h"
 
-using namespace yasb::platform;
+using namespace wabar::brightness;
 using Clock = PolicyIgnoreWindow::Clock;
 
 TEST(BrightnessPolicy, PayloadIsLittleEndianAndClamped) {

@@ -5,7 +5,7 @@
 #include <optional>
 #include <vector>
 
-namespace yasb::platform {
+namespace wabar::brightness {
 
 struct BrightnessMonitor {
   qulonglong id = 0;  // HMONITOR
@@ -53,4 +53,4 @@ class BrightnessControl : public QObject {
 // period (0 disables it); the control center uses the Python default of 60.
 BrightnessControl* createSystemBrightness(QObject* parent = nullptr, int ddcPollSeconds = 60);
 
-}  // namespace yasb::platform
+}  // namespace wabar::brightness

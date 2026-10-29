@@ -18,7 +18,17 @@ wabar_contribute(
     test_github.cpp
     test_wallpapers.cpp
     test_wallpaper_control.cpp
-    test_brightness_policy.cpp
+    test_wallpaper_manager.cpp
+    test_glazewm_socket.cpp
+    test_glazewm_state.cpp
+    test_komorebi_service.cpp
+    test_systray_click.cpp
+    test_systray_pipe.cpp
+    test_tray_icon_registry.cpp
+    test_systray_icon_scale.cpp
+    test_systray_state.cpp
+    test_github_api.cpp
+    test_taskbar_platform.cpp
     test_platform.cpp
   TEST_LIBS nlohmann_json::nlohmann_json
 )
