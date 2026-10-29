@@ -68,5 +68,6 @@ wabar_contribute(
     tests/test_popups.cpp
     tests/test_screen_match.cpp
     tests/test_theme.cpp
+    tests/test_wallpaper_handler.cpp
   TEST_LIBS wabar_host_base
 )

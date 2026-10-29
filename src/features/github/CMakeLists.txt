@@ -1,6 +1,6 @@
 # GitHub notifications and device-flow sign-in. The root is Qt Core and Qt Network; the QML service
-# and widget use shell for the "open URL" clicks. test_github.cpp stays in spike/tests until the bar
-# fixtures move to host/testing.
+# and widget use shell for the "open URL" clicks. The widget tests use the bar Harness of
+# host/testing.
 wabar_feature(NAME github
   DEPENDS shell
   SOURCES
@@ -16,4 +16,5 @@ wabar_feature(NAME github
     qml/GitHub.qml
   TESTS
     tests/test_github_api.cpp
+    tests/test_github.cpp
   SYSTEM_LIBS Qt6::Network)

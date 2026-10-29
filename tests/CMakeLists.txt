@@ -1,6 +1,6 @@
 # wabar_tests: the one test binary (proposal, section 8). Its sources are main.cpp here plus every
 # TESTS contribution: wabar_feature(... TESTS ...) under src/ and wabar_contribute(TESTS ...) in the
-# legacy spike/tests/. Added after every contributor (top-level CMakeLists.txt).
+# legacy spike/tests/, plus tests/integration/. Added after every contributor (top-level CMakeLists.txt).
 # Select one feature by suite name: ctest -R Tray, or --gtest_filter=Tray*.
 include(GoogleTest)
 find_package(Qt6 REQUIRED COMPONENTS Test)
@@ -9,7 +9,13 @@ get_property(test_sources GLOBAL PROPERTY WABAR_TEST_SOURCES)
 get_property(test_libs GLOBAL PROPERTY WABAR_TEST_LIBS)
 list(REMOVE_DUPLICATES test_libs)
 
-add_executable(wabar_tests main.cpp ${test_sources})
+# tests/integration: tests that load built-in widgets of several features together (they may
+# include anything); every unit's own tests come through the TESTS contributions.
+add_executable(wabar_tests main.cpp
+  integration/test_builtin_widgets.cpp
+  integration/test_safe_mode.cpp
+  integration/test_widget_popups.cpp
+  ${test_sources})
 # The control tests run wabarc.exe.
 add_dependencies(wabar_tests wabarc)
 target_compile_definitions(wabar_tests PRIVATE

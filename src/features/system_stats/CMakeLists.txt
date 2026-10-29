@@ -19,5 +19,7 @@ wabar_feature(NAME system_stats
     qml/Memory.qml
     qml/StatGraph.qml
     qml/StatPopup.qml
-  TESTS tests/test_stat_sources.cpp
+  TESTS
+    tests/test_stat_sources.cpp
+    tests/test_stat_widgets.cpp
   SYSTEM_LIBS pdh psapi setupapi)

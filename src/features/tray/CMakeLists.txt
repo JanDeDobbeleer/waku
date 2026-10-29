@@ -43,6 +43,7 @@ wabar_feature(
     tests/test_tray_icon_registry.cpp
     tests/test_tray_model.cpp
     tests/test_tray_pins.cpp
+    tests/test_tray_widget.cpp
   SYSTEM_LIBS
     psapi
     user32

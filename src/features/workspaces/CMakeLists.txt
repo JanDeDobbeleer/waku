@@ -36,6 +36,7 @@ wabar_feature(NAME workspaces
     tests/test_glazewm_state.cpp
     tests/test_komorebi_service.cpp
     tests/test_wm_clients.cpp
+    tests/test_workspace_dot.cpp
     tests/test_workspaces.cpp
   SYSTEM_LIBS winhttp)
 # The komorebi state is parsed JSON (komorebi_service.h, komorebi_state.h).

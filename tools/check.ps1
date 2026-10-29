@@ -235,10 +235,10 @@ Write-Step 'structure (S1-S8; enforcing under src/ and tests/, report-only for l
 $sw = [Diagnostics.Stopwatch]::StartNew()
 $structureRules = [ordered]@{
     S1 = 'every source under src/ belongs to exactly one unit and is declared by it'
-    S2 = 'quoted includes: own unit, kernel/, root headers of control/ and of DEPENDS features; host also control/; app/ and tests/ free'
+    S2 = 'quoted includes: own unit, kernel/, root headers of control/ and of DEPENDS features (their tests also host/testing/ and the testing/ of DEPENDS); host also control/; app/ and tests/ free'
     S3 = 'Windows SDK and C++/WinRT headers only in */win32/**, features/tray/hook/, app/, tests'
     S4 = 'QtQml/QtQuick includes and QML_* macros only in */qml/**, */testing/**, app/, tests; QtWidgets nowhere'
-    S5 = 'only */tests/** and tests/ include */testing/**'
+    S5 = 'only */tests/**, */testing/** and tests/ include */testing/** (features: own, DEPENDS and host/testing/)'
     S6 = 'a feature''s .qml uses services (S.<Type>) and widgets of its own feature or its DEPENDS only'
     S7 = 'QML-facing header basenames unique across the services module; .qml basenames unique per module'
     S8 = 'DEPENDS name existing features and form an acyclic graph'
@@ -436,7 +436,7 @@ foreach ($f in $checkFiles) {
             if ($inc -match $widgetsIncludes) { Add-StructureViolation 'S4' $at "<$inc>: Qt Widgets is not used" }
         } elseif ($line -match '^\s*#\s*include\s*"([^"]+)"') {
             $inc = $Matches[1]
-            if ($inc -match '(^|/)testing/' -and -not $isTests) { Add-StructureViolation 'S5' $at "includes `"$inc`" outside tests" }
+            if ($inc -match '(^|/)testing/' -and -not $isTests -and $f -notmatch '(^|/)testing/') { Add-StructureViolation 'S5' $at "includes `"$inc`" outside tests" }
             # S2 (src/ only; tests/ and app/ include freely)
             if (-not $isSrc -or -not $unit -or $unit.StartsWith('app/')) { continue }
             if ($inc -notmatch '/') {
@@ -448,6 +448,9 @@ foreach ($f in $checkFiles) {
             # control/ root headers (the interfaces the bar's handler calls, such as WallpaperControl) are a
             # stable shared abstraction: a feature may implement them without a DEPENDS edge.
             if ($feature -and $inc -match '^control/[^/]+$') { continue }
+            # Tests of any feature may include the bar Harness and the widget helpers (host/testing/);
+            # the testing/ of their DEPENDS features is allowed below.
+            if ($feature -and $isTests -and $inc -match '^host/testing/[^/]+$') { continue }
             $ok = $false
             if ($feature -and $inc -match '^features/([^/]+)/(.+)$') {
                 $d = $Matches[1]; $rest = $Matches[2]

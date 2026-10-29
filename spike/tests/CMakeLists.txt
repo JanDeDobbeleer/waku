@@ -3,13 +3,10 @@
 wabar_contribute(
   TESTS
     test_audio.cpp
-    test_builtin_widgets.cpp
-    test_safe_mode.cpp
-    test_tray_widget.cpp
-    test_taskbar.cpp
+    test_bluetooth.cpp
+    test_notifications.cpp
     test_control_center.cpp
-    test_github.cpp
-    test_wallpapers.cpp
-    test_wallpaper_control.cpp
+    test_brightness_policy.cpp
+    test_platform.cpp
   TEST_LIBS nlohmann_json::nlohmann_json
 )

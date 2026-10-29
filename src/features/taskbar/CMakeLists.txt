@@ -27,6 +27,7 @@ wabar_feature(
     qml/Taskbar.qml
   TESTS
     tests/test_taskbar_platform.cpp
+    tests/test_taskbar.cpp
   SYSTEM_LIBS
     advapi32
     dwmapi

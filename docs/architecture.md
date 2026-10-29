@@ -27,7 +27,7 @@ former `spike/` targets do not yet (migration step 9):
 | `wabar_services`, `wabar_widgets` | `src/modules/qml_modules.cmake` | QML modules `wabar.services` and `wabar.widgets`, assembled from contributions (below) | `yasb_widgets`, the feature libraries, Qt Quick | |
 | `wabar` (exe), `wabarc` (exe) | `spike/` | `spike/main.cpp`, `spike/cli/main.cpp` | | |
 | `YASBNativeTrayHook[_arm64]` (DLL) | `src/features/tray/hook/` | `src/features/tray/hook/trayhook.cpp` | | static CRT, built next to `wabar.exe` |
-| `wabar_tests` (exe) | `tests/` | `tests/main.cpp` and every `TESTS` contribution (`spike/tests/**`, `src/**/tests/`) | | `GTest`, `Qt6::Test` |
+| `wabar_tests` (exe) | `tests/` | `tests/main.cpp` and `tests/integration/` and every `TESTS` contribution (`spike/tests/**`, `src/**/tests/`) | | `GTest`, `Qt6::Test` |
 
 All targets share the repo root as include directory (includes are written `"core/..."`), so the
 compiler alone does not reject a header-only include against the arrow. `tools\check.ps1` (also

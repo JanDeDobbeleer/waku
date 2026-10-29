@@ -36,7 +36,9 @@ wabar_feature(
     qml/Wallpapers.qml
   TESTS
     tests/test_wallpaper_manager.cpp
+    tests/test_wallpaper_service.cpp
     tests/test_wallpaper_transition.cpp
+    tests/test_wallpapers.cpp
   SYSTEM_LIBS
     advapi32
     ole32

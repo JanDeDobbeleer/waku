@@ -24,6 +24,6 @@ Current design of the capability. QML only: no C++, no service, no thread.
 
 ## Tests
 
-The tests need a bar harness (`spike/tests/bar_fixtures.h`) and stay in the integration style files
-until the host fixtures move: `ClockWidget.*` and `CalendarWidget.*` in
-`spike/tests/test_builtin_widgets.cpp`, `CalendarPopupTest.*` in `spike/tests/test_popups.cpp`.
+`tests/test_clock.cpp` runs `ClockWidget.*`, `CalendarWidget.*` and `CalendarPopupTest.*` in a real
+bar on the offscreen platform, with the Harness and helpers of `host/testing/` (rule S2 lets the tests
+of every feature include them).

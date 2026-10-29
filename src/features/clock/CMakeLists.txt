@@ -2,4 +2,6 @@
 wabar_feature(NAME clock
   QML_FILES
     qml/Calendar.qml
-    qml/Clock.qml)
+    qml/Clock.qml
+  TESTS
+    tests/test_clock.cpp)
