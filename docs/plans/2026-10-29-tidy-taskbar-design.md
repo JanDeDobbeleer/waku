@@ -10,6 +10,10 @@ One button per running window of this monitor, or per app when grouping is on. A
 window's icon, a count badge for a group of two or more, and a tint for the active window, a
 minimised window and a window that flashes for attention. Pinned apps stay in the bar as buttons
 when they do not run and take the place of their window when they do.
+`grouping` is off by default, as in Python's schema (`taskbar.grouping.enabled: false`); a user config that
+turns it on in Python must set `grouping: true` here. The group key is the app's unique id (AUMID, else
+`path:<exe>`, as Python's `get_app_unique_id`), so two windows of one exe group even without an AUMID;
+a window with no id never groups.
 
 - Left click: focus the window; minimise it when it is already active; restore it when minimised;
   on a group, activate the next window of the app after the active one (cycle).

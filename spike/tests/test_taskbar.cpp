@@ -30,6 +30,8 @@ using tidy::services::WindowIconProvider;
 constexpr plat::WindowHandle kFirst = 101;
 constexpr plat::WindowHandle kSecond = 102;
 constexpr plat::WindowHandle kThird = 103;
+constexpr plat::WindowHandle kFourth = 104;
+constexpr plat::WindowHandle kFifth = 105;
 
 // A window system that never touches the desktop: windows are rows in a map and every action is
 // only recorded.
@@ -263,6 +265,42 @@ TEST(TaskbarModel, GroupsTheWindowsOfOneAppWithACount) {
   f.system->rows.erase(kSecond);
   f.hook(plat::shell::kWindowDestroyed, kSecond);
   EXPECT_EQ(f.keys(), (QStringList{QStringLiteral("g:mail")}));
+}
+
+TEST(TaskbarModel, GroupsWindowsOfOneExeByPathWhenTheyHaveNoAumid) {
+  // The real system falls back to "path:<exe>" when a window has no AUMID; the same key groups.
+  Fixture f;
+  f.system->add(kFirst, QStringLiteral("Edge 1"), QStringLiteral("aumid:Edge"));
+  f.system->add(kSecond, QStringLiteral("Term 1"), QStringLiteral("path:C:\\t\\wt.exe"));
+  f.system->add(kThird, QStringLiteral("Term 2"), QStringLiteral("path:C:\\t\\wt.exe"));
+  f.start();
+  f.model.setGrouping(true);
+  EXPECT_EQ(f.rows(), 2);
+  EXPECT_EQ(f.at(0, TaskbarModel::CountRole).toInt(), 1);
+  EXPECT_EQ(f.at(1, TaskbarModel::CountRole).toInt(), 2);
+
+  // A window without any id stays alone, even beside another one without an id.
+  f.system->add(kFourth, QStringLiteral("Odd 1")).uniqueId.clear();
+  f.system->add(kFifth, QStringLiteral("Odd 2")).uniqueId.clear();
+  f.hook(plat::shell::kWindowCreated, kFourth);
+  f.hook(plat::shell::kWindowCreated, kFifth);
+  EXPECT_EQ(f.rows(), 4);
+}
+
+TEST(TaskbarModel, AGroupedRunningAppAbsorbsIntoItsPinnedButton) {
+  Fixture f;
+  writePins(pinFileIn(f.dir), {QStringLiteral("app")});
+  f.system->add(kFirst, QStringLiteral("A1"), QStringLiteral("app"));
+  f.system->add(kSecond, QStringLiteral("A2"), QStringLiteral("app"));
+  f.start();
+  f.model.setGrouping(true);
+  ASSERT_EQ(f.rows(), 1);
+  EXPECT_TRUE(f.at(0, TaskbarModel::PinnedRole).toBool());
+  EXPECT_EQ(f.at(0, TaskbarModel::CountRole).toInt(), 2);
+  f.system->rows.erase(kSecond);
+  f.hook(plat::shell::kWindowDestroyed, kSecond);
+  EXPECT_EQ(f.rows(), 1);
+  EXPECT_EQ(f.at(0, TaskbarModel::CountRole).toInt(), 1);
 }
 
 TEST(TaskbarModel, FiltersWindowsLikeThePythonTaskbar) {
