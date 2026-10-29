@@ -4,6 +4,8 @@
 # Include root is src/ (#include "kernel/qt/app_data.h"). Qt Core and Gui only; the Windows SDK
 # only under win32/ (rule S3). Everything links this library through wabar_feature() or by name.
 add_library(wabar_kernel STATIC
+  win32/app_activation.h
+  win32/app_activation.cpp
   qt/app_data.h
   qt/app_data.cpp
   qt/live_desktop.h
@@ -20,10 +22,11 @@ add_library(wabar_kernel STATIC
 target_include_directories(wabar_kernel PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(wabar_kernel
   PUBLIC Qt6::Core Qt6::Gui
-  PRIVATE wabar_options shell32 ole32 windowsapp)
+  PRIVATE wabar_options shell32 ole32 windowsapp propsys user32 version)
 
 wabar_contribute(
   TESTS
+    tests/test_app_activation.cpp
     tests/test_app_data.cpp
     tests/test_live_desktop.cpp
     tests/test_polled_source.cpp

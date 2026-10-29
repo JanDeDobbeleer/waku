@@ -25,8 +25,8 @@
 #include <string>
 #include <vector>
 
+#include "kernel/win32/app_activation.h"
 #include "kernel/win32/shell_launch.h"
-#include "platform/media_session.h"
 
 namespace yasb::platform {
 namespace {
@@ -215,7 +215,7 @@ bool activateToast(const QString& aumid, const QString& launch, const QString& a
 
 bool showApp(const QString& aumid) {
   if (aumid.isEmpty()) return false;
-  if (activateAppByAumid(aumid)) return true;
+  if (wabar::kernel::activateAppByAumid(aumid)) return true;
   if (!hasShellApp(aumid)) return false;
   wabar::kernel::shellOpen(QStringLiteral("shell:AppsFolder\\") + aumid);
   return true;
