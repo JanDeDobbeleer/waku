@@ -1,9 +1,0 @@
-:root {
-    --a: var(--b);
-    --b: var(--a);
-    --self: var(--self);
-    --ok: red;
-}
-.x { color: var(--a); }
-.y { color: var(--b); }
-.z { color: var(--self); background: var(--ok); }

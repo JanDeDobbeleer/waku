@@ -64,29 +64,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## qt-css-engine (Video-Nomad/qt-css-engine)
-
-- Project: https://github.com/Video-Nomad/qt-css-engine
-- Reference revision: commit `fadd1a992edd79765556ef6a6ec7d8e62ff78973` (package version
-  `0.1.7.dev3+gfadd1a992`, branch `dev`)
-- Use: `core/css/rules.*` ports `qt_css_engine.extract_rules`; `core/css/transition_engine.*`
-  re-implements the transition engine's behaviour (cascade ordering, easing names, `:clicked` flow,
-  cursor map).
-
-The licence below is copied verbatim from the package's `LICENSE.md` at that revision.
-
-```text
-MIT License
-
-Copyright (c) 2026 George Sladkovsky
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-```
-
 ## Build and runtime dependencies
 
 Not vendored in this repository; fetched by vcpkg (`vcpkg.json`) or installed separately. Their
@@ -94,9 +71,8 @@ licences apply to binaries that include them.
 
 | Dependency | Licence | How it is used |
 |---|---|---|
-| Qt 6.10 (Core, Gui, Widgets) | LGPLv3 | Dynamically linked; DLLs deployed next to the exe by `windeployqt`, unmodified |
-| yaml-cpp | MIT | Statically linked (config parsing) |
-| nlohmann-json | MIT | Header-only (config model) |
+| Qt 6.10 (Core, Gui, Qml, Quick, Network) | LGPLv3 | Dynamically linked; DLLs deployed next to the exe by `windeployqt`, unmodified |
+| nlohmann-json | MIT | Header-only (JSON from the window managers, GitHub and the tray hook) |
 | GoogleTest | BSD-3-Clause | Test executable only; not shipped |
 | C++/WinRT headers (Windows SDK) | MIT | Header-only (apartment init) |
-| Microsoft Visual C++ runtime | Microsoft redistributable licence | `vc_redist.<arch>.exe` copied to `dist` by the `deploy` target |
+| Microsoft Visual C++ runtime | Microsoft redistributable licence | Not shipped by this repository |

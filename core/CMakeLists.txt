@@ -1,17 +1,12 @@
-# config and css sit below ui and must not depend on each other.
-add_subdirectory(config)
-add_subdirectory(css)
-
-# ui: bar shell, widget framework and helpers. Sources are added by the subdirectories.
+# ui: the app bar (appbar registration), the DWM backdrop helpers and the event bus header.
 add_library(yasb_ui STATIC
-  version.h
-  version.cpp
+  bar/app_bar.h
+  bar/app_bar.cpp
+  widgets/backdrop.h
+  widgets/backdrop.cpp
+  widgets/event_bus.h
 )
 target_include_directories(yasb_ui PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(yasb_ui
-  PUBLIC yasb_css yasb_config Qt6::Core Qt6::Gui Qt6::Widgets
+  PUBLIC Qt6::Core Qt6::Gui
   PRIVATE yasb_options)
-
-add_subdirectory(bar)
-add_subdirectory(widgets)
-add_subdirectory(util)

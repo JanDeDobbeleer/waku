@@ -1,4 +1,0 @@
-bars:
-  main:
-    widgets:
-      left: [cpu]

@@ -79,12 +79,3 @@ jobs:
 
       - name: Test
         run: ctest --preset ${{ matrix.preset }}
-
-      - name: Deploy
-        run: cmake --build --preset ${{ matrix.preset }} --target deploy
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist-${{ matrix.preset }}
-          path: dist/
-          if-no-files-found: error

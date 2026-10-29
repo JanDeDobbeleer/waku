@@ -4,7 +4,6 @@
   "version": "0.1.0",
   "builtin-baseline": "5363acb796e576328288fae60c25304e227e9839",
   "dependencies": [
-    "yaml-cpp",
     "nlohmann-json",
     "gtest"
   ]

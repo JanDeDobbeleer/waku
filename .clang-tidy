@@ -17,9 +17,9 @@ Checks: >
   modernize-use-override,
   readability-identifier-naming
 WarningsAsErrors: '*'
-# Own headers only; generated options are schema-owned. System headers remain excluded.
-HeaderFilterRegex: '(^|[/\\])(app|core|platform|widgets|tools[/\\]yasbc-native)[/\\]'
-ExcludeHeaderFilterRegex: '(^|[/\\])(core[/\\]config[/\\]options|build|vcpkg_installed)[/\\]'
+# Own headers only. System headers remain excluded.
+HeaderFilterRegex: '(^|[/\\])(core|platform|widgets)[/\\]'
+ExcludeHeaderFilterRegex: '(^|[/\\])(build|vcpkg_installed)[/\\]'
 SystemHeaders: false
 CheckOptions:
   # Encapsulated state, not public aggregate/schema fields. No case rule: camelCase_ is valid.

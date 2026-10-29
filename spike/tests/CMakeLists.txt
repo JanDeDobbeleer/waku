@@ -45,6 +45,7 @@ add_executable(wabar_services_tests
   test_brightness_policy.cpp
   test_github_api.cpp
   test_taskbar_platform.cpp
+  test_platform.cpp
 )
 # The control tests run wabarc.exe.
 add_dependencies(wabar_services_tests wabarc)

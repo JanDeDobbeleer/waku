@@ -82,7 +82,8 @@ class ThemeValues : public QObject {
   Q_PROPERTY(int groupPadding MEMBER groupPadding_ NOTIFY changed FINAL)
   // Bar widget metrics, Python YASB's `.widget` box: `barPadding` is the horizontal padding of a
   // widget on a bar (a popup row keeps `padding`), `iconSpacing` the gap between a widget's icon
-  // and its text, `labelPaddingBottom` the padding under the text (it lifts the text by half of it).
+  // and its text, `labelPaddingBottom` the padding under the text (it lifts the text by half of
+  // it).
   Q_PROPERTY(int barPadding MEMBER barPadding_ NOTIFY changed FINAL)
   Q_PROPERTY(qreal iconSpacing MEMBER iconSpacing_ NOTIFY changed FINAL)
   Q_PROPERTY(int labelPaddingBottom MEMBER labelPaddingBottom_ NOTIFY changed FINAL)

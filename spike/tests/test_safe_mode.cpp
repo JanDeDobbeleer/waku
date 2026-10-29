@@ -56,7 +56,8 @@ TEST(SafeMode, TheThemeFileIsIgnored) {
         QStringLiteral("import wabar\nThemeSpec { accent: \"#ff0000\"; fontSize: 30 }\n"));
   h.makeHost();
   ASSERT_TRUE(h.host->reload());
-  auto* theme = h.engine.singletonInstance<Theme*>(QStringLiteral("wabar"), QStringLiteral("Theme"));
+  auto* theme =
+      h.engine.singletonInstance<Theme*>(QStringLiteral("wabar"), QStringLiteral("Theme"));
   ASSERT_NE(theme, nullptr);
   EXPECT_EQ(theme->property("accent").value<QColor>(), QColor(0x5b, 0x8d, 0xef));
   EXPECT_EQ(theme->property("fontSize").toInt(), 13);

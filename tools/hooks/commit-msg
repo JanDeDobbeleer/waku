@@ -16,7 +16,7 @@ fi
 
 echo "commit-msg: subject is not a conventional commit:" >&2
 echo "  $subject" >&2
-echo "expected: type(scope)?: subject, e.g. 'fix(config): reject list roots'" >&2
+echo "expected: type(scope)?: subject, e.g. 'fix(bar): reject list roots'" >&2
 echo "types: feat fix refactor perf test docs build ci chore style revert" >&2
-echo "scopes: config css bar widgets app platform parity ab build docs test style chore" >&2
+echo "scopes: bar widgets platform build docs test style chore" >&2
 exit 1

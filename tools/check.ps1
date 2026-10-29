@@ -1,29 +1,26 @@
 <#
 .SYNOPSIS
-    Definition-of-done check for yasb-native: format, generated files, build and tests.
+    Definition-of-done check for wabar: format, layering, JSON subscripts, build and tests.
 .DESCRIPTION
     Steps, in order:
-      1. format     clang-format --dry-run -Werror over *.cpp/*.h in app, core, platform, widgets,
-                    tests and tools/yasbc-native (with -Staged: only the staged versions of staged
-                    files, which is what the pre-commit hook uses).
-      2. generated  runs core/config/options/generate_options.py into a scratch copy under build\
-                    and compares the output with core/config/options/*.h. The working tree is never
-                    rewritten.
-      3. layering   fails on an #include "..." against the layer arrow
-                    app -> widgets -> ui (core/bar, core/widgets, core/util) -> css/config -> platform
+      1. format     clang-format --dry-run -Werror over *.cpp/*.h in core, platform, widgets, spike
+                    (with -Staged: only the staged versions of staged files, which is what
+                    the pre-commit hook uses).
+      2. layering   fails on an #include "..." against the layer arrow
+                    spike -> widgets -> core -> platform
                     (with -Staged: only staged files, reading their staged content).
-      4. json-subscript
-                    heuristic grep for the const nlohmann::json operator[] in product code (app,
-                    core, platform, widgets, tools/yasbc-native); see Test-JsonSubscript.
-      5. configure  cmake --preset <Preset>       (skipped with -Fast)
-      6. build      cmake --build --preset <Preset> (skipped with -Fast)
-      7. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 (skipped with -Fast)
-    -Analyze replaces steps 5-7 with an isolated MSVC /analyze build and clang-tidy.
+      3. json-subscript
+                    heuristic grep for the const nlohmann::json operator[] in product code (core,
+                    platform, widgets).
+      4. configure  cmake --preset <Preset>       (skipped with -Fast)
+      5. build      cmake --build --preset <Preset> (skipped with -Fast)
+      6. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 (skipped with -Fast)
+    -Analyze replaces steps 4-6 with an isolated MSVC /analyze build and clang-tidy.
     Configure, build and test each run in their own cmd.exe after the matching vcvars*.bat, with
     VCPKG_ROOT=C:\vcpkg (override with the VCPKG_ROOT_OVERRIDE environment variable).
     Exits 1 if any step fails. Requires PowerShell 7 (pwsh).
 .PARAMETER Fast
-    Only the format, generated-file, layering and JSON-subscript checks.
+    Only the format, layering and JSON-subscript checks.
 .PARAMETER Analyze
     Instead of ordinary build/tests, run MSVC /analyze and clang-tidy on production units in an
     isolated build\<Preset>-analyze directory. Requires LLVM clang-tidy.
@@ -57,7 +54,7 @@ if ($Analyze -and ($Fast -or $Staged)) {
     exit 1
 }
 
-$formatDirs = @('app', 'core', 'platform', 'widgets', 'tests', 'tools/yasbc-native')
+$formatDirs = @('core', 'platform', 'widgets', 'spike')
 $results = New-Object System.Collections.Generic.List[object]
 
 function Add-Result([string]$Step, [string]$Status, [string]$Detail, [double]$Seconds) {
@@ -80,30 +77,6 @@ function Find-ClangFormat {
     $fallback = 'C:\Program Files\LLVM\bin\clang-format.exe'
     if (Test-Path $fallback) { return $fallback }
     return $null
-}
-
-function Find-Python {
-    # Returns the command prefix (exe + leading args) of a working Python 3.
-    $candidates = @(@('py', '-3'), @('python'), @('python3'))
-    foreach ($c in $candidates) {
-        if (-not (Get-Command $c[0] -ErrorAction SilentlyContinue)) { continue }
-        $exe = $c[0]
-        $pre = @()
-        if ($c.Count -gt 1) { $pre = $c[1..($c.Count - 1)] }
-        $out = & $exe @pre -c 'import sys; print(sys.version_info[0])' 2>$null
-        if ($LASTEXITCODE -eq 0 -and "$out".Trim() -eq '3') { return , (@($exe) + $pre) }
-    }
-    return $null
-}
-
-function Get-FileSha256([string]$Path) {
-    $sha = [Security.Cryptography.SHA256]::Create()
-    try {
-        $bytes = [IO.File]::ReadAllBytes((Resolve-Path -LiteralPath $Path))
-        return [BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-', '')
-    } finally {
-        $sha.Dispose()
-    }
 }
 
 function Get-VcvarsScript([string]$PresetName) {
@@ -192,67 +165,18 @@ if ($SkipFormat) {
     }
 }
 
-# 2. generated -------------------------------------------------------------------------------
-Write-Step 'generated (core/config/options vs generate_options.py)'
-$sw = [Diagnostics.Stopwatch]::StartNew()
-$python = Find-Python
-if (-not $python) {
-    Add-Result 'generated' 'FAIL' 'Python 3 not found (tried py -3, python, python3)' $sw.Elapsed.TotalSeconds
-} else {
-    $scratch = Join-Path $repo 'build\check-generated'
-    if (Test-Path $scratch) { Remove-Item -Recurse -Force $scratch }
-    $genDir = Join-Path $scratch 'core\config\options'
-    New-Item -ItemType Directory -Force -Path $genDir | Out-Null
-    New-Item -ItemType Directory -Force -Path (Join-Path $scratch 'schema') | Out-Null
-    Copy-Item 'core\config\options\generate_options.py' $genDir
-    Copy-Item 'schema\schema.json' (Join-Path $scratch 'schema')
-    $pyExe = $python[0]
-    $pyArgs = @()
-    if ($python.Count -gt 1) { $pyArgs = $python[1..($python.Count - 1)] }
-    $genOut = & $pyExe @pyArgs -I (Join-Path $genDir 'generate_options.py') 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        $genOut | ForEach-Object { Write-Host "  $_" }
-        Add-Result 'generated' 'FAIL' "generate_options.py exited $LASTEXITCODE" $sw.Elapsed.TotalSeconds
-    } else {
-        $expected = @(Get-ChildItem $genDir -Filter '*.h' | ForEach-Object { $_.Name })
-        $actual = @(Get-ChildItem 'core\config\options' -Filter '*.h' | ForEach-Object { $_.Name })
-        $drift = New-Object System.Collections.Generic.List[string]
-        foreach ($name in $expected) {
-            $mine = Join-Path 'core\config\options' $name
-            if (-not (Test-Path $mine)) { $drift.Add("$name (missing)"); continue }
-            $a = Get-FileSha256 (Join-Path $genDir $name)
-            $b = Get-FileSha256 $mine
-            if ($a -ne $b) { $drift.Add("$name (differs)") }
-        }
-        foreach ($name in $actual) {
-            if ($expected -notcontains $name) { $drift.Add("$name (not generated)") }
-        }
-        if ($drift.Count -eq 0) {
-            Remove-Item -Recurse -Force $scratch
-            Add-Result 'generated' 'PASS' "$($expected.Count) headers match" $sw.Elapsed.TotalSeconds
-        } else {
-            Write-Host 'Generated headers drift from generate_options.py:'
-            $drift | ForEach-Object { Write-Host "  $_" }
-            Write-Host "Expected output kept in $genDir. Fix: python core\config\options\generate_options.py"
-            Add-Result 'generated' 'FAIL' "$($drift.Count) header(s) drift" $sw.Elapsed.TotalSeconds
-        }
-    }
-}
-
-# 3. layering --------------------------------------------------------------------------------
+# 2. layering --------------------------------------------------------------------------------
 # All targets share the repo root as include directory, so CMake alone cannot stop a header from
-# being included against the arrow (app -> widgets -> ui -> {css, config} -> platform). The
+# being included against the arrow (spike -> widgets -> core -> platform). The
 # first matching folder prefix wins; its list holds the include prefixes it must not use.
 Write-Step 'layering (#include directions)'
 $sw = [Diagnostics.Stopwatch]::StartNew()
 $layerRules = @(
-    @{ Dir = 'platform/';    Deny = @('core/', 'widgets/', 'app/') },
-    @{ Dir = 'core/config/'; Deny = @('core/css/', 'core/bar/', 'core/widgets/', 'core/util/', 'core/version.h', 'widgets/', 'app/') },
-    @{ Dir = 'core/css/';    Deny = @('core/config/', 'core/bar/', 'core/widgets/', 'core/util/', 'core/version.h', 'widgets/', 'app/') },
-    @{ Dir = 'core/';        Deny = @('widgets/', 'app/') },
-    @{ Dir = 'widgets/';     Deny = @('app/') }
+    @{ Dir = 'platform/'; Deny = @('core/', 'widgets/', 'spike/') },
+    @{ Dir = 'core/';     Deny = @('widgets/', 'spike/') },
+    @{ Dir = 'widgets/';  Deny = @('spike/') }
 )
-$layerDirs = @('app', 'core', 'platform', 'widgets')
+$layerDirs = @('core', 'platform', 'widgets')
 if ($Staged) {
     $layerFiles = @(git diff --cached --name-only --diff-filter=ACMR -- $layerDirs)
 } else {
@@ -283,14 +207,14 @@ foreach ($f in $layerFiles) {
     }
 }
 if ($violations.Count -eq 0) {
-    Add-Result 'layering' 'PASS' "$($layerFiles.Count) files respect app -> widgets -> ui -> css/config -> platform" $sw.Elapsed.TotalSeconds
+    Add-Result 'layering' 'PASS' "$($layerFiles.Count) files respect wabar (spike) -> widgets -> core -> platform" $sw.Elapsed.TotalSeconds
 } else {
     Write-Host 'Includes against the layering arrow (see AGENTS.md, Layering):'
     $violations | ForEach-Object { Write-Host "  $_" }
     Add-Result 'layering' 'FAIL' "$($violations.Count) include(s) against the arrow" $sw.Elapsed.TotalSeconds
 }
 
-# 4. json-subscript ---------------------------------------------------------------------------
+# 3. json-subscript ---------------------------------------------------------------------------
 # operator[] on a const nlohmann::json with a missing key is undefined behaviour (AGENTS.md, error
 # handling). Types are invisible to a grep, so this is a heuristic over files that mention "json":
 #   flagged  a string-literal subscript that is not assigned to (x["k"] ... with no "] =" after it),
@@ -301,7 +225,7 @@ if ($violations.Count -eq 0) {
 #            end the line with the comment "json-subscript-ok".
 Write-Step 'json-subscript (const nlohmann::json operator[] heuristic)'
 $sw = [Diagnostics.Stopwatch]::StartNew()
-$productDirs = @('app', 'core', 'platform', 'widgets', 'tools/yasbc-native')
+$productDirs = @('core', 'platform', 'widgets')
 if ($Staged) {
     $jsonFiles = @(git diff --cached --name-only --diff-filter=ACMR -- $productDirs)
 } else {
@@ -338,7 +262,7 @@ if ($hits.Count -eq 0) {
     Add-Result 'json-subscript' 'FAIL' "$($hits.Count) suspicious subscript(s)" $sw.Elapsed.TotalSeconds
 }
 
-# 5-7. configure, build, test (or isolated static analysis) ------------------------------------
+# 4-6. configure, build, test (or isolated static analysis) ------------------------------------
 if ($Analyze) {
     $vcvars = Get-VcvarsScript $Preset
     $analysisDir = Join-Path $repo "build\$Preset-analyze"
@@ -390,7 +314,7 @@ if ($Analyze) {
                 $entries | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $wabarDir 'compile_commands.json')
                 $units = @($entries | Where-Object {
                     $relative = [IO.Path]::GetRelativePath($repo, $_.file).Replace('\', '/')
-                    $relative -match '^(app|core|platform|widgets|tools/yasbc-native)/.*\.cpp$'
+                    $relative -match '^(core|platform|widgets)/.*\.cpp$'
                 } | ForEach-Object { $_.file } | Sort-Object -Unique)
                 $commands = New-Object System.Collections.Generic.List[string]
                 $commands.Add('set failures=0')

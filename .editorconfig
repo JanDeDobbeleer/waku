@@ -17,13 +17,3 @@ trim_trailing_whitespace = false
 # Git runs hooks with sh; they must stay LF.
 [{tools/hooks/*,*.sh}]
 end_of_line = lf
-
-# Parity oracle: vectors, fixtures and the exported schema are byte-exact LF output of
-# tools/parity. Editors must not touch whitespace or line endings.
-[{tests/vectors/**,tools/parity/fixtures/**,schema/schema.json}]
-charset = unset
-indent_style = unset
-indent_size = unset
-end_of_line = lf
-insert_final_newline = unset
-trim_trailing_whitespace = unset

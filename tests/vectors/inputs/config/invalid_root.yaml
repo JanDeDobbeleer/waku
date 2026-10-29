@@ -1,7 +1,0 @@
-watch_config: maybe
-bars:
-  main:
-    style: nope
-    dimensions:
-      width: "wide"
-widgets: {}

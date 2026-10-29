@@ -6,8 +6,8 @@
 #include <QVariantList>
 #include <utility>
 
-#include "core/widgets/callbacks.h"
 #include "core/widgets/event_bus.h"
+#include "platform/command_line.h"
 #include "widgets/komorebi/komorebi_state.h"
 
 namespace yasb::widgets::komorebi {
@@ -67,7 +67,7 @@ QString KomorebiService::uniquePipeName() {
 QString KomorebiService::shellChain(const std::vector<QStringList>& commands) {
   QStringList parts;
   for (const QStringList& args : commands) {
-    parts.append(QStringLiteral("\"komorebic.exe\" ") + quoteCmdLine(args));
+    parts.append(QStringLiteral("\"komorebic.exe\" ") + platform::quoteCmdLine(args));
   }
   return parts.join(QStringLiteral(" && "));
 }

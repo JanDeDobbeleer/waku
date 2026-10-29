@@ -1,11 +1,7 @@
 # platform: Win32 wrappers. Depends on nothing of ours; Qt Core only for QMetaType in headers.
 add_library(yasb_platform STATIC
-  accent_color.h
-  accent_color.cpp
   app_identity.h
   app_identity.cpp
-  dwm_thumbnail.h
-  dwm_thumbnail.cpp
   pin_support.h
   pin_support.cpp
   window_system.h
@@ -13,8 +9,6 @@ add_library(yasb_platform STATIC
   window_tracker.h
   window_tracker.cpp
   window_tracker_hooks_win32.cpp
-  app_volume.h
-  app_volume.cpp
   audio.h
   audio.cpp
   battery.h
@@ -23,6 +17,8 @@ add_library(yasb_platform STATIC
   bluetooth.cpp
   brightness.h
   brightness.cpp
+  command_line.h
+  command_line.cpp
   connectivity.h
   connectivity.cpp
   desktop_wallpaper.h
@@ -62,8 +58,6 @@ add_library(yasb_platform STATIC
   power.cpp
   shell_open.h
   shell_open.cpp
-  sound.h
-  sound.cpp
   theme.h
   theme.cpp
   touch_keyboard.h
