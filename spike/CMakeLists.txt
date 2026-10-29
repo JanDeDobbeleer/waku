@@ -27,12 +27,18 @@ qt_add_qml_module(tidy_services
     services/shell_service.cpp
     services/workspaces_service.h
     services/workspaces_service.cpp
+    services/tray_icon_model.h
+    services/tray_icon_model.cpp
+    services/tray_image_provider.h
+    services/tray_image_provider.cpp
+    services/systray.h
+    services/systray.cpp
 )
 target_include_directories(tidy_services PUBLIC ${CMAKE_SOURCE_DIR}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/services)  # generated type registration includes headers by name
 target_compile_definitions(tidy_services PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(tidy_services PUBLIC Qt6::Qml yasb_platform yasb_widgets)
+target_link_libraries(tidy_services PUBLIC Qt6::Qml Qt6::Quick yasb_platform yasb_widgets)
 
 # tidy_control: the pipe between a running bar and tidybarc.
 add_subdirectory(control)

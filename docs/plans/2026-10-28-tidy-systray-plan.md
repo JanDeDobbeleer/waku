@@ -88,7 +88,7 @@ tidy.services
                      TrayIconRegistry, exposes `available`, `unavailableReason`, `icons`.
   TrayIconModel      QAbstractListModel behind Systray.icons. Roles: key, tooltip, exe, iconUrl,
                      hwnd, hasGuid. dataChanged on update, rows removed on delete.
-                     Invokables on Systray: click(key, button), doubleClick(key), refresh().
+                     Invokables on Systray: click(id, button), doubleClick(id), refresh().
   TrayPins           instantiable, one per Tray widget. Takes the model and a screenId; exposes
                      `pinned` and `unpinned` models in saved order, setPinned(key, bool),
                      move(key, pinned, toIndex); loads and saves the per-screen state file.
@@ -120,7 +120,7 @@ control channel's `quit` and a normal exit both go through that path. No new thr
 
 ### Clicks
 
-`Systray.click(key, button)` runs the extracted click function with the real `TrayWindowApi`. Press
+`Systray.click(id, button)` runs the extracted click function with the real `TrayWindowApi`. Press
 and release both go to the program (`WM_*BUTTONDOWN`, then `WM_*BUTTONUP`), a double click sends
 `WM_LBUTTONDBLCLK` and swallows the next release, and a press-and-release more than a few pixels
 apart is not a click. The QML button decides press, release and distance; the function only builds
@@ -133,7 +133,7 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 | # | Phase | Delivers | Touches Explorer | Size |
 |---|---|---|---|---|
 | 1 | Extract and test | **Done** (`d74eff5`, `93eff1f`). `platform/systray_click` (`sendTrayAction`, `sendTrayNotify`), `TrayIconRegistry` (identity, filter, stale sweep), `savedStateFor`, `appDataDir(folder)`. The Widgets build uses them; its 49 systray tests and the full suite (832) pass unchanged; 42 new tests. | no | M |
-| 2 | `Systray` and the model | singleton, `TrayIconModel`, the image provider (with a changing-icon test), "unavailable" states; tests with a fake `TrayHost` and `TrayWindowApi` (add, update, delete, filter, stale, click messages). | no | M |
+| 2 | `Systray` and the model | **Done.** `Systray` singleton (`click` and `doubleClick` take the icon `id`, since exe-path keys can repeat), `TrayIconModel`, `TrayImageProvider`; 19 new tests on a fake host and window API. Planned: singleton, `TrayIconModel`, the image provider (with a changing-icon test), "unavailable" states; tests with a fake `TrayHost` and `TrayWindowApi` (add, update, delete, filter, stale, click messages). | no | M |
 | 3 | `TrayPins` | pinned and unpinned models, order, move, per-screen persistence; tests with a temp state dir and the existing state vectors. | no | S |
 | 4 | `Tray` widget | pinned row, unpinned inline and popup, chevron, tooltips, click, modifier pin, the icon menu (pin, unpin, move, refresh); offscreen tests with the fake host injected through a test seam. | no | L |
 | 5 | Live bring-up | the hook DLL copied next to `tidybar.exe`; `--no-tray` switch; run against the real Explorer with the Widgets build stopped: icons appear, left, right, middle and double click, tooltip, pin, order, Explorer restart, quit leaves the shell tray intact, a forced kill lets the DLL detach. | **yes** | M |
@@ -161,5 +161,4 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 
 ## Next step
 
-Phase 1 (extract and test). It is a refactor of the Widgets build's code with tests, no tidy UI
-yet, and nothing touches Explorer.
+Phase 3 (`TrayPins`). Persistence and ordering on temp dirs, nothing touches Explorer.
