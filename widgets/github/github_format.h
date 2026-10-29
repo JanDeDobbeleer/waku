@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "core/config/options/github.h"
 #include "platform/github_api.h"
+#include "widgets/github/github_icons.h"
 
 // Pure helpers of yasb:src/core/widgets/yasb/github.py and core/utils/time_utils.py.
 namespace yasb::widgets::github {
@@ -24,7 +24,7 @@ struct IconAndStates {
 };
 // GithubWidget._resolve_icon_and_states.
 IconAndStates iconAndStates(const platform::GithubNotification& notification,
-                            const config::options::GithubIconsConfig& icons);
+                            const GithubIcons& icons);
 
 // Python `text[: max - 3] + "..."` when len(text) > max, counted in code points.
 QString truncateField(const QString& text, int maxSize);

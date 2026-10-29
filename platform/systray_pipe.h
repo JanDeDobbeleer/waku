@@ -37,7 +37,7 @@ using ExePathResolver = std::function<QString(std::uint64_t hwnd)>;
 ParsedTrayMessage parseTrayPipeMessage(const QByteArray& message,
                                        const ExePathResolver& exePath = {});
 
-// The SHELLTRAYDATA behind WM_COPYDATA (dwData 1) as the legacy window receives it.
+// The SHELLTRAYDATA behind WM_COPYDATA (dwData 1) as Explorer sends it to Shell_TrayWnd.
 ParsedTrayMessage parseShellTrayData(const char* payload, std::int64_t size,
                                      const char* rgba = nullptr, std::int64_t rgbaSize = 0,
                                      int iconWidth = 0, int iconHeight = 0,

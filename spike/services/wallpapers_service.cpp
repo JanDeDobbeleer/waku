@@ -283,7 +283,7 @@ void Wallpapers::configureEngine(bool enabled, const QString& animation) {
 void Wallpapers::applyToManager() {
   if (!manager_) return;
   manager_->configure(imagePath_.isEmpty() ? QStringList() : QStringList{imagePath_},
-                      autoChangeSeconds_, autoChangeSeconds_ > 0, {}, {});
+                      autoChangeSeconds_, autoChangeSeconds_ > 0, {});
 }
 
 void Wallpapers::refresh() {

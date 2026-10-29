@@ -76,8 +76,6 @@ add_library(yasb_platform STATIC
   systray_hook.h
   systray_hook.cpp
   systray_host.h
-  systray_legacy.h
-  systray_legacy.cpp
   systray_pipe.h
   systray_pipe.cpp
   systray_types.h

@@ -24,8 +24,7 @@ struct RealHost {
 
 bool g_disabled = false;
 
-// The hook host or nothing: the legacy window is never created (it would take over Explorer's
-// tray window), so makeLegacy is cleared.
+// The hook host or nothing.
 RealHost makeRealHost() {
   RealHost result;
   if (g_disabled) {
@@ -37,7 +36,6 @@ RealHost makeRealHost() {
     return result;
   }
   yasb::widgets::TrayHostFactories factories = yasb::widgets::realTrayHostFactories();
-  factories.makeLegacy = nullptr;
   QString dllReason;
   bool hookTried = false;
   auto findDll = factories.findHookDll;

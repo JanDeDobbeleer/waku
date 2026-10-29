@@ -104,6 +104,22 @@ QStringList splitClasses(const QString& value) {
   return value.split(ws, Qt::SkipEmptyParts);
 }
 
+github::GithubIcons toGithubIcons(const config::options::GithubIconsConfig& icons) {
+  github::GithubIcons result;
+  result.issue = icons.issue;
+  result.issue_closed = icons.issue_closed;
+  result.pull_request = icons.pull_request;
+  result.pull_request_closed = icons.pull_request_closed;
+  result.pull_request_merged = icons.pull_request_merged;
+  result.pull_request_draft = icons.pull_request_draft;
+  result.release = icons.release;
+  result.discussion = icons.discussion;
+  result.discussion_answered = icons.discussion_answered;
+  result.checksuite = icons.checksuite;
+  result.default_ = icons.default_;
+  return result;
+}
+
 platform::GithubFetchOptions fetchOptions(const config::options::GithubConfig& options) {
   platform::GithubFetchOptions fetch;
   fetch.onlyUnread = options.only_unread;
@@ -417,7 +433,7 @@ QFrame* GithubWidget::createNotificationItem(const platform::GithubNotification&
   }
   description = truncateField(description, maxSize);
 
-  const github::IconAndStates iconStates = github::iconAndStates(n, options_.icons);
+  const github::IconAndStates iconStates = github::iconAndStates(n, toGithubIcons(options_.icons));
   const QString baseClass = n.type.toLower();
 
   QStringList classes{QStringLiteral("item")};

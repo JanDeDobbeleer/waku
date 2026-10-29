@@ -22,7 +22,7 @@ namespace wabar::services {
 namespace platform = ::yasb::platform;
 
 // The notification-area icons of other programs, as a QML singleton shared by every Tray widget.
-// Owns the one TrayHost (the hook in Explorer; there is no legacy mode), applies the
+// Owns the one TrayHost (the hook in Explorer), applies the
 // TrayIconRegistry to its notifications and mirrors the result in `icons`. Registers the
 // image://tray provider on the engine that creates it. When no host can be used, `available` is
 // false, `unavailableReason` says why and `icons` stays empty; nothing touches Explorer.

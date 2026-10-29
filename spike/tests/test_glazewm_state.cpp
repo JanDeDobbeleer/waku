@@ -9,10 +9,8 @@
 #include <vector>
 
 #include "core/widgets/event_bus.h"
-#include "core/widgets/registry.h"
 #include "widgets/glazewm/glazewm_service.h"
 #include "widgets/glazewm/glazewm_state.h"
-#include "widgets/glazewm/glazewm_widgets.h"
 
 using nlohmann::json;
 using namespace yasb::widgets;
@@ -211,11 +209,6 @@ json response(const std::string& clientMessage, json data) {
 }
 
 }  // namespace
-
-TEST(GlazewmService, RegisterIsCallable) {
-  WidgetRegistry registry;
-  registerGlazewmWidgets(registry);
-}
 
 TEST(GlazewmService, SendsSubscriptionUnionOnConnectAndOpensOnce) {
   Harness h;

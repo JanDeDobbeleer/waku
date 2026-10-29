@@ -54,8 +54,7 @@ QString categoryTitle(const QString& categoryType) {
   return spaced.isEmpty() ? categoryType : spaced;
 }
 
-IconAndStates iconAndStates(const platform::GithubNotification& n,
-                            const config::options::GithubIconsConfig& icons) {
+IconAndStates iconAndStates(const platform::GithubNotification& n, const GithubIcons& icons) {
   IconAndStates result;
   if (n.type == QLatin1String("Issue")) {
     const QString state = n.issueState.value_or(QString()).toLower();

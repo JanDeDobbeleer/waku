@@ -4,7 +4,6 @@
 #include <QDebug>
 
 #include "platform/systray_hook.h"
-#include "platform/systray_legacy.h"
 
 namespace yasb::widgets {
 
@@ -20,9 +19,6 @@ TrayHostFactories realTrayHostFactories() {
     if (!hook->valid()) return nullptr;
     return hook;
   };
-  factories.makeLegacy = []() -> std::unique_ptr<platform::TrayHost> {
-    return std::make_unique<platform::SystrayLegacy>();
-  };
   return factories;
 }
 
@@ -33,17 +29,16 @@ std::unique_ptr<platform::TrayHost> createTrayHost(bool useHook, const QString& 
     const QString dll = factories.findHookDll(appDir, &reason);
     if (dll.isEmpty()) {
       if (reason.contains(QLatin1String("not found")))
-        qWarning().noquote() << "Systray hook DLL missing. Reverting to legacy mode.";
+        qWarning().noquote() << "Systray hook DLL missing. No tray host.";
       else
-        qDebug().noquote() << "Systray hook disabled (" << reason
-                           << "); falling back to legacy mode.";
+        qDebug().noquote() << "Systray hook disabled (" << reason << "); no tray host.";
     } else if (auto hook = factories.makeHook(dll)) {
       return hook;
     } else {
-      qWarning().noquote() << "Systray hook could not start. Reverting to legacy mode.";
+      qWarning().noquote() << "Systray hook could not start. No tray host.";
     }
   }
-  return factories.makeLegacy ? factories.makeLegacy() : nullptr;
+  return nullptr;
 }
 
 SystrayService::SystrayService(bool useHook, const QString& appDir,

@@ -94,8 +94,6 @@ add_library(yasb_widgets STATIC
   wallpapers/gallery_layout.cpp
   wallpapers/thumbnail_cache.h
   wallpapers/thumbnail_cache.cpp
-  wallpapers/wallpaper_engine.h
-  wallpapers/wallpaper_engine.cpp
   wallpapers/wallpaper_files.h
   wallpapers/wallpaper_files.cpp
   wallpapers/wallpaper_layout.h

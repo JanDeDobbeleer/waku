@@ -3,8 +3,11 @@
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
+#include <QPointer>
 #include <QProcess>
 #include <exception>
+#include <memory>
+#include <utility>
 
 #include "widgets/wallpapers/wallpaper_files.h"
 
@@ -39,11 +42,6 @@ WallpaperManager::CommandRunner systemCommandRunner(QObject* owner) {
 WallpaperManager::WallpaperManager(Dependencies deps, QObject* parent)
     : QObject(parent), deps_(std::move(deps)) {
   if (!deps_.backend) deps_.backend = [] { return platform::makeDesktopWallpaperBackend(); };
-  if (!deps_.engine) {
-    deps_.engine = [](const QString& image, const QString& animation) {
-      return new WallpaperEngine(image, animation);
-    };
-  }
   if (!deps_.runner) deps_.runner = systemCommandRunner(this);
   if (!deps_.picker) {
     auto generator = std::make_shared<std::mt19937>(std::random_device{}());
@@ -59,10 +57,6 @@ WallpaperManager::~WallpaperManager() { stop(); }
 void WallpaperManager::stop() {
   timer_.stop();
   timerRunning_ = false;
-  if (engine_) {
-    delete engine_.data();
-    engine_.clear();
-  }
 }
 
 platform::DesktopWallpaperBackend* WallpaperManager::backend() {
@@ -71,11 +65,9 @@ platform::DesktopWallpaperBackend* WallpaperManager::backend() {
 }
 
 void WallpaperManager::configure(const QStringList& imagePaths, int updateInterval,
-                                 bool changeAutomatically, const QStringList& runAfter,
-                                 const EngineOptions& engine) {
+                                 bool changeAutomatically, const QStringList& runAfter) {
   imagePaths_ = imagePaths;
   runAfter_ = runAfter;
-  engineOptions_ = engine;
   if (changeAutomatically && !timerRunning_) {
     if (updateInterval > 0) {
       timer_.start(updateInterval * 1000);
@@ -87,29 +79,7 @@ void WallpaperManager::configure(const QStringList& imagePaths, int updateInterv
   }
 }
 
-void WallpaperManager::setWallpaper(const QString& imagePath, const QString& monitorId,
-                                    bool animate) {
-  if (animate && monitorId.isEmpty() && engineOptions_.enabled) {
-    try {
-      WallpaperEngine* engine = deps_.engine(imagePath, engineOptions_.animation);
-      if (engine) {
-        if (engine_) delete engine_.data();
-        engine_ = engine;
-        connect(engine, &WallpaperEngine::finished, this,
-                [this, imagePath] { setWallpaper(imagePath, QString(), false); });
-        connect(engine, &WallpaperEngine::skipped, this, [this](const QString& reason) {
-          // The same reason repeats on every change, so say it once.
-          if (std::exchange(skipLogged_, true)) return;
-          qWarning().noquote() << "Wallpaper animation skipped:" << reason;
-        });
-        engine->start();
-        return;
-      }
-    } catch (const std::exception& error) {
-      qCritical().noquote() << "Wallpaper engine failed, falling back:" << error.what();
-    }
-  }
-
+void WallpaperManager::setWallpaper(const QString& imagePath, const QString& monitorId) {
   QString error;
   const QString absolute = QDir::toNativeSeparators(QFileInfo(imagePath).absoluteFilePath());
   if (!backend()->setWallpaper(monitorId, absolute, &error)) {

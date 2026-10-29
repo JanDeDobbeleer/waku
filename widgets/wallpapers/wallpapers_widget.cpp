@@ -54,11 +54,8 @@ WallpapersWidget::WallpapersWidget(const WidgetContext& context, Hooks hooks)
   }
   QStringList runAfter;
   for (const std::string& command : options_.run_after) runAfter << qs(command);
-  WallpaperManager::EngineOptions engine;
-  engine.enabled = options_.engine.enabled;
-  if (!options_.engine.animation.empty()) engine.animation = qs(options_.engine.animation);
   manager_->configure(imagePathsFrom(options_.image_path), options_.update_interval,
-                      options_.change_automatically, runAfter, engine);
+                      options_.change_automatically, runAfter);
 
   buildWidgetLabel(qs(options_.label));
   if (options_.tooltip) setTooltip(this, QStringLiteral("Change Wallpaper"), context.globalState);

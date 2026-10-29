@@ -10,8 +10,8 @@
 
 namespace yasb::platform {
 
-// Where tray icon notifications come from. The real implementations (`SystrayHook`,
-// `SystrayLegacy`) intercept Explorer's Shell_TrayWnd; widgets and tests only see this interface,
+// Where tray icon notifications come from. The real implementation (`SystrayHook`) intercepts
+// Explorer's Shell_TrayWnd; widgets and tests only see this interface,
 // so a test substitutes a fake and never touches the real tray.
 //
 // Signals are emitted from the implementation's worker thread; connect with the default (auto)

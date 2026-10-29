@@ -536,7 +536,7 @@ void WallpaperGallery::applyWallpaper(const QString& imagePath, const QString& m
   if (monitorId.isEmpty())
     services_.manager->setWallpaper(imagePath);
   else
-    services_.manager->setWallpaper(imagePath, monitorId, false);
+    services_.manager->setWallpaper(imagePath, monitorId);
 }
 
 void WallpaperGallery::showContextMenuForImage(int index, const QPoint& globalPos) {

@@ -57,10 +57,10 @@ class HotkeyHost {
 
 // The wallpaper folder, the current wallpaper and the gallery of every Wallpapers widget of a
 // `wabar` run, as a QML singleton. Wraps the UI-free classes of the Widgets build:
-// yasb::widgets::WallpaperManager (set, random, auto-change timer; its own QWidget engine stays
-// off, the Qt Quick WallpaperTransition replaces it, see
-// docs/plans/2026-10-29-wabar-wallpapers-design.md), collectImageFiles, ThumbnailCache and
-// platform::DesktopWallpaperBackend. Registers image://wallpaper/<path>?<stamp>.
+// yasb::widgets::WallpaperManager (set, random, auto-change timer; the animated change is the Qt
+// Quick WallpaperTransition, see docs/plans/2026-10-29-wabar-wallpapers-design.md),
+// collectImageFiles, ThumbnailCache and platform::DesktopWallpaperBackend. Registers
+// image://wallpaper/<path>?<stamp>.
 //
 // Threads: GUI thread, no thread of its own (the transition's decoder thread is described there).
 // The thumbnail provider runs on Qt's image-reader thread (ForceAsynchronousImageLoading); it owns

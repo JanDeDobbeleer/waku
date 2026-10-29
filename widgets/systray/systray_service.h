@@ -14,17 +14,16 @@ namespace yasb::widgets {
 struct TrayHostFactories {
   // Path of the hook DLL for this machine, empty (with `reason`) when the hook cannot be used.
   std::function<QString(const QString& appDir, QString* reason)> findHookDll;
-  // A hook host for `dllPath`; null or invalid hosts fall back to legacy mode.
+  // A hook host for `dllPath`; null for a host that is not valid.
   std::function<std::unique_ptr<platform::TrayHost>(const QString& dllPath)> makeHook;
-  std::function<std::unique_ptr<platform::TrayHost>()> makeLegacy;
 };
 
-// The factories wired to platform::SystrayHook and platform::SystrayLegacy.
+// The factories wired to platform::SystrayHook.
 TrayHostFactories realTrayHostFactories();
 
-// SystrayWidget.setup_client's choice of client: the hook when `useHook` is set and usable, the
-// legacy window otherwise (a missing DLL is logged once as a warning, emulation and unsupported
-// architectures at debug level).
+// The tray client: the hook when `useHook` is set and usable, null otherwise (a missing DLL is
+// logged as a warning, emulation and unsupported architectures at debug level). There is no
+// fallback that replaces Explorer's tray window.
 std::unique_ptr<platform::TrayHost> createTrayHost(bool useHook, const QString& appDir,
                                                    const TrayHostFactories& factories);
 
@@ -33,7 +32,7 @@ std::unique_ptr<platform::TrayHost> createTrayHost(bool useHook, const QString& 
 // under key "systray", owned by that registry, stopped by its stopAll().
 //
 // Threads: constructed and used on the GUI thread; the host owns its worker thread (see
-// platform/systray_hook.h and systray_legacy.h).
+// platform/systray_hook.h).
 class SystrayService : public QObject {
   Q_OBJECT
  public:

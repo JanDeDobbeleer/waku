@@ -78,7 +78,7 @@ during startup, before `WidgetBuilder` constructs the configured widgets; repeat
 it; the systray widget injects it into Explorer to see tray icons. `hook/` builds it with a static
 CRT, and each preset builds the DLL for its own architecture, so an ARM64 host runs the ARM64
 preset's build. The DLL must match Explorer's architecture: an x64 build running under emulation
-on ARM64 cannot use it and falls back to the legacy tray window, as Python YASB does. The pipe and
+on ARM64 cannot use it and has no tray host (the tray stays empty). The pipe and
 watchdog mutex names are set once in the root `CMakeLists.txt` (`YASB_TRAY_PIPE_NAME`,
 `YASB_TRAY_MUTEX_NAME`) and passed to both the DLL and `platform/`. The DLL detaches from Explorer
 by itself (up to 5 s) after the host exits, so wait for it to unload before starting another build

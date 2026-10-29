@@ -33,6 +33,18 @@ add_executable(wabar_services_tests
   test_wallpapers.cpp
   test_wallpaper_transition.cpp
   test_wallpaper_control.cpp
+  test_wallpaper_manager.cpp
+  test_glazewm_socket.cpp
+  test_glazewm_state.cpp
+  test_komorebi_service.cpp
+  test_systray_click.cpp
+  test_systray_pipe.cpp
+  test_tray_icon_registry.cpp
+  test_systray_icon_scale.cpp
+  test_systray_state.cpp
+  test_brightness_policy.cpp
+  test_github_api.cpp
+  test_taskbar_platform.cpp
 )
 # The control tests run wabarc.exe.
 add_dependencies(wabar_services_tests wabarc)

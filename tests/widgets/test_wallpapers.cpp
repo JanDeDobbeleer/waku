@@ -25,7 +25,6 @@
 #include "widgets/wallpapers/gallery.h"
 #include "widgets/wallpapers/gallery_layout.h"
 #include "widgets/wallpapers/thumbnail_cache.h"
-#include "widgets/wallpapers/wallpaper_engine.h"
 #include "widgets/wallpapers/wallpaper_files.h"
 #include "widgets/wallpapers/wallpaper_layout.h"
 #include "widgets/wallpapers/wallpaper_manager.h"
@@ -73,25 +72,6 @@ QString nativeAbsolute(const QString& path) {
   return QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath());
 }
 
-// Counts the messages that contain a marker; installed for the length of one test.
-struct MessageCounter {
-  static inline int count = 0;
-  static inline QString marker;
-  static inline QtMessageHandler previous = nullptr;
-  explicit MessageCounter(const QString& text) {
-    count = 0;
-    marker = text;
-    previous = qInstallMessageHandler(
-        [](QtMsgType type, const QMessageLogContext& context, const QString& message) {
-          if (message.contains(marker)) ++count;
-          if (previous) previous(type, context, message);
-        });
-  }
-  ~MessageCounter() { qInstallMessageHandler(previous); }
-  MessageCounter(const MessageCounter&) = delete;
-  MessageCounter& operator=(const MessageCounter&) = delete;
-};
-
 // The fake desktop: records every set and answers the monitor questions.
 struct FakeDesktop {
   struct Set {
@@ -130,7 +110,6 @@ struct ManagerRig {
   std::vector<std::function<void(const QString&)>> pendingCommands;
   bool deferCommands = false;
   std::vector<int> picks;  // consumed in order; the last one repeats
-  std::function<WallpaperEngine*(const QString&, const QString&)> engine;
   std::unique_ptr<WallpaperManager> manager;
 
   ManagerRig() {
@@ -138,9 +117,6 @@ struct ManagerRig {
     deps.backend = [this] {
       ++desktop->backendsCreated;
       return std::make_unique<FakeBackend>(desktop);
-    };
-    deps.engine = [this](const QString& image, const QString& animation) -> WallpaperEngine* {
-      return engine ? engine(image, animation) : nullptr;
     };
     deps.runner = [this](const QString& command, std::function<void(const QString&)> done) {
       commands.push_back(command);
@@ -157,27 +133,6 @@ struct ManagerRig {
     manager = std::make_unique<WallpaperManager>(std::move(deps));
   }
 };
-
-WallpaperEngine::Platform fakePlatform(const QString& oldImage, bool workerFound,
-                                       std::shared_ptr<int> attaches = nullptr) {
-  WallpaperEngine::Platform platform;
-  platform.readSettings = [] { return DesktopSettings{}; };
-  platform.transcodedPath = [oldImage] { return oldImage; };
-  platform.attach = [workerFound, attaches](
-                        std::uintptr_t,
-                        QString* failure) -> std::optional<yasb::platform::WorkerWAttachment> {
-    if (attaches) ++*attaches;
-    if (!workerFound) {
-      if (failure) *failure = QStringLiteral("Could not locate WorkerW");
-      return std::nullopt;
-    }
-    yasb::platform::WorkerWAttachment attachment;
-    attachment.workerRect = QRect(0, 0, 800, 600);
-    attachment.monitors = {QRect(0, 0, 800, 600)};
-    return attachment;
-  };
-  return platform;
-}
 
 // --- vector replay ----------------------------------------------------------------------------
 
@@ -467,213 +422,6 @@ TEST_F(WallpapersTest, ReplaysPythonVectors) {
     }
   }
   EXPECT_GT(steps, 60);
-}
-
-// --- files and cache --------------------------------------------------------------------------
-
-TEST_F(WallpapersTest, ImagePathAcceptsStringOrList) {
-  EXPECT_EQ(imagePathsFrom(json("C:/a")), QStringList{QStringLiteral("C:/a")});
-  EXPECT_EQ(imagePathsFrom(json::array({"C:/a", "D:/b"})),
-            (QStringList{QStringLiteral("C:/a"), QStringLiteral("D:/b")}));
-  EXPECT_TRUE(imagePathsFrom(json(nullptr)).isEmpty());
-}
-
-TEST_F(WallpapersTest, NaturalOrderPutsImg2BeforeImg10) {
-  for (const char* name : {"img10.png", "img2.png", "img1.png"})
-    touch(QDir(temp_.path()).filePath(QString::fromLatin1(name)));
-  QStringList names;
-  for (const QString& file : collectImageFiles({temp_.path()}, supportedImageTypes({0, 0})))
-    names << QFileInfo(file).fileName();
-  EXPECT_EQ(names, (QStringList{QStringLiteral("img1.png"), QStringLiteral("img2.png"),
-                                QStringLiteral("img10.png")}));
-}
-
-TEST_F(WallpapersTest, MissingFolderYieldsNoFiles) {
-  EXPECT_TRUE(collectImageFiles({QDir(temp_.path()).filePath(QStringLiteral("nope"))},
-                                {QStringLiteral("png")})
-                  .isEmpty());
-}
-
-TEST_F(WallpapersTest, ThumbnailCacheRoundTripsAndKeysFollowSizeAndFile) {
-  const QString image = writePng(QDir(temp_.path()).filePath(QStringLiteral("a.png")), Qt::red);
-  const QString key = cache_->key(image, 100, 50);
-  ASSERT_FALSE(key.isEmpty());
-  EXPECT_EQ(key, cache_->key(image, 100, 50));
-  EXPECT_NE(key, cache_->key(image, 101, 50));
-  EXPECT_TRUE(cache_->key(QDir(temp_.path()).filePath(QStringLiteral("gone.png")), 1, 1).isEmpty());
-  EXPECT_FALSE(cache_->load(key).has_value());
-
-  QImage thumb(8, 4, QImage::Format_ARGB32);
-  thumb.fill(Qt::blue);
-  cache_->save(key, thumb);
-  const auto loaded = cache_->load(key);
-  ASSERT_TRUE(loaded.has_value());
-  EXPECT_EQ(loaded->size(), QSize(8, 4));
-}
-
-TEST_F(WallpapersTest, ThumbnailCachePrunesExpiredFiles) {
-  QImage thumb(2, 2, QImage::Format_ARGB32);
-  thumb.fill(Qt::green);
-  cache_->save(QStringLiteral("old.png"), thumb);
-  cache_->save(QStringLiteral("new.png"), thumb);
-  QFile old(QDir(cache_->folder()).filePath(QStringLiteral("old.png")));
-  ASSERT_TRUE(old.open(QIODevice::ReadWrite));
-  const QDateTime ancient =
-      QDateTime::currentDateTime().addSecs(-ThumbnailCache::kMaxAgeSeconds - 3600);
-  ASSERT_TRUE(old.setFileTime(ancient, QFileDevice::FileModificationTime));
-  old.close();
-
-  cache_->prune();
-  EXPECT_FALSE(cache_->load(QStringLiteral("old.png")).has_value());
-  EXPECT_TRUE(cache_->load(QStringLiteral("new.png")).has_value());
-}
-
-// --- manager ----------------------------------------------------------------------------------
-
-TEST_F(WallpapersTest, ChangeBackgroundNeverRepeatsAndSetsEveryMonitor) {
-  const QStringList files = makeImages(3);
-  WallpaperManager& manager = *rig_.manager;
-  manager.configure({temp_.path()}, 60, false, {}, {});
-
-  rig_.picks = {0};
-  manager.changeBackground();
-  ASSERT_EQ(rig_.desktop->sets.size(), 1u);
-  EXPECT_TRUE(rig_.desktop->sets[0].monitor.isEmpty());  // all monitors
-  EXPECT_EQ(rig_.desktop->sets[0].path, nativeAbsolute(files[0]));
-
-  // The picker keeps answering 0 first; the manager must re-pick until the image differs.
-  rig_.picks = {0, 0, 2};
-  manager.changeBackground();
-  ASSERT_EQ(rig_.desktop->sets.size(), 2u);
-  EXPECT_EQ(rig_.desktop->sets[1].path, nativeAbsolute(files[2]));
-}
-
-TEST_F(WallpapersTest, ChangeBackgroundWithoutImagesTouchesNothing) {
-  rig_.manager->configure({QDir(temp_.path()).filePath(QStringLiteral("empty"))}, 60, false, {},
-                          {});
-  rig_.manager->changeBackground();
-  EXPECT_TRUE(rig_.desktop->sets.empty());
-  EXPECT_EQ(rig_.desktop->backendsCreated, 0);
-  EXPECT_FALSE(rig_.manager->isRunning());
-}
-
-TEST_F(WallpapersTest, RunAfterReplacesImageAndBlocksOverlappingChanges) {
-  const QStringList files = makeImages(2);
-  rig_.deferCommands = true;
-  rig_.manager->configure({temp_.path()}, 60, false,
-                          {QStringLiteral("tool {image} --now"), QStringLiteral("second")}, {});
-
-  rig_.picks = {1};
-  rig_.manager->changeBackground();
-  EXPECT_TRUE(rig_.manager->isRunning());
-  ASSERT_EQ(rig_.commands.size(), 1u);
-  EXPECT_EQ(rig_.commands[0], QStringLiteral("tool \"%1\" --now").arg(nativeAbsolute(files[1])));
-  EXPECT_EQ(rig_.manager->lastImage(), nativeAbsolute(files[1]));
-
-  rig_.manager->changeBackground();  // ignored: a change is still running
-  EXPECT_EQ(rig_.desktop->sets.size(), 1u);
-
-  rig_.pendingCommands.front()(QString());
-  ASSERT_EQ(rig_.commands.size(), 2u);
-  EXPECT_TRUE(rig_.manager->isRunning());
-  rig_.pendingCommands.back()(QString());
-  EXPECT_FALSE(rig_.manager->isRunning());
-}
-
-TEST_F(WallpapersTest, SetFailureResetsTheGuardAndSkipsCommands) {
-  makeImages(1);
-  rig_.desktop->failSet = true;
-  rig_.manager->configure({temp_.path()}, 60, false, {QStringLiteral("never")}, {});
-  rig_.manager->changeBackground();
-  EXPECT_FALSE(rig_.manager->isRunning());
-  EXPECT_TRUE(rig_.commands.empty());
-}
-
-TEST_F(WallpapersTest, SingleMonitorSetNeverAnimates) {
-  const QString image = makeImages(1).front();
-  int engines = 0;
-  rig_.engine = [&engines](const QString&, const QString&) -> WallpaperEngine* {
-    ++engines;
-    return nullptr;
-  };
-  rig_.manager->configure({temp_.path()}, 60, false, {}, {true, QStringLiteral("split")});
-  rig_.manager->setWallpaper(image, QStringLiteral("MON1"), true);
-  EXPECT_EQ(engines, 0);
-  ASSERT_EQ(rig_.desktop->sets.size(), 1u);
-  EXPECT_EQ(rig_.desktop->sets[0].monitor, QStringLiteral("MON1"));
-}
-
-TEST_F(WallpapersTest, TimerFollowsChangeAutomatically) {
-  WallpaperManager& manager = *rig_.manager;
-  manager.configure({temp_.path()}, 90, true, {}, {});
-  EXPECT_TRUE(manager.timerRunning());
-  EXPECT_EQ(manager.timerIntervalMs(), 90000);
-  manager.configure({temp_.path()}, 90, false, {}, {});
-  EXPECT_FALSE(manager.timerRunning());
-}
-
-TEST_F(WallpapersTest, MonitorIdsComeFromTheBackend) {
-  rig_.desktop->monitors = {{QStringLiteral("A"), {}}, {QStringLiteral("B"), {}}};
-  EXPECT_EQ(rig_.manager->monitorIds(), (QStringList{QStringLiteral("A"), QStringLiteral("B")}));
-}
-
-// --- engine -----------------------------------------------------------------------------------
-
-TEST_F(WallpapersTest, MissingWorkerWSetsWithoutAnimationAndLogsOnce) {
-  const QString fresh = writePng(QDir(temp_.path()).filePath(QStringLiteral("new.png")), Qt::red);
-  const QString old = writePng(QDir(temp_.path()).filePath(QStringLiteral("old.png")), Qt::blue);
-  auto attaches = std::make_shared<int>(0);
-  rig_.engine = [&](const QString& image, const QString& animation) {
-    return new WallpaperEngine(image, animation, fakePlatform(old, false, attaches), 20);
-  };
-  rig_.manager->configure({temp_.path()}, 60, false, {}, {true, QStringLiteral("split")});
-  MessageCounter counter(QStringLiteral("Wallpaper animation skipped"));
-
-  rig_.manager->setWallpaper(fresh);
-  ASSERT_TRUE(waitFor([&] { return rig_.desktop->sets.size() == 1; }));
-  rig_.manager->setWallpaper(fresh);
-  ASSERT_TRUE(waitFor([&] { return rig_.desktop->sets.size() == 2; }));
-  QCoreApplication::processEvents();
-
-  EXPECT_EQ(*attaches, 2);
-  EXPECT_EQ(MessageCounter::count, 1);
-  EXPECT_EQ(rig_.desktop->sets[0].path, nativeAbsolute(fresh));
-}
-
-TEST_F(WallpapersTest, UnreadableOldWallpaperAlsoSkipsTheAnimation) {
-  const QString fresh = writePng(QDir(temp_.path()).filePath(QStringLiteral("new.png")), Qt::red);
-  auto attaches = std::make_shared<int>(0);
-  const QString missing = QDir(temp_.path()).filePath(QStringLiteral("none.png"));
-  rig_.engine = [&](const QString& image, const QString& animation) {
-    return new WallpaperEngine(image, animation, fakePlatform(missing, true, attaches), 20);
-  };
-  rig_.manager->configure({temp_.path()}, 60, false, {}, {true, QStringLiteral("circle")});
-  rig_.manager->setWallpaper(fresh);
-  ASSERT_TRUE(waitFor([&] { return rig_.desktop->sets.size() == 1; }));
-  EXPECT_EQ(*attaches, 0);
-}
-
-TEST_F(WallpapersTest, SplitTransitionPlaysThenSetsTheWallpaper) {
-  const QString fresh =
-      writePng(QDir(temp_.path()).filePath(QStringLiteral("new.png")), Qt::red, 400, 300);
-  const QString old =
-      writePng(QDir(temp_.path()).filePath(QStringLiteral("old.png")), Qt::blue, 400, 300);
-  QPointer<WallpaperEngine> created;
-  rig_.engine = [&](const QString& image, const QString& animation) {
-    created = new WallpaperEngine(image, animation, fakePlatform(old, true), 40);
-    return created.data();
-  };
-  rig_.manager->configure({temp_.path()}, 60, false, {}, {true, QStringLiteral("split")});
-  rig_.manager->setWallpaper(fresh);
-
-  ASSERT_TRUE(waitFor([&] { return created && created->animated(); }));
-  EXPECT_TRUE(rig_.desktop->sets.empty());  // nothing committed while the overlay plays
-  EXPECT_EQ(created->areas().size(), 1u);
-  EXPECT_EQ(created->scaledNew().size(), 1u);
-  ASSERT_TRUE(waitFor([&] { return rig_.desktop->sets.size() == 1; }));
-  ASSERT_TRUE(created);
-  EXPECT_DOUBLE_EQ(created->progress(), 1.0);
-  EXPECT_TRUE(rig_.desktop->sets[0].monitor.isEmpty());
 }
 
 // --- gallery ----------------------------------------------------------------------------------

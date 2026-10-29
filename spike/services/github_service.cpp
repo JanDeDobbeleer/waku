@@ -18,23 +18,8 @@ namespace github = ::yasb::widgets::github;
 
 const QString kDefaultVerificationUri = QStringLiteral("https://github.com/login/device");
 
-// The schema defaults of GithubIconsConfig (Nerd Font glyphs).
-const yasb::config::options::GithubIconsConfig& icons() {
-  static const yasb::config::options::GithubIconsConfig value = [] {
-    yasb::config::options::GithubIconsConfig i;
-    i.issue = "\xEF\x90\x9B";                // U+F41B
-    i.issue_closed = "\xEF\x90\x9D";         // U+F41D
-    i.pull_request = "\xEE\xA9\xA4";         // U+EA64
-    i.pull_request_closed = "\xEE\xAF\x9A";  // U+EBDA
-    i.pull_request_merged = "\xEF\x85\xBF";  // U+F17F
-    i.pull_request_draft = "\xEE\xAF\x9B";   // U+EBDB
-    i.release = "\xEE\xAA\x84";              // U+EA84
-    i.discussion = "\xEF\x91\x82";           // U+F442
-    i.discussion_answered = "\xEF\x93\x80";  // U+F4C0
-    i.checksuite = "\xEF\x90\x98";           // U+F418
-    i.default_ = "\xEE\xAA\x84";             // U+EA84
-    return i;
-  }();
+const github::GithubIcons& icons() {
+  static const github::GithubIcons value;
   return value;
 }
 

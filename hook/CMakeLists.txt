@@ -5,7 +5,7 @@
 #
 # The DLL must match Explorer's architecture, so each preset builds the DLL for its own target
 # (arm64-* -> YASBNativeTrayHook_arm64.dll, x64-release -> YASBNativeTrayHook.dll). An x64 build
-# running under emulation on an ARM64 host cannot inject it and falls back to the legacy window.
+# running under emulation on an ARM64 host cannot inject it, so it has no tray host.
 if(CMAKE_CXX_COMPILER_ARCHITECTURE_ID STREQUAL "ARM64")
   set(_hook_suffix "_arm64")
   set(_hook_arm64 TRUE)
