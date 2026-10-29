@@ -1,4 +1,4 @@
-#include "platform/audio.h"
+#include "features/audio/audio_endpoints.h"
 
 // clang-format off
 // functiondiscoverykeys_devpkey.h needs mmdeviceapi.h (propkey) first; keep this order.
@@ -18,7 +18,7 @@
 #include <map>
 #include <utility>
 
-namespace yasb::platform {
+namespace wabar::audio {
 namespace {
 
 // Undocumented IPolicyConfig (used by SetDefaultEndpoint, the same call pycaw makes). Only
@@ -326,4 +326,4 @@ AudioEndpoints* createSystemAudio(AudioFlow flow, QObject* parent) {
   return new SystemAudio(flow, parent);
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::audio

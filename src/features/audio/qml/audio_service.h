@@ -6,14 +6,12 @@
 #include <QString>
 #include <QVariantList>
 
-#include "platform/audio.h"
+#include "features/audio/audio_endpoints.h"
 
-namespace wabar::services {
-
-namespace platform = ::yasb::platform;
+namespace wabar::audio {
 
 // Default audio endpoint of one direction as a QML singleton (AudioOutput, AudioInput). Created
-// by the engine on first use and shared by every widget. GUI thread only: platform::AudioEndpoints
+// by the engine on first use and shared by every widget. GUI thread only: AudioEndpoints
 // re-posts its Core Audio callbacks to the GUI thread, and `changed` is emitted from there.
 // The endpoint is stopped (callbacks released) when the engine destroys the singleton.
 class AudioBase : public QObject {
@@ -43,10 +41,10 @@ class AudioBase : public QObject {
 
  protected:
   // Takes ownership of `endpoints` (also the test seam: pass a fake).
-  AudioBase(platform::AudioEndpoints* endpoints, QObject* parent);
+  AudioBase(AudioEndpoints* endpoints, QObject* parent);
 
  private:
-  platform::AudioEndpoints* endpoints_;
+  AudioEndpoints* endpoints_;
 };
 
 class AudioOutput : public AudioBase {
@@ -56,7 +54,7 @@ class AudioOutput : public AudioBase {
 
  public:
   explicit AudioOutput(QObject* parent = nullptr)
-      : AudioBase(platform::createSystemAudio(platform::AudioFlow::Render), parent) {}
+      : AudioBase(createSystemAudio(AudioFlow::Render), parent) {}
 };
 
 class AudioInput : public AudioBase {
@@ -66,7 +64,7 @@ class AudioInput : public AudioBase {
 
  public:
   explicit AudioInput(QObject* parent = nullptr)
-      : AudioBase(platform::createSystemAudio(platform::AudioFlow::Capture), parent) {}
+      : AudioBase(createSystemAudio(AudioFlow::Capture), parent) {}
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::audio

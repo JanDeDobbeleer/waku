@@ -1,14 +1,14 @@
-#include "spike/services/audio_service.h"
+#include "features/audio/qml/audio_service.h"
 
 #include <algorithm>
 
-namespace wabar::services {
+namespace wabar::audio {
 
-AudioBase::AudioBase(platform::AudioEndpoints* endpoints, QObject* parent)
+AudioBase::AudioBase(AudioEndpoints* endpoints, QObject* parent)
     : QObject(parent), endpoints_(endpoints) {
   endpoints_->setParent(this);
-  connect(endpoints_, &platform::AudioEndpoints::volumeChanged, this, &AudioBase::changed);
-  connect(endpoints_, &platform::AudioEndpoints::deviceChanged, this, &AudioBase::changed);
+  connect(endpoints_, &AudioEndpoints::volumeChanged, this, &AudioBase::changed);
+  connect(endpoints_, &AudioEndpoints::deviceChanged, this, &AudioBase::changed);
 }
 
 AudioBase::~AudioBase() { endpoints_->stop(); }
@@ -29,7 +29,7 @@ void AudioBase::setMuted(bool muted) {
 
 QVariantList AudioBase::devices() const {
   QVariantList list;
-  for (const platform::AudioDevice& device : endpoints_->devices()) {
+  for (const AudioDevice& device : endpoints_->devices()) {
     list << QVariantMap{{QStringLiteral("id"), device.id}, {QStringLiteral("name"), device.name}};
   }
   return list;
@@ -39,4 +39,4 @@ QString AudioBase::defaultDevice() const { return endpoints_->defaultDeviceId();
 
 bool AudioBase::setDefaultDevice(const QString& id) { return endpoints_->setDefaultDevice(id); }
 
-}  // namespace wabar::services
+}  // namespace wabar::audio

@@ -5,8 +5,29 @@
 # module target itself is defined in src/modules/ from these and the src/features/ contributions.
 wabar_contribute(
   SERVICES_SOURCES
-    services/audio_service.h
-    services/audio_service.cpp
+    services/stat_source.h
+    services/system_stats.h
+    services/system_stats.cpp
+    services/child_process.h
+    services/child_process.cpp
+    services/media_service.h
+    services/media_service.cpp
+    services/glazewm_client.h
+    services/glazewm_client.cpp
+    services/komorebi_client.h
+    services/komorebi_client.cpp
+    services/shell_service.h
+    services/shell_service.cpp
+    services/workspaces_service.h
+    services/workspaces_service.cpp
+    services/tray_icon_model.h
+    services/tray_icon_model.cpp
+    services/tray_image_provider.h
+    services/tray_image_provider.cpp
+    services/systray.h
+    services/systray.cpp
+    services/tray_pins.h
+    services/tray_pins.cpp
     services/bluetooth_service.h
     services/bluetooth_service.cpp
     services/notification_service.h
@@ -15,7 +36,7 @@ wabar_contribute(
     services/control_center_service.cpp
   # The generated type registration includes headers by name.
   SERVICES_INCLUDE_DIRS services
-  SERVICES_LIBS wabar_brightness yasb_platform yasb_widgets wabar_control wabar_kernel
+  SERVICES_LIBS wabar_audio wabar_brightness yasb_platform yasb_widgets wabar_control wabar_kernel
 )
 
 # wabar_control: the pipe between a running bar and wabarc.

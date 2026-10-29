@@ -8,7 +8,17 @@ wabar_contribute(
     DeviceMenu.qml
     DeviceRow.qml
     Slider.qml
-    Volume.qml
+    Calendar.qml
+    Clock.qml
+    Cpu.qml
+    Memory.qml
+    Battery.qml
+    Media.qml
+    Workspaces.qml
+    WorkspaceDot.qml
+    TrayIconButton.qml
+    Tray.qml
+    ActiveLayout.qml
     Bluetooth.qml
     Notifications.qml
     ControlCenter.qml

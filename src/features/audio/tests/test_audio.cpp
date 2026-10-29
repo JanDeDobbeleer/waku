@@ -3,51 +3,12 @@
 #include <QSignalSpy>
 #include <memory>
 
-#include "spike/services/audio_service.h"
+#include "features/audio/qml/audio_service.h"
+#include "features/audio/testing/fake_audio_endpoints.h"
 
-using namespace wabar::services;
-namespace platform = yasb::platform;
+using namespace wabar::audio;
 
 namespace {
-
-class FakeEndpoints final : public platform::AudioEndpoints {
- public:
-  bool available() override { return hasEndpoint; }
-  std::optional<int> volumePercent() override {
-    return hasEndpoint ? std::optional<int>(volume) : std::nullopt;
-  }
-  bool setVolumePercent(int percent) override {
-    if (!hasEndpoint) return false;
-    volume = percent;
-    return true;
-  }
-  std::optional<bool> muted() override {
-    return hasEndpoint ? std::optional<bool>(isMuted) : std::nullopt;
-  }
-  bool setMuted(bool value) override {
-    if (!hasEndpoint) return false;
-    isMuted = value;
-    return true;
-  }
-  std::vector<platform::AudioDevice> devices() override {
-    return {{QStringLiteral("id-1"), QStringLiteral("Speakers")},
-            {QStringLiteral("id-2"), QStringLiteral("Headphones")}};
-  }
-  QString defaultDeviceId() override { return defaultId; }
-  bool setDefaultDevice(const QString& id) override {
-    defaultId = id;
-    return true;
-  }
-  void stop() override {
-    if (stopCounter) ++*stopCounter;
-  }
-
-  bool hasEndpoint = true;
-  int volume = 30;
-  bool isMuted = false;
-  QString defaultId = QStringLiteral("id-1");
-  int* stopCounter = nullptr;
-};
 
 // Exposes the protected constructor; keeps a pointer to the fake the base class now owns.
 class TestAudio final : public AudioBase {
