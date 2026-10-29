@@ -14,6 +14,7 @@ wabar_contribute(
     Wifi.qml
     Notifications.qml
     ControlCenter.qml
-    GitHub.qml
+    Wallpapers.qml
+    WallpaperGallery.qml
     SafeConfig.qml
 )

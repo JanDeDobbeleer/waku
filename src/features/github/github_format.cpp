@@ -1,10 +1,10 @@
-#include "widgets/github/github_format.h"
+#include "features/github/github_format.h"
 
 #include <QHash>
 #include <QRegularExpression>
 #include <algorithm>
 
-namespace yasb::widgets::github {
+namespace wabar::github {
 namespace {
 
 QString plural(long long value, const char* unit) {
@@ -54,7 +54,7 @@ QString categoryTitle(const QString& categoryType) {
   return spaced.isEmpty() ? categoryType : spaced;
 }
 
-IconAndStates iconAndStates(const platform::GithubNotification& n, const GithubIcons& icons) {
+IconAndStates iconAndStates(const GithubNotification& n, const GithubIcons& icons) {
   IconAndStates result;
   if (n.type == QLatin1String("Issue")) {
     const QString state = n.issueState.value_or(QString()).toLower();
@@ -102,7 +102,7 @@ QString truncateField(const QString& text, int maxSize) {
          QStringLiteral("...");
 }
 
-QStringList orderedCategories(const std::vector<platform::GithubNotification>& notifications,
+QStringList orderedCategories(const std::vector<GithubNotification>& notifications,
                               const std::vector<std::string>& configuredOrder) {
   QStringList seen;
   for (const auto& n : notifications) {
@@ -122,4 +122,4 @@ QStringList orderedCategories(const std::vector<platform::GithubNotification>& n
   return ordered;
 }
 
-}  // namespace yasb::widgets::github
+}  // namespace wabar::github

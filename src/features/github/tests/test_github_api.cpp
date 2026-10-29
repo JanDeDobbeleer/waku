@@ -8,13 +8,12 @@
 #include <QTimeZone>
 #include <nlohmann/json.hpp>
 
-#include "platform/github_api.h"
-#include "widgets/github/github_format.h"
-#include "widgets/github/github_icons.h"
+#include "features/github/github_api.h"
+#include "features/github/github_format.h"
+#include "features/github/github_icons.h"
 
 using nlohmann::json;
-using namespace yasb::widgets;
-using namespace yasb::platform;
+using namespace wabar::github;
 
 namespace {
 
@@ -94,7 +93,7 @@ const QDateTime kNow = QDateTime(QDate(2026, 10, 28), QTime(12, 0), QTimeZone::U
 // --- pure helpers ------------------------------------------------------------------------------
 
 TEST(GithubFormat, RelativeTimeMatchesPythonBuckets) {
-  using yasb::widgets::github::relativeTime;
+  using wabar::github::relativeTime;
   const auto at = [](const char* iso) { return relativeTime(QString(iso), kNow); };
   EXPECT_EQ(at("2026-10-28T11:59:30Z"), "just now");
   EXPECT_EQ(at("2026-10-28T11:59:00Z"), "1 minute ago");
@@ -111,7 +110,7 @@ TEST(GithubFormat, RelativeTimeMatchesPythonBuckets) {
 }
 
 TEST(GithubFormat, CategoryTitlesAndTruncation) {
-  using namespace yasb::widgets::github;
+  using namespace wabar::github;
   EXPECT_EQ(categoryTitle("PullRequest"), "Pull Requests");
   EXPECT_EQ(categoryTitle("CheckSuite"), "Check Suites");
   EXPECT_EQ(categoryTitle("RepositoryVulnerabilityAlert"), "Repository Vulnerability Alert");
@@ -122,7 +121,7 @@ TEST(GithubFormat, CategoryTitlesAndTruncation) {
 }
 
 TEST(GithubFormat, IconsAndStatesFollowPythonPriority) {
-  yasb::widgets::github::GithubIcons icons;
+  wabar::github::GithubIcons icons;
   icons.issue = "I";
   icons.issue_closed = "IC";
   icons.pull_request = "P";
@@ -134,7 +133,7 @@ TEST(GithubFormat, IconsAndStatesFollowPythonPriority) {
   icons.release = "R";
   icons.checksuite = "CS";
   icons.default_ = "X";
-  using namespace yasb::widgets::github;
+  using namespace wabar::github;
   GithubNotification issue = note("1", "Issue", true);
   EXPECT_EQ(iconAndStates(issue, icons).icon, "I");
   issue.issueState = QString("closed");
@@ -173,14 +172,15 @@ TEST(GithubApi, ParsesNotificationsAndBuildsWebUrls) {
   }));
   ASSERT_TRUE(page.has_value());
   ASSERT_EQ(page->size(), 5u);
-  EXPECT_EQ((*page)[0].url, "https://github.com/o/r/pull/5");
-  EXPECT_EQ((*page)[1].url, "https://github.com/o/r/issues/6");
-  EXPECT_EQ((*page)[2].url, "https://github.com/o/r/releases");
-  EXPECT_EQ((*page)[3].url, "https://github.com/o/r/actions");
-  EXPECT_EQ((*page)[4].url, "https://github.com/o/r");
-  EXPECT_TRUE((*page)[0].unread);
-  EXPECT_FALSE((*page)[1].unread);
-  EXPECT_EQ((*page)[0].reason, "mention");
+  const auto& items = *page;
+  EXPECT_EQ(items[0].url, "https://github.com/o/r/pull/5");
+  EXPECT_EQ(items[1].url, "https://github.com/o/r/issues/6");
+  EXPECT_EQ(items[2].url, "https://github.com/o/r/releases");
+  EXPECT_EQ(items[3].url, "https://github.com/o/r/actions");
+  EXPECT_EQ(items[4].url, "https://github.com/o/r");
+  EXPECT_TRUE(items[0].unread);
+  EXPECT_FALSE(items[1].unread);
+  EXPECT_EQ(items[0].reason, "mention");
   EXPECT_FALSE(parseGithubNotifications("{}").has_value());
   EXPECT_FALSE(parseGithubNotifications("[{\"id\":\"1\"}]").has_value());
 }
@@ -230,15 +230,16 @@ TEST(GithubApi, EnrichmentQueryAndResponse) {
           "comments":{"totalCount":2},"reviewThreads":{"totalCount":3}}},
     "n3":{"discussion":{"isAnswered":true,"comments":{"totalCount":1}}}}})";
   ASSERT_TRUE(applyGithubEnrichment(response, *page, true));
-  EXPECT_EQ((*page)[0].issueState, QString("closed"));
-  EXPECT_EQ((*page)[0].commentCount, 4);
-  EXPECT_FALSE((*page)[1].commentCount.has_value());
-  EXPECT_EQ((*page)[2].pullRequestState, QString("merged"));
-  EXPECT_TRUE((*page)[2].pullRequestIsMerged);
-  EXPECT_EQ((*page)[2].pullRequestIsDraft, std::optional<bool>(false));
-  EXPECT_EQ((*page)[2].commentCount, 5);
-  EXPECT_EQ((*page)[3].discussionIsAnswered, std::optional<bool>(true));
-  EXPECT_EQ((*page)[3].commentCount, 1);
+  const auto& items = *page;
+  EXPECT_EQ(items[0].issueState, QString("closed"));
+  EXPECT_EQ(items[0].commentCount, 4);
+  EXPECT_FALSE(items[1].commentCount.has_value());
+  EXPECT_EQ(items[2].pullRequestState, QString("merged"));
+  EXPECT_TRUE(items[2].pullRequestIsMerged);
+  EXPECT_EQ(items[2].pullRequestIsDraft, std::optional<bool>(false));
+  EXPECT_EQ(items[2].commentCount, 5);
+  EXPECT_EQ(items[3].discussionIsAnswered, std::optional<bool>(true));
+  EXPECT_EQ(items[3].commentCount, 1);
 
   auto untouched = *page;
   EXPECT_FALSE(applyGithubEnrichment(R"({"errors":[{"message":"x"}]})", untouched, true));

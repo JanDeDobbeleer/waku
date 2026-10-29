@@ -16,7 +16,7 @@
 
 // Port of yasb:src/core/widgets/services/github/{api,auth}.py. Never log or persist the token
 // anywhere except the token file the Python build also uses.
-namespace yasb::platform {
+namespace wabar::github {
 
 struct GithubNotification {
   QString id;
@@ -140,6 +140,6 @@ GithubDeviceCode parseGithubDeviceCode(const HttpResponse& response);
 HttpRequest githubAccessTokenRequest(const QString& deviceCode);
 GithubTokenPoll parseGithubAccessToken(const HttpResponse& response);
 
-}  // namespace yasb::platform
+}  // namespace wabar::github
 
-Q_DECLARE_METATYPE(yasb::platform::GithubFetchResult)
+Q_DECLARE_METATYPE(wabar::github::GithubFetchResult)

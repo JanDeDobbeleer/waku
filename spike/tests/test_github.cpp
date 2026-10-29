@@ -8,65 +8,18 @@
 #include <memory>
 #include <vector>
 
-#include "spike/services/github_service.h"
+#include "features/github/qml/github_service.h"
+#include "features/github/testing/fake_github_client.h"
 #include "spike/tests/bar_fixtures.h"
 
-using namespace wabar::services;
-namespace platform = yasb::platform;
+using namespace wabar::github;
+using namespace wabar::github::testing;
 
 namespace {
 
-// A stand-in for the GitHub API server: REST pages, the GraphQL call and nothing else.
-class ScriptTransport final : public platform::HttpTransport {
- public:
-  platform::HttpResponse send(const platform::HttpRequest& request) override {
-    requests.push_back(request);
-    if (request.url.endsWith(QStringLiteral("/graphql"))) return {500, QStringLiteral("skip")};
-    return handler(request);
-  }
-  std::function<platform::HttpResponse(const platform::HttpRequest&)> handler;
-  std::vector<platform::HttpRequest> requests;
-};
-
-class FakeClient final : public GithubClient {
- public:
-  QString loadToken() override { return token; }
-  bool saveToken(const QString& value) override {
-    saved = value;
-    return saveOk;
-  }
-  void fetch(const platform::GithubFetchOptions& options,
-             std::function<void(const platform::GithubFetchResult&)> done) override {
-    fetches.push_back(options);
-    if (hold) {
-      pending = std::move(done);
-      return;
-    }
-    done(useTransport ? platform::fetchGithubNotifications(transport, options) : canned);
-  }
-  void send(const platform::HttpRequest& request,
-            std::function<void(const platform::HttpResponse&)> done) override {
-    sent.push_back(request);
-    done(respond ? respond(request) : platform::HttpResponse{200, QStringLiteral("OK")});
-  }
-
-  // A made-up value; the tests never see a real token.
-  QString token = QStringLiteral("test-token");
-  QString saved;
-  bool saveOk = true;
-  bool hold = false;
-  bool useTransport = false;
-  platform::GithubFetchResult canned;
-  ScriptTransport transport;
-  std::function<void(const platform::GithubFetchResult&)> pending;
-  std::function<platform::HttpResponse(const platform::HttpRequest&)> respond;
-  std::vector<platform::GithubFetchOptions> fetches;
-  std::vector<platform::HttpRequest> sent;
-};
-
-platform::GithubNotification note(const QString& id, const QString& type, bool unread,
-                                  const QString& title = QStringLiteral("Title")) {
-  platform::GithubNotification n;
+GithubNotification note(const QString& id, const QString& type, bool unread,
+                        const QString& title = QStringLiteral("Title")) {
+  GithubNotification n;
   n.id = id;
   n.type = type;
   n.unread = unread;
@@ -77,8 +30,8 @@ platform::GithubNotification note(const QString& id, const QString& type, bool u
   return n;
 }
 
-platform::GithubFetchResult okResult(std::vector<platform::GithubNotification> list) {
-  platform::GithubFetchResult r;
+GithubFetchResult okResult(std::vector<GithubNotification> list) {
+  GithubFetchResult r;
   r.ok = true;
   r.notifications = std::move(list);
   return r;
@@ -235,13 +188,13 @@ TEST(GithubService, OptionsReachTheFetchAndCoalesceIntoOneRefresh) {
 TEST(GithubService, ParsesTheApiAndAppliesTheUnreadFilterAndTheMaximum) {
   ServiceHarness h;
   h.client->useTransport = true;
-  h.client->transport.handler = [](const platform::HttpRequest&) {
-    return platform::HttpResponse{200, QStringLiteral("OK"), restPage(3)};
+  h.client->transport.handler = [](const HttpRequest&) {
+    return HttpResponse{200, QStringLiteral("OK"), restPage(3)};
   };
   h.github->setMaxNotification(2);
   h.settle();
   ASSERT_FALSE(h.client->transport.requests.empty());
-  const platform::HttpRequest& first = h.client->transport.requests.front();
+  const HttpRequest& first = h.client->transport.requests.front();
   EXPECT_TRUE(first.url.contains(QStringLiteral("all=false")));  // only unread
   EXPECT_TRUE(first.url.contains(QStringLiteral("per_page=2")));
   ASSERT_EQ(h.github->items().size(), 2);  // the third page entry is cut
@@ -263,9 +216,8 @@ TEST(GithubService, ParsesTheApiAndAppliesTheUnreadFilterAndTheMaximum) {
 TEST(GithubService, ReasonFilterDropsOtherReasons) {
   ServiceHarness h;
   h.client->useTransport = true;
-  h.client->transport.handler = [](const platform::HttpRequest&) {
-    return platform::HttpResponse{200, QStringLiteral("OK"),
-                                  restPage(2, true, QStringLiteral("subscribed"))};
+  h.client->transport.handler = [](const HttpRequest&) {
+    return HttpResponse{200, QStringLiteral("OK"), restPage(2, true, QStringLiteral("subscribed"))};
   };
   h.github->setReasonFilters({QStringLiteral("mention")});
   h.settle();
@@ -280,22 +232,22 @@ TEST(GithubService, FailuresSetTheErrorAndClearTheList) {
   ASSERT_EQ(h.github->items().size(), 1);
 
   h.client->useTransport = true;
-  h.client->transport.handler = [](const platform::HttpRequest&) {
-    return platform::HttpResponse{401, QStringLiteral("Unauthorized")};
+  h.client->transport.handler = [](const HttpRequest&) {
+    return HttpResponse{401, QStringLiteral("Unauthorized")};
   };
   h.github->refresh();
   EXPECT_TRUE(h.github->items().isEmpty());
   EXPECT_EQ(h.github->unreadCount(), 0);
   EXPECT_TRUE(h.github->error().contains(QStringLiteral("401")));
 
-  h.client->transport.handler = [](const platform::HttpRequest&) {
-    return platform::HttpResponse{};  // status 0: offline
+  h.client->transport.handler = [](const HttpRequest&) {
+    return HttpResponse{};  // status 0: offline
   };
   h.github->refresh();
   EXPECT_TRUE(h.github->error().contains(QStringLiteral("no internet")));
 
-  h.client->transport.handler = [](const platform::HttpRequest&) {
-    return platform::HttpResponse{200, QStringLiteral("OK"), QByteArrayLiteral("{not json")};
+  h.client->transport.handler = [](const HttpRequest&) {
+    return HttpResponse{200, QStringLiteral("OK"), QByteArrayLiteral("{not json")};
   };
   h.github->refresh();
   EXPECT_FALSE(h.github->error().isEmpty());
@@ -368,19 +320,18 @@ TEST(GithubService, SignInShowsTheCodeThenSavesTheTokenAndFetches) {
   h.settle();
   h.client->canned = okResult({note(QStringLiteral("1"), QStringLiteral("Issue"), true)});
   int step = 0;
-  h.client->respond = [&step](const platform::HttpRequest& request) {
+  h.client->respond = [&step](const HttpRequest& request) {
     if (request.url.endsWith(QStringLiteral("/device/code"))) {
-      return platform::HttpResponse{
+      return HttpResponse{
           200, QStringLiteral("OK"),
           QByteArrayLiteral("{\"device_code\":\"dc\",\"user_code\":\"ABCD-1234\","
                             "\"verification_uri\":\"https://github.com/login/device\","
                             "\"interval\":5,\"expires_in\":900}")};
     }
     ++step;
-    return platform::HttpResponse{200, QStringLiteral("OK"),
-                                  step == 1
-                                      ? QByteArrayLiteral("{\"error\":\"authorization_pending\"}")
-                                      : QByteArrayLiteral("{\"access_token\":\"made-up-token\"}")};
+    return HttpResponse{200, QStringLiteral("OK"),
+                        step == 1 ? QByteArrayLiteral("{\"error\":\"authorization_pending\"}")
+                                  : QByteArrayLiteral("{\"access_token\":\"made-up-token\"}")};
   };
   h.github->signIn();
   EXPECT_TRUE(h.github->signingIn());
@@ -408,21 +359,20 @@ TEST(GithubService, SignInShowsTheCodeThenSavesTheTokenAndFetches) {
 TEST(GithubService, SignInReportsFailuresAndCanBeCancelled) {
   ServiceHarness h{QString()};
   h.settle();
-  h.client->respond = [](const platform::HttpRequest&) {
-    return platform::HttpResponse{};  // offline
+  h.client->respond = [](const HttpRequest&) {
+    return HttpResponse{};  // offline
   };
   h.github->signIn();
   EXPECT_FALSE(h.github->signingIn());
   EXPECT_FALSE(h.github->signInError().isEmpty());
 
-  h.client->respond = [](const platform::HttpRequest& request) {
+  h.client->respond = [](const HttpRequest& request) {
     if (request.url.endsWith(QStringLiteral("/device/code"))) {
-      return platform::HttpResponse{
-          200, QStringLiteral("OK"),
-          QByteArrayLiteral("{\"device_code\":\"dc\",\"user_code\":\"X\"}")};
+      return HttpResponse{200, QStringLiteral("OK"),
+                          QByteArrayLiteral("{\"device_code\":\"dc\",\"user_code\":\"X\"}")};
     }
-    return platform::HttpResponse{200, QStringLiteral("OK"),
-                                  QByteArrayLiteral("{\"error\":\"access_denied\"}")};
+    return HttpResponse{200, QStringLiteral("OK"),
+                        QByteArrayLiteral("{\"error\":\"access_denied\"}")};
   };
   h.github->signIn();
   EXPECT_TRUE(h.github->signingIn());
@@ -446,12 +396,11 @@ TEST(GithubService, ATokenThatCannotBeSavedStillSignsIn) {
   ServiceHarness h{QString()};
   h.settle();
   h.client->saveOk = false;
-  h.client->respond = [](const platform::HttpRequest& request) {
+  h.client->respond = [](const HttpRequest& request) {
     const bool device = request.url.endsWith(QStringLiteral("/device/code"));
-    return platform::HttpResponse{
-        200, QStringLiteral("OK"),
-        device ? QByteArrayLiteral("{\"device_code\":\"dc\",\"user_code\":\"X\"}")
-               : QByteArrayLiteral("{\"access_token\":\"made-up-token\"}")};
+    return HttpResponse{200, QStringLiteral("OK"),
+                        device ? QByteArrayLiteral("{\"device_code\":\"dc\",\"user_code\":\"X\"}")
+                               : QByteArrayLiteral("{\"access_token\":\"made-up-token\"}")};
   };
   h.github->signIn();
   h.github->pollSignIn();

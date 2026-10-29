@@ -1,4 +1,4 @@
-#include "platform/github_api.h"
+#include "features/github/github_api.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -21,7 +21,7 @@
 
 #include "kernel/qt/app_data.h"
 
-namespace yasb::platform {
+namespace wabar::github {
 namespace {
 
 const QString kApi = QStringLiteral("https://api.github.com");
@@ -502,4 +502,4 @@ GithubTokenPoll parseGithubAccessToken(const HttpResponse& response) {
   return {Kind::Pending, {}, {}};
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::github

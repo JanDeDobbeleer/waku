@@ -6,11 +6,11 @@
 #include <string>
 #include <vector>
 
-#include "platform/github_api.h"
-#include "widgets/github/github_icons.h"
+#include "features/github/github_api.h"
+#include "features/github/github_icons.h"
 
 // Pure helpers of yasb:src/core/widgets/yasb/github.py and core/utils/time_utils.py.
-namespace yasb::widgets::github {
+namespace wabar::github {
 
 // time_utils.get_relative_time(iso, short=False); "" for an empty or unparsable timestamp.
 QString relativeTime(const QString& isoTimestamp, const QDateTime& nowUtc);
@@ -23,14 +23,13 @@ struct IconAndStates {
   QStringList states;
 };
 // GithubWidget._resolve_icon_and_states.
-IconAndStates iconAndStates(const platform::GithubNotification& notification,
-                            const GithubIcons& icons);
+IconAndStates iconAndStates(const GithubNotification& notification, const GithubIcons& icons);
 
 // Python `text[: max - 3] + "..."` when len(text) > max, counted in code points.
 QString truncateField(const QString& text, int maxSize);
 
 // Notification types in configured order (case-insensitive), then the rest in first-seen order.
-QStringList orderedCategories(const std::vector<platform::GithubNotification>& notifications,
+QStringList orderedCategories(const std::vector<GithubNotification>& notifications,
                               const std::vector<std::string>& configuredOrder);
 
-}  // namespace yasb::widgets::github
+}  // namespace wabar::github

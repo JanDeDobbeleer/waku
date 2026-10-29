@@ -12,11 +12,9 @@
 #include <memory>
 #include <vector>
 
-#include "platform/github_api.h"
+#include "features/github/github_api.h"
 
-namespace wabar::services {
-
-namespace platform = ::yasb::platform;
+namespace wabar::github {
 
 // The network and token side of the GitHub service, so tests run without GitHub. Callbacks are
 // delivered on the GUI thread (a fake may call them at once).
@@ -27,16 +25,15 @@ class GithubClient {
   virtual QString loadToken() = 0;
   virtual bool saveToken(const QString& token) = 0;
   // `options.token` is set. A failed fetch has `ok == false` and an error text.
-  virtual void fetch(const platform::GithubFetchOptions& options,
-                     std::function<void(const platform::GithubFetchResult&)> done) = 0;
+  virtual void fetch(const GithubFetchOptions& options,
+                     std::function<void(const GithubFetchResult&)> done) = 0;
   // One HTTP request (mark as read, device flow).
-  virtual void send(const platform::HttpRequest& request,
-                    std::function<void(const platform::HttpResponse&)> done) = 0;
+  virtual void send(const HttpRequest& request, std::function<void(const HttpResponse&)> done) = 0;
 };
 
 // The real client: fetches on one-shot `QThreadPool` threads (each owns its own network
 // transport and ends with the fetch; nothing is joined), requests go through
-// platform::sendHttpAsync. Results are posted to the GUI thread through a guard object owned by
+// sendHttpAsync. Results are posted to the GUI thread through a guard object owned by
 // the client, so a response that arrives after the client is destroyed is dropped. The token is
 // handed to the fetch and never logged.
 std::unique_ptr<GithubClient> createSystemGithubClient();
@@ -131,23 +128,23 @@ class GitHub : public QObject {
 
  private:
   void scheduleRefresh();
-  void onFetched(const platform::GithubFetchResult& result);
+  void onFetched(const GithubFetchResult& result);
   void rebuild();
-  void onDeviceCode(const platform::HttpResponse& response, int generation);
-  void onTokenPoll(const platform::HttpResponse& response, int generation);
+  void onDeviceCode(const HttpResponse& response, int generation);
+  void onTokenPoll(const HttpResponse& response, int generation);
   void endSignIn(const QString& error);
-  void sendMark(const platform::HttpRequest& request);
+  void sendMark(const HttpRequest& request);
 
   std::unique_ptr<GithubClient> client_;
   QString token_;
   int interval_ = 600000;
-  platform::GithubFetchOptions fetchOptions_;
+  GithubFetchOptions fetchOptions_;
   QStringList categoriesOrder_;
   QTimer pollTimer_;
   QTimer kickTimer_;
   bool inFlight_ = false;
   bool rerun_ = false;
-  std::vector<platform::GithubNotification> notifications_;
+  std::vector<GithubNotification> notifications_;
   QVariantList items_;
   QVariantList groups_;
   QString error_;
@@ -162,4 +159,4 @@ class GitHub : public QObject {
   QTimer signInTimer_;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::github

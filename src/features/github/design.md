@@ -2,7 +2,7 @@
 
 Status: decisions taken, built in this pass. Sits on `spike/qt-quick-bar` next to the Notifications
 and Bluetooth widgets. Reference: Python YASB `yasb/github*` (branch `local/build`) and the Widgets
-build's `widgets/github/` and `platform/github_api.*`.
+build's `widgets/github/` and `features/github/github_api.*`.
 
 ## What the widget does
 
@@ -29,13 +29,13 @@ is seconds), `maxNotification`, `onlyUnread`, `showComments` (Python `show_comme
 
 | Piece | Where | Use |
 |---|---|---|
-| REST fetch, paging, link header, reason filter, GraphQL enrichment (state, comment count) | `platform/github_api.*` `fetchGithubNotifications` | as is, run on a `QThreadPool` thread with the blocking network transport |
+| REST fetch, paging, link header, reason filter, GraphQL enrichment (state, comment count) | `features/github/github_api.*` `fetchGithubNotifications` | as is, run on a `QThreadPool` thread with the blocking network transport |
 | mark thread / all as read requests | `githubMarkThreadReadRequest`, `githubMarkAllReadRequest` | as is, sent with `sendHttpAsync` |
 | token file, device flow requests and parsers | `githubTokenFilePath`, `readGithubTokenFile`, `saveGithubTokenFile`, `githubDeviceCodeRequest`, `parseGithubDeviceCode`, `githubAccessTokenRequest`, `parseGithubAccessToken` | as is |
-| relative time, category titles, field truncation, category order, state classes | `widgets/github/github_format.*` (no UI) | as is |
+| relative time, category titles, field truncation, category order, state classes | `features/github/github_format.*` (no UI) | as is |
 | `GithubWidget`, `GithubDataStore`, `GithubAuthDialog` | `widgets/github/` | not used: QWidgets. Their logic (unread count, mark read, ordering, poll skip while a fetch runs, device-flow loop) is ported to the service |
-| `wabar.services.GitHub` | `spike/services/github_service.*` | new: the singleton below |
-| `GitHub.qml` | `spike/widgets/` | new |
+| `wabar.services.GitHub` | `features/github/qml/github_service.*` | new: the singleton below |
+| `GitHub.qml` | `features/github/qml/` | new |
 
 ## QML-facing API
 

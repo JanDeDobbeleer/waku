@@ -1,4 +1,4 @@
-#include "spike/services/github_service.h"
+#include "features/github/qml/github_service.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -8,33 +8,31 @@
 #include <algorithm>
 #include <exception>
 
+#include "features/github/github_format.h"
 #include "kernel/qt/live_desktop.h"
-#include "widgets/github/github_format.h"
 
-namespace wabar::services {
+namespace wabar::github {
 namespace {
-
-namespace github = ::yasb::widgets::github;
 
 const QString kDefaultVerificationUri = QStringLiteral("https://github.com/login/device");
 
-const github::GithubIcons& icons() {
-  static const github::GithubIcons value;
+const GithubIcons& icons() {
+  static const GithubIcons value;
   return value;
 }
 
-QVariantMap itemMap(const platform::GithubNotification& n, const QDateTime& now) {
-  const github::IconAndStates iconStates = github::iconAndStates(n, icons());
+QVariantMap itemMap(const GithubNotification& n, const QDateTime& now) {
+  const IconAndStates iconStates = iconAndStates(n, icons());
   return {{QStringLiteral("id"), n.id},
           {QStringLiteral("title"), n.title},
           {QStringLiteral("repo"), n.repository},
           {QStringLiteral("type"), n.type},
           {QStringLiteral("category"), n.type},
-          {QStringLiteral("categoryTitle"), github::categoryTitle(n.type)},
+          {QStringLiteral("categoryTitle"), categoryTitle(n.type)},
           {QStringLiteral("url"), n.url},
           {QStringLiteral("unread"), n.unread},
           {QStringLiteral("comments"), n.commentCount.value_or(-1)},
-          {QStringLiteral("time"), github::relativeTime(n.updatedAt, now)},
+          {QStringLiteral("time"), relativeTime(n.updatedAt, now)},
           {QStringLiteral("state"), iconStates.states.join(QLatin1Char(' '))},
           {QStringLiteral("icon"), iconStates.icon}};
 }
@@ -42,33 +40,31 @@ QVariantMap itemMap(const platform::GithubNotification& n, const QDateTime& now)
 class SystemGithubClient final : public GithubClient {
  public:
   QString loadToken() override {
-    return platform::resolveGithubToken(QStringLiteral("env"),
-                                        qEnvironmentVariable("YASB_GITHUB_TOKEN"),
-                                        platform::githubTokenFilePath());
+    return resolveGithubToken(QStringLiteral("env"), qEnvironmentVariable("YASB_GITHUB_TOKEN"),
+                              githubTokenFilePath());
   }
   bool saveToken(const QString& token) override {
-    return platform::saveGithubTokenFile(platform::githubTokenFilePath(), token);
+    return saveGithubTokenFile(githubTokenFilePath(), token);
   }
-  void fetch(const platform::GithubFetchOptions& options,
-             std::function<void(const platform::GithubFetchResult&)> done) override {
-    QThreadPool::globalInstance()->start([options, done = std::move(done),
-                                          guard = QPointer<QObject>(&guard_)] {
-      platform::GithubFetchResult result;
-      try {
-        result = platform::fetchGithubNotifications(*platform::createNetworkTransport(), options);
-      } catch (const std::exception& error) {
-        result = {};
-        result.error =
-            QStringLiteral("an unexpected error occurred: ") + QString::fromUtf8(error.what());
-      }
-      if (!guard) return;
-      QMetaObject::invokeMethod(
-          guard.data(), [result, done] { done(result); }, Qt::QueuedConnection);
-    });
+  void fetch(const GithubFetchOptions& options,
+             std::function<void(const GithubFetchResult&)> done) override {
+    QThreadPool::globalInstance()->start(
+        [options, done = std::move(done), guard = QPointer<QObject>(&guard_)] {
+          GithubFetchResult result;
+          try {
+            result = fetchGithubNotifications(*createNetworkTransport(), options);
+          } catch (const std::exception& error) {
+            result = {};
+            result.error =
+                QStringLiteral("an unexpected error occurred: ") + QString::fromUtf8(error.what());
+          }
+          if (!guard) return;
+          QMetaObject::invokeMethod(
+              guard.data(), [result, done] { done(result); }, Qt::QueuedConnection);
+        });
   }
-  void send(const platform::HttpRequest& request,
-            std::function<void(const platform::HttpResponse&)> done) override {
-    platform::sendHttpAsync(request, &guard_, std::move(done));
+  void send(const HttpRequest& request, std::function<void(const HttpResponse&)> done) override {
+    sendHttpAsync(request, &guard_, std::move(done));
   }
 
  private:
@@ -107,9 +103,8 @@ GitHub::GitHub(std::unique_ptr<GithubClient> client, QObject* parent)
 GitHub::~GitHub() = default;
 
 int GitHub::unreadCount() const {
-  return static_cast<int>(
-      std::count_if(notifications_.begin(), notifications_.end(),
-                    [](const platform::GithubNotification& n) { return n.unread; }));
+  return static_cast<int>(std::count_if(notifications_.begin(), notifications_.end(),
+                                        [](const GithubNotification& n) { return n.unread; }));
 }
 
 void GitHub::scheduleRefresh() {
@@ -174,13 +169,13 @@ void GitHub::refresh() {
     return;
   }
   inFlight_ = true;
-  platform::GithubFetchOptions options = fetchOptions_;
+  GithubFetchOptions options = fetchOptions_;
   options.token = token_;
   emit changed();
-  client_->fetch(options, [this](const platform::GithubFetchResult& result) { onFetched(result); });
+  client_->fetch(options, [this](const GithubFetchResult& result) { onFetched(result); });
 }
 
-void GitHub::onFetched(const platform::GithubFetchResult& result) {
+void GitHub::onFetched(const GithubFetchResult& result) {
   inFlight_ = false;
   if (result.ok) {
     error_.clear();
@@ -206,13 +201,13 @@ void GitHub::rebuild() {
   for (const auto& n : notifications_) items_.append(itemMap(n, now));
   std::vector<std::string> order;
   for (const QString& category : categoriesOrder_) order.push_back(category.toStdString());
-  for (const QString& category : github::orderedCategories(notifications_, order)) {
+  for (const QString& category : orderedCategories(notifications_, order)) {
     QVariantList members;
     for (const auto& n : notifications_) {
       if (n.type == category) members.append(itemMap(n, now));
     }
     groups_.append(QVariantMap{{QStringLiteral("type"), category},
-                               {QStringLiteral("title"), github::categoryTitle(category)},
+                               {QStringLiteral("title"), categoryTitle(category)},
                                {QStringLiteral("items"), members}});
   }
 }
@@ -233,7 +228,7 @@ void GitHub::markRead(const QString& id) {
     if (n.id != id) continue;
     if (!n.unread) return;
     n.unread = false;
-    if (client_ && !token_.isEmpty()) sendMark(platform::githubMarkThreadReadRequest(token_, id));
+    if (client_ && !token_.isEmpty()) sendMark(githubMarkThreadReadRequest(token_, id));
     rebuild();
     emit changed();
     return;
@@ -244,14 +239,14 @@ void GitHub::markAllRead() {
   if (notifications_.empty()) return;
   for (auto& n : notifications_) n.unread = false;
   if (client_ && !token_.isEmpty()) {
-    sendMark(platform::githubMarkAllReadRequest(token_, QDateTime::currentDateTimeUtc()));
+    sendMark(githubMarkAllReadRequest(token_, QDateTime::currentDateTimeUtc()));
   }
   rebuild();
   emit changed();
 }
 
-void GitHub::sendMark(const platform::HttpRequest& request) {
-  client_->send(request, [](const platform::HttpResponse& response) {
+void GitHub::sendMark(const HttpRequest& request) {
+  client_->send(request, [](const HttpResponse& response) {
     if (response.status == 0 || response.status >= 300) {
       qWarning().noquote() << "GitHub: marking as read failed:" << response.status
                            << response.reason << response.error;
@@ -260,7 +255,7 @@ void GitHub::sendMark(const platform::HttpRequest& request) {
 }
 
 QString GitHub::truncate(const QString& text, int maxSize) const {
-  return github::truncateField(text, maxSize);
+  return truncateField(text, maxSize);
 }
 
 void GitHub::signIn() {
@@ -271,10 +266,9 @@ void GitHub::signIn() {
   verificationUri_.clear();
   const int generation = ++signInGeneration_;
   emit changed();
-  client_->send(platform::githubDeviceCodeRequest(),
-                [this, generation](const platform::HttpResponse& response) {
-                  onDeviceCode(response, generation);
-                });
+  client_->send(githubDeviceCodeRequest(), [this, generation](const HttpResponse& response) {
+    onDeviceCode(response, generation);
+  });
 }
 
 void GitHub::cancelSignIn() {
@@ -283,9 +277,9 @@ void GitHub::cancelSignIn() {
   endSignIn({});
 }
 
-void GitHub::onDeviceCode(const platform::HttpResponse& response, int generation) {
+void GitHub::onDeviceCode(const HttpResponse& response, int generation) {
   if (generation != signInGeneration_ || !signingIn_) return;
-  const platform::GithubDeviceCode code = platform::parseGithubDeviceCode(response);
+  const GithubDeviceCode code = parseGithubDeviceCode(response);
   if (!code.error.isEmpty()) {
     endSignIn(code.error);
     return;
@@ -306,16 +300,15 @@ void GitHub::onDeviceCode(const platform::HttpResponse& response, int generation
 void GitHub::pollSignIn() {
   if (!client_ || !signingIn_ || deviceCode_.isEmpty()) return;
   const int generation = signInGeneration_;
-  client_->send(platform::githubAccessTokenRequest(deviceCode_),
-                [this, generation](const platform::HttpResponse& response) {
-                  onTokenPoll(response, generation);
-                });
+  client_->send(
+      githubAccessTokenRequest(deviceCode_),
+      [this, generation](const HttpResponse& response) { onTokenPoll(response, generation); });
 }
 
-void GitHub::onTokenPoll(const platform::HttpResponse& response, int generation) {
+void GitHub::onTokenPoll(const HttpResponse& response, int generation) {
   if (generation != signInGeneration_ || !signingIn_) return;
-  const platform::GithubTokenPoll poll = platform::parseGithubAccessToken(response);
-  using Kind = platform::GithubTokenPoll::Kind;
+  const GithubTokenPoll poll = parseGithubAccessToken(response);
+  using Kind = GithubTokenPoll::Kind;
   switch (poll.kind) {
     case Kind::Pending:
       signInTimer_.start(signInSeconds_ * 1000);
@@ -348,4 +341,4 @@ void GitHub::endSignIn(const QString& error) {
   emit changed();
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::github
