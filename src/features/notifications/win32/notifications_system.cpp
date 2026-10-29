@@ -29,11 +29,11 @@
 #include <set>
 #include <thread>
 
-#include "platform/notifications.h"
-#include "platform/toast_activation.h"
-#include "platform/toast_xml.h"
+#include "features/notifications/notifications.h"
+#include "features/notifications/toast_activation.h"
+#include "features/notifications/toast_xml.h"
 
-namespace yasb::platform {
+namespace wabar::notifications {
 namespace {
 
 namespace wun = winrt::Windows::UI::Notifications;
@@ -464,4 +464,4 @@ std::unique_ptr<NotificationSource> createSystemNotificationSource() {
   return std::make_unique<SystemNotificationSource>();
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::notifications

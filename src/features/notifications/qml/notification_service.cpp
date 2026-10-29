@@ -1,4 +1,4 @@
-#include "spike/services/notification_service.h"
+#include "features/notifications/qml/notification_service.h"
 
 #include <QDate>
 #include <QDateTime>
@@ -6,7 +6,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::services {
+namespace wabar::notifications {
 namespace {
 
 QString timeText(const QDateTime& created) {
@@ -16,23 +16,21 @@ QString timeText(const QDateTime& created) {
                                               : local.toString(QStringLiteral("d MMM"));
 }
 
-std::unique_ptr<platform::NotificationSource> systemSource() {
+std::unique_ptr<NotificationSource> systemSource() {
   // The listener and the WNF subscription read the real desktop; a desktop that is not live never
   // runs them.
   if (!kernel::liveDesktop()) return nullptr;
-  return platform::createSystemNotificationSource();
+  return createSystemNotificationSource();
 }
 
 }  // namespace
 
 Notifications::Notifications(QObject* parent) : Notifications(systemSource(), parent) {}
 
-Notifications::Notifications(std::unique_ptr<platform::NotificationSource> source, QObject* parent)
+Notifications::Notifications(std::unique_ptr<NotificationSource> source, QObject* parent)
     : QObject(parent), hasSource_(source != nullptr), service_(std::move(source), this) {
-  connect(&service_, &platform::NotificationService::countChanged, this,
-          &Notifications::onServiceChanged);
-  connect(&service_, &platform::NotificationService::itemsChanged, this,
-          &Notifications::onServiceChanged);
+  connect(&service_, &NotificationService::countChanged, this, &Notifications::onServiceChanged);
+  connect(&service_, &NotificationService::itemsChanged, this, &Notifications::onServiceChanged);
   service_.start();
 }
 
@@ -65,4 +63,4 @@ void Notifications::activate(int id) {
   }
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::notifications

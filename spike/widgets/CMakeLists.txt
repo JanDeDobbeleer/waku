@@ -20,7 +20,7 @@ wabar_contribute(
     Tray.qml
     ActiveLayout.qml
     Wifi.qml
-    Notifications.qml
+    Taskbar.qml
     ControlCenter.qml
     SafeConfig.qml
 )

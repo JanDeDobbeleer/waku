@@ -1,5 +1,3 @@
-#include "platform/dnd.h"
-
 #include <windows.h>
 #include <combaseapi.h>
 
@@ -7,7 +5,9 @@
 #include <QMetaObject>
 #include <functional>
 
-namespace yasb::platform {
+#include "features/notifications/dnd.h"
+
+namespace wabar::notifications {
 namespace {
 
 // Undocumented shell interface (docs/architecture.md allowlist). Only the two profile accessors
@@ -153,4 +153,4 @@ void DndWatcher::stop() {
 
 void DndWatcher::deliver(const QString& status) { emit statusChanged(status); }
 
-}  // namespace yasb::platform
+}  // namespace wabar::notifications

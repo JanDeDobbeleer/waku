@@ -30,13 +30,15 @@ wabar_contribute(
     services/tray_pins.cpp
     services/network_service.h
     services/network_service.cpp
-    services/notification_service.h
-    services/notification_service.cpp
+    services/taskbar_service.h
+    services/taskbar_service.cpp
+    services/taskbar_model.h
+    services/taskbar_model.cpp
     services/control_center_service.h
     services/control_center_service.cpp
   # The generated type registration includes headers by name.
   SERVICES_INCLUDE_DIRS services
-  SERVICES_LIBS wabar_audio wabar_bluetooth wabar_brightness yasb_platform yasb_widgets wabar_control wabar_kernel
+  SERVICES_LIBS wabar_audio wabar_bluetooth wabar_brightness wabar_notifications yasb_platform yasb_widgets wabar_control wabar_kernel
 )
 
 # wabar_control: the pipe between a running bar and wabarc.

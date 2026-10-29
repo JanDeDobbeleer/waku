@@ -1,4 +1,4 @@
-#include "platform/toast_activation.h"
+#include "features/notifications/toast_activation.h"
 
 // clang-format off
 // The Windows SDK headers below depend on each other's order (propkey.h needs propsys.h).
@@ -28,7 +28,13 @@
 #include "kernel/win32/app_activation.h"
 #include "kernel/win32/shell_launch.h"
 
+// TEMPORARY (move step): defined in platform/media_source_apps.cpp until the kernel app
+// activation helper replaces it at merge; declared here so no legacy header is included.
 namespace yasb::platform {
+bool activateAppByAumid(const QString& aumid);
+}
+
+namespace wabar::notifications {
 namespace {
 
 // {9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}, 26 (propkey.h does not define it).
@@ -215,7 +221,7 @@ bool activateToast(const QString& aumid, const QString& launch, const QString& a
 
 bool showApp(const QString& aumid) {
   if (aumid.isEmpty()) return false;
-  if (wabar::kernel::activateAppByAumid(aumid)) return true;
+  if (yasb::platform::activateAppByAumid(aumid)) return true;
   if (!hasShellApp(aumid)) return false;
   wabar::kernel::shellOpen(QStringLiteral("shell:AppsFolder\\") + aumid);
   return true;
@@ -235,4 +241,4 @@ QString packageInstallFolder(const QString& aumid) {
   return {};
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::notifications

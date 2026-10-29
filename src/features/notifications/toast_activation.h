@@ -2,7 +2,7 @@
 
 #include <QString>
 
-namespace yasb::platform {
+namespace wabar::notifications {
 
 // Port of services/notifications/toast_activation.py. All functions block; call them off the GUI
 // thread (the notification worker runs them).
@@ -22,4 +22,4 @@ bool showApp(const QString& aumid);
 // The install folder of a packaged app, empty when it has none.
 QString packageInstallFolder(const QString& aumid);
 
-}  // namespace yasb::platform
+}  // namespace wabar::notifications

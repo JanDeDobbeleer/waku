@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QString>
 
-namespace yasb::platform {
+namespace wabar::notifications {
 
 // Windows Focus Assist / Do Not Disturb (services/dnd/dnd_api.py DndService), through the
 // undocumented IQuietHoursSettings COM object. Modes: "disabled", "priority", "alarms".
@@ -42,4 +42,4 @@ class DndWatcher final : public QObject {
   bool active_ = false;
 };
 
-}  // namespace yasb::platform
+}  // namespace wabar::notifications

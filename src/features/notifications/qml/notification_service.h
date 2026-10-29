@@ -6,14 +6,12 @@
 #include <QVariantList>
 #include <memory>
 
-#include "platform/notifications.h"
+#include "features/notifications/notifications.h"
 
-namespace wabar::services {
-
-namespace platform = ::yasb::platform;
+namespace wabar::notifications {
 
 // The Action Center toasts as a QML singleton, shared by every Notifications widget. Wraps
-// platform::NotificationService, which owns the WNF subscription and the listener worker thread;
+// NotificationService, which owns the WNF subscription and the listener worker thread;
 // this object lives on the GUI thread and the platform service re-posts every source event to it.
 // The engine destroys it, which stops the source and joins the worker thread. Without a source
 // (the offscreen platform, where the real listener must not run) `available` stays false.
@@ -35,7 +33,7 @@ class Notifications : public QObject {
  public:
   explicit Notifications(QObject* parent = nullptr);
   // Test seam: a fake source; null means no source.
-  Notifications(std::unique_ptr<platform::NotificationSource> source, QObject* parent);
+  Notifications(std::unique_ptr<NotificationSource> source, QObject* parent);
   ~Notifications() override;
 
   bool available() const { return hasSource_; }
@@ -55,8 +53,8 @@ class Notifications : public QObject {
   void onServiceChanged();
 
   bool hasSource_;
-  platform::NotificationService service_;
+  NotificationService service_;
   QVariantList items_;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::notifications

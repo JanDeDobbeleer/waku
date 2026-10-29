@@ -5,31 +5,15 @@
 #include <memory>
 #include <vector>
 
-#include "spike/services/notification_service.h"
+#include "features/notifications/qml/notification_service.h"
+#include "features/notifications/testing/fake_notification_source.h"
 
-using namespace wabar::services;
-namespace platform = yasb::platform;
+using namespace wabar::notifications;
 
 namespace {
 
-class FakeSource final : public platform::NotificationSource {
- public:
-  void start(platform::NotificationSink* sink) override { sink_ = sink; }
-  void stop() override { sink_ = nullptr; }
-  void clearAll() override { ++clears; }
-  void refresh() override { ++refreshes; }
-  void remove(std::uint32_t id) override { removed.push_back(id); }
-  void activate(const platform::NotificationItem& item) override { activated.push_back(item.id); }
-
-  platform::NotificationSink* sink_ = nullptr;
-  int clears = 0;
-  int refreshes = 0;
-  std::vector<std::uint32_t> removed;
-  std::vector<std::uint32_t> activated;
-};
-
-platform::NotificationItem toast(std::uint32_t id, const QString& title) {
-  platform::NotificationItem item;
+NotificationItem toast(std::uint32_t id, const QString& title) {
+  NotificationItem item;
   item.id = id;
   item.appName = QStringLiteral("Mail");
   item.title = title;
@@ -44,7 +28,7 @@ struct Harness {
     source = fake.get();
     notifications = std::make_unique<Notifications>(std::move(fake), nullptr);
   }
-  void publish(std::uint32_t count, std::vector<platform::NotificationItem> items) {
+  void publish(std::uint32_t count, std::vector<NotificationItem> items) {
     source->sink_->countChanged(count);
     source->sink_->itemsChanged(std::move(items));
     QCoreApplication::processEvents();

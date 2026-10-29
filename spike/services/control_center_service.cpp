@@ -6,9 +6,9 @@
 #include <QVariantMap>
 #include <algorithm>
 
+#include "features/notifications/dnd.h"
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/shell_launch.h"
-#include "platform/dnd.h"
 #include "platform/theme.h"
 #include "platform/touch_keyboard.h"
 #include "platform/user_info.h"
@@ -27,8 +27,8 @@ void runAfterQuit(const QStringList& arguments) {
 
 ControlCenter::Backend systemBackend() {
   ControlCenter::Backend b;
-  b.dndStatus = [] { return platform::dndStatus(); };
-  b.setDndStatus = [](const QString& mode) { return platform::setDndStatus(mode); };
+  b.dndStatus = [] { return wabar::notifications::dndStatus(); };
+  b.setDndStatus = [](const QString& mode) { return wabar::notifications::setDndStatus(mode); };
   b.themeMode = [] { return platform::themeMode(); };
   b.toggleTheme = [] { return platform::toggleThemeMode(); };
   b.toggleTouchKeyboard = [] { platform::toggleTouchKeyboard(); };
@@ -73,8 +73,9 @@ ControlCenter::ControlCenter(QObject* parent)
   available_ = kernel::liveDesktop();
   if (!available_) return;
   // Focus Assist changes made outside the bar (Settings, the action centre).
-  auto* watcher = new platform::DndWatcher(this);
-  connect(watcher, &platform::DndWatcher::statusChanged, this, &ControlCenter::onDndStatus);
+  auto* watcher = new wabar::notifications::DndWatcher(this);
+  connect(watcher, &wabar::notifications::DndWatcher::statusChanged, this,
+          &ControlCenter::onDndStatus);
   watcher->start();
 }
 

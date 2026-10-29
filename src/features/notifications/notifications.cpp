@@ -1,11 +1,11 @@
-#include "platform/notifications.h"
+#include "features/notifications/notifications.h"
 
 #include <QDebug>
 #include <QMetaObject>
 #include <exception>
 #include <utility>
 
-namespace yasb::platform {
+namespace wabar::notifications {
 
 // Re-posts every source event to the service's thread. Events for a destroyed service are dropped
 // by Qt together with the service's posted events.
@@ -95,4 +95,4 @@ void NotificationService::applyCount(std::uint32_t count) {
   emit countChanged(count_);
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::notifications

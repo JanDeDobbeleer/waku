@@ -7,9 +7,9 @@
 #include <optional>
 #include <vector>
 
-#include "platform/toast_xml.h"
+#include "features/notifications/toast_xml.h"
 
-namespace yasb::platform {
+namespace wabar::notifications {
 
 // Receives source events. A source may call it from any thread.
 class NotificationSink {
@@ -94,4 +94,4 @@ class NotificationService final : public QObject {
   bool started_ = false;
 };
 
-}  // namespace yasb::platform
+}  // namespace wabar::notifications

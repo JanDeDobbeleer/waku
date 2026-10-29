@@ -8,7 +8,7 @@
 #include <optional>
 #include <vector>
 
-namespace yasb::platform {
+namespace wabar::notifications {
 
 // One toast as the Action Center lists it (services/notifications/windows_notification.py
 // NotificationItem). Image fields are local files, empty when the toast has none or it is not on
@@ -90,4 +90,4 @@ std::vector<NotificationItem> assembleItems(
     const std::function<std::vector<ToastXml>(const QString&, int)>& readHistory,
     const std::function<ImagePathEnv(const QString&, const QString&)>& envFor);
 
-}  // namespace yasb::platform
+}  // namespace wabar::notifications

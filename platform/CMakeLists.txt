@@ -29,15 +29,14 @@ add_library(yasb_platform STATIC
   media_source_apps.cpp
   memory.h
   memory.cpp
-  notifications.h
-  notifications.cpp
-  notifications_system.cpp
-  toast_activation.h
-  toast_activation.cpp
-  toast_xml.h
-  toast_xml.cpp
-  dnd.h
-  dnd.cpp
+  pdh.h
+  pdh.cpp
+  window_focus.h
+  window_focus.cpp
+  workerw.h
+  workerw.cpp
+  wlan.h
+  wlan.cpp
   power.h
   power.cpp
   theme.h

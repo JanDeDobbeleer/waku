@@ -18,7 +18,6 @@ wabar_contribute(
     test_tray_widget.cpp
     test_active_layout.cpp
     test_network.cpp
-    test_notifications.cpp
     test_taskbar.cpp
     test_control_center.cpp
     test_github.cpp

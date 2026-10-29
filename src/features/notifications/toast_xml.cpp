@@ -1,4 +1,4 @@
-#include "platform/toast_xml.h"
+#include "features/notifications/toast_xml.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -9,7 +9,7 @@
 #include <QXmlStreamReader>
 #include <memory>
 
-namespace yasb::platform {
+namespace wabar::notifications {
 namespace {
 
 struct Node {
@@ -258,4 +258,4 @@ std::vector<NotificationItem> assembleItems(
   return items;
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::notifications
