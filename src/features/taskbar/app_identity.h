@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <optional>
 
-#include "platform/window_system.h"
+#include "features/taskbar/window_system.h"
 
-namespace yasb::platform {
+namespace wabar::taskbar {
 
 // Joins the calling thread to COM for the lifetime of the object (multi-threaded apartment unless
 // the thread already has one). Shell property and icon calls need it off the GUI thread.
@@ -50,4 +50,4 @@ std::optional<QString> hostArguments(const QString& exePath, std::uint32_t pid);
 // The part of a command line after the program: split off the quoted or first token.
 QString commandLineArguments(const QString& commandLine);
 
-}  // namespace yasb::platform
+}  // namespace wabar::taskbar

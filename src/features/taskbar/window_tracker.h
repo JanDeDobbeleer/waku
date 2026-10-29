@@ -4,11 +4,11 @@
 #include <map>
 #include <memory>
 
-#include "platform/window_system.h"
+#include "features/taskbar/window_system.h"
 
 class QTimer;
 
-namespace yasb::platform {
+namespace wabar::taskbar {
 
 // Shell hook (HSHELL_*) and WinEvent codes the tracker reacts to.
 namespace shell {
@@ -83,12 +83,12 @@ class WindowTracker : public QObject {
   void handleWinEvent(unsigned eventType, WindowHandle hwnd, long idObject, long idChild);
 
  signals:
-  void windowAdded(yasb::platform::WindowHandle hwnd, const yasb::platform::WindowInfo& info);
-  void windowRemoved(yasb::platform::WindowHandle hwnd, const yasb::platform::WindowInfo& info);
-  void windowUpdated(yasb::platform::WindowHandle hwnd, const yasb::platform::WindowInfo& info);
-  void windowMonitorChanged(yasb::platform::WindowHandle hwnd,
-                            const yasb::platform::WindowInfo& info);
-  void windowMinimizeChanged(yasb::platform::WindowHandle hwnd, bool minimized);
+  void windowAdded(wabar::taskbar::WindowHandle hwnd, const wabar::taskbar::WindowInfo& info);
+  void windowRemoved(wabar::taskbar::WindowHandle hwnd, const wabar::taskbar::WindowInfo& info);
+  void windowUpdated(wabar::taskbar::WindowHandle hwnd, const wabar::taskbar::WindowInfo& info);
+  void windowMonitorChanged(wabar::taskbar::WindowHandle hwnd,
+                            const wabar::taskbar::WindowInfo& info);
+  void windowMinimizeChanged(wabar::taskbar::WindowHandle hwnd, bool minimized);
 
  private:
   // ApplicationWindow: the title and class are cached and only refreshed by update().
@@ -131,4 +131,4 @@ class WindowTracker : public QObject {
   bool keepCloaked_ = false;
 };
 
-}  // namespace yasb::platform
+}  // namespace wabar::taskbar

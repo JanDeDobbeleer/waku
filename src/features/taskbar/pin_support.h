@@ -6,9 +6,9 @@
 #include <optional>
 #include <vector>
 
-#include "platform/window_system.h"
+#include "features/taskbar/window_system.h"
 
-namespace yasb::platform {
+namespace wabar::taskbar {
 
 // What taskbar_pinned.json stores per pinned app besides its id (PinManager metadata).
 struct PinMetadata {
@@ -92,4 +92,4 @@ IconBitmap shellItemIcon(const QString& parsingName, int size);
 IconBitmap iconBitmapFromHicon(void* hicon);
 IconBitmap defaultAppIcon();
 
-}  // namespace yasb::platform
+}  // namespace wabar::taskbar

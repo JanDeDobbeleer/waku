@@ -21,10 +21,6 @@ wabar_contribute(
     services/network_service.cpp
     services/notification_service.h
     services/notification_service.cpp
-    services/taskbar_service.h
-    services/taskbar_service.cpp
-    services/taskbar_model.h
-    services/taskbar_model.cpp
     services/control_center_service.h
     services/control_center_service.cpp
     services/github_service.h

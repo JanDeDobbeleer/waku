@@ -14,11 +14,11 @@
 #include <set>
 #include <vector>
 
-#include "platform/app_identity.h"
-#include "platform/pin_support.h"
-#include "platform/window_system.h"
+#include "features/taskbar/app_identity.h"
+#include "features/taskbar/pin_support.h"
+#include "features/taskbar/window_system.h"
 
-namespace yasb::platform {
+namespace wabar::taskbar {
 namespace {
 
 HWND toHwnd(WindowHandle hwnd) { return reinterpret_cast<HWND>(hwnd); }
@@ -345,7 +345,7 @@ class Win32WindowSystem final : public WindowSystem {
   }
 
   std::optional<QString> appUniqueId(const WindowInfo& info) const override {
-    return platform::appUniqueId(info.hwnd, info.processPath, info.pid);
+    return wabar::taskbar::appUniqueId(info.hwnd, info.processPath, info.pid);
   }
 
   IconBitmap windowIcon(WindowHandle handle, int size) const override {
@@ -461,4 +461,4 @@ std::shared_ptr<WindowSystem> makeWin32WindowSystem() {
   return std::make_shared<Win32WindowSystem>();
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::taskbar

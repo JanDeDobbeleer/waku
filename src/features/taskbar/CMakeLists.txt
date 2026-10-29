@@ -1,0 +1,42 @@
+# taskbar: running and pinned apps. Window tracking (shell hook and WinEvent hooks), app identity,
+# pin support and store, window and pinned-app icons, the Taskbar service and model, the Taskbar
+# widget. No dependencies on other features.
+wabar_feature(
+  NAME taskbar
+  SOURCES
+    app_identity.h
+    pin_store.h
+    pin_store.cpp
+    pin_support.h
+    taskbar_icons.h
+    taskbar_icons.cpp
+    window_system.h
+    window_tracker.h
+    window_tracker.cpp
+  WIN32_SOURCES
+    win32/app_identity_win.cpp
+    win32/pin_support_win.cpp
+    win32/window_system_win.cpp
+    win32/window_tracker_hooks_win.cpp
+  QML_SOURCES
+    qml/taskbar_model.h
+    qml/taskbar_model.cpp
+    qml/taskbar_service.h
+    qml/taskbar_service.cpp
+  QML_FILES
+    qml/Taskbar.qml
+  TESTS
+    tests/test_taskbar_platform.cpp
+  SYSTEM_LIBS
+    advapi32
+    dwmapi
+    ole32
+    oleaut32
+    propsys
+    psapi
+    shell32
+    shlwapi
+    user32
+    uuid
+    version
+)

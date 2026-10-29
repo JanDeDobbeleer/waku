@@ -1,4 +1,4 @@
-#include "widgets/taskbar/taskbar_icons.h"
+#include "features/taskbar/taskbar_icons.h"
 
 #include <QPainter>
 #include <QPointer>
@@ -6,10 +6,9 @@
 #include <QTimer>
 #include <algorithm>
 
-namespace yasb::widgets {
+namespace wabar::taskbar {
 
-TaskbarIcons::TaskbarIcons(std::shared_ptr<platform::WindowSystem> system, bool async,
-                           QObject* parent)
+TaskbarIcons::TaskbarIcons(std::shared_ptr<WindowSystem> system, bool async, QObject* parent)
     : QObject(parent), system_(std::move(system)), async_(async) {
   // One loader thread, like IconService: windows are asked one at a time and a hung one costs
   // at most the WM_GETICON timeout.
@@ -18,7 +17,7 @@ TaskbarIcons::TaskbarIcons(std::shared_ptr<platform::WindowSystem> system, bool 
 
 TaskbarIcons::~TaskbarIcons() { pool_.waitForDone(); }
 
-QImage TaskbarIcons::toImage(const platform::IconBitmap& bitmap, int physical) {
+QImage TaskbarIcons::toImage(const IconBitmap& bitmap, int physical) {
   if (bitmap.isNull()) return {};
   QImage source(reinterpret_cast<const uchar*>(bitmap.bgra.constData()), bitmap.width,
                 bitmap.height, bitmap.width * 4, QImage::Format_ARGB32);
@@ -27,13 +26,13 @@ QImage TaskbarIcons::toImage(const platform::IconBitmap& bitmap, int physical) {
   return copy.scaled(physical, physical, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 }
 
-QPixmap TaskbarIcons::icon(platform::WindowHandle hwnd, int size, qreal dpr) {
-  const std::shared_ptr<platform::WindowSystem> system = system_;
+QPixmap TaskbarIcons::icon(WindowHandle hwnd, int size, qreal dpr) {
+  const std::shared_ptr<WindowSystem> system = system_;
   return iconFor(hwnd, size, dpr,
                  [system, hwnd](int physical) { return system->windowIcon(hwnd, physical); });
 }
 
-QPixmap TaskbarIcons::pixmapFromBitmap(const platform::IconBitmap& bitmap, int size, qreal dpr) {
+QPixmap TaskbarIcons::pixmapFromBitmap(const IconBitmap& bitmap, int size, qreal dpr) {
   if (size <= 0) return {};
   const int physical = std::max(1, static_cast<int>(size * dpr));
   const QImage image = toImage(bitmap, physical);
@@ -43,8 +42,7 @@ QPixmap TaskbarIcons::pixmapFromBitmap(const platform::IconBitmap& bitmap, int s
   return pixmap;
 }
 
-QPixmap TaskbarIcons::iconFor(platform::WindowHandle hwnd, int size, qreal dpr,
-                              const Loader& loader) {
+QPixmap TaskbarIcons::iconFor(WindowHandle hwnd, int size, qreal dpr, const Loader& loader) {
   if (size <= 0) return {};
   const int physical = std::max(1, static_cast<int>(size * dpr));
   const Key key{hwnd, physical};
@@ -61,7 +59,7 @@ QPixmap TaskbarIcons::iconFor(platform::WindowHandle hwnd, int size, qreal dpr,
   return pixmap;
 }
 
-void TaskbarIcons::forget(platform::WindowHandle hwnd) {
+void TaskbarIcons::forget(WindowHandle hwnd) {
   for (auto it = cache_.begin(); it != cache_.end();) {
     it = it->first.first == hwnd ? cache_.erase(it) : std::next(it);
   }
@@ -75,14 +73,14 @@ void TaskbarIcons::request(const Key& key, const Loader& loader) {
   loaders_[key] = loader;
   const int physical = key.second;
   if (!async_) {
-    const platform::IconBitmap bitmap = loader(physical);
+    const IconBitmap bitmap = loader(physical);
     finish(key, toImage(bitmap, physical), bitmap.complete);
     return;
   }
   pending_.insert(key);
   QPointer<TaskbarIcons> self(this);
   pool_.start(QRunnable::create([self, loader, key] {
-    platform::IconBitmap bitmap;
+    IconBitmap bitmap;
     try {
       bitmap = loader(key.second);
     } catch (...) {
@@ -117,7 +115,7 @@ namespace {
 
 // Tile assets carry a margin that shell icons do not, so crop to the drawing and pad to a square
 // (Python _toast_app_icon: ImageOps.pad on the alpha bounding box).
-platform::IconBitmap toastIcon(const QString& path, int size) {
+IconBitmap toastIcon(const QString& path, int size) {
   QImage image(path);
   if (image.isNull() || size <= 0) return {};
   image = image.convertToFormat(QImage::Format_ARGB32);
@@ -142,7 +140,7 @@ platform::IconBitmap toastIcon(const QString& path, int size) {
     painter.setCompositionMode(QPainter::CompositionMode_Source);
     painter.drawImage((size - cropped.width()) / 2, (size - cropped.height()) / 2, cropped);
   }
-  platform::IconBitmap bitmap;
+  IconBitmap bitmap;
   bitmap.width = bitmap.height = size;
   bitmap.bgra = QByteArray(reinterpret_cast<const char*>(canvas.constBits()),
                            static_cast<qsizetype>(canvas.sizeInBytes()));
@@ -151,11 +149,11 @@ platform::IconBitmap toastIcon(const QString& path, int size) {
 
 }  // namespace
 
-platform::IconBitmap loadPinnedIcon(const platform::PinSupport& pins, const QString& uniqueId,
-                                    const platform::PinMetadata& metadata, int size) {
-  platform::IconBitmap bitmap = pins.pinnedIcon(uniqueId, metadata, size);
+IconBitmap loadPinnedIcon(const PinSupport& pins, const QString& uniqueId,
+                          const PinMetadata& metadata, int size) {
+  IconBitmap bitmap = pins.pinnedIcon(uniqueId, metadata, size);
   if (!bitmap.isNull()) return bitmap;
-  const platform::UniqueIdParts parts = platform::parseUniqueId(uniqueId);
+  const UniqueIdParts parts = parseUniqueId(uniqueId);
   if (parts.type == QLatin1String("aumid")) {
     // Unpackaged toast senders (Firefox, Windows system toasts) register an AUMID that
     // shell:AppsFolder does not list.
@@ -167,4 +165,4 @@ platform::IconBitmap loadPinnedIcon(const platform::PinSupport& pins, const QStr
   return pins.defaultIcon();
 }
 
-}  // namespace yasb::widgets
+}  // namespace wabar::taskbar

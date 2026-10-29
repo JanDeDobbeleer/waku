@@ -29,7 +29,6 @@ wabar_contribute(
     test_komorebi_service.cpp
     test_brightness_policy.cpp
     test_github_api.cpp
-    test_taskbar_platform.cpp
     test_platform.cpp
   TEST_LIBS nlohmann_json::nlohmann_json
 )

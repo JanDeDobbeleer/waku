@@ -16,7 +16,6 @@ wabar_contribute(
     Bluetooth.qml
     Wifi.qml
     Notifications.qml
-    Taskbar.qml
     ControlCenter.qml
     GitHub.qml
     Wallpapers.qml

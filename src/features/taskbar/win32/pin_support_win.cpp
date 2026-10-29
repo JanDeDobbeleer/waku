@@ -1,4 +1,4 @@
-#include "platform/pin_support.h"
+#include "features/taskbar/pin_support.h"
 
 // clang-format off
 #include <windows.h>
@@ -20,9 +20,9 @@
 #include <tuple>
 #include <utility>
 
-#include "platform/app_identity.h"
+#include "features/taskbar/app_identity.h"
 
-namespace yasb::platform {
+namespace wabar::taskbar {
 namespace {
 
 const PROPERTYKEY kAppUserModelId = {
@@ -624,4 +624,4 @@ std::optional<ShortcutInfo> readShortcut(const QString& path) {
 
 std::shared_ptr<PinSupport> makeWin32PinSupport() { return std::make_shared<Win32PinSupport>(); }
 
-}  // namespace yasb::platform
+}  // namespace wabar::taskbar

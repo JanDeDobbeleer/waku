@@ -16,133 +16,25 @@
 #include <memory>
 #include <set>
 
-#include "spike/services/taskbar_model.h"
-#include "spike/services/taskbar_service.h"
+#include "features/taskbar/qml/taskbar_model.h"
+#include "features/taskbar/qml/taskbar_service.h"
+#include "features/taskbar/testing/fake_window_system.h"
 #include "spike/tests/bar_fixtures.h"
 
 namespace {
 
-namespace plat = yasb::platform;
-using wabar::services::TaskbarModel;
-using wabar::services::TaskbarService;
-using wabar::services::WindowIconProvider;
+namespace plat = wabar::taskbar;
+using wabar::taskbar::FakePins;
+using wabar::taskbar::FakeSystem;
+using wabar::taskbar::TaskbarModel;
+using wabar::taskbar::TaskbarService;
+using wabar::taskbar::WindowIconProvider;
 
 constexpr plat::WindowHandle kFirst = 101;
 constexpr plat::WindowHandle kSecond = 102;
 constexpr plat::WindowHandle kThird = 103;
 constexpr plat::WindowHandle kFourth = 104;
 constexpr plat::WindowHandle kFifth = 105;
-
-// A window system that never touches the desktop: windows are rows in a map and every action is
-// only recorded.
-class FakeSystem final : public plat::WindowSystem {
- public:
-  struct Row {
-    plat::WindowInfo info;
-    bool iconic = false;
-    QString uniqueId = QStringLiteral("app");
-  };
-
-  Row& add(plat::WindowHandle hwnd, const QString& title, const QString& uniqueId = {},
-           const QString& process = QStringLiteral("app.exe")) {
-    Row& row = rows[hwnd];
-    row.info.hwnd = hwnd;
-    row.info.title = title;
-    row.info.className = QStringLiteral("TestClass");
-    row.info.processName = process;
-    row.info.processPath = QStringLiteral("C:\\test\\") + process;
-    row.info.pid = 1;
-    row.info.canMinimize = true;
-    row.info.monitor = barMonitor;
-    if (!uniqueId.isEmpty()) row.uniqueId = uniqueId;
-    return row;
-  }
-
-  bool isWindow(plat::WindowHandle hwnd) const override { return rows.count(hwnd) != 0; }
-  bool isIconic(plat::WindowHandle hwnd) const override {
-    const auto found = rows.find(hwnd);
-    return found != rows.end() && found->second.iconic;
-  }
-  plat::WindowHandle foregroundWindow() const override { return foreground; }
-  std::vector<plat::WindowHandle> enumerateWindows() const override {
-    std::vector<plat::WindowHandle> result;
-    for (const auto& [hwnd, row] : rows) result.push_back(hwnd);
-    return result;
-  }
-  plat::WindowInfo query(plat::WindowHandle hwnd) const override {
-    const auto found = rows.find(hwnd);
-    return found != rows.end() ? found->second.info : plat::WindowInfo{};
-  }
-  bool isTaskbarWindow(const plat::WindowInfo& info) const override {
-    return rows.count(info.hwnd) != 0 && !info.title.trimmed().isEmpty();
-  }
-  bool canMinimize(plat::WindowHandle hwnd) const override { return query(hwnd).canMinimize; }
-  plat::WindowHandle monitorOfWindow(plat::WindowHandle) const override { return barMonitor; }
-  QRect windowRect(plat::WindowHandle) const override { return QRect(0, 0, 800, 600); }
-  std::pair<plat::WindowHandle, plat::WindowHandle> resolveBaseAndFocus(
-      plat::WindowHandle hwnd) const override {
-    return {hwnd, hwnd};
-  }
-  bool isOwnerRootActive(plat::WindowHandle base) const override { return foreground == base; }
-  std::optional<QString> appUniqueId(const plat::WindowInfo& info) const override {
-    const auto found = rows.find(info.hwnd);
-    if (found == rows.end() || found->second.uniqueId.isEmpty()) return std::nullopt;
-    return found->second.uniqueId;
-  }
-  plat::IconBitmap windowIcon(plat::WindowHandle, int size) const override {
-    plat::IconBitmap bitmap;
-    bitmap.width = bitmap.height = size;
-    bitmap.bgra = QByteArray(size * size * 4, '\x80');
-    return bitmap;
-  }
-
-  void restoreWindow(plat::WindowHandle hwnd) override {
-    log << QStringLiteral("restore %1").arg(hwnd);
-  }
-  void minimizeWindow(plat::WindowHandle hwnd) override {
-    log << QStringLiteral("minimize %1").arg(hwnd);
-  }
-  void showWindow(plat::WindowHandle hwnd) override { log << QStringLiteral("show %1").arg(hwnd); }
-  void setForeground(plat::WindowHandle hwnd) override {
-    log << QStringLiteral("foreground %1").arg(hwnd);
-  }
-  void closeApplication(plat::WindowHandle hwnd, bool force) override {
-    log << QStringLiteral("%1 %2").arg(force ? "kill" : "close").arg(hwnd);
-  }
-
-  std::map<plat::WindowHandle, Row> rows;
-  plat::WindowHandle foreground = 0;
-  plat::WindowHandle barMonitor = 1;
-  QStringList log;
-};
-
-// Shell operations that never touch the start menu or the registry.
-class FakePins final : public plat::PinSupport {
- public:
-  plat::PinMetadata resolveMetadata(const plat::WindowInfo& info, const QString&) const override {
-    return {info.title, QStringLiteral("C:\\lnk\\") + info.title + QStringLiteral(".lnk")};
-  }
-  plat::IconBitmap pinnedIcon(const QString&, const plat::PinMetadata&, int size) const override {
-    return filled(size, '\x30');
-  }
-  std::optional<QString> toastIconPath(const QString&) const override { return std::nullopt; }
-  plat::IconBitmap defaultIcon() const override { return filled(16, '\x77'); }
-  plat::IconBitmap recycleBinIcon(bool, int size) const override { return filled(size, '\x40'); }
-  void launch(const QString& uniqueId, const plat::PinMetadata&, const QString&) override {
-    launches << uniqueId;
-  }
-  plat::RecycleBinInfo recycleBinInfo() const override { return {}; }
-  void emptyRecycleBin() override {}
-  std::vector<plat::QuickAccessFolder> quickAccessFolders() const override { return {}; }
-
-  static plat::IconBitmap filled(int size, char value) {
-    plat::IconBitmap bitmap;
-    bitmap.width = bitmap.height = size;
-    bitmap.bgra = QByteArray(size * size * 4, value);
-    return bitmap;
-  }
-  QStringList launches;
-};
 
 QString pinFileIn(const QTemporaryDir& dir) {
   return dir.filePath(QStringLiteral("taskbar_pinned.json"));
@@ -439,7 +331,7 @@ TEST(TaskbarModel, APinnedAppThatIsNotRunningLaunchesOnClick) {
   f.model.activate(0);
   f.model.middleClick(0);
   f.model.launch(0);
-  EXPECT_EQ(f.pins->launches,
+  EXPECT_EQ(f.pins->launchedIds,
             (QStringList{QStringLiteral("x"), QStringLiteral("x"), QStringLiteral("x")}));
   EXPECT_TRUE(f.system->log.isEmpty());
 }
@@ -674,6 +566,6 @@ TEST_F(TaskbarWidgetTest, APinnedAppThatIsNotRunningShowsAndLaunches) {
   ASSERT_TRUE(waitFor(h, QStringLiteral("taskbarButton-p:x")));
   QTest::mouseClick(h.window(), Qt::LeftButton, Qt::NoModifier,
                     centerIn(h.window(), QStringLiteral("taskbarButton-p:x")));
-  EXPECT_EQ(pins_->launches, (QStringList{QStringLiteral("x")}));
+  EXPECT_EQ(pins_->launchedIds, (QStringList{QStringLiteral("x")}));
   EXPECT_TRUE(system_->log.isEmpty());
 }

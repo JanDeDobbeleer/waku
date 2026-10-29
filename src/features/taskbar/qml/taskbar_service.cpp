@@ -1,4 +1,4 @@
-#include "spike/services/taskbar_service.h"
+#include "features/taskbar/qml/taskbar_service.h"
 
 #include <QDebug>
 #include <QJsonObject>
@@ -12,7 +12,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::services {
+namespace wabar::taskbar {
 namespace {
 
 std::function<std::unique_ptr<TaskbarService>()>& testFactory() {
@@ -32,7 +32,7 @@ void guarded(const char* what, Fn&& fn) {
   }
 }
 
-constexpr platform::WindowHandle kPseudoBase = platform::WindowHandle(1) << 63;
+constexpr WindowHandle kPseudoBase = WindowHandle(1) << 63;
 
 }  // namespace
 
@@ -45,7 +45,7 @@ TaskbarService::TaskbarService(QObject* parent) : QObject(parent) {
     deps.trackerAvailable = false;
     deps.unavailableReason = QStringLiteral("taskbar unavailable: offscreen platform");
   } else {
-    deps.hooks = platform::makeWin32TrackerHooks();
+    deps.hooks = makeWin32TrackerHooks();
   }
   init(std::move(deps));
 }
@@ -60,36 +60,37 @@ TaskbarService::~TaskbarService() {
 
 void TaskbarService::init(Deps deps) {
   reason_ = std::move(deps.unavailableReason);
-  system_ = deps.system ? std::move(deps.system) : platform::makeWin32WindowSystem();
-  pins_ = deps.pins ? std::move(deps.pins) : platform::makeWin32PinSupport();
-  pinStore_ = new yasb::widgets::PinStore(
-      deps.pinFile.isEmpty() ? yasb::widgets::PinStore::defaultFile() : deps.pinFile, this);
+  system_ = deps.system ? std::move(deps.system) : makeWin32WindowSystem();
+  pins_ = deps.pins ? std::move(deps.pins) : makeWin32PinSupport();
+  pinStore_ = new wabar::taskbar::PinStore(
+      deps.pinFile.isEmpty() ? wabar::taskbar::PinStore::defaultFile() : deps.pinFile, this);
   pinStore_->load();
-  icons_ = new yasb::widgets::TaskbarIcons(system_, deps.asyncIcons, this);
-  connect(icons_, &yasb::widgets::TaskbarIcons::iconsChanged, this,
+  icons_ = new wabar::taskbar::TaskbarIcons(system_, deps.asyncIcons, this);
+  connect(icons_, &wabar::taskbar::TaskbarIcons::iconsChanged, this,
           [this] { guarded("icons", [&] { onIconsChanged(); }); });
-  connect(pinStore_, &yasb::widgets::PinStore::pinnedAppsChanged, this, [this] { emit changed(); });
+  connect(pinStore_, &wabar::taskbar::PinStore::pinnedAppsChanged, this,
+          [this] { emit changed(); });
 
   if (!deps.trackerAvailable) return;
-  tracker_ = new platform::WindowTracker(system_, std::move(deps.hooks), this);
-  connect(tracker_, &platform::WindowTracker::windowAdded, this,
-          [this](platform::WindowHandle hwnd, const platform::WindowInfo& info) {
+  tracker_ = new WindowTracker(system_, std::move(deps.hooks), this);
+  connect(tracker_, &WindowTracker::windowAdded, this,
+          [this](WindowHandle hwnd, const WindowInfo& info) {
             guarded("window added", [&] { onAdded(hwnd, info); });
           });
-  connect(tracker_, &platform::WindowTracker::windowRemoved, this,
-          [this](platform::WindowHandle hwnd, const platform::WindowInfo&) {
+  connect(tracker_, &WindowTracker::windowRemoved, this,
+          [this](WindowHandle hwnd, const WindowInfo&) {
             guarded("window removed", [&] { onRemoved(hwnd); });
           });
-  connect(tracker_, &platform::WindowTracker::windowUpdated, this,
-          [this](platform::WindowHandle hwnd, const platform::WindowInfo& info) {
+  connect(tracker_, &WindowTracker::windowUpdated, this,
+          [this](WindowHandle hwnd, const WindowInfo& info) {
             guarded("window updated", [&] { onUpdated(hwnd, info); });
           });
-  connect(tracker_, &platform::WindowTracker::windowMonitorChanged, this,
-          [this](platform::WindowHandle hwnd, const platform::WindowInfo& info) {
+  connect(tracker_, &WindowTracker::windowMonitorChanged, this,
+          [this](WindowHandle hwnd, const WindowInfo& info) {
             guarded("window monitor", [&] { onUpdated(hwnd, info); });
           });
-  connect(tracker_, &platform::WindowTracker::windowMinimizeChanged, this,
-          [this](platform::WindowHandle hwnd, bool minimized) {
+  connect(tracker_, &WindowTracker::windowMinimizeChanged, this,
+          [this](WindowHandle hwnd, bool minimized) {
             guarded("window minimize", [&] { onMinimizeChanged(hwnd, minimized); });
           });
 }
@@ -112,7 +113,7 @@ void TaskbarService::setFactoryForTests(std::function<std::unique_ptr<TaskbarSer
 void TaskbarService::attach(QWindow* window) {
   if (!tracker_ || !window || tracker_->isInitialized()) return;
   guarded("attach", [&] {
-    if (!tracker_->start(static_cast<platform::WindowHandle>(window->winId())))
+    if (!tracker_->start(static_cast<WindowHandle>(window->winId())))
       qWarning() << "Taskbar could not start the window tracker; it will stay empty";
   });
 }
@@ -121,14 +122,14 @@ void TaskbarService::keepCloakedTasks(bool keep) {
   if (tracker_) tracker_->keepCloakedTasks(keep);
 }
 
-const TaskbarWindow* TaskbarService::window(platform::WindowHandle hwnd) const {
+const TaskbarWindow* TaskbarService::window(WindowHandle hwnd) const {
   for (const TaskbarWindow& w : windows_) {
     if (w.hwnd == hwnd) return &w;
   }
   return nullptr;
 }
 
-TaskbarWindow* TaskbarService::find(platform::WindowHandle hwnd) {
+TaskbarWindow* TaskbarService::find(WindowHandle hwnd) {
   for (TaskbarWindow& w : windows_) {
     if (w.hwnd == hwnd) return &w;
   }
@@ -137,7 +138,7 @@ TaskbarWindow* TaskbarService::find(platform::WindowHandle hwnd) {
 
 // --- tracker signals
 
-void TaskbarService::onAdded(platform::WindowHandle hwnd, const platform::WindowInfo& info) {
+void TaskbarService::onAdded(WindowHandle hwnd, const WindowInfo& info) {
   if (TaskbarWindow* existing = find(hwnd)) {
     existing->info = info;
   } else {
@@ -151,7 +152,7 @@ void TaskbarService::onAdded(platform::WindowHandle hwnd, const platform::Window
   emit changed();
 }
 
-void TaskbarService::onRemoved(platform::WindowHandle hwnd) {
+void TaskbarService::onRemoved(WindowHandle hwnd) {
   const auto it = std::find_if(windows_.begin(), windows_.end(),
                                [hwnd](const TaskbarWindow& w) { return w.hwnd == hwnd; });
   if (it == windows_.end()) return;
@@ -161,7 +162,7 @@ void TaskbarService::onRemoved(platform::WindowHandle hwnd) {
   emit changed();
 }
 
-void TaskbarService::onUpdated(platform::WindowHandle hwnd, const platform::WindowInfo& info) {
+void TaskbarService::onUpdated(WindowHandle hwnd, const WindowInfo& info) {
   TaskbarWindow* w = find(hwnd);
   if (!w) {
     onAdded(hwnd, info);
@@ -173,7 +174,7 @@ void TaskbarService::onUpdated(platform::WindowHandle hwnd, const platform::Wind
   emit changed();
 }
 
-void TaskbarService::onMinimizeChanged(platform::WindowHandle hwnd, bool minimized) {
+void TaskbarService::onMinimizeChanged(WindowHandle hwnd, bool minimized) {
   TaskbarWindow* w = find(hwnd);
   if (!w || w->minimized == minimized) return;
   w->minimized = minimized;
@@ -182,7 +183,7 @@ void TaskbarService::onMinimizeChanged(platform::WindowHandle hwnd, bool minimiz
 
 // --- icons
 
-QImage TaskbarService::iconImage(platform::WindowHandle key) {
+QImage TaskbarService::iconImage(WindowHandle key) {
   IconEntry& entry = iconCache_[key];
   if (!entry.image.isNull()) return entry.image;
   QPixmap pixmap;
@@ -191,11 +192,10 @@ QImage TaskbarService::iconImage(platform::WindowHandle key) {
       const auto id = uniqueIdByPseudo_.find(key);
       if (id != uniqueIdByPseudo_.end()) {
         const QString uniqueId = id->second;
-        const platform::PinMetadata metadata{pinStore_->title(uniqueId),
-                                             pinStore_->shortcutPath(uniqueId)};
-        const std::shared_ptr<platform::PinSupport> pins = pins_;
+        const PinMetadata metadata{pinStore_->title(uniqueId), pinStore_->shortcutPath(uniqueId)};
+        const std::shared_ptr<PinSupport> pins = pins_;
         pixmap = icons_->iconFor(key, kIconSize, 1.0, [pins, uniqueId, metadata](int size) {
-          return yasb::widgets::loadPinnedIcon(*pins, uniqueId, metadata, size);
+          return wabar::taskbar::loadPinnedIcon(*pins, uniqueId, metadata, size);
         });
       }
     } else {
@@ -211,7 +211,7 @@ QImage TaskbarService::iconImage(platform::WindowHandle key) {
   return entry.image;
 }
 
-int TaskbarService::iconRevision(platform::WindowHandle key) const {
+int TaskbarService::iconRevision(WindowHandle key) const {
   const auto found = iconCache_.find(key);
   return found == iconCache_.end() ? 0 : found->second.revision;
 }
@@ -227,10 +227,10 @@ void TaskbarService::onIconsChanged() {
   if (any) emit changed();
 }
 
-platform::WindowHandle TaskbarService::pseudoFor(const QString& uniqueId) {
+WindowHandle TaskbarService::pseudoFor(const QString& uniqueId) {
   const auto found = pseudoByUniqueId_.find(uniqueId);
   if (found != pseudoByUniqueId_.end()) return found->second;
-  const platform::WindowHandle pseudo = kPseudoBase | (pseudoByUniqueId_.size() + 1);
+  const WindowHandle pseudo = kPseudoBase | (pseudoByUniqueId_.size() + 1);
   pseudoByUniqueId_[uniqueId] = pseudo;
   uniqueIdByPseudo_[pseudo] = uniqueId;
   return pseudo;
@@ -238,13 +238,13 @@ platform::WindowHandle TaskbarService::pseudoFor(const QString& uniqueId) {
 
 // --- actions
 
-void TaskbarService::activate(platform::WindowHandle hwnd) {
+void TaskbarService::activate(WindowHandle hwnd) {
   if (isPseudo(hwnd)) return;
   bringToForeground(hwnd);
 }
 
 // Port of TaskbarWidget::bringToForeground without the preview and flash timers.
-void TaskbarService::bringToForeground(platform::WindowHandle hwnd) {
+void TaskbarService::bringToForeground(WindowHandle hwnd) {
   guarded("activate", [&] {
     if (!system_->isWindow(hwnd)) return;
     const auto [base, focusTarget] = system_->resolveBaseAndFocus(hwnd);
@@ -254,7 +254,7 @@ void TaskbarService::bringToForeground(platform::WindowHandle hwnd) {
     if (system_->isIconic(base)) {
       system_->restoreWindow(base);
       system_->setForeground(base);
-      const platform::WindowHandle target = focusTarget ? focusTarget : base;
+      const WindowHandle target = focusTarget ? focusTarget : base;
       QPointer<TaskbarService> self(this);
       QTimer::singleShot(0, this, [self, target] {
         if (self) guarded("focus", [&] { self->system_->setForeground(target); });
@@ -270,7 +270,7 @@ void TaskbarService::bringToForeground(platform::WindowHandle hwnd) {
   });
 }
 
-void TaskbarService::cycle(const std::vector<platform::WindowHandle>& members) {
+void TaskbarService::cycle(const std::vector<WindowHandle>& members) {
   if (members.empty()) return;
   int active = -1;
   for (size_t i = 0; i < members.size(); ++i) {
@@ -283,7 +283,7 @@ void TaskbarService::cycle(const std::vector<platform::WindowHandle>& members) {
   activate(members[static_cast<size_t>(active + 1) % members.size()]);
 }
 
-void TaskbarService::closeWindow(platform::WindowHandle hwnd) {
+void TaskbarService::closeWindow(WindowHandle hwnd) {
   if (isPseudo(hwnd)) return;
   guarded("close", [&] {
     if (system_->isWindow(hwnd)) system_->closeApplication(hwnd, false);
@@ -292,20 +292,19 @@ void TaskbarService::closeWindow(platform::WindowHandle hwnd) {
 
 void TaskbarService::launchPinned(const QString& uniqueId) {
   guarded("launch", [&] {
-    const platform::PinMetadata metadata{pinStore_->title(uniqueId),
-                                         pinStore_->shortcutPath(uniqueId)};
+    const PinMetadata metadata{pinStore_->title(uniqueId), pinStore_->shortcutPath(uniqueId)};
     pins_->launch(uniqueId, metadata, QString());
   });
 }
 
-void TaskbarService::pinWindow(platform::WindowHandle hwnd) {
+void TaskbarService::pinWindow(WindowHandle hwnd) {
   guarded("pin", [&] {
     const TaskbarWindow* w = window(hwnd);
     if (!w || !w->uniqueId) {
       qWarning() << "Taskbar: cannot pin, the app could not be identified";
       return;
     }
-    platform::PinMetadata metadata = pins_->resolveMetadata(w->info, *w->uniqueId);
+    PinMetadata metadata = pins_->resolveMetadata(w->info, *w->uniqueId);
     if (metadata.title.isEmpty()) metadata.title = w->info.title;
     QJsonObject json{{QStringLiteral("title"), metadata.title}};
     if (!metadata.shortcutPath.isEmpty())
@@ -333,7 +332,7 @@ QImage WindowIconProvider::requestImage(const QString& id, QSize* size,
   if (size) *size = QSize(0, 0);
   if (!service_) return {};
   bool ok = false;
-  const platform::WindowHandle key = id.section(QLatin1Char('/'), 0, 0).toULongLong(&ok);
+  const WindowHandle key = id.section(QLatin1Char('/'), 0, 0).toULongLong(&ok);
   if (!ok) return {};
   const QImage image = service_->iconImage(key);
   if (image.isNull()) return {};
@@ -341,4 +340,4 @@ QImage WindowIconProvider::requestImage(const QString& id, QSize* size,
   return image;
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::taskbar

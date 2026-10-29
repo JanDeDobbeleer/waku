@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-namespace yasb::platform {
+namespace wabar::taskbar {
 
 // An HWND as an integer. 0 means "no window".
 using WindowHandle = std::uintptr_t;
@@ -89,4 +89,4 @@ class WindowSystem {
 
 std::shared_ptr<WindowSystem> makeWin32WindowSystem();
 
-}  // namespace yasb::platform
+}  // namespace wabar::taskbar

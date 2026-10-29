@@ -6,7 +6,7 @@
 #include <QStringList>
 #include <map>
 
-namespace yasb::widgets {
+namespace wabar::taskbar {
 
 // The data side of PinManager: taskbar_pinned.json ({"pinned_apps": {id: metadata}, "pinned_order":
 // [id]}) and the signal Python's TaskbarSignalBus sends to every taskbar. Pinned apps are global,
@@ -54,4 +54,4 @@ class PinStore : public QObject {
   qint64 stamp_ = -1;
 };
 
-}  // namespace yasb::widgets
+}  // namespace wabar::taskbar

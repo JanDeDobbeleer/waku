@@ -1,4 +1,4 @@
-#include "platform/app_identity.h"
+#include "features/taskbar/app_identity.h"
 
 // clang-format off
 #include <windows.h>
@@ -23,7 +23,7 @@
 #include <QUrl>
 #include <vector>
 
-namespace yasb::platform {
+namespace wabar::taskbar {
 namespace {
 
 // PKEY_AppUserModel_ID {9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}, 5. Spelled out so the build does
@@ -252,4 +252,4 @@ std::optional<QString> appUniqueId(WindowHandle hwnd, const QString& exePath, st
   return QStringLiteral("path:") + stable;
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::taskbar

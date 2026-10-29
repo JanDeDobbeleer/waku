@@ -1,4 +1,4 @@
-#include "widgets/taskbar/pin_store.h"
+#include "features/taskbar/pin_store.h"
 
 #include <QDebug>
 #include <QDir>
@@ -10,7 +10,7 @@
 
 #include "kernel/qt/app_data.h"
 
-namespace yasb::widgets {
+namespace wabar::taskbar {
 
 PinStore::PinStore(QString filePath, QObject* parent)
     : QObject(parent), filePath_(std::move(filePath)) {}
@@ -104,4 +104,4 @@ void PinStore::updateOrder(const QStringList& newOrder) {
   emit pinnedAppsChanged(QStringLiteral("reorder"), QString());
 }
 
-}  // namespace yasb::widgets
+}  // namespace wabar::taskbar

@@ -1,4 +1,4 @@
-#include "spike/services/taskbar_model.h"
+#include "features/taskbar/qml/taskbar_model.h"
 
 #include <QDebug>
 #include <algorithm>
@@ -6,7 +6,7 @@
 #include <map>
 #include <set>
 
-namespace wabar::services {
+namespace wabar::taskbar {
 
 TaskbarModel::TaskbarModel(QObject* parent) : QAbstractListModel(parent) {}
 
@@ -132,8 +132,7 @@ void TaskbarModel::updateMonitor() {
   monitor_ = 0;
   if (!monitorExclusive_ || !service_ || !window_) return;
   try {
-    monitor_ =
-        service_->system()->monitorOfWindow(static_cast<platform::WindowHandle>(window_->winId()));
+    monitor_ = service_->system()->monitorOfWindow(static_cast<WindowHandle>(window_->winId()));
   } catch (const std::exception& error) {
     qWarning().noquote() << "Taskbar: monitor of the bar failed:" << error.what();
   }
@@ -141,7 +140,7 @@ void TaskbarModel::updateMonitor() {
 
 // --- rows
 
-bool TaskbarModel::shownNow(platform::WindowHandle hwnd) const {
+bool TaskbarModel::shownNow(WindowHandle hwnd) const {
   return std::any_of(rows_.begin(), rows_.end(), [hwnd](const Row& row) {
     return std::find(row.members.begin(), row.members.end(), hwnd) != row.members.end();
   });
@@ -149,7 +148,7 @@ bool TaskbarModel::shownNow(platform::WindowHandle hwnd) const {
 
 // shouldShowWindow of TaskbarWidget.
 bool TaskbarModel::visibleHere(const TaskbarWindow& w) const {
-  const platform::WindowInfo& info = w.info;
+  const WindowInfo& info = w.info;
   if (info.title.trimmed().isEmpty()) return false;
   if (!info.processName) return false;
   if (ignoreTitles_.contains(info.title)) return false;
@@ -195,7 +194,7 @@ std::vector<TaskbarModel::Row> TaskbarModel::compute() {
   for (Row& row : running) {
     const TaskbarWindow* rep = nullptr;
     bool allMinimized = true;
-    for (platform::WindowHandle hwnd : row.members) {
+    for (WindowHandle hwnd : row.members) {
       const TaskbarWindow* w = service_->window(hwnd);
       if (!w) continue;
       if (!rep || (w->info.isActive && !rep->info.isActive)) rep = w;
@@ -337,8 +336,8 @@ void TaskbarModel::closeWindow(int row) {
 void TaskbarModel::closeAll(int row) {
   const Row* r = rowAt(row);
   if (!r || !service_ || !r->running) return;
-  const std::vector<platform::WindowHandle> members = r->members;  // closing changes the rows
-  for (platform::WindowHandle hwnd : members) service_->closeWindow(hwnd);
+  const std::vector<WindowHandle> members = r->members;  // closing changes the rows
+  for (WindowHandle hwnd : members) service_->closeWindow(hwnd);
 }
 
 void TaskbarModel::togglePin(int row) {
@@ -355,4 +354,4 @@ void TaskbarModel::launch(int row) {
   if (r && service_ && !r->uniqueId.isEmpty() && r->pinned) service_->launchPinned(r->uniqueId);
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::taskbar

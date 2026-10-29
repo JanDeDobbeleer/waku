@@ -12,10 +12,6 @@ add_library(yasb_widgets STATIC
   komorebi/komorebi_service.h
   komorebi/komorebi_state.cpp
   komorebi/komorebi_state.h
-  taskbar/pin_store.cpp
-  taskbar/pin_store.h
-  taskbar/taskbar_icons.cpp
-  taskbar/taskbar_icons.h
   wallpapers/thumbnail_cache.cpp
   wallpapers/thumbnail_cache.h
   wallpapers/wallpaper_files.cpp

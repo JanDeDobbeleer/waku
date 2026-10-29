@@ -1,11 +1,11 @@
-#include "platform/window_tracker.h"
+#include "features/taskbar/window_tracker.h"
 
 #include <QDebug>
 #include <QTimer>
 #include <algorithm>
 #include <exception>
 
-namespace yasb::platform {
+namespace wabar::taskbar {
 namespace {
 
 // Runs `fn`, logging instead of letting anything escape into Qt (slots, timers, hook callbacks).
@@ -410,4 +410,4 @@ void WindowTracker::rescanWindows() {
   enumerateExisting();
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::taskbar
