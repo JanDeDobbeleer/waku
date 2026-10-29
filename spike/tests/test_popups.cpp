@@ -194,6 +194,24 @@ TEST(PopupWindowTest, AWidgetAtTheScreenEdgeKeepsItOnScreen) {
   EXPECT_LE(popup->x() + popup->width(), screen.right() - 8 + 1);
 }
 
+TEST(PopupWindowTest, ContentGrowingAfterOpenStaysOnScreen) {
+  Harness h;
+  h.start(popupConfig(QString(), QStringLiteral("end")));
+  ASSERT_TRUE(started(h));
+  QQuickWindow* popup = findWindow(QStringLiteral("pop"));
+  invoke(popup, "open");
+  QTest::qWait(50);
+  // Content wider than the room to the right of the anchor, arriving after the window is shown.
+  QQuickItem* content = findItem(popup, QStringLiteral("content"));
+  ASSERT_NE(content, nullptr);
+  content->setProperty("width", 700);
+  QTest::qWait(100);
+  const QRect screen = QGuiApplication::primaryScreen()->geometry();
+  EXPECT_GE(popup->width(), 700);
+  EXPECT_GE(popup->x(), screen.x() + 8);
+  EXPECT_LE(popup->x() + popup->width(), screen.right() - 8 + 1);
+}
+
 TEST(PopupWindowTest, CloseHidesItAndSignalsOnce) {
   Harness h;
   h.start(popupConfig());

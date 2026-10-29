@@ -84,6 +84,11 @@ Window {
     // losing activation because the user went to another window.
     property bool wasActive: false
 
+    // The content can grow after the window opened (a list that fills in, a label that changes), and
+    // the window grows to the right and down from its corner, so place it again for the final size.
+    onWidthChanged: if (visible) reposition()
+    onHeightChanged: if (visible) reposition()
+
     onActiveChanged: {
         if (active)
             wasActive = true;

@@ -42,11 +42,19 @@ Pill {
     property string powerPlanTitle: "Power Plan"
     property string powerModeTitle: "Power Mode"
 
-    readonly property int panelWidth: 300
+    readonly property int panelWidth: 340
     readonly property var quickLabels: ({
+            "dnd": "DND",
+            "cycleDnd": "DND",
+            "mute": "Mute",
+            "micMute": "Mic",
+            "screenshot": "Shot",
+            "touchKeyboard": "Keys",
+            "darkMode": "Dark"
+        })
+    readonly property var quickNames: ({
             "dnd": "Do Not Disturb",
             "cycleDnd": "Do Not Disturb",
-            "mute": "Mute",
             "micMute": "Mic Mute",
             "screenshot": "Screenshot",
             "touchKeyboard": "Keyboard",
@@ -454,7 +462,7 @@ Pill {
                     fill: active ? Theme.accentFill : Theme.fill
                     opacity: usable ? 1 : 0.4
                     interactive: usable
-                    tooltip: usable ? "" : "Unavailable"
+                    tooltip: usable ? (root.quickNames[modelData] ?? "") : "Unavailable"
                     onClicked: {
                         if (usable)
                             root.runQuick(modelData);
@@ -529,11 +537,11 @@ Pill {
     Component {
         id: powerSection
 
-        Row {
-            spacing: 8
+        Column {
+            spacing: 6
 
             Choice {
-                rowWidth: S.ControlCenter.powerModeAvailable ? (root.panelWidth - 2 * Theme.padding - 8) / 2 : root.panelWidth - 2 * Theme.padding
+                rowWidth: root.panelWidth - 2 * Theme.padding
                 title: root.powerPlanTitle
                 current: S.ControlCenter.powerPlanName !== "" ? S.ControlCenter.powerPlanName : "Unknown"
                 choices: S.ControlCenter.powerPlans
@@ -542,7 +550,7 @@ Pill {
 
             Choice {
                 visible: S.ControlCenter.powerModeAvailable
-                rowWidth: (root.panelWidth - 2 * Theme.padding - 8) / 2
+                rowWidth: root.panelWidth - 2 * Theme.padding
                 title: root.powerModeTitle
                 current: S.ControlCenter.powerModeName !== "" ? S.ControlCenter.powerModeName : "Unknown"
                 choices: S.ControlCenter.powerModes
