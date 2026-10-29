@@ -14,6 +14,17 @@ import QtQuick
 // With Theme.islands each non-empty group sits on an island: a background of Theme.surface (or the
 // Bar's `background`) with rounded bottom corners and concave fillets at the screen edge, as in
 // Python YASB's adaptive bar. An island is the group's row plus Theme.groupPadding on each side.
+//
+// `startFill`, `centerFill` and `endFill` paint an island with a horizontal gradient across its
+// width instead of the flat fill. Each is a list of colours, spaced evenly; one colour is flat and
+// an empty list (the default) keeps the flat fill. Entries that are not colours are skipped. When
+// `centerFill` is empty but both others are not, the centre island runs from the last colour of
+// `startFill` to the first of `endFill`, so the three islands read as one bar (`centerStops`).
+//
+//     layout: BarLayout {
+//         startFill: ["#ff6a00", "#e8338a", "#8a3ffc"]
+//         endFill:   ["#2f6bff", "#1fb5c9"]
+//     }
 Item {
     id: root
 
@@ -23,12 +34,40 @@ Item {
     property int startPadding: padding
     property int endPadding: padding
 
+    property var startFill: []
+    property var centerFill: []
+    property var endFill: []
+
+    // The usable colours of a fill list, as colour values; anything else gives an empty list.
+    function fillStops(list) {
+        const out = []
+        if (!list || typeof list === "string" || list.length === undefined) return out
+        for (let i = 0; i < list.length; ++i) {
+            try {
+                const c = Qt.color(list[i])
+                if (c.valid) out.push(c)
+            } catch (e) {}
+        }
+        return out
+    }
+    readonly property var startStops: fillStops(startFill)
+    readonly property var endStops: fillStops(endFill)
+    readonly property var centerStops: {
+        const own = fillStops(centerFill)
+        if (own.length > 0) return own
+        if (startStops.length > 0 && endStops.length > 0)
+            return [startStops[startStops.length - 1], endStops[0]]
+        return []
+    }
+
     // One island: an item with the body's geometry (named, so tests find it) and a canvas that also
     // draws the fillets outside the body.
     component Island: Item {
         id: island
 
         required property Item row
+        // Gradient colours; empty paints the flat fillColor
+        property var stops: []
         readonly property bool flipped: Window.window && Window.window.spec
                                         && Window.window.spec.position === Bar.Bottom
         readonly property color fillColor: Window.window && Window.window.spec
@@ -62,6 +101,7 @@ Item {
             Connections {
                 target: island
                 function onFillColorChanged() { canvas.requestPaint() }
+                function onStopsChanged() { canvas.requestPaint() }
                 function onFlippedChanged() { canvas.requestPaint() }
                 function onXChanged() { canvas.requestPaint() }
             }
@@ -82,7 +122,15 @@ Item {
                     ctx.translate(0, h)
                     ctx.scale(1, -1)
                 }
-                ctx.fillStyle = island.fillColor
+                const stops = island.stops
+                if (stops && stops.length > 1) {
+                    const g = ctx.createLinearGradient(x0, 0, x1, 0)
+                    for (let i = 0; i < stops.length; ++i)
+                        g.addColorStop(i / (stops.length - 1), stops[i])
+                    ctx.fillStyle = g
+                } else {
+                    ctx.fillStyle = stops && stops.length === 1 ? stops[0] : island.fillColor
+                }
                 ctx.beginPath()
                 if (leftFlush) {
                     ctx.moveTo(x0, 0)
@@ -109,9 +157,9 @@ Item {
         }
     }
 
-    Island { objectName: "island-start"; row: leftRow }
-    Island { objectName: "island-center"; row: centerRow }
-    Island { objectName: "island-end"; row: rightRow }
+    Island { objectName: "island-start"; row: leftRow; stops: root.startStops }
+    Island { objectName: "island-center"; row: centerRow; stops: root.centerStops }
+    Island { objectName: "island-end"; row: rightRow; stops: root.endStops }
 
     // The widgets are parented straight into the rows, so they behave like ordinary children.
     property alias start: leftRow.data

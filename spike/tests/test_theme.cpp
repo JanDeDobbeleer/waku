@@ -372,3 +372,114 @@ TEST(ThemeHost, IslandsSitOverTheirGroupsAndSkipEmptyOnes) {
   settle();
   EXPECT_TRUE(shown(h, "island-center"));
 }
+
+namespace {
+
+QString gradientConfig(const QString& layoutProperties) {
+  return QStringLiteral(R"(
+import QtQuick
+import wabar
+Config {
+    Bar {
+        layout: BarLayout {
+            objectName: "fill-layout"
+            %1
+            start: [ Rectangle { objectName: "a"; width: 60; height: 20 } ]
+            center: [ Rectangle { objectName: "b"; width: 40; height: 20 } ]
+            end: [ Rectangle { objectName: "c"; width: 50; height: 20 } ]
+        }
+    }
+}
+)")
+      .arg(layoutProperties);
+}
+
+QVariantList stopsOf(Harness& h, const char* property) {
+  QQuickItem* layout = findItem(h.window(), QStringLiteral("fill-layout"));
+  if (!layout) return {};
+  const QVariant v = layout->property(property);
+  return v.metaType() == QMetaType::fromType<QJSValue>() ? v.value<QJSValue>().toVariant().toList()
+                                                         : v.toList();
+}
+
+}  // namespace
+
+TEST(ThemeHost, IslandGradientsDefaultToFlat) {
+  Harness h;
+  writeTheme(h, themeText(QStringLiteral("islands: true; groupPadding: 10; islandRadius: 8")));
+  h.start(gradientConfig(QString()));
+  ASSERT_TRUE(h.host->reload());
+  settle();
+  EXPECT_TRUE(stopsOf(h, "startStops").isEmpty());
+  EXPECT_TRUE(stopsOf(h, "centerStops").isEmpty());
+  EXPECT_TRUE(stopsOf(h, "endStops").isEmpty());
+  EXPECT_TRUE(shown(h, "island-start"));
+}
+
+TEST(ThemeHost, IslandGradientsKeepTheIslandGeometryAndBridgeTheCentre) {
+  Harness h;
+  writeTheme(h, themeText(QStringLiteral("islands: true; groupPadding: 10; islandRadius: 8")));
+  h.start(gradientConfig(QStringLiteral(
+      R"(startFill: ["#ff6a00", "#e8338a", "#8a3ffc"]; endFill: ["#2f6bff", "#1fb5c9"])")));
+  ASSERT_TRUE(h.host->reload());
+  settle();
+  EXPECT_EQ(stopsOf(h, "startStops").size(), 3);
+  EXPECT_EQ(stopsOf(h, "endStops").size(), 2);
+  const QVariantList centre = stopsOf(h, "centerStops");
+  ASSERT_EQ(centre.size(), 2);
+  EXPECT_EQ(centre.at(0).value<QColor>(), QColor("#8a3ffc"));
+  EXPECT_EQ(centre.at(1).value<QColor>(), QColor("#2f6bff"));
+  QQuickItem* start = findItem(h.window(), QStringLiteral("island-start"));
+  QQuickItem* end = findItem(h.window(), QStringLiteral("island-end"));
+  ASSERT_TRUE(start && end);
+  EXPECT_TRUE(start->isVisible());
+  EXPECT_DOUBLE_EQ(start->width(), 60 + 20);
+  EXPECT_DOUBLE_EQ(end->width(), 50 + 20);
+  EXPECT_TRUE(shown(h, "island-center"));
+}
+
+TEST(ThemeHost, AnExplicitCentreFillBeatsTheBridge) {
+  Harness h;
+  writeTheme(h, themeText(QStringLiteral("islands: true")));
+  h.start(gradientConfig(
+      QStringLiteral(R"(startFill: ["#ff0000"]; endFill: ["#0000ff"]; centerFill: ["#00ff00"])")));
+  ASSERT_TRUE(h.host->reload());
+  settle();
+  const QVariantList centre = stopsOf(h, "centerStops");
+  ASSERT_EQ(centre.size(), 1);
+  EXPECT_EQ(centre.at(0).value<QColor>(), QColor("#00ff00"));
+}
+
+TEST(ThemeHost, BadGradientValuesFallBackToFlat) {
+  Harness h;
+  writeTheme(h, themeText(QStringLiteral("islands: true")));
+  h.start(gradientConfig(QStringLiteral(
+      R"(startFill: ["not a colour", "#ff0000"]; centerFill: null; endFill: "oops")")));
+  ASSERT_TRUE(h.host->reload());
+  settle();
+  const QVariantList start = stopsOf(h, "startStops");
+  ASSERT_EQ(start.size(), 1);
+  EXPECT_EQ(start.at(0).value<QColor>(), QColor("#ff0000"));
+  EXPECT_TRUE(stopsOf(h, "endStops").isEmpty());
+  EXPECT_TRUE(stopsOf(h, "centerStops").isEmpty());
+  EXPECT_TRUE(shown(h, "island-end"));
+}
+
+TEST(ThemeHost, IslandGradientPaintsLeftAndRightDifferently) {
+  Harness h;
+  writeTheme(h, themeText(QStringLiteral("islands: true; groupPadding: 10; islandRadius: 8")));
+  h.start(gradientConfig(QStringLiteral(R"(startFill: ["#ff0000", "#0000ff"])")));
+  ASSERT_TRUE(h.host->reload());
+  settle();
+  QQuickItem* start = findItem(h.window(), QStringLiteral("island-start"));
+  ASSERT_NE(start, nullptr);
+  const QImage img = h.window()->grabWindow();
+  if (img.isNull()) GTEST_SKIP() << "window grab is not available on this backend";
+  const QPointF p = start->mapToItem(h.window()->contentItem(), QPointF());
+  const int y = 2;
+  const QColor left = img.pixelColor(int(p.x()) + 2, y);
+  const QColor right = img.pixelColor(int(p.x() + start->width()) - 3, y);
+  if (left == right) GTEST_SKIP() << "Canvas does not paint on this backend";
+  EXPECT_GT(left.red(), right.red());
+  EXPECT_GT(right.blue(), left.blue());
+}
