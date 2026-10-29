@@ -13,14 +13,8 @@ wabar_contribute(
     services/media_service.cpp
     services/shell_service.h
     services/shell_service.cpp
-    services/tray_icon_model.h
-    services/tray_icon_model.cpp
-    services/tray_image_provider.h
-    services/tray_image_provider.cpp
-    services/systray.h
-    services/systray.cpp
-    services/tray_pins.h
-    services/tray_pins.cpp
+    services/workspaces_service.h
+    services/workspaces_service.cpp
     services/bluetooth_service.h
     services/bluetooth_service.cpp
     services/network_service.h

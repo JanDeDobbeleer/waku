@@ -9,7 +9,10 @@
 #     QML_SOURCES   <files...>      qml/*.h, qml/*.cpp: QML-facing C++, compiled into wabar.services
 #     QML_FILES     <files...>      qml/*.qml: widgets, compiled into wabar.widgets
 #     TESTS         <files...>      tests/*.cpp: compiled into the one test binary
-#     SYSTEM_LIBS   <libs...>)      Windows import libraries the feature calls
+#     SYSTEM_LIBS   <libs...>       Windows import libraries the feature calls
+#     SUBTARGET_SOURCES <files...>) sources of a target the feature builds in its own subfolder
+#                                   (tray/hook, the DLL): listed only so rule S1 sees them; they
+#                                   are not compiled into wabar_<f>
 #
 # Decisions the proposal left open (keep them simple; revisit in step 11 if they chafe):
 # - Argument names follow the step-4 brief (QML_SOURCES/QML_FILES, the qt_add_qml_module words)
@@ -75,7 +78,7 @@ endfunction()
 
 function(wabar_feature)
   cmake_parse_arguments(PARSE_ARGV 0 arg "" "NAME"
-    "DEPENDS;SOURCES;WIN32_SOURCES;QML_SOURCES;QML_FILES;TESTS;SYSTEM_LIBS")
+    "DEPENDS;SOURCES;WIN32_SOURCES;QML_SOURCES;QML_FILES;TESTS;SYSTEM_LIBS;SUBTARGET_SOURCES")
   set(f "${arg_NAME}")
   if(arg_UNPARSED_ARGUMENTS)
     message(FATAL_ERROR "wabar_feature(${f}): unknown arguments ${arg_UNPARSED_ARGUMENTS}")

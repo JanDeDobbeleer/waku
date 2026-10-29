@@ -48,21 +48,9 @@ add_library(yasb_platform STATIC
   touch_keyboard.cpp
   user_info.h
   user_info.cpp
-  systray_click.h
-  systray_click.cpp
-  systray_hook.h
-  systray_hook.cpp
-  systray_host.h
-  systray_pipe.h
-  systray_pipe.cpp
-  systray_types.h
-  systray_win.h
-  systray_win.cpp
+  system_stats.h
 )
 target_include_directories(yasb_platform PUBLIC ${CMAKE_SOURCE_DIR})
-# Pipe and watchdog mutex names shared with hook/trayhook.cpp (set in the root CMakeLists).
-target_compile_definitions(yasb_platform PUBLIC
-  YASB_TRAY_PIPE_NAME="${YASB_TRAY_PIPE_NAME}" YASB_TRAY_MUTEX_NAME="${YASB_TRAY_MUTEX_NAME}")
 target_link_libraries(yasb_platform
   PUBLIC Qt6::Core
   PRIVATE wabar_options wabar_kernel psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32

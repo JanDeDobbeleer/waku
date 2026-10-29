@@ -37,12 +37,12 @@ to run the bar and `wabarc`.
 ## Tray hook DLL
 
 `wabar.exe` ships `YASBNativeTrayHook.dll` (x64) or `YASBNativeTrayHook_arm64.dll` next to it; the
-Tray widget injects it into Explorer to see tray icons. `hook/` builds it with a static CRT, and
+Tray widget injects it into Explorer to see tray icons. `src/features/tray/hook/` builds it with a static CRT, and
 each preset builds the DLL for its own architecture, so an ARM64 host runs the ARM64 preset's build.
 The DLL must match Explorer's architecture: an x64 build running under emulation on ARM64 cannot use
 it and has no tray host (the tray stays empty). The pipe and watchdog mutex names are set once in
 the root `CMakeLists.txt` (`YASB_TRAY_PIPE_NAME`, `YASB_TRAY_MUTEX_NAME`) and passed to both the DLL
-and `platform/`. The DLL detaches from Explorer by itself (up to 5 s) after the host exits, so wait
+and `wabar_tray`. The DLL detaches from Explorer by itself (up to 5 s) after the host exits, so wait
 for it to unload before starting another run that hooks the tray. Automated tests never inject it:
 they use a private pipe and fake injector, and the tray host is not created on the `offscreen`
 platform. Pass `--no-tray` to `wabar.exe` for runs that must not hook Explorer.

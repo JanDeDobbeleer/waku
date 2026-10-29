@@ -43,12 +43,11 @@ include(wabar_feature)   # wabar_feature(), wabar_contribute()
 # legacy folders still build their libraries and feed the QML modules and the test binary through
 # wabar_contribute(); src/modules/qml_modules.cmake defines wabar.services and wabar.widgets
 # after every contributor.
-# Pipe and watchdog mutex names the host (platform/systray_hook) and the injected DLL (hook/)
+# Pipe and watchdog mutex names the host (features/tray/win32/tray_hook) and the injected DLL (features/tray/hook/)
 # must agree on; distinct from Python YASB's so both builds can coexist.
 set(YASB_TRAY_PIPE_NAME "yasb_native_systray_monitor")
 set(YASB_TRAY_MUTEX_NAME "YASBNativeTrayHookAlive")
 
-add_subdirectory(hook)
 add_subdirectory(platform)
 add_subdirectory(core)
 add_subdirectory(widgets)

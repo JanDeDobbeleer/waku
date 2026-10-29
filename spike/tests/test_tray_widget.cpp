@@ -9,48 +9,38 @@
 #include <set>
 #include <vector>
 
-#include "platform/systray_click.h"
-#include "platform/systray_host.h"
-#include "platform/systray_types.h"
-#include "spike/services/systray.h"
+#include "features/tray/qml/systray.h"
+#include "features/tray/testing/fake_tray_host.h"
+#include "features/tray/tray_click.h"
+#include "features/tray/tray_host.h"
+#include "features/tray/tray_state.h"
+#include "features/tray/tray_types.h"
 #include "spike/tests/bar_fixtures.h"
-#include "widgets/systray/systray_state.h"
 
 namespace {
 
-namespace plat = yasb::platform;
-using wabar::services::Systray;
+namespace plat = wabar::tray;
+using wabar::tray::FakeApi;
+using wabar::tray::FakeHost;
+using wabar::tray::Systray;
 
 constexpr std::uint32_t kCallback = 0x8001;
-
-class FakeHost : public plat::TrayHost {
- public:
-  void start() override {}
-  void stop() override {}
-  QString mode() const override { return QStringLiteral("fake"); }
-  void sendModified(const plat::TrayIconData& data) { emit iconModified(data); }
-};
 
 struct Log {
   std::vector<std::int64_t> events;  // callback lParams of version <= 3 notifications, in order
   int broadcasts = 0;
 };
 
-class FakeApi : public plat::TrayWindowApi {
- public:
-  explicit FakeApi(std::shared_ptr<Log> log) : log_(std::move(log)) {}
-  bool isWindow(std::uint64_t) override { return true; }
-  void allowSetForeground(std::uint64_t) override {}
-  void sendNotifyMessage(std::uint64_t, std::uint32_t message, std::uint64_t,
-                         std::int64_t lParam) override {
-    if (message == kCallback) log_->events.push_back(lParam);
-  }
-  std::pair<int, int> cursorPos() override { return {0, 0}; }
-  void broadcastTaskbarCreated() override { ++log_->broadcasts; }
-
- private:
-  std::shared_ptr<Log> log_;
-};
+// A FakeApi that reports into `log`, which the test keeps after the bar owns the api.
+std::unique_ptr<FakeApi> makeApi(const std::shared_ptr<Log>& log) {
+  auto api = std::make_unique<FakeApi>();
+  api->anyWindow = true;
+  api->onSend = [log](const FakeApi::Message& m) {
+    if (m.message == kCallback) log->events.push_back(m.lParam);
+  };
+  api->onBroadcast = [log] { ++log->broadcasts; };
+  return api;
+}
 
 plat::TrayIconData makeIcon(const char* name, bool hidden = false) {
   static std::uint32_t nextId = 1;
@@ -75,11 +65,11 @@ class TrayWidgetTest : public testing::Test {
     ASSERT_TRUE(state_.isValid());
     Systray::setFactoryForTests([this]() -> std::unique_ptr<Systray> {
       if (!unavailable_.isEmpty()) {
-        return std::make_unique<Systray>(nullptr, std::make_unique<FakeApi>(log_), unavailable_);
+        return std::make_unique<Systray>(nullptr, makeApi(log_), unavailable_);
       }
       auto fake = std::make_unique<FakeHost>();
       host_ = fake.get();
-      return std::make_unique<Systray>(std::move(fake), std::make_unique<FakeApi>(log_), QString());
+      return std::make_unique<Systray>(std::move(fake), makeApi(log_), QString());
     });
   }
   void TearDown() override { Systray::setFactoryForTests({}); }
@@ -92,17 +82,17 @@ class TrayWidgetTest : public testing::Test {
   // The saved-state id of the primary screen, which the offscreen bar is on.
   static QString screenId() {
     QScreen* screen = QGuiApplication::primaryScreen();
-    const QString id = yasb::widgets::cleanScreenId(screen->manufacturer(), screen->name(),
-                                                    screen->serialNumber());
+    const QString id =
+        wabar::tray::cleanScreenId(screen->manufacturer(), screen->name(), screen->serialNumber());
     return id.isEmpty() ? QStringLiteral("None") : id;
   }
   // Writes the saved state before the bar exists.
   void saveState(const QStringList& entries) {
-    write(yasb::widgets::SystrayStateStore(state_.path(), screenId()).path(),
+    write(wabar::tray::SystrayStateStore(state_.path(), screenId()).path(),
           QStringLiteral("{") + entries.join(QLatin1Char(',')) + QStringLiteral("}"));
   }
-  yasb::widgets::IconStateMap loadState() const {
-    return yasb::widgets::SystrayStateStore(state_.path(), screenId()).load();
+  wabar::tray::IconStateMap loadState() const {
+    return wabar::tray::SystrayStateStore(state_.path(), screenId()).load();
   }
 
   QString trayConfig(const QString& props = QString()) const {
