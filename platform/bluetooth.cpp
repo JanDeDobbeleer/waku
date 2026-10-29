@@ -1252,6 +1252,17 @@ std::unique_ptr<BluetoothBackend> createBluetoothBackend() {
   return std::make_unique<RealBluetoothBackend>();
 }
 
+bool hasBluetoothAdapter() {
+  BLUETOOTH_FIND_RADIO_PARAMS findParams{};
+  findParams.dwSize = sizeof(findParams);
+  HANDLE radio = nullptr;
+  HBLUETOOTH_RADIO_FIND finder = BluetoothFindFirstRadio(&findParams, &radio);
+  if (!finder) return false;
+  if (radio) CloseHandle(radio);
+  BluetoothFindRadioClose(finder);
+  return true;
+}
+
 }  // namespace yasb::platform
 
 #include "bluetooth.moc"

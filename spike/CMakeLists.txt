@@ -35,6 +35,12 @@ qt_add_qml_module(tidy_services
     services/systray.cpp
     services/tray_pins.h
     services/tray_pins.cpp
+    services/bluetooth_service.h
+    services/bluetooth_service.cpp
+    services/network_service.h
+    services/network_service.cpp
+    services/notification_service.h
+    services/notification_service.cpp
 )
 target_include_directories(tidy_services PUBLIC ${CMAKE_SOURCE_DIR}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/services)  # generated type registration includes headers by name

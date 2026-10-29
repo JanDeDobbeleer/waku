@@ -125,6 +125,10 @@ class BluetoothBackend : public QObject {
 
 std::unique_ptr<BluetoothBackend> createBluetoothBackend();
 
+// True when the machine has a Bluetooth adapter (BluetoothFindFirstRadio, no WinRT, returns at
+// once). The adapter being switched off still counts.
+bool hasBluetoothAdapter();
+
 }  // namespace yasb::platform
 
 Q_DECLARE_METATYPE(yasb::platform::BluetoothDevice)

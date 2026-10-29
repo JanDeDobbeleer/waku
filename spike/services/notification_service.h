@@ -1,0 +1,62 @@
+#pragma once
+
+#include <QtQml/qqmlregistration.h>
+
+#include <QObject>
+#include <QVariantList>
+#include <memory>
+
+#include "platform/notifications.h"
+
+namespace tidy::services {
+
+namespace platform = ::yasb::platform;
+
+// The Action Center toasts as a QML singleton, shared by every Notifications widget. Wraps
+// platform::NotificationService, which owns the WNF subscription and the listener worker thread;
+// this object lives on the GUI thread and the platform service re-posts every source event to it.
+// The engine destroys it, which stops the source and joins the worker thread. Without a source
+// (the offscreen platform, where the real listener must not run) `available` stays false.
+//
+// `count` is the number of toasts in the Action Center. `unread` is true while there is any: a
+// toast leaves the Action Center once it is dismissed or activated, so what remains is unread.
+// `items` is the toast list, newest first, a list of maps with id, app, title, body and time (a
+// short clock or date text built when the list arrives). `refresh()` re-reads the list; the popup
+// calls it when it opens.
+class Notifications : public QObject {
+  Q_OBJECT
+  QML_ELEMENT
+  QML_SINGLETON
+  Q_PROPERTY(bool available READ available NOTIFY changed FINAL)
+  Q_PROPERTY(int count READ count NOTIFY changed FINAL)
+  Q_PROPERTY(bool unread READ unread NOTIFY changed FINAL)
+  Q_PROPERTY(QVariantList items READ items NOTIFY changed FINAL)
+
+ public:
+  explicit Notifications(QObject* parent = nullptr);
+  // Test seam: a fake source; null means no source.
+  Notifications(std::unique_ptr<platform::NotificationSource> source, QObject* parent);
+  ~Notifications() override;
+
+  bool available() const { return hasSource_; }
+  int count() const { return service_.count(); }
+  bool unread() const { return service_.count() > 0; }
+  QVariantList items() const { return items_; }
+
+  Q_INVOKABLE void clear() { service_.clearAll(); }
+  Q_INVOKABLE void dismiss(int id);
+  Q_INVOKABLE void activate(int id);
+  Q_INVOKABLE void refresh() { service_.refresh(); }
+
+ signals:
+  void changed();
+
+ private:
+  void onServiceChanged();
+
+  bool hasSource_;
+  platform::NotificationService service_;
+  QVariantList items_;
+};
+
+}  // namespace tidy::services

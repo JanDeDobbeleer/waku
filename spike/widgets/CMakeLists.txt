@@ -18,6 +18,10 @@ qt_add_qml_module(tidy_widgets
     Workspaces.qml
     TrayIconButton.qml
     Tray.qml
+    ActiveLayout.qml
+    Bluetooth.qml
+    Wifi.qml
+    Notifications.qml
     SafeConfig.qml
 )
 target_link_libraries(tidy_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE tidy_bar tidy_services)

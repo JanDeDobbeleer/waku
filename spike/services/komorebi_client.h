@@ -3,7 +3,9 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <QObject>
+#include <QStringList>
 #include <QVariantList>
+#include <QVariantMap>
 
 #include "core/widgets/event_bus.h"
 #include "widgets/komorebi/komorebi_service.h"
@@ -20,8 +22,12 @@ namespace widgets = ::yasb::widgets;
 // engine destroys the singleton.
 //
 // `monitors`: [{index, id, name, focused, workspaces: [{index, name, focused, hasWindows,
-// windowCount}]}]; `id` is the monitor handle (HMONITOR). A monitor is `focused` when it is the
-// focused one; a workspace is `focused` when it is the one shown on its monitor.
+// windowCount}], workspace, layout}]; `id` is the monitor handle (HMONITOR). A monitor is `focused`
+// when it is the focused one; a workspace is `focused` when it is the one shown on its monitor.
+// `workspace` is the index of the shown workspace (-1 when none). `layout` is what that workspace
+// shows: "bsp", "columns", "rows", "grid", "scrolling", "vertical_stack", "horizontal_stack",
+// "ultrawide_vertical_stack", "right_main_vertical_stack", "custom", or one of the states "paused",
+// "floating", "maximized", "monocle" (checked in that order, as Python YASB does).
 class Komorebi : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -44,6 +50,12 @@ class Komorebi : public QObject {
   widgets::EventBus& bus() { return bus_; }
 
   Q_INVOKABLE void focusWorkspace(int monitorIndex, int workspaceIndex);
+  // Sets the layout of the shown workspace (`komorebic workspace-layout`); `layout` is a snake_case
+  // or kebab-case name.
+  Q_INVOKABLE void setLayout(int monitorIndex, QString layout);
+  // Moves `step` places along `layouts` from the current layout (wrapping); in a blocking state
+  // (paused, floating, maximized, monocle) it undoes that state instead.
+  Q_INVOKABLE void cycleLayout(int monitorIndex, QStringList layouts, int step);
 
  signals:
   void changed();
@@ -51,6 +63,7 @@ class Komorebi : public QObject {
  private:
   void subscribe();
   void onEvent(const QString& name, const QVariantMap& payload);
+  QVariantMap monitorAt(int monitorIndex) const;
 
   widgets::EventBus bus_;
   widgets::komorebi::KomorebiService service_;

@@ -23,6 +23,10 @@ add_executable(tidy_services_tests
   test_systray.cpp
   test_tray_pins.cpp
   test_tray_widget.cpp
+  test_active_layout.cpp
+  test_bluetooth.cpp
+  test_network.cpp
+  test_notifications.cpp
 )
 target_compile_definitions(tidy_services_tests PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
