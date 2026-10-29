@@ -14,6 +14,7 @@
 namespace tidy::services {
 namespace {
 
+constexpr int kRefreshDelayMs = 200;    // SystrayWidget's refreshTimer_
 constexpr int kSweepIntervalMs = 5000;  // SystrayWidget's iconCheckTimer_
 
 struct RealHost {
@@ -21,10 +22,16 @@ struct RealHost {
   QString reason;
 };
 
+bool g_disabled = false;
+
 // The hook host or nothing: the legacy window is never created (it would take over Explorer's
 // tray window), so makeLegacy is cleared.
 RealHost makeRealHost() {
   RealHost result;
+  if (g_disabled) {
+    result.reason = QStringLiteral("tray unavailable: disabled by --no-tray");
+    return result;
+  }
   if (QGuiApplication::platformName() == QStringLiteral("offscreen")) {
     result.reason = QStringLiteral("tray unavailable: offscreen platform");
     return result;
@@ -105,7 +112,11 @@ void Systray::connectHost() {
           [this](const platform::TrayIconData& data) { onIconModified(data); });
   connect(host_.get(), &platform::TrayHost::iconDeleted, this,
           [this](const platform::TrayIconData& data) { onIconDeleted(data); });
-  connect(host_.get(), &platform::TrayHost::updateIcons, this, [this] { sweep(); });
+  // The hook has just connected: have Explorer announce every icon it already has.
+  refreshTimer_.setSingleShot(true);
+  refreshTimer_.setInterval(kRefreshDelayMs);
+  connect(host_.get(), &platform::TrayHost::updateIcons, this, [this] { refreshTimer_.start(); });
+  connect(&refreshTimer_, &QTimer::timeout, this, [this] { refresh(); });
   connect(&sweepTimer_, &QTimer::timeout, this, [this] { sweep(); });
   sweepTimer_.start(kSweepIntervalMs);
   host_->start();
@@ -128,6 +139,8 @@ Systray* Systray::create(QQmlEngine* engine, QJSEngine*) {
 void Systray::setFactoryForTests(std::function<std::unique_ptr<Systray>()> factory) {
   testFactory() = std::move(factory);
 }
+
+void Systray::setDisabled(bool disabled) { g_disabled = disabled; }
 
 void Systray::setFilter(bool showSystemIcons, const QStringList& hiddenExeNames) {
   registry_.setFilter(showSystemIcons ? QSet<QUuid>() : systemGuids(), hiddenExeNames);

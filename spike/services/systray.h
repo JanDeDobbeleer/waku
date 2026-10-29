@@ -53,6 +53,9 @@ class Systray : public QObject {
   // the real host. An empty function restores the real path.
   static void setFactoryForTests(std::function<std::unique_ptr<Systray>()> factory);
 
+  // `tidybar --no-tray`: the real Systray stays unavailable and never touches Explorer.
+  static void setDisabled(bool disabled);
+
   bool available() const { return host_ != nullptr; }
   QString unavailableReason() const { return reason_; }
   TrayIconModel* icons() { return &model_; }
@@ -87,7 +90,8 @@ class Systray : public QObject {
   // Ids whose next left-button release is swallowed: set by doubleClick (the release of the
   // double-click gesture must not act as a second click), cleared by the next left click.
   QSet<int> swallowRelease_;
-  QTimer sweepTimer_;  // 5 s, as the Widgets build: drops icons whose owner window is gone
+  QTimer refreshTimer_;  // 200 ms single shot after the hook asks for icons: TaskbarCreated
+  QTimer sweepTimer_;    // 5 s, as the Widgets build: drops icons whose owner window is gone
 };
 
 }  // namespace tidy::services

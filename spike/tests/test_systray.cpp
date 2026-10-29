@@ -4,6 +4,7 @@
 
 #include <QCoreApplication>
 #include <QSignalSpy>
+#include <QTest>
 #include <memory>
 #include <set>
 #include <vector>
@@ -146,7 +147,7 @@ TEST(Systray, StaleSweepRemovesIconsWhoseWindowIsGone) {
   ASSERT_EQ(f.rows(), 2);
   f.api->windows.erase(200);
   f.host->askForIcons();
-  QCoreApplication::processEvents();
+  QTest::qWait(400);  // the refresh that sweeps runs 200 ms after the request
   EXPECT_EQ(f.rows(), 1);
   EXPECT_EQ(f.systray.icons()->iconData(0)->hWnd, 100u);
 }
@@ -202,6 +203,14 @@ TEST(Systray, RefreshBroadcastsTaskbarCreated) {
   EXPECT_EQ(f.api->broadcasts, 1);
 }
 
+TEST(Systray, HookAskingForIconsBroadcastsTaskbarCreatedOnce) {
+  Fixture f;
+  f.host->askForIcons();
+  f.host->askForIcons();
+  QTest::qWait(400);
+  EXPECT_EQ(f.api->broadcasts, 1);
+}
+
 TEST(Systray, NullHostIsUnavailableWithTheReason) {
   Systray systray(nullptr, std::make_unique<FakeApi>(), QStringLiteral("tray unavailable: test"));
   EXPECT_FALSE(systray.available());
@@ -215,6 +224,14 @@ TEST(Systray, RealConstructorIsUnavailableOffscreen) {
   Systray systray(nullptr);
   EXPECT_FALSE(systray.available());
   EXPECT_EQ(systray.unavailableReason(), QStringLiteral("tray unavailable: offscreen platform"));
+}
+
+TEST(Systray, NoTrayKeepsTheRealOneUnavailable) {
+  Systray::setDisabled(true);
+  Systray systray(nullptr);
+  Systray::setDisabled(false);
+  EXPECT_FALSE(systray.available());
+  EXPECT_EQ(systray.unavailableReason(), QStringLiteral("tray unavailable: disabled by --no-tray"));
 }
 
 TEST(Systray, DestructorStopsTheHostOnce) {

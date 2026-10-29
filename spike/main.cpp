@@ -6,6 +6,7 @@
 #include "spike/bar/bar_host.h"
 #include "spike/bar/control_handler.h"
 #include "spike/control/control.h"
+#include "spike/services/systray.h"
 
 int main(int argc, char* argv[]) {
   // As app/main.cpp setFontEngine(): Qt's DirectWrite font database maps every installed font
@@ -32,10 +33,14 @@ int main(int argc, char* argv[]) {
   QCommandLineOption safeOpt(
       QStringLiteral("safe"),
       QStringLiteral("Start the built-in bar with the default theme and ignore the config home."));
+  QCommandLineOption noTrayOpt(QStringLiteral("no-tray"),
+                               QStringLiteral("Never hook Explorer; the Tray widget stays empty."));
   parser.addOption(configHomeOpt);
+  parser.addOption(noTrayOpt);
   parser.addOption(appBarOpt);
   parser.addOption(safeOpt);
   parser.process(app);
+  tidy::services::Systray::setDisabled(parser.isSet(noTrayOpt));
 
   const QString configHome =
       tidy::resolveConfigHome(parser.value(configHomeOpt), QStringLiteral(SPIKE_CONFIG_DIR));
