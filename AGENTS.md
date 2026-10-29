@@ -4,10 +4,8 @@ Read this before changing anything. It applies to every agent session and to hum
 single source of truth for how to work in this repository. Background: `docs/architecture.md`,
 `docs/building.md`, `SECURITY.md`, `src/app/README.md`.
 
-wabar is a C++20/Qt 6.10 Qt Quick bar for Windows, configured in QML. Python YASB is a reference for
-how Windows behaves (undocumented APIs, edge cases), not a behavioural spec: nothing in this
-repository has to match it. The retired Qt Widgets build is at the git tag `yasb-native-final` and in
-`docs/archive/`.
+wabar is a C++20/Qt 6.10 port of YASB (pronounced /wab-bar/). The Python build (`D:\yasb`, branch `local/build`) is
+the behavioural reference: when in doubt, match what Python YASB does.
 
 ## Build and test
 
@@ -58,18 +56,9 @@ process); a single case runs with `wabar_tests --gtest_filter=Suite.Case`. Prese
 
 `tools\check.ps1` exits 0. Its steps, in order:
 
-1. `format`: clang-format dry run over `src/` and `tests/`.
-2. `structure`: rules S1-S8 (below).
-3. `json-subscript`: no `const nlohmann::json::operator[]` in product code.
-4. `build`: configure and build the `arm64-debug` preset (own targets use `/W4 /WX`).
-5. `qmllint`: the `all_qmllint` target over every QML module; fails when the warning count rises
-   above `tools/qmllint-baseline.txt` (a ratchet: lower the number when it falls, never raise it).
-6. `test`: `ctest` over `wabar_tests`.
-
-Options: `-Fast` runs steps 1-3 only; `-Staged` checks only the staged files (the pre-commit hook
-uses it); `-Analyze` runs steps 1-3 plus MSVC `/analyze` and clang-tidy in an isolated build
-directory instead of steps 4-6 (see `docs/building.md`). `-SkipFormat` and `-Preset <name>` also
-exist.
+`pwsh -NoProfile -File tools\check.ps1 -Analyze` runs the fast checks and opt-in local static
+analysis instead of tests, in an isolated build directory. It requires clang-tidy; see
+`docs/building.md`. Ordinary checks reset `WABAR_ANALYZE=OFF`; hooks remain fast-only.
 
 Git hooks in `tools/hooks` run the fast checks on staged files and validate the commit message.
 Enable them once per clone:
@@ -106,7 +95,13 @@ of that step in the script, which is exact; do not restate it here. In short:
   QML-facing header names are unique.
 - S8: `DEPENDS` names existing features and has no cycle.
 
-Design and the dependency table: `docs/architecture.md`.
+| Target | Layer |
+|---|---|
+| `wabar_app` (+ exe `wabar` from `app/main.cpp`) | app |
+| `wabar_widgets` | widgets |
+| `wabar_ui` | ui |
+| `wabar_css`, `wabar_config` | css / config |
+| `wabar_platform` | platform |
 
 Shells are configuration, not engine. A ported or user-written shell (caelestia, a launcher, a dock)
 lives in a config home outside this repository and carries its own tokens, palette, layout and styling.
@@ -175,13 +170,17 @@ fine. Never use the `const` `nlohmann::json::operator[]` on a key that may be mi
 ## Live desktop rules
 
 - Tests and tooling always pass `--config-home <dir>` to `wabar.exe`. Never run it against the
-  user's real config (`%USERPROFILE%\.config\wabar`) and never write to that folder.
-- Tests never touch the user's real bar, wallpaper, tray or Explorer. Use `--no-tray` so a test run
-  never hooks Explorer, and never change the wallpaper outside a `--dry-run`.
-- Services ask `kernel::liveDesktop()` before touching the machine; it is false on the offscreen
-  platform. No service tests `platformName()` itself.
-- No bar reserves screen work area unless `--register-app-bar` is passed, so a test or tool run
-  leaves the desktop layout alone. `--safe` starts the built-in bar and ignores the config.
+  user's real config (`%USERPROFILE%\.config\wabar`), never write to that folder, and never write to the old `%USERPROFILE%\.config\yasb` or `%LOCALAPPDATA%\YASB`. Tests of the folder migration use temp roots (`platform/app_data.h`).
+- A regular start (no `--config-home`, `--screenshot` or offscreen platform) reserves screen work area. `--register-app-bar` forces that for isolated runs and only `tools/ab` passes it; `--no-app-bar` suppresses it.
+- Prefer `--smoke`, `--version` and `--screenshot <png>` with `QT_QPA_PLATFORM=offscreen` for checks.
+
+## Python parity of startup
+
+Port every Python startup side effect: environment variables, Qt attributes, application flags.
+Example: Python YASB sets `QT_QPA_PLATFORM=windows:fontengine=gdi` in `src/env.py`
+(`set_font_engine`); missing it made Qt use DirectWrite and map every installed font (2,105 handles,
+206 MiB working set). When you port a startup path, read the Python entry points (`src/main.py`,
+`src/env.py`, `src/settings.py`) for side effects, not just the feature code.
 
 ## Undocumented Windows APIs
 

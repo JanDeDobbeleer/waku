@@ -1,33 +1,9 @@
 # wabar
 
-wabar (/ˈwæbɑːr/, "wab-bar") stands for "Windows, actually. With a bar." It is a top bar for
-Windows, written in C++20 and Qt 6.10 (Qt Quick) and configured in QML. The name nods to
-[Waybar](https://github.com/Alexays/Waybar), the bar for Wayland.
+Pronounced /wab-bar/: "Windows, actually. With a bar."
 
-The bar is a set of QML files. `shell.qml` says which bars to show and which widgets go where;
-`theme.qml` sets the look. Save either file and the bars reload. Built-in widgets cover the clock,
-workspaces (komorebi and GlazeWM), media, volume, Bluetooth, Wi-Fi, battery, CPU, memory, the tray,
-the taskbar, notifications, GitHub, wallpapers and a control center. You can copy any of them into
-your config and change it.
-
-## Quick start
-
-Build and test with the steps in [docs/building.md](docs/building.md), then run the bar with the
-sample config:
-
-```powershell
-build\arm64-debug\wabar.exe --config-home examples\config
-build\arm64-debug\wabarc.exe --config-home examples\config status
-```
-
-`wabarc` talks to the running bar. Its commands are `reload`, `status`, `quit`,
-`wallpaper set|random|next|previous|gallery`, `surface list|show|hide|toggle|status <name>`,
-`call [<target> <function> [args...]]`, `shortcut <name>|list` and `taskbar hide|show|status`.
-Details and flags: [src/app/README.md](src/app/README.md) and [docs/building.md](docs/building.md).
-
-Use `--config-home <dir>` (or `WABAR_CONFIG_HOME`) to point wabar at your own folder, and
-`--no-tray` if you do not want it to hook Explorer. `cmake --build --preset arm64-debug --target
-deploy` assembles a portable folder in `dist/wabar`.
+wabar is a native C++20/Qt 6.10 Windows bar, a port of [YASB](https://github.com/amnweb/yasb), scoped to the widgets in one config.
+The Python build (`D:\yasb`, branch `local/build`) is the behavioral reference.
 
 ## Documentation
 

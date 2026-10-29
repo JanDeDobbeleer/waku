@@ -1,6 +1,6 @@
 # Third-party notices
 
-yasb-native is distributed under the MIT licence in `LICENSE`. It contains code derived from the
+wabar is distributed under the MIT licence in `LICENSE`. It contains code derived from the
 projects below, whose notices must be kept with any copy or substantial portion of this software.
 
 ## YASB (amnweb/yasb)
