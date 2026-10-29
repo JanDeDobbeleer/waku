@@ -31,6 +31,7 @@ add_executable(wabar_services_tests
   test_control_center.cpp
   test_github.cpp
   test_wallpapers.cpp
+  test_wallpaper_transition.cpp
 )
 target_compile_definitions(wabar_services_tests PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)

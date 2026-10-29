@@ -13,8 +13,10 @@ import wabar.services as S
 // "primary" or "active" (the focused window's screen). `autoChange` is a number of seconds
 // between random wallpapers, 0 for never. `imageWidth`, `orientation` ("portrait" or
 // "landscape"), `cornerRadius` and `accentColor` (the border of the current wallpaper) style the
-// gallery, a strip of thumbnails. The animated change (`engine`) and the other gallery types are
-// not supported yet: the wallpaper changes at once.
+// gallery, a strip of thumbnails. `engine: true` plays an animated reveal of the new wallpaper over
+// the old one, behind the desktop icons, before it is set; `animation` is "split" (default),
+// "circle", "slide_top", "diamond" or "fade". The auto-change timer and the other gallery types
+// are not animated or supported: the wallpaper changes at once.
 Pill {
     id: root
 
@@ -27,9 +29,12 @@ Pill {
     property string orientation: "portrait"
     property int cornerRadius: 0
     property color accentColor: "#ffffff"
+    property bool engine: false
+    property string animation: "split"
 
     function sync() {
         S.Wallpapers.configure(imagePath, hotkey, hotkeyScreen, autoChange);
+        S.Wallpapers.configureEngine(engine, animation);
     }
 
     visible: label !== "" && S.Wallpapers.available
@@ -40,6 +45,8 @@ Pill {
     onHotkeyChanged: sync()
     onHotkeyScreenChanged: sync()
     onAutoChangeChanged: sync()
+    onEngineChanged: sync()
+    onAnimationChanged: sync()
     Component.onCompleted: sync()
 
     onClicked: S.Wallpapers.toggleGallery()

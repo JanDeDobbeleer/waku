@@ -12,10 +12,12 @@
 #include <QGuiApplication>
 #include <QImageReader>
 #include <QQmlEngine>
+#include <QRandomGenerator>
 #include <QScreen>
 #include <QUrl>
 #include <QVariantMap>
 #include <exception>
+#include <utility>
 
 #include "platform/window_focus.h"
 #include "widgets/wallpapers/wallpaper_files.h"
@@ -136,6 +138,7 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
   if (!deps_.backend && deps_.realBackend && !g_disabled && !isOffscreen()) {
     deps_.backend = [] { return platform::makeDesktopWallpaperBackend(); };
   }
+  if (!deps_.dryRun) deps_.dryRun = qEnvironmentVariableIntValue("WABAR_WALLPAPER_DRYRUN") != 0;
   if (deps_.backend) {
     guarded("backend", [&] { backend_ = deps_.backend(); });
   }
@@ -151,6 +154,7 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
 }
 
 Wallpapers::~Wallpapers() {
+  if (transition_) transition_->cancel();
   if (deps_.hotkeys) deps_.hotkeys->unregisterKey();
   if (manager_) manager_->stop();
 }
@@ -203,6 +207,11 @@ void Wallpapers::configure(const QString& imagePath, const QString& hotkey,
   });
 }
 
+void Wallpapers::configureEngine(bool enabled, const QString& animation) {
+  engineEnabled_ = enabled;
+  animation_ = animation.isEmpty() ? QStringLiteral("split") : animation;
+}
+
 void Wallpapers::applyToManager() {
   if (!manager_) return;
   manager_->configure(imagePath_.isEmpty() ? QStringList() : QStringList{imagePath_},
@@ -250,16 +259,65 @@ void Wallpapers::readCurrent() {
 void Wallpapers::setWallpaper(const QString& path) {
   if (!available_ || !QFileInfo(path).isFile()) return;
   guarded("set wallpaper", [&] {
-    manager_->changeBackground(path);
-    refresh();
+    if (transition_) {
+      transition_->cancel();  // a change during the animation supersedes it
+      transition_.reset();
+    }
+    if (engineEnabled_) {
+      playTransition(path);
+    } else {
+      commitWallpaper(path);
+    }
   });
+}
+
+void Wallpapers::playTransition(const QString& path) {
+  transition_ = deps_.transition ? deps_.transition(path, animation_)
+                                 : std::make_unique<WallpaperTransition>(path, animation_);
+  if (!transition_) {
+    commitWallpaper(path);
+    return;
+  }
+  connect(transition_.get(), &WallpaperTransition::skipped, this, [this](const QString& reason) {
+    // The same reason repeats on every change, so say it once.
+    if (std::exchange(skipLogged_, true)) return;
+    qWarning().noquote() << "Wallpaper animation skipped:" << reason;
+  });
+  // finished() follows skipped(), so a skipped animation sets the wallpaper at once.
+  connect(transition_.get(), &WallpaperTransition::finished, this,
+          [this, path] { guarded("set wallpaper", [&] { commitWallpaper(path); }); });
+  transition_->start();
+}
+
+void Wallpapers::commitWallpaper(const QString& path) {
+  if (deps_.dryRun) {
+    qInfo().noquote() << "Wallpapers: dry run, not setting" << path;
+    return;
+  }
+  manager_->changeBackground(path);
+  refresh();
 }
 
 void Wallpapers::random() {
   if (!available_) return;
   guarded("random wallpaper", [&] {
-    manager_->changeBackground();
-    refresh();
+    if (!engineEnabled_) {
+      manager_->changeBackground();
+      refresh();
+      return;
+    }
+    // Pick here (never the one shown now) so the change can animate like a gallery click.
+    const QStringList all = widgets::collectImageFiles({imagePath_});
+    if (all.isEmpty()) return;
+    QString next;
+    do {
+      const int count = static_cast<int>(all.size());
+      next = all.at(deps_.picker ? deps_.picker(count) % count
+                                 : static_cast<int>(QRandomGenerator::global()->bounded(count)));
+    } while (all.size() > 1 &&
+             widgets::normalizedPathKey(next) == widgets::normalizedPathKey(current_) &&
+             (deps_.picker == nullptr));
+    setWallpaper(next);
   });
 }
 

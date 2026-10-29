@@ -51,6 +51,8 @@ qt_add_qml_module(wabar_services
     services/github_service.cpp
     services/wallpapers_service.h
     services/wallpapers_service.cpp
+    services/wallpaper_transition.h
+    services/wallpaper_transition.cpp
 )
 target_include_directories(wabar_services PUBLIC ${CMAKE_SOURCE_DIR}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/services)  # generated type registration includes headers by name

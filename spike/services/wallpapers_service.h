@@ -12,6 +12,7 @@
 #include <optional>
 
 #include "platform/desktop_wallpaper.h"
+#include "spike/services/wallpaper_transition.h"
 #include "widgets/wallpapers/thumbnail_cache.h"
 #include "widgets/wallpapers/wallpaper_manager.h"
 
@@ -43,13 +44,15 @@ class HotkeyHost {
 
 // The wallpaper folder, the current wallpaper and the gallery of every Wallpapers widget of a
 // `wabar` run, as a QML singleton. Wraps the UI-free classes of the Widgets build:
-// yasb::widgets::WallpaperManager (set, random, auto-change timer; the animated `engine` is off,
-// see docs/plans/2026-10-29-wabar-wallpapers-design.md), collectImageFiles, ThumbnailCache and
+// yasb::widgets::WallpaperManager (set, random, auto-change timer; its own QWidget engine stays
+// off, the Qt Quick WallpaperTransition replaces it, see
+// docs/plans/2026-10-29-wabar-wallpapers-design.md), collectImageFiles, ThumbnailCache and
 // platform::DesktopWallpaperBackend. Registers image://wallpaper/<path>?<stamp>.
 //
-// Threads: GUI thread, no thread of its own. The thumbnail provider runs on Qt's image-reader
-// thread (ForceAsynchronousImageLoading); it owns a shared ThumbnailCache and reads image files,
-// nothing else. The hotkey arrives on the GUI thread.
+// Threads: GUI thread, no thread of its own (the transition's decoder thread is described there).
+// The thumbnail provider runs on Qt's image-reader thread (ForceAsynchronousImageLoading); it owns
+// a shared ThumbnailCache and reads image files, nothing else. The hotkey arrives on the GUI
+// thread.
 //
 // `files` is a list of maps: path, name, thumbnail (image URL) and current (bool), in Explorer
 // name order. `available` is false (nothing is ever set) when IDesktopWallpaper cannot be
@@ -73,7 +76,11 @@ class Wallpapers : public QObject {
     yasb::widgets::WallpaperManager::Picker picker;
     std::shared_ptr<yasb::widgets::ThumbnailCache> cache;
     std::unique_ptr<HotkeyHost> hotkeys;
+    // Builds the transition for (image, animation); null means the real WallpaperTransition.
+    std::function<std::unique_ptr<WallpaperTransition>(const QString&, const QString&)> transition;
     bool realBackend = true;
+    // Play the transition but never call SetWallpaper (WABAR_WALLPAPER_DRYRUN=1 sets it).
+    bool dryRun = false;
   };
 
   // Deliberately not default-constructible: Qt uses a singleton's default constructor in
@@ -102,6 +109,9 @@ class Wallpapers : public QObject {
   // seconds (0 off). Safe to call again from every bar; the last call wins.
   Q_INVOKABLE void configure(const QString& imagePath, const QString& hotkey,
                              const QString& hotkeyScreen, int autoChangeSeconds);
+  // The animated change: `enabled` plays the transition (Qt Quick overlay on WorkerW) before the
+  // wallpaper is set, `animation` is circle, slide_top, diamond, split or fade. Off by default.
+  Q_INVOKABLE void configureEngine(bool enabled, const QString& animation);
   // Rescans the folder and reads the current wallpaper.
   Q_INVOKABLE void refresh();
   Q_INVOKABLE void setWallpaper(const QString& path);
@@ -121,6 +131,8 @@ class Wallpapers : public QObject {
   QString screenNameFor(const QString& mode) const;
   void readCurrent();
   void applyToManager();
+  void commitWallpaper(const QString& path);
+  void playTransition(const QString& path);
 
   Deps deps_;
   bool available_ = false;
@@ -135,6 +147,10 @@ class Wallpapers : public QObject {
   QString current_;
   bool galleryOpen_ = false;
   QString galleryScreen_;
+  bool engineEnabled_ = false;
+  QString animation_ = QStringLiteral("split");
+  std::unique_ptr<WallpaperTransition> transition_;
+  bool skipLogged_ = false;
 };
 
 // image://wallpaper/<path>?<stamp>: the thumbnail of one file, scaled to fit `requestedSize`

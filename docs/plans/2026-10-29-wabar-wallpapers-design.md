@@ -68,12 +68,41 @@ Qt Quick window.
 7. **Non-default constructor.** Qt prefers a singleton's default constructor over `create()`, and
    `create()` registers the image provider (as for Taskbar).
 
+## Transition engine (Qt Quick)
+
+The animated change (`engine`, `animation`) is ported from the `QWidget` `WallpaperEngine` to Qt Quick,
+so the wabar wallpaper widget needs no Qt Widgets code. The old engine stays in the Widgets build
+until that build is retired.
+
+- **Approach.** `spike/services/wallpaper_transition.*`: `WallpaperTransition` owns a frameless,
+  input-transparent `QQuickWindow` and one `WallpaperScene` (a `QQuickPaintedItem`, built in C++: no QML file, the
+  reveal shapes come from `revealPath`) that draws, for
+  every monitor area, the old image and then the new image clipped by the reveal shape at
+  `progress` (0..1). A `QVariantAnimation` (1200 ms, OutQuad) drives `progress`. The window is
+  re-parented to WorkerW (above the wallpaper, below the icons) and ends when the animation does.
+  When it ends the service sets the wallpaper (one `IDesktopWallpaper` call, the existing path); the
+  overlay lingers a moment so the desktop never shows the old picture, then goes. A new change
+  during the animation cancels it (no commit for the cancelled one) and starts the next.
+- **Reused.** `wallpaper_layout` (`layoutForScreens`, `revealPath`, `readDesktopSettings`): the same
+  per-monitor areas, fit modes (fill, fit, stretch, tile, center, span) and reveal shapes as the old
+  engine. `platform::attachToWorkerW` and `transcodedWallpaperPath` for the Win32 side: no Win32 is
+  duplicated and no undocumented API is added.
+- **Threads.** GUI thread. One short-lived `QThread` decodes the new image and the old one (the
+  transcoded wallpaper); it touches no Qt Quick object and is joined before the transition is
+  destroyed. Scaling for the monitors (`QPixmap`) runs on the GUI thread, as before.
+- **Failure.** WorkerW not found or an unreadable image: the window never shows, `skipped(reason)` is
+  logged once and the wallpaper is set at once. Unknown animation names fall back to a cross-fade.
+- **Dropped.** The 50 ms window fade-in before the reveal (the window sits at opacity 0.999 instead:
+  a child of WorkerW is only composed on this Windows build when it is layered, and Qt layers a
+  window once its opacity is not 1), and animation of the auto-change timer (the manager still changes it at once; the
+  gallery and the right-click random animate). Seams for tests: `WallpaperTransition::Platform`
+  (settings, old image path, attach, decode, show) and `Wallpapers::Deps::transition`.
+- **Dry run.** `WABAR_WALLPAPER_DRYRUN=1` plays the transition and logs instead of calling
+  `IDesktopWallpaper`, so it can be watched without changing the real wallpaper.
+
 ## Left out
 
-- **The `split` transition (and every `engine` animation): deferred.** `WallpaperEngine` is a
-  `QWidget` painted on a WorkerW child window; wabar runs a `QGuiApplication` with no Qt Widgets.
-  Rewriting it as a Qt Quick overlay is a separate job. The manager is configured with the engine
-  off, so a change is a plain `IDesktopWallpaper` call. No fake animation.
+- **The manager's own engine.** It stays off (it is a `QWidget`); the Qt Quick transition above replaces it.
 - `default`/`magnified`/`slide` gallery types, mouse-wheel/page-key scrolling, `run_after` commands,
   other keybinding actions (`change_wallpaper`), `system` accent colour, tooltips.
 - A hotkey without a Wallpapers item: the hotkey belongs to the singleton, so it exists only once a
