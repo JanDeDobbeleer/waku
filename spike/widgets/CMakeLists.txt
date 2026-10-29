@@ -8,8 +8,6 @@ wabar_contribute(
     DeviceMenu.qml
     DeviceRow.qml
     Slider.qml
-    Calendar.qml
-    Clock.qml
     Volume.qml
     Media.qml
     Workspaces.qml
