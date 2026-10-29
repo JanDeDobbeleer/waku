@@ -37,7 +37,7 @@ class NetworkTransport final : public HttpTransport {
     QNetworkAccessManager manager;
     QNetworkRequest networkRequest{QUrl(request.url)};
     networkRequest.setTransferTimeout(timeoutMs_);
-    networkRequest.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("yasb-native"));
+    networkRequest.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("wabar"));
     for (const auto& [name, value] : request.headers) networkRequest.setRawHeader(name, value);
     QNetworkReply* reply = manager.sendCustomRequest(networkRequest, request.verb, request.body);
     QEventLoop loop;

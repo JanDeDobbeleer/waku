@@ -2,7 +2,7 @@
 
 #include "host/screen_match.h"
 
-using namespace wabar;
+using namespace wabar::host;
 
 namespace {
 

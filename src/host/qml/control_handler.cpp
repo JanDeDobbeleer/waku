@@ -6,9 +6,9 @@
 
 #include "host/qml/bar_host.h"
 
-namespace wabar {
+namespace wabar::host {
 
-QString answerWallpaperCommand(const QStringList& words, WallpaperControl* wallpapers) {
+QString answerWallpaperCommand(const QStringList& words, control::WallpaperControl* wallpapers) {
   static const QString usage = QStringLiteral(
       "error: usage: wallpaper set [--dry-run] <file-or-path> | random [--dry-run] | next "
       "[--dry-run] | previous [--dry-run] | gallery");
@@ -40,8 +40,8 @@ QString answerWallpaperCommand(const QStringList& words, WallpaperControl* wallp
   return wallpapers->controlGallery();
 }
 
-ControlHandler makeControlHandler(BarHost& host, bool safe, std::function<void()> quit,
-                                  WallpaperControlProvider wallpapers) {
+control::ControlHandler makeControlHandler(BarHost& host, bool safe, std::function<void()> quit,
+                                           control::WallpaperControlProvider wallpapers) {
   if (!quit) quit = [] { QCoreApplication::quit(); };
   QPointer<BarHost> guard(&host);
   return [guard, safe, quit = std::move(quit),
@@ -64,7 +64,8 @@ ControlHandler makeControlHandler(BarHost& host, bool safe, std::function<void()
     }
     if (command == QLatin1String("wallpaper") || command.startsWith(QLatin1String("wallpaper "))) {
       QStringList words;
-      if (!splitCommand(command, &words)) return QStringLiteral("error: unterminated quote");
+      if (!control::splitCommand(command, &words))
+        return QStringLiteral("error: unterminated quote");
       words.removeFirst();
       return answerWallpaperCommand(words, wallpapers ? wallpapers() : nullptr);
     }
@@ -73,4 +74,4 @@ ControlHandler makeControlHandler(BarHost& host, bool safe, std::function<void()
   };
 }
 
-}  // namespace wabar
+}  // namespace wabar::host

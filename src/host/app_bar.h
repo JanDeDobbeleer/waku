@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-namespace yasb::bar {
+namespace wabar::host {
 
 enum class AppBarEdge { Top = 1, Bottom = 3 };
 
@@ -51,4 +51,4 @@ class FakeAppBar : public IAppBar {
 // Talks to SHAppBarMessage and sets WS_EX_NOACTIVATE / WS_EX_TOPMOST. Live desktop only.
 std::unique_ptr<IAppBar> makeWin32AppBar();
 
-}  // namespace yasb::bar
+}  // namespace wabar::host

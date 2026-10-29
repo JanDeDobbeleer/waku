@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace wabar {
+namespace wabar::control {
 
 void* acquireInstanceMutex(const QString& name) {
   const std::wstring mutexName = L"Local\\" + name.toStdWString();
@@ -21,4 +21,4 @@ void releaseInstanceMutex(void* mutex) {
   if (mutex) CloseHandle(static_cast<HANDLE>(mutex));
 }
 
-}  // namespace wabar
+}  // namespace wabar::control

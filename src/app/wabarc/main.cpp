@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
       }
       words << target;
     }
-    line = wabar::joinCommand(words);
+    line = wabar::control::joinCommand(words);
   } else if (positional.size() != 1 ||
              (command != QLatin1String("reload") && command != QLatin1String("status") &&
               command != QLatin1String("quit"))) {
@@ -112,19 +112,19 @@ int main(int argc, char* argv[]) {
   }
 
   // The same default as the bar, so that the two meet without any option.
-  const QString configHome = wabar::resolveConfigHome(parser.value(configHomeOpt),
-                                                      QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
-  const wabar::ControlReply reply =
-      wabar::sendControlCommand(wabar::controlPipeName(configHome), line);
+  const QString configHome = wabar::control::resolveConfigHome(
+      parser.value(configHomeOpt), QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
+  const wabar::control::ControlReply reply =
+      wabar::control::sendControlCommand(wabar::control::controlPipeName(configHome), line);
 
   switch (reply.status) {
-    case wabar::ControlReply::NotRunning:
+    case wabar::control::ControlReply::NotRunning:
       print(stderr, QStringLiteral("wabarc: no bar is running for %1").arg(configHome));
       return kNotRunning;
-    case wabar::ControlReply::Failed:
+    case wabar::control::ControlReply::Failed:
       print(stderr, QStringLiteral("wabarc: %1").arg(reply.text));
       return kUsage;
-    case wabar::ControlReply::Ok:
+    case wabar::control::ControlReply::Ok:
       break;
   }
   const bool error = reply.text.startsWith(QLatin1String("error:"));

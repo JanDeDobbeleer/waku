@@ -1,21 +1,21 @@
 // Port of Python YASB's trayhook.cpp (YASB 2.0.8). The pipe name and the watchdog mutex name come
-// from the build (YASB_TRAY_PIPE_NAME, YASB_TRAY_MUTEX_NAME compile definitions, set once in the
+// from the build (WABAR_TRAY_PIPE_NAME, WABAR_TRAY_MUTEX_NAME compile definitions, set once in the
 // root CMakeLists.txt and shared with win32/tray_hook) so this DLL and the native host
 // always agree, and differ from the Python build's names.
 #include <windows.h>
 
-#ifndef YASB_TRAY_PIPE_NAME
-#error "YASB_TRAY_PIPE_NAME must be defined by the build"
+#ifndef WABAR_TRAY_PIPE_NAME
+#error "WABAR_TRAY_PIPE_NAME must be defined by the build"
 #endif
-#ifndef YASB_TRAY_MUTEX_NAME
-#error "YASB_TRAY_MUTEX_NAME must be defined by the build"
+#ifndef WABAR_TRAY_MUTEX_NAME
+#error "WABAR_TRAY_MUTEX_NAME must be defined by the build"
 #endif
-#define YASB_WIDE_(x) L##x
-#define YASB_WIDE(x) YASB_WIDE_(x)
-#define YASB_PIPE_PATH L"\\\\.\\pipe\\" YASB_WIDE(YASB_TRAY_PIPE_NAME)
-#define YASB_MUTEX_PATH L"Global\\" YASB_WIDE(YASB_TRAY_MUTEX_NAME)
+#define WABAR_WIDE_(x) L##x
+#define WABAR_WIDE(x) WABAR_WIDE_(x)
+#define WABAR_PIPE_PATH L"\\\\.\\pipe\\" WABAR_WIDE(WABAR_TRAY_PIPE_NAME)
+#define WABAR_MUTEX_PATH L"Global\\" WABAR_WIDE(WABAR_TRAY_MUTEX_NAME)
 
-#define WM_YASB_UNHOOK (WM_APP + 1)
+#define WM_WABAR_UNHOOK (WM_APP + 1)
 
 // Global state
 WNDPROC g_OldWndProc = NULL;
@@ -73,7 +73,7 @@ struct SHELLTRAYDATA {
 void ConnectToPipe() {
   EnterCriticalSection(&g_PipeCS);
   if (g_hPipe == INVALID_HANDLE_VALUE) {
-    g_hPipe = CreateFileW(YASB_PIPE_PATH, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+    g_hPipe = CreateFileW(WABAR_PIPE_PATH, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
                           FILE_FLAG_OVERLAPPED, NULL);
   }
   LeaveCriticalSection(&g_PipeCS);
@@ -313,7 +313,7 @@ LRESULT CALLBACK ManualSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
   // dequeued by the top-level GetMessage loop AFTER all nested SendMessage
   // dispatches have unwound - so no ManualSubclassProc frames remain on the
   // stack when we process it.
-  if (uMsg == WM_YASB_UNHOOK) {
+  if (uMsg == WM_WABAR_UNHOOK) {
     if (oldProc) {
       SetWindowLongPtrW(hWnd, GWLP_WNDPROC, (LONG_PTR)oldProc);
       g_OldWndProc = NULL;
@@ -355,7 +355,7 @@ LRESULT CALLBACK ManualSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 // If the host crashes or exits, the OS releases the
 // mutex automatically, and this thread detects it and self-detaches the DLL.
 DWORD WINAPI WatchdogThread(LPVOID /*lpParam*/) {
-  HANDLE hMutex = OpenMutexW(SYNCHRONIZE, FALSE, YASB_MUTEX_PATH);
+  HANDLE hMutex = OpenMutexW(SYNCHRONIZE, FALSE, WABAR_MUTEX_PATH);
   if (!hMutex) {
     // Mutex doesn't exist - host is already gone
     DebugOutput("[DLL] Watchdog: host mutex not found, self-detaching.\n");
@@ -386,8 +386,8 @@ DWORD WINAPI WatchdogThread(LPVOID /*lpParam*/) {
   //    ManualSubclassProc frames are on the stack when we process it.
   HWND hTray = FindRealSystray();
   if (hTray && g_OldWndProc) {
-    OutputDebugStringA("[DLL] Detach: PostMessage WM_YASB_UNHOOK...\n");
-    PostMessageW(hTray, WM_YASB_UNHOOK, 0, 0);
+    OutputDebugStringA("[DLL] Detach: PostMessage WM_WABAR_UNHOOK...\n");
+    PostMessageW(hTray, WM_WABAR_UNHOOK, 0, 0);
     // Wait for the UI thread to process the posted message and signal completion
     DWORD waitResult = WaitForSingleObject(g_hUnhookDoneEvent, 5000);
     if (waitResult == WAIT_OBJECT_0) {
@@ -431,8 +431,8 @@ DWORD WINAPI InitThread(LPVOID /*lpParam*/) {
   // Create the event before connecting - watchdog will need it
   g_hUnhookDoneEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
 
-  g_hPipe = CreateFileW(YASB_PIPE_PATH, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED,
-                        NULL);
+  g_hPipe = CreateFileW(WABAR_PIPE_PATH, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                        FILE_FLAG_OVERLAPPED, NULL);
   if (g_hPipe != INVALID_HANDLE_VALUE) {
     DebugOutput("[DLL] Pipeline connected.\n");
     HWND hTray = FindRealSystray();

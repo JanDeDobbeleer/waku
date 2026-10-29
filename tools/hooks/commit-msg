@@ -9,14 +9,15 @@ case "$subject" in
   "Merge "* | "Revert \""* | "fixup! "* | "squash! "* | "amend! "*) exit 0 ;;
 esac
 
-pattern='^(feat|fix|refactor|perf|test|docs|build|ci|chore|style|revert)(\([a-z0-9-]+\))?!?: .+'
+scopes='kernel|control|host|ui|app|audio|bluetooth|brightness|clock|control_center|github|media|network|notifications|shell|system_stats|taskbar|tray|wallpapers|workspaces|build|docs|test|style|chore'
+pattern="^(feat|fix|refactor|perf|test|docs|build|ci|chore|style|revert)(\(($scopes)\))?!?: .+"
 if printf '%s\n' "$subject" | grep -Eq "$pattern"; then
   exit 0
 fi
 
 echo "commit-msg: subject is not a conventional commit:" >&2
 echo "  $subject" >&2
-echo "expected: type(scope)?: subject, e.g. 'fix(bar): reject list roots'" >&2
+echo "expected: type(scope)?: subject, e.g. 'fix(host): reject list roots'" >&2
 echo "types: feat fix refactor perf test docs build ci chore style revert" >&2
-echo "scopes: bar widgets platform build docs test style chore" >&2
+echo "scopes: kernel control host ui app, a feature name (audio ... workspaces), build docs test style chore" >&2
 exit 1

@@ -9,7 +9,7 @@
 
 #include "control/win32/instance_mutex.h"
 
-namespace wabar {
+namespace wabar::control {
 
 QString controlPipeName(const QString& configHome) {
   QString normal = QDir::cleanPath(QDir::fromNativeSeparators(configHome)).toLower();
@@ -160,4 +160,4 @@ ControlReply sendControlCommand(const QString& name, const QString& command, int
   return {ControlReply::Ok, QString::fromUtf8(received).trimmed()};
 }
 
-}  // namespace wabar
+}  // namespace wabar::control

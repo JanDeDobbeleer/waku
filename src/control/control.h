@@ -6,7 +6,7 @@
 #include <QStringList>
 #include <functional>
 
-namespace wabar {
+namespace wabar::control {
 
 // The control channel: how `wabarc` (reload, status, quit, wallpaper ...) talks to the running bar.
 // A named pipe (QLocalServer) per config home, so two instances with different config homes do not
@@ -72,4 +72,4 @@ struct ControlReply {
 // off the thread that runs the server (the CLI has no server).
 ControlReply sendControlCommand(const QString& name, const QString& command, int timeoutMs = 5000);
 
-}  // namespace wabar
+}  // namespace wabar::control

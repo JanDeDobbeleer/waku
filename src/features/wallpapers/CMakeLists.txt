@@ -1,6 +1,6 @@
 # wallpapers: the wallpaper folder, set and cycle wallpapers, the picker gallery and its hotkey, and
 # the animated change (a Qt Quick overlay on WorkerW). No dependencies on other features.
-# The service implements wabar::WallpaperControl (control/wallpaper_control.h), the interface the
+# The service implements wabar::control::WallpaperControl (control/wallpaper_control.h), the interface the
 # bar's control handler calls.
 wabar_feature(
   NAME wallpapers

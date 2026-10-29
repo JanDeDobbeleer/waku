@@ -45,7 +45,7 @@ class KomorebiService : public QObject {
  public:
   using CommandRunner = std::function<void(const std::vector<QStringList>& commands)>;
 
-  // Default: real komorebic backend, unique `yasb-native-<uuid>` pipe, detached hidden commands.
+  // Default: real komorebic backend, unique `wabar-<uuid>` pipe, detached hidden commands.
   explicit KomorebiService(EventBus& bus);
   KomorebiService(EventBus& bus, KomorebiBackend backend, CommandRunner runner, QString pipeName,
                   KomorebiPipeListener::Timing timing);

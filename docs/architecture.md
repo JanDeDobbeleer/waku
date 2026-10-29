@@ -22,7 +22,7 @@ own target, the executables and `wabar_tests` link `wabar_options` (`cmake/wabar
 | `wabar_<f>` | `src/features/<f>/` | one feature (`wabar_feature()`) | `wabar_kernel`, the `DEPENDS` features | `wabar_options`, the feature's system libraries |
 | `wabar_services`, `wabar_widgets` | `src/modules/qml_modules.cmake` | QML modules `wabar.services` and `wabar.widgets`, assembled from contributions (below) | the feature libraries, Qt Quick | `wabar_options` |
 | `wabar` (exe), `wabarc` (exe) | `src/app/wabar/`, `src/app/wabarc/` | `main.cpp` of each; `SafeConfig.qml` joins `wabar.widgets` | | `wabar_options`, the modules / `wabar_control` |
-| `YASBNativeTrayHook[_arm64]` (DLL) | `src/features/tray/hook/` | `trayhook.cpp` | | static CRT, `/W4 /WX` set by hand, built next to `wabar.exe` |
+| `WabarTrayHook[_arm64]` (DLL) | `src/features/tray/hook/` | `trayhook.cpp` | | static CRT, `/W4 /WX` set by hand, built next to `wabar.exe` |
 | `wabar_tests` (exe) | `tests/` | `tests/main.cpp`, `tests/integration/` and every `TESTS` contribution (`src/**/tests/`) | | `wabar_options`, `GTest`, `Qt6::Test` |
 
 The one relaxation of the warning level is `wabar_qt_generated_code()` in `cmake/wabar_options.cmake`:
@@ -33,8 +33,10 @@ Rule S2 lets any feature include the root headers of `control/` (the interface h
 
 ### The `src/` layout
 
-`docs/plans/2026-10-29-wabar-architecture-proposal.md` has been carried out up to step 9 (the
-`spike/`, `platform/`, `widgets/` and `core/` folders are gone); steps 10 (names) and 11 (docs) remain.
+`docs/plans/2026-10-29-wabar-architecture-proposal.md` has been carried out up to step 10 (the
+`spike/`, `platform/`, `widgets/` and `core/` folders are gone; every C++ namespace is `wabar::<unit>`:
+`kernel`, `control`, `host` and one per feature; the hook DLL, pipe and mutex have Wabar names); step 11
+(docs) remains.
 
 - `cmake/wabar_feature.cmake`: `wabar_feature(NAME <f> DEPENDS ... SOURCES ... WIN32_SOURCES ...
   QML_SOURCES ... QML_FILES ... TESTS ... SYSTEM_LIBS ...)` builds `wabar_<f>` (STATIC, or
@@ -99,8 +101,8 @@ hand results back with queued signals or `QMetaObject::invokeMethod`.
 | wallpaper overlay decoder (`QThread`) | `WallpaperTransition` (`src/features/wallpapers/qml/wallpaper_transition.h`, one per transition) | decodes the new image and the transcoded copy of the old one; touches no Qt Quick object, posts the images back to the GUI thread through a checked `QPointer` | the thread deletes itself when it ends; a cancelled or destroyed transition never waits for it |
 | `RealBluetoothBackend` (`QThread`) | `wabar.services.Bluetooth` (see singletons) | BluetoothAPIs and WinRT enumeration, battery reads, radio power, device watchers, audio connect/disconnect; results return as queued signals | destructor: cancel connect, `shutdown`, `quit`, `wait` |
 | GlazeWM WebSocket thread (`std::thread`) | `GlazewmService` (`src/features/workspaces/glazewm_service.h`) via `glazewm::GlazewmSocket` (`src/features/workspaces/glazewm.h`, `win32/glazewm_socket.cpp`), created by the first widget subscription | owns the WinHTTP session, connect, blocking receive loop and the 4 s reconnect sleep; text frames and connection changes reach the GUI thread as queued signals; sends run on the GUI thread | `GlazewmSocket::stop()`: sets the stop event, closes the WinHTTP handles, `join` (idempotent, also from the destructor); the owner calls `GlazewmService::stop()` |
-| komorebi pipe thread (`std::thread`) | `KomorebiService` (`src/features/workspaces/komorebi_service.h`) via `komorebi::KomorebiPipeListener` (`src/features/workspaces/komorebi.h`, `win32/komorebi_pipe.cpp`) | owns the `\\.\pipe\yasb-native-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls | `stop()`: sets the stop event (cancels waits and overlapped I/O), `join`, then `komorebic unsubscribe-pipe`; started lazily by the first subscription; the owner calls it |
-| systray hook thread (`std::thread`) | `SystrayHook` (`src/features/tray/win32/tray_hook.h`), owned by `wabar.services.Systray`, started by the first Tray widget | creates nothing itself: the GUI thread creates the watchdog mutex and the `\\.\pipe\yasb_native_systray_monitor` pipe in the constructor; the worker injects `YASBNativeTrayHook[_arm64].dll` into Explorer (`SetWindowsHookEx`), owns the OVERLAPPED I/O, read buffer and completion event, parses each pipe message and emits queued signals to the GUI thread; retries after Explorer restarts (1 s no Explorer, 5 s failed injection, 3 s after the DLL disconnects) | `stop()` (also called by the destructor): sets the stop flag, releases the injection hook, cancels pending I/O, releases and closes the mutex (the DLL's watchdog then detaches and restores Shell_TrayWnd's window procedure within 5 s), `join` |
+| komorebi pipe thread (`std::thread`) | `KomorebiService` (`src/features/workspaces/komorebi_service.h`) via `komorebi::KomorebiPipeListener` (`src/features/workspaces/komorebi.h`, `win32/komorebi_pipe.cpp`) | owns the `\\.\pipe\wabar-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls | `stop()`: sets the stop event (cancels waits and overlapped I/O), `join`, then `komorebic unsubscribe-pipe`; started lazily by the first subscription; the owner calls it |
+| systray hook thread (`std::thread`) | `SystrayHook` (`src/features/tray/win32/tray_hook.h`), owned by `wabar.services.Systray`, started by the first Tray widget | creates nothing itself: the GUI thread creates the watchdog mutex and the `\\.\pipe\wabar_systray_monitor` pipe in the constructor; the worker injects `WabarTrayHook[_arm64].dll` into Explorer (`SetWindowsHookEx`), owns the OVERLAPPED I/O, read buffer and completion event, parses each pipe message and emits queued signals to the GUI thread; retries after Explorer restarts (1 s no Explorer, 5 s failed injection, 3 s after the DLL disconnects) | `stop()` (also called by the destructor): sets the stop flag, releases the injection hook, cancels pending I/O, releases and closes the mutex (the DLL's watchdog then detaches and restores Shell_TrayWnd's window procedure within 5 s), `join` |
 
 Platform data sources (`src/features/*/win32/`) are sampled off the GUI thread by the wabar stat sources; anything
 they cache globally must be locked.

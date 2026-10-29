@@ -195,8 +195,8 @@ bool GlazewmSocket::connectOnce() {
   const std::wstring host = url.host().toStdWString();
   const std::wstring path = target.toStdWString();
 
-  HINTERNET session = WinHttpOpen(L"yasb-native", WINHTTP_ACCESS_TYPE_NO_PROXY,
-                                  WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+  HINTERNET session = WinHttpOpen(L"wabar", WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME,
+                                  WINHTTP_NO_PROXY_BYPASS, 0);
   if (!session) return false;
   if (!publish(Slot::Session, session)) return false;
   const int t = timing_.connectTimeoutMs;

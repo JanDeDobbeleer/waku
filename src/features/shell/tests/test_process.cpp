@@ -54,7 +54,7 @@ TEST(ProcessService, CapturesStandardError) {
 
 TEST(ProcessService, ProgramThatCannotStartFinishesWithMinusOne) {
   Process process;
-  process.setProgram(QStringLiteral("definitely-not-a-program-yasb.exe"));
+  process.setProgram(QStringLiteral("definitely-not-a-program-wabar.exe"));
   QSignalSpy finished(&process, &Process::finished);
   process.run();
   ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));

@@ -5,7 +5,7 @@
 #include "control/control.h"
 #include "control/wallpaper_control.h"
 
-namespace wabar {
+namespace wabar::host {
 
 class BarHost;
 
@@ -19,11 +19,12 @@ class BarHost;
 //   other   "error: unknown command '...' (try: reload, status, quit, wallpaper)"
 // `quit` defaults to QCoreApplication::quit. `wallpapers` is asked when a wallpaper command
 // arrives (the service is created on demand), so a bar without wallpapers never builds it.
-ControlHandler makeControlHandler(BarHost& host, bool safe, std::function<void()> quit = {},
-                                  WallpaperControlProvider wallpapers = {});
+control::ControlHandler makeControlHandler(BarHost& host, bool safe,
+                                           std::function<void()> quit = {},
+                                           control::WallpaperControlProvider wallpapers = {});
 
 // The `wallpaper` commands on their own (the words after "wallpaper"): the parsing the handler
 // uses, public for tests.
-QString answerWallpaperCommand(const QStringList& words, WallpaperControl* wallpapers);
+QString answerWallpaperCommand(const QStringList& words, control::WallpaperControl* wallpapers);
 
-}  // namespace wabar
+}  // namespace wabar::host

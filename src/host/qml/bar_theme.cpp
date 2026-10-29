@@ -3,7 +3,7 @@
 #include <QFontDatabase>
 #include <QMetaProperty>
 
-namespace wabar {
+namespace wabar::host {
 
 ThemeValues::ThemeValues(QObject* parent)
     : QObject(parent),
@@ -21,4 +21,4 @@ void ThemeValues::assignFrom(const ThemeValues& other) {
   barFillHover_ = other.barFillHover_;
 }
 
-}  // namespace wabar
+}  // namespace wabar::host

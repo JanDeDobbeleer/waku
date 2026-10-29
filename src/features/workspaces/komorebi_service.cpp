@@ -60,7 +60,7 @@ KomorebiService::KomorebiService(EventBus& bus, KomorebiBackend backend, Command
 KomorebiService::~KomorebiService() { stop(); }
 
 QString KomorebiService::uniquePipeName() {
-  return QStringLiteral("yasb-native-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
+  return QStringLiteral("wabar-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
 
 QString KomorebiService::shellChain(const std::vector<QStringList>& commands) {

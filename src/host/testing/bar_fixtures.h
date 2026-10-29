@@ -20,9 +20,12 @@
 #include <memory>
 #include <vector>
 
+#include "control/control.h"
+#include "control/wallpaper_control.h"
 #include "host/qml/bar_host.h"
 
-using namespace wabar;
+using namespace wabar::control;
+using namespace wabar::host;
 
 namespace {
 
@@ -85,7 +88,7 @@ QPointF positionIn(QQuickWindow* window, const QString& name) {
 // ---- fake native layer ----
 
 struct AppBarRecord {
-  yasb::bar::AppBarRequest request;
+  wabar::host::AppBarRequest request;
 };
 
 struct Native {
@@ -95,10 +98,10 @@ struct Native {
   qlonglong monitor = 4242;
 
   BarHost::NativeHooks hooks() {
-    class Recording final : public yasb::bar::IAppBar {
+    class Recording final : public wabar::host::IAppBar {
      public:
       Recording(Native* owner) : owner_(owner) {}
-      void create(const yasb::bar::AppBarRequest& request) override {
+      void create(const wabar::host::AppBarRequest& request) override {
         owner_->created.push_back({request});
       }
       void remove() override { ++owner_->removed; }
@@ -107,7 +110,7 @@ struct Native {
       Native* owner_;
     };
     BarHost::NativeHooks hooks;
-    hooks.makeAppBar = [this]() -> std::unique_ptr<yasb::bar::IAppBar> {
+    hooks.makeAppBar = [this]() -> std::unique_ptr<wabar::host::IAppBar> {
       return std::make_unique<Recording>(this);
     };
     hooks.applyBackdrop = [this](quintptr, Bar::Backdrop backdrop) {

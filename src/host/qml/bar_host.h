@@ -19,7 +19,7 @@ class QQmlEngine;
 class QQuickWindow;
 class QScreen;
 
-namespace wabar {
+namespace wabar::host {
 
 // Builds the bars declared in <config home>\bar.qml and keeps them up to date.
 //
@@ -43,7 +43,7 @@ class BarHost : public QObject {
   // blur a window.
   struct NativeHooks {
     // One per window; null function: no app bar object at all.
-    std::function<std::unique_ptr<yasb::bar::IAppBar>()> makeAppBar;
+    std::function<std::unique_ptr<wabar::host::IAppBar>()> makeAppBar;
     std::function<void(quintptr hwnd, Bar::Backdrop backdrop)> applyBackdrop;
     // HMONITOR of the monitor the window is on.
     std::function<qlonglong(quintptr hwnd)> monitorHandle;
@@ -109,7 +109,7 @@ class BarHost : public QObject {
     QQuickWindow* window = nullptr;
     QScreen* screen = nullptr;
     Bar* spec = nullptr;
-    std::unique_ptr<yasb::bar::IAppBar> appBar;
+    std::unique_ptr<wabar::host::IAppBar> appBar;
   };
   // Members are destroyed in reverse order: windows first, then the config, then its component.
   struct Loaded {
@@ -150,4 +150,4 @@ class BarHost : public QObject {
   bool watching_ = false;
 };
 
-}  // namespace wabar
+}  // namespace wabar::host

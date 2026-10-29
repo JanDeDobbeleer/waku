@@ -10,7 +10,8 @@
 #include "host/qml/control_handler.h"
 #include "host/testing/bar_fixtures.h"
 
-using namespace wabar;
+using namespace wabar::control;
+using namespace wabar::host;
 
 namespace {
 

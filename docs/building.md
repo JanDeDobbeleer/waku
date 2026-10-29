@@ -36,16 +36,27 @@ to run the bar and `wabarc`.
 
 ## Tray hook DLL
 
-`wabar.exe` ships `YASBNativeTrayHook.dll` (x64) or `YASBNativeTrayHook_arm64.dll` next to it; the
+`wabar.exe` ships `WabarTrayHook.dll` (x64) or `WabarTrayHook_arm64.dll` next to it; the
 Tray widget injects it into Explorer to see tray icons. `src/features/tray/hook/` builds it with a static CRT, and
 each preset builds the DLL for its own architecture, so an ARM64 host runs the ARM64 preset's build.
 The DLL must match Explorer's architecture: an x64 build running under emulation on ARM64 cannot use
 it and has no tray host (the tray stays empty). The pipe and watchdog mutex names are set once in
-the root `CMakeLists.txt` (`YASB_TRAY_PIPE_NAME`, `YASB_TRAY_MUTEX_NAME`) and passed to both the DLL
+the root `CMakeLists.txt` (`WABAR_TRAY_PIPE_NAME`, `WABAR_TRAY_MUTEX_NAME`) and passed to both the DLL
 and `wabar_tray`. The DLL detaches from Explorer by itself (up to 5 s) after the host exits, so wait
 for it to unload before starting another run that hooks the tray. Automated tests never inject it:
 they use a private pipe and fake injector, and the tray host is not created on the `offscreen`
 platform. Pass `--no-tray` to `wabar.exe` for runs that must not hook Explorer.
+
+## Deploy
+
+`cmake --build --preset <preset> --target deploy` assembles a portable folder, `dist/wabar` by
+default (`-DWABAR_DIST_DIR=...` changes it; `dist/` is not tracked): `wabar.exe`, `wabarc.exe`, the
+tray hook DLL, the Qt runtime from `windeployqt` (scanning `src/` for QML imports), `examples/config`
+and `modules/`, the built-in widgets as a read-only reference. `modules/wabar/` holds the host QML
+files, `modules/wabar/widgets/` the widget `.qml` files and `modules/wabar/services/` the service
+types, each with `qmldir` and `.qmltypes`. The widgets stay compiled into `wabar.exe`; copy one into
+the config home's `widgets/` folder to change it, and lint it with
+`qmllint -I <dist>/wabar/modules widgets/Clock.qml`. It never touches an installed or running copy.
 
 ## Checks
 
@@ -70,8 +81,8 @@ and clang-tidy over production compilation units under `src`. It does not
 run tests, launch the bar or register an app-bar. `-Fast` and `-Staged` cannot be combined with
 `-Analyze`; hooks still run only fast checks.
 
-Analysis uses `build\<preset>-analyze` with `BUILD_TESTING=OFF` and `YASB_ANALYZE=ON`.
-The default `YASB_ANALYZE` is `OFF`; ordinary checks explicitly reset it to `OFF`.
+Analysis uses `build\<preset>-analyze` with `BUILD_TESTING=OFF` and `WABAR_ANALYZE=ON`.
+The default `WABAR_ANALYZE` is `OFF`; ordinary checks explicitly reset it to `OFF`.
 The option applies `/analyze /analyze:external-` only through our `wabar_options` target.
 Qt and third-party headers are external for MSVC and excluded by clang-tidy. Generated MOC units
 are built by MSVC but are not clang-tidy entry points. Logs and diagnostic counts appear in the

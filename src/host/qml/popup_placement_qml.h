@@ -9,7 +9,7 @@
 
 #include "host/popup_placement.h"
 
-namespace wabar {
+namespace wabar::host {
 
 // The QML face of placePopup(): used by PopupWindow and Tooltip as `PopupPlacement.position(...)`.
 class PopupPlacement : public QObject {
@@ -36,4 +36,4 @@ class PopupPlacement : public QObject {
   }
 };
 
-}  // namespace wabar
+}  // namespace wabar::host

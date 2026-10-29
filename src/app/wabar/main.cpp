@@ -43,28 +43,28 @@ int main(int argc, char* argv[]) {
   parser.process(app);
   wabar::kernel::setCapabilityDisabled(QStringLiteral("tray"), parser.isSet(noTrayOpt));
 
-  const QString configHome = wabar::resolveConfigHome(parser.value(configHomeOpt),
-                                                      QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
+  const QString configHome = wabar::control::resolveConfigHome(
+      parser.value(configHomeOpt), QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
 
   QQmlEngine engine;
-  wabar::BarHost::Options options;
+  wabar::host::BarHost::Options options;
   options.configHome = configHome;
   options.allowReserve = parser.isSet(appBarOpt);
   options.safe = parser.isSet(safeOpt);
-  options.hooks = wabar::BarHost::NativeHooks::win32();
-  wabar::BarHost host(&engine, std::move(options));
+  options.hooks = wabar::host::BarHost::NativeHooks::win32();
+  wabar::host::BarHost host(&engine, std::move(options));
 
   // One bar per config home: `wabarc` finds it by the same name, and a second start would put
   // a second bar over the first.
-  wabar::ControlServer control(
-      wabar::controlPipeName(configHome),
-      wabar::makeControlHandler(host, parser.isSet(safeOpt), {},
-                                // Built on the first wallpaper command if no config did.
-                                [&engine]() -> wabar::WallpaperControl* {
-                                  return engine.singletonInstance<wabar::wallpapers::Wallpapers*>(
-                                      QStringLiteral("wabar.services"),
-                                      QStringLiteral("Wallpapers"));
-                                }));
+  wabar::control::ControlServer control(
+      wabar::control::controlPipeName(configHome),
+      wabar::host::makeControlHandler(
+          host, parser.isSet(safeOpt), {},
+          // Built on the first wallpaper command if no config did.
+          [&engine]() -> wabar::control::WallpaperControl* {
+            return engine.singletonInstance<wabar::wallpapers::Wallpapers*>(
+                QStringLiteral("wabar.services"), QStringLiteral("Wallpapers"));
+          }));
   if (!control.listen()) {
     qCritical().noquote() << "wabar is already running for" << configHome
                           << "(wabarc quit stops it)";

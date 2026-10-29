@@ -17,11 +17,11 @@ so the hotkey works.
 
 No wallpaper logic is re-implemented. The `Wallpapers` singleton wraps the UI-free classes:
 
-- `yasb::widgets::WallpaperManager`: set a wallpaper (`changeBackground(path)`), the random pick
+- `wabar::wallpapers::WallpaperManager`: set a wallpaper (`changeBackground(path)`), the random pick
   (never the same twice), the auto-change timer, post-change commands.
 - `collectImageFiles` / `imagePathsFrom` (`wallpaper_files`): the folder scan in Explorer name order.
 - `ThumbnailCache`: PNG thumbnails, keyed by file identity and size, under
-  `%LOCALAPPDATA%\YASB\wallpaper_thumbnails` (shared with the Widgets build).
+  `%LOCALAPPDATA%\wabar\wallpaper_thumbnails`.
 - `platform::DesktopWallpaperBackend` (`IDesktopWallpaper`): reads the current wallpaper and, through
   the manager, sets it. Tests give both a fake.
 - `platform::foregroundMonitorRect()` for the `active` screen mode.
@@ -129,7 +129,7 @@ until that build is retired.
   line; arguments with spaces are quoted by doubling (`"a ""b"" c"`, no backslash escapes, so a
   Windows path is left alone: `joinCommand`/`splitCommand` in `control/control.h`). A relative
   path with a folder part is made absolute by the client; a bare name is looked up in the folder.
-  The handler parses `wallpaper <verb> [--dry-run] [arg]` and calls the `wabar::WallpaperControl`
+  The handler parses `wallpaper <verb> [--dry-run] [arg]` and calls the `wabar::control::WallpaperControl`
   interface (`control/wallpaper_control.h`), which `Wallpapers` implements and tests fake. The
   service is looked up when a command arrives, so a bar without wallpaper settings builds it only
   on the first command.

@@ -15,8 +15,8 @@ HostArch hostArch();
 // True for a process running under WOW64 or Prism emulation (an x64 build on an ARM64 host).
 bool runningUnderEmulation();
 
-// File name of the tray hook DLL for the host architecture ("YASBNativeTrayHook.dll" on x64,
-// "YASBNativeTrayHook_arm64.dll" on ARM64); empty when the architecture is unsupported.
+// File name of the tray hook DLL for the host architecture ("WabarTrayHook.dll" on x64,
+// "WabarTrayHook_arm64.dll" on ARM64); empty when the architecture is unsupported.
 QString trayHookDllName();
 
 // Full path of the executable that owns `hwnd`; empty when it cannot be opened.

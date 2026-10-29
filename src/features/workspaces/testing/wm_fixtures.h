@@ -116,7 +116,7 @@ struct KomorebiHarness {
     backend.runKomorebic = [](const QStringList&, int) { return kmb::KomorebicResult{}; };
     komorebi = std::make_unique<Komorebi>(
         backend, [this](const std::vector<QStringList>& commands) { runs.push_back(commands); },
-        QStringLiteral("yasb-native-services-test"), kmb::KomorebiPipeListener::Timing{}, nullptr);
+        QStringLiteral("wabar-services-test"), kmb::KomorebiPipeListener::Timing{}, nullptr);
   }
 
   void publish(const QString& kind, const kmb::JsonPtr& state = nullptr) {

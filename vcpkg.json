@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-  "name": "yasb-native",
+  "name": "wabar",
   "version": "0.1.0",
   "builtin-baseline": "5363acb796e576328288fae60c25304e227e9839",
   "dependencies": [

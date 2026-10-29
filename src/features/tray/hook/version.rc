@@ -13,17 +13,17 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
-            VALUE "CompanyName",      "yasb-native"
-            VALUE "FileDescription",  "YASB native system tray monitor hook"
+            VALUE "CompanyName",      "wabar"
+            VALUE "FileDescription",  "wabar system tray monitor hook"
             VALUE "FileVersion",      "1.0.2.0"
-            VALUE "InternalName",     "YASBNativeTrayHook"
+            VALUE "InternalName",     "WabarTrayHook"
             VALUE "LegalCopyright",   "MIT License"
 #if defined(BUILD_ARM64)
-            VALUE "OriginalFilename", "YASBNativeTrayHook_arm64.dll"
+            VALUE "OriginalFilename", "WabarTrayHook_arm64.dll"
 #else
-            VALUE "OriginalFilename", "YASBNativeTrayHook.dll"
+            VALUE "OriginalFilename", "WabarTrayHook.dll"
 #endif
-            VALUE "ProductName",      "YASB - Yet Another Status Bar"
+            VALUE "ProductName",      "wabar"
             VALUE "ProductVersion",   "1.0.2.0"
         END
     END

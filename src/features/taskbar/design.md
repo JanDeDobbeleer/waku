@@ -22,8 +22,8 @@ a window with no id never groups.
 - Right click: a menu in a `PopupWindow`: close window, close all windows (groups only), pin to or
   unpin from the taskbar. A pinned app that does not run gets "Open app" and "Unpin".
 - Hover: the window title as a tooltip (`tooltip`, off by default as in Python).
-- Pinned apps are `%LOCALAPPDATA%\YASB\taskbar_pinned.json`, read and written through the Widgets
-  build's `PinStore`, so the two builds share one list.
+- Pinned apps are `%LOCALAPPDATA%\wabar\taskbar_pinned.json` (copied once from `YASB`), read and written
+  through `PinStore`.
 
 Options (Python names, camel case): `iconSize`, `tooltip`, `showOnlyVisible`, `strictFiltering`,
 `monitorExclusive`, `hideEmpty`, `grouping`, `showCount`, `ignoreTitles`, `ignoreClasses`,

@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace wabar {
+namespace wabar::host {
 
 namespace {
 
@@ -37,4 +37,4 @@ QPointF placePopup(const QRectF& anchor, const QSizeF& size, const QRectF& scree
   return {x, y};
 }
 
-}  // namespace wabar
+}  // namespace wabar::host

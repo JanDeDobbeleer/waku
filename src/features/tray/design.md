@@ -29,7 +29,7 @@ The hard, risky part is done and was run live in the Widgets build (parity check
 | `SystrayService` / `createTrayHost` (one host per run) | `widgets/systray/systray_service.*` | widgets (no UI) | as is, without the legacy factory |
 | `IconStateMap`, `updateCurrentState`, `updateIconData`, `iconStateKey`, `SystrayStateStore` (per-screen JSON), `cleanScreenId` | `widgets/systray/systray_state.*` | widgets (no UI) | as is, except `appDataDir()` hardcodes `YASB` |
 | `scaleTrayIcon` (Lanczos to 32 px plus sharpen) | `widgets/systray/icon_scale.*` | widgets (no UI) | as is |
-| The hook DLL (`YASBNativeTrayHook[_arm64].dll`) | `hook/trayhook.cpp` | native | the same DLL and the same pipe and mutex names, copied next to `wabar.exe` |
+| The hook DLL (`WabarTrayHook[_arm64].dll`) | `hook/trayhook.cpp` | native | the same DLL and the same pipe and mutex names, copied next to `wabar.exe` |
 
 Logic that is tangled into Widgets classes and must be **extracted** (then used by both builds):
 
@@ -45,7 +45,7 @@ Logic that is tangled into Widgets classes and must be **extracted** (then used 
 
 1. **Pin state file: separate.** `%LOCALAPPDATA%\wabar\systray_state_<screen>.json`, same JSON
    format. `appDataDir()` gets a parameter.
-2. **One hook at a time, so no second DLL.** `yasb-native` is shut down while `wabar.exe` runs.
+2. **One hook at a time, so no second DLL.** The retired Widgets build (`yasb-native`) is shut down while `wabar.exe` runs.
    Wabar reuses the existing hook DLL and its pipe and mutex names, and the build copies the DLL
    next to `wabar.exe`. The Widgets build's CMake target stays the DLL's owner until that build
    is retired; then `hook/` moves and is renamed. Safety net: if the pipe or mutex is already held
@@ -164,14 +164,14 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 When `yasb-native` is retired in favour of wabar:
 
 - Move `hook/` (DLL, `trayhook.cpp`) under the wabar tree and rename the DLL and its pipe and mutex
-  names together (`YASB_TRAY_MUTEX_NAME` in `CMakeLists.txt` and `platform/systray_hook.h`). Until
+  names together (done in step 10 of the restructure: `WABAR_TRAY_MUTEX_NAME` in `CMakeLists.txt`). Until
   then the two builds must not run together; wabar reports "another tray host is running".
 - `platform/systray_*`, `platform/systray_click.*`, `widgets/systray/systray_service.*`,
   `systray_state.*`, `tray_icon_registry.*` and `icon_scale.*` stay: wabar uses them. The Qt
   Widgets classes (`systray_widget.*`, `tray_icon_button.*`, the popup and the legacy host
   `platform/systray_legacy.*`) and their tests go with the build.
-- Pin state: wabar writes `%LOCALAPPDATA%	idy`, the Widgets build and Python YASB `YASB`. Copy
-  `systray_state_*.json` across once if the pins should carry over.
+- Pin state: wabar writes `%LOCALAPPDATA%\wabar`, the Widgets build and Python YASB `YASB` (the kernel copies the
+  `systray_state_*.json` files across once).
 - Python YASB has its own hook DLL (`YASBTrayHook_arm64.dll`). Stop it before starting wabar's
   `Tray`; whether the two coexist was not tested.
 - A regular `wabar` run reserves no work area; pass `--register-app-bar` (see `AGENTS.md`).

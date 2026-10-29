@@ -35,7 +35,7 @@ constexpr int kDdcAttempts = 5;
 constexpr auto kDdcRetrySleep = std::chrono::milliseconds(100);
 constexpr BYTE kVcpBrightness = 0x10;
 constexpr BYTE kVcpContrast = 0x12;
-constexpr wchar_t kPolicyWindowClass[] = L"YasbBrightnessPolicyWatcher";
+constexpr wchar_t kPolicyWindowClass[] = L"WabarBrightnessPolicyWatcher";
 
 // {7516b95f-f776-4464-8c53-06167f40cc99}
 const GUID kVideoSubgroup = {
@@ -678,7 +678,7 @@ class SystemBrightness final : public BrightnessControl {
       ready.set_value();
       return;
     }
-    HWND hwnd = CreateWindowExW(0, kPolicyWindowClass, L"YASB brightness policy", 0, 0, 0, 0, 0,
+    HWND hwnd = CreateWindowExW(0, kPolicyWindowClass, L"wabar brightness policy", 0, 0, 0, 0, 0,
                                 HWND_MESSAGE, nullptr, wc.hInstance, this);
     if (!hwnd) {
       qWarning() << "Brightness policy watcher: CreateWindowExW failed";

@@ -3,7 +3,7 @@
 #include <QString>
 #include <functional>
 
-namespace wabar {
+namespace wabar::control {
 
 // What the `wallpaper` commands of `wabarc` ask of the wallpaper service. The control handler
 // depends on this interface only (so its tests use a fake); wabar::services::Wallpapers
@@ -24,4 +24,4 @@ class WallpaperControl {
 // Looked up when a command arrives; null when there is no wallpaper service.
 using WallpaperControlProvider = std::function<WallpaperControl*()>;
 
-}  // namespace wabar
+}  // namespace wabar::control

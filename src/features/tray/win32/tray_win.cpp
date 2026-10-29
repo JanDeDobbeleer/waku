@@ -83,9 +83,9 @@ bool runningUnderEmulation() {
 QString trayHookDllName() {
   switch (hostArch()) {
     case HostArch::X64:
-      return QStringLiteral("YASBNativeTrayHook.dll");
+      return QStringLiteral("WabarTrayHook.dll");
     case HostArch::Arm64:
-      return QStringLiteral("YASBNativeTrayHook_arm64.dll");
+      return QStringLiteral("WabarTrayHook_arm64.dll");
     default:
       return {};
   }

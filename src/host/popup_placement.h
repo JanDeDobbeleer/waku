@@ -4,7 +4,7 @@
 #include <QRectF>
 #include <QSizeF>
 
-namespace wabar {
+namespace wabar::host {
 
 // Which side of the anchor a popup prefers.
 enum class PopupEdge { Below, Above };
@@ -17,4 +17,4 @@ enum class PopupEdge { Below, Above };
 QPointF placePopup(const QRectF& anchor, const QSizeF& size, const QRectF& screen, PopupEdge edge,
                    qreal gap, qreal margin);
 
-}  // namespace wabar
+}  // namespace wabar::host

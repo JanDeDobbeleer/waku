@@ -57,7 +57,7 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& f
 // name order. `available` is false (nothing is ever set) when IDesktopWallpaper cannot be
 // created: not a live desktop (kernel::liveDesktop("wallpapers")). The hotkey is never registered
 // then.
-class Wallpapers : public QObject, public wabar::WallpaperControl {
+class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON

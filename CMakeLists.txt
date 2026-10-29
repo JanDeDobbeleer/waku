@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(yasb-native VERSION 0.1.0 LANGUAGES CXX)
+project(wabar VERSION 0.1.0 LANGUAGES CXX)
 
 if(NOT MSVC)
-  message(FATAL_ERROR "yasb-native builds with MSVC only (see docs/building.md)")
+  message(FATAL_ERROR "wabar builds with MSVC only (see docs/building.md)")
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -14,18 +14,18 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 # /ZI (edit and continue) is incompatible with /guard:cf
 set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
 
-# Qt root comes from QT_ROOT (default C:/Qt/6.10.2); YASB_QT_DIR picks the kit folder.
+# Qt root comes from QT_ROOT (default C:/Qt/6.10.2); WABAR_QT_DIR picks the kit folder.
 if(DEFINED ENV{QT_ROOT})
-  file(TO_CMAKE_PATH "$ENV{QT_ROOT}" YASB_QT_ROOT)
+  file(TO_CMAKE_PATH "$ENV{QT_ROOT}" WABAR_QT_ROOT)
 else()
-  set(YASB_QT_ROOT "C:/Qt/6.10.2")
+  set(WABAR_QT_ROOT "C:/Qt/6.10.2")
 endif()
-set(YASB_QT_DIR "msvc2022_arm64" CACHE STRING "Qt kit folder under QT_ROOT")
-list(PREPEND CMAKE_PREFIX_PATH "${YASB_QT_ROOT}/${YASB_QT_DIR}")
+set(WABAR_QT_DIR "msvc2022_arm64" CACHE STRING "Qt kit folder under QT_ROOT")
+list(PREPEND CMAKE_PREFIX_PATH "${WABAR_QT_ROOT}/${WABAR_QT_DIR}")
 # x64 kit on an ARM64 host needs the native kit for host tools (moc, rcc, ...)
-if(YASB_QT_DIR STREQUAL "msvc2022_64" AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "ARM64|arm64"
+if(WABAR_QT_DIR STREQUAL "msvc2022_64" AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "ARM64|arm64"
    AND NOT DEFINED QT_HOST_PATH)
-  set(QT_HOST_PATH "${YASB_QT_ROOT}/msvc2022_arm64")
+  set(QT_HOST_PATH "${WABAR_QT_ROOT}/msvc2022_arm64")
 endif()
 
 find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui Qml Quick Network)
@@ -41,10 +41,11 @@ include(wabar_feature)   # wabar_feature(), wabar_contribute()
 # assembled from their contributions (src/modules/qml_modules.cmake).
 # Pipe and watchdog mutex names the host (features/tray/win32/tray_hook) and the injected DLL (features/tray/hook/)
 # must agree on; distinct from Python YASB's so both builds can coexist.
-set(YASB_TRAY_PIPE_NAME "yasb_native_systray_monitor")
-set(YASB_TRAY_MUTEX_NAME "YASBNativeTrayHookAlive")
+set(WABAR_TRAY_PIPE_NAME "wabar_systray_monitor")
+set(WABAR_TRAY_MUTEX_NAME "WabarTrayHookAlive")
 
 add_subdirectory(src)
+include(wabar_deploy)    # the deploy target (needs the targets of src/)
 
 include(CTest)
 if(BUILD_TESTING)

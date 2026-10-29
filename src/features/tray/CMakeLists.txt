@@ -51,10 +51,9 @@ wabar_feature(
     hook/trayhook.cpp
 )
 
-# Pipe and watchdog mutex names shared with the DLL (hook/). The DLL, the pipe and the mutex are
-# renamed together in a later step.
+# Pipe and watchdog mutex names shared with the DLL (hook/), set once in the root CMakeLists.txt.
 target_compile_definitions(wabar_tray PUBLIC
-  YASB_TRAY_PIPE_NAME="${YASB_TRAY_PIPE_NAME}" YASB_TRAY_MUTEX_NAME="${YASB_TRAY_MUTEX_NAME}")
+  WABAR_TRAY_PIPE_NAME="${WABAR_TRAY_PIPE_NAME}" WABAR_TRAY_MUTEX_NAME="${WABAR_TRAY_MUTEX_NAME}")
 # tray_state.cpp reads and writes the per-screen JSON state.
 target_link_libraries(wabar_tray PRIVATE nlohmann_json::nlohmann_json)
 

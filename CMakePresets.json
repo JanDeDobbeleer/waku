@@ -18,7 +18,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "VCPKG_TARGET_TRIPLET": "arm64-windows-static-md",
-        "YASB_QT_DIR": "msvc2022_arm64"
+        "WABAR_QT_DIR": "msvc2022_arm64"
       }
     },
     {
@@ -29,7 +29,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "VCPKG_TARGET_TRIPLET": "arm64-windows-static-md",
-        "YASB_QT_DIR": "msvc2022_arm64"
+        "WABAR_QT_DIR": "msvc2022_arm64"
       }
     },
     {
@@ -40,7 +40,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
-        "YASB_QT_DIR": "msvc2022_64"
+        "WABAR_QT_DIR": "msvc2022_64"
       }
     }
   ],

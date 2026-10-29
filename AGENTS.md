@@ -46,8 +46,11 @@ cmd /c "call `"$vc\vcvarsarm64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset
 cmd /c "call `"$vc\vcvarsarm64_amd64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64-release && cmake --build --preset x64-release && ctest --test-dir build\x64-release --output-on-failure --timeout 120"
 ```
 
-The targets are `wabar` (the bar), `wabarc` (its console client), `YASBNativeTrayHook[_arm64]` (the
-DLL injected into Explorer) and `wabar_tests` (all tests, defined in `tests/`). `ctest` needs
+The targets are `wabar` (the bar), `wabarc` (its console client), `WabarTrayHook[_arm64]` (the
+DLL injected into Explorer) and `wabar_tests` (all tests, defined in `tests/`). The `deploy` target assembles `dist/wabar`: the
+executables, the hook DLL, the Qt runtime (`windeployqt`), the built-in widget sources with `qmldir`
+and `.qmltypes` under `modules/` (read-only reference for `qmllint -I <dist>/wabar/modules`) and
+`examples/config`. `ctest` needs
 `QT_QPA_PLATFORM=offscreen`; the CMake test properties set it, so `ctest --test-dir` works without
 the test preset. Presets live in `CMakePresets.json`; `compile_commands.json` is written to
 `build\<preset>`.
@@ -60,7 +63,7 @@ architecture proposal), the json-subscript check, the `arm64-debug` build and `c
 
 `pwsh -NoProfile -File tools\check.ps1 -Analyze` runs the fast checks and opt-in local static
 analysis instead of tests, in an isolated build directory. It requires clang-tidy; see
-`docs/building.md`. Ordinary checks reset `YASB_ANALYZE=OFF`; hooks remain fast-only.
+`docs/building.md`. Ordinary checks reset `WABAR_ANALYZE=OFF`; hooks remain fast-only.
 
 Git hooks in `tools/hooks` run the fast checks on staged files and validate the commit message.
 Enable them once per clone:
@@ -134,7 +137,9 @@ a row (and a reason) in the singleton table there.
 Conventional commits: `type(scope): subject`, imperative, lower case, no trailing period.
 
 - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`, `revert`.
-- Scopes: `bar`, `widgets`, `platform`, `build`, `docs`, `test`, `style`, `chore`. The scope is
-  optional.
+- Scopes: the unit names `kernel`, `control`, `host`, `ui`, `app`; the feature names `audio`,
+  `bluetooth`, `brightness`, `clock`, `control_center`, `github`, `media`, `network`,
+  `notifications`, `shell`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces`; and
+  `build`, `docs`, `test`, `style`, `chore`. The scope is optional. `tools/hooks/commit-msg` checks it.
 - One logical change per commit; `tools\check.ps1` green before committing.
 - Agent-authored commits end with the attribution trailer the session instructions give.

@@ -10,7 +10,7 @@
 
 #pragma comment(lib, "dwmapi.lib")
 
-namespace yasb::widgets {
+namespace wabar::host {
 namespace {
 
 constexpr DWORD kUseImmersiveDarkMode = 20;
@@ -142,4 +142,4 @@ void enableDwmFrame(quintptr hwndValue) {
   }
 }
 
-}  // namespace yasb::widgets
+}  // namespace wabar::host

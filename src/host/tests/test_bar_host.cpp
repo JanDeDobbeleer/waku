@@ -158,7 +158,7 @@ TEST(BarHostTest, RegistersAnAppBarWithTheEdgeAndHeight) {
   h.start(barConfig(QStringLiteral("a"), QStringLiteral("height: 30; position: Bar.Bottom")));
   ASSERT_TRUE(h.host->reload());
   ASSERT_EQ(h.native.created.size(), 1u);
-  EXPECT_EQ(h.native.created[0].request.edge, yasb::bar::AppBarEdge::Bottom);
+  EXPECT_EQ(h.native.created[0].request.edge, wabar::host::AppBarEdge::Bottom);
   EXPECT_EQ(h.native.created[0].request.height, 30);
   EXPECT_TRUE(h.native.created[0].request.alwaysOnTop);
 }

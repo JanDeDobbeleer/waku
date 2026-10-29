@@ -9,7 +9,7 @@
 
 #include "control/control.h"
 
-using namespace wabar;
+using namespace wabar::control;
 
 namespace {
 

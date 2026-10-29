@@ -1,15 +1,13 @@
-# wabar_options: compile and link flags for our own targets (was yasb_options). Applied PRIVATE,
+# wabar_options: compile and link flags for our own targets. Applied PRIVATE,
 # so third-party code keeps its warning level.
 #
 # Every own target links it PRIVATE: the libraries (kernel, control, features, host), the QML
 # module targets (wabar, wabar.services, wabar.widgets), the two executables and wabar_tests.
 # Define a new target's flags here, never per target.
 #
-# YASB_ANALYZE keeps its name until the rename step (10): tools\check.ps1 and docs/building.md
-# pass it.
 add_library(wabar_options INTERFACE)
-option(YASB_ANALYZE "Enable MSVC static analysis for own targets" OFF)
-if(YASB_ANALYZE)
+option(WABAR_ANALYZE "Enable MSVC static analysis for own targets" OFF)
+if(WABAR_ANALYZE)
   target_compile_options(wabar_options INTERFACE /analyze /analyze:external-)
 endif()
 target_compile_features(wabar_options INTERFACE cxx_std_20)

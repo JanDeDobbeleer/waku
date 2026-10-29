@@ -3,18 +3,18 @@
 #include "host/qml/bar_host.h"
 #include "host/win32/backdrop.h"
 
-namespace wabar {
+namespace wabar::host {
 
 BarHost::NativeHooks BarHost::NativeHooks::win32() {
   NativeHooks hooks;
-  hooks.makeAppBar = [] { return yasb::bar::makeWin32AppBar(); };
+  hooks.makeAppBar = [] { return wabar::host::makeWin32AppBar(); };
   hooks.applyBackdrop = [](quintptr hwnd, Bar::Backdrop backdrop) {
     switch (backdrop) {
       case Bar::Blur:
-        yasb::widgets::enableBlur(hwnd, true, true);
+        wabar::host::enableBlur(hwnd, true, true);
         break;
       case Bar::Mica:
-        yasb::widgets::enableMica(hwnd);
+        wabar::host::enableMica(hwnd);
         break;
       case Bar::None:
         break;
@@ -28,4 +28,4 @@ BarHost::NativeHooks BarHost::NativeHooks::win32() {
   return hooks;
 }
 
-}  // namespace wabar
+}  // namespace wabar::host

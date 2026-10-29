@@ -160,7 +160,7 @@ bool openUri(const QString& launch) {
 bool callActivator(const QString& aumid, const QString& launch) {
   const auto clsid = findActivator(aumid);
   if (!clsid) return false;
-  // Out of process, an app's activator never loads into YASB.
+  // Out of process, an app's activator never loads into wabar.
   INotificationActivationCallback* activator = nullptr;
   const HRESULT created =
       CoCreateInstance(*clsid, nullptr, CLSCTX_LOCAL_SERVER, IID_PPV_ARGS(&activator));

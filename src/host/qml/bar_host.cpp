@@ -15,7 +15,7 @@
 
 #include "host/screen_match.h"
 
-namespace wabar {
+namespace wabar::host {
 
 namespace {
 
@@ -42,8 +42,8 @@ QStringList describeAll(const QList<QQmlError>& errors) {
 
 QList<QScreen*> applicationScreens() { return QGuiApplication::screens(); }
 
-yasb::bar::AppBarEdge edgeOf(Bar::Position position) {
-  return position == Bar::Bottom ? yasb::bar::AppBarEdge::Bottom : yasb::bar::AppBarEdge::Top;
+wabar::host::AppBarEdge edgeOf(Bar::Position position) {
+  return position == Bar::Bottom ? wabar::host::AppBarEdge::Bottom : wabar::host::AppBarEdge::Top;
 }
 
 }  // namespace
@@ -327,7 +327,7 @@ void BarHost::present(Entry& entry) {
   }
   if (hooks.makeAppBar) {
     entry.appBar = hooks.makeAppBar();
-    yasb::bar::AppBarRequest request;
+    wabar::host::AppBarRequest request;
     request.hwnd = hwnd;
     request.edge = edgeOf(entry.spec->position());
     request.height = entry.spec->height();
@@ -363,4 +363,4 @@ void BarHost::refreshWatches() {
   watcher_.addPaths(paths);
 }
 
-}  // namespace wabar
+}  // namespace wabar::host

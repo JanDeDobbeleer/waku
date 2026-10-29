@@ -93,7 +93,7 @@ TEST(KomorebiServiceTest, ShellChainQuotesLikePython) {
             QStringLiteral("\"komorebic.exe\" focus-monitor-at-cursor && \"komorebic.exe\" "
                            "toggle-tiling"));
   const QString name = komo::KomorebiService::uniquePipeName();
-  EXPECT_TRUE(name.startsWith(QStringLiteral("yasb-native-")));
+  EXPECT_TRUE(name.startsWith(QStringLiteral("wabar-")));
   EXPECT_NE(name, komo::KomorebiService::uniquePipeName());
 }
 
@@ -117,7 +117,7 @@ TEST(KomorebiServiceTest, CommandEventsReachTheRunner) {
   std::vector<std::vector<QStringList>> runs;
   komo::KomorebiService service(
       bus, {}, [&](const std::vector<QStringList>& commands) { runs.push_back(commands); },
-      QStringLiteral("yasb-native-unused"), {});
+      QStringLiteral("wabar-unused"), {});
   komo::sendCommand(
       bus, {QStringLiteral("focus-monitor-workspace"), QStringLiteral("0"), QStringLiteral("2")});
   komo::sendCommandChain(
@@ -195,7 +195,7 @@ TEST(KomorebiServiceTest, ListensOnItsOwnPipeReconnectsAndSurvivesMalformedJson)
   timing.stateRetryMs = 20;
   timing.reconnectMs = 50;
   const QString pipe =
-      QStringLiteral("yasb-native-test-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
+      QStringLiteral("wabar-test-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
   komo::KomorebiService service(bus, backend, nullptr, pipe, timing);
   EXPECT_NE(pipe, komo::KomorebiService::uniquePipeName());
 
@@ -255,7 +255,7 @@ TEST(KomorebiServiceTest, OfflineKomorebiKeepsRetryingUntilStopped) {
   };
   komo::KomorebiPipeListener::Timing timing;
   timing.subscribeRetryMs = 10;
-  komo::KomorebiService service(bus, backend, nullptr, QStringLiteral("yasb-native-test-offline"),
+  komo::KomorebiService service(bus, backend, nullptr, QStringLiteral("wabar-test-offline"),
                                 timing);
   emit bus.event(komo::kSubscribeEvent, {});
   QTest::qWait(150);

@@ -337,8 +337,8 @@ class HookSession : public testing::Test {
  protected:
   SystrayHook::Options options(FakeInjector* injector = nullptr) {
     SystrayHook::Options result;
-    result.pipeName = QStringLiteral("\\\\.\\pipe\\yasb-native-test-") + uniqueSuffix();
-    result.mutexName = QStringLiteral("Local\\YASBNativeTrayHookTest-") + uniqueSuffix();
+    result.pipeName = QStringLiteral("\\\\.\\pipe\\wabar-test-") + uniqueSuffix();
+    result.mutexName = QStringLiteral("Local\\WabarTrayHookTest-") + uniqueSuffix();
     if (injector) {
       injectorPtr_ = injector;
       result.injector = std::unique_ptr<TrayInjector>(new Forward(injector));

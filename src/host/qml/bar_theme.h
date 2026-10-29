@@ -6,7 +6,7 @@
 #include <QObject>
 #include <QString>
 
-namespace wabar {
+namespace wabar::host {
 
 // The look of every bar and widget: colours, the font and a few sizes. Widgets read it as
 // `Theme.accent`, `Theme.fontSize`, ... and follow a change at once.
@@ -181,4 +181,4 @@ class Theme : public ThemeValues {
   explicit Theme(QObject* parent = nullptr) : ThemeValues(parent) {}
 };
 
-}  // namespace wabar
+}  // namespace wabar::host

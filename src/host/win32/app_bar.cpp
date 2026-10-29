@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <shellapi.h>
 
-namespace yasb::bar {
+namespace wabar::host {
 
 AppBarRect computeAppBarRect(AppBarEdge edge, int height, const QRect& g, double dpr,
                              bool scaleScreenHeight) {
@@ -62,4 +62,4 @@ class Win32AppBar : public IAppBar {
 
 std::unique_ptr<IAppBar> makeWin32AppBar() { return std::make_unique<Win32AppBar>(); }
 
-}  // namespace yasb::bar
+}  // namespace wabar::host

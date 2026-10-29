@@ -187,7 +187,7 @@ TEST(SystrayHostChoice, UseHookFalseNeverTouchesTheHook) {
 TEST(SystrayHostChoice, MissingDllMeansNoHost) {
   FactoryProbe probe;
   probe.dll.clear();
-  probe.reason = "YASBNativeTrayHook.dll not found next to the executable";
+  probe.reason = "WabarTrayHook.dll not found next to the executable";
   EXPECT_EQ(createTrayHost(true, "app", probe.factories()), nullptr);
   EXPECT_EQ(probe.hooksMade, 0);
 }

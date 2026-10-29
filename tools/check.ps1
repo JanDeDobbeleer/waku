@@ -81,7 +81,7 @@ function Find-ClangFormat {
 }
 
 function Get-VcvarsScript([string]$PresetName) {
-    $dir = $env:YASB_VCVARS_DIR
+    $dir = $env:WABAR_VCVARS_DIR
     if (-not $dir) {
         $dir = 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build'
     }
@@ -471,10 +471,10 @@ if ($Analyze) {
     Write-Step 'MSVC /analyze (production targets, isolated build)'
     $sw = [Diagnostics.Stopwatch]::StartNew()
     if (-not (Test-Path $vcvars)) {
-        Add-Result 'msvc-analyze' 'FAIL' "missing $vcvars (set YASB_VCVARS_DIR)" 0
+        Add-Result 'msvc-analyze' 'FAIL' "missing $vcvars (set WABAR_VCVARS_DIR)" 0
         Add-Result 'clang-tidy' 'SKIP' 'configure failed' 0
     } else {
-        $code = Invoke-InVsEnv 'analyze-configure' $vcvars "cmake --preset $Preset -B `"$analysisDir`" -DYASB_ANALYZE=ON -DBUILD_TESTING=OFF"
+        $code = Invoke-InVsEnv 'analyze-configure' $vcvars "cmake --preset $Preset -B `"$analysisDir`" -DWABAR_ANALYZE=ON -DBUILD_TESTING=OFF"
         if ($code -ne 0) {
             Add-Result 'msvc-analyze' 'FAIL' "configure exit $code" $sw.Elapsed.TotalSeconds
             Add-Result 'clang-tidy' 'SKIP' 'configure failed' 0
@@ -552,12 +552,12 @@ if ($Analyze) {
     $vcvars = Get-VcvarsScript $Preset
     $buildOk = $false
     if (-not (Test-Path $vcvars)) {
-        Add-Result 'configure' 'FAIL' "missing $vcvars (set YASB_VCVARS_DIR)" 0
+        Add-Result 'configure' 'FAIL' "missing $vcvars (set WABAR_VCVARS_DIR)" 0
         Add-Result 'build' 'SKIP' 'configure failed' 0
     } else {
         Write-Step "configure (cmake --preset $Preset)"
         $sw = [Diagnostics.Stopwatch]::StartNew()
-        $code = Invoke-InVsEnv 'configure' $vcvars "cmake --preset $Preset -DYASB_ANALYZE=OFF"
+        $code = Invoke-InVsEnv 'configure' $vcvars "cmake --preset $Preset -DWABAR_ANALYZE=OFF"
         if ($code -ne 0) {
             Add-Result 'configure' 'FAIL' "exit $code" $sw.Elapsed.TotalSeconds
             Add-Result 'build' 'SKIP' 'configure failed' 0

@@ -1,6 +1,6 @@
 #include "host/screen_match.h"
 
-namespace wabar {
+namespace wabar::host {
 
 namespace {
 
@@ -31,4 +31,4 @@ std::vector<int> matchScreens(const QStringList& patterns, const std::vector<Scr
   return selected;
 }
 
-}  // namespace wabar
+}  // namespace wabar::host
