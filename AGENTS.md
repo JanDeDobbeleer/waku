@@ -10,7 +10,23 @@ this repository has to match it.
 
 ## Build and test
 
-Use `pwsh`, never `powershell` or `powershell.exe`, for script execution.
+Use `pwsh`, never `powershell` or `powershell.exe`, for script execution, and use `pwsh` for
+everything that is shell specific (paths, environment variables, processes, files, build and test
+commands). Do not mix Bash and PowerShell for the same task.
+
+### Shell hygiene (no escaping churn)
+
+- Write Windows paths in single-quoted PowerShell literals, build them with `Join-Path`, and read
+  well-known folders from `$env:USERPROFILE` and `$env:LOCALAPPDATA` instead of typing them. Use
+  `-LiteralPath` for `Remove-Item` and `Copy-Item`.
+- More than a few lines, or anything that needs quoting, goes into a `.ps1` or `.py` file that is
+  then run. Do not paste long one-liners.
+- Python from a shell uses raw strings (`r'...'`) or reads its arguments from a file; a backslash
+  path in a normal string is a bug (`\w`, `\.`).
+- Bash, where it exists, only gets forward-slash paths (`/d/yasb-native`) and simple git or file
+  commands.
+- Do not chain a delete or overwrite with a `Start-Process` of a path with spaces in one command;
+  run them as separate calls.
 
 Run every step in one `cmd.exe` process after the MSVC environment script; environment changes do
 not survive between separate `cmd /c` calls. `vcvars*.bat` live in
