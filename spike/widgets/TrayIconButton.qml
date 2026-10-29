@@ -52,8 +52,11 @@ Item {
         anchors.centerIn: parent
         width: root.iconSize
         height: root.iconSize
-        sourceSize: Qt.size(root.iconSize, root.iconSize)
+        // The provider delivers the icon at 32 px; at 150 or 200 percent that is the size drawn, at
+        // 100 percent it is scaled down, so no sourceSize (it would shrink it before the device
+        // pixel ratio is applied) and mipmaps for the downscale.
         smooth: true
+        mipmap: true
         cache: false
         source: root.model.iconUrl
     }

@@ -137,7 +137,7 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 | 3 | `TrayPins` | **Done.** `TrayPins` (instantiable, one per Tray widget; `setPinned`, `move`, `moveBy` and `isPinned` take the icon `id`) with `TrayPinList` models for `pinned` and `unpinned`, saved order and per-screen state file in the Widgets build's format. Planned: pinned and unpinned models, order, move, per-screen persistence; tests with a temp state dir and the existing state vectors. | no | S |
 | 4 | `Tray` widget | **Done.** `Tray` and `TrayIconButton` (pinned row, unpinned inline or in a popup grid behind a chevron, tooltips, click, double click, Ctrl-click pin, Ctrl+right-click menu with pin, move and refresh); `TrayPins.window`/`screen`, `hidden` role and `Systray::setFactoryForTests`; 13 widget tests on the fake host. Planned: pinned row, unpinned inline and popup, chevron, tooltips, click, modifier pin, the icon menu (pin, unpin, move, refresh); offscreen tests with the fake host injected through a test seam. | no | L |
 | 5 | Live bring-up | **Done 2026-10-29** on ARM64 Windows 11, Python YASB stopped (its own hook DLL, `YASBTrayHook_arm64.dll`, was loaded in Explorer; ours and the Widgets build's are the same family, Python's is a different one, so it was stopped too). The DLL already sits next to `tidybar.exe` (same output folder); `--no-tray` added. Found and fixed live: `Systray` never broadcast `TaskbarCreated` after the hook connected (200 ms after `updateIcons`, as the Widgets build), so no icon appeared. Checked by hand: 14 icons arrive, chevron popup with 5 columns, tooltip, Ctrl+click pins and writes `%LOCALAPPDATA%	idy\systray_state_<screen>.json`, a right click reaches OneDrive (flyout and menu), Explorer restart brings the hook and the icons back, `tidybarc quit` and a forced kill both detach the DLL within 1 s. Not checked: middle and double click on a real program, order moves in the menu, other DPIs. Planned: the hook DLL copied next to `tidybar.exe`; `--no-tray` switch; run against the real Explorer with the Widgets build stopped: icons appear, left, right, middle and double click, tooltip, pin, order, Explorer restart, quit leaves the shell tray intact, a forced kill lets the DLL detach. | **yes** | M |
-| 6 | Polish | icon sizes at other DPIs, hide lists, system icons option, docs, notes for retiring the Widgets build's copy. | yes | S |
+| 6 | Polish | **Done.** The icon is drawn from the provider's 32 px image with mipmaps and no `sourceSize`, so it is not shrunk before the device pixel ratio applies (the change itself was not looked at live; this machine has one 200 percent screen, so 100 and 150 percent cannot be run here). `hide` and `showSystemIcons` were done in phase 4. Retirement notes below. | no | S |
 
 ## Tests
 
@@ -159,7 +159,24 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 | The extraction breaks the Widgets build | its tests stay in the same run; phase 1 ends with both builds green |
 | Undocumented Windows API use grows | none added: all of it is already in the allowlist of `docs/architecture.md`, and tidy adds no call |
 
+## Retiring the Widgets build's systray
+
+When `yasb-native` is retired in favour of tidy:
+
+- Move `hook/` (DLL, `trayhook.cpp`) under the tidy tree and rename the DLL and its pipe and mutex
+  names together (`YASB_TRAY_MUTEX_NAME` in `CMakeLists.txt` and `platform/systray_hook.h`). Until
+  then the two builds must not run together; tidy reports "another tray host is running".
+- `platform/systray_*`, `platform/systray_click.*`, `widgets/systray/systray_service.*`,
+  `systray_state.*`, `tray_icon_registry.*` and `icon_scale.*` stay: tidy uses them. The Qt
+  Widgets classes (`systray_widget.*`, `tray_icon_button.*`, the popup and the legacy host
+  `platform/systray_legacy.*`) and their tests go with the build.
+- Pin state: tidy writes `%LOCALAPPDATA%	idy`, the Widgets build and Python YASB `YASB`. Copy
+  `systray_state_*.json` across once if the pins should carry over.
+- Python YASB has its own hook DLL (`YASBTrayHook_arm64.dll`). Stop it before starting tidybar's
+  `Tray`; whether the two coexist was not tested.
+- A regular `tidybar` run reserves no work area; pass `--register-app-bar` (see `AGENTS.md`).
+
 ## Next step
 
-Phase 6 (polish): icon sizes at other DPIs, the unchecked live cases above (middle and double click,
-menu moves), system icons option, and notes for retiring the Widgets build's copy.
+None planned. Open: middle and double click on a real program, and 100 and 150 percent DPI,
+were not run live.
