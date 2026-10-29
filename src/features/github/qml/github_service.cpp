@@ -40,7 +40,7 @@ QVariantMap itemMap(const GithubNotification& n, const QDateTime& now) {
 class SystemGithubClient final : public GithubClient {
  public:
   QString loadToken() override {
-    return resolveGithubToken(QStringLiteral("env"), qEnvironmentVariable("YASB_GITHUB_TOKEN"),
+    return resolveGithubToken(QStringLiteral("env"), qEnvironmentVariable("WABAR_GITHUB_TOKEN"),
                               githubTokenFilePath());
   }
   bool saveToken(const QString& token) override {

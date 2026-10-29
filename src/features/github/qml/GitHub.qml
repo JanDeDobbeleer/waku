@@ -7,7 +7,7 @@ import wabar.services as S
 // click a row to mark it read and open it in the browser, "Mark all as read" in the footer), a
 // right click toggles the alternate label. Hovering shows the unread count. Signed out, the popup
 // offers "Sign in": GitHub's device flow shows a code to enter at github.com/login/device. The
-// token is the one the Python build saved (or YASB_GITHUB_TOKEN); it never reaches QML.
+// token is the one the Python build saved (or WABAR_GITHUB_TOKEN); it never reaches QML.
 //
 //     GitHub { interval: 600000; maxNotification: 30; categoriesOrder: ["Issue", "PullRequest"] }
 //

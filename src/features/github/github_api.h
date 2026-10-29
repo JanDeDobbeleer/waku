@@ -112,7 +112,7 @@ HttpRequest githubMarkAllReadRequest(const QString& token, const QDateTime& nowU
 
 // %LOCALAPPDATA%\wabar\github_token (the wabar data folder; copied once from YASB).
 QString githubTokenFilePath();
-// GithubWidget token order: "env" -> YASB_GITHUB_TOKEN, else the option; empty -> token file.
+// GithubWidget token order: "env" -> WABAR_GITHUB_TOKEN, else the option; empty -> token file.
 QString resolveGithubToken(const QString& configToken, const QString& envToken,
                            const QString& tokenFilePath);
 QString readGithubTokenFile(const QString& path);
