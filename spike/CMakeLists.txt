@@ -33,6 +33,8 @@ qt_add_qml_module(tidy_services
     services/tray_image_provider.cpp
     services/systray.h
     services/systray.cpp
+    services/tray_pins.h
+    services/tray_pins.cpp
 )
 target_include_directories(tidy_services PUBLIC ${CMAKE_SOURCE_DIR}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/services)  # generated type registration includes headers by name

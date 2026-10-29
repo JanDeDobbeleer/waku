@@ -134,7 +134,7 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 |---|---|---|---|---|
 | 1 | Extract and test | **Done** (`d74eff5`, `93eff1f`). `platform/systray_click` (`sendTrayAction`, `sendTrayNotify`), `TrayIconRegistry` (identity, filter, stale sweep), `savedStateFor`, `appDataDir(folder)`. The Widgets build uses them; its 49 systray tests and the full suite (832) pass unchanged; 42 new tests. | no | M |
 | 2 | `Systray` and the model | **Done.** `Systray` singleton (`click` and `doubleClick` take the icon `id`, since exe-path keys can repeat), `TrayIconModel`, `TrayImageProvider`; 19 new tests on a fake host and window API. Planned: singleton, `TrayIconModel`, the image provider (with a changing-icon test), "unavailable" states; tests with a fake `TrayHost` and `TrayWindowApi` (add, update, delete, filter, stale, click messages). | no | M |
-| 3 | `TrayPins` | pinned and unpinned models, order, move, per-screen persistence; tests with a temp state dir and the existing state vectors. | no | S |
+| 3 | `TrayPins` | **Done.** `TrayPins` (instantiable, one per Tray widget; `setPinned`, `move`, `moveBy` and `isPinned` take the icon `id`) with `TrayPinList` models for `pinned` and `unpinned`, saved order and per-screen state file in the Widgets build's format. Planned: pinned and unpinned models, order, move, per-screen persistence; tests with a temp state dir and the existing state vectors. | no | S |
 | 4 | `Tray` widget | pinned row, unpinned inline and popup, chevron, tooltips, click, modifier pin, the icon menu (pin, unpin, move, refresh); offscreen tests with the fake host injected through a test seam. | no | L |
 | 5 | Live bring-up | the hook DLL copied next to `tidybar.exe`; `--no-tray` switch; run against the real Explorer with the Widgets build stopped: icons appear, left, right, middle and double click, tooltip, pin, order, Explorer restart, quit leaves the shell tray intact, a forced kill lets the DLL detach. | **yes** | M |
 | 6 | Polish | icon sizes at other DPIs, hide lists, system icons option, docs, notes for retiring the Widgets build's copy. | yes | S |
@@ -161,4 +161,4 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 
 ## Next step
 
-Phase 3 (`TrayPins`). Persistence and ordering on temp dirs, nothing touches Explorer.
+Phase 4 (`Tray` widget). Offscreen tests with the fake host injected; nothing touches Explorer.
