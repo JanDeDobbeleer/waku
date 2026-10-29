@@ -24,6 +24,6 @@ Current design of the capability. QML only: no C++, no service, no thread.
 
 ## Tests
 
-`tests/test_clock.cpp` runs `ClockWidget.*`, `CalendarWidget.*` and `CalendarPopupTest.*` in a real
+`src/features/clock/tests/test_clock.cpp` runs `ClockWidget.*`, `CalendarWidget.*` and `CalendarPopupTest.*` in a real
 bar on the offscreen platform, with the Harness and helpers of `host/testing/` (rule S2 lets the tests
 of every feature include them).

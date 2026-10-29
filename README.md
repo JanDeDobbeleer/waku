@@ -1,23 +1,49 @@
 # wabar
 
-wabar (/ˈwæbɑːr/, "wab-bar": "Windows, actually. With a bar.") is a Qt Quick top bar for Windows
-(C++20, Qt 6.10), configured in QML. It started as a native port of [YASB](https://github.com/amnweb/yasb);
-the retired Qt Widgets build is at the git tag `yasb-native-final` and described in
-[docs/archive](docs/archive/README.md). See [src/app/README.md](src/app/README.md) for how to run and
-configure it; a sample config is in [examples/config](examples/config).
+wabar (/ˈwæbɑːr/, "wab-bar") stands for "Windows, actually. With a bar." It is a top bar for
+Windows, written in C++20 and Qt 6.10 (Qt Quick) and configured in QML. The name nods to
+[Waybar](https://github.com/Alexays/Waybar), the bar for Wayland.
+
+The bar is a set of QML files. `bar.qml` says which bars to show and which widgets go where;
+`theme.qml` sets the look. Save either file and the bars reload. Built-in widgets cover the clock,
+workspaces (komorebi and GlazeWM), media, volume, Bluetooth, Wi-Fi, battery, CPU, memory, the tray,
+the taskbar, notifications, GitHub, wallpapers and a control center. You can copy any of them into
+your config and change it.
+
+## Quick start
+
+Build and test with the steps in [docs/building.md](docs/building.md), then run the bar with the
+sample config:
+
+```powershell
+build\arm64-debug\wabar.exe --config-home examples\config
+build\arm64-debug\wabarc.exe --config-home examples\config status
+```
+
+`wabarc` talks to the running bar. Its commands are `reload`, `status`, `quit` and
+`wallpaper set|random|next|previous|gallery`. Details and flags: [src/app/README.md](src/app/README.md).
+
+Use `--config-home <dir>` (or `WABAR_CONFIG_HOME`) to point wabar at your own folder, and
+`--no-tray` if you do not want it to hook Explorer. `cmake --build --preset arm64-debug --target
+deploy` assembles a portable folder in `dist/wabar`.
 
 ## Documentation
 
 | Document | What it covers |
 | --- | --- |
-| [AGENTS.md](AGENTS.md) | Rules for agents and contributors: commands, layering, style, commits, definition of done |
-| [docs/building.md](docs/building.md) | Prerequisites, build/test commands, `tools\check.ps1` |
-| [docs/architecture.md](docs/architecture.md) | Layering, threading, singletons, error policy, undocumented-API allowlist |
-| [docs/plans](docs/plans) | Design notes and plans (architecture proposal, widgets) |
-| [docs/archive](docs/archive/README.md) | Records of the retired Widgets build |
-| [SECURITY.md](SECURITY.md) | Threat model |
+| [AGENTS.md](AGENTS.md) | Rules for contributors and agents: commands, structure rules, adding a feature, style, commits |
+| [docs/building.md](docs/building.md) | Prerequisites, presets, deploy, command-line flags, `tools\check.ps1`, hooks |
+| [docs/architecture.md](docs/architecture.md) | Units and layering, threads, singletons, error policy, undocumented-API allowlist |
+| [docs/styling.md](docs/styling.md) | How the look is configured |
+| [src/app/README.md](src/app/README.md) | Running `wabar` and `wabarc`, config home, QML modules |
+| `src/features/<f>/design.md` | The design note of each feature |
+| [docs/plans](docs/plans/README.md) | Dated design notes and plans, with their status |
+| [docs/archive](docs/archive/README.md) | Records of the retired Qt Widgets build |
+| [SECURITY.md](SECURITY.md) | Threat model and how to report a problem |
 
-## Licence
+## Licence and credits
 
-MIT, see [LICENSE](LICENSE). Derived from YASB (MIT); see
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+wabar is released under the MIT licence ([LICENSE](LICENSE)). It began as a C++ port of
+[YASB](https://github.com/amnweb/yasb) and still uses what YASB found out about Windows (tray
+messages, window tracking, notifications). [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) holds the
+notices that must travel with any copy.

@@ -1,65 +1,92 @@
 # Architecture
 
-How the code is put together today and the rules that keep it there. The Widgets build (yasb-native)
-was retired; its records are in `docs/archive/` and at the git tag `yasb-native-final`. The proposal
-for the wabar layout is `docs/plans/2026-10-29-wabar-architecture-proposal.md`. Rules for agents are in
-`AGENTS.md`.
+How wabar is put together and the rules that keep it that way. Rules for contributors and agents
+are in `AGENTS.md`; build and run commands are in `docs/building.md`. The decisions behind the
+layout are in `docs/plans/2026-10-29-wabar-architecture-proposal.md`.
 
-## Layering
+## Units and layering
 
 Dependencies point one way: `app` -> `features` -> (`host`, `control`, `ui`) -> `kernel`. Every unit
-under `src/` is its own static library (or QML module), the include root is `src/`, and the rules
-S1-S8 of `tools\check.ps1` (step `structure`) enforce the direction on includes and QML use. Every
-own target, the executables and `wabar_tests` link `wabar_options` (`cmake/wabar_options.cmake`:
-`/W4 /WX /permissive- /guard:cf /sdl ...`).
+under `src/` is its own static library or contributes to a QML module. The include root is `src/`.
+The `structure` step of `tools\check.ps1` enforces the direction on includes and QML use (rules
+S1-S8; the table at the top of that step is the exact text). Every own target, the executables and
+`wabar_tests` link `wabar_options` (`cmake/wabar_options.cmake`: `/W4 /WX /permissive- /guard:cf
+/sdl ...`).
 
 | Target | Folder | Sources | Links PUBLIC | Links PRIVATE |
 |---|---|---|---|---|
 | `wabar_kernel` | `src/kernel/` | shared helpers (below) | `Qt6::Core`, `Qt6::Gui` | `wabar_options`, Win32 libs |
 | `wabar_control` | `src/control/` | the control pipe between a running bar and `wabarc` (no Qt Quick) | `wabar_kernel`, `Qt6::Core`, `Qt6::Network` | `wabar_options` |
 | `wabar_host_base` | `src/host/` | `screen_match`, `popup_placement`, `app_bar.h` and `win32/` (app bar, DWM backdrop) | `wabar_kernel` | `wabar_options`, `dwmapi shell32 user32` |
-| `wabar_host` | `src/host/` | the wabar host: QML module `wabar` (`qml/`, `win32/bar_host_win32.cpp`) | `wabar_host_base`, `wabar_control`, Qt Quick | `wabar_options` |
+| `wabar_host` | `src/host/` | the bar runtime: QML module `wabar` (`qml/`, `win32/bar_host_win32.cpp`) | `wabar_host_base`, `wabar_control`, Qt Quick | `wabar_options` |
 | `wabar_<f>` | `src/features/<f>/` | one feature (`wabar_feature()`) | `wabar_kernel`, the `DEPENDS` features | `wabar_options`, the feature's system libraries |
 | `wabar_services`, `wabar_widgets` | `src/modules/qml_modules.cmake` | QML modules `wabar.services` and `wabar.widgets`, assembled from contributions (below) | the feature libraries, Qt Quick | `wabar_options` |
 | `wabar` (exe), `wabarc` (exe) | `src/app/wabar/`, `src/app/wabarc/` | `main.cpp` of each; `SafeConfig.qml` joins `wabar.widgets` | | `wabar_options`, the modules / `wabar_control` |
 | `WabarTrayHook[_arm64]` (DLL) | `src/features/tray/hook/` | `trayhook.cpp` | | static CRT, `/W4 /WX` set by hand, built next to `wabar.exe` |
 | `wabar_tests` (exe) | `tests/` | `tests/main.cpp`, `tests/integration/` and every `TESTS` contribution (`src/**/tests/`) | | `wabar_options`, `GTest`, `Qt6::Test` |
 
+`ui` has no C++: its QML files (`Pill`, `Slider`, `DeviceMenu`, `DeviceRow`) join `wabar.widgets`.
+
 The one relaxation of the warning level is `wabar_qt_generated_code()` in `cmake/wabar_options.cmake`:
 `/wd4702` on the files qmlcachegen generates for the three QML modules.
 
-Rule S2 lets any feature include the root headers of `control/` (the interface headers such as
-`WallpaperControl` are a stable shared abstraction, not a feature edge).
+### Allowed dependencies
 
-### The `src/` layout
+A feature declares its edges in `wabar_feature(... DEPENDS ...)` in its `CMakeLists.txt`. It may
+include the root headers (interfaces and value types) and use the QML types of its `DEPENDS`; never
+their `win32/` or `qml/` C++ headers, and `testing/` only from tests. The graph is acyclic.
 
-`docs/plans/2026-10-29-wabar-architecture-proposal.md` has been carried out up to step 10 (the
-`spike/`, `platform/`, `widgets/` and `core/` folders are gone; every C++ namespace is `wabar::<unit>`:
-`kernel`, `control`, `host` and one per feature; the hook DLL, pipe and mutex have Wabar names); step 11
-(docs) remains.
+| Unit | May depend on |
+|---|---|
+| `kernel` | Qt Core, Qt Gui; the Windows SDK only in `kernel/win32/` |
+| `control` | `kernel`, Qt Core, Qt Network |
+| `host` | `kernel`, `control`, Qt Quick |
+| `ui` (QML only) | the `host` QML types (`Theme`, `Tooltip`, `PopupWindow`) |
+| every feature | `kernel`; its QML also uses the `host` QML types and `ui` |
+| `audio`, `bluetooth`, `network`, `github` | `shell` (the "open settings" and "open URL" clicks use the `Shell` service) |
+| `control_center` | `audio`, `media`, `notifications`, `brightness` |
+| `brightness`, `clock`, `media`, `notifications`, `shell`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces` | no other feature |
+| `app`, `tests/` | everything |
+
+A feature also includes the root headers of `control/` (such as `WallpaperControl`): they are a
+stable shared interface, not a feature edge. `host` includes `control/` too.
+
+### Feature layout
+
+Folders a feature does not need are absent. `wabar_feature()` rejects a file in the wrong folder at
+configure time.
+
+| Path | Holds | May include |
+|---|---|---|
+| `CMakeLists.txt` | the one `wabar_feature(...)` call: sources, `DEPENDS`, system libraries, QML contributions, tests | |
+| `design.md` | the design note of the capability | |
+| feature root `*.h`, `*.cpp` | the domain: backend interfaces, value types, UI-free logic, factory declarations | Qt Core and Gui; no Windows headers, no QML |
+| `win32/` | the Windows implementation of the root interfaces (Win32, COM, WinRT); `_win` suffix where a root header has the same name | Windows SDK and C++/WinRT |
+| `qml/` | QML-facing C++ (singletons, models, image providers) and the feature's `.qml` files | `QtQml`, `QtQuick`, `QML_*` macros |
+| `testing/` | fakes of the root interfaces, header-only | used by tests only |
+| `tests/` | gtest sources; suite names start with the feature name | anything of the feature, `kernel`, `testing/` of itself and its `DEPENDS` |
+
+### CMake
 
 - `cmake/wabar_feature.cmake`: `wabar_feature(NAME <f> DEPENDS ... SOURCES ... WIN32_SOURCES ...
-  QML_SOURCES ... QML_FILES ... TESTS ... SYSTEM_LIBS ...)` builds `wabar_<f>` (STATIC, or
-  INTERFACE when QML only), links `wabar_kernel` and the `DEPENDS` libraries, checks the inner
-  folder layout and that each `DEPENDS` feature is declared earlier, and appends its QML C++,
-  `.qml` files and tests to global lists. `wabar_contribute()` is the same append for kernel, host, ui and app. The decisions are in
-  the comment at the top of the file.
-- `src/CMakeLists.txt` adds `kernel`, `control`, `host`, `ui`, `features`, `app`, then includes the modules.
-  `src/kernel/` is the STATIC `wabar_kernel` (include root `src/`), see below.
-- `src/modules/qml_modules.cmake` defines `wabar.services` and `wabar.widgets` from the global lists.
-  It is included from `src/CMakeLists.txt`, not added as a subdirectory, because
-  qmlcachegen names its outputs after the `.qml` path relative to the declaring directory and a
-  `../` path breaks the build on Windows. Every `.qml` file gets `QT_RESOURCE_ALIAS <basename>`,
-  so resource paths stay `qrc:/qt/qml/wabar/widgets/<Name>.qml`.
-- `tests/CMakeLists.txt` defines `wabar_tests` from `tests/main.cpp` and the `TESTS` list.
-- `tools\check.ps1` step `structure` checks rules S1-S8 (proposal, section 4.2), reading `DEPENDS`
-  from the `wabar_feature(` calls; every violation fails the step.
+  QML_SOURCES ... QML_FILES ... TESTS ... SYSTEM_LIBS ...)` builds `wabar_<f>` (static, or
+  interface when the feature is QML only), links `wabar_kernel` and the `DEPENDS` libraries, checks
+  the folder layout and that each `DEPENDS` feature is declared earlier, and appends the feature's
+  QML C++, `.qml` files and tests to global lists. `wabar_contribute()` does the same append for
+  kernel, host, ui and app. The comment at the top of the file holds the decisions.
+- `src/CMakeLists.txt` adds `kernel`, `control`, `host`, `ui`, `features` and `app`, then includes
+  `src/modules/qml_modules.cmake`. `src/features/CMakeLists.txt` has one `add_subdirectory` line
+  per feature, in dependency order. Deleting a feature is deleting its folder and that line.
+- `tests/CMakeLists.txt` defines `wabar_tests` from `tests/main.cpp`, `tests/integration/` and the
+  `TESTS` list. One binary keeps one `windeployqt` step and one link; select a feature with
+  `ctest -R Tray` or `--gtest_filter=Tray*`.
+- System libraries sit in the `SYSTEM_LIBS` of the feature that calls them.
 
-### The kernel (`src/kernel/`)
+## The kernel
 
-Helpers with no domain knowledge that two or more units use today and that change for reasons
-outside any feature (admission criteria: proposal, section 6; a pull request that adds a kernel
-file names its two users). Qt Core and Gui only; the Windows SDK only under `kernel/win32/`.
+`src/kernel/` holds helpers with no domain knowledge that two or more units use and that change for
+reasons outside any feature. Admission criteria are in `AGENTS.md` (a pull request that adds a
+kernel file names its two users). Qt Core and Gui only; the Windows SDK only under `kernel/win32/`.
 Namespace `wabar::kernel`, include `"kernel/<qt|win32>/<file>.h"`.
 
 | File | What | Users |
@@ -76,15 +103,49 @@ Namespace `wabar::kernel`, include `"kernel/<qt|win32>/<file>.h"`.
 Rules the kernel owns:
 
 - **One data folder**: every file wabar keeps lives in `%LOCALAPPDATA%\wabar` (`appDataDir()`,
-  created on demand). Nothing writes to `%LOCALAPPDATA%\YASB` any more. The first `appDataDir()` call
-  of a process copies `taskbar_pinned.json`, `github_token` and `systray_state_*.json` from `YASB`
-  when `YASB` exists; it never moves or overwrites, logs one line when it copied something and
-  leaves a marker file `migrated_from_yasb`, so the copy happens once (a file the user deletes from
-  `wabar` does not come back). Wallpaper thumbnails are a cache and are rebuilt, not copied.
+  created on demand). Nothing writes to `%LOCALAPPDATA%\YASB`. The first `appDataDir()` call of a
+  process copies `taskbar_pinned.json`, `github_token` and `systray_state_*.json` from `YASB` when
+  `YASB` exists; it never moves or overwrites, logs one line when it copied something and leaves a
+  marker file `migrated_from_yasb`, so the copy happens once (a file the user deletes from `wabar`
+  does not come back). Wallpaper thumbnails are a cache and are rebuilt, not copied.
 - **Live desktop**: a service that touches the real machine in its real constructor asks
-  `kernel::liveDesktop()`; it is false on the offscreen platform (tests, screenshots). A command-line
-  flag switches one capability off by name (`setCapabilityDisabled("tray", true)`); ask
-  `liveDesktop("tray")`. No service tests `platformName()` itself.
+  `kernel::liveDesktop()`; it is false on the offscreen platform (tests, screenshots). A
+  command-line flag switches one capability off by name (`setCapabilityDisabled("tray", true)`);
+  ask `liveDesktop("tray")`. No service tests `platformName()` itself.
+
+## QML modules and built-in widgets
+
+Three QML modules, version 1.0. Their URIs are the user-facing API and do not change.
+
+| URI | Built from | Holds |
+|---|---|---|
+| `wabar` | `src/host/qml/` | `Config`, `Bar`, `BarLayout`, `Theme`, `PopupWindow`, `Tooltip` (the bar runtime) |
+| `wabar.widgets` | every feature's `qml/*.qml`, `src/ui/*.qml`, `src/app/wabar/SafeConfig.qml` | the built-in widgets and the shared look |
+| `wabar.services` | every feature's `qml/*.{h,cpp}`, `src/kernel/qml/` | the C++ data sources and actions |
+
+- `src/modules/qml_modules.cmake` assembles the last two from the contributions. It is included
+  from `src/CMakeLists.txt`, not added as a subdirectory, because qmlcachegen names its outputs after
+  the `.qml` path relative to the declaring directory and a `../` path breaks the build on Windows.
+- Every `.qml` file gets `QT_RESOURCE_ALIAS <basename>`, so resource paths stay
+  `qrc:/qt/qml/wabar/widgets/<Name>.qml`. Basenames are therefore unique per module (rule S7), and
+  the generated type registration includes QML-facing headers by name, so those are unique too.
+- A type's QML name is its class name or `QML_NAMED_ELEMENT`; its C++ namespace (`wabar::tray`)
+  is not visible to QML.
+- Widgets and services share some names (`Cpu`, `Memory`, `Battery`, `Media`, `Workspaces`). A widget
+  imports the services as `import wabar.services as S`, and so does a user config that needs them.
+  This clash is why there is one module per kind and not one per feature.
+
+### How built-in widgets ship, and how to override one
+
+The built-in widgets stay compiled into `wabar.exe` (qmlcachegen, resources, static plugins). The
+source of one is `src/features/<f>/qml/<Name>.qml`. `deploy` also copies those files with `qmldir`
+and `.qmltypes` to `dist/wabar/modules/` as a read-only reference (`docs/building.md`).
+
+A user changes a built-in widget by copying its file into the config home's `widgets/` folder,
+which `bar.qml` imports as a directory (`import "widgets"`), and editing the copy. Give the copy a
+new name and use that name in `bar.qml`. A copy that keeps the built-in's name relies on QML's
+import order and is not covered by tests. `qmllint -I <dist>/wabar/modules` lints the copy. The
+config format is described in `docs/plans/2026-10-28-qt-quick-bar-config-design.md`.
 
 ## Threading
 
@@ -93,19 +154,21 @@ hand results back with queued signals or `QMetaObject::invokeMethod`.
 
 | Thread | Owner | Work | Stopped by |
 |---|---|---|---|
-| GUI | `QGuiApplication` / the wabar host | QML engine, bars, services, hotkeys, tray | `wabar` quits and `exec()` returns |
-| `QThreadPool` threads (github) | `github::sendHttpAsync` (`features/github/github_api.h`) (github mark-as-read, device-flow login, post-login fetch) | one blocking QtNetwork request each with its own `QNetworkAccessManager`; the result is posted back to the GUI thread and dropped if its context object is gone | finishes on its own (15 s transfer timeout); no join needed |
-| media session thread (`std::thread`, MTA) | `MediaSessionService`'s `SystemMediaSource` (`features/media/win32/media_session_winrt.cpp`), created on first use by `wabar.services.Media` | owns every GSMTC WinRT object; WinRT handlers only enqueue a task, the thread sleeps on a condition variable (no polling) and posts plain snapshots to the GUI thread; position interpolation is a GUI-thread `QTimer` active only while the current session plays | `stop()`: revokes handlers, wakes the queue, `join` |
+| `QThreadPool` threads (github) | `github::sendHttpAsync` (`src/features/github/github_api.h`) (github mark-as-read, device-flow login, post-login fetch) | one blocking QtNetwork request each with its own `QNetworkAccessManager`; the result is posted back to the GUI thread and dropped if its context object is gone | finishes on its own (15 s transfer timeout); no join needed |
+| media session thread (`std::thread`, MTA) | `MediaSessionService`'s `SystemMediaSource` (`src/features/media/win32/media_session_winrt.cpp`), created on first use by `wabar.services.Media` | owns every GSMTC WinRT object; WinRT handlers only enqueue a task, the thread sleeps on a condition variable (no polling) and posts plain snapshots to the GUI thread; position interpolation is a GUI-thread `QTimer` active only while the current session plays | `stop()`: revokes handlers, wakes the queue, `join` |
 | taskbar icon loader (`QThreadPool`, one thread) | `TaskbarIcons` (`src/features/taskbar/taskbar_icons.cpp`, owned by `wabar.services.TaskbarService`) | `WindowSystem::windowIcon` (WM_GETICON with a 200 ms timeout, shell item images, class icons), serial like Python's `IconService` thread; the image returns to the GUI thread with a queued call and is dropped if the loader is gone | destructor: `waitForDone` (a hung window costs at most the WM_GETICON timeout) |
-| `WlanBackend` (`QThread`) | `wabar.services.Network` (`features/network/qml/network_service.{h,cpp}`, backend `features/network/win32/wlan_win.cpp`) (created on the first refresh or connect) | wlanapi scan, connection query, profile edits, `Windows.Devices.WiFi` connect and disconnect; results return as queued signals | `~WlanBackend`: unregister notifications, `quit`, `wait` |
+| `WlanBackend` (`QThread`) | `wabar.services.Network` (`src/features/network/qml/network_service.{h,cpp}`, backend `src/features/network/win32/wlan_win.cpp`) (created on the first refresh or connect) | wlanapi scan, connection query, profile edits, `Windows.Devices.WiFi` connect and disconnect; results return as queued signals | `~WlanBackend`: unregister notifications, `quit`, `wait` |
 | wallpaper overlay decoder (`QThread`) | `WallpaperTransition` (`src/features/wallpapers/qml/wallpaper_transition.h`, one per transition) | decodes the new image and the transcoded copy of the old one; touches no Qt Quick object, posts the images back to the GUI thread through a checked `QPointer` | the thread deletes itself when it ends; a cancelled or destroyed transition never waits for it |
 | `RealBluetoothBackend` (`QThread`) | `wabar.services.Bluetooth` (see singletons) | BluetoothAPIs and WinRT enumeration, battery reads, radio power, device watchers, audio connect/disconnect; results return as queued signals | destructor: cancel connect, `shutdown`, `quit`, `wait` |
 | GlazeWM WebSocket thread (`std::thread`) | `GlazewmService` (`src/features/workspaces/glazewm_service.h`) via `glazewm::GlazewmSocket` (`src/features/workspaces/glazewm.h`, `win32/glazewm_socket.cpp`), created by the first widget subscription | owns the WinHTTP session, connect, blocking receive loop and the 4 s reconnect sleep; text frames and connection changes reach the GUI thread as queued signals; sends run on the GUI thread | `GlazewmSocket::stop()`: sets the stop event, closes the WinHTTP handles, `join` (idempotent, also from the destructor); the owner calls `GlazewmService::stop()` |
 | komorebi pipe thread (`std::thread`) | `KomorebiService` (`src/features/workspaces/komorebi_service.h`) via `komorebi::KomorebiPipeListener` (`src/features/workspaces/komorebi.h`, `win32/komorebi_pipe.cpp`) | owns the `\\.\pipe\wabar-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls | `stop()`: sets the stop event (cancels waits and overlapped I/O), `join`, then `komorebic unsubscribe-pipe`; started lazily by the first subscription; the owner calls it |
 | systray hook thread (`std::thread`) | `SystrayHook` (`src/features/tray/win32/tray_hook.h`), owned by `wabar.services.Systray`, started by the first Tray widget | creates nothing itself: the GUI thread creates the watchdog mutex and the `\\.\pipe\wabar_systray_monitor` pipe in the constructor; the worker injects `WabarTrayHook[_arm64].dll` into Explorer (`SetWindowsHookEx`), owns the OVERLAPPED I/O, read buffer and completion event, parses each pipe message and emits queued signals to the GUI thread; retries after Explorer restarts (1 s no Explorer, 5 s failed injection, 3 s after the DLL disconnects) | `stop()` (also called by the destructor): sets the stop flag, releases the injection hook, cancels pending I/O, releases and closes the mutex (the DLL's watchdog then detaches and restores Shell_TrayWnd's window procedure within 5 s), `join` |
+| `BrightnessControl` worker (`std::thread`) | `wabar.services.ControlCenter`, created on first use (`src/features/brightness/win32/brightness_win.cpp`) | owns DDC/CI reads and writes, display metadata (WinRT `DisplayMonitor`) and the coalesced slider writes; results return as queued signals; DDC probes fan out with `std::async` and are joined by the worker | `stop()` (called by `stopAll()`): sets the stop flag, wakes the queue, `join` |
+| notifications worker (`std::thread`, MTA) and WNF callback | `NotificationService`'s `SystemNotificationSource` (`src/features/notifications/win32/notifications_system.cpp`), created on first use by `wabar.services.Notifications` | the worker owns the `UserNotificationListener` and runs list reads (100 ms debounce after each WNF change or menu open), remove, clear (all or one app) and toast activation tasks, sleeping on a condition variable (no polling); the WNF callback runs on a system thread, arms the debounced read and forwards a `u32` count to the sink, which posts both results to the GUI thread. Toast activation (`src/features/notifications/win32/toast_activation_win.cpp`) runs on this thread | `stop()`: unsubscribe WNF (waits for a running callback), wake the queue, `join` |
+| `DndWatcher` WNF callback (system thread) | `DndWatcher` (`src/features/notifications/win32/dnd_win.cpp`), owned by `wabar.services.ControlCenter` | the callback reads `dndStatus()` and posts the result to the GUI thread (`statusChanged`) | `stop()`: unsubscribe WNF (waits for a running callback) |
 
-Platform data sources (`src/features/*/win32/`) are sampled off the GUI thread by the wabar stat sources; anything
-they cache globally must be locked.
+Platform data sources (`src/features/*/win32/`) are sampled off the GUI thread by the stat sources;
+anything they cache globally must be locked.
 
 ## Singletons and process-wide state
 
@@ -113,15 +176,18 @@ No new singleton without a row here and a reason.
 
 | What | Where | Notes |
 |---|---|---|
-| media source-app name cache, shell-app cache | `features/media/win32/media_source_apps.cpp` (names), `kernel/win32/app_activation.cpp` (shell-app cache) | AUMID to display name; `QMutex`-guarded, written from the media session thread only |
+| media source-app name cache, shell-app cache | `src/features/media/win32/media_source_apps.cpp` (names), `src/kernel/win32/app_activation.cpp` (shell-app cache) | AUMID to display name; `QMutex`-guarded, written from the media session thread only |
 | `wabar.services.Systray` | `src/features/tray/qml/systray.{h,cpp}` | the one tray host of a `wabar` run (the hook in Explorer), shared by every Tray widget of the bar; created by the QML engine on first use and destroyed with it, which stops the host. |
-| `wabar.services.Network` | `features/network/qml/network_service.{h,cpp}` | the one Wi-Fi/Ethernet/VPN state of a `wabar` run, shared by every Wifi widget; created by the QML engine on first use and destroyed with it. Polls on the global `QThreadPool` (one sample at a time, applied on the GUI thread); the Wi-Fi scan/connect backend and its thread (`createWlanBackend`) start on the first refresh or connect and stop in the destructor. No source on the offscreen platform |
+| `wabar.services.Network` | `src/features/network/qml/network_service.{h,cpp}` | the one Wi-Fi/Ethernet/VPN state of a `wabar` run, shared by every Wifi widget; created by the QML engine on first use and destroyed with it. Polls on the global `QThreadPool` (one sample at a time, applied on the GUI thread); the Wi-Fi scan/connect backend and its thread (`createWlanBackend`) start on the first refresh or connect and stop in the destructor. No source on the offscreen platform |
 | cached Windows build number | `src/kernel/win32/windows_build.cpp` (`windowsBuild()`) | immutable |
 | live-desktop disable flags | `src/kernel/qt/live_desktop.cpp` | set of capability names behind a `QMutex`; written once at startup (`--no-tray`), read by the services' real constructors |
 | app data migration record | `src/kernel/qt/app_data.cpp` (`appDataDir`) | set of base folders already migrated in this process, behind a `QMutex`; the on-disk marker `migrated_from_yasb` makes the copy happen once per machine |
 | `wabar.services.TaskbarService` | `src/features/taskbar/qml/taskbar_service.{h,cpp}` | the one window tracker (`wabar::taskbar::WindowTracker`: shell hook and WinEvent hooks), pinned-apps store (`taskbar_pinned.json`) and window-icon cache of a `wabar` run, shared by every Taskbar widget; created by the QML engine on first use and destroyed with it (the tracker stops, the icon loader's one-thread pool is joined). Registers `image://windowicon`. The tracker starts when the first Taskbar widget hands over its bar window; it never starts on the offscreen platform. |
-| `wabar.services.GitHub` | `features/github/qml/github_service.{h,cpp}` | the GitHub notifications of a `wabar` run for every GitHub widget, created by the QML engine as a singleton on the GUI thread. Polls on a `QTimer`; each fetch is a one-shot task on the global `QThreadPool` (own network transport, ends with the request, nothing to join) and `github::sendHttpAsync` carries mark-as-read and the device-flow requests; results return through a guard `QObject` owned by the client, so a response after the service is destroyed is dropped. Reads `YASB_GITHUB_TOKEN` or the token file the Python build uses, holds the token in memory only. No client on the offscreen platform |
+| `wabar.services.GitHub` | `src/features/github/qml/github_service.{h,cpp}` | the GitHub notifications of a `wabar` run for every GitHub widget, created by the QML engine as a singleton on the GUI thread. Polls on a `QTimer`; each fetch is a one-shot task on the global `QThreadPool` (own network transport, ends with the request, nothing to join) and `github::sendHttpAsync` carries mark-as-read and the device-flow requests; results return through a guard `QObject` owned by the client, so a response after the service is destroyed is dropped. Reads `WABAR_GITHUB_TOKEN` or the token file the Python build uses, holds the token in memory only. No client on the offscreen platform |
 | `wabar.services.Wallpapers` | `src/features/wallpapers/qml/wallpapers_service.{h,cpp}` | the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `wabar` run, shared by every Wallpapers widget; created by the QML engine on first use (`create()` registers `image://wallpaper`) and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles`, `ThumbnailCache` and `DesktopWallpaperBackend` (animated `engine` off). No thread of its own: the hotkey is `RegisterHotKey` (documented) on the GUI thread through a native event filter, unregistered in the destructor; thumbnails are decoded on Qt's image-reader thread by a provider that holds only the `ThumbnailCache`. Inert, no hotkey, when `kernel::liveDesktop("wallpapers")` is false. |
+| `wabar.services.Bluetooth` | `src/features/bluetooth/qml/bluetooth_service.{h,cpp}` | the one Bluetooth backend of a `wabar` run (radio, paired devices, battery, connect/disconnect on the `RealBluetoothBackend` thread), shared by every Bluetooth widget; created by the QML engine on first use and owned by it, destroyed with it, which joins the backend thread. Never creates a backend when `kernel::liveDesktop("bluetooth")` is false or without an adapter (`bluetooth::hasBluetoothAdapter`). |
+| `wabar.services.Notifications` | `src/features/notifications/qml/notification_service.{h,cpp}` | the Action Center toasts for every Notifications widget of a `wabar` run, created by the QML engine as a singleton; wraps `wabar::notifications::NotificationService` (WNF subscription and listener worker thread, stopped and joined when the engine destroys it); has no source on the offscreen platform |
+| `wabar.services.ControlCenter` | `src/features/control_center/qml/control_center_service.{h,cpp}` | the system side of every ControlCenter widget of a `wabar` run, created by the QML engine as a singleton: Do Not Disturb (its own `wabar::notifications::DndWatcher`, WNF subscription stopped by its destructor), app theme, touch keyboard, power plans and modes, user name and picture, and the session and power actions behind an injectable launcher (shutdown, restart and sign out need a second request). Owns one `wabar::brightness::BrightnessControl` (DDC/CI worker thread plus the power-setting window thread, joined by `stop()` in the destructor). Volume, microphone and the player are not repeated: the widget uses `AudioOutput`, `AudioInput` and `Media`. Inert on the offscreen platform |
 
 Function-local `static const` regexes and lookup tables are immutable and not listed.
 
@@ -129,16 +195,20 @@ Function-local `static const` regexes and lookup tables are immutable and not li
 
 - Exceptions never cross a Qt boundary: slots, lambdas connected to signals, event handlers,
   `paintEvent`, timers and any callback invoked by Qt. An exception escaping into Qt or
-  `QApplication::exec()` is `std::terminate` with no log line.
+  `QGuiApplication::exec()` is `std::terminate` with no log line.
 - Every entry point from Qt into our code either uses non-throwing APIs or wraps its body in
   `try`/`catch` and logs with `qWarning`/`qCritical`.
 - API boundaries return values, `std::optional` or a result struct. Internal exceptions thrown and
-  caught within one module are fine (`backdrop.cpp`).
+  caught within one module are fine (`src/host/win32/backdrop.cpp`).
+- Never use the `const` `nlohmann::json::operator[]` on a key that may be missing; the
+  `json-subscript` step of `tools\check.ps1` looks for it.
 
 ## Undocumented Windows API allowlist
 
 Every undocumented API, hand-laid struct or numeric constant missing from the SDK is listed here
 with the build it was verified on and its fallback. Add a row in the same commit that adds the call.
+Each call fails soft. `IDesktopWallpaper` (`src/features/wallpapers/win32/desktop_wallpaper_win.cpp`)
+is documented and needs no row.
 
 | API | Where | Verified on | Fallback |
 |---|---|---|---|
@@ -147,24 +217,24 @@ with the build it was verified on and its fallback. Add a row in the same commit
 | Registry values `HKCU\Control Panel\Desktop`: `MaxVirtualDesktopDimension`, `MaxMonitorDimension` (DWORD), `PanoramaThreshold`, `PanoramaPortraitThreshold` (DWORD, thousandths), `TileWallpaper` / `WallpaperStyle` (strings), `HKCU\Control Panel\Colors\Background`, and the file `%APPDATA%\Microsoft\Windows\Themes\TranscodedWallpaper` | `src/features/wallpapers/win32/workerw.cpp` (`readWallpaperFit`, `readTranscodeLimits`, `readPanoramaThreshold`, `readDesktopBackgroundRgb`, `transcodedWallpaperPath`) | Python YASB (`engine.py`) on Windows 11 build 26100; not exercised live on build 26300 in this port | a missing or unreadable value uses Python's default (fit "fill", threshold 2.22 / 1.0, black background, no transcode resize); an unreadable transcoded copy skips the animation |
 | `ntdll!NtQueryInformationProcess` class 60 (`ProcessCommandLineInformation`), read as a `UNICODE_STRING` | `src/features/taskbar/win32/app_identity_win.cpp` (`hostArguments`) | key and layout from Python YASB (`pin_context.py`) | symbol missing or call failing gives no host arguments; `mmc.exe` / `rundll32.exe` windows then share one `path:` identity |
 | `PKEY_AppUserModel_ID` ({9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}, 5), spelled out instead of taken from `propkey.h` | `src/features/taskbar/win32/app_identity_win.cpp` (`aumidForWindow`) | Windows 11 build 26300, ARM64 | property store unavailable falls back to the process AUMID, then to the exe path |
-| `ITipInvocation` ({37C994E7-432B-4834-A2F7-DCE1F13B834B}) from `CLSID_UIHostNoLaunch` ({4CE576FA-83DC-4F88-951C-9D0782B4E376}) `Toggle(HWND)` | `features/control_center/win32/touch_keyboard_win.cpp` | ids from Python YASB; not exercised live on build 26300 | server not reachable: start `TabTip.exe` with `ShellExecuteEx`, `WaitForInputIdle`, toggle again; a missing TabTip logs a warning |
-| `powrprof!PowerGetUserConfiguredACPowerMode`, `PowerSetUserConfiguredACPowerMode`, `PowerSetUserConfiguredDCPowerMode` (power-mode overlays; absent on older Windows 10) and the overlay GUIDs 961cc777-2547-4f9d-8174-7d86181b8a7a / ded574b5-45a0-4f42-8737-46345c09c238 | `features/control_center/win32/power_win.cpp` (`activePowerMode`, `setPowerMode`) | Windows 11 build 26300, ARM64 (`PowerGet...` verified live: `Balanced`; the setters are not exercised live) | resolved with `GetProcAddress`; a missing getter falls back to the `ActiveOverlayAcPowerScheme` registry value, a missing setter returns false and the mode label keeps the chosen name; on Windows 10 the mode button is not built |
-| `SHELLTRAYDATA` / 32-bit `NOTIFYICONDATA` layout (964 bytes: signature, message, then the 956-byte struct with 32-bit handles) that Explorer sends in `WM_COPYDATA` `dwData` 1 to `Shell_TrayWnd`; `dwData` 3 `WINNOTIFYICONIDENTIFIER` | `src/features/tray/tray_pipe.cpp` (`parseShellTrayData`), `src/features/tray/hook/trayhook.cpp` | layout from Python YASB 2.0.8, which runs on this build daily; the native parser is checked against an independently laid out struct in `src/features/tray/tests/test_systray_pipe.cpp`; not exercised against the live shell by this port yet (build 26300, pending the orchestrator's live run) | a short or malformed message is dropped with a warning; an unknown shell message type is ignored |
-| Injecting a DLL into `explorer.exe` with `SetWindowsHookEx(WH_GETMESSAGE)` on the `Shell_TrayWnd` thread, which then subclasses `Shell_TrayWnd` (`SetWindowLongPtr(GWLP_WNDPROC)`) and writes tray messages to a named pipe | `src/features/tray/win32/tray_hook.cpp` (`ExplorerInjector`), `src/features/tray/hook/trayhook.cpp` | design and DLL source from Python YASB 2.0.8; not exercised live by this port yet (build 26300, ARM64 pending) | `createTrayHost` returns no host (the tray stays empty) when the DLL is missing, the architecture is unsupported, the process runs under emulation or the pipe and mutex cannot be created; a failed injection retries every 5 s; the DLL detaches itself within 5 s when the host's watchdog mutex is released or abandoned, restoring the saved window procedure |
-
-Every undocumented API still to come gets a row here. `IDesktopWallpaper` itself (`src/features/wallpapers/win32/desktop_wallpaper_win.cpp`) is documented and needs no row.
-| `BrightnessControl` worker (`std::thread`) | `wabar.services.ControlCenter`, created on first use (`features/brightness/win32/brightness_win.cpp`) | owns DDC/CI reads and writes, display metadata (WinRT `DisplayMonitor`) and the coalesced slider writes; results return as queued signals; DDC probes fan out with `std::async` and are joined by the worker | `stop()` (called by `stopAll()`): sets the stop flag, wakes the queue, `join` |
-| notifications worker (`std::thread`, MTA) and WNF callback | `NotificationService`'s `SystemNotificationSource` (`features/notifications/win32/notifications_system.cpp`), created on first use by `wabar.services.Notifications` | the worker owns the `UserNotificationListener` and runs list reads (100 ms debounce after each WNF change or menu open), remove, clear (all or one app) and toast activation tasks, sleeping on a condition variable (no polling); the WNF callback runs on a system thread, arms the debounced read and forwards a `u32` count to the sink, which posts both results to the GUI thread. Toast activation (`features/notifications/win32/toast_activation_win.cpp`) runs on this thread | `stop()`: unsubscribe WNF (waits for a running callback), wake the queue, `join` |
-| `DndWatcher` WNF callback (system thread) | `DndWatcher` (`features/notifications/win32/dnd_win.cpp`), owned by `wabar.services.ControlCenter` | the callback reads `dndStatus()` and posts the result to the GUI thread (`statusChanged`) | `stop()`: unsubscribe WNF (waits for a running callback) |
-| `wabar.services.Bluetooth` | `features/bluetooth/qml/bluetooth_service.{h,cpp}` | the one Bluetooth backend of a `wabar` run (radio, paired devices, battery, connect/disconnect on the `RealBluetoothBackend` thread), shared by every Bluetooth widget; created by the QML engine on first use and owned by it, destroyed with it, which joins the backend thread. Never creates a backend when `kernel::liveDesktop("bluetooth")` is false or without an adapter (`platform::hasBluetoothAdapter`). |
-| `wabar.services.Notifications` | `features/notifications/qml/notification_service.{h,cpp}` | the Action Center toasts for every Notifications widget of a `wabar` run, created by the QML engine as a singleton; wraps `wabar::notifications::NotificationService` (WNF subscription and listener worker thread, stopped and joined when the engine destroys it); has no source on the offscreen platform |
-| `wabar.services.ControlCenter` | `features/control_center/qml/control_center_service.{h,cpp}` | the system side of every ControlCenter widget of a `wabar` run, created by the QML engine as a singleton: Do Not Disturb (its own `wabar::notifications::DndWatcher`, WNF subscription stopped by its destructor), app theme, touch keyboard, power plans and modes, user name and picture, and the session and power actions behind an injectable launcher (shutdown, restart and sign out need a second request). Owns one `wabar::brightness::BrightnessControl` (DDC/CI worker thread plus the power-setting window thread, joined by `stop()` in the destructor). Volume, microphone and the player are not repeated: the widget uses `AudioOutput`, `AudioInput` and `Media`. Inert on the offscreen platform |
-| `DEVPKEY_Bluetooth_Battery` ({104EA319-6EE2-4701-BD47-8DDBF425BBE5}, 2), a PnP property key read with `CM_Get_DevNode_PropertyW` | `features/bluetooth/win32/bluetooth_win.cpp` (`readBattery`) | Windows 11 build 26300, ARM64 (key and layout from Python YASB) | read failure or non-byte type gives no battery value; the menu then shows no battery |
-| `KSPROPSETID_BtAudio` ({7FA06C40-B8F6-4C7E-8556-E8C33A12E54D}) one-shot ids 0 (reconnect) and 1 (disconnect) sent through `IKsControl::KsProperty` | `features/bluetooth/win32/bluetooth_win.cpp` (`setAudioConnection`) | key and ids from Python YASB; not exercised live on build 26300 | no KS filter or a refusing driver returns `no_ks_controls` / `oneshot_failed`; the menu shows "Failed to connect/disconnect device" |
-| `ntdll!RtlSubscribeWnfStateChangeNotification` / `RtlUnsubscribeWnfStateChangeNotification` (resolved with `GetProcAddress`, local function typedefs) with WNF state names `WNF_SHEL_NOTIFICATION_TOTAL` (0x0D83063EA3B8D035, Windows 11 toast total) and `WNF_SHEL_NOTIFICATIONS` (0x0D83063EA3BC1035, Windows 10 unread badge); the buffer is read as a `u32` count | `features/notifications/win32/notifications_system.cpp` | Windows 11 build 26300, ARM64 (names, signatures and buffer layout from Python YASB) | a missing symbol or a non-zero status for both names logs a warning and leaves the count at 0 (icon `default`); clearing still works through the documented `UserNotificationListener` |
-| `IPolicyConfig` ({f8679f50-850a-41cf-9c72-430f290290c8}) from `CLSID_PolicyConfigClient`, hand-laid vtable (`SetDefaultEndpoint` at slot 10 after `IUnknown`) | `features/audio/win32/audio_endpoints_win.cpp` (`setDefaultDevice`) | layout and ids from pycaw (same call Python YASB makes); not exercised live, so the default output is never changed by tests | `CoCreateInstance` or the call failing logs once and returns false; the source menu keeps the old default |
-| `IQuietHoursSettings` ({6BFF4732-81EC-4FFB-AE67-B6C1BC29631F}) from `CLSID_QuietHoursSettings` ({F53321FA-34F8-4B7F-B9A3-361877CB94CF}), `get_UserSelectedProfile` / `put_UserSelectedProfile` directly after `IUnknown`, profile ids `Microsoft.QuietHoursProfile.*` | `features/notifications/win32/dnd_win.cpp` | Windows 11 build 26300, ARM64 (read verified live: `disabled`); the write path is not exercised live | creation or read failure reports `unknown`, which the Do Not Disturb tile shows as active (as Python does); a failed write logs and the tile state is unchanged |
-| `ntdll!RtlSubscribeWnfStateChangeNotification` with WNF state name `WNF_SHEL_QUIETHOURS_ACTIVE_PROFILE_CHANGED` (0x0D83063EA3BF1C75), the callback ignores the buffer and re-reads the profile through `IQuietHoursSettings` | `features/notifications/win32/dnd_win.cpp` (`DndWatcher`) | name from Python YASB; not exercised live on 26300 | a missing symbol or a non-zero status logs a warning and the Do Not Disturb button then updates only on its own clicks |
+| `ITipInvocation` ({37C994E7-432B-4834-A2F7-DCE1F13B834B}) from `CLSID_UIHostNoLaunch` ({4CE576FA-83DC-4F88-951C-9D0782B4E376}) `Toggle(HWND)` | `src/features/control_center/win32/touch_keyboard_win.cpp` | ids from Python YASB; not exercised live on build 26300 | server not reachable: start `TabTip.exe` with `ShellExecuteEx`, `WaitForInputIdle`, toggle again; a missing TabTip logs a warning |
+| `powrprof!PowerGetUserConfiguredACPowerMode`, `PowerSetUserConfiguredACPowerMode`, `PowerSetUserConfiguredDCPowerMode` (power-mode overlays; absent on older Windows 10) and the overlay GUIDs 961cc777-2547-4f9d-8174-7d86181b8a7a / ded574b5-45a0-4f42-8737-46345c09c238 | `src/features/control_center/win32/power_win.cpp` (`activePowerMode`, `setPowerMode`) | Windows 11 build 26300, ARM64 (`PowerGet...` verified live: `Balanced`; the setters are not exercised live) | resolved with `GetProcAddress`; a missing getter falls back to the `ActiveOverlayAcPowerScheme` registry value, a missing setter returns false and the mode label keeps the chosen name; on Windows 10 the mode button is not built |
+| `SHELLTRAYDATA` / 32-bit `NOTIFYICONDATA` layout (964 bytes: signature, message, then the 956-byte struct with 32-bit handles) that Explorer sends in `WM_COPYDATA` `dwData` 1 to `Shell_TrayWnd`; `dwData` 3 `WINNOTIFYICONIDENTIFIER` | `src/features/tray/tray_pipe.cpp` (`parseShellTrayData`), `src/features/tray/hook/trayhook.cpp` | layout from Python YASB 2.0.8; the parser is checked against an independently laid out struct in `src/features/tray/tests/test_systray_pipe.cpp`; run live on Windows 11 build 26300, ARM64, 2026-10-29 (14 icons arrived, clicks reached the apps) | a short or malformed message is dropped with a warning; an unknown shell message type is ignored |
+| Injecting a DLL into `explorer.exe` with `SetWindowsHookEx(WH_GETMESSAGE)` on the `Shell_TrayWnd` thread, which then subclasses `Shell_TrayWnd` (`SetWindowLongPtr(GWLP_WNDPROC)`) and writes tray messages to a named pipe | `src/features/tray/win32/tray_hook.cpp` (`ExplorerInjector`), `src/features/tray/hook/trayhook.cpp` | design and DLL source from Python YASB 2.0.8; run live on Windows 11 build 26300, ARM64, 2026-10-29 (Explorer restart recovers; `wabarc quit` and a forced kill detach the DLL within 1 s) | `createTrayHost` returns no host (the tray stays empty) when the DLL is missing, the architecture is unsupported, the process runs under emulation or the pipe and mutex cannot be created; a failed injection retries every 5 s; the DLL detaches itself within 5 s when the host's watchdog mutex is released or abandoned, restoring the saved window procedure |
+| `DEVPKEY_Bluetooth_Battery` ({104EA319-6EE2-4701-BD47-8DDBF425BBE5}, 2), a PnP property key read with `CM_Get_DevNode_PropertyW` | `src/features/bluetooth/win32/bluetooth_win.cpp` (`readBattery`) | Windows 11 build 26300, ARM64 (key and layout from Python YASB) | read failure or non-byte type gives no battery value; the menu then shows no battery |
+| `KSPROPSETID_BtAudio` ({7FA06C40-B8F6-4C7E-8556-E8C33A12E54D}) one-shot ids 0 (reconnect) and 1 (disconnect) sent through `IKsControl::KsProperty` | `src/features/bluetooth/win32/bluetooth_win.cpp` (`setAudioConnection`) | key and ids from Python YASB; not exercised live on build 26300 | no KS filter or a refusing driver returns `no_ks_controls` / `oneshot_failed`; the menu shows "Failed to connect/disconnect device" |
+| `ntdll!RtlSubscribeWnfStateChangeNotification` / `RtlUnsubscribeWnfStateChangeNotification` (resolved with `GetProcAddress`, local function typedefs) with WNF state names `WNF_SHEL_NOTIFICATION_TOTAL` (0x0D83063EA3B8D035, Windows 11 toast total) and `WNF_SHEL_NOTIFICATIONS` (0x0D83063EA3BC1035, Windows 10 unread badge); the buffer is read as a `u32` count | `src/features/notifications/win32/notifications_system.cpp` | Windows 11 build 26300, ARM64 (names, signatures and buffer layout from Python YASB) | a missing symbol or a non-zero status for both names logs a warning and leaves the count at 0 (icon `default`); clearing still works through the documented `UserNotificationListener` |
+| `IPolicyConfig` ({f8679f50-850a-41cf-9c72-430f290290c8}) from `CLSID_PolicyConfigClient`, hand-laid vtable (`SetDefaultEndpoint` at slot 10 after `IUnknown`) | `src/features/audio/win32/audio_endpoints_win.cpp` (`setDefaultDevice`) | layout and ids from pycaw (same call Python YASB makes); not exercised live, so the default output is never changed by tests | `CoCreateInstance` or the call failing logs once and returns false; the source menu keeps the old default |
+| `IQuietHoursSettings` ({6BFF4732-81EC-4FFB-AE67-B6C1BC29631F}) from `CLSID_QuietHoursSettings` ({F53321FA-34F8-4B7F-B9A3-361877CB94CF}), `get_UserSelectedProfile` / `put_UserSelectedProfile` directly after `IUnknown`, profile ids `Microsoft.QuietHoursProfile.*` | `src/features/notifications/win32/dnd_win.cpp` | Windows 11 build 26300, ARM64 (read verified live: `disabled`); the write path is not exercised live | creation or read failure reports `unknown`, which the Do Not Disturb tile shows as active (as Python does); a failed write logs and the tile state is unchanged |
+| `ntdll!RtlSubscribeWnfStateChangeNotification` with WNF state name `WNF_SHEL_QUIETHOURS_ACTIVE_PROFILE_CHANGED` (0x0D83063EA3BF1C75), the callback ignores the buffer and re-reads the profile through `IQuietHoursSettings` | `src/features/notifications/win32/dnd_win.cpp` (`DndWatcher`) | name from Python YASB; not exercised live on 26300 | a missing symbol or a non-zero status logs a warning and the Do Not Disturb button then updates only on its own clicks |
 | `user32!SetWindowCompositionAttribute` with `WCA_ACCENT_POLICY` (19), local `AccentPolicy` / `CompositionAttribData` structs | `src/host/win32/backdrop.cpp` (`setAccentPolicy`) | Windows 11 build 26300, ARM64 | resolved with `GetProcAddress`; missing symbol or failure throws inside `enableBlur`, which catches and logs; bar keeps its plain background |
-| `ntdll!RtlGetVersion` (documented for drivers; used because `GetVersionEx` lies to unmanifested apps) | `src/kernel/win32/windows_build.cpp` (`windowsBuild`; users: `src/host/win32/backdrop.cpp`, `src/features/system_stats/win32/pdh.cpp` CPU counter choice, `features/control_center/win32/power_win.cpp` `isWindows10`) | Windows 11 build 26300, ARM64 | build 0: backdrop takes the pre-Windows 11 paths, PDH uses `% Processor Utility` and falls back to `% Processor Time` |
+| `ntdll!RtlGetVersion` (documented for drivers; used because `GetVersionEx` lies to unmanifested apps) | `src/kernel/win32/windows_build.cpp` (`windowsBuild`; users: `src/host/win32/backdrop.cpp`, `src/features/system_stats/win32/pdh.cpp` CPU counter choice, `src/features/control_center/win32/power_win.cpp` `isWindows10`) | Windows 11 build 26300, ARM64 | build 0: backdrop takes the pre-Windows 11 paths, PDH uses `% Processor Utility` and falls back to `% Processor Time` |
 | Numeric DWM attributes: `DWMWA_USE_IMMERSIVE_DARK_MODE` (20), `DWMWA_WINDOW_CORNER_PREFERENCE` (33), `DWMWA_BORDER_COLOR` (34), `DWMWA_SYSTEMBACKDROP_TYPE` (38), undocumented Mica attribute 1029, colour sentinels `0xFFFFFFFF`/`0xFFFFFFFE` | `src/host/win32/backdrop.cpp` | Windows 11 build 26300, ARM64 | gated on `windowsBuild()` (22000 / 22621); `DwmSetWindowAttribute` failures are caught and logged |
+
+## History
+
+wabar began as a C++ port of Python YASB. That port, built on Qt Widgets with YAML and CSS config,
+was retired at the git tag `yasb-native-final`; its records are in `docs/archive/`. wabar replaced it
+with a Qt Quick bar configured in QML, and in October 2026 the code was reorganised by capability
+into the units above (`docs/plans/2026-10-29-wabar-architecture-proposal.md`). Python YASB remains a
+reference for how Windows behaves, not for how wabar must behave.

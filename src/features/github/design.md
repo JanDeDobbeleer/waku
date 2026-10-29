@@ -1,8 +1,8 @@
 # wabar GitHub: design note
 
-Status: decisions taken, built in this pass. Sits on `spike/qt-quick-bar` next to the Notifications
-and Bluetooth widgets. Reference: Python YASB `yasb/github*` (branch `local/build`) and the Widgets
-build's `widgets/github/` and `features/github/github_api.*`.
+Status: built. Reference: Python YASB `yasb/github*` (branch `local/build`); the data layer
+(`github_api.*`) and the Qt Widgets widget that preceded wabar are at the git tag
+`yasb-native-final`.
 
 ## What the widget does
 
@@ -33,7 +33,7 @@ is seconds), `maxNotification`, `onlyUnread`, `showComments` (Python `show_comme
 | mark thread / all as read requests | `githubMarkThreadReadRequest`, `githubMarkAllReadRequest` | as is, sent with `sendHttpAsync` |
 | token file, device flow requests and parsers | `githubTokenFilePath`, `readGithubTokenFile`, `saveGithubTokenFile`, `githubDeviceCodeRequest`, `parseGithubDeviceCode`, `githubAccessTokenRequest`, `parseGithubAccessToken` | as is |
 | relative time, category titles, field truncation, category order, state classes | `features/github/github_format.*` (no UI) | as is |
-| `GithubWidget`, `GithubDataStore`, `GithubAuthDialog` | `widgets/github/` | not used: QWidgets. Their logic (unread count, mark read, ordering, poll skip while a fetch runs, device-flow loop) is ported to the service |
+| `GithubWidget`, `GithubDataStore`, `GithubAuthDialog` | the Widgets build (tag `yasb-native-final`) | not used: QWidgets. Their logic (unread count, mark read, ordering, poll skip while a fetch runs, device-flow loop) is ported to the service |
 | `wabar.services.GitHub` | `features/github/qml/github_service.*` | new: the singleton below |
 | `GitHub.qml` | `features/github/qml/` | new |
 
@@ -59,9 +59,10 @@ is seconds), `maxNotification`, `onlyUnread`, `showComments` (Python `show_comme
 
 The token is never in the config, in QML or in logs; `signedIn` is all QML sees.
 
-1. At start-up the service reads `YASB_GITHUB_TOKEN`, else the token file the Python build and the
-   Widgets build already use (`%LOCALAPPDATA%\YASB\github_token`). A user who signed in with either
-   build is signed in here.
+1. At start-up the service reads `WABAR_GITHUB_TOKEN`, else the token file `github_token` in
+   `%LOCALAPPDATA%\wabar`. The first start copies it from `%LOCALAPPDATA%\YASB` when the Python build
+   or the Widgets build wrote one there (`docs/architecture.md`, the kernel), so a user who signed in
+   with either is signed in here.
 2. Without a token no request is sent (as Python's skipped poll), `signedIn` is false and the
    popup offers "Sign in".
 3. `signIn()` runs the same OAuth device flow as Python's auth dialog: request a device code,

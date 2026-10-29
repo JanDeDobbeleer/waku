@@ -1,12 +1,13 @@
 # Agent guide (wabar)
 
-Read this before changing anything. It applies to every agent session and to humans. Background:
-`docs/architecture.md`, `docs/building.md`, `SECURITY.md`, `src/app/README.md`.
+Read this before changing anything. It applies to every agent session and to humans. It is the
+single source of truth for how to work in this repository. Background: `docs/architecture.md`,
+`docs/building.md`, `SECURITY.md`, `src/app/README.md`.
 
-wabar is a C++20/Qt 6.10 Qt Quick bar for Windows, configured in QML. The retired Qt Widgets build
-(yasb-native) is kept at the git tag `yasb-native-final` and in `docs/archive/`. Python YASB is a
-reference for how Windows behaves (undocumented APIs, edge cases), not a behavioural spec: nothing in
-this repository has to match it.
+wabar is a C++20/Qt 6.10 Qt Quick bar for Windows, configured in QML. Python YASB is a reference for
+how Windows behaves (undocumented APIs, edge cases), not a behavioural spec: nothing in this
+repository has to match it. The retired Qt Widgets build is at the git tag `yasb-native-final` and in
+`docs/archive/`.
 
 ## Build and test
 
@@ -46,24 +47,26 @@ cmd /c "call `"$vc\vcvarsarm64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset
 cmd /c "call `"$vc\vcvarsarm64_amd64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64-release && cmake --build --preset x64-release && ctest --test-dir build\x64-release --output-on-failure --timeout 120"
 ```
 
-The targets are `wabar` (the bar), `wabarc` (its console client), `WabarTrayHook[_arm64]` (the
-DLL injected into Explorer) and `wabar_tests` (all tests, defined in `tests/`). The `deploy` target assembles `dist/wabar`: the
-executables, the hook DLL, the Qt runtime (`windeployqt`), the built-in widget sources with `qmldir`
-and `.qmltypes` under `modules/` (read-only reference for `qmllint -I <dist>/wabar/modules`) and
-`examples/config`. `ctest` needs
-`QT_QPA_PLATFORM=offscreen`; the CMake test properties set it, so `ctest --test-dir` works without
-the test preset. Presets live in `CMakePresets.json`; `compile_commands.json` is written to
-`build\<preset>`.
+Targets: `wabar` (the bar), `wabarc` (its console client), `WabarTrayHook[_arm64]` (the DLL injected
+into Explorer), `wabar_tests` (all tests, defined in `tests/`) and `deploy` (assembles `dist/wabar`;
+see `docs/building.md`). `ctest` needs `QT_QPA_PLATFORM=offscreen`; the CMake test properties set
+it, so `ctest --test-dir` works without the test preset. Presets live in `CMakePresets.json`;
+`compile_commands.json` is written to `build\<preset>`.
 
 ## Definition of done
 
-`tools\check.ps1` exits 0. It runs the clang-format check, the `structure` check (rules S1-S8 of the
-architecture proposal), the json-subscript check, the `arm64-debug` build and `ctest`.
-`tools\check.ps1 -Fast` runs only the first three. Every own target builds with `/W4 /WX`.
+`tools\check.ps1` exits 0. Its steps, in order:
 
-`pwsh -NoProfile -File tools\check.ps1 -Analyze` runs the fast checks and opt-in local static
-analysis instead of tests, in an isolated build directory. It requires clang-tidy; see
-`docs/building.md`. Ordinary checks reset `WABAR_ANALYZE=OFF`; hooks remain fast-only.
+1. `format`: clang-format dry run over `src/` and `tests/`.
+2. `structure`: rules S1-S8 (below).
+3. `json-subscript`: no `const nlohmann::json::operator[]` in product code.
+4. `build`: configure and build the `arm64-debug` preset (own targets use `/W4 /WX`).
+5. `test`: `ctest` over `wabar_tests`.
+
+Options: `-Fast` runs steps 1-3 only; `-Staged` checks only the staged files (the pre-commit hook
+uses it); `-Analyze` runs steps 1-3 plus MSVC `/analyze` and clang-tidy in an isolated build
+directory instead of steps 4-5 (see `docs/building.md`). `-SkipFormat` and `-Preset <name>` also
+exist.
 
 Git hooks in `tools/hooks` run the fast checks on staged files and validate the commit message.
 Enable them once per clone:
@@ -75,18 +78,61 @@ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 `.git-blame-ignore-revs` lists mechanical formatting commits so `git blame` skips them.
 
-## Layering
+## Structure
 
+Layout: `src/{kernel,control,host,ui,features/<f>,app/<exe>}`, `tests/` (the test main and the
+cross-feature tests), `examples/config` (the sample config home), `cmake/`, `tools/`, `docs/`.
 Dependencies point one way: `app` -> `features` -> (`host`, `control`, `ui`) -> `kernel`. The
-`structure` step of `tools\check.ps1` enforces rules S1-S8 (includes, Windows and QML headers, QML use
-across features, `DEPENDS`) on `src/` and `tests/`. `cmake/wabar_feature.cmake` declares a feature
-(`wabar_feature(NAME <f> DEPENDS ... SOURCES ... WIN32_SOURCES ... QML_SOURCES ... QML_FILES ...
-TESTS ... SYSTEM_LIBS ...)`, one line in `src/features/CMakeLists.txt`), and
-`src/modules/qml_modules.cmake` builds the QML modules `wabar.services` and `wabar.widgets` from the
-contributions of `src/`. The executables are in `src/app/`; the sample config home is
-`examples/config`.
+include root is `src/`. Every unit is a static library or QML module; a feature is `wabar_<f>`.
 
-Details: `docs/architecture.md`.
+The `structure` step of `tools\check.ps1` enforces rules S1-S8. The rule text is the table at the top
+of that step in the script, which is exact; do not restate it here. In short:
+
+- S1: every file under `src/` belongs to exactly one unit and is listed in its `CMakeLists.txt`.
+- S2: includes are rooted at `src/` and stay inside the unit, `kernel/`, `control/` and the root
+  headers of `DEPENDS` features.
+- S3, S4: Windows SDK and WinRT headers only in `win32/` folders (and the tray hook, `app/`,
+  tests); `QtQml`/`QtQuick` and `QML_*` macros only in `qml/` folders (and `testing/`, `app/`,
+  tests); `QtWidgets` nowhere.
+- S5: only tests include `testing/` (fakes).
+- S6, S7: a feature's QML uses services and widgets of its own feature or its `DEPENDS` only;
+  QML-facing header names are unique.
+- S8: `DEPENDS` names existing features and has no cycle.
+
+Design and the dependency table: `docs/architecture.md`.
+
+## Adding a feature
+
+1. Create `src/features/<f>/` with only the folders it needs: the root (domain: interfaces, value
+   types, UI-free logic; Qt Core/Gui only), `win32/` (Windows implementation, `_win` suffix where a
+   root header has the same name), `qml/` (QML-facing C++ and the widgets' `.qml`), `testing/`
+   (header-only fakes), `tests/` (gtest) and `hook/` only for a separate DLL.
+2. Write `src/features/<f>/CMakeLists.txt` with one `wabar_feature(NAME <f> ...)` call (arguments are
+   in the comment at the top of `cmake/wabar_feature.cmake`). Name every file; the folder name
+   equals `NAME`.
+3. Add `add_subdirectory(<f>)` to `src/features/CMakeLists.txt`, below every feature in its
+   `DEPENDS`.
+4. Declare `DEPENDS` for each feature whose root headers or QML types you use. Add only edges that
+   exist; the table in `docs/architecture.md` lists them.
+5. QML contributions go in `QML_SOURCES` (services, compiled into `wabar.services`) and `QML_FILES`
+   (widgets, compiled into `wabar.widgets`). Give each new `.qml` and header a basename that is
+   unique in its module. Do not edit `src/modules/`.
+6. Put the interface behind a root header and the real thing in `win32/`, so tests use a fake from
+   `testing/`. Tests go in `tests/` (`TESTS`), named after the feature (`TrayModel...`) so
+   `ctest -R Tray` selects them.
+7. Write `design.md` in the feature folder: what it is for, the decisions, the open points.
+8. Update `docs/architecture.md` in the same commit: a row in the dependency table, one per new
+   thread, one per new singleton, one per undocumented Windows API. Add the feature name to the
+   commit scopes in `tools/hooks/commit-msg` and to this file.
+9. Run `tools\check.ps1`.
+
+## The kernel
+
+`src/kernel/` is for helpers that meet all three tests: two or more units use it today (not
+"might"), it has no domain knowledge (no "tray", "komorebi", "wallpaper"), and it changes for reasons
+outside any one feature. A helper with one user lives in that user. A pull request that adds a kernel
+file names its two users in the description. The kernel links Qt Core and Gui only; the Windows SDK
+only under `kernel/win32/`.
 
 ## Style
 
@@ -95,11 +141,14 @@ Details: `docs/architecture.md`.
   `C:\Program Files\LLVM\bin`.
 - Members use a trailing underscore: `name_`. Do not add new `m_name` members.
 - Includes are rooted at `src/`: `#include "kernel/qt/app_data.h"`, never `"app_data.h"`.
+- C++ namespaces are `wabar::<unit>`: `kernel`, `control`, `host` or the feature name.
 - Qt string literals: `QStringLiteral("...")`. Do not introduce `u"..."_s` or `QLatin1String` in new
   code except where an API needs a Latin-1 view.
 - `NOMINMAX`, `WIN32_LEAN_AND_MEAN`, `UNICODE` come from the `wabar_options` target; do not redefine
   them locally.
-- `.editorconfig` defines whitespace and line endings: CRLF for C++ sources and docs, LF for QML.
+- `.editorconfig` defines whitespace and line endings: CRLF for C++ sources and docs, LF for QML and
+  the git hooks.
+- Prose (docs, comments, commit messages): short sentences, active voice, no filler, no emoji.
 
 ## Error handling
 
@@ -116,8 +165,10 @@ fine. Never use the `const` `nlohmann::json::operator[]` on a key that may be mi
   user's real config (`%USERPROFILE%\.config\wabar`) and never write to that folder.
 - Tests never touch the user's real bar, wallpaper, tray or Explorer. Use `--no-tray` so a test run
   never hooks Explorer, and never change the wallpaper outside a `--dry-run`.
-- A regular start reserves screen work area. `--register-app-bar` forces that for isolated runs,
-  `--safe` starts the built-in bar and ignores the config.
+- Services ask `kernel::liveDesktop()` before touching the machine; it is false on the offscreen
+  platform. No service tests `platformName()` itself.
+- No bar reserves screen work area unless `--register-app-bar` is passed, so a test or tool run
+  leaves the desktop layout alone. `--safe` starts the built-in bar and ignores the config.
 
 ## Undocumented Windows APIs
 

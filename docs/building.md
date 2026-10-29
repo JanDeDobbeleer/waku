@@ -30,9 +30,45 @@ cmd /c "call `"$vc`" arm64_amd64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64
 On an x64 host use `vcvarsall.bat x64` and the same presets.
 
 Everything lands in `build\<preset>`: `wabar.exe`, `wabarc.exe`, the tray hook DLL next to them and
-`wabar_tests.exe` with the Qt DLLs and the offscreen platform plugin that `windeployqt`
-copies next to it. The unpackaged debug build runs from that folder. `src/app/README.md` explains how
-to run the bar and `wabarc`.
+`wabar_tests.exe` with the Qt DLLs and the offscreen platform plugin that `windeployqt` copies next
+to it. The targets are `wabar`, `wabarc`, `WabarTrayHook` (`WabarTrayHook_arm64` on ARM64),
+`wabar_tests` and `deploy`; select one with `cmake --build --preset <preset> --target <name>`.
+
+## Run
+
+Run `wabar` from the build folder. It needs a config home: a folder with `bar.qml` (and optionally
+`theme.qml` and `widgets/`). The repository has a sample in `examples/config`.
+
+```powershell
+build\arm64-debug\wabar.exe --config-home examples\config
+build\arm64-debug\wabarc.exe --config-home examples\config status
+```
+
+`wabar.exe` flags:
+
+| Flag | Effect |
+|---|---|
+| `--config-home <dir>` | The config home. Default: `$WABAR_CONFIG_HOME`, else the `examples/config` of the checkout the build came from. |
+| `--register-app-bar` | Let bars that ask (`reserveSpace`) reserve screen work area. Without it no bar reserves space. |
+| `--safe` | Start the built-in bar with the default theme and ignore the config home. |
+| `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
+| `--help` | Print the options. |
+
+`wabarc.exe` talks to the bar that runs for the same config home (`--config-home <dir>` or
+`WABAR_CONFIG_HOME`):
+
+| Command | Effect |
+|---|---|
+| `wabarc reload` | Reload the config of the running bar. |
+| `wabarc status` | Print what the bar is doing. |
+| `wabarc quit` | Stop the bar. |
+| `wabarc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
+| `wabarc wallpaper random`, `next`, `previous` | Pick from the wallpaper folder; `next` and `previous` wrap. |
+| `wabarc wallpaper gallery` | Open or close the wallpaper picker. |
+
+`--dry-run` after `wallpaper` (not `gallery`) plays the animation without setting the wallpaper.
+Exit codes: 0 ok, 1 the bar answered an error, 2 no bar is running, 3 usage error. More on running
+the bar: `src/app/README.md`.
 
 ## Tray hook DLL
 
@@ -50,13 +86,23 @@ platform. Pass `--no-tray` to `wabar.exe` for runs that must not hook Explorer.
 ## Deploy
 
 `cmake --build --preset <preset> --target deploy` assembles a portable folder, `dist/wabar` by
-default (`-DWABAR_DIST_DIR=...` changes it; `dist/` is not tracked): `wabar.exe`, `wabarc.exe`, the
-tray hook DLL, the Qt runtime from `windeployqt` (scanning `src/` for QML imports), `examples/config`
-and `modules/`, the built-in widgets as a read-only reference. `modules/wabar/` holds the host QML
-files, `modules/wabar/widgets/` the widget `.qml` files and `modules/wabar/services/` the service
-types, each with `qmldir` and `.qmltypes`. The widgets stay compiled into `wabar.exe`; copy one into
+default (`-DWABAR_DIST_DIR=...` changes it; `dist/` is not tracked):
+
+```
+dist/wabar/
+  wabar.exe, wabarc.exe, WabarTrayHook[_arm64].dll
+  <Qt runtime>                  from windeployqt, scanning src/ for QML imports
+  examples/config/              the sample config home
+  modules/wabar/                the host QML files, qmldir and .qmltypes (module `wabar`)
+  modules/wabar/widgets/        the built-in widget .qml files, qmldir, .qmltypes (`wabar.widgets`)
+  modules/wabar/services/       qmldir and .qmltypes of the C++ services (`wabar.services`)
+```
+
+The widgets stay compiled into `wabar.exe`; `modules/` is a read-only reference. Copy a widget into
 the config home's `widgets/` folder to change it, and lint it with
-`qmllint -I <dist>/wabar/modules widgets/Clock.qml`. It never touches an installed or running copy.
+`qmllint -I <dist>/wabar/modules widgets/Clock.qml`. The target never touches an installed or
+running copy. Note that a copy of `wabar.exe` outside the checkout has no sample config to fall back
+on: pass `--config-home`.
 
 ## Checks
 
@@ -66,12 +112,23 @@ the config home's `widgets/` folder to change it, and lint it with
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1          # everything
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast    # format + structure + json-subscript
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast -Staged  # the same on staged files only
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -SkipFormat -Preset arm64-release
 pwsh -NoProfile -File tools\check.ps1 -Analyze                       # local static analysis
 ```
 
-Configure also writes `build\<preset>\compile_commands.json` for clang tooling. Git hooks live in
-`tools\hooks`; enable them with `git config core.hooksPath tools/hooks`.
+Configure also writes `build\<preset>\compile_commands.json` for clang tooling.
+
+### Git hooks
+
+The hooks in `tools\hooks` are `pre-commit` (runs `check.ps1 -Fast -Staged`) and `commit-msg`
+(checks the conventional-commit subject and its scope; the list is in `AGENTS.md`). Enable them once
+per clone, together with the blame setting:
+
+```powershell
+git config core.hooksPath tools/hooks
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
 
 ### Local static analysis
 

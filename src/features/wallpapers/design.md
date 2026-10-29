@@ -1,13 +1,13 @@
 # wabar Wallpapers widget: design note
 
-Date: 2026-10-29. Branch `spike/qt-quick-bar`. Reference: Python YASB `wallpapers` widget and the
-Qt Widgets port in `widgets/wallpapers/`.
+Date: 2026-10-29. Reference: Python YASB `wallpapers` widget (the Qt Widgets port that preceded
+wabar is at the git tag `yasb-native-final`).
 
 ## What it does
 
 Python's wallpapers widget does four things: an optional bar button, a gallery of the wallpapers in
 `image_path`, a hotkey that toggles the gallery, and an animated change (`engine`). wabar ships the
-first three plus an optional random timer. The animation is deferred (see below).
+first three plus an optional random timer, and the animation (see "Transition engine").
 
 The user's config (`label ""`, `image_path ~/.config/wallpapers`, gallery `strip`, portrait, 240 px,
 accent `#fff`, radius 0, `alt+e` on the cursor screen) needs no bar button. The widget stays loaded
@@ -22,9 +22,9 @@ No wallpaper logic is re-implemented. The `Wallpapers` singleton wraps the UI-fr
 - `collectImageFiles` / `imagePathsFrom` (`wallpaper_files`): the folder scan in Explorer name order.
 - `ThumbnailCache`: PNG thumbnails, keyed by file identity and size, under
   `%LOCALAPPDATA%\wabar\wallpaper_thumbnails`.
-- `platform::DesktopWallpaperBackend` (`IDesktopWallpaper`): reads the current wallpaper and, through
+- `wallpapers::DesktopWallpaperBackend` (`desktop_wallpaper.h`, `IDesktopWallpaper`): reads the current wallpaper and, through
   the manager, sets it. Tests give both a fake.
-- `platform::foregroundMonitorRect()` for the `active` screen mode.
+- `wallpapers::foregroundMonitorRect()` (`win32/window_focus.h`) for the `active` screen mode.
 
 ## QML-facing API (`wabar.services.Wallpapers`, singleton)
 
@@ -52,13 +52,13 @@ Qt Quick window.
    makes "click outside closes" a plain mouse area. Escape, Enter, arrows, losing focus close or move.
 2. **Open on the cursor screen.** `hotkeyScreen` follows Python: `cursor`, `primary`, `active`
    (foreground window's monitor); anything else means primary.
-3. **Hotkey: `RegisterHotKey` on the GUI thread.** The Widgets build's `HotkeyService` lives in
-   `app/` (it needs the event bus and a thread), which `spike/` must not include. The service
+3. **Hotkey: `RegisterHotKey` on the GUI thread.** The Widgets build's `HotkeyService` lived in
+   `app/` (it needed the event bus and a thread), which a feature must not include. The service
    registers one hotkey with a null window handle and a `QAbstractNativeEventFilter` receives
    `WM_HOTKEY` in Qt's own message loop. No new thread and no hidden window. `RegisterHotKey` is
    documented, so no allowlist row. If the combination is taken the service logs a warning and the
-   gallery stays reachable through the bar button. Never registered offscreen, in tests, or after
-   `setDisabled(true)`.
+   gallery stays reachable through the bar button. Never registered offscreen, in tests, or when
+   `kernel::liveDesktop("wallpapers")` is false.
 4. **Thumbnails load asynchronously.** The provider has `ForceAsynchronousImageLoading`, so Qt
    decodes on its image-reader thread. The provider holds only the immutable cache object and reads
    files; it touches no service state.
@@ -71,10 +71,10 @@ Qt Quick window.
 ## Transition engine (Qt Quick)
 
 The animated change (`engine`, `animation`) is ported from the `QWidget` `WallpaperEngine` to Qt Quick,
-so the wabar wallpaper widget needs no Qt Widgets code. The old engine stays in the Widgets build
-until that build is retired.
+so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the Widgets build
+(git tag `yasb-native-final`).
 
-- **Approach.** `spike/services/wallpaper_transition.*`: `WallpaperTransition` owns a frameless,
+- **Approach.** `qml/wallpaper_transition.*`: `WallpaperTransition` owns a frameless,
   input-transparent `QQuickWindow` and one `WallpaperScene` (a `QQuickPaintedItem`, built in C++: no QML file, the
   reveal shapes come from `revealPath`) that draws, for
   every monitor area, the old image and then the new image clipped by the reveal shape at
@@ -85,7 +85,7 @@ until that build is retired.
   during the animation cancels it (no commit for the cancelled one) and starts the next.
 - **Reused.** `wallpaper_layout` (`layoutForScreens`, `revealPath`, `readDesktopSettings`): the same
   per-monitor areas, fit modes (fill, fit, stretch, tile, center, span) and reveal shapes as the old
-  engine. `platform::attachToWorkerW` and `transcodedWallpaperPath` for the Win32 side: no Win32 is
+  engine. `attachToWorkerW` and `transcodedWallpaperPath` (`win32/workerw.h`) for the Win32 side: no Win32 is
   duplicated and no undocumented API is added.
 - **Threads.** GUI thread. One short-lived `QThread` decodes the new image and the old one (the
   transcoded wallpaper); it touches no Qt Quick object and is joined before the transition is
@@ -109,7 +109,7 @@ until that build is retired.
 
 ## No widget: `WallpaperSettings` and `wabarc wallpaper`
 
-- **`WallpaperSettings`** (`wabar.services`, `spike/services/wallpaper_settings.*`) is a non-visual QML
+- **`WallpaperSettings`** (`wabar.services`, `qml/wallpaper_settings.*`) is a non-visual QML
   type declared next to the bars: `Config { WallpaperSettings { imagePath: ...; hotkey: "alt+e";
   engine: true; animation: "split" } Bar { ... } }`. It has `imagePath`, `hotkey`, `hotkeyScreen`,
   `autoChange`, `engine`, `animation` and the gallery look (`imageWidth`, `orientation`,

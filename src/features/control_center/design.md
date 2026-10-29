@@ -1,12 +1,12 @@
 # Wabar ControlCenter widget: design
 
-Date: 2026-10-29. Branch `spike/qt-quick-bar`. Reference: Python YASB `control_center` and the Qt
-Widgets port in `widgets/control_center/`.
+Date: 2026-10-29. Reference: Python YASB `control_center` (the Qt Widgets port that preceded it is
+at the git tag `yasb-native-final`).
 
 Layout (feature `control_center`, namespace `wabar::control_center`): `power.h`, `app_theme.h`,
 `touch_keyboard.h` and `user_info.h` at the root with their Windows code in `win32/`; the
 service and widget in `qml/`; the test in `tests/`. DEPENDS audio media notifications brightness:
-the DND state comes from `features/notifications/dnd.h`, the slider from `features/brightness/brightness.h`.
+the DND state comes from `features/notifications/dnd.h`, the brightness control from `features/brightness/brightness.h`.
 
 ## What it does
 
@@ -31,12 +31,12 @@ A right click on the button opens the Settings app.
 | Volume, mute, devices (output and input) | `AudioOutput`, `AudioInput` singletons (`audio_service`) |
 | Track, transport buttons | `Media` singleton (`media_service`) |
 | Slider, button, popup | `Slider.qml`, `Pill.qml`, `PopupWindow.qml` |
-| Brightness (DDC/CI, scheme panel) | `platform::BrightnessControl` (`createSystemBrightness`) |
-| Focus Assist read, write, watcher | `platform::dndStatus`, `setDndStatus`, `DndWatcher` |
-| Dark mode | `platform::themeMode`, `toggleThemeMode` |
-| Touch keyboard, URI launch | `platform::toggleTouchKeyboard`, `shellOpen` |
-| Power plans and modes, session actions | `platform::powerPlans`, `powerModes`, `lockWorkstation`, `suspendSystem`, `hibernateSystem`, `runShutdown` |
-| User name and picture | `platform::windowsUsername`, `userAvatarPath` |
+| Brightness (DDC/CI, scheme panel) | `brightness::BrightnessControl` (`createSystemBrightness`) |
+| Focus Assist read, write, watcher | `notifications::dndStatus`, `setDndStatus`, `DndWatcher` |
+| Dark mode | `control_center::themeMode`, `toggleThemeMode` |
+| Touch keyboard, URI launch | `control_center::toggleTouchKeyboard`, `kernel::shellOpen` |
+| Power plans and modes, session actions | `control_center::powerPlans`, `powerModes`, `lockWorkstation`, `suspendSystem`, `hibernateSystem`, `runShutdown` |
+| User name and picture | `control_center::windowsUsername`, `userAvatarPath` |
 
 No new platform code and no new undocumented API: every call is already on the allowlist in
 `docs/architecture.md`.
@@ -108,7 +108,7 @@ list) and `SliderRow`. Options: `glyph`, `sectionsOrder`, `quickActions`, `colum
 
 ## Tests
 
-`tests/test_control_center.cpp` covers the service with a fake backend, launcher and
+`src/features/control_center/tests/test_control_center.cpp` covers the service with a fake backend, launcher and
 brightness control: DND toggle and cycle, external DND events, theme and keyboard, screenshot and
 `ms-settings:` filtering, brightness read, write, clamp and source switch, power plan and mode
 lists and failures, unsupported modes, immediate versus confirmed actions, cancel, unknown

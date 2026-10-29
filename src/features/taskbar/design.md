@@ -1,8 +1,8 @@
 # wabar taskbar: design note
 
-Status: decisions taken, built in this pass. Sits on `spike/qt-quick-bar` next to the Tray widget
-(`2026-10-28-wabar-systray-plan.md`). Reference: Python YASB `yasb/taskbar*` (branch `local/build`)
-and the Widgets build's `widgets/taskbar/`.
+Status: built. Sits next to the Tray widget (`src/features/tray/design.md`). Reference: Python YASB
+`yasb/taskbar*` (branch `local/build`); the Qt Widgets taskbar that preceded wabar is at the git tag
+`yasb-native-final`.
 
 ## What the widget does
 
@@ -31,21 +31,21 @@ Options (Python names, camel case): `iconSize`, `tooltip`, `showOnlyVisible`, `s
 
 ## What is reused and what is new
 
-| Piece | Where | Layer | Use |
+| Piece | Where (`src/features/taskbar/`) | Layer | Use |
 |---|---|---|---|
-| `WindowTracker` (shell hook, WinEvent hooks, taskbar-window policy, active and flash state) | `platform/window_tracker.*` | platform | as is, one per run, owned by the service |
-| `WindowSystem` (query, focus, minimise, close, app id, icon) | `platform/window_system*.h` | platform | as is; tests substitute a fake |
-| `PinSupport` (pin metadata, launch, pinned icons) | `platform/pin_support.*` | platform | as is; tests substitute a fake |
-| `PinStore` (taskbar_pinned.json, change signal) | `widgets/taskbar/pin_store.*` | widgets (no UI) | as is |
-| `TaskbarIcons` (icon loader on a worker thread, cache), `loadPinnedIcon` | `widgets/taskbar/taskbar_icons.*` | widgets (no UI) | as is |
-| `TaskbarService` (singleton) | `spike/services/taskbar_service.*` | wabar.services | new: tracker + pin store + icons + the focus/close/pin actions |
-| `TaskbarModel` (per widget) | `spike/services/taskbar_model.*` | wabar.services | new: filters and groups the service's windows into button rows |
-| `WindowIconProvider` | `spike/services/taskbar_service.*` | wabar.services | new: `image://windowicon/<key>/<rev>` |
-| `Taskbar.qml` | `spike/widgets/` | wabar.widgets | new |
+| `WindowTracker` (shell hook, WinEvent hooks, taskbar-window policy, active and flash state) | `window_tracker.*`, `win32/window_tracker_hooks_win.cpp` | root, `win32/` | one per run, owned by the service |
+| `WindowSystem` (query, focus, minimise, close, app id, icon) | `window_system.h`, `win32/window_system_win.cpp` | root, `win32/` | tests substitute `testing/fake_window_system.h` |
+| `PinSupport` (pin metadata, launch, pinned icons) | `pin_support.h`, `win32/pin_support_win.cpp` | root, `win32/` | tests substitute a fake |
+| `PinStore` (taskbar_pinned.json, change signal) | `pin_store.*` | root (no UI) | as is |
+| `TaskbarIcons` (icon loader on a worker thread, cache), `loadPinnedIcon` | `taskbar_icons.*` | root (no UI) | as is |
+| `TaskbarService` (singleton) | `qml/taskbar_service.*` | `qml/` (`wabar.services`) | tracker + pin store + icons + the focus/close/pin actions |
+| `TaskbarModel` (per widget) | `qml/taskbar_model.*` | `qml/` (`wabar.services`) | filters and groups the service's windows into button rows |
+| `WindowIconProvider` | `qml/taskbar_service.*` | `qml/` (`wabar.services`) | `image://windowicon/<key>/<rev>` |
+| `Taskbar.qml` | `qml/` | `qml/` (`wabar.widgets`) | the widget |
 
-The Widgets classes `TaskbarWidget`, `AppButton`, `TaskbarMenu` and `PreviewManager` are QWidgets
-and are not used; their logic (filter, group key, `bringToForeground`, pin/unpin) is ported to
-the service and the model, not re-invented.
+The classes of the Widgets build (`TaskbarWidget`, `AppButton`, `TaskbarMenu`, `PreviewManager`) were
+QWidgets and are not used; their logic (filter, group key, `bringToForeground`, pin/unpin) is ported
+to the service and the model, not re-invented.
 
 ## QML-facing API
 
@@ -70,7 +70,7 @@ appeared.
    menu alive.
 2. **The service is not default-constructible** (Qt prefers a singleton's default constructor to
    `create()`, and `create()` registers the image provider). Same seam as `Systray`:
-   `setFactoryForTests`, `setDisabled`.
+   `setFactoryForTests`; `kernel::liveDesktop()` gates the real tracker.
 3. **Icons through an image provider** with the same shape as `image://tray`: the service keeps the
    32 px image of each key and a revision that is bumped when an asynchronous load finishes, so
    QML reloads exactly that icon. A pinned app that does not run uses a service-assigned
@@ -81,22 +81,22 @@ appeared.
    windows.
 5. **Middle click closes** (Python has no default for it; the brief asked for close or launch).
 6. **Pins are written only from the menu.** Reorder by drag is out of scope, as for the tray;
-   the order is the file's order and the Widgets build can still reorder it.
-7. **No new Windows API.** Everything goes through `platform/`; nothing is added to the
-   undocumented-API allowlist.
+   the order is the file's order.
+7. **No new Windows API.** Everything goes through the `win32/` implementations of the root
+   interfaces; nothing is added to the undocumented-API allowlist.
 
-## Left out in this pass
+## Left out
 
-- **Hover preview and peek** (`preview.*`): the Widgets build draws DWM thumbnails into child
-  QWidgets and reorders a live-preview peek window. A Qt Quick window has no per-item native
+- **Hover preview and peek** (`preview.*`): the Python build and the Widgets build draw DWM
+  thumbnails into child widgets and reorder a live-preview peek window. A Qt Quick window has no per-item native
   child to register a thumbnail against; this needs its own design (a transparent window per
   thumbnail, with the thumbnail registered against it and cropped to the item). Deferred, not
-  faked: the options are accepted by the config layer but have no effect, and a click on a group
-  cycles instead of opening a preview.
+  faked: the options are not read, and a click on a group cycles instead of opening a preview.
 - **Animation** of buttons being added and removed, the title label (`title_label`), drag reorder,
   the Recycle Bin pin, Explorer quick-access and "New window" jump list entries, "End task",
   keybindings and `on_*` callbacks, `ignore_apps` as one nested object (three flat lists
   instead).
-- A `--no-taskbar` switch: `TaskbarService::setDisabled(bool)` exists; wiring it to the command
-  line is `spike/main.cpp`'s job.
-- Live check against real windows (the orchestrator's live phase). Tests run on fakes only.
+- A `--no-taskbar` switch: `src/app/wabar/main.cpp` would call
+  `kernel::setCapabilityDisabled("taskbar", true)` and the service would ask
+  `kernel::liveDesktop("taskbar")`.
+- Live check against real windows. Tests run on fakes only.

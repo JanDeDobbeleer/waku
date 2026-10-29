@@ -18,13 +18,16 @@ to Waybar, the bar for Wayland. It is written in lower case and plain ASCII in c
   folder, hotkey and animation come from a `WallpaperSettings { ... }` next to the bars in `bar.qml`
   (`import wabar.services as S`, then `S.WallpaperSettings`: the services share names with the
   widgets, so import them under an alias) or from a `Wallpapers` widget.
-- Config home: `%USERPROFILE%\.config\wabar\` (`bar.qml`, `theme.qml`, your own widgets), or
-  `--config-home <dir>` / `WABAR_CONFIG_HOME`. Edit and save: the bars reload.
+- Config home: a folder with `bar.qml`, optionally `theme.qml` and your own widgets in `widgets/`.
+  Select it with `--config-home <dir>` or `WABAR_CONFIG_HOME`; without either, `wabar` and `wabarc`
+  use the `examples/config` of the checkout they were built from. A personal config
+  conventionally lives in `%USERPROFILE%\.config\wabar`; pass that folder with `--config-home`.
+  Edit and save: the bars reload.
 - QML modules: `wabar` (Config, Bar, BarLayout, Theme), `wabar.widgets` (the built-in widgets) and
   `wabar.services` (the C++ data sources).
 - `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
   the built-in bar and ignores the config.
 
-Design notes and plans are in [docs/plans](../../docs/plans). The sample config is in
-[examples/config](../../examples/config); a development build uses it when neither `--config-home`
-nor `WABAR_CONFIG_HOME` is given.
+The architecture is in [docs/architecture.md](../../docs/architecture.md), the build and every flag
+in [docs/building.md](../../docs/building.md), and dated plans in [docs/plans](../../docs/plans/README.md).
+The sample config is in [examples/config](../../examples/config).
