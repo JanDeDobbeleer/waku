@@ -12,9 +12,6 @@ wabar_contribute(
   SERVICES_LIBS wabar_audio wabar_bluetooth wabar_brightness wabar_notifications yasb_platform yasb_widgets wabar_control wabar_kernel
 )
 
-# wabar_control: the pipe between a running bar and wabarc.
-add_subdirectory(control)
-
 # wabar: Config, Bar, BarLayout and the host.
 add_subdirectory(bar)
 

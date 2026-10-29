@@ -127,10 +127,10 @@ until that build is retired.
   one or the other: both create a gallery and two would open at once.
 - **CLI.** `wabarc wallpaper set|random|next|previous [--dry-run]` and `gallery`. The client sends one
   line; arguments with spaces are quoted by doubling (`"a ""b"" c"`, no backslash escapes, so a
-  Windows path is left alone: `joinCommand`/`splitCommand` in `spike/control/control.h`). A relative
+  Windows path is left alone: `joinCommand`/`splitCommand` in `control/control.h`). A relative
   path with a folder part is made absolute by the client; a bare name is looked up in the folder.
   The handler parses `wallpaper <verb> [--dry-run] [arg]` and calls the `wabar::WallpaperControl`
-  interface (`spike/control/wallpaper_control.h`), which `Wallpapers` implements and tests fake. The
+  interface (`control/wallpaper_control.h`), which `Wallpapers` implements and tests fake. The
   service is looked up when a command arrives, so a bar without wallpaper settings builds it only
   on the first command.
 - **Answers.** `ok: <full path>` once the change has started (the animation may still run), `ok:

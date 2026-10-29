@@ -2,8 +2,8 @@
 
 #include <functional>
 
-#include "spike/control/control.h"
-#include "spike/control/wallpaper_control.h"
+#include "control/control.h"
+#include "control/wallpaper_control.h"
 
 namespace wabar {
 

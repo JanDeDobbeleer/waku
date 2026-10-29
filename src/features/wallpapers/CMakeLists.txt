@@ -1,7 +1,7 @@
 # wallpapers: the wallpaper folder, set and cycle wallpapers, the picker gallery and its hotkey, and
 # the animated change (a Qt Quick overlay on WorkerW). No dependencies on other features.
-# The service implements wabar::WallpaperControl, which still lives in spike/control/ (the control
-# unit moves later) and is included from there.
+# The service implements wabar::WallpaperControl (control/wallpaper_control.h), the interface the
+# bar's control handler calls.
 wabar_feature(
   NAME wallpapers
   SOURCES
@@ -48,3 +48,6 @@ wabar_feature(
 
 # wallpaper_files.h names nlohmann::json in its API.
 target_link_libraries(wabar_wallpapers PUBLIC nlohmann_json::nlohmann_json)
+
+# qml/wallpapers_service.h includes control/wallpaper_control.h.
+target_link_libraries(wabar_wallpapers PUBLIC wabar_control)

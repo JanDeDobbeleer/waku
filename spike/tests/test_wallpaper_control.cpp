@@ -12,12 +12,12 @@
 #include <memory>
 #include <vector>
 
+#include "control/control.h"
+#include "control/wallpaper_control.h"
 #include "features/wallpapers/qml/wallpaper_transition.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/testing/fake_wallpaper_backend.h"
 #include "spike/bar/control_handler.h"
-#include "spike/control/control.h"
-#include "spike/control/wallpaper_control.h"
 #include "spike/tests/bar_fixtures.h"
 
 namespace {
@@ -192,40 +192,6 @@ QString wabarcPath() {
 }
 
 }  // namespace
-
-// ---- quoting ----
-
-TEST(WallpaperQuoting, JoinQuotesWhatNeedsIt) {
-  EXPECT_EQ(wabar::joinCommand({QStringLiteral("wallpaper"), QStringLiteral("set"),
-                                QStringLiteral("C:\\a b\\c.png")}),
-            QStringLiteral("wallpaper set \"C:\\a b\\c.png\""));
-  EXPECT_EQ(wabar::joinCommand({QStringLiteral("x"), QString()}), QStringLiteral("x \"\""));
-  EXPECT_EQ(wabar::quoteArgument(QStringLiteral("say \"hi\"")),
-            QStringLiteral("\"say \"\"hi\"\"\""));
-  EXPECT_EQ(wabar::quoteArgument(QStringLiteral("C:\\plain\\path.png")),
-            QStringLiteral("C:\\plain\\path.png"));
-}
-
-TEST(WallpaperQuoting, SplitIsTheInverseOfJoin) {
-  const QStringList words{QStringLiteral("wallpaper"),
-                          QStringLiteral("set"),
-                          QStringLiteral("C:\\My Pictures\\a \"best\" one.png"),
-                          QString(),
-                          QStringLiteral("D:\\dir with space\\"),
-                          QStringLiteral("tab\there")};
-  QStringList back;
-  ASSERT_TRUE(wabar::splitCommand(wabar::joinCommand(words), &back));
-  EXPECT_EQ(back, words);
-}
-
-TEST(WallpaperQuoting, SplitHandlesPlainQuotedAndBrokenLines) {
-  QStringList words;
-  ASSERT_TRUE(wabar::splitCommand(QStringLiteral("  a   \"b c\"d  \"\"  "), &words));
-  EXPECT_EQ(words, (QStringList{QStringLiteral("a"), QStringLiteral("b cd"), QString()}));
-  ASSERT_TRUE(wabar::splitCommand(QString(), &words));
-  EXPECT_TRUE(words.isEmpty());
-  EXPECT_FALSE(wabar::splitCommand(QStringLiteral("a \"b c"), &words));
-}
 
 // ---- the handler on a fake service ----
 

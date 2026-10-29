@@ -235,7 +235,7 @@ Write-Step 'structure (S1-S8; enforcing under src/ and tests/, report-only for l
 $sw = [Diagnostics.Stopwatch]::StartNew()
 $structureRules = [ordered]@{
     S1 = 'every source under src/ belongs to exactly one unit and is declared by it'
-    S2 = 'quoted includes: own unit, kernel/, root headers of DEPENDS features; host also control/; app/ and tests/ free'
+    S2 = 'quoted includes: own unit, kernel/, root headers of control/ and of DEPENDS features; host also control/; app/ and tests/ free'
     S3 = 'Windows SDK and C++/WinRT headers only in */win32/**, features/tray/hook/, app/, tests'
     S4 = 'QtQml/QtQuick includes and QML_* macros only in */qml/**, app/, tests; QtWidgets nowhere'
     S5 = 'only */tests/** and tests/ include */testing/**'
@@ -444,6 +444,9 @@ foreach ($f in $checkFiles) {
             }
             if ($inc.StartsWith("$unit/") -or $inc.StartsWith('kernel/')) { continue }
             if ($unit -eq 'host' -and $inc.StartsWith('control/')) { continue }
+            # control/ root headers (the interfaces the bar's handler calls, such as WallpaperControl) are a
+            # stable shared abstraction: a feature may implement them without a DEPENDS edge.
+            if ($feature -and $inc -match '^control/[^/]+$') { continue }
             $ok = $false
             if ($feature -and $inc -match '^features/([^/]+)/(.+)$') {
                 $d = $Matches[1]; $rest = $Matches[2]

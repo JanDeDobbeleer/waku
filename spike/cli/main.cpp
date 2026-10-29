@@ -25,7 +25,7 @@
 #include <QDir>
 #include <cstdio>
 
-#include "spike/control/control.h"
+#include "control/control.h"
 
 namespace {
 

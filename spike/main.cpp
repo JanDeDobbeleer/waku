@@ -3,11 +3,11 @@
 #include <QQmlEngine>
 #include <QQuickWindow>
 
+#include "control/control.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "kernel/qt/live_desktop.h"
 #include "spike/bar/bar_host.h"
 #include "spike/bar/control_handler.h"
-#include "spike/control/control.h"
 
 int main(int argc, char* argv[]) {
   // As app/main.cpp setFontEngine(): Qt's DirectWrite font database maps every installed font

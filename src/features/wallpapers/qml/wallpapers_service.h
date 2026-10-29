@@ -17,9 +17,9 @@
 #include "features/wallpapers/wallpaper_hotkey.h"
 #include "features/wallpapers/wallpaper_manager.h"
 
-// The control unit still lives in spike/control/ and moves in a later step. Rule S2 checks quoted
-// includes only, so this one is an angle include until then; make it quoted when control moves.
-#include <spike/control/wallpaper_control.h>
+// The control interface headers are a stable shared abstraction: a feature may include
+// control/ (rule S2) to implement the interface the bar's handler calls.
+#include "control/wallpaper_control.h"
 
 class QJSEngine;
 class QQmlEngine;

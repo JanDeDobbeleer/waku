@@ -7,7 +7,7 @@ wabar_contribute(
     test_builtin_widgets.cpp
     test_theme.cpp
     test_popups.cpp
-    test_control.cpp
+    test_control_handler.cpp
     test_safe_mode.cpp
     test_tray_widget.cpp
     test_taskbar.cpp

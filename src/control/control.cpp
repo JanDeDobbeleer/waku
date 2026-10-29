@@ -1,6 +1,4 @@
-#include "spike/control/control.h"
-
-#include <windows.h>
+#include "control/control.h"
 
 #include <QCryptographicHash>
 #include <QDebug>
@@ -8,6 +6,8 @@
 #include <QLocalSocket>
 #include <QPointer>
 #include <QTimer>
+
+#include "control/win32/instance_mutex.h"
 
 namespace wabar {
 
@@ -88,20 +88,14 @@ ControlServer::ControlServer(QString name, ControlHandler handler, QObject* pare
 
 ControlServer::~ControlServer() {
   server_.close();
-  if (mutex_) CloseHandle(static_cast<HANDLE>(mutex_));
+  releaseInstanceMutex(mutex_);
 }
 
 bool ControlServer::listen() {
   if (server_.isListening()) return true;
   if (!mutex_) {
-    const std::wstring mutexName = L"Local\\" + name_.toStdWString();
-    HANDLE mutex = CreateMutexW(nullptr, FALSE, mutexName.c_str());
-    if (!mutex) return false;
-    if (GetLastError() == ERROR_ALREADY_EXISTS) {
-      CloseHandle(mutex);  // another instance holds it
-      return false;
-    }
-    mutex_ = mutex;
+    mutex_ = acquireInstanceMutex(name_);
+    if (!mutex_) return false;
   }
   // We own the name now, so whatever is left under it is stale.
   QLocalServer::removeServer(name_);
