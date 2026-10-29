@@ -6,7 +6,7 @@
 
 #include "spike/services/tray_icon_model.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 // image://tray/<id>/<revision>: the scaled icon of one TrayIconModel row. The revision only
 // busts QML's image cache and is ignored here. Requests run synchronously on the GUI thread
@@ -21,4 +21,4 @@ class TrayImageProvider : public QQuickImageProvider {
   QPointer<TrayIconModel> model_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

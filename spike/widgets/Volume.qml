@@ -1,6 +1,6 @@
 import QtQuick
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // Output volume. The wheel changes it, a click opens a panel (slider, mute, output devices), a
 // right click opens the sound settings. Hovering shows the current output device. Hidden when

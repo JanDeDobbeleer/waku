@@ -3,7 +3,7 @@
 #include "core/widgets/backdrop.h"
 #include "spike/bar/bar_host.h"
 
-namespace tidy {
+namespace wabar {
 
 BarHost::NativeHooks BarHost::NativeHooks::win32() {
   NativeHooks hooks;
@@ -28,4 +28,4 @@ BarHost::NativeHooks BarHost::NativeHooks::win32() {
   return hooks;
 }
 
-}  // namespace tidy
+}  // namespace wabar

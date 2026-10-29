@@ -3,6 +3,9 @@
 A native C++20/Qt 6.10 port of [YASB](https://github.com/amnweb/yasb), scoped to the widgets in one config.
 The Python build (`D:\yasb`, branch `local/build`) is the behavioral reference.
 
+The Qt Quick bar in `spike/` is called wabar (/ˈwæbɑːr/, "wab-bar": "Windows, actually. With a bar."); see
+[spike/README.md](spike/README.md).
+
 ## Documentation
 
 | Document | What it covers |

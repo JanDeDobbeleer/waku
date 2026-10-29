@@ -1,11 +1,11 @@
-// tidybarc: the command-line client of a running bar.
+// wabarc: the command-line client of a running bar.
 //
-//     tidybarc reload     reload the config of the running bar
-//     tidybarc status     what the running bar is doing
-//     tidybarc quit       stop the running bar
+//     wabarc reload     reload the config of the running bar
+//     wabarc status     what the running bar is doing
+//     wabarc quit       stop the running bar
 //
 // A separate console program, as komorebic is to komorebi: the bar itself is a Windows (GUI)
-// program with no console to print to. `--config-home <dir>` (or $TIDY_CONFIG_HOME) selects
+// program with no console to print to. `--config-home <dir>` (or $WABAR_CONFIG_HOME) selects
 // the instance, as it does for the bar.
 //
 // Exit code: 0 the bar answered ok, 1 it answered an error, 2 no bar is running, 3 usage error or
@@ -32,11 +32,11 @@ void print(FILE* stream, const QString& text) {
 
 int main(int argc, char* argv[]) {
   QCoreApplication app(argc, argv);
-  QCoreApplication::setApplicationName(QStringLiteral("tidybarc"));
+  QCoreApplication::setApplicationName(QStringLiteral("wabarc"));
 
   QCommandLineParser parser;
   parser.setApplicationDescription(
-      QStringLiteral("Controls a running tidy bar.\n\nCommands:\n  reload  reload the config\n"
+      QStringLiteral("Controls a running wabar bar.\n\nCommands:\n  reload  reload the config\n"
                      "  status  show what the bar is doing\n  quit    stop the bar"));
   parser.addHelpOption();
   QCommandLineOption configHomeOpt(QStringLiteral("config-home"),
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 
   const QStringList positional = parser.positionalArguments();
   if (positional.size() != 1) {
-    print(stderr, QStringLiteral("usage: tidybarc [--config-home <dir>] reload|status|quit"));
+    print(stderr, QStringLiteral("usage: wabarc [--config-home <dir>] reload|status|quit"));
     return kUsage;
   }
   const QString command = positional.first();
@@ -56,24 +56,24 @@ int main(int argc, char* argv[]) {
       command != QLatin1String("quit")) {
     print(
         stderr,
-        QStringLiteral("tidybarc: unknown command '%1' (try: reload, status, quit)").arg(command));
+        QStringLiteral("wabarc: unknown command '%1' (try: reload, status, quit)").arg(command));
     return kUsage;
   }
 
   // The same default as the bar, so that the two meet without any option.
   const QString configHome =
-      tidy::resolveConfigHome(parser.value(configHomeOpt), QStringLiteral(SPIKE_CONFIG_DIR));
-  const tidy::ControlReply reply =
-      tidy::sendControlCommand(tidy::controlPipeName(configHome), command);
+      wabar::resolveConfigHome(parser.value(configHomeOpt), QStringLiteral(SPIKE_CONFIG_DIR));
+  const wabar::ControlReply reply =
+      wabar::sendControlCommand(wabar::controlPipeName(configHome), command);
 
   switch (reply.status) {
-    case tidy::ControlReply::NotRunning:
-      print(stderr, QStringLiteral("tidybarc: no bar is running for %1").arg(configHome));
+    case wabar::ControlReply::NotRunning:
+      print(stderr, QStringLiteral("wabarc: no bar is running for %1").arg(configHome));
       return kNotRunning;
-    case tidy::ControlReply::Failed:
-      print(stderr, QStringLiteral("tidybarc: %1").arg(reply.text));
+    case wabar::ControlReply::Failed:
+      print(stderr, QStringLiteral("wabarc: %1").arg(reply.text));
       return kUsage;
-    case tidy::ControlReply::Ok:
+    case wabar::ControlReply::Ok:
       break;
   }
   const bool error = reply.text.startsWith(QLatin1String("error:"));

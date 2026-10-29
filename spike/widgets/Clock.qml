@@ -1,5 +1,5 @@
 import QtQuick
-import tidy
+import wabar
 
 // The date and time. A click opens a calendar; hovering shows the full date.
 //

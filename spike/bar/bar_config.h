@@ -9,7 +9,7 @@
 #include <QQmlListProperty>
 #include <QStringList>
 
-namespace tidy {
+namespace wabar {
 
 // One bar, as declared in bar.qml. A declaration, not a window: the host builds one window per
 // matching screen and instantiates `layout` inside it. All properties are read when the config is
@@ -68,7 +68,7 @@ class Config : public QObject {
   Q_OBJECT
   QML_ELEMENT
   Q_CLASSINFO("DefaultProperty", "bars")
-  Q_PROPERTY(QQmlListProperty<tidy::Bar> bars READ bars FINAL)
+  Q_PROPERTY(QQmlListProperty<wabar::Bar> bars READ bars FINAL)
 
  public:
   explicit Config(QObject* parent = nullptr) : QObject(parent) {}
@@ -80,4 +80,4 @@ class Config : public QObject {
   QList<Bar*> bars_;
 };
 
-}  // namespace tidy
+}  // namespace wabar

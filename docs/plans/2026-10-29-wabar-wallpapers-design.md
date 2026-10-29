@@ -1,4 +1,4 @@
-# tidy Wallpapers widget: design note
+# wabar Wallpapers widget: design note
 
 Date: 2026-10-29. Branch `spike/qt-quick-bar`. Reference: Python YASB `wallpapers` widget and the
 Qt Widgets port in `widgets/wallpapers/`.
@@ -6,7 +6,7 @@ Qt Widgets port in `widgets/wallpapers/`.
 ## What it does
 
 Python's wallpapers widget does four things: an optional bar button, a gallery of the wallpapers in
-`image_path`, a hotkey that toggles the gallery, and an animated change (`engine`). tidy ships the
+`image_path`, a hotkey that toggles the gallery, and an animated change (`engine`). wabar ships the
 first three plus an optional random timer. The animation is deferred (see below).
 
 The user's config (`label ""`, `image_path ~/.config/wallpapers`, gallery `strip`, portrait, 240 px,
@@ -26,7 +26,7 @@ No wallpaper logic is re-implemented. The `Wallpapers` singleton wraps the UI-fr
   the manager, sets it. Tests give both a fake.
 - `platform::foregroundMonitorRect()` for the `active` screen mode.
 
-## QML-facing API (`tidy.services.Wallpapers`, singleton)
+## QML-facing API (`wabar.services.Wallpapers`, singleton)
 
 | Member | Meaning |
 |---|---|
@@ -71,7 +71,7 @@ Qt Quick window.
 ## Left out
 
 - **The `split` transition (and every `engine` animation): deferred.** `WallpaperEngine` is a
-  `QWidget` painted on a WorkerW child window; tidy runs a `QGuiApplication` with no Qt Widgets.
+  `QWidget` painted on a WorkerW child window; wabar runs a `QGuiApplication` with no Qt Widgets.
   Rewriting it as a Qt Quick overlay is a separate job. The manager is configured with the engine
   off, so a change is a plain `IDesktopWallpaper` call. No fake animation.
 - `default`/`magnified`/`slide` gallery types, mouse-wheel/page-key scrolling, `run_after` commands,

@@ -1,5 +1,5 @@
 import QtQuick
-import tidy
+import wabar
 
 // The popup of the CPU and memory widgets, as in Python YASB: a title with a pin, a graph of the
 // recent history and a grid of stat cards.

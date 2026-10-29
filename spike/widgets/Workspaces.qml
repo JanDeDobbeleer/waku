@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Window
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // The workspaces of this bar's monitor, from whichever tiling window manager is running (komorebi
 // or GlazeWM). A click shows a workspace, the wheel steps through them. Hidden when neither runs.

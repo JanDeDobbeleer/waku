@@ -1,7 +1,7 @@
-// The sample tidy config. Point the spike at another folder with --config-home <dir>.
+// The sample wabar config. Point the spike at another folder with --config-home <dir>.
 // Edit and save: the bars reload. A mistake keeps the previous bars and shows an error pill.
-import tidy
-import tidy.widgets          // the built-in widgets
+import wabar
+import wabar.widgets          // the built-in widgets
 import "widgets"           // your own, one component per file (see widgets/)
 
 Config {

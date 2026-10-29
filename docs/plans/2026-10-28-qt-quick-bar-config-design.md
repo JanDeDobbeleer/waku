@@ -1,7 +1,7 @@
 # Qt Quick bar: how layout and widget config are declared
 
 Status: proposal, for the `spike/qt-quick-bar` branch. Nothing here is implemented beyond the
-spike (`spike/`): a QML bar window, the `tidy.services` module and hot-reloaded user widgets.
+spike (`spike/`): a QML bar window, the `wabar.services` module and hot-reloaded user widgets.
 
 ## Decision
 
@@ -23,7 +23,7 @@ generate QML later); a C++ builder API (no hot reload, no sharing).
 
 ## Files
 
-Config home (default `%USERPROFILE%\.config\tidy\`, overridable with `--config-home`):
+Config home (default `%USERPROFILE%\.config\wabar\`, overridable with `--config-home`):
 
 ```
 bar.qml          entry point: declares the bars
@@ -35,14 +35,14 @@ widgets/         user widgets, one component per file
 
 `widgets/` is a normal QML directory import, so `Clock.qml` is usable as `Clock {}` after
 `import "widgets"`. There is no registry and no loader list: a widget exists because a file
-exists. Built-in widgets ship in the `tidy.widgets` module with the same shape, so a user widget
+exists. Built-in widgets ship in the `wabar.widgets` module with the same shape, so a user widget
 can copy or wrap one.
 
 ## bar.qml
 
 ```qml
-import tidy
-import tidy.widgets
+import wabar
+import wabar.widgets
 import "widgets"
 
 Config {
@@ -80,7 +80,7 @@ Config {
 
 A widget is any QML `Item` with an `implicitWidth` and `implicitHeight`. Conventions, not rules:
 
-- Take data from `tidy.services` (`Memory`, `Cpu`, `Battery`, `AudioOutput`, `Media`, `Komorebi`,
+- Take data from `wabar.services` (`Memory`, `Cpu`, `Battery`, `AudioOutput`, `Media`, `Komorebi`,
   `GlazeWM`, `Process`). Polled sources are instantiated by the widget; shared event sources are
   singletons.
 - Expose options as `property` declarations with defaults. Document them in a comment at the top
@@ -88,9 +88,9 @@ A widget is any QML `Item` with an `implicitWidth` and `implicitHeight`. Convent
 - Use `Theme` for colours and fonts so a theme change restyles every widget.
 - Do not block: long work goes through `Process` or a service.
 
-### Built-in widgets (`tidy.widgets`)
+### Built-in widgets (`wabar.widgets`)
 
-Plain QML on top of `tidy.services`; a user can copy one into `widgets/` and change it.
+Plain QML on top of `wabar.services`; a user can copy one into `widgets/` and change it.
 
 | Widget | Shows | Options |
 |---|---|---|
@@ -111,9 +111,9 @@ Rules the set follows:
 - Text options are format strings with `%1`, `%2`, `%3` placeholders, not a template language.
 - A widget that has nothing to show hides itself with `visible: false` and leaves the layout.
 - The widgets share names with services (`Cpu`, `Memory`, `Battery`, `Media`, `Workspaces`), so the
-  module imports the services as `import tidy.services as S` and writes `S.Cpu {}`. A user
-  config imports `tidy.widgets`; a custom widget that needs services imports
-  `tidy.services` and avoids those five names, or imports it `as S` too.
+  module imports the services as `import wabar.services as S` and writes `S.Cpu {}`. A user
+  config imports `wabar.widgets`; a custom widget that needs services imports
+  `wabar.services` and avoids those five names, or imports it `as S` too.
 
 ## Theme
 
@@ -124,7 +124,7 @@ default on the next reload. This replaces CSS for colours and fonts; per-widget 
 property on that widget.
 
 ```qml
-import tidy
+import wabar
 ThemeSpec { accent: "#ff8800"; fontFamily: "Cascadia Code"; radius: 6 }
 ```
 
@@ -156,7 +156,7 @@ Design notes:
 
 ## Popups and tooltips
 
-Two types in the `tidy` module; both are plain QML and both are windows of their own, because
+Two types in the `wabar` module; both are plain QML and both are windows of their own, because
 the bar window is only as tall as the bar.
 
 ```qml
@@ -225,32 +225,32 @@ Pill {
   outlive an edit.
 - `qmllint` works on the config home, so editors give completion and diagnostics for free.
 - `--safe`: see below.
-- `tidybarc reload`: see below.
+- `wabarc reload`: see below.
 
 ### Safe mode and the command line
 
-- **`tidybar.exe --safe`** starts the built-in bar (`tidy.widgets/SafeConfig.qml`: Clock,
+- **`wabar.exe --safe`** starts the built-in bar (`wabar.widgets/SafeConfig.qml`: Clock,
   Workspaces, Volume, Battery, Cpu, Memory) with the default theme. Nothing in the config home is
   read, so a broken `bar.qml`, a broken `theme.qml` or a missing folder cannot get in the way, and
   nothing is watched. It is the way back to a bar when the config is wrong: fix the files, then
-  start normally. `tidybarc reload` in safe mode rebuilds the same bar.
-- **`tidybarc.exe`** is a separate console program, as `komorebic` is to komorebi: the bar is a
+  start normally. `wabarc reload` in safe mode rebuilds the same bar.
+- **`wabarc.exe`** is a separate console program, as `komorebic` is to komorebi: the bar is a
   Windows (GUI) program with no console to print to or exit code to return. It talks to the
   running bar over a named pipe:
 
   | Command | Answer | Exit code |
   |---|---|---|
-  | `tidybarc reload` | `ok`, or `error: bar.qml:12:5: ...` (the previous bars stay) | 0, or 1 |
-  | `tidybarc status` | `running; bars=1; safe=no; error=none` | 0 |
-  | `tidybarc quit` | `ok`, then the bar exits | 0 |
-  | no bar running | `tidybarc: no bar is running for <config home>` | 2 |
+  | `wabarc reload` | `ok`, or `error: bar.qml:12:5: ...` (the previous bars stay) | 0, or 1 |
+  | `wabarc status` | `running; bars=1; safe=no; error=none` | 0 |
+  | `wabarc quit` | `ok`, then the bar exits | 0 |
+  | no bar running | `wabarc: no bar is running for <config home>` | 2 |
   | bad command, no answer | usage or the reason | 3 |
 
-- The instance is named by the config home: `--config-home <dir>` or `$TIDY_CONFIG_HOME` on
+- The instance is named by the config home: `--config-home <dir>` or `$WABAR_CONFIG_HOME` on
   both programs picks it, and the pipe name is a short hash of the folder (case and trailing
   slashes do not matter), so two bars with different config homes do not meet.
 - One bar per config home: a named mutex held by the running bar refuses a second start with
-  `tidybar is already running for <config home> (tidybarc quit stops it)` and exit code 1. (Two
+  `wabar is already running for <config home> (wabarc quit stops it)` and exit code 1. (Two
   `QLocalServer`s can listen on one pipe name on Windows, so the pipe alone cannot tell.)
 - Protocol: one line in, one line out, then the connection closes. A line over 1 KiB is refused
   and a client that stalls is dropped after 3 s, so a stray process cannot hold the bar.
@@ -263,16 +263,16 @@ explicit trust prompt per file; a QML sandbox is not practical.
 
 ## Versioning
 
-`import tidy 1.0` and `import tidy.services 1.0` are the public API. Adding properties is
+`import wabar 1.0` and `import wabar.services 1.0` are the public API. Adding properties is
 compatible; removing or renaming one is a major bump with the old name kept for one release.
 
 ## Delivery order
 
-1. `Config`, `Bar`, `BarLayout` in a `tidy` QML module; the host builds one window per screen from
+1. `Config`, `Bar`, `BarLayout` in a `wabar` QML module; the host builds one window per screen from
    them; replace the spike's "load every file in `widgets/`" with the explicit layout. (Medium.)
-2. Built-in `tidy.widgets`: Clock, Cpu, Memory, Battery, Volume, Media, Workspaces (komorebi or
+2. Built-in `wabar.widgets`: Clock, Cpu, Memory, Battery, Volume, Media, Workspaces (komorebi or
    GlazeWM, chosen by what is running). (Medium.)
-3. Transactional reload with the error pill, `--safe`, `tidybarc reload`. (Small; done.)
+3. Transactional reload with the error pill, `--safe`, `wabarc reload`. (Small; done.)
 4. `Theme` singleton and `theme.qml`. (Small.)
 5. Popups (`PopupWindow`) and tooltips, then systray and taskbar, which need native-window work.
    (Large.)
@@ -280,7 +280,7 @@ compatible; removing or renaming one is a major bump with the old name kept for 
 ## Decisions taken
 
 - This is a new application with its own name; it is not a YASB fork and reads no YASB config.
-  The name is tidy (see [Name](#name)), always written in lower case.
+  The name is wabar (see [Name](#name)), always written in lower case.
 - `Workspaces` is one shared model over komorebi and GlazeWM (below).
 - `Shell` is a small helper in the services module (below).
 
@@ -327,18 +327,18 @@ actions (lock, sleep) are not part of the first cut.
 
 ## Name
 
-The product is tidy: a bar keeps the desktop tidy, one thin strip with everything in its place.
-The name is lower case everywhere. The application is the executable **`tidybar.exe`**; its
-command-line client is **`tidybarc.exe`** (`tidybarc reload`; a console program, so it is separate
-from the GUI executable). The config home is `%USERPROFILE%\.config\tidy\`, the QML modules are
-`tidy`, `tidy.widgets` and `tidy.services`, the environment variable is `TIDY_CONFIG_HOME` and the
-control pipe is named `tidy-<hash of the config home>`.
+The product is **wabar**, pronounced /ˈwæbɑːr/ ("wab-bar"; the a is the one in "actually"). It stands
+for "Windows, actually. With a bar." and is a nod to Waybar, the bar for Wayland. The name is lower
+case everywhere and plain ASCII in code. The application is the executable **`wabar.exe`**; its
+command-line client is **`wabarc.exe`** (`wabarc reload`; a console program, so it is separate from
+the GUI executable). The config home is `%USERPROFILE%\.config\wabar\`, the QML modules are
+`wabar`, `wabar.widgets` and `wabar.services`, the C++ namespace is `wabar`, the environment variable
+is `WABAR_CONFIG_HOME` and the control pipe is named `wabar-<hash of the config home>`.
 
-The executable carries "bar" because `tidy.exe` is already taken: HTML Tidy (`htacg/tidy-html5`) is
-a widely installed command-line program with that file name, and a second `tidy.exe` on the PATH
-would shadow one of the two. Nothing else is called tidy or tidybar on GitHub among the top results
-(checked on GitHub only; no trademark or domain search yet).
+Not checked: other projects or packages called wabar, and trademarks or domains (nothing beyond
+knowing Waybar exists).
 
-History: the working name was barnacle until the rename to tidy; fascia, transom, overbar and
-others were considered before it. The repository, the `yasb_*` targets and the `yasb::` C++
-namespaces outside `spike/` still carry the old name; renaming them is a separate step.
+History: the working name was barnacle, then tidy (executables `tidybar` and `tidybarc`; the plain
+`tidy.exe` clashed with HTML Tidy), and since 2026-10-29 it is wabar. Fascia, transom and overbar
+were also considered. The repository, the `yasb_*` targets and the `yasb::` C++ namespaces outside
+`spike/` still carry the old name; renaming them is a separate step.

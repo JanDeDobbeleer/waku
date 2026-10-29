@@ -1,5 +1,5 @@
 import QtQuick
-import tidy
+import wabar
 
 // One row of a DeviceMenu: an icon, a name with a status line, and an optional text or button at
 // the right.

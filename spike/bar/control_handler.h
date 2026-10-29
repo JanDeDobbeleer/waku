@@ -4,7 +4,7 @@
 
 #include "spike/control/control.h"
 
-namespace tidy {
+namespace wabar {
 
 class BarHost;
 
@@ -16,4 +16,4 @@ class BarHost;
 // `quit` defaults to QCoreApplication::quit.
 ControlHandler makeControlHandler(BarHost& host, bool safe, std::function<void()> quit = {});
 
-}  // namespace tidy
+}  // namespace wabar

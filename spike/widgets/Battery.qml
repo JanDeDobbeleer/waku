@@ -1,6 +1,6 @@
 import QtQuick
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // Battery charge. Hidden on a machine without a battery.
 //

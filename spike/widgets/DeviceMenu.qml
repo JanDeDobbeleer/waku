@@ -1,5 +1,5 @@
 import QtQuick
-import tidy
+import wabar
 
 // The popup of the Wi-Fi and Bluetooth widgets, as in Python YASB: a header with the title and a
 // button, a list of rows and a footer with a settings link and a refresh button.

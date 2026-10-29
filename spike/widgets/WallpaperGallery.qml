@@ -1,8 +1,8 @@
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Window
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // The wallpaper gallery: a strip of thumbnails of the files in the wallpaper folder, centred on a
 // dimmed full-screen window on the screen the service picked (S.Wallpapers.galleryScreen). A click

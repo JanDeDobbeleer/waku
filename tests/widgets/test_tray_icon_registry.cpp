@@ -304,12 +304,12 @@ TEST(SystrayAppDataDir, TheFolderNameIsAParameterWithTheWidgetsBuildAsDefault) {
   qputenv("LOCALAPPDATA", local.path().toUtf8());
 
   const QString widgets = appDataDir();
-  const QString tidy = appDataDir(QStringLiteral("tidy"));
+  const QString wabar = appDataDir(QStringLiteral("wabar"));
   EXPECT_EQ(QDir(widgets).dirName(), QStringLiteral("YASB"));
-  EXPECT_EQ(QDir(tidy).dirName(), QStringLiteral("tidy"));
+  EXPECT_EQ(QDir(wabar).dirName(), QStringLiteral("wabar"));
   EXPECT_TRUE(QDir(widgets).exists());
-  EXPECT_TRUE(QDir(tidy).exists());
-  EXPECT_EQ(QDir(tidy).absolutePath(), QDir(local.path()).filePath(QStringLiteral("tidy")));
+  EXPECT_TRUE(QDir(wabar).exists());
+  EXPECT_EQ(QDir(wabar).absolutePath(), QDir(local.path()).filePath(QStringLiteral("wabar")));
 
   if (saved.isNull())
     qunsetenv("LOCALAPPDATA");

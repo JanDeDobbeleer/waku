@@ -1,6 +1,6 @@
 import QtQuick
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // What is playing, with the album art the player delivered. A click opens a panel (art, track,
 // seek bar, previous, play and pause, next), a right click plays or pauses, the wheel skips back

@@ -1,4 +1,4 @@
-# tidy GitHub: design note
+# wabar GitHub: design note
 
 Status: decisions taken, built in this pass. Sits on `spike/qt-quick-bar` next to the Notifications
 and Bluetooth widgets. Reference: Python YASB `yasb/github*` (branch `local/build`) and the Widgets
@@ -34,12 +34,12 @@ is seconds), `maxNotification`, `onlyUnread`, `showComments` (Python `show_comme
 | token file, device flow requests and parsers | `githubTokenFilePath`, `readGithubTokenFile`, `saveGithubTokenFile`, `githubDeviceCodeRequest`, `parseGithubDeviceCode`, `githubAccessTokenRequest`, `parseGithubAccessToken` | as is |
 | relative time, category titles, field truncation, category order, state classes | `widgets/github/github_format.*` (no UI) | as is |
 | `GithubWidget`, `GithubDataStore`, `GithubAuthDialog` | `widgets/github/` | not used: QWidgets. Their logic (unread count, mark read, ordering, poll skip while a fetch runs, device-flow loop) is ported to the service |
-| `tidy.services.GitHub` | `spike/services/github_service.*` | new: the singleton below |
+| `wabar.services.GitHub` | `spike/services/github_service.*` | new: the singleton below |
 | `GitHub.qml` | `spike/widgets/` | new |
 
 ## QML-facing API
 
-`S.GitHub` (singleton, one per `tidybar` run, shared by every GitHub widget):
+`S.GitHub` (singleton, one per `wabar` run, shared by every GitHub widget):
 
 - State: `available` (constant: false on the offscreen platform), `signedIn`, `unreadCount`, `items`
   (maps: `id`, `title`, `repo`, `type`, `category`, `categoryTitle`, `url`, `unread`, `comments`
@@ -73,20 +73,20 @@ The token is never in the config, in QML or in logs; `signedIn` is all QML sees.
 ## Decisions
 
 - One service, not a store per widget: Python shares one data manager among widgets with the same
-  settings; the tidy bar has one set of options per run, so the last widget to set an option wins.
+  settings; the wabar bar has one set of options per run, so the last widget to set an option wins.
 - Failure behaviour matches Python: a failed fetch logs, sets `error` and clears the list. A poll
   while another fetch runs is skipped; an option change during a fetch re-runs once afterwards.
 - `open(id)` returns the URL instead of opening it, so the service has no desktop side effect
   and QML uses the one `Shell` path for every link.
 - State icons come from the schema defaults (`GithubIconsConfig`), filled in the service; they
-  are not an option in tidy yet.
+  are not an option in wabar yet.
 - The real client (`GithubClient`) is only created off the offscreen platform; tests inject a fake
   and never touch the network or a real token.
 
 ## Left out
 
 - Per-widget stores and per-widget polling settings.
-- Keybindings, tooltip toggle, popup blur / corner / alignment options (tidy popups share one
+- Keybindings, tooltip toggle, popup blur / corner / alignment options (wabar popups share one
   style).
 - A token in the config (`token: env`); the environment variable and the token file replace it.
 - Signing out (Python has none either; delete the token file).

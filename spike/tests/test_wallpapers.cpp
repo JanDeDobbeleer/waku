@@ -18,11 +18,11 @@
 namespace {
 
 namespace plat = yasb::platform;
-using tidy::services::HotkeyCombo;
-using tidy::services::HotkeyHost;
-using tidy::services::parseHotkey;
-using tidy::services::Wallpapers;
-using tidy::services::WallpaperThumbnailProvider;
+using wabar::services::HotkeyCombo;
+using wabar::services::HotkeyHost;
+using wabar::services::parseHotkey;
+using wabar::services::Wallpapers;
+using wabar::services::WallpaperThumbnailProvider;
 
 // The wallpaper "on the desktop": shared by every backend the service creates.
 struct DesktopState {
@@ -256,8 +256,8 @@ TEST(WallpapersWidget, TheHotkeyOpensAGalleryWindowWithOneThumbnailPerFile) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import tidy
-import tidy.widgets
+import wabar
+import wabar.widgets
 Config {
     Bar {
         layout: BarLayout {

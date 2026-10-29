@@ -15,13 +15,13 @@
 
 #include "spike/bar/screen_match.h"
 
-namespace tidy {
+namespace wabar {
 
 namespace {
 
-constexpr auto kWindowUrl = "qrc:/qt/qml/tidy/BarWindow.qml";
-constexpr auto kFallbackUrl = "qrc:/qt/qml/tidy/FallbackConfig.qml";
-constexpr auto kSafeUrl = "qrc:/qt/qml/tidy/widgets/SafeConfig.qml";
+constexpr auto kWindowUrl = "qrc:/qt/qml/wabar/BarWindow.qml";
+constexpr auto kFallbackUrl = "qrc:/qt/qml/wabar/FallbackConfig.qml";
+constexpr auto kSafeUrl = "qrc:/qt/qml/wabar/widgets/SafeConfig.qml";
 
 // "file:line:col: message", with the file name only.
 QString describe(const QQmlError& error) {
@@ -54,7 +54,7 @@ BarHost::BarHost(QQmlEngine* engine, Options options, QObject* parent)
   windowComponent_ =
       std::make_unique<QQmlComponent>(engine_, QUrl(QString::fromLatin1(kWindowUrl)));
   if (windowComponent_->isError()) {
-    qCritical().noquote() << "tidy: cannot load the bar window:"
+    qCritical().noquote() << "wabar: cannot load the bar window:"
                           << describeAll(windowComponent_->errors()).join('\n');
   }
   debounce_.setSingleShot(true);
@@ -123,14 +123,14 @@ bool BarHost::validate(const QUrl& url, const QMetaObject& expected, QString* er
   QQmlComponent component(&probe, url);
   if (component.isError()) {
     const QStringList lines = describeAll(component.errors());
-    qWarning().noquote() << "tidy: config errors:\n" << lines.join('\n');
+    qWarning().noquote() << "wabar: config errors:\n" << lines.join('\n');
     *error = lines.value(0);
     return false;
   }
   std::unique_ptr<QObject> root(component.create());
   if (!root) {
     const QStringList lines = describeAll(component.errors());
-    qWarning().noquote() << "tidy: config errors:\n" << lines.join('\n');
+    qWarning().noquote() << "wabar: config errors:\n" << lines.join('\n');
     *error = lines.value(0, QStringLiteral("the config could not be created"));
     return false;
   }
@@ -138,7 +138,7 @@ bool BarHost::validate(const QUrl& url, const QMetaObject& expected, QString* er
     *error = QStringLiteral("%1 must declare a %2 at its root")
                  .arg(QFileInfo(url.toLocalFile()).fileName(),
                       QString::fromLatin1(expected.className()).section(QStringLiteral("::"), -1));
-    qWarning().noquote() << "tidy:" << *error;
+    qWarning().noquote() << "wabar:" << *error;
     return false;
   }
   return true;
@@ -150,7 +150,7 @@ bool BarHost::validateTheme(QString* error) {
 }
 
 void BarHost::applyTheme() {
-  auto* theme = engine_->singletonInstance<Theme*>(QStringLiteral("tidy"), QStringLiteral("Theme"));
+  auto* theme = engine_->singletonInstance<Theme*>(QStringLiteral("wabar"), QStringLiteral("Theme"));
   if (!theme) return;
   const ThemeSpec defaults;
   if (options_.safe || !QFileInfo::exists(themePath())) {
@@ -187,7 +187,7 @@ bool BarHost::reloadSafe() {
     if (auto fallback = build(QUrl(QString::fromLatin1(kFallbackUrl)), &fallbackError)) {
       install(std::move(fallback));
     } else {
-      qCritical().noquote() << "tidy: the fallback bar failed:" << fallbackError;
+      qCritical().noquote() << "wabar: the fallback bar failed:" << fallbackError;
     }
     emit reloaded(false);
     return false;
@@ -205,7 +205,7 @@ bool BarHost::reload() {
   if (!QFileInfo::exists(entryPath())) {
     error = QStringLiteral("%1 not found in %2")
                 .arg(options_.entryFile, QDir::toNativeSeparators(options_.configHome));
-    qWarning().noquote() << "tidy:" << error;
+    qWarning().noquote() << "wabar:" << error;
   } else if (validate(QUrl::fromLocalFile(entryPath()), Config::staticMetaObject, &error) &&
              validateTheme(&error)) {
     // The config is good, so the old bars can go. Qt only reloads changed files when no object
@@ -224,7 +224,7 @@ bool BarHost::reload() {
       if (auto fallback = build(QUrl(QString::fromLatin1(kFallbackUrl)), &fallbackError)) {
         install(std::move(fallback));
       } else {
-        qCritical().noquote() << "tidy: the fallback bar failed:" << fallbackError;
+        qCritical().noquote() << "wabar: the fallback bar failed:" << fallbackError;
       }
     }
     emit reloaded(false);
@@ -242,21 +242,21 @@ std::unique_ptr<BarHost::Loaded> BarHost::build(const QUrl& url, QString* error)
   loaded->component = std::make_unique<QQmlComponent>(engine_, url);
   if (loaded->component->isError()) {
     const QStringList lines = describeAll(loaded->component->errors());
-    qWarning().noquote() << "tidy: config errors:\n" << lines.join('\n');
+    qWarning().noquote() << "wabar: config errors:\n" << lines.join('\n');
     *error = lines.value(0);
     return nullptr;
   }
   loaded->root.reset(loaded->component->create());
   if (!loaded->root) {
     const QStringList lines = describeAll(loaded->component->errors());
-    qWarning().noquote() << "tidy: config errors:\n" << lines.join('\n');
+    qWarning().noquote() << "wabar: config errors:\n" << lines.join('\n');
     *error = lines.value(0, QStringLiteral("the config could not be created"));
     return nullptr;
   }
   loaded->config = qobject_cast<Config*>(loaded->root.get());
   if (!loaded->config) {
     *error = QStringLiteral("%1 must declare a Config at its root").arg(options_.entryFile);
-    qWarning().noquote() << "tidy:" << *error;
+    qWarning().noquote() << "wabar:" << *error;
     return nullptr;
   }
   if (!windowComponent_ || windowComponent_->isError()) {
@@ -280,7 +280,7 @@ std::unique_ptr<BarHost::Loaded> BarHost::build(const QUrl& url, QString* error)
       auto* window = qobject_cast<QQuickWindow*>(object.get());
       if (!window) {
         const QStringList lines = describeAll(windowComponent_->errors());
-        qWarning().noquote() << "tidy: cannot create a bar window:\n" << lines.join('\n');
+        qWarning().noquote() << "wabar: cannot create a bar window:\n" << lines.join('\n');
         *error = lines.value(0, QStringLiteral("a bar window could not be created"));
         return nullptr;
       }
@@ -349,4 +349,4 @@ void BarHost::refreshWatches() {
   watcher_.addPaths(paths);
 }
 
-}  // namespace tidy
+}  // namespace wabar

@@ -10,7 +10,7 @@
 #include "core/widgets/event_bus.h"
 #include "widgets/komorebi/komorebi_service.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 namespace widgets = ::yasb::widgets;
@@ -71,4 +71,4 @@ class Komorebi : public QObject {
   QVariantList monitors_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

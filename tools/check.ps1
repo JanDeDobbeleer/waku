@@ -369,10 +369,10 @@ if ($Analyze) {
 
             Write-Step 'clang-tidy (production compile database entries)'
             $sw = [Diagnostics.Stopwatch]::StartNew()
-            $tidy = Get-Command clang-tidy -ErrorAction SilentlyContinue
-            $tidyExe = 'C:\Program Files\LLVM\bin\clang-tidy.exe'
-            if ($tidy) { $tidyExe = $tidy.Source }
-            if (-not (Test-Path $tidyExe)) {
+            $wabar = Get-Command clang-tidy -ErrorAction SilentlyContinue
+            $wabarExe = 'C:\Program Files\LLVM\bin\clang-tidy.exe'
+            if ($wabar) { $wabarExe = $wabar.Source }
+            if (-not (Test-Path $wabarExe)) {
                 Add-Result 'clang-tidy' 'FAIL' 'clang-tidy not found on PATH or in C:\Program Files\LLVM\bin' 0
             } elseif ($code -ne 0) {
                 Add-Result 'clang-tidy' 'FAIL' 'MSVC build failed; generated Qt headers may be unavailable' 0
@@ -380,14 +380,14 @@ if ($Analyze) {
                 $entries = Get-Content (Join-Path $analysisDir 'compile_commands.json') -Raw | ConvertFrom-Json
                 # clang-cl does not accept MSVC's analyzer/anglebrackets switches. Keep the
                 # original database for MSVC; /external:I still marks dependency headers.
-                $tidyDir = Join-Path $analysisDir 'clang-tidy'
-                New-Item -ItemType Directory -Force -Path $tidyDir | Out-Null
+                $wabarDir = Join-Path $analysisDir 'clang-tidy'
+                New-Item -ItemType Directory -Force -Path $wabarDir | Out-Null
                 foreach ($entry in $entries) {
                     $entry.command = $entry.command -replace '(?<=\s)/analyze(?=\s)', '' `
                         -replace '(?<=\s)/analyze:external-(?=\s)', '' `
                         -replace '(?<=\s)/external:anglebrackets(?=\s)', ''
                 }
-                $entries | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $tidyDir 'compile_commands.json')
+                $entries | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $wabarDir 'compile_commands.json')
                 $units = @($entries | Where-Object {
                     $relative = [IO.Path]::GetRelativePath($repo, $_.file).Replace('\', '/')
                     $relative -match '^(app|core|platform|widgets|tools/yasbc-native)/.*\.cpp$'
@@ -401,7 +401,7 @@ if ($Analyze) {
                 foreach ($unit in $units) {
                     $commands.Add("echo Analyzing $unit >> `"$log`"")
                     # Qt signals named event() intentionally do not override QObject::event().
-                    $commands.Add("`"$tidyExe`" -p `"$tidyDir`" --extra-arg=--target=$triple --extra-arg=-Wno-overloaded-virtual `"$unit`" >> `"$log`" 2>&1")
+                    $commands.Add("`"$wabarExe`" -p `"$wabarDir`" --extra-arg=--target=$triple --extra-arg=-Wno-overloaded-virtual `"$unit`" >> `"$log`" 2>&1")
                     $commands.Add('if errorlevel 1 set /a failures+=1 >nul')
                 }
                 $commands.Add("type `"$log`"")

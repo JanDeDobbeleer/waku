@@ -8,7 +8,7 @@ namespace {
 // (Workspaces and Volume would start komorebi, GlazeWM and audio clients).
 const char* kTinySafe = R"(
 import QtQuick
-import tidy
+import wabar
 Config {
     Bar {
         layout: BarLayout {
@@ -53,10 +53,10 @@ TEST(SafeMode, TheThemeFileIsIgnored) {
   ASSERT_TRUE(h.dir.isValid());
   useTinySafeConfig(h);
   write(h.dir.filePath(QStringLiteral("theme.qml")),
-        QStringLiteral("import tidy\nThemeSpec { accent: \"#ff0000\"; fontSize: 30 }\n"));
+        QStringLiteral("import wabar\nThemeSpec { accent: \"#ff0000\"; fontSize: 30 }\n"));
   h.makeHost();
   ASSERT_TRUE(h.host->reload());
-  auto* theme = h.engine.singletonInstance<Theme*>(QStringLiteral("tidy"), QStringLiteral("Theme"));
+  auto* theme = h.engine.singletonInstance<Theme*>(QStringLiteral("wabar"), QStringLiteral("Theme"));
   ASSERT_NE(theme, nullptr);
   EXPECT_EQ(theme->property("accent").value<QColor>(), QColor(0x5b, 0x8d, 0xef));
   EXPECT_EQ(theme->property("fontSize").toInt(), 13);
@@ -113,7 +113,7 @@ TEST(SafeMode, TheBuiltInSafeConfigIsAValidConfig) {
   ASSERT_TRUE(h.dir.isValid());
   h.makeHost();
   EXPECT_EQ(BarHost::safeConfigUrl().toString(),
-            QStringLiteral("qrc:/qt/qml/tidy/widgets/SafeConfig.qml"));
+            QStringLiteral("qrc:/qt/qml/wabar/widgets/SafeConfig.qml"));
   QString error;
   // Checking builds no widget and starts no service: layouts are lazy components.
   EXPECT_TRUE(h.host->checkConfig(BarHost::safeConfigUrl(), &error)) << qPrintable(error);

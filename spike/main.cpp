@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
   parser.addHelpOption();
   QCommandLineOption configHomeOpt(
       QStringLiteral("config-home"),
-      QStringLiteral("Folder with bar.qml (default: $TIDY_CONFIG_HOME, else the sample config "
+      QStringLiteral("Folder with bar.qml (default: $WABAR_CONFIG_HOME, else the sample config "
                      "of the repository)."),
       QStringLiteral("dir"));
   QCommandLineOption appBarOpt(QStringLiteral("register-app-bar"),
@@ -40,26 +40,26 @@ int main(int argc, char* argv[]) {
   parser.addOption(appBarOpt);
   parser.addOption(safeOpt);
   parser.process(app);
-  tidy::services::Systray::setDisabled(parser.isSet(noTrayOpt));
+  wabar::services::Systray::setDisabled(parser.isSet(noTrayOpt));
 
   const QString configHome =
-      tidy::resolveConfigHome(parser.value(configHomeOpt), QStringLiteral(SPIKE_CONFIG_DIR));
+      wabar::resolveConfigHome(parser.value(configHomeOpt), QStringLiteral(SPIKE_CONFIG_DIR));
 
   QQmlEngine engine;
-  tidy::BarHost::Options options;
+  wabar::BarHost::Options options;
   options.configHome = configHome;
   options.allowReserve = parser.isSet(appBarOpt);
   options.safe = parser.isSet(safeOpt);
-  options.hooks = tidy::BarHost::NativeHooks::win32();
-  tidy::BarHost host(&engine, std::move(options));
+  options.hooks = wabar::BarHost::NativeHooks::win32();
+  wabar::BarHost host(&engine, std::move(options));
 
-  // One bar per config home: `tidybarc` finds it by the same name, and a second start would put
+  // One bar per config home: `wabarc` finds it by the same name, and a second start would put
   // a second bar over the first.
-  tidy::ControlServer control(tidy::controlPipeName(configHome),
-                              tidy::makeControlHandler(host, parser.isSet(safeOpt)));
+  wabar::ControlServer control(wabar::controlPipeName(configHome),
+                              wabar::makeControlHandler(host, parser.isSet(safeOpt)));
   if (!control.listen()) {
-    qCritical().noquote() << "tidybar is already running for" << configHome
-                          << "(tidybarc quit stops it)";
+    qCritical().noquote() << "wabar is already running for" << configHome
+                          << "(wabarc quit stops it)";
     return 1;
   }
 

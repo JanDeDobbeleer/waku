@@ -1,6 +1,6 @@
 import QtQuick
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // Bluetooth radio and connected devices. A click opens a panel (radio switch, paired devices with
 // connect and disconnect, battery level when known), a middle click opens the Bluetooth settings,

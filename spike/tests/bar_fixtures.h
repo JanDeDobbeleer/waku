@@ -22,7 +22,7 @@
 
 #include "spike/bar/bar_host.h"
 
-using namespace tidy;
+using namespace wabar;
 
 namespace {
 
@@ -33,7 +33,7 @@ QString barConfig(const QString& startText = QStringLiteral("a"),
                   const QString& barProperties = QString()) {
   return QStringLiteral(R"(
 import QtQuick
-import tidy
+import wabar
 
 Config {
     Bar {

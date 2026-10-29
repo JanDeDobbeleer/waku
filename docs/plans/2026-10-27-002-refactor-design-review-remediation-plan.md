@@ -116,7 +116,7 @@ Each unit is one commit (conventional subject), green on `tools/check.ps1` befor
 - T-4: shared `test_main.cpp` with one gtest `Environment` owning `QApplication`.
 - T-2: replace sleeps with event waits/deadlines in `test_single_instance`, `test_cli_protocol`.
 - T-1: tests for `AppServices` (with injected collaborators from R6), `WidgetBuilder`, `log.cpp`.
-- T-6: tidy `tests/CMakeLists.txt`.
+- T-6: wabar `tests/CMakeLists.txt`.
 
 ### R11 — Static analysis (ci, local)
 - `.clang-tidy` per review 7.1 (members `lower_case_` suffix). MSVC `/analyze` configure option.

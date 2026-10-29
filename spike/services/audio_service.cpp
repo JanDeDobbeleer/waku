@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace tidy::services {
+namespace wabar::services {
 
 AudioBase::AudioBase(platform::AudioEndpoints* endpoints, QObject* parent)
     : QObject(parent), endpoints_(endpoints) {
@@ -39,4 +39,4 @@ QString AudioBase::defaultDevice() const { return endpoints_->defaultDeviceId();
 
 bool AudioBase::setDefaultDevice(const QString& id) { return endpoints_->setDefaultDevice(id); }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

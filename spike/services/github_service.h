@@ -14,7 +14,7 @@
 
 #include "platform/github_api.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -162,4 +162,4 @@ class GitHub : public QObject {
   QTimer signInTimer_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

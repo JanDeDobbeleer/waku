@@ -18,7 +18,7 @@
 class QJSEngine;
 class QQmlEngine;
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -42,9 +42,9 @@ class HotkeyHost {
 };
 
 // The wallpaper folder, the current wallpaper and the gallery of every Wallpapers widget of a
-// `tidybar` run, as a QML singleton. Wraps the UI-free classes of the Widgets build:
+// `wabar` run, as a QML singleton. Wraps the UI-free classes of the Widgets build:
 // yasb::widgets::WallpaperManager (set, random, auto-change timer; the animated `engine` is off,
-// see docs/plans/2026-10-29-tidy-wallpapers-design.md), collectImageFiles, ThumbnailCache and
+// see docs/plans/2026-10-29-wabar-wallpapers-design.md), collectImageFiles, ThumbnailCache and
 // platform::DesktopWallpaperBackend. Registers image://wallpaper/<path>?<stamp>.
 //
 // Threads: GUI thread, no thread of its own. The thumbnail provider runs on Qt's image-reader
@@ -85,7 +85,7 @@ class Wallpapers : public QObject {
   static Wallpapers* create(QQmlEngine* engine, QJSEngine*);
   // Tests: create() builds the singleton with this factory instead of the real one.
   static void setFactoryForTests(std::function<std::unique_ptr<Wallpapers>()> factory);
-  // `tidybar --no-wallpapers` (once wired): no IDesktopWallpaper, no hotkey.
+  // `wabar --no-wallpapers` (once wired): no IDesktopWallpaper, no hotkey.
   static void setDisabled(bool disabled);
 
   bool available() const { return available_; }
@@ -149,4 +149,4 @@ class WallpaperThumbnailProvider : public QQuickImageProvider {
   std::shared_ptr<yasb::widgets::ThumbnailCache> cache_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

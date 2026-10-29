@@ -11,7 +11,7 @@
 #include <exception>
 #include <utility>
 
-namespace tidy::services {
+namespace wabar::services {
 namespace {
 
 bool g_disabled = false;
@@ -344,4 +344,4 @@ QImage WindowIconProvider::requestImage(const QString& id, QSize* size,
   return image;
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

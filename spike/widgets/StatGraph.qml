@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
-import tidy
+import wabar
 
 // A rolling area chart of percentages (0 to 100), the graph of the CPU and memory popups.
 //

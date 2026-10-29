@@ -6,7 +6,7 @@
 #include "spike/services/tray_icon_model.h"
 #include "spike/services/tray_image_provider.h"
 
-using namespace tidy::services;
+using namespace wabar::services;
 
 namespace {
 

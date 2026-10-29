@@ -12,7 +12,7 @@
 #include "platform/systray_click.h"
 #include "spike/services/systray.h"
 
-using namespace tidy::services;
+using namespace wabar::services;
 namespace plat = yasb::platform;
 
 namespace {

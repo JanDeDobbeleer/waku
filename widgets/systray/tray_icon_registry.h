@@ -14,7 +14,7 @@ namespace yasb::widgets {
 
 // The set of tray icons currently announced, without any UI: which notification belongs to which
 // icon, which ones are filtered out, and which owners have gone away. A systray widget (Widgets or
-// tidy) keeps one view object per icon and maps it by id.
+// wabar) keeps one view object per icon and maps it by id.
 //
 // Ports of the icon lifecycle in SystrayWidget: findIcon, the filtered-guid and hide_icons checks
 // of onIconModified, onIconDeleted and checkIcons.

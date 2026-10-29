@@ -7,7 +7,7 @@
 #include <QRectF>
 #include <QSizeF>
 
-namespace tidy {
+namespace wabar {
 
 // Where a popup or tooltip goes, as a pure function so it can be tested without windows.
 // Used by PopupWindow and Tooltip as `PopupPlacement.position(...)`; all coordinates are logical
@@ -37,4 +37,4 @@ class PopupPlacement : public QObject {
   }
 };
 
-}  // namespace tidy
+}  // namespace wabar

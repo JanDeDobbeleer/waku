@@ -12,7 +12,7 @@
 #include "spike/services/tray_pins.h"
 #include "widgets/systray/systray_state.h"
 
-using namespace tidy::services;
+using namespace wabar::services;
 
 namespace {
 

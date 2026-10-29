@@ -24,7 +24,7 @@ class QQmlEngine;
 class QJSEngine;
 class QWindow;
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -36,7 +36,7 @@ struct TaskbarWindow {
   bool minimized = false;
 };
 
-// The windows of the desktop and the pinned apps, shared by every Taskbar widget of a `tidybar`
+// The windows of the desktop and the pinned apps, shared by every Taskbar widget of a `wabar`
 // run (Python's shared TaskbarWindowManager and PinManager). Owns the WindowTracker, the PinStore
 // (taskbar_pinned.json, shared with the Widgets build) and the window icons, and performs the
 // actions a button needs: focus, close, pin, launch. `TaskbarModel` turns its state into rows.
@@ -77,7 +77,7 @@ class TaskbarService : public QObject {
   static TaskbarService* create(QQmlEngine* engine, QJSEngine*);
   // Tests: create() builds the singleton with this factory instead of the real one.
   static void setFactoryForTests(std::function<std::unique_ptr<TaskbarService>()> factory);
-  // `tidybar --no-taskbar` (once wired): the real service has no tracker.
+  // `wabar --no-taskbar` (once wired): the real service has no tracker.
   static void setDisabled(bool disabled);
 
   bool available() const { return tracker_ != nullptr; }
@@ -160,4 +160,4 @@ class WindowIconProvider : public QQuickImageProvider {
   QPointer<TaskbarService> service_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

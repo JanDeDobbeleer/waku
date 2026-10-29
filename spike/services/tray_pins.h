@@ -13,7 +13,7 @@
 #include "spike/services/tray_icon_model.h"
 #include "widgets/systray/systray_state.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 class TrayPins;
 
@@ -66,13 +66,13 @@ class TrayPins : public QObject {
   Q_OBJECT
   QML_ELEMENT
   Q_PROPERTY(
-      tidy::services::TrayIconModel* icons READ icons WRITE setIcons NOTIFY iconsChanged FINAL)
+      wabar::services::TrayIconModel* icons READ icons WRITE setIcons NOTIFY iconsChanged FINAL)
   Q_PROPERTY(QString screenId READ screenId WRITE setScreenId NOTIFY screenIdChanged FINAL)
   Q_PROPERTY(QScreen* screen READ screen WRITE setScreen NOTIFY screenChanged FINAL)
   Q_PROPERTY(QWindow* window READ window WRITE setWindow NOTIFY windowChanged FINAL)
   Q_PROPERTY(QString stateDir READ stateDir WRITE setStateDir NOTIFY stateDirChanged FINAL)
-  Q_PROPERTY(tidy::services::TrayPinList* pinned READ pinned CONSTANT FINAL)
-  Q_PROPERTY(tidy::services::TrayPinList* unpinned READ unpinned CONSTANT FINAL)
+  Q_PROPERTY(wabar::services::TrayPinList* pinned READ pinned CONSTANT FINAL)
+  Q_PROPERTY(wabar::services::TrayPinList* unpinned READ unpinned CONSTANT FINAL)
 
  public:
   explicit TrayPins(QObject* parent = nullptr);
@@ -92,7 +92,7 @@ class TrayPins : public QObject {
   // its window instead: `screen` follows window->screen(), including when the window moves.
   void setWindow(QWindow* window);
   QString stateDir() const { return stateDir_; }
-  // Defaults to appDataDir("tidy"). Set it before screenId (tests); later it reloads.
+  // Defaults to appDataDir("wabar"). Set it before screenId (tests); later it reloads.
   void setStateDir(const QString& dir);
   TrayPinList* pinned() { return &pinned_; }
   TrayPinList* unpinned() { return &unpinned_; }
@@ -135,4 +135,4 @@ class TrayPins : public QObject {
   TrayPinList unpinned_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

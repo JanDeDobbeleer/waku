@@ -1,4 +1,4 @@
-# Tidy ControlCenter widget: design
+# Wabar ControlCenter widget: design
 
 Date: 2026-10-29. Branch `spike/qt-quick-bar`. Reference: Python YASB `control_center` and the Qt
 Widgets port in `widgets/control_center/`.
@@ -91,7 +91,7 @@ list) and `SliderRow`. Options: `glyph`, `sectionsOrder`, `quickActions`, `colum
 
 - Custom quick actions that run a command (`command` ids in the Python options), the per-action
   `label` and `icon` overrides, `label_position`, and the CSS-class styling. Quick actions use
-  fixed labels and symbols from the widget; this can follow when the tidy theme model has a
+  fixed labels and symbols from the widget; this can follow when the wabar theme model has a
   place for them.
 - Popup `alignment`, `direction`, `offset_*`, `border_color`, `round_corners`: owned by
   `PopupWindow` and the theme.

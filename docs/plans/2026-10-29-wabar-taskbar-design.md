@@ -1,7 +1,7 @@
-# tidy taskbar: design note
+# wabar taskbar: design note
 
 Status: decisions taken, built in this pass. Sits on `spike/qt-quick-bar` next to the Tray widget
-(`2026-10-28-tidy-systray-plan.md`). Reference: Python YASB `yasb/taskbar*` (branch `local/build`)
+(`2026-10-28-wabar-systray-plan.md`). Reference: Python YASB `yasb/taskbar*` (branch `local/build`)
 and the Widgets build's `widgets/taskbar/`.
 
 ## What the widget does
@@ -38,10 +38,10 @@ Options (Python names, camel case): `iconSize`, `tooltip`, `showOnlyVisible`, `s
 | `PinSupport` (pin metadata, launch, pinned icons) | `platform/pin_support.*` | platform | as is; tests substitute a fake |
 | `PinStore` (taskbar_pinned.json, change signal) | `widgets/taskbar/pin_store.*` | widgets (no UI) | as is |
 | `TaskbarIcons` (icon loader on a worker thread, cache), `loadPinnedIcon` | `widgets/taskbar/taskbar_icons.*` | widgets (no UI) | as is |
-| `TaskbarService` (singleton) | `spike/services/taskbar_service.*` | tidy.services | new: tracker + pin store + icons + the focus/close/pin actions |
-| `TaskbarModel` (per widget) | `spike/services/taskbar_model.*` | tidy.services | new: filters and groups the service's windows into button rows |
-| `WindowIconProvider` | `spike/services/taskbar_service.*` | tidy.services | new: `image://windowicon/<key>/<rev>` |
-| `Taskbar.qml` | `spike/widgets/` | tidy.widgets | new |
+| `TaskbarService` (singleton) | `spike/services/taskbar_service.*` | wabar.services | new: tracker + pin store + icons + the focus/close/pin actions |
+| `TaskbarModel` (per widget) | `spike/services/taskbar_model.*` | wabar.services | new: filters and groups the service's windows into button rows |
+| `WindowIconProvider` | `spike/services/taskbar_service.*` | wabar.services | new: `image://windowicon/<key>/<rev>` |
+| `Taskbar.qml` | `spike/widgets/` | wabar.widgets | new |
 
 The Widgets classes `TaskbarWidget`, `AppButton`, `TaskbarMenu` and `PreviewManager` are QWidgets
 and are not used; their logic (filter, group key, `bringToForeground`, pin/unpin) is ported to

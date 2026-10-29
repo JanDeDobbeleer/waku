@@ -1,9 +1,9 @@
-# tidy.widgets: the built-in widgets, plain QML on top of tidy.services. Inside the module
+# wabar.widgets: the built-in widgets, plain QML on top of wabar.services. Inside the module
 # the services are imported under the name S because the widgets share names with them (Cpu,
 # Memory, Battery, Media, Workspaces).
-qt_add_library(tidy_widgets STATIC)
-qt_add_qml_module(tidy_widgets
-  URI tidy.widgets
+qt_add_library(wabar_widgets STATIC)
+qt_add_qml_module(wabar_widgets
+  URI wabar.widgets
   VERSION 1.0
   QML_FILES
     Pill.qml
@@ -34,4 +34,4 @@ qt_add_qml_module(tidy_widgets
     WallpaperGallery.qml
     SafeConfig.qml
 )
-target_link_libraries(tidy_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE tidy_bar tidy_services)
+target_link_libraries(wabar_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE wabar_bar wabar_services)

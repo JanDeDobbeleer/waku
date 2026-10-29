@@ -9,7 +9,7 @@
 
 #include "platform/systray_types.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -69,4 +69,4 @@ class TrayIconModel : public QAbstractListModel {
   std::vector<Row> rows_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

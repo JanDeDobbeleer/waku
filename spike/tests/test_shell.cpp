@@ -8,7 +8,7 @@
 
 #include "spike/services/shell_service.h"
 
-using namespace tidy::services;
+using namespace wabar::services;
 
 namespace {
 
@@ -75,30 +75,30 @@ TEST(ShellService, CommandAndOpenReachTheLauncher) {
 
 TEST(ShellService, ExposesPathsAndEnvironment) {
   Launches l;
-  Shell shell(l.launcher(), QStringLiteral("C:\\cfg\\tidy"), nullptr);
-  EXPECT_EQ(shell.configHome(), QStringLiteral("C:\\cfg\\tidy"));
+  Shell shell(l.launcher(), QStringLiteral("C:\\cfg\\wabar"), nullptr);
+  EXPECT_EQ(shell.configHome(), QStringLiteral("C:\\cfg\\wabar"));
   EXPECT_FALSE(shell.homeDir().isEmpty());
   EXPECT_EQ(shell.homeDir(), QDir::toNativeSeparators(QDir::homePath()));
 
-  qputenv("TIDY_TEST_VALUE", "hello");
-  EXPECT_EQ(shell.env(QStringLiteral("TIDY_TEST_VALUE")), QStringLiteral("hello"));
-  EXPECT_TRUE(shell.env(QStringLiteral("TIDY_TEST_UNSET_VALUE")).isEmpty());
-  qunsetenv("TIDY_TEST_VALUE");
+  qputenv("WABAR_TEST_VALUE", "hello");
+  EXPECT_EQ(shell.env(QStringLiteral("WABAR_TEST_VALUE")), QStringLiteral("hello"));
+  EXPECT_TRUE(shell.env(QStringLiteral("WABAR_TEST_UNSET_VALUE")).isEmpty());
+  qunsetenv("WABAR_TEST_VALUE");
 }
 
 TEST(ShellService, DefaultConfigHomeFollowsTheEnvironmentOrTheHomeFolder) {
-  qunsetenv("TIDY_CONFIG_HOME");
+  qunsetenv("WABAR_CONFIG_HOME");
   {
     Shell shell;
-    EXPECT_TRUE(shell.configHome().endsWith(QStringLiteral("\\.config\\tidy")))
+    EXPECT_TRUE(shell.configHome().endsWith(QStringLiteral("\\.config\\wabar")))
         << qPrintable(shell.configHome());
   }
-  qputenv("TIDY_CONFIG_HOME", "D:/somewhere/else");
+  qputenv("WABAR_CONFIG_HOME", "D:/somewhere/else");
   {
     Shell shell;
     EXPECT_EQ(shell.configHome(), QStringLiteral("D:\\somewhere\\else"));
   }
-  qunsetenv("TIDY_CONFIG_HOME");
+  qunsetenv("WABAR_CONFIG_HOME");
 }
 
 // The real launches, writing into a temp folder: they start hidden detached processes.
@@ -124,5 +124,5 @@ TEST(ShellServiceReal, StartRunsADetachedProgram) {
 
 TEST(ShellServiceReal, StartOfAMissingProgramFails) {
   Shell shell;
-  EXPECT_FALSE(shell.start(QStringLiteral("definitely-not-a-program-tidy.exe")));
+  EXPECT_FALSE(shell.start(QStringLiteral("definitely-not-a-program-wabar.exe")));
 }

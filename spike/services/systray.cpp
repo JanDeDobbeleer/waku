@@ -11,7 +11,7 @@
 #include "spike/services/tray_image_provider.h"
 #include "widgets/systray/systray_service.h"
 
-namespace tidy::services {
+namespace wabar::services {
 namespace {
 
 constexpr int kRefreshDelayMs = 200;    // SystrayWidget's refreshTimer_
@@ -233,4 +233,4 @@ void Systray::doubleClick(int id) {
   }
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

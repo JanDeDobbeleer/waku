@@ -10,7 +10,7 @@ Config {
                     color: Theme.text
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSize
-                    text: "tidy"
+                    text: "wabar"
                 }
             ]
         }

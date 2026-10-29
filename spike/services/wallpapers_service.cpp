@@ -20,7 +20,7 @@
 #include "platform/window_focus.h"
 #include "widgets/wallpapers/wallpaper_files.h"
 
-namespace tidy::services {
+namespace wabar::services {
 namespace {
 
 namespace widgets = ::yasb::widgets;
@@ -338,4 +338,4 @@ QImage WallpaperThumbnailProvider::requestImage(const QString& id, QSize* size,
   }
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

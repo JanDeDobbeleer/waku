@@ -23,9 +23,9 @@
 namespace {
 
 namespace plat = yasb::platform;
-using tidy::services::TaskbarModel;
-using tidy::services::TaskbarService;
-using tidy::services::WindowIconProvider;
+using wabar::services::TaskbarModel;
+using wabar::services::TaskbarService;
+using wabar::services::WindowIconProvider;
 
 constexpr plat::WindowHandle kFirst = 101;
 constexpr plat::WindowHandle kSecond = 102;
@@ -536,8 +536,8 @@ class TaskbarWidgetTest : public testing::Test {
   bool start(Harness& h, const QString& props = QString()) {
     h.start(QStringLiteral(R"(
 import QtQuick
-import tidy
-import tidy.widgets
+import wabar
+import wabar.widgets
 Config {
     Bar {
         layout: BarLayout {

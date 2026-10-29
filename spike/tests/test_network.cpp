@@ -10,7 +10,7 @@
 
 #include "spike/services/network_service.h"
 
-using namespace tidy::services;
+using namespace wabar::services;
 namespace platform = yasb::platform;
 
 namespace {

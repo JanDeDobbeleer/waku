@@ -2,7 +2,7 @@
 
 #include "spike/bar/screen_match.h"
 
-using namespace tidy;
+using namespace wabar;
 
 namespace {
 

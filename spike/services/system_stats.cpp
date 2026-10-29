@@ -1,6 +1,6 @@
 #include "spike/services/system_stats.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 Memory::Memory(QObject* parent) : Memory(platform::createMemoryDataSource(), parent) {}
 
@@ -44,4 +44,4 @@ void Battery::sample() {
   });
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

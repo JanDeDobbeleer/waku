@@ -1,6 +1,6 @@
 import QtQuick
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // Network state: a signal-strength glyph (Wi-Fi levels, Ethernet, disconnected) and a VPN glyph
 // while a VPN is up. A click opens a list of nearby networks (name, signal, lock) with a refresh;

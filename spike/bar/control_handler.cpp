@@ -6,7 +6,7 @@
 
 #include "spike/bar/bar_host.h"
 
-namespace tidy {
+namespace wabar {
 
 ControlHandler makeControlHandler(BarHost& host, bool safe, std::function<void()> quit) {
   if (!quit) quit = [] { QCoreApplication::quit(); };
@@ -33,4 +33,4 @@ ControlHandler makeControlHandler(BarHost& host, bool safe, std::function<void()
   };
 }
 
-}  // namespace tidy
+}  // namespace wabar

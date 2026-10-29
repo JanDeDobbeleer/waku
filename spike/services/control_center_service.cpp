@@ -13,7 +13,7 @@
 #include "platform/touch_keyboard.h"
 #include "platform/user_info.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace {
 
@@ -316,4 +316,4 @@ bool ControlCenter::requestAction(const QString& id) {
   return false;
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

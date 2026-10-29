@@ -1,6 +1,6 @@
 #include "spike/services/media_service.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 QString imageMimeType(const QByteArray& bytes) {
   if (bytes.startsWith("\x89PNG\r\n\x1a\n")) return QStringLiteral("image/png");
@@ -55,4 +55,4 @@ bool Media::canPrevious() const { return current() && current()->prevEnabled; }
 bool Media::canPlayPause() const { return current() && current()->playEnabled; }
 bool Media::canNext() const { return current() && current()->nextEnabled; }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

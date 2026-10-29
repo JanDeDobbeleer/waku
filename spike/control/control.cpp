@@ -9,17 +9,17 @@
 #include <QPointer>
 #include <QTimer>
 
-namespace tidy {
+namespace wabar {
 
 QString controlPipeName(const QString& configHome) {
   QString normal = QDir::cleanPath(QDir::fromNativeSeparators(configHome)).toLower();
   const QByteArray hash = QCryptographicHash::hash(normal.toUtf8(), QCryptographicHash::Sha1);
-  return QStringLiteral("tidy-") + QString::fromLatin1(hash.toHex().left(12));
+  return QStringLiteral("wabar-") + QString::fromLatin1(hash.toHex().left(12));
 }
 
 QString resolveConfigHome(const QString& optionValue, const QString& fallback) {
   if (!optionValue.isEmpty()) return optionValue;
-  if (const QString fromEnv = qEnvironmentVariable("TIDY_CONFIG_HOME"); !fromEnv.isEmpty()) {
+  if (const QString fromEnv = qEnvironmentVariable("WABAR_CONFIG_HOME"); !fromEnv.isEmpty()) {
     return fromEnv;
   }
   return fallback;
@@ -116,4 +116,4 @@ ControlReply sendControlCommand(const QString& name, const QString& command, int
   return {ControlReply::Ok, QString::fromUtf8(received).trimmed()};
 }
 
-}  // namespace tidy
+}  // namespace wabar

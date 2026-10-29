@@ -5,7 +5,7 @@
 
 #include "widgets/komorebi/komorebi_state.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace kmb = widgets::komorebi;
 
@@ -163,4 +163,4 @@ QVariantMap Komorebi::monitorAt(int monitorIndex) const {
   return {};
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

@@ -17,7 +17,7 @@
 class QQmlEngine;
 class QJSEngine;
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -53,7 +53,7 @@ class Systray : public QObject {
   // the real host. An empty function restores the real path.
   static void setFactoryForTests(std::function<std::unique_ptr<Systray>()> factory);
 
-  // `tidybar --no-tray`: the real Systray stays unavailable and never touches Explorer.
+  // `wabar --no-tray`: the real Systray stays unavailable and never touches Explorer.
   static void setDisabled(bool disabled);
 
   bool available() const { return host_ != nullptr; }
@@ -94,4 +94,4 @@ class Systray : public QObject {
   QTimer sweepTimer_;    // 5 s, as the Widgets build: drops icons whose owner window is gone
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

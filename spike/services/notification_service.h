@@ -8,7 +8,7 @@
 
 #include "platform/notifications.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -59,4 +59,4 @@ class Notifications : public QObject {
   QVariantList items_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

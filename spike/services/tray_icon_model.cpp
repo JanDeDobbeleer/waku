@@ -6,7 +6,7 @@
 #include "widgets/systray/icon_scale.h"
 #include "widgets/systray/systray_state.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace {
 
@@ -126,4 +126,4 @@ int TrayIconModel::revision(int id) const {
   return at < 0 ? 0 : rows_[static_cast<size_t>(at)].revision;
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

@@ -4,7 +4,7 @@
 #include <QVariantMap>
 #include <algorithm>
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace {
 
@@ -92,4 +92,4 @@ void Bluetooth::disconnectDevice(const QString& id) {
   if (backend_) backend_->disconnectDevice(id);
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

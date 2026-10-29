@@ -11,7 +11,7 @@
 
 #include "widgets/github/github_format.h"
 
-namespace tidy::services {
+namespace wabar::services {
 namespace {
 
 namespace github = ::yasb::widgets::github;
@@ -366,4 +366,4 @@ void GitHub::endSignIn(const QString& error) {
   emit changed();
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

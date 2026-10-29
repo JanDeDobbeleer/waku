@@ -5,19 +5,19 @@
 #include <QString>
 #include <functional>
 
-namespace tidy {
+namespace wabar {
 
-// The control channel: how `tidybarc` (reload, status, quit) talks to the running bar. A named
+// The control channel: how `wabarc` (reload, status, quit) talks to the running bar. A named
 // pipe (QLocalServer) per config home, so two instances with different config homes do not meet,
 // and a running instance doubles as the single-instance guard for its config home.
 //
 // Protocol: the client sends one line (a command), the server answers with one line and closes.
 // Commands are answered on the GUI thread of the instance.
 
-// "tidy-" plus a short hash of the config home (case and trailing slashes do not matter).
+// "wabar-" plus a short hash of the config home (case and trailing slashes do not matter).
 QString controlPipeName(const QString& configHome);
 
-// The config home to use: the command-line value if given, else $TIDY_CONFIG_HOME, else
+// The config home to use: the command-line value if given, else $WABAR_CONFIG_HOME, else
 // `fallback`.
 QString resolveConfigHome(const QString& optionValue, const QString& fallback);
 
@@ -63,4 +63,4 @@ struct ControlReply {
 // off the thread that runs the server (the CLI has no server).
 ControlReply sendControlCommand(const QString& name, const QString& command, int timeoutMs = 5000);
 
-}  // namespace tidy
+}  // namespace wabar

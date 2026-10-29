@@ -1,5 +1,5 @@
 import QtQuick
-import tidy
+import wabar
 
 // A horizontal slider for popups: a track, a filled part and a handle.
 //

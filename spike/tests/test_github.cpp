@@ -11,7 +11,7 @@
 #include "spike/services/github_service.h"
 #include "spike/tests/bar_fixtures.h"
 
-using namespace tidy::services;
+using namespace wabar::services;
 namespace platform = yasb::platform;
 
 namespace {
@@ -471,8 +471,8 @@ TEST(GithubWidget, LoadsAndIsHiddenWithoutTheService) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import tidy
-import tidy.widgets
+import wabar
+import wabar.widgets
 Config {
     Bar {
         layout: BarLayout {

@@ -19,7 +19,7 @@
 namespace {
 
 namespace plat = yasb::platform;
-using tidy::services::Systray;
+using wabar::services::Systray;
 
 constexpr std::uint32_t kCallback = 0x8001;
 
@@ -108,8 +108,8 @@ class TrayWidgetTest : public testing::Test {
   QString trayConfig(const QString& props = QString()) const {
     return QStringLiteral(R"(
 import QtQuick
-import tidy
-import tidy.widgets
+import wabar
+import wabar.widgets
 Config {
     Bar {
         layout: BarLayout {

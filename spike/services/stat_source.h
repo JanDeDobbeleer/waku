@@ -13,7 +13,7 @@
 #include <memory>
 #include <optional>
 
-namespace tidy::services {
+namespace wabar::services {
 
 // Base of the polled data sources (Memory, Cpu, Battery). Once the QML component is complete it
 // samples every `interval` ms while `active`. The platform call runs on a QThreadPool thread, one
@@ -100,4 +100,4 @@ class StatSource : public QObject, public QQmlParserStatus {
   std::deque<double> history_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

@@ -9,7 +9,7 @@
 
 #include "platform/media_session.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -79,4 +79,4 @@ class Media : public QObject {
   QString thumbnailUrl_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

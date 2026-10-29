@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <climits>
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace {
 
@@ -154,7 +154,7 @@ void TrayPins::setStateDir(const QString& dir) {
 
 void TrayPins::reload() {
   try {
-    if (stateDir_.isEmpty()) stateDir_ = yasb::widgets::appDataDir(QStringLiteral("tidy"));
+    if (stateDir_.isEmpty()) stateDir_ = yasb::widgets::appDataDir(QStringLiteral("wabar"));
     const yasb::widgets::SystrayStateStore store(stateDir_, effectiveScreenId());
     currentState_ = store.load();
   } catch (const std::exception& error) {
@@ -292,4 +292,4 @@ void TrayPins::persist() {
   }
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

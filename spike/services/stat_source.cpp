@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace tidy::services {
+namespace wabar::services {
 
 StatSource::StatSource(QObject* parent) : QObject(parent) {
   connect(&timer_, &QTimer::timeout, this, [this] { sample(); });
@@ -62,4 +62,4 @@ void StatSource::setReady() {
   emit readyChanged();
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

@@ -1,6 +1,6 @@
 import QtQuick
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // The control center: a bar button that opens a panel with the account and session buttons,
 // quick toggles, brightness, volume and microphone sliders, power plan and mode, and what is

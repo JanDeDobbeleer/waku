@@ -12,7 +12,7 @@
 #include "platform/wlan.h"
 #include "spike/services/stat_source.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -113,4 +113,4 @@ class Network : public StatSource {
   bool connecting_ = false;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

@@ -3,7 +3,7 @@
 #include <QGuiApplication>
 #include <algorithm>
 
-namespace tidy::services {
+namespace wabar::services {
 
 NetworkStatus statusFromSample(const platform::ConnectivitySample& sample,
                                const std::optional<int>& exactQuality) {
@@ -130,4 +130,4 @@ bool Network::connectTo(const QString& ssid) {
   return true;
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

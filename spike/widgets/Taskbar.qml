@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Window
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // The open windows of this monitor as icon buttons, and the apps you pinned. A left click focuses
 // a window, minimises it when it is already in front and restores it when it is minimised; on an

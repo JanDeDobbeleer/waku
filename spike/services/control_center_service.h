@@ -14,7 +14,7 @@
 #include "platform/brightness.h"
 #include "platform/power.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -162,4 +162,4 @@ class ControlCenter : public QObject {
   QString pending_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

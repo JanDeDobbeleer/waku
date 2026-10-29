@@ -54,8 +54,8 @@ void updateCurrentState(IconStateMap& state, const QStringList& pinned,
 void updateIconData(platform::TrayIconData& old, const platform::TrayIconData& incoming);
 
 // %LOCALAPPDATA%\<folder>, created on demand (core/utils/system.py app_data_path). The Widgets
-// build keeps its state in "YASB" (Python YASB's folder, so the two share pins); tidy passes
-// "tidy".
+// build keeps its state in "YASB" (Python YASB's folder, so the two share pins); wabar passes
+// "wabar".
 QString appDataDir(const QString& folder = QStringLiteral("YASB"));
 
 // "systray_state_<screen id>.json" in `dir`, in Python YASB's format: a JSON object of key ->

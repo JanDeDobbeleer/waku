@@ -5,7 +5,7 @@
 #include <QGuiApplication>
 #include <QVariantMap>
 
-namespace tidy::services {
+namespace wabar::services {
 namespace {
 
 QString timeText(const QDateTime& created) {
@@ -64,4 +64,4 @@ void Notifications::activate(int id) {
   }
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

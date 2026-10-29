@@ -1,6 +1,6 @@
 import QtQuick
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // GitHub notifications. The pill shows a glyph and a dot while there are unread notifications. A
 // click opens a list grouped by category (state icon, title, repository and age, comment count;

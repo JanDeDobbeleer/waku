@@ -8,7 +8,7 @@
 
 #include "platform/audio.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -69,4 +69,4 @@ class AudioInput : public AudioBase {
       : AudioBase(platform::createSystemAudio(platform::AudioFlow::Capture), parent) {}
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

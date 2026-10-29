@@ -10,7 +10,7 @@
 
 #include "platform/bluetooth.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -66,4 +66,4 @@ class Bluetooth : public QObject {
   platform::BluetoothStatus status_;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

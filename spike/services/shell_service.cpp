@@ -8,7 +8,7 @@
 #include "platform/komorebi.h"
 #include "platform/shell_open.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace {
 
@@ -22,10 +22,10 @@ bool startDetached(const QString& program, const QStringList& arguments) {
 }
 
 QString defaultConfigHome() {
-  if (const QString fromEnv = qEnvironmentVariable("TIDY_CONFIG_HOME"); !fromEnv.isEmpty()) {
+  if (const QString fromEnv = qEnvironmentVariable("WABAR_CONFIG_HOME"); !fromEnv.isEmpty()) {
     return QDir::toNativeSeparators(fromEnv);
   }
-  return QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/.config/tidy"));
+  return QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/.config/wabar"));
 }
 
 }  // namespace
@@ -57,4 +57,4 @@ void Shell::open(const QString& target) {
 
 QString Shell::env(const QString& name) const { return qEnvironmentVariable(qPrintable(name)); }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

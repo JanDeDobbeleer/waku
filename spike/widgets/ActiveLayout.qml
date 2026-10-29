@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Window
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // The komorebi tiling layout of this bar's monitor. A click switches to the next layout of
 // `layouts`, the wheel steps through them; while the workspace is paused, floating, maximized or

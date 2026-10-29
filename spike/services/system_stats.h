@@ -8,7 +8,7 @@
 #include "platform/system_stats.h"
 #include "spike/services/stat_source.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 namespace platform = ::yasb::platform;
 
@@ -102,4 +102,4 @@ class Battery : public StatSource {
   bool available_ = false;
 };
 
-}  // namespace tidy::services
+}  // namespace wabar::services

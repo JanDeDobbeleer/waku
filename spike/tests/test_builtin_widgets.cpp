@@ -5,7 +5,7 @@
 
 #include "spike/tests/bar_fixtures.h"
 
-// The built-in widgets (tidy.widgets), instantiated in a real bar on the offscreen platform.
+// The built-in widgets (wabar.widgets), instantiated in a real bar on the offscreen platform.
 // Volume, Media and Workspaces are left out on purpose: creating them starts real audio,
 // media-session, komorebi and GlazeWM clients, which a test must not do on a developer's machine.
 // They are covered by the build (qmlcachegen type-checks them) and by running the sample config.
@@ -15,8 +15,8 @@ namespace {
 QString widgetConfig(const QString& widgets) {
   return QStringLiteral(R"(
 import QtQuick
-import tidy
-import tidy.widgets
+import wabar
+import wabar.widgets
 Config {
     Bar {
         layout: BarLayout {
@@ -101,7 +101,7 @@ TEST(PillWidget, OnABarItIsFlatAndTakesTheBarFill) {
   Harness h;
   write(h.dir.filePath(QStringLiteral("theme.qml")),
         QStringLiteral(
-            "import tidy\nThemeSpec { barFill: \"#00000000\"; barFillHover: \"#26c6d0f5\" }\n"));
+            "import wabar\nThemeSpec { barFill: \"#00000000\"; barFillHover: \"#26c6d0f5\" }\n"));
   h.start(widgetConfig(QStringLiteral(R"(Pill { objectName: "p"; text: "x" })")));
   ASSERT_TRUE(started(h));
   QQuickItem* pill = item(h, QStringLiteral("p"));
@@ -114,7 +114,7 @@ TEST(PillWidget, OnABarItIsFlatAndTakesTheBarFill) {
 TEST(PillWidget, InAPopupItKeepsTheVisibleFill) {
   Harness h;
   write(h.dir.filePath(QStringLiteral("theme.qml")),
-        QStringLiteral("import tidy\nThemeSpec { barFill: \"#00000000\" }\n"));
+        QStringLiteral("import wabar\nThemeSpec { barFill: \"#00000000\" }\n"));
   h.start(widgetConfig(QStringLiteral(R"(
 Pill {
     objectName: "anchor"; text: "a"
@@ -152,7 +152,7 @@ QQuickItem* textChild(QQuickItem* root, const QString& text) {
 TEST(PillWidget, AnIconIsDrawnInTheIconFont) {
   Harness h;
   write(h.dir.filePath(QStringLiteral("theme.qml")),
-        QStringLiteral("import tidy\nThemeSpec { iconFont: \"Test Icons\"; iconSize: 18 }\n"));
+        QStringLiteral("import wabar\nThemeSpec { iconFont: \"Test Icons\"; iconSize: 18 }\n"));
   h.start(widgetConfig(QStringLiteral(R"(Pill { objectName: "p"; icon: ""; text: "hi" })")));
   ASSERT_TRUE(started(h));
   QQuickItem* pill = item(h, QStringLiteral("p"));

@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Window
-import tidy
-import tidy.services as S
+import wabar
+import wabar.services as S
 
 // One notification-area icon, used by Tray. Not meant to be placed by hand.
 //

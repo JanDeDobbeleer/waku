@@ -1,6 +1,6 @@
 #include "spike/services/tray_image_provider.h"
 
-namespace tidy::services {
+namespace wabar::services {
 
 TrayImageProvider::TrayImageProvider(TrayIconModel* model)
     : QQuickImageProvider(QQuickImageProvider::Image), model_(model) {}
@@ -18,4 +18,4 @@ QImage TrayImageProvider::requestImage(const QString& id, QSize* size,
   return image;
 }
 
-}  // namespace tidy::services
+}  // namespace wabar::services

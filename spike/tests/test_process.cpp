@@ -7,7 +7,7 @@
 
 #include "spike/services/child_process.h"
 
-using namespace tidy::services;
+using namespace wabar::services;
 
 namespace {
 
