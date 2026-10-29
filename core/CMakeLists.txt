@@ -4,7 +4,6 @@ add_library(yasb_ui STATIC
   bar/app_bar.cpp
   widgets/backdrop.h
   widgets/backdrop.cpp
-  widgets/event_bus.h
 )
 target_include_directories(yasb_ui PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(yasb_ui

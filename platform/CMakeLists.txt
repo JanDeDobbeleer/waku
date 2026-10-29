@@ -15,18 +15,12 @@ add_library(yasb_platform STATIC
   bluetooth.cpp
   brightness.h
   brightness.cpp
-  command_line.h
-  command_line.cpp
   connectivity.h
   connectivity.cpp
   desktop_wallpaper.h
   desktop_wallpaper.cpp
   github_api.h
   github_api.cpp
-  glazewm.h
-  glazewm.cpp
-  komorebi.h
-  komorebi.cpp
   media_session.h
   media_session.cpp
   media_session_winrt.cpp
@@ -72,7 +66,7 @@ target_compile_definitions(yasb_platform PUBLIC
 target_link_libraries(yasb_platform
   PUBLIC Qt6::Core
   PRIVATE wabar_options wabar_kernel psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32
-          wlanapi ws2_32 bthprops cfgmgr32 shlwapi dwmapi oleaut32 uuid dxva2 powrprof secur32 advapi32 winhttp)
+          wlanapi ws2_32 bthprops cfgmgr32 shlwapi dwmapi oleaut32 uuid dxva2 powrprof secur32 advapi32)
 # GitHub widget HTTPS (github_api.cpp); headers stay QtCore-only.
 find_package(Qt6 REQUIRED COMPONENTS Network)
 target_link_libraries(yasb_platform PRIVATE Qt6::Network)

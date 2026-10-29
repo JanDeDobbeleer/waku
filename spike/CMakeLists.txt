@@ -11,14 +11,8 @@ wabar_contribute(
     services/audio_service.cpp
     services/media_service.h
     services/media_service.cpp
-    services/glazewm_client.h
-    services/glazewm_client.cpp
-    services/komorebi_client.h
-    services/komorebi_client.cpp
     services/shell_service.h
     services/shell_service.cpp
-    services/workspaces_service.h
-    services/workspaces_service.cpp
     services/tray_icon_model.h
     services/tray_icon_model.cpp
     services/tray_image_provider.h

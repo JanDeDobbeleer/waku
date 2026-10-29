@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "platform/bluetooth.h"
-#include "platform/command_line.h"
 #include "platform/connectivity.h"
 #include "platform/toast_activation.h"
 #include "platform/toast_xml.h"
@@ -163,10 +162,4 @@ TEST(BluetoothTypes, PreferKnownThenConnected) {
   b.connected = true;
   EXPECT_TRUE(preferDevice(b, a));
   EXPECT_FALSE(preferDevice(a, b));
-}
-
-TEST(CommandLine, QuoteCmdLineFollowsList2CmdLine) {
-  EXPECT_EQ(quoteCmdLine({"notepad", "a b", ""}), "notepad \"a b\" \"\"");
-  EXPECT_EQ(quoteCmdLine({"say \"hi\""}), "\"say \\\"hi\\\"\"");
-  EXPECT_EQ(quoteCmdLine({"C:\\dir with space\\"}), "\"C:\\dir with space\\\\\"");
 }

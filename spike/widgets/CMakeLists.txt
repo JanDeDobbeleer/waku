@@ -10,11 +10,8 @@ wabar_contribute(
     Slider.qml
     Volume.qml
     Media.qml
-    Workspaces.qml
-    WorkspaceDot.qml
     TrayIconButton.qml
     Tray.qml
-    ActiveLayout.qml
     Bluetooth.qml
     Wifi.qml
     Notifications.qml

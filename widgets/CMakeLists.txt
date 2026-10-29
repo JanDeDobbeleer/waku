@@ -4,14 +4,6 @@ add_library(yasb_widgets STATIC
   github/github_format.cpp
   github/github_format.h
   github/github_icons.h
-  glazewm/glazewm_service.cpp
-  glazewm/glazewm_service.h
-  glazewm/glazewm_state.cpp
-  glazewm/glazewm_state.h
-  komorebi/komorebi_service.cpp
-  komorebi/komorebi_service.h
-  komorebi/komorebi_state.cpp
-  komorebi/komorebi_state.h
   systray/icon_scale.cpp
   systray/icon_scale.h
   systray/systray_service.cpp

@@ -5,9 +5,7 @@ wabar_contribute(
     test_process.cpp
     test_audio.cpp
     test_media.cpp
-    test_wm_clients.cpp
     test_shell.cpp
-    test_workspaces.cpp
     test_screen_match.cpp
     test_bar_host.cpp
     test_builtin_widgets.cpp
@@ -19,7 +17,6 @@ wabar_contribute(
     test_systray.cpp
     test_tray_pins.cpp
     test_tray_widget.cpp
-    test_active_layout.cpp
     test_bluetooth.cpp
     test_network.cpp
     test_notifications.cpp
@@ -30,9 +27,6 @@ wabar_contribute(
     test_wallpaper_transition.cpp
     test_wallpaper_control.cpp
     test_wallpaper_manager.cpp
-    test_glazewm_socket.cpp
-    test_glazewm_state.cpp
-    test_komorebi_service.cpp
     test_systray_click.cpp
     test_systray_pipe.cpp
     test_tray_icon_registry.cpp
