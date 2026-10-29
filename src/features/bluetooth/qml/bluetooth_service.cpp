@@ -1,75 +1,75 @@
-#include "spike/services/bluetooth_service.h"
+#include "features/bluetooth/qml/bluetooth_service.h"
 
 #include <QVariantMap>
 #include <algorithm>
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::services {
+namespace wabar::bluetooth {
 
 namespace {
 
-std::unique_ptr<platform::BluetoothBackend> makeRealBackend() {
+std::unique_ptr<BluetoothBackend> makeRealBackend() {
   if (!kernel::liveDesktop(QStringLiteral("bluetooth"))) return nullptr;
-  if (!platform::hasBluetoothAdapter()) return nullptr;
-  return platform::createBluetoothBackend();
+  if (!hasBluetoothAdapter()) return nullptr;
+  return createBluetoothBackend();
 }
 
 // Paired or remembered devices are the ones the bar lists and counts.
-bool listed(const platform::BluetoothDevice& device) { return device.paired || device.remembered; }
+bool listed(const BluetoothDevice& device) { return device.paired || device.remembered; }
 
 }  // namespace
 
 Bluetooth::Bluetooth(QObject* parent) : Bluetooth(makeRealBackend(), parent) {}
 
-Bluetooth::Bluetooth(std::unique_ptr<platform::BluetoothBackend> backend, QObject* parent)
+Bluetooth::Bluetooth(std::unique_ptr<BluetoothBackend> backend, QObject* parent)
     : QObject(parent), backend_(std::move(backend)) {
   if (!backend_) return;
-  connect(backend_.get(), &platform::BluetoothBackend::statusUpdated, this, &Bluetooth::onStatus);
+  connect(backend_.get(), &BluetoothBackend::statusUpdated, this, &Bluetooth::onStatus);
   // The backend publishes the new connection through its watchers; ask once more so the list is
   // exact when a connect or disconnect ends.
-  connect(backend_.get(), &platform::BluetoothBackend::connectionFinished, this,
+  connect(backend_.get(), &BluetoothBackend::connectionFinished, this,
           [this] { backend_->refresh(); });
   backend_->start();
 }
 
 Bluetooth::~Bluetooth() = default;
 
-void Bluetooth::onStatus(const platform::BluetoothStatus& status) {
+void Bluetooth::onStatus(const BluetoothStatus& status) {
   status_ = status;
   emit changed();
 }
 
-QVector<platform::BluetoothDevice> Bluetooth::connectedDevices() const {
+QVector<BluetoothDevice> Bluetooth::connectedDevices() const {
   if (!status_.radioOn) return {};
   return status_.connectedDevices();
 }
 
 QStringList Bluetooth::connectedNames() const {
   QStringList names;
-  for (const platform::BluetoothDevice& device : connectedDevices()) names.push_back(device.name);
+  for (const BluetoothDevice& device : connectedDevices()) names.push_back(device.name);
   return names;
 }
 
 QVariantList Bluetooth::devices() const {
-  QVector<platform::BluetoothDevice> shown;
-  for (const platform::BluetoothDevice& device : status_.devices) {
+  QVector<BluetoothDevice> shown;
+  for (const BluetoothDevice& device : status_.devices) {
     if (listed(device)) shown.push_back(device);
   }
   std::stable_sort(shown.begin(), shown.end(),
-                   [](const platform::BluetoothDevice& a, const platform::BluetoothDevice& b) {
+                   [](const BluetoothDevice& a, const BluetoothDevice& b) {
                      if (a.connected != b.connected) return a.connected;
                      return a.name.localeAwareCompare(b.name) < 0;
                    });
   QVariantList result;
-  for (const platform::BluetoothDevice& device : shown) {
+  for (const BluetoothDevice& device : shown) {
     QVariantMap map;
     map.insert(QStringLiteral("id"), device.address);
     map.insert(QStringLiteral("name"), device.name);
     map.insert(QStringLiteral("connected"), device.connected);
     map.insert(QStringLiteral("paired"), device.paired);
     map.insert(QStringLiteral("canConnect"), device.supportsConnect());
-    map.insert(QStringLiteral("type"), platform::btDeviceTypeName(device.deviceType));
+    map.insert(QStringLiteral("type"), btDeviceTypeName(device.deviceType));
     map.insert(QStringLiteral("batteryPercent"), device.battery.value_or(-1));
     result.push_back(map);
   }
@@ -88,4 +88,4 @@ void Bluetooth::disconnectDevice(const QString& id) {
   if (backend_) backend_->disconnectDevice(id);
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::bluetooth

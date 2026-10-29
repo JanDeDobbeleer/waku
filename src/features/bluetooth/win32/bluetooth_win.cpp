@@ -1,6 +1,6 @@
-#include "platform/bluetooth.h"
-
 #include <windows.h>
+
+#include "features/bluetooth/bluetooth.h"
 // These SDK headers depend on the Windows declarations above.
 #include <bluetoothapis.h>
 #include <cfgmgr32.h>
@@ -28,7 +28,7 @@
 
 #include "kernel/win32/winrt_apartment.h"
 
-namespace yasb::platform {
+namespace wabar::bluetooth {
 
 // --- pure helpers (bluetooth_types.py) -------------------------------------------------------
 
@@ -927,12 +927,12 @@ class BluetoothWorker : public QObject {
   }
 
  signals:
-  void statusReady(const yasb::platform::BluetoothStatus& status);
+  void statusReady(const wabar::bluetooth::BluetoothStatus& status);
   void refreshFailed(const QString& message);
   void scanStarted();
-  void scanCompleted(int status, const QVector<yasb::platform::BluetoothDevice>& devices);
+  void scanCompleted(int status, const QVector<wabar::bluetooth::BluetoothDevice>& devices);
   void connectionFinished(bool success, const QString& message,
-                          const yasb::platform::BluetoothDevice& device);
+                          const wabar::bluetooth::BluetoothDevice& device);
 
  private:
   void refreshQueuedRun() {
@@ -1263,6 +1263,6 @@ bool hasBluetoothAdapter() {
   return true;
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::bluetooth
 
-#include "bluetooth.moc"
+#include "bluetooth_win.moc"

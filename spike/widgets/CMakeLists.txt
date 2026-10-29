@@ -19,7 +19,7 @@ wabar_contribute(
     TrayIconButton.qml
     Tray.qml
     ActiveLayout.qml
-    Bluetooth.qml
+    Wifi.qml
     Notifications.qml
     ControlCenter.qml
     SafeConfig.qml

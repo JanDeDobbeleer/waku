@@ -8,14 +8,12 @@
 #include <QVariantList>
 #include <memory>
 
-#include "platform/bluetooth.h"
+#include "features/bluetooth/bluetooth.h"
 
-namespace wabar::services {
-
-namespace platform = ::yasb::platform;
+namespace wabar::bluetooth {
 
 // The Bluetooth radio and its paired devices as a QML singleton, shared by every Bluetooth
-// widget. Wraps platform::BluetoothBackend, which owns the enumeration thread (BluetoothAPIs and
+// widget. Wraps BluetoothBackend, which owns the enumeration thread (BluetoothAPIs and
 // WinRT reads, battery, radio power, connect and disconnect); this object lives on the GUI thread
 // and mirrors the backend's queued `statusUpdated` snapshots as one `changed`. The engine destroys
 // it, which destroys the backend: cancel connect, shutdown, quit and join the thread.
@@ -39,7 +37,7 @@ class Bluetooth : public QObject {
   // Real backend, unless unavailable (see above).
   explicit Bluetooth(QObject* parent = nullptr);
   // Test seam: any backend (null = unavailable). Started at once.
-  Bluetooth(std::unique_ptr<platform::BluetoothBackend> backend, QObject* parent);
+  Bluetooth(std::unique_ptr<BluetoothBackend> backend, QObject* parent);
   ~Bluetooth() override;
 
   bool available() const { return backend_ != nullptr; }
@@ -56,11 +54,11 @@ class Bluetooth : public QObject {
   void changed();
 
  private:
-  QVector<platform::BluetoothDevice> connectedDevices() const;
-  void onStatus(const platform::BluetoothStatus& status);
+  QVector<BluetoothDevice> connectedDevices() const;
+  void onStatus(const BluetoothStatus& status);
 
-  std::unique_ptr<platform::BluetoothBackend> backend_;
-  platform::BluetoothStatus status_;
+  std::unique_ptr<BluetoothBackend> backend_;
+  BluetoothStatus status_;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::bluetooth

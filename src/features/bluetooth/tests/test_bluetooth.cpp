@@ -4,37 +4,17 @@
 #include <QVariantMap>
 #include <memory>
 
-#include "spike/services/bluetooth_service.h"
+#include "features/bluetooth/qml/bluetooth_service.h"
+#include "features/bluetooth/testing/fake_bluetooth_backend.h"
 
-using namespace wabar::services;
-namespace platform = yasb::platform;
+using namespace wabar::bluetooth;
 
 namespace {
 
-class FakeBackend final : public platform::BluetoothBackend {
- public:
-  void start() override { ++starts; }
-  void refresh() override { ++refreshes; }
-  void scan() override {}
-  bool setRadio(bool on) override {
-    radioRequests.push_back(on);
-    return true;
-  }
-  void connectDevice(const QString& address) override { connects.push_back(address); }
-  void disconnectDevice(const QString& address) override { disconnects.push_back(address); }
-  void publish(const platform::BluetoothStatus& status) { publishStatus(status); }
-
-  int starts = 0;
-  int refreshes = 0;
-  std::vector<bool> radioRequests;
-  QStringList connects;
-  QStringList disconnects;
-};
-
-platform::BluetoothDevice device(const QString& name, bool connected, bool paired = true,
-                                 std::optional<int> battery = std::nullopt,
-                                 platform::BtDeviceType type = platform::BtDeviceType::Headphones) {
-  platform::BluetoothDevice d;
+BluetoothDevice device(const QString& name, bool connected, bool paired = true,
+                       std::optional<int> battery = std::nullopt,
+                       BtDeviceType type = BtDeviceType::Headphones) {
+  BluetoothDevice d;
   d.name = name;
   d.address = QStringLiteral("addr-") + name;
   d.connected = connected;
@@ -77,11 +57,10 @@ TEST(BluetoothService, WithoutABackendItIsUnavailableAndInert) {
 TEST(BluetoothService, MirrorsStatusAndNotifies) {
   Fixture f;
   QSignalSpy changed(f.service.get(), &Bluetooth::changed);
-  platform::BluetoothStatus status;
+  BluetoothStatus status;
   status.radioOn = true;
-  status.devices = {
-      device(QStringLiteral("Mouse"), false, true, std::nullopt, platform::BtDeviceType::Mouse),
-      device(QStringLiteral("Buds"), true, true, 80)};
+  status.devices = {device(QStringLiteral("Mouse"), false, true, std::nullopt, BtDeviceType::Mouse),
+                    device(QStringLiteral("Buds"), true, true, 80)};
   f.fake->publish(status);
   EXPECT_EQ(changed.count(), 1);
   EXPECT_TRUE(f.service->radioOn());
@@ -103,7 +82,7 @@ TEST(BluetoothService, MirrorsStatusAndNotifies) {
 
 TEST(BluetoothService, RadioOffHidesConnectedDevices) {
   Fixture f;
-  platform::BluetoothStatus status;
+  BluetoothStatus status;
   status.radioOn = false;
   status.devices = {device(QStringLiteral("Buds"), true)};
   f.fake->publish(status);
@@ -113,7 +92,7 @@ TEST(BluetoothService, RadioOffHidesConnectedDevices) {
 
 TEST(BluetoothService, UnpairedDevicesAreNotListedOrCounted) {
   Fixture f;
-  platform::BluetoothStatus status;
+  BluetoothStatus status;
   status.radioOn = true;
   status.devices = {device(QStringLiteral("Stranger"), true, false),
                     device(QStringLiteral("Buds"), false)};
@@ -137,7 +116,7 @@ TEST(BluetoothService, CommandsReachTheBackend) {
 
 TEST(BluetoothService, AFinishedConnectionRefreshesTheList) {
   Fixture f;
-  emit f.fake->connectionFinished(true, QString(), platform::BluetoothDevice());
+  emit f.fake->connectionFinished(true, QString(), BluetoothDevice());
   EXPECT_EQ(f.fake->refreshes, 1);
 }
 

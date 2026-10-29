@@ -10,7 +10,7 @@
 #include <optional>
 #include <utility>
 
-namespace yasb::platform {
+namespace wabar::bluetooth {
 
 // Port of bluetooth_types.DeviceType (the string names double as the device_icons keys).
 enum class BtDeviceType {
@@ -107,11 +107,11 @@ class BluetoothBackend : public QObject {
 
  signals:
   void scanStarted();
-  void scanCompleted(int status, const QVector<yasb::platform::BluetoothDevice>& devices);
-  void statusUpdated(const yasb::platform::BluetoothStatus& status);
+  void scanCompleted(int status, const QVector<wabar::bluetooth::BluetoothDevice>& devices);
+  void statusUpdated(const wabar::bluetooth::BluetoothStatus& status);
   void refreshFailed(const QString& message);
   void connectionFinished(bool success, const QString& message,
-                          const yasb::platform::BluetoothDevice& device);
+                          const wabar::bluetooth::BluetoothDevice& device);
 
  protected:
   void publishStatus(const BluetoothStatus& status) {
@@ -129,8 +129,8 @@ std::unique_ptr<BluetoothBackend> createBluetoothBackend();
 // once). The adapter being switched off still counts.
 bool hasBluetoothAdapter();
 
-}  // namespace yasb::platform
+}  // namespace wabar::bluetooth
 
-Q_DECLARE_METATYPE(yasb::platform::BluetoothDevice)
-Q_DECLARE_METATYPE(yasb::platform::BluetoothStatus)
-Q_DECLARE_METATYPE(QVector<yasb::platform::BluetoothDevice>)
+Q_DECLARE_METATYPE(wabar::bluetooth::BluetoothDevice)
+Q_DECLARE_METATYPE(wabar::bluetooth::BluetoothStatus)
+Q_DECLARE_METATYPE(QVector<wabar::bluetooth::BluetoothDevice>)

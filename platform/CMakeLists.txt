@@ -11,8 +11,6 @@ add_library(yasb_platform STATIC
   window_tracker_hooks_win32.cpp
   battery.h
   battery.cpp
-  bluetooth.h
-  bluetooth.cpp
   command_line.h
   command_line.cpp
   connectivity.h
