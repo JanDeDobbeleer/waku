@@ -574,3 +574,21 @@ change; rename only what the row says", and `tools\check.ps1` green.
   caller (some served only Widgets classes, for example parts of `window_system.h` or
   `media_session.h`) was not checked function by function; the moves keep them, a later pass with
   a linker map can trim.
+
+## 11. Decisions (owner, 2026-10-29)
+
+Answers to the eight questions in section 10.
+
+1. **Animated wallpaper transition: port it first.** Before the restructure, port `WallpaperEngine`
+   from a `QWidget` overlay to a Qt Quick window, so no Qt Widgets code remains. Only then is the
+   old engine deleted (step 2 no longer deletes it, it deletes the ported-away original).
+2. **Data folder:** everything in `%LOCALAPPDATA%\wabar`; copy `taskbar_pinned.json`, the GitHub
+   token file and `systray_state_*.json` from `YASB` once on first start; never write to `YASB`.
+3. **Systray legacy host:** delete `platform/systray_legacy.*`.
+4. **Hook DLL and pipe names:** rename to `WabarTrayHook[_arm64].dll`, `wabar_systray_monitor` and
+   `WabarTrayHookAlive` in step 10. The old yasb-native build is not run any more.
+5. **Repository rename:** after the merge to main, as a separate last step.
+6. **Python YASB:** a reference for OS behaviour only; drop the label-parity and startup-parity rules
+   from `AGENTS.md`.
+7. **Widget sources:** `deploy` ships the built-in `.qml` files with `qmldir` and `.qmltypes`.
+8. **Old documents:** move to `docs/archive/` with a note that they describe the retired Widgets build.
