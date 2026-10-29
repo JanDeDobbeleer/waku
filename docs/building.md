@@ -90,6 +90,13 @@ Stat widget factories (CPU, memory, battery) are exposed through
 `wabar::widgets::registerStatWidgets()` in `widgets\stat_widgets.h`. `app\main.cpp` calls it once
 during startup, before `WidgetBuilder` constructs the configured widgets; repeated calls are no-ops.
 
+## Native taskbar
+
+By default wabar hides the Windows taskbar at start and restores it at exit (config key
+`hide_windows_taskbar`, default `true`, wabar only). `--keep-taskbar` turns it off for one run.
+The offscreen platform, `--screenshot` and `--config-home` never hide it; `--hide-taskbar` allows it
+with `--config-home`. Details: [taskbar-hiding.md](taskbar-hiding.md).
+
 ## Tray hook DLL
 
 `wabar.exe` ships `WabarTrayHook.dll` (x64) or `WabarTrayHook_arm64.dll` next to
