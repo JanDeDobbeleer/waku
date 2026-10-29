@@ -30,6 +30,9 @@ Pill {
     property string vpnIcon: "󰦝"
     property bool popup: true
     property bool showAlt: false
+    // Extra room before the VPN glyph, in pixels (Python's `.wifi-widget .vpn` padding-left minus
+    // the icon spacing the row already adds).
+    property int vpnPadding: 0
 
     readonly property string kind: S.Network.kind
 
@@ -62,14 +65,9 @@ Pill {
         return text.replace(/\s+/g, " ").trim();
     }
 
-    // The glyphs a template asks for ({wifi_icon}, {vpn_icon}), drawn in Theme.iconFont.
+    // The glyph a template asks for with {wifi_icon}; {vpn_icon} is drawn apart, in the accent colour.
     function glyphs(template) {
-        const parts = [];
-        if (template.includes("{wifi_icon}"))
-            parts.push(glyph());
-        if (template.includes("{vpn_icon}") && S.Network.vpnActive)
-            parts.push(vpnIcon);
-        return parts.join(" ");
+        return template.includes("{wifi_icon}") ? glyph() : "";
     }
 
     function details() {
@@ -85,6 +83,9 @@ Pill {
 
     visible: S.Network.available
     readonly property string template: kind === "ethernet" ? (showAlt ? ethernetAltFormat : ethernetFormat) : (showAlt ? altFormat : format)
+    // Wi-Fi, Ethernet and VPN glyphs are Material Design icons Segoe lacks, so they come from the
+    // proportional fallback icon font (Python's `.wifi-widget .icon`).
+    iconFont: Theme.iconFontFallback
     icon: glyphs(template)
     text: render(template)
     tooltip: details()
@@ -96,6 +97,18 @@ Pill {
         target: S.Network
         property: "interval"
         value: root.interval
+    }
+
+    // The VPN glyph: Python's `.vpn` span, accent coloured with 4 px before it.
+    Text {
+        objectName: "wifiVpn"
+        visible: root.template.includes("{vpn_icon}") && S.Network.vpnActive
+        anchors.verticalCenter: parent.verticalCenter
+        leftPadding: root.vpnPadding
+        color: Theme.accent
+        font.family: Theme.iconFontFallback
+        font.pixelSize: Theme.iconSize
+        text: root.vpnIcon
     }
 
     TapHandler {

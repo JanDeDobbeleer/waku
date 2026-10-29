@@ -24,6 +24,10 @@ Pill {
     property string noDevice: "No devices connected"
     property bool showAlt: false
 
+    // Horizontal padding on a bar: Python's `.bluetooth-widget` uses 3 px, half of the others'.
+    property int barPadding: 3
+    padding: flat ? barPadding : Theme.padding
+
     function stateIcon() {
         if (!S.Bluetooth.radioOn)
             return iconOff;

@@ -34,6 +34,8 @@ Rectangle {
     // A glyph in Theme.iconFont before the text; empty for none.
     property string icon: ""
     property color iconColor: textColor
+    // The font of `icon`; a widget whose glyph Theme.iconFont lacks sets Theme.iconFontFallback.
+    property string iconFont: Theme.iconFont
     // True when the Pill sits on a bar window (the window has a `spec`), false in a popup.
     property bool flat: Window.window !== null && Window.window.spec !== undefined
     // The resting and hover background; `restFill` is what a widget returns to when it has nothing
@@ -72,7 +74,7 @@ Rectangle {
             visible: root.icon !== ""
             anchors.verticalCenter: parent.verticalCenter
             color: root.iconColor
-            font.family: Theme.iconFont
+            font.family: root.iconFont
             font.pixelSize: Theme.iconSize
             text: root.icon
         }

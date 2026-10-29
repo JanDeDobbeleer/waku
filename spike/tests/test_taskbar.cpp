@@ -573,10 +573,14 @@ TEST_F(TaskbarWidgetTest, TheWindowsOfTheDesktopAppearAsButtons) {
   ASSERT_TRUE(waitFor(h, QStringLiteral("taskbarButton-w:102")));
   QQuickItem* first = findItem(h.window(), QStringLiteral("taskbarButton-w:101"));
   EXPECT_TRUE(first->isVisible());
-  EXPECT_EQ(first->width(), 24);  // iconSize 16 + 8
+  EXPECT_EQ(first->width(), 34);  // iconSize 16 + 2 * padding 8 + 2 * border 1
   EXPECT_LT(positionIn(h.window(), QStringLiteral("taskbarButton-w:101")).x(),
             positionIn(h.window(), QStringLiteral("taskbarButton-w:102")).x());
   EXPECT_TRUE(findItem(h.window(), QStringLiteral("taskbar"))->isVisible());
+  // Python's period: the button plus 2 * margin 2 is 38 logical px.
+  EXPECT_EQ(positionIn(h.window(), QStringLiteral("taskbarButton-w:102")).x() -
+                positionIn(h.window(), QStringLiteral("taskbarButton-w:101")).x(),
+            38);
 }
 
 TEST_F(TaskbarWidgetTest, HideEmptyHidesTheWidgetUntilAWindowAppears) {

@@ -67,6 +67,9 @@ class ThemeValues : public QObject {
   // widget text, 100 to 900 (400 normal, 600 semi bold).
   Q_PROPERTY(QString iconFont MEMBER iconFont_ NOTIFY changed FINAL)
   Q_PROPERTY(int iconSize MEMBER iconSize_ NOTIFY changed FINAL)
+  // The proportional font for glyphs `iconFont` lacks (the Wi-Fi, Ethernet and VPN glyphs), as
+  // Python YASB's `--icons-font-fallback`.
+  Q_PROPERTY(QString iconFontFallback MEMBER iconFontFallback_ NOTIFY changed FINAL)
   Q_PROPERTY(int fontWeight MEMBER fontWeight_ NOTIFY changed FINAL)
 
   // Islands, the adaptive look of Python YASB: with `islands` on, each non-empty widget group
@@ -144,6 +147,7 @@ class ThemeValues : public QObject {
   int padding_ = 10;
   int spacing_ = 12;
   QString iconFont_{QStringLiteral("Segoe Fluent Icons")};
+  QString iconFontFallback_{QStringLiteral("JetBrainsMono NFP")};
   int iconSize_ = 16;
   int fontWeight_ = 400;
   bool islands_ = false;

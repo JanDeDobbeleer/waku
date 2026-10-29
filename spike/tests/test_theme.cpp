@@ -58,6 +58,7 @@ TEST(ThemeValuesTest, DefaultsAreTheShippedLook) {
             spec.property("fillHover").value<QColor>());
   EXPECT_EQ(spec.property("iconFont").toString(), QStringLiteral("Segoe Fluent Icons"));
   EXPECT_EQ(spec.property("iconSize").toInt(), 16);
+  EXPECT_EQ(spec.property("iconFontFallback").toString(), QStringLiteral("JetBrainsMono NFP"));
   EXPECT_EQ(spec.property("fontWeight").toInt(), 400);
   EXPECT_EQ(spec.property("popupSurface").value<QColor>(), QColor(0x18, 0x18, 0x20, 0xf0));
   EXPECT_EQ(spec.property("popupBorder").value<QColor>(), QColor(0xff, 0xff, 0xff, 0x33));
