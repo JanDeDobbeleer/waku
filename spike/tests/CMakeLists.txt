@@ -29,6 +29,8 @@ add_executable(tidy_services_tests
   test_notifications.cpp
   test_taskbar.cpp
   test_control_center.cpp
+  test_github.cpp
+  test_wallpapers.cpp
 )
 target_compile_definitions(tidy_services_tests PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)

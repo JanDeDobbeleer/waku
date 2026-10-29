@@ -47,6 +47,10 @@ qt_add_qml_module(tidy_services
     services/taskbar_model.cpp
     services/control_center_service.h
     services/control_center_service.cpp
+    services/github_service.h
+    services/github_service.cpp
+    services/wallpapers_service.h
+    services/wallpapers_service.cpp
 )
 target_include_directories(tidy_services PUBLIC ${CMAKE_SOURCE_DIR}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/services)  # generated type registration includes headers by name

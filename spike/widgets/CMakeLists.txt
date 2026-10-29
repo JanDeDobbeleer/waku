@@ -24,6 +24,9 @@ qt_add_qml_module(tidy_widgets
     Notifications.qml
     Taskbar.qml
     ControlCenter.qml
+    GitHub.qml
+    Wallpapers.qml
+    WallpaperGallery.qml
     SafeConfig.qml
 )
 target_link_libraries(tidy_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE tidy_bar tidy_services)
