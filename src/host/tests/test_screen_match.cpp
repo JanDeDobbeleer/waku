@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "spike/bar/screen_match.h"
+#include "host/screen_match.h"
 
 using namespace wabar;
 

@@ -37,7 +37,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(wabar_options)   # wabar_options: flags for our own targets
 include(wabar_feature)   # wabar_feature(), wabar_contribute()
 
-# Targets (see docs/architecture.md): wabar -> wabar_* (spike/) -> yasb_widgets -> yasb_ui
+# Targets (see docs/architecture.md): wabar -> wabar_* (spike/) -> yasb_widgets
 #                                                                 -> yasb_platform
 # Migration to src/ (docs/plans/2026-10-29-wabar-architecture-proposal.md) is in progress: the
 # legacy folders still build their libraries and feed the QML modules and the test binary through
@@ -49,7 +49,6 @@ set(YASB_TRAY_PIPE_NAME "yasb_native_systray_monitor")
 set(YASB_TRAY_MUTEX_NAME "YASBNativeTrayHookAlive")
 
 add_subdirectory(platform)
-add_subdirectory(core)
 add_subdirectory(widgets)
 add_subdirectory(spike)
 add_subdirectory(src)

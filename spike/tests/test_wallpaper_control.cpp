@@ -17,8 +17,8 @@
 #include "features/wallpapers/qml/wallpaper_transition.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/testing/fake_wallpaper_backend.h"
-#include "spike/bar/control_handler.h"
-#include "spike/tests/bar_fixtures.h"
+#include "host/qml/control_handler.h"
+#include "host/testing/bar_fixtures.h"
 
 namespace {
 

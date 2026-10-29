@@ -7,11 +7,11 @@
 #include <QRectF>
 #include <QSizeF>
 
+#include "host/popup_placement.h"
+
 namespace wabar {
 
-// Where a popup or tooltip goes, as a pure function so it can be tested without windows.
-// Used by PopupWindow and Tooltip as `PopupPlacement.position(...)`; all coordinates are logical
-// pixels in the same (global) space.
+// The QML face of placePopup(): used by PopupWindow and Tooltip as `PopupPlacement.position(...)`.
 class PopupPlacement : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -24,12 +24,11 @@ class PopupPlacement : public QObject {
 
   explicit PopupPlacement(QObject* parent = nullptr) : QObject(parent) {}
 
-  // The top-left corner for a popup of `size`, centred on `anchor` on the preferred side at `gap`
-  // from it. The popup stays `margin` inside `screen`: it slides sideways to fit and flips to the
-  // other side of the anchor when the preferred side has no room (and, if neither side fits, is
-  // clamped into the screen).
   static QPointF place(const QRectF& anchor, const QSizeF& size, const QRectF& screen, Edge edge,
-                       qreal gap, qreal margin);
+                       qreal gap, qreal margin) {
+    return placePopup(anchor, size, screen, edge == Above ? PopupEdge::Above : PopupEdge::Below,
+                      gap, margin);
+  }
 
   Q_INVOKABLE QPointF position(const QRectF& anchor, const QSizeF& size, const QRectF& screen,
                                int edge, qreal gap, qreal margin) const {

@@ -12,9 +12,6 @@ wabar_contribute(
   SERVICES_LIBS wabar_audio wabar_bluetooth wabar_brightness wabar_notifications yasb_platform yasb_widgets wabar_control wabar_kernel
 )
 
-# wabar: Config, Bar, BarLayout and the host.
-add_subdirectory(bar)
-
 # wabar.widgets: the built-in widgets (contributed; the module is defined in src/modules/).
 add_subdirectory(widgets)
 
@@ -23,7 +20,7 @@ target_compile_definitions(wabar PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX
   SPIKE_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config")
 target_link_libraries(wabar PRIVATE
-  wabar_bar wabar_barplugin wabar_widgets wabar_widgetsplugin
+  wabar_host wabar_hostplugin wabar_widgets wabar_widgetsplugin
   wabar_services wabar_servicesplugin)
 set_target_properties(wabar PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 

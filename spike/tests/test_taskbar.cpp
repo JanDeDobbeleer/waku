@@ -19,7 +19,7 @@
 #include "features/taskbar/qml/taskbar_model.h"
 #include "features/taskbar/qml/taskbar_service.h"
 #include "features/taskbar/testing/fake_window_system.h"
-#include "spike/tests/bar_fixtures.h"
+#include "host/testing/bar_fixtures.h"
 
 namespace {
 

@@ -10,7 +10,7 @@
 
 #include "features/github/qml/github_service.h"
 #include "features/github/testing/fake_github_client.h"
-#include "spike/tests/bar_fixtures.h"
+#include "host/testing/bar_fixtures.h"
 
 using namespace wabar::github;
 using namespace wabar::github::testing;

@@ -11,9 +11,9 @@
 #include <memory>
 #include <vector>
 
-#include "core/bar/app_bar.h"
-#include "spike/bar/bar_config.h"
-#include "spike/bar/bar_theme.h"
+#include "host/app_bar.h"
+#include "host/qml/bar_config.h"
+#include "host/qml/bar_theme.h"
 
 class QQmlEngine;
 class QQuickWindow;

@@ -1,10 +1,10 @@
-#include "spike/bar/control_handler.h"
+#include "host/qml/control_handler.h"
 
 #include <QCoreApplication>
 #include <QPointer>
 #include <QTimer>
 
-#include "spike/bar/bar_host.h"
+#include "host/qml/bar_host.h"
 
 namespace wabar {
 

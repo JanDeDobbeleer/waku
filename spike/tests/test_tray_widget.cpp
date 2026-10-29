@@ -15,7 +15,7 @@
 #include "features/tray/tray_host.h"
 #include "features/tray/tray_state.h"
 #include "features/tray/tray_types.h"
-#include "spike/tests/bar_fixtures.h"
+#include "host/testing/bar_fixtures.h"
 
 namespace {
 

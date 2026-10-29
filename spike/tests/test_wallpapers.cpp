@@ -14,7 +14,7 @@
 
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/testing/fake_wallpaper_backend.h"
-#include "spike/tests/bar_fixtures.h"
+#include "host/testing/bar_fixtures.h"
 
 namespace {
 

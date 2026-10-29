@@ -5,9 +5,9 @@
 
 #include "control/control.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
+#include "host/qml/bar_host.h"
+#include "host/qml/control_handler.h"
 #include "kernel/qt/live_desktop.h"
-#include "spike/bar/bar_host.h"
-#include "spike/bar/control_handler.h"
 
 int main(int argc, char* argv[]) {
   // As app/main.cpp setFontEngine(): Qt's DirectWrite font database maps every installed font

@@ -1,4 +1,4 @@
-#include "spike/bar/bar_host.h"
+#include "host/qml/bar_host.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -13,7 +13,7 @@
 #include <QUrl>
 #include <QWindow>
 
-#include "spike/bar/screen_match.h"
+#include "host/screen_match.h"
 
 namespace wabar {
 

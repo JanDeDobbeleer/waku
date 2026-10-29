@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "spike/tests/bar_fixtures.h"
+#include "host/testing/bar_fixtures.h"
 
 // ---- Config and Bar declarations ----
 

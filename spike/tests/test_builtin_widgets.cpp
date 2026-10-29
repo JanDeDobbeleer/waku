@@ -3,7 +3,7 @@
 #include <QRegularExpression>
 #include <QWheelEvent>
 
-#include "spike/tests/bar_fixtures.h"
+#include "host/testing/bar_fixtures.h"
 
 // The built-in widgets (wabar.widgets), instantiated in a real bar on the offscreen platform.
 // Volume, Media and Workspaces are left out on purpose: creating them starts real audio,

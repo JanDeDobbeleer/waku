@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "spike/bar/popup_placement.h"
-#include "spike/tests/bar_fixtures.h"
+#include "host/qml/popup_placement_qml.h"
+#include "host/testing/bar_fixtures.h"
 
 namespace {
 

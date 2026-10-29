@@ -1,7 +1,7 @@
 #include <windows.h>
 
-#include "core/widgets/backdrop.h"
-#include "spike/bar/bar_host.h"
+#include "host/qml/bar_host.h"
+#include "host/win32/backdrop.h"
 
 namespace wabar {
 

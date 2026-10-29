@@ -16,7 +16,7 @@ target_compile_definitions(wabar_tests PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 # The static QML plugins are linked so `import wabar` resolves in the test engines.
 target_link_libraries(wabar_tests PRIVATE
-  wabar_bar wabar_barplugin wabar_widgets wabar_widgetsplugin
+  wabar_host wabar_hostplugin wabar_widgets wabar_widgetsplugin
   wabar_services wabar_servicesplugin
   ${test_libs}
   GTest::gtest Qt6::Test)
@@ -28,7 +28,7 @@ add_custom_command(TARGET wabar_tests POST_BUILD
   COMMAND Qt6::windeployqt $<IF:$<CONFIG:Debug>,--debug,--release>
           --no-translations --no-system-d3d-compiler --no-opengl-sw --no-compiler-runtime
           --include-plugins qoffscreen
-          --qmldir "${PROJECT_SOURCE_DIR}/spike/bar"
+          --qmldir "${PROJECT_SOURCE_DIR}/src/host/qml"
           --qmldir "${PROJECT_SOURCE_DIR}/spike/widgets"
           --qmldir "${PROJECT_SOURCE_DIR}/src"
           --dir "$<TARGET_FILE_DIR:wabar_tests>" "$<TARGET_FILE:wabar_tests>"

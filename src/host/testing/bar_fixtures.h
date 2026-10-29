@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-#include "spike/bar/bar_host.h"
+#include "host/qml/bar_host.h"
 
 using namespace wabar;
 

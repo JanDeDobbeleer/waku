@@ -237,7 +237,7 @@ $structureRules = [ordered]@{
     S1 = 'every source under src/ belongs to exactly one unit and is declared by it'
     S2 = 'quoted includes: own unit, kernel/, root headers of control/ and of DEPENDS features; host also control/; app/ and tests/ free'
     S3 = 'Windows SDK and C++/WinRT headers only in */win32/**, features/tray/hook/, app/, tests'
-    S4 = 'QtQml/QtQuick includes and QML_* macros only in */qml/**, app/, tests; QtWidgets nowhere'
+    S4 = 'QtQml/QtQuick includes and QML_* macros only in */qml/**, */testing/**, app/, tests; QtWidgets nowhere'
     S5 = 'only */tests/** and tests/ include */testing/**'
     S6 = 'a feature''s .qml uses services (S.<Type>) and widgets of its own feature or its DEPENDS only'
     S7 = 'QML-facing header basenames unique across the services module; .qml basenames unique per module'
@@ -424,7 +424,8 @@ foreach ($f in $checkFiles) {
     }
 
     $winOk = ($f -match '(^|/)win32/' -or $f.StartsWith('src/features/tray/hook/') -or $f.StartsWith('src/app/') -or $isTests)
-    $qmlOk = ($f -match '(^|/)qml/' -or $f.StartsWith('src/app/') -or $isTests)
+    # testing/ holds fixtures that build QML engines and windows (host/testing/bar_fixtures.h).
+    $qmlOk = ($f -match '(^|/)(qml|testing)/' -or $f.StartsWith('src/app/') -or $isTests)
     for ($i = 0; $i -lt $lines.Count; $i++) {
         $line = "$($lines[$i])"
         $at = "${f}:$($i + 1)"

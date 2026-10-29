@@ -2,7 +2,7 @@
 
 #include <QFontDatabase>
 
-#include "spike/tests/bar_fixtures.h"
+#include "host/testing/bar_fixtures.h"
 
 namespace {
 

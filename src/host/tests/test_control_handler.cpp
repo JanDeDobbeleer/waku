@@ -7,8 +7,8 @@
 #include <thread>
 
 #include "control/control.h"
-#include "spike/bar/control_handler.h"
-#include "spike/tests/bar_fixtures.h"
+#include "host/qml/control_handler.h"
+#include "host/testing/bar_fixtures.h"
 
 using namespace wabar;
 

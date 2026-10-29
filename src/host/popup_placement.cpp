@@ -1,4 +1,4 @@
-#include "spike/bar/popup_placement.h"
+#include "host/popup_placement.h"
 
 #include <algorithm>
 
@@ -15,8 +15,8 @@ qreal clampInto(qreal value, qreal low, qreal high) {
 
 }  // namespace
 
-QPointF PopupPlacement::place(const QRectF& anchor, const QSizeF& size, const QRectF& screen,
-                              Edge edge, qreal gap, qreal margin) {
+QPointF placePopup(const QRectF& anchor, const QSizeF& size, const QRectF& screen, PopupEdge edge,
+                   qreal gap, qreal margin) {
   const qreal minX = screen.left() + margin;
   const qreal maxX = screen.right() - size.width() - margin;
   const qreal x = clampInto(anchor.center().x() - size.width() / 2, minX, maxX);
@@ -29,7 +29,7 @@ QPointF PopupPlacement::place(const QRectF& anchor, const QSizeF& size, const QR
   const bool fitsAbove = above >= minY;
 
   qreal y;
-  if (edge == Below) {
+  if (edge == PopupEdge::Below) {
     y = fitsBelow ? below : (fitsAbove ? above : clampInto(below, minY, maxY));
   } else {
     y = fitsAbove ? above : (fitsBelow ? below : clampInto(above, minY, maxY));

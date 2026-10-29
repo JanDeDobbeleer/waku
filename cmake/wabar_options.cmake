@@ -2,7 +2,7 @@
 # so third-party code keeps its warning level.
 #
 # Who links it (migration step 4): the legacy libraries that already linked yasb_options
-# (yasb_platform, yasb_ui, yasb_widgets) and every target under src/ (wabar_feature() adds it).
+# (yasb_platform, yasb_widgets) and every target under src/ (wabar_feature() adds it).
 # The former spike/ targets (wabar_bar, wabar_control, the two QML module targets, the exes and
 # the test binary) do not link it yet: they set only the definitions below by hand. Step 9 links
 # it there and fixes what /W4 /WX reveals.

@@ -1,4 +1,4 @@
-#include "core/bar/app_bar.h"
+#include "host/app_bar.h"
 
 #include <windows.h>
 #include <shellapi.h>

@@ -10,7 +10,7 @@ for the wabar layout is `docs/plans/2026-10-29-wabar-architecture-proposal.md`. 
 The old by-layer layout still holds until the restructure (migration step 4) replaces it:
 
 ```
-spike/ (wabar)  ->  widgets/  ->  core/{bar,widgets} (ui)  ->  platform
+spike/ (wabar)  ->  widgets/  ->  platform   (core/ is gone: it moved into src/host/)
 ```
 
 Each layer is its own static library. The legacy libraries and every target under `src/` link
@@ -20,9 +20,9 @@ former `spike/` targets do not yet (migration step 9):
 | Target | Folder | Sources | Links PUBLIC | Links PRIVATE |
 |---|---|---|---|---|
 | `yasb_platform` | `platform/` | `platform/` | `Qt6::Core` | `pdh setupapi psapi ...` (Win32 libs), `Qt6::Network` |
-| `yasb_ui` | `core/` | `core/bar/app_bar.*`, `core/widgets/backdrop.*` | `Qt6::Core`, `Qt6::Gui` | |
-| `yasb_widgets` | `widgets/` | service and state code of the systray, taskbar and wallpapers widgets | `yasb_ui`, `yasb_platform`, `nlohmann_json` | |
-| `wabar_bar` | `spike/` | the wabar host (QML module `wabar`) | `yasb_ui`, `wabar_control`, Qt Quick | |
+| `yasb_widgets` | `widgets/` | service and state code of the systray, taskbar and wallpapers widgets | `yasb_platform`, `nlohmann_json` | |
+| `wabar_host_base` | `src/host/` | `screen_match`, `popup_placement`, `app_bar.h` and `win32/` (app bar, DWM backdrop) | `wabar_kernel` | `wabar_options`, `dwmapi shell32 user32` |
+| `wabar_host` | `src/host/` | the wabar host: QML module `wabar` (`qml/`, `win32/bar_host_win32.cpp`) | `wabar_host_base`, `wabar_control`, Qt Quick | |
 | `wabar_control` | `src/control/` | the control pipe between a running bar and `wabarc` (no Qt Quick) | `wabar_kernel`, `Qt6::Core`, `Qt6::Network` | `wabar_options` |
 | `wabar_services`, `wabar_widgets` | `src/modules/qml_modules.cmake` | QML modules `wabar.services` and `wabar.widgets`, assembled from contributions (below) | `yasb_widgets`, the feature libraries, Qt Quick | |
 | `wabar` (exe), `wabarc` (exe) | `spike/` | `spike/main.cpp`, `spike/cli/main.cpp` | | |
@@ -152,10 +152,10 @@ with the build it was verified on and its fallback. Add a row in the same commit
 
 | API | Where | Verified on | Fallback |
 |---|---|---|---|
-| `user32!SetWindowCompositionAttribute` with `WCA_ACCENT_POLICY` (19), local `AccentPolicy` / `CompositionAttribData` structs | `core/widgets/backdrop.cpp` (`setAccentPolicy`) | Windows 11 build 26300, ARM64 | resolved with `GetProcAddress`; missing symbol or failure throws inside `enableBlur`, which catches and logs; bar keeps its plain background |
+| `user32!SetWindowCompositionAttribute` with `WCA_ACCENT_POLICY` (19), local `AccentPolicy` / `CompositionAttribData` structs | `src/host/win32/backdrop.cpp` (`setAccentPolicy`) | Windows 11 build 26300, ARM64 | resolved with `GetProcAddress`; missing symbol or failure throws inside `enableBlur`, which catches and logs; bar keeps its plain background |
 | `ntdll!NtQuerySystemInformation` class 80 (`SystemMemoryListInformation`), local `MemoryListInformation` struct | `src/features/system_stats/win32/memory.cpp` (`cachedBytes`) | Windows 11 build 26300, ARM64 | `GetPerformanceInfo` `SystemCache` when the symbol is missing or the call fails |
-| `ntdll!RtlGetVersion` (documented for drivers; used because `GetVersionEx` lies to unmanifested apps) | `src/kernel/win32/windows_build.cpp` (`windowsBuild`; users: `core/widgets/backdrop.cpp`, `src/features/system_stats/win32/pdh.cpp` CPU counter choice, `platform/power.cpp` `isWindows10`) | Windows 11 build 26300, ARM64 | build 0: backdrop takes the pre-Windows 11 paths, PDH uses `% Processor Utility` and falls back to `% Processor Time` |
-| Numeric DWM attributes: `DWMWA_USE_IMMERSIVE_DARK_MODE` (20), `DWMWA_WINDOW_CORNER_PREFERENCE` (33), `DWMWA_BORDER_COLOR` (34), `DWMWA_SYSTEMBACKDROP_TYPE` (38), undocumented Mica attribute 1029, colour sentinels `0xFFFFFFFF`/`0xFFFFFFFE` | `core/widgets/backdrop.cpp` | Windows 11 build 26300, ARM64 | gated on `windowsBuild()` (22000 / 22621); `DwmSetWindowAttribute` failures are caught and logged |
+| `ntdll!RtlGetVersion` (documented for drivers; used because `GetVersionEx` lies to unmanifested apps) | `src/kernel/win32/windows_build.cpp` (`windowsBuild`; users: `src/host/win32/backdrop.cpp`, `src/features/system_stats/win32/pdh.cpp` CPU counter choice, `platform/power.cpp` `isWindows10`) | Windows 11 build 26300, ARM64 | build 0: backdrop takes the pre-Windows 11 paths, PDH uses `% Processor Utility` and falls back to `% Processor Time` |
+| Numeric DWM attributes: `DWMWA_USE_IMMERSIVE_DARK_MODE` (20), `DWMWA_WINDOW_CORNER_PREFERENCE` (33), `DWMWA_BORDER_COLOR` (34), `DWMWA_SYSTEMBACKDROP_TYPE` (38), undocumented Mica attribute 1029, colour sentinels `0xFFFFFFFF`/`0xFFFFFFFE` | `src/host/win32/backdrop.cpp` | Windows 11 build 26300, ARM64 | gated on `windowsBuild()` (22000 / 22621); `DwmSetWindowAttribute` failures are caught and logged |
 | `DEVPKEY_Bluetooth_Battery` ({104EA319-6EE2-4701-BD47-8DDBF425BBE5}, 2), a PnP property key read with `CM_Get_DevNode_PropertyW` | `platform/bluetooth.cpp` (`readBattery`) | Windows 11 build 26300, ARM64 (key and layout from Python YASB) | read failure or non-byte type gives no battery value; the menu then shows no battery |
 | `KSPROPSETID_BtAudio` ({7FA06C40-B8F6-4C7E-8556-E8C33A12E54D}) one-shot ids 0 (reconnect) and 1 (disconnect) sent through `IKsControl::KsProperty` | `platform/bluetooth.cpp` (`setAudioConnection`) | key and ids from Python YASB; not exercised live on build 26300 | no KS filter or a refusing driver returns `no_ks_controls` / `oneshot_failed`; the menu shows "Failed to connect/disconnect device" |
 | `ntdll!RtlSubscribeWnfStateChangeNotification` / `RtlUnsubscribeWnfStateChangeNotification` (resolved with `GetProcAddress`, local function typedefs) with WNF state names `WNF_SHEL_NOTIFICATION_TOTAL` (0x0D83063EA3B8D035, Windows 11 toast total) and `WNF_SHEL_NOTIFICATIONS` (0x0D83063EA3BC1035, Windows 10 unread badge); the buffer is read as a `u32` count | `platform/notifications_system.cpp` | Windows 11 build 26300, ARM64 (names, signatures and buffer layout from Python YASB) | a missing symbol or a non-zero status for both names logs a warning and leaves the count at 0 (icon `default`); clearing still works through the documented `UserNotificationListener` |

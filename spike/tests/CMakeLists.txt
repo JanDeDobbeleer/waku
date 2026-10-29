@@ -2,12 +2,8 @@
 # to the one test binary wabar_tests that tests/CMakeLists.txt defines.
 wabar_contribute(
   TESTS
-    test_screen_match.cpp
-    test_bar_host.cpp
+    test_audio.cpp
     test_builtin_widgets.cpp
-    test_theme.cpp
-    test_popups.cpp
-    test_control_handler.cpp
     test_safe_mode.cpp
     test_tray_widget.cpp
     test_taskbar.cpp

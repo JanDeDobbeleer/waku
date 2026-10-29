@@ -84,4 +84,4 @@ qt_add_qml_module(wabar_widgets
   NO_GENERATE_EXTRA_QMLDIRS
   QML_FILES ${widgets_qml_files}
 )
-target_link_libraries(wabar_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE wabar_bar wabar_services)
+target_link_libraries(wabar_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE wabar_host wabar_services)
