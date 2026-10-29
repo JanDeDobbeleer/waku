@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace yasb::platform {
+namespace wabar::network {
 
 // IANA interface types VPN adapters use: PPP, proprietary virtual (WireGuard, OpenVPN DCO...) and
 // tunnel.
@@ -56,6 +56,6 @@ std::optional<std::string> localIpAddress();
 // Info + IP in one call for the polling worker. `exactQuality` is filled by the caller.
 ConnectivitySample sampleConnectivity();
 
-}  // namespace yasb::platform
+}  // namespace wabar::network
 
-Q_DECLARE_METATYPE(yasb::platform::ConnectivitySample)
+Q_DECLARE_METATYPE(wabar::network::ConnectivitySample)

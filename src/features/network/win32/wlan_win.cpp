@@ -1,5 +1,3 @@
-#include "platform/wlan.h"
-
 #include <windows.h>
 #include <winrt/Windows.Devices.WiFi.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -16,9 +14,10 @@
 #include <stdexcept>
 #include <vector>
 
+#include "features/network/wlan.h"
 #include "kernel/win32/winrt_apartment.h"
 
-namespace yasb::platform {
+namespace wabar::network {
 namespace {
 
 namespace wifi = winrt::Windows::Devices::WiFi;
@@ -325,9 +324,9 @@ class WlanWorker : public QObject {
   void profileDisconnected(const QString& profile) { emit disconnected(profile); }
 
  signals:
-  void scanCompleted(int status, const QVector<yasb::platform::WifiNetwork>& networks);
-  void currentConnection(bool connected, const yasb::platform::WifiNetwork& network);
-  void connectFinished(int status, const QString& ssid, const yasb::platform::WifiNetwork& network);
+  void scanCompleted(int status, const QVector<wabar::network::WifiNetwork>& networks);
+  void currentConnection(bool connected, const wabar::network::WifiNetwork& network);
+  void connectFinished(int status, const QString& ssid, const wabar::network::WifiNetwork& network);
   void connectFailed(const QString& message);
   void disconnected(const QString& profileName);
 
@@ -467,6 +466,6 @@ std::optional<int> currentSignalQuality() {
   return network->quality;
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::network
 
-#include "wlan.moc"
+#include "wlan_win.moc"

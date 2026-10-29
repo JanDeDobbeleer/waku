@@ -1,5 +1,3 @@
-#include "platform/connectivity.h"
-
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Networking.Connectivity.h>
@@ -8,9 +6,10 @@
 
 #include <algorithm>
 
+#include "features/network/connectivity.h"
 #include "kernel/win32/winrt_apartment.h"
 
-namespace yasb::platform {
+namespace wabar::network {
 namespace {
 
 namespace wnc = winrt::Windows::Networking::Connectivity;
@@ -106,4 +105,4 @@ ConnectivitySample sampleConnectivity() {
   return sample;
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::network

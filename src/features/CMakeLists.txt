@@ -3,3 +3,4 @@
 add_subdirectory(shell)
 add_subdirectory(github)
 add_subdirectory(media)
+add_subdirectory(network)

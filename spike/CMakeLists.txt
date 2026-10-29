@@ -26,8 +26,6 @@ wabar_contribute(
     services/tray_pins.cpp
     services/bluetooth_service.h
     services/bluetooth_service.cpp
-    services/network_service.h
-    services/network_service.cpp
     services/notification_service.h
     services/notification_service.cpp
     services/control_center_service.h

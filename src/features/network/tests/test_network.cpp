@@ -8,60 +8,13 @@
 #include <mutex>
 #include <vector>
 
-#include "spike/services/network_service.h"
+#include "features/network/qml/network_service.h"
+#include "features/network/testing/fake_network_source.h"
 
-using namespace wabar::services;
-namespace platform = yasb::platform;
+using namespace wabar::network;
+using namespace wabar::network::testing;
 
 namespace {
-
-class FakeWifiBackend final : public platform::WifiBackend {
- public:
-  void setUpdatesEnabled(bool enabled) override { updates = enabled; }
-  void scan() override { ++scans; }
-  void queryCurrent() override {}
-  void connectTo(const platform::WifiNetwork& network, const QString& ssid, const QString&,
-                 bool hidden) override {
-    connects.push_back({network.ssid, ssid, hidden});
-  }
-  void disconnectCurrent() override {}
-  void forget(const QString&) override {}
-  void setAutoConnect(const QString&, bool) override {}
-
-  struct Connect {
-    QString network;
-    QString ssid;
-    bool hidden;
-  };
-  bool updates = false;
-  int scans = 0;
-  std::vector<Connect> connects;
-};
-
-class FakeSource final : public NetworkSource {
- public:
-  NetworkStatus sample() override {
-    ++calls;
-    std::lock_guard lock(mutex);
-    return status;
-  }
-  std::unique_ptr<platform::WifiBackend> createWifiBackend() override {
-    auto created = std::make_unique<FakeWifiBackend>();
-    backend = created.get();
-    return created;
-  }
-  void set(NetworkStatus next) {
-    std::lock_guard lock(mutex);
-    status = std::move(next);
-  }
-
-  std::atomic<int> calls{0};
-  FakeWifiBackend* backend = nullptr;
-
- private:
-  std::mutex mutex;
-  NetworkStatus status;
-};
 
 NetworkStatus wifiStatus(int signal = 80, const QString& vpn = {}) {
   NetworkStatus status;
@@ -73,20 +26,18 @@ NetworkStatus wifiStatus(int signal = 80, const QString& vpn = {}) {
   return status;
 }
 
-platform::WifiNetwork scanned(const QString& ssid, int quality, bool secured, bool known,
-                              bool connected = false) {
-  platform::WifiNetwork network;
+WifiNetwork scanned(const QString& ssid, int quality, bool secured, bool known,
+                    bool connected = false) {
+  WifiNetwork network;
   network.ssid = ssid;
   network.quality = quality;
-  network.state = (secured ? platform::kWifiSecured : platform::kWifiUnsecured) |
-                  (connected ? platform::kWifiConnected : 0);
+  network.state = (secured ? kWifiSecured : kWifiUnsecured) | (connected ? kWifiConnected : 0);
   network.profileExists = known;
   return network;
 }
 
-platform::ConnectivitySample sample(const char* name, int bars, bool ethernet,
-                                    const char* vpn = "") {
-  platform::ConnectivitySample s;
+ConnectivitySample sample(const char* name, int bars, bool ethernet, const char* vpn = "") {
+  ConnectivitySample s;
   s.info.name = name;
   s.info.bars = bars;
   s.info.ethernet = ethernet;
@@ -136,7 +87,7 @@ TEST(NetworkStatusMapping, VpnNameComesThroughOnEveryKind) {
 }
 
 TEST(NetworkStatusMapping, LookupFailureLeavesTheAddressEmpty) {
-  platform::ConnectivitySample s = sample("Home", 4, false);
+  ConnectivitySample s = sample("Home", 4, false);
   s.ipAddress.reset();
   EXPECT_TRUE(statusFromSample(s, std::nullopt).ipAddress.isEmpty());
 }
@@ -204,7 +155,7 @@ TEST(Network, RefreshScansAndListsNetworksConnectedFirstThenBySignal) {
   EXPECT_EQ(fake->backend->scans, 1);
   EXPECT_TRUE(network.scanning());
 
-  emit fake->backend->scanCompleted(static_cast<int>(platform::WifiScanStatus::Success),
+  emit fake->backend->scanCompleted(static_cast<int>(WifiScanStatus::Success),
                                     {scanned(QStringLiteral("Cafe"), 90, false, false),
                                      scanned(QStringLiteral("Home"), 40, true, true, true),
                                      scanned(QStringLiteral("Hidden"), 10, true, false),
@@ -231,11 +182,11 @@ TEST(Network, AFailedScanEmptiesTheList) {
   auto fake = std::make_shared<FakeSource>();
   Network network(fake, nullptr);
   network.refresh();
-  emit fake->backend->scanCompleted(static_cast<int>(platform::WifiScanStatus::Success),
+  emit fake->backend->scanCompleted(static_cast<int>(WifiScanStatus::Success),
                                     {scanned(QStringLiteral("Home"), 40, true, true)});
   ASSERT_EQ(network.networks().size(), 1);
   network.refresh();
-  emit fake->backend->scanCompleted(static_cast<int>(platform::WifiScanStatus::AccessDenied), {});
+  emit fake->backend->scanCompleted(static_cast<int>(WifiScanStatus::AccessDenied), {});
   EXPECT_TRUE(network.networks().isEmpty());
   EXPECT_FALSE(network.scanning());
 }
@@ -244,7 +195,7 @@ TEST(Network, ConnectsOnlyToKnownScannedNetworks) {
   auto fake = std::make_shared<FakeSource>();
   Network network(fake, nullptr);
   network.refresh();
-  emit fake->backend->scanCompleted(static_cast<int>(platform::WifiScanStatus::Success),
+  emit fake->backend->scanCompleted(static_cast<int>(WifiScanStatus::Success),
                                     {scanned(QStringLiteral("Work"), 60, true, true),
                                      scanned(QStringLiteral("Cafe"), 90, true, false)});
 
@@ -264,11 +215,11 @@ TEST(Network, AFinishedConnectScansAndPollsAgain) {
   fake->set(wifiStatus());
   Network network(fake, nullptr);
   network.refresh();
-  emit fake->backend->scanCompleted(static_cast<int>(platform::WifiScanStatus::Success),
+  emit fake->backend->scanCompleted(static_cast<int>(WifiScanStatus::Success),
                                     {scanned(QStringLiteral("Work"), 60, true, true)});
   ASSERT_TRUE(network.connectTo(QStringLiteral("Work")));
 
-  emit fake->backend->connectFinished(static_cast<int>(platform::WifiConnectStatus::Success),
+  emit fake->backend->connectFinished(static_cast<int>(WifiConnectStatus::Success),
                                       QStringLiteral("Work"),
                                       scanned(QStringLiteral("Work"), 60, true, true, true));
   EXPECT_EQ(fake->backend->scans, 2);
@@ -280,7 +231,7 @@ TEST(Network, AFailedConnectAllowsANewOne) {
   auto fake = std::make_shared<FakeSource>();
   Network network(fake, nullptr);
   network.refresh();
-  emit fake->backend->scanCompleted(static_cast<int>(platform::WifiScanStatus::Success),
+  emit fake->backend->scanCompleted(static_cast<int>(WifiScanStatus::Success),
                                     {scanned(QStringLiteral("Work"), 60, true, true)});
   ASSERT_TRUE(network.connectTo(QStringLiteral("Work")));
   emit fake->backend->connectFailed(QStringLiteral("no"));

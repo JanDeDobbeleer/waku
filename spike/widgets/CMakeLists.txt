@@ -15,7 +15,6 @@ wabar_contribute(
     Tray.qml
     ActiveLayout.qml
     Bluetooth.qml
-    Wifi.qml
     Notifications.qml
     ControlCenter.qml
     Wallpapers.qml

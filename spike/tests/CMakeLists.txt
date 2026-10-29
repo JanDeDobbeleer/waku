@@ -15,7 +15,6 @@ wabar_contribute(
     test_safe_mode.cpp
     test_tray_widget.cpp
     test_bluetooth.cpp
-    test_network.cpp
     test_notifications.cpp
     test_taskbar.cpp
     test_control_center.cpp

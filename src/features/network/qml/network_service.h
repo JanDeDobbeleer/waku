@@ -8,13 +8,11 @@
 #include <optional>
 #include <vector>
 
-#include "features/system_stats/qml/stat_source.h"
-#include "platform/connectivity.h"
-#include "platform/wlan.h"
+#include "features/network/connectivity.h"
+#include "features/network/wlan.h"
+#include "kernel/qml/stat_source.h"
 
-namespace wabar::services {
-
-namespace platform = ::yasb::platform;
+namespace wabar::network {
 
 // One poll of the network state: what the Wi-Fi widget shows.
 struct NetworkStatus {
@@ -39,12 +37,12 @@ class NetworkSource {
   virtual NetworkStatus sample() = 0;
   // The Wi-Fi scan and connect backend. Called on the GUI thread the first time a scan or a
   // connect is requested; null when there is none.
-  virtual std::unique_ptr<platform::WifiBackend> createWifiBackend() = 0;
+  virtual std::unique_ptr<WifiBackend> createWifiBackend() = 0;
 };
 
 // Maps one connectivity sample and the exact signal quality onto the status. Ethernet wins over
 // Wi-Fi; the "Disconnected" and "Error" names the backend reports mean no connection.
-NetworkStatus statusFromSample(const platform::ConnectivitySample& sample,
+NetworkStatus statusFromSample(const ConnectivitySample& sample,
                                const std::optional<int>& exactQuality);
 
 // The real source; null on the offscreen platform.
@@ -101,16 +99,16 @@ class Network : public system_stats::StatSource {
   void sample() override;
 
  private:
-  platform::WifiBackend* backend();
-  void onScanCompleted(int status, const QVector<platform::WifiNetwork>& networks);
+  WifiBackend* backend();
+  void onScanCompleted(int status, const QVector<WifiNetwork>& networks);
 
   std::shared_ptr<NetworkSource> source_;
-  std::unique_ptr<platform::WifiBackend> backend_;
+  std::unique_ptr<WifiBackend> backend_;
   NetworkStatus status_;
-  std::vector<platform::WifiNetwork> scanned_;
+  std::vector<WifiNetwork> scanned_;
   QVariantList networks_;
   bool scanning_ = false;
   bool connecting_ = false;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::network
