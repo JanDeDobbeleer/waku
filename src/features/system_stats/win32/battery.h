@@ -1,8 +1,8 @@
 #pragma once
 
-#include "platform/system_stats.h"
+#include "features/system_stats/system_stats.h"
 
-namespace yasb::platform {
+namespace wabar::system_stats {
 
 class WindowsBatteryDataSource final : public BatteryDataSource {
  public:
@@ -12,4 +12,4 @@ class WindowsBatteryDataSource final : public BatteryDataSource {
   std::wstring devicePath_;
 };
 
-}  // namespace yasb::platform
+}  // namespace wabar::system_stats

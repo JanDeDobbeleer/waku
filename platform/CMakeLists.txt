@@ -11,8 +11,6 @@ add_library(yasb_platform STATIC
   window_tracker_hooks_win32.cpp
   audio.h
   audio.cpp
-  battery.h
-  battery.cpp
   bluetooth.h
   bluetooth.cpp
   brightness.h
@@ -33,8 +31,6 @@ add_library(yasb_platform STATIC
   media_session.cpp
   media_session_winrt.cpp
   media_source_apps.cpp
-  memory.h
-  memory.cpp
   notifications.h
   notifications.cpp
   notifications_system.cpp
@@ -42,8 +38,6 @@ add_library(yasb_platform STATIC
   toast_activation.cpp
   toast_xml.h
   toast_xml.cpp
-  pdh.h
-  pdh.cpp
   window_focus.h
   window_focus.cpp
   workerw.h
@@ -60,7 +54,6 @@ add_library(yasb_platform STATIC
   touch_keyboard.cpp
   user_info.h
   user_info.cpp
-  system_stats.h
   systray_click.h
   systray_click.cpp
   systray_hook.h
@@ -78,7 +71,7 @@ target_compile_definitions(yasb_platform PUBLIC
   YASB_TRAY_PIPE_NAME="${YASB_TRAY_PIPE_NAME}" YASB_TRAY_MUTEX_NAME="${YASB_TRAY_MUTEX_NAME}")
 target_link_libraries(yasb_platform
   PUBLIC Qt6::Core
-  PRIVATE wabar_options wabar_kernel pdh setupapi psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32
+  PRIVATE wabar_options wabar_kernel psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32
           wlanapi ws2_32 bthprops cfgmgr32 shlwapi dwmapi oleaut32 uuid dxva2 powrprof secur32 advapi32 winhttp)
 # GitHub widget HTTPS (github_api.cpp); headers stay QtCore-only.
 find_package(Qt6 REQUIRED COMPONENTS Network)

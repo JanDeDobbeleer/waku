@@ -5,12 +5,10 @@
 #include <QVariantList>
 #include <memory>
 
-#include "platform/system_stats.h"
-#include "spike/services/stat_source.h"
+#include "features/system_stats/qml/stat_source.h"
+#include "features/system_stats/system_stats.h"
 
-namespace wabar::services {
-
-namespace platform = ::yasb::platform;
+namespace wabar::system_stats {
 
 class Memory : public StatSource {
   Q_OBJECT
@@ -26,7 +24,7 @@ class Memory : public StatSource {
 
  public:
   explicit Memory(QObject* parent = nullptr);
-  Memory(std::shared_ptr<platform::MemoryDataSource> source, QObject* parent);
+  Memory(std::shared_ptr<MemoryDataSource> source, QObject* parent);
 
   double percent() const { return sample_.percent; }
   qlonglong used() const { return static_cast<qlonglong>(sample_.used); }
@@ -41,8 +39,8 @@ class Memory : public StatSource {
   void sample() override;
 
  private:
-  std::shared_ptr<platform::MemoryDataSource> source_;
-  platform::MemorySample sample_;
+  std::shared_ptr<MemoryDataSource> source_;
+  MemorySample sample_;
 };
 
 class Cpu : public StatSource {
@@ -57,7 +55,7 @@ class Cpu : public StatSource {
 
  public:
   explicit Cpu(QObject* parent = nullptr);
-  Cpu(std::shared_ptr<platform::CpuDataSource> source, QObject* parent);
+  Cpu(std::shared_ptr<CpuDataSource> source, QObject* parent);
 
   double percent() const { return sample_.percent; }
   QVariantList perCore() const;
@@ -70,8 +68,8 @@ class Cpu : public StatSource {
   void sample() override;
 
  private:
-  std::shared_ptr<platform::CpuDataSource> source_;
-  platform::CpuSample sample_;
+  std::shared_ptr<CpuDataSource> source_;
+  CpuSample sample_;
 };
 
 class Battery : public StatSource {
@@ -85,7 +83,7 @@ class Battery : public StatSource {
 
  public:
   explicit Battery(QObject* parent = nullptr);
-  Battery(std::shared_ptr<platform::BatteryDataSource> source, QObject* parent);
+  Battery(std::shared_ptr<BatteryDataSource> source, QObject* parent);
 
   bool available() const { return available_; }
   int percent() const { return sample_.percent; }
@@ -97,9 +95,9 @@ class Battery : public StatSource {
   void sample() override;
 
  private:
-  std::shared_ptr<platform::BatteryDataSource> source_;
-  platform::BatterySample sample_;
+  std::shared_ptr<BatteryDataSource> source_;
+  BatterySample sample_;
   bool available_ = false;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::system_stats

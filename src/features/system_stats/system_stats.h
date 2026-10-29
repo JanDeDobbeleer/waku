@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace yasb::platform {
+namespace wabar::system_stats {
 
 struct CpuSample {
   double percent = 0;
@@ -69,9 +69,9 @@ std::shared_ptr<CpuDataSource> createCpuDataSource();
 std::shared_ptr<MemoryDataSource> createMemoryDataSource();
 std::shared_ptr<BatteryDataSource> createBatteryDataSource();
 
-}  // namespace yasb::platform
+}  // namespace wabar::system_stats
 
 #include <QMetaType>
-Q_DECLARE_METATYPE(yasb::platform::CpuSample)
-Q_DECLARE_METATYPE(yasb::platform::MemorySample)
-Q_DECLARE_METATYPE(yasb::platform::BatterySample)
+Q_DECLARE_METATYPE(wabar::system_stats::CpuSample)
+Q_DECLARE_METATYPE(wabar::system_stats::MemorySample)
+Q_DECLARE_METATYPE(wabar::system_stats::BatterySample)

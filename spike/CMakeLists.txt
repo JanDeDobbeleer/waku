@@ -5,9 +5,6 @@
 # module target itself is defined in src/modules/ from these and the src/features/ contributions.
 wabar_contribute(
   SERVICES_SOURCES
-    services/stat_source.h
-    services/system_stats.h
-    services/system_stats.cpp
     services/child_process.h
     services/child_process.cpp
     services/audio_service.h

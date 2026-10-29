@@ -8,9 +8,9 @@
 #include <optional>
 #include <vector>
 
+#include "features/system_stats/qml/stat_source.h"
 #include "platform/connectivity.h"
 #include "platform/wlan.h"
-#include "spike/services/stat_source.h"
 
 namespace wabar::services {
 
@@ -58,7 +58,7 @@ std::shared_ptr<NetworkSource> createSystemNetworkSource();
 // signal; it is filled by `refresh()` and stays empty until then. The Wi-Fi backend (and its
 // thread) is created by the first refresh or connect and destroyed with this object, which stops
 // it. GUI thread only.
-class Network : public StatSource {
+class Network : public system_stats::StatSource {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON

@@ -5,16 +5,11 @@
 wabar_contribute(
   WIDGETS_QML_FILES
     Pill.qml
-    StatGraph.qml
-    StatPopup.qml
     DeviceMenu.qml
     DeviceRow.qml
     Slider.qml
     Calendar.qml
     Clock.qml
-    Cpu.qml
-    Memory.qml
-    Battery.qml
     Volume.qml
     Media.qml
     Workspaces.qml

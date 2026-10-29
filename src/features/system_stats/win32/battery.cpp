@@ -1,4 +1,4 @@
-#include "platform/battery.h"
+#include "features/system_stats/win32/battery.h"
 
 #include <windows.h>
 
@@ -11,7 +11,7 @@
 #include <cmath>
 #include <vector>
 
-namespace yasb::platform {
+namespace wabar::system_stats {
 namespace {
 
 constexpr int kPowerTimeUnknown = -1;
@@ -141,4 +141,4 @@ std::shared_ptr<BatteryDataSource> createBatteryDataSource() {
   return std::make_shared<WindowsBatteryDataSource>();
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::system_stats

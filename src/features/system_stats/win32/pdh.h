@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include "platform/system_stats.h"
+#include "features/system_stats/system_stats.h"
 
-namespace yasb::platform {
+namespace wabar::system_stats {
 
 class PdhCpuDataSource final : public CpuDataSource {
  public:
@@ -17,4 +17,4 @@ class PdhCpuDataSource final : public CpuDataSource {
   std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace yasb::platform
+}  // namespace wabar::system_stats

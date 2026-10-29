@@ -1,4 +1,4 @@
-#include "platform/pdh.h"
+#include "features/system_stats/win32/pdh.h"
 
 #include <windows.h>
 #include <pdh.h>
@@ -9,7 +9,7 @@
 
 #include "kernel/win32/windows_build.h"
 
-namespace yasb::platform {
+namespace wabar::system_stats {
 namespace {
 
 constexpr DWORD kWin1124H2Build = 26100;
@@ -163,4 +163,4 @@ std::shared_ptr<CpuDataSource> createCpuDataSource() {
   return std::make_shared<PdhCpuDataSource>();
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::system_stats

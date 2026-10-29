@@ -1,4 +1,4 @@
-#include "platform/memory.h"
+#include "features/system_stats/win32/memory.h"
 
 #include <windows.h>
 #include <pdh.h>
@@ -8,7 +8,7 @@
 #include <cmath>
 #include <mutex>
 
-namespace yasb::platform {
+namespace wabar::system_stats {
 namespace {
 
 struct MemoryListInformation {
@@ -119,4 +119,4 @@ std::shared_ptr<MemoryDataSource> createMemoryDataSource() {
   return std::make_shared<WindowsMemoryDataSource>();
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::system_stats
