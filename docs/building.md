@@ -30,7 +30,7 @@ cmd /c "call `"$vc`" arm64_amd64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64
 On an x64 host use `vcvarsall.bat x64` and the same presets.
 
 Everything lands in `build\<preset>`: `wabar.exe`, `wabarc.exe`, the tray hook DLL next to them and
-`wabar_services_tests.exe` with the Qt DLLs and the offscreen platform plugin that `windeployqt`
+`wabar_tests.exe` with the Qt DLLs and the offscreen platform plugin that `windeployqt`
 copies next to it. The unpackaged debug build runs from that folder. `spike/README.md` explains how
 to run the bar and `wabarc`.
 
@@ -72,7 +72,7 @@ run tests, launch the bar or register an app-bar. `-Fast` and `-Staged` cannot b
 
 Analysis uses `build\<preset>-analyze` with `BUILD_TESTING=OFF` and `YASB_ANALYZE=ON`.
 The default `YASB_ANALYZE` is `OFF`; ordinary checks explicitly reset it to `OFF`.
-The option applies `/analyze /analyze:external-` only through our `yasb_options` target.
+The option applies `/analyze /analyze:external-` only through our `wabar_options` target.
 Qt and third-party headers are external for MSVC and excluded by clang-tidy. Generated MOC units
 are built by MSVC but are not clang-tidy entry points. Logs and diagnostic counts appear in the
 analysis directory and the check summary. Missing tools, compiler errors and analyzer findings fail
@@ -93,7 +93,7 @@ errors. The x64/Release presets are supported by the command but were not valida
 
 Notes:
 
-- Tests are copied next to `wabar_services_tests.exe` with `windeployqt` (including the `offscreen`
+- Tests are copied next to `wabar_tests.exe` with `windeployqt` (including the `offscreen`
   platform plugin) and `ctest` sets `QT_QPA_PLATFORM=offscreen`.
 - Warnings are errors (`/WX`) for our targets only; vcpkg and Qt code are unaffected, and headers
   included with angle brackets are treated as external (`/external:anglebrackets /external:W0`).

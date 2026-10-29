@@ -1,14 +1,10 @@
 # Spike: Qt Quick top bar configured in QML. Throwaway; checks app bar + backdrop on a QQuickWindow,
 # memory footprint, the config model and hot reload.
-find_package(Qt6 6.10 REQUIRED COMPONENTS Quick Qml Network)
-qt_policy(SET QTP0001 NEW)  # QML module resources under :/qt/qml/<URI>
 
-# wabar.services: the C++ half of the widget API (polled data sources, Process, Shell, ...).
-qt_add_library(wabar_services STATIC)
-qt_add_qml_module(wabar_services
-  URI wabar.services
-  VERSION 1.0
-  SOURCES
+# wabar.services: the C++ half of the widget API (polled data sources, Process, Shell, ...). The
+# module target itself is defined in src/modules/ from these and the src/features/ contributions.
+wabar_contribute(
+  SERVICES_SOURCES
     services/stat_source.h
     services/stat_source.cpp
     services/system_stats.h
@@ -55,13 +51,10 @@ qt_add_qml_module(wabar_services
     services/wallpaper_settings.cpp
     services/wallpaper_transition.h
     services/wallpaper_transition.cpp
+  # The generated type registration includes headers by name.
+  SERVICES_INCLUDE_DIRS services
+  SERVICES_LIBS yasb_platform yasb_widgets wabar_control
 )
-target_include_directories(wabar_services PUBLIC ${CMAKE_SOURCE_DIR}
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/services)  # generated type registration includes headers by name
-target_compile_definitions(wabar_services PRIVATE
-  UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(wabar_services PUBLIC Qt6::Qml Qt6::Quick yasb_platform yasb_widgets
-  wabar_control)
 
 # wabar_control: the pipe between a running bar and wabarc.
 add_subdirectory(control)
@@ -69,7 +62,7 @@ add_subdirectory(control)
 # wabar: Config, Bar, BarLayout and the host.
 add_subdirectory(bar)
 
-# wabar.widgets: the built-in widgets.
+# wabar.widgets: the built-in widgets (contributed; the module is defined in src/modules/).
 add_subdirectory(widgets)
 
 qt_add_executable(wabar WIN32 main.cpp)

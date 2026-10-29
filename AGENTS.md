@@ -31,7 +31,7 @@ cmd /c "call `"$vc\vcvarsarm64_amd64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --
 ```
 
 The targets are `wabar` (the bar), `wabarc` (its console client), `YASBNativeTrayHook[_arm64]` (the
-DLL injected into Explorer) and `wabar_services_tests` (all tests). `ctest` needs
+DLL injected into Explorer) and `wabar_tests` (all tests, defined in `tests/`). `ctest` needs
 `QT_QPA_PLATFORM=offscreen`; the CMake test properties set it, so `ctest --test-dir` works without
 the test preset. Presets live in `CMakePresets.json`; `compile_commands.json` is written to
 `build\<preset>`.
@@ -39,8 +39,10 @@ the test preset. Presets live in `CMakePresets.json`; `compile_commands.json` is
 ## Definition of done
 
 `tools\check.ps1` exits 0. It runs the clang-format check, the include-layering check, the
-json-subscript check, the `arm64-debug` build and `ctest`. `tools\check.ps1 -Fast` runs only the
-first three.
+`structure` check (rules S1-S8 of the architecture proposal), the json-subscript check, the
+`arm64-debug` build and `ctest`. `tools\check.ps1 -Fast` runs only the first four. `structure`
+enforces under `src/` and `tests/` and only reports (warnings, exit 0) for the legacy folders;
+`-Verbose` lists those warnings.
 
 `pwsh -NoProfile -File tools\check.ps1 -Analyze` runs the fast checks and opt-in local static
 analysis instead of tests, in an isolated build directory. It requires clang-tidy; see
@@ -73,6 +75,13 @@ spike (wabar)  ->  widgets  ->  core/{bar,widgets} (ui)  ->  platform
 | ui | `core/bar/`, `core/widgets/` | Qt |
 | platform | `platform/` | Win32, Qt Core only |
 
+The restructure is in progress (migration step 4 done): `src/` has the skeleton (`kernel/`,
+`features/`, `modules/`), `cmake/wabar_feature.cmake` declares a feature (`wabar_feature(NAME <f>
+DEPENDS ... SOURCES ... WIN32_SOURCES ... QML_SOURCES ... QML_FILES ... TESTS ... SYSTEM_LIBS ...)`,
+one line in `src/features/CMakeLists.txt`), and `src/modules/qml_modules.cmake` builds the QML
+modules `wabar.services` and `wabar.widgets` from the contributions of `src/features/` and the
+legacy `spike/` folders. Code moved under `src/` follows the `structure` rules, not this table.
+
 Details: `docs/architecture.md`.
 
 ## Style
@@ -84,7 +93,7 @@ Details: `docs/architecture.md`.
 - Includes are rooted at the repo: `#include "platform/audio.h"`, never `"audio.h"`.
 - Qt string literals: `QStringLiteral("...")`. Do not introduce `u"..."_s` or `QLatin1String` in new
   code except where an API needs a Latin-1 view.
-- `NOMINMAX`, `WIN32_LEAN_AND_MEAN`, `UNICODE` come from the `yasb_options` target; do not redefine
+- `NOMINMAX`, `WIN32_LEAN_AND_MEAN`, `UNICODE` come from the `wabar_options` target; do not redefine
   them locally.
 - `.editorconfig` defines whitespace and line endings: CRLF for C++ sources and docs, LF for QML.
 

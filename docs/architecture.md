@@ -13,23 +13,49 @@ The old by-layer layout still holds until the restructure (migration step 4) rep
 spike/ (wabar)  ->  widgets/  ->  core/{bar,widgets} (ui)  ->  platform
 ```
 
-Each layer is its own static library and every target links `yasb_options`:
+Each layer is its own static library. The legacy libraries and every target under `src/` link
+`wabar_options` (`cmake/wabar_options.cmake`: `/W4 /WX /permissive- /guard:cf /sdl ...`); the
+former `spike/` targets do not yet (migration step 9):
 
 | Target | Folder | Sources | Links PUBLIC | Links PRIVATE |
 |---|---|---|---|---|
 | `yasb_platform` | `platform/` | `platform/` | `Qt6::Core` | `pdh setupapi psapi ...` (Win32 libs), `Qt6::Network` |
 | `yasb_ui` | `core/` | `core/bar/app_bar.*`, `core/widgets/backdrop.*`, `core/widgets/event_bus.h` | `Qt6::Core`, `Qt6::Gui` | |
 | `yasb_widgets` | `widgets/` | service and state code of the GitHub, GlazeWM, komorebi, systray, taskbar and wallpapers widgets | `yasb_ui`, `yasb_platform`, `nlohmann_json` | |
-| `wabar_*` | `spike/` | the wabar host, QML modules and services | `yasb_widgets`, Qt Quick | |
+| `wabar_bar`, `wabar_control` | `spike/` | the wabar host (QML module `wabar`) and the control pipe | `yasb_ui`, Qt Quick | |
+| `wabar_services`, `wabar_widgets` | `src/modules/qml_modules.cmake` | QML modules `wabar.services` and `wabar.widgets`, assembled from contributions (below) | `yasb_widgets`, the feature libraries, Qt Quick | |
 | `wabar` (exe), `wabarc` (exe) | `spike/` | `spike/main.cpp`, `spike/cli/main.cpp` | | |
 | `YASBNativeTrayHook[_arm64]` (DLL) | `hook/` | `hook/trayhook.cpp` | | static CRT, built next to `wabar.exe` |
-| `wabar_services_tests` (exe) | `spike/tests/` | `spike/tests/**` | | `GTest`, `Qt6::Test` |
+| `wabar_tests` (exe) | `tests/` | `tests/main.cpp` and every `TESTS` contribution (`spike/tests/**`, `src/**/tests/`) | | `GTest`, `Qt6::Test` |
 
 All targets share the repo root as include directory (includes are written `"core/..."`), so the
 compiler alone does not reject a header-only include against the arrow. `tools\check.ps1` (also
 with `-Fast` and in the pre-commit hook) has a `layering` step that fails on any `#include "..."`
 from `platform/` into `core/`, `widgets/` or `spike/`; from `core/` into `widgets/` or `spike/`; and
 from `widgets/` into `spike/`.
+
+### The `src/` skeleton (migration in progress)
+
+`docs/plans/2026-10-29-wabar-architecture-proposal.md` is being carried out; step 4 added the
+skeleton, steps 5+ move code into it.
+
+- `cmake/wabar_feature.cmake`: `wabar_feature(NAME <f> DEPENDS ... SOURCES ... WIN32_SOURCES ...
+  QML_SOURCES ... QML_FILES ... TESTS ... SYSTEM_LIBS ...)` builds `wabar_<f>` (STATIC, or
+  INTERFACE when QML only), links `wabar_kernel` and the `DEPENDS` libraries, checks the inner
+  folder layout and that each `DEPENDS` feature is declared earlier, and appends its QML C++,
+  `.qml` files and tests to global lists. `wabar_contribute()` is the same append for the legacy
+  `spike/` folders. The decisions are in the comment at the top of the file.
+- `src/CMakeLists.txt` adds `kernel`, `control`, `host`, `ui`, `features`, `app` (each if
+  present). `src/kernel/` is an empty INTERFACE `wabar_kernel` (include root `src/`) until step 5.
+- `src/modules/qml_modules.cmake` defines `wabar.services` and `wabar.widgets` from the global lists.
+  It is included from the top-level `CMakeLists.txt`, not added as a subdirectory, because
+  qmlcachegen names its outputs after the `.qml` path relative to the declaring directory and a
+  `../` path breaks the build on Windows. Every `.qml` file gets `QT_RESOURCE_ALIAS <basename>`,
+  so resource paths stay `qrc:/qt/qml/wabar/widgets/<Name>.qml`.
+- `tests/CMakeLists.txt` defines `wabar_tests` from `tests/main.cpp` and the `TESTS` list.
+- `tools\check.ps1` step `structure` checks rules S1-S8 (proposal, section 4.2), reading `DEPENDS`
+  from the `wabar_feature(` calls: enforcing under `src/` and `tests/`, report-only for the legacy
+  folders.
 
 ## Threading
 

@@ -82,7 +82,7 @@ target_compile_definitions(yasb_platform PUBLIC
   YASB_TRAY_PIPE_NAME="${YASB_TRAY_PIPE_NAME}" YASB_TRAY_MUTEX_NAME="${YASB_TRAY_MUTEX_NAME}")
 target_link_libraries(yasb_platform
   PUBLIC Qt6::Core
-  PRIVATE yasb_options pdh setupapi psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32
+  PRIVATE wabar_options pdh setupapi psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32
           wlanapi ws2_32 bthprops cfgmgr32 shlwapi dwmapi oleaut32 uuid dxva2 powrprof secur32 advapi32 winhttp)
 # GitHub widget HTTPS (github_api.cpp); headers stay QtCore-only.
 find_package(Qt6 REQUIRED COMPONENTS Network)

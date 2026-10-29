@@ -3,15 +3,19 @@
     Definition-of-done check for wabar: format, layering, JSON subscripts, build and tests.
 .DESCRIPTION
     Steps, in order:
-      1. format     clang-format --dry-run -Werror over *.cpp/*.h in core, platform, widgets, spike
-                    (with -Staged: only the staged versions of staged files, which is what
-                    the pre-commit hook uses).
-      2. layering   fails on an #include "..." against the layer arrow
+      1. format     clang-format --dry-run -Werror over *.cpp/*.h in src, tests and the legacy
+                    core, platform, widgets, spike (with -Staged: only the staged versions of
+                    staged files, which is what the pre-commit hook uses).
+      2. layering   fails on an #include "..." against the legacy layer arrow
                     spike -> widgets -> core -> platform
                     (with -Staged: only staged files, reading their staged content).
+      2b. structure rules S1-S8 of the wabar architecture (DEPENDS read from the wabar_feature(
+                    calls in src/features/*/CMakeLists.txt); enforcing under src/ and tests/,
+                    report-only (warnings, exit 0) for the legacy folders; -Verbose lists them.
+                    With -Staged: per-file rules on staged files, global rules on the index.
       3. json-subscript
-                    heuristic grep for the const nlohmann::json operator[] in product code (core,
-                    platform, widgets).
+                    heuristic grep for the const nlohmann::json operator[] in product code (src,
+                    tests, core, platform, widgets).
       4. configure  cmake --preset <Preset>       (skipped with -Fast)
       5. build      cmake --build --preset <Preset> (skipped with -Fast)
       6. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 (skipped with -Fast)
@@ -20,14 +24,15 @@
     VCPKG_ROOT=C:\vcpkg (override with the VCPKG_ROOT_OVERRIDE environment variable).
     Exits 1 if any step fails. Requires PowerShell 7 (pwsh).
 .PARAMETER Fast
-    Only the format, layering and JSON-subscript checks.
+    Only the format, layering, structure and JSON-subscript checks.
 .PARAMETER Analyze
     Instead of ordinary build/tests, run MSVC /analyze and clang-tidy on production units in an
     isolated build\<Preset>-analyze directory. Requires LLVM clang-tidy.
 .PARAMETER SkipFormat
     Skip the clang-format check.
 .PARAMETER Staged
-    Format- and layering-check only files staged in the index, reading their staged content.
+    Format-, layering- and structure-check only files staged in the index, reading their staged
+    content.
 .PARAMETER Preset
     CMake configure/build preset. Default arm64-debug.
 .EXAMPLE
@@ -54,7 +59,7 @@ if ($Analyze -and ($Fast -or $Staged)) {
     exit 1
 }
 
-$formatDirs = @('core', 'platform', 'widgets', 'spike')
+$formatDirs = @('src', 'tests', 'core', 'platform', 'widgets', 'spike')
 $results = New-Object System.Collections.Generic.List[object]
 
 function Add-Result([string]$Step, [string]$Status, [string]$Detail, [double]$Seconds) {
@@ -214,6 +219,260 @@ if ($violations.Count -eq 0) {
     Add-Result 'layering' 'FAIL' "$($violations.Count) include(s) against the arrow" $sw.Elapsed.TotalSeconds
 }
 
+# 2b. structure ------------------------------------------------------------------------------
+# Rules S1-S8 of docs/plans/2026-10-29-wabar-architecture-proposal.md (section 4.2). The DEPENDS
+# graph comes from the wabar_feature( calls in src/features/*/CMakeLists.txt, read with a regex, so
+# no build tree is needed. Units: kernel, control, host, ui, features/<f>, app/<exe>; tests/ (the
+# top-level folder) holds the test main and the integration tests.
+# Mode: ENFORCING for src/ and tests/ (a violation fails the step); REPORT-ONLY for the legacy
+# folders not yet moved (warnings with a count; the step still passes). S3-S5 are the rules that
+# mean something for a legacy file; list the legacy warnings with -Verbose.
+# Decisions beyond the proposal: S3 and S4 also allow */tests/** and tests/ (tests build QML
+# engines and Win32 fakes); S2 requires includes rooted at src/ (a bare "x.h" fails, "x.moc" is
+# fine); S1 also requires each .cpp/.qml of a feature to be named in its CMakeLists.txt and the
+# NAME to equal the folder name.
+Write-Step 'structure (S1-S8; enforcing under src/ and tests/, report-only for legacy folders)'
+$sw = [Diagnostics.Stopwatch]::StartNew()
+$structureRules = [ordered]@{
+    S1 = 'every source under src/ belongs to exactly one unit and is declared by it'
+    S2 = 'quoted includes: own unit, kernel/, root headers of DEPENDS features; host also control/; app/ and tests/ free'
+    S3 = 'Windows SDK and C++/WinRT headers only in */win32/**, features/tray/hook/, app/, tests'
+    S4 = 'QtQml/QtQuick includes and QML_* macros only in */qml/**, app/, tests; QtWidgets nowhere'
+    S5 = 'only */tests/** and tests/ include */testing/**'
+    S6 = 'a feature''s .qml uses services (S.<Type>) and widgets of its own feature or its DEPENDS only'
+    S7 = 'QML-facing header basenames unique across the services module; .qml basenames unique per module'
+    S8 = 'DEPENDS name existing features and form an acyclic graph'
+}
+$structureLegacyDirs = @('core', 'platform', 'widgets', 'spike', 'hook')
+$windowsHeaders = '^(windows|winrt/.*|shlobj|shellapi|shobjidl|shobjidl_core|shlwapi|shldisp|exdisp|' +
+    'propsys|propkey|propvarutil|propidl|objbase|combaseapi|ole2|ocidl|unknwn|initguid|winternl|' +
+    'tlhelp32|psapi|powrprof|pdh|mmdeviceapi|endpointvolume|devicetopology|functiondiscoverykeys_devpkey|' +
+    'mmsystem|ks|ksproxy|dwmapi|uxtheme|appmodel|ws2tcpip|winsock2|wlanapi|winhttp|winioctl|setupapi|' +
+    'cfgmgr32|devguid|bluetoothapis|batclass|security|sddl|physicalmonitorenumerationapi|' +
+    'lowlevelmonitorconfigurationapi|highlevelmonitorconfigurationapi|notificationactivationcallback|' +
+    'wtsapi32|winreg|winuser|versionhelpers|wincodec|roapi|wrl/.*|qt_windows)\.h$|^winrt/'
+$qmlIncludes = '^(QQml\w*|QQuick\w*|QJSEngine|QJSValue|QtQml/.*|QtQuick/.*)$'
+$qmlMacros = '\bQML_(ELEMENT|NAMED_ELEMENT|SINGLETON|UNCREATABLE|ANONYMOUS)\b'
+$widgetsIncludes = '^(QWidget|QApplication|QtWidgets/.*)$'
+
+function Get-CheckLines([string]$Path) {
+    if ($Staged) { return @(git show ":$Path" 2>$null) }
+    if (Test-Path -LiteralPath $Path) { return @(Get-Content -LiteralPath $Path) }
+    return @()
+}
+
+# The whole tree (index with -Staged) for the global rules; the checked set for per-file rules.
+if ($Staged) {
+    $treeFiles = @(git ls-files --cached -- src tests $structureLegacyDirs)
+    $checkFiles = @(git diff --cached --name-only --diff-filter=ACMR -- src tests $structureLegacyDirs)
+} else {
+    $treeFiles = @(git ls-files --cached --others --exclude-standard -- src tests $structureLegacyDirs)
+    $checkFiles = $treeFiles
+}
+$treeFiles = @($treeFiles | Where-Object { $_ -and ($Staged -or (Test-Path -LiteralPath $_)) } | Sort-Object -Unique)
+$checkFiles = @($checkFiles | Where-Object { $_ -match '\.(cpp|h|qml)$' } | Sort-Object -Unique)
+
+$enforced = New-Object System.Collections.Generic.List[string]
+$legacy = New-Object System.Collections.Generic.List[object]
+function Add-StructureViolation([string]$Rule, [string]$File, [string]$Text) {
+    if ($File.StartsWith('src/') -or $File.StartsWith('tests/')) {
+        $enforced.Add("${Rule} ${File}: $Text")
+    } else {
+        $legacy.Add([pscustomobject]@{ Rule = $Rule; Line = "${Rule} ${File}: $Text" })
+    }
+}
+
+# S8 and the DEPENDS map: features[<f>] = @{ Depends = @(...); CMake = <text> }.
+$features = @{}
+foreach ($cm in @($treeFiles | Where-Object { $_ -match '^src/features/([^/]+)/CMakeLists\.txt$' })) {
+    $folder = ($cm -split '/')[2]
+    $text = (Get-CheckLines $cm) -join "`n"
+    $text = ($text -split "`n" | ForEach-Object { $_ -replace '#.*$', '' }) -join "`n"
+    $m = [regex]::Match($text, '(?s)wabar_feature\s*\((.*?)\)')
+    if (-not $m.Success) {
+        Add-StructureViolation 'S1' $cm 'no wabar_feature( call'
+        continue
+    }
+    $tokens = @($m.Groups[1].Value -split '\s+' | Where-Object { $_ })
+    $name = $null; $depends = @(); $section = ''
+    foreach ($t in $tokens) {
+        if ($t -cmatch '^(NAME|DEPENDS|SOURCES|WIN32_SOURCES|QML_SOURCES|QML_FILES|TESTS|SYSTEM_LIBS)$') {
+            $section = $t; continue
+        }
+        if ($section -eq 'NAME') { $name = $t; $section = '' }
+        elseif ($section -eq 'DEPENDS') { $depends += $t }
+    }
+    if ($name -ne $folder) {
+        Add-StructureViolation 'S1' $cm "wabar_feature NAME '$name' differs from the folder '$folder'"
+    }
+    $features[$folder] = @{ Depends = $depends; CMake = $m.Groups[1].Value }
+}
+foreach ($f in $features.Keys) {
+    foreach ($d in $features[$f].Depends) {
+        if (-not $features.ContainsKey($d)) {
+            Add-StructureViolation 'S8' "src/features/$f/CMakeLists.txt" "DEPENDS $d is not a feature"
+        }
+    }
+}
+$visitState = @{}
+function Test-FeatureCycle([string]$F, [string[]]$Path) {
+    if ($visitState[$F] -eq 2) { return }
+    if ($visitState[$F] -eq 1) {
+        Add-StructureViolation 'S8' "src/features/$F/CMakeLists.txt" "DEPENDS cycle: $(($Path + $F) -join ' -> ')"
+        return
+    }
+    $visitState[$F] = 1
+    foreach ($d in $features[$F].Depends) {
+        if ($features.ContainsKey($d)) { Test-FeatureCycle $d ($Path + $F) }
+    }
+    $visitState[$F] = 2
+}
+foreach ($f in $features.Keys) { Test-FeatureCycle $f @() }
+
+# Unit of a path under src/: kernel, control, host, ui, features/<f>, app/<exe>; $null if none.
+function Get-Unit([string]$File) {
+    if ($File -match '^src/(kernel|control|host|ui)/') { return $Matches[1] }
+    if ($File -match '^src/features/([^/]+)/.+') { return "features/$($Matches[1])" }
+    if ($File -match '^src/app/([^/]+)/.+') { return "app/$($Matches[1])" }
+    return $null
+}
+
+# S7 and the QML type map for S6: type name -> feature.
+$qmlOwner = @{}
+$serviceOwner = @{}
+$headerSeen = @{}
+$servicesHeaders = @($treeFiles | Where-Object { $_ -match '^src/.+/qml/[^/]+\.h$' -or $_ -match '^spike/services/[^/]+\.h$' })
+foreach ($h in $servicesHeaders) {
+    $base = Split-Path $h -Leaf
+    if ($headerSeen.ContainsKey($base)) {
+        Add-StructureViolation 'S7' $h "header basename $base also used by $($headerSeen[$base])"
+    } else {
+        $headerSeen[$base] = $h
+    }
+    if ($h -match '^src/features/([^/]+)/qml/') {
+        $owner = $Matches[1]
+        $class = $null
+        foreach ($line in (Get-CheckLines $h)) {
+            if ("$line" -match '^\s*class\s+(?:\w+\s+)?(\w+)\s*(?:final\s*)?[:{]') { $class = $Matches[1] }
+            if ("$line" -match 'QML_NAMED_ELEMENT\(\s*(\w+)\s*\)') { $serviceOwner[$Matches[1]] = $owner }
+            elseif ("$line" -match '\bQML_ELEMENT\b' -and $class) { $serviceOwner[$class] = $owner }
+        }
+    }
+}
+$moduleQml = @{
+    'wabar.widgets' = @($treeFiles | Where-Object { ($_ -match '^src/.+\.qml$' -and $_ -notmatch '^src/host/') -or $_ -match '^spike/widgets/[^/]+\.qml$' })
+    'wabar'         = @($treeFiles | Where-Object { $_ -match '^src/host/.+\.qml$' -or $_ -match '^spike/bar/[^/]+\.qml$' })
+}
+foreach ($module in $moduleQml.Keys) {
+    $seen = @{}
+    foreach ($q in $moduleQml[$module]) {
+        $base = Split-Path $q -Leaf
+        if ($seen.ContainsKey($base)) {
+            Add-StructureViolation 'S7' $q "$base also in $($seen[$base]) (module $module)"
+        } else {
+            $seen[$base] = $q
+        }
+        if ($q -match '^src/features/([^/]+)/qml/') { $qmlOwner[[IO.Path]::GetFileNameWithoutExtension($q)] = $Matches[1] }
+    }
+}
+
+# Per-file rules.
+foreach ($f in $checkFiles) {
+    $isSrc = $f.StartsWith('src/')
+    $isTests = ($f -match '(^|/)tests/')
+    $unit = Get-Unit $f
+    $feature = $null
+    if ($unit -and $unit.StartsWith('features/')) { $feature = $unit.Substring(9) }
+
+    if ($isSrc) {
+        # S1
+        if (-not $unit) {
+            Add-StructureViolation 'S1' $f 'belongs to no unit (kernel, control, host, ui, features/<f>, app/<exe>)'
+        } elseif ($feature -and -not $features.ContainsKey($feature)) {
+            Add-StructureViolation 'S1' $f "features/$feature has no CMakeLists.txt with wabar_feature("
+        } elseif ($feature -and $f -match '\.(cpp|qml)$') {
+            $rel = $f.Substring("src/features/$feature/".Length)
+            if ($features[$feature].CMake -notmatch "(^|\s)$([regex]::Escape($rel))(\s|$)") {
+                Add-StructureViolation 'S1' $f "not declared in src/features/$feature/CMakeLists.txt"
+            }
+        }
+    }
+
+    $lines = @(Get-CheckLines $f)
+    if ($f -match '\.qml$') {
+        # S6
+        if (-not $feature) { continue }
+        $allowed = @($feature) + @($features[$feature].Depends)
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            $code = ("$($lines[$i])" -replace '//.*$', '')
+            foreach ($m in [regex]::Matches($code, '\bS\.([A-Z]\w*)')) {
+                $owner = $serviceOwner[$m.Groups[1].Value]
+                if ($owner -and $allowed -notcontains $owner) {
+                    Add-StructureViolation 'S6' "${f}:$($i + 1)" "uses service S.$($m.Groups[1].Value) of feature $owner (not in DEPENDS)"
+                }
+            }
+            foreach ($m in [regex]::Matches($code, '(?<![\w.])([A-Z]\w*)\s*\{')) {
+                $owner = $qmlOwner[$m.Groups[1].Value]
+                if ($owner -and $allowed -notcontains $owner) {
+                    Add-StructureViolation 'S6' "${f}:$($i + 1)" "uses widget $($m.Groups[1].Value) of feature $owner (not in DEPENDS)"
+                }
+            }
+        }
+        continue
+    }
+
+    $winOk = ($f -match '(^|/)win32/' -or $f.StartsWith('src/features/tray/hook/') -or $f.StartsWith('src/app/') -or $isTests)
+    $qmlOk = ($f -match '(^|/)qml/' -or $f.StartsWith('src/app/') -or $isTests)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = "$($lines[$i])"
+        $at = "${f}:$($i + 1)"
+        if ($line -match '^\s*#\s*include\s*<([^>]+)>') {
+            $inc = $Matches[1]
+            if ($inc -match $windowsHeaders -and -not $winOk) { Add-StructureViolation 'S3' $at "<$inc> outside win32/" }
+            if ($inc -match $qmlIncludes -and -not $qmlOk) { Add-StructureViolation 'S4' $at "<$inc> outside qml/" }
+            if ($inc -match $widgetsIncludes) { Add-StructureViolation 'S4' $at "<$inc>: Qt Widgets is not used" }
+        } elseif ($line -match '^\s*#\s*include\s*"([^"]+)"') {
+            $inc = $Matches[1]
+            if ($inc -match '(^|/)testing/' -and -not $isTests) { Add-StructureViolation 'S5' $at "includes `"$inc`" outside tests" }
+            # S2 (src/ only; tests/ and app/ include freely)
+            if (-not $isSrc -or -not $unit -or $unit.StartsWith('app/')) { continue }
+            if ($inc -notmatch '/') {
+                if ($inc -notmatch '\.moc$') { Add-StructureViolation 'S2' $at "`"$inc`" is not rooted at src/" }
+                continue
+            }
+            if ($inc.StartsWith("$unit/") -or $inc.StartsWith('kernel/')) { continue }
+            if ($unit -eq 'host' -and $inc.StartsWith('control/')) { continue }
+            $ok = $false
+            if ($feature -and $inc -match '^features/([^/]+)/(.+)$') {
+                $d = $Matches[1]; $rest = $Matches[2]
+                if ($features[$feature].Depends -contains $d) {
+                    if ($rest -notmatch '/') { $ok = $true }
+                    elseif ($isTests -and $rest -match '^testing/[^/]+$') { $ok = $true }
+                }
+            }
+            if (-not $ok) { Add-StructureViolation 'S2' $at "$unit must not include `"$inc`"" }
+        } elseif ($line -match $qmlMacros -and -not $qmlOk -and $line -notmatch '^\s*//') {
+            Add-StructureViolation 'S4' $at "$($Matches[0]) outside qml/"
+        }
+    }
+}
+
+$legacyCounts = @($legacy | Group-Object Rule | Sort-Object Name | ForEach-Object { "$($_.Name)=$($_.Count)" }) -join ' '
+if ($legacy.Count -gt 0) {
+    Write-Host "Report-only: $($legacy.Count) legacy warning(s) outside src/ ($legacyCounts); -Verbose lists them"
+    $legacy | ForEach-Object { Write-Verbose "  warning $($_.Line)" }
+}
+$scope = 'files'
+if ($Staged) { $scope = 'staged files' }
+if ($enforced.Count -eq 0) {
+    Add-Result 'structure' 'PASS' "$($checkFiles.Count) $scope, $($features.Count) features; legacy report-only: $($legacy.Count) warning(s) $legacyCounts" $sw.Elapsed.TotalSeconds
+} else {
+    Write-Host 'Structure violations under src/ and tests/:'
+    $structureRules.GetEnumerator() | ForEach-Object { Write-Host "  $($_.Key)  $($_.Value)" }
+    $enforced | ForEach-Object { Write-Host "  $_" }
+    Add-Result 'structure' 'FAIL' "$($enforced.Count) violation(s) under src/ or tests/" $sw.Elapsed.TotalSeconds
+}
+
 # 3. json-subscript ---------------------------------------------------------------------------
 # operator[] on a const nlohmann::json with a missing key is undefined behaviour (AGENTS.md, error
 # handling). Types are invisible to a grep, so this is a heuristic over files that mention "json":
@@ -225,7 +484,7 @@ if ($violations.Count -eq 0) {
 #            end the line with the comment "json-subscript-ok".
 Write-Step 'json-subscript (const nlohmann::json operator[] heuristic)'
 $sw = [Diagnostics.Stopwatch]::StartNew()
-$productDirs = @('core', 'platform', 'widgets')
+$productDirs = @('src', 'tests', 'core', 'platform', 'widgets')
 if ($Staged) {
     $jsonFiles = @(git diff --cached --name-only --diff-filter=ACMR -- $productDirs)
 } else {
@@ -314,7 +573,7 @@ if ($Analyze) {
                 $entries | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $wabarDir 'compile_commands.json')
                 $units = @($entries | Where-Object {
                     $relative = [IO.Path]::GetRelativePath($repo, $_.file).Replace('\', '/')
-                    $relative -match '^(core|platform|widgets)/.*\.cpp$'
+                    $relative -match '^(src|core|platform|widgets)/.*\.cpp$'
                 } | ForEach-Object { $_.file } | Sort-Object -Unique)
                 $commands = New-Object System.Collections.Generic.List[string]
                 $commands.Add('set failures=0')

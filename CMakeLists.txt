@@ -28,26 +28,21 @@ if(YASB_QT_DIR STREQUAL "msvc2022_64" AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "A
   set(QT_HOST_PATH "${YASB_QT_ROOT}/msvc2022_arm64")
 endif()
 
-find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui)
+find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui Qml Quick Network)
+qt_policy(SET QTP0001 NEW)  # QML module resources under :/qt/qml/<URI>
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 
-# Applied to our own targets only, so third-party code keeps its warning level.
-add_library(yasb_options INTERFACE)
-option(YASB_ANALYZE "Enable MSVC static analysis for own targets" OFF)
-if(YASB_ANALYZE)
-  target_compile_options(yasb_options INTERFACE /analyze /analyze:external-)
-endif()
-target_compile_features(yasb_options INTERFACE cxx_std_20)
-target_compile_definitions(yasb_options INTERFACE
-  UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_compile_options(yasb_options INTERFACE
-  /W4 /WX /permissive- /guard:cf /sdl /utf-8 /EHsc /Zc:__cplusplus
-  /external:anglebrackets /external:W0)
-target_link_options(yasb_options INTERFACE /GUARD:CF /DYNAMICBASE /NXCOMPAT)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(wabar_options)   # wabar_options: flags for our own targets
+include(wabar_feature)   # wabar_feature(), wabar_contribute()
 
 # Targets (see docs/architecture.md): wabar -> wabar_* (spike/) -> yasb_widgets -> yasb_ui
 #                                                                 -> yasb_platform
+# Migration to src/ (docs/plans/2026-10-29-wabar-architecture-proposal.md) is in progress: the
+# legacy folders still build their libraries and feed the QML modules and the test binary through
+# wabar_contribute(); src/modules/qml_modules.cmake defines wabar.services and wabar.widgets
+# after every contributor.
 # Pipe and watchdog mutex names the host (platform/systray_hook) and the injected DLL (hook/)
 # must agree on; distinct from Python YASB's so both builds can coexist.
 set(YASB_TRAY_PIPE_NAME "yasb_native_systray_monitor")
@@ -58,8 +53,11 @@ add_subdirectory(platform)
 add_subdirectory(core)
 add_subdirectory(widgets)
 add_subdirectory(spike)
+add_subdirectory(src)
+include(src/modules/qml_modules.cmake)  # wabar.services, wabar.widgets
 
 include(CTest)
 if(BUILD_TESTING)
   add_subdirectory(spike/tests)
+  add_subdirectory(tests)
 endif()
