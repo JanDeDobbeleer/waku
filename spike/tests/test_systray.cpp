@@ -212,7 +212,7 @@ TEST(Systray, NullHostIsUnavailableWithTheReason) {
 }
 
 TEST(Systray, RealConstructorIsUnavailableOffscreen) {
-  Systray systray;
+  Systray systray(nullptr);
   EXPECT_FALSE(systray.available());
   EXPECT_EQ(systray.unavailableReason(), QStringLiteral("tray unavailable: offscreen platform"));
 }
@@ -223,4 +223,33 @@ TEST(Systray, DestructorStopsTheHostOnce) {
     Systray systray(std::make_unique<FakeHost>(stops), std::make_unique<FakeApi>(), QString());
   }
   EXPECT_EQ(*stops, 1);
+}
+
+TEST(Systray, CreateUsesTheTestFactoryOncePerCall) {
+  int calls = 0;
+  FakeHost* host = nullptr;
+  Systray::setFactoryForTests([&] {
+    ++calls;
+    host = new FakeHost;
+    return std::make_unique<Systray>(std::unique_ptr<plat::TrayHost>(host),
+                                     std::make_unique<FakeApi>(), QString());
+  });
+  std::unique_ptr<Systray> first(Systray::create(nullptr, nullptr));
+  EXPECT_EQ(calls, 1);
+  EXPECT_TRUE(first->available());
+  EXPECT_EQ(host->starts, 1);
+  std::unique_ptr<Systray> second(Systray::create(nullptr, nullptr));
+  EXPECT_EQ(calls, 2);
+  Systray::setFactoryForTests({});
+}
+
+TEST(Systray, EmptyFactoryRestoresTheRealPath) {
+  Systray::setFactoryForTests([] {
+    return std::make_unique<Systray>(std::make_unique<FakeHost>(), std::make_unique<FakeApi>(),
+                                     QString());
+  });
+  Systray::setFactoryForTests({});
+  std::unique_ptr<Systray> systray(Systray::create(nullptr, nullptr));
+  EXPECT_FALSE(systray->available());  // offscreen
+  EXPECT_EQ(systray->unavailableReason(), QStringLiteral("tray unavailable: offscreen platform"));
 }

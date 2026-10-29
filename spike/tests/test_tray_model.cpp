@@ -137,3 +137,25 @@ TEST(TrayImageProvider, ReturnsScaledImageAndEmptyForUnknown) {
   model.reset();
   EXPECT_TRUE(provider.requestImage(QStringLiteral("4/1"), &size, QSize()).isNull());
 }
+
+TEST(TrayModel, HiddenRoleFollowsNisHidden) {
+  TrayIconModel m;
+  platform::TrayIconData d = makeIcon(QStringLiteral("a.exe"));
+  m.apply(1, d);
+  EXPECT_FALSE(role(m, 0, TrayIconModel::HiddenRole).toBool());  // no NIF_STATE
+
+  d.uFlags = platform::kNifState;
+  d.dwState = 1;
+  m.apply(1, d);
+  EXPECT_TRUE(role(m, 0, TrayIconModel::HiddenRole).toBool());
+
+  d.dwState = 0;
+  m.apply(1, d);
+  EXPECT_FALSE(role(m, 0, TrayIconModel::HiddenRole).toBool());
+
+  d.uFlags = 0;  // state bits without NIF_STATE do not count
+  d.dwState = 1;
+  m.apply(1, d);
+  EXPECT_FALSE(role(m, 0, TrayIconModel::HiddenRole).toBool());
+  EXPECT_TRUE(m.roleNames().values().contains("hidden"));
+}

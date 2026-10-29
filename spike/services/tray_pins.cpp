@@ -125,6 +125,26 @@ void TrayPins::setScreenId(const QString& id) {
   if (changed) emit screenIdChanged();
 }
 
+void TrayPins::setScreen(QScreen* screen) {
+  const bool changed = screen != screen_.data();
+  screen_ = screen;
+  setScreenId(screen ? yasb::widgets::cleanScreenId(screen->manufacturer(), screen->name(),
+                                                    screen->serialNumber())
+                     : QStringLiteral("None"));
+  if (changed) emit screenChanged();
+}
+
+void TrayPins::setWindow(QWindow* window) {
+  if (window == window_.data()) return;
+  if (window_) disconnect(window_, &QWindow::screenChanged, this, nullptr);
+  window_ = window;
+  if (window) {
+    connect(window, &QWindow::screenChanged, this, [this](QScreen* screen) { setScreen(screen); });
+  }
+  setScreen(window ? window->screen() : nullptr);
+  emit windowChanged();
+}
+
 void TrayPins::setStateDir(const QString& dir) {
   if (dir == stateDir_) return;
   stateDir_ = dir;

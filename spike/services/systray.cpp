@@ -62,6 +62,11 @@ RealHost makeRealHost() {
   return result;
 }
 
+std::function<std::unique_ptr<Systray>()>& testFactory() {
+  static std::function<std::unique_ptr<Systray>()> factory;
+  return factory;
+}
+
 QSet<QUuid> systemGuids() {
   return {platform::kTrayBatteryIconGuid, platform::kTrayVolumeIconGuid,
           platform::kTrayNetworkIconGuid};
@@ -109,11 +114,19 @@ void Systray::connectHost() {
 Systray* Systray::create(QQmlEngine* engine, QJSEngine*) {
   // The engine owns the returned singleton (no CppOwnership), so the provider's model outlives
   // nothing it should not: the engine deletes its providers first.
-  auto* systray = new Systray;
+  Systray* systray = nullptr;
+  if (testFactory()) {
+    systray = testFactory()().release();
+  }
+  if (!systray) systray = new Systray(nullptr);
   if (engine) {
     engine->addImageProvider(QStringLiteral("tray"), new TrayImageProvider(systray->icons()));
   }
   return systray;
+}
+
+void Systray::setFactoryForTests(std::function<std::unique_ptr<Systray>()> factory) {
+  testFactory() = std::move(factory);
 }
 
 void Systray::setFilter(bool showSystemIcons, const QStringList& hiddenExeNames) {

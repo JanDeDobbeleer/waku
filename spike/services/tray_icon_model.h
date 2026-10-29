@@ -33,6 +33,7 @@ class TrayIconModel : public QAbstractListModel {
     IconUrlRole,  // image://tray/<id>/<revision>
     HwndRole,     // as a string: QML numbers cannot hold a 64-bit handle
     HasGuidRole,
+    HiddenRole,  // NIS_HIDDEN: the program asked for the icon not to be shown
   };
 
   explicit TrayIconModel(QObject* parent = nullptr);

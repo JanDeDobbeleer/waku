@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <QFile>
+#include <QGuiApplication>
+#include <QScreen>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <memory>
@@ -308,4 +310,59 @@ TEST_F(TrayPinsTest, ViewsSeeConsistentRowCounts) {
   EXPECT_TRUE(pinnedView.consistent());
   EXPECT_TRUE(unpinnedView.consistent());
   EXPECT_GT(count.count(), 0);
+}
+
+TEST_F(TrayPinsTest, HiddenRoleIsForwardedByTheLists) {
+  auto s = make({"a"});
+  auto d = makeIcon("a");
+  d.uFlags = platform::kNifState;
+  d.dwState = 1;
+  s->model.apply(1, d);
+  const QAbstractItemModel& list = *s->pins.unpinned();
+  EXPECT_TRUE(list.data(list.index(0, 0), TrayIconModel::HiddenRole).toBool());
+  EXPECT_TRUE(list.roleNames().values().contains("hidden"));
+}
+
+TEST_F(TrayPinsTest, ScreenDerivesTheScreenIdAndReloads) {
+  QScreen* screen = QGuiApplication::primaryScreen();
+  ASSERT_NE(screen, nullptr);
+  const QString id =
+      yasb::widgets::cleanScreenId(screen->manufacturer(), screen->name(), screen->serialNumber());
+  // The offscreen screen may clean to an empty id, which is the "None" file.
+  writeRaw("{" + entry("a", true, 0) + "}", id.isEmpty() ? QStringLiteral("None") : id);
+  TrayIconModel model;
+  TrayPins pins;
+  pins.setStateDir(dir_.path());
+  pins.setIcons(&model);
+  model.apply(1, makeIcon("a"));
+
+  QSignalSpy changed(&pins, &TrayPins::screenChanged);
+  pins.setScreen(screen);
+  EXPECT_EQ(pins.screen(), screen);
+  EXPECT_EQ(pins.screenId(), id);
+  EXPECT_EQ(changed.count(), 1);
+  EXPECT_TRUE(pins.isPinned(1));
+
+  pins.setScreen(nullptr);
+  EXPECT_EQ(pins.screenId(), QStringLiteral("None"));
+  EXPECT_EQ(pins.screen(), nullptr);
+  if (!id.isEmpty()) EXPECT_FALSE(pins.isPinned(1));  // the "None" file is empty
+
+  pins.setScreenId(QStringLiteral("X"));  // the plain property still works
+  EXPECT_EQ(pins.screenId(), QStringLiteral("X"));
+}
+
+TEST_F(TrayPinsTest, WindowSuppliesTheScreen) {
+  QWindow window;
+  window.setScreen(QGuiApplication::primaryScreen());
+  TrayPins pins;
+  pins.setStateDir(dir_.path());
+  QSignalSpy changed(&pins, &TrayPins::windowChanged);
+  pins.setWindow(&window);
+  EXPECT_EQ(changed.count(), 1);
+  EXPECT_EQ(pins.window(), &window);
+  EXPECT_EQ(pins.screen(), QGuiApplication::primaryScreen());
+  pins.setWindow(nullptr);
+  EXPECT_EQ(pins.screen(), nullptr);
+  EXPECT_EQ(pins.screenId(), QStringLiteral("None"));
 }

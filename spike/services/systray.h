@@ -7,6 +7,7 @@
 #include <QString>
 #include <QStringList>
 #include <QTimer>
+#include <functional>
 #include <memory>
 
 #include "platform/systray_host.h"
@@ -38,7 +39,9 @@ class Systray : public QObject {
 
  public:
   // Real: hook host from the DLL next to the executable; unavailable on the offscreen platform.
-  explicit Systray(QObject* parent = nullptr);
+  // Deliberately not default-constructible: Qt uses a singleton's default constructor in
+  // preference to create(), and create() must run to register the image provider.
+  explicit Systray(QObject* parent);
   // Test seam: any host (null = unavailable with `unavailableReason`) and window API.
   Systray(std::unique_ptr<platform::TrayHost> host, std::unique_ptr<platform::TrayWindowApi> api,
           QString unavailableReason, QObject* parent = nullptr);
@@ -46,6 +49,9 @@ class Systray : public QObject {
 
   // QML_SINGLETON factory: builds the real one and registers the image provider on `engine`.
   static Systray* create(QQmlEngine* engine, QJSEngine*);
+  // Tests: create() builds the singleton with this factory (called once per create) instead of
+  // the real host. An empty function restores the real path.
+  static void setFactoryForTests(std::function<std::unique_ptr<Systray>()> factory);
 
   bool available() const { return host_ != nullptr; }
   QString unavailableReason() const { return reason_; }

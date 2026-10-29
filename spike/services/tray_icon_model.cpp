@@ -52,6 +52,8 @@ QVariant TrayIconModel::data(const QModelIndex& index, int role) const {
       return QString::number(row.data.hWnd);
     case HasGuidRole:
       return row.data.guid.has_value();
+    case HiddenRole:
+      return (row.data.uFlags & platform::kNifState) != 0 && row.data.dwState == 1;
     default:
       return {};
   }
@@ -59,8 +61,9 @@ QVariant TrayIconModel::data(const QModelIndex& index, int role) const {
 
 QHash<int, QByteArray> TrayIconModel::roleNames() const {
   return {
-      {IdRole, "id"},           {KeyRole, "key"},   {TooltipRole, "tooltip"}, {ExeRole, "exe"},
-      {IconUrlRole, "iconUrl"}, {HwndRole, "hwnd"}, {HasGuidRole, "hasGuid"},
+      {IdRole, "id"},           {KeyRole, "key"},         {TooltipRole, "tooltip"},
+      {ExeRole, "exe"},         {IconUrlRole, "iconUrl"}, {HwndRole, "hwnd"},
+      {HasGuidRole, "hasGuid"}, {HiddenRole, "hidden"},
   };
 }
 

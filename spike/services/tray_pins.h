@@ -4,7 +4,10 @@
 
 #include <QAbstractListModel>
 #include <QObject>
+#include <QPointer>
+#include <QScreen>
 #include <QString>
+#include <QWindow>
 #include <vector>
 
 #include "spike/services/tray_icon_model.h"
@@ -65,6 +68,8 @@ class TrayPins : public QObject {
   Q_PROPERTY(
       tidy::services::TrayIconModel* icons READ icons WRITE setIcons NOTIFY iconsChanged FINAL)
   Q_PROPERTY(QString screenId READ screenId WRITE setScreenId NOTIFY screenIdChanged FINAL)
+  Q_PROPERTY(QScreen* screen READ screen WRITE setScreen NOTIFY screenChanged FINAL)
+  Q_PROPERTY(QWindow* window READ window WRITE setWindow NOTIFY windowChanged FINAL)
   Q_PROPERTY(QString stateDir READ stateDir WRITE setStateDir NOTIFY stateDirChanged FINAL)
   Q_PROPERTY(tidy::services::TrayPinList* pinned READ pinned CONSTANT FINAL)
   Q_PROPERTY(tidy::services::TrayPinList* unpinned READ unpinned CONSTANT FINAL)
@@ -78,6 +83,14 @@ class TrayPins : public QObject {
   QString screenId() const { return screenId_; }
   // Loads that screen's state file and rebuilds both lists. Empty means "None".
   void setScreenId(const QString& id);
+  QScreen* screen() const { return screen_; }
+  // Sets screenId to the screen's cleaned identity (cleanScreenId of manufacturer, name and
+  // serial number; "None" for null) and reloads as setScreenId does.
+  void setScreen(QScreen* screen);
+  QWindow* window() const { return window_; }
+  // QML cannot hand over a QScreen (a Window's `screen` there is a ScreenInfo), so a Tray gives
+  // its window instead: `screen` follows window->screen(), including when the window moves.
+  void setWindow(QWindow* window);
   QString stateDir() const { return stateDir_; }
   // Defaults to appDataDir("tidy"). Set it before screenId (tests); later it reloads.
   void setStateDir(const QString& dir);
@@ -95,6 +108,8 @@ class TrayPins : public QObject {
  signals:
   void iconsChanged();
   void screenIdChanged();
+  void screenChanged();
+  void windowChanged();
   void stateDirChanged();
 
  private:
@@ -111,6 +126,8 @@ class TrayPins : public QObject {
 
   TrayIconModel* icons_ = nullptr;
   QString screenId_;
+  QPointer<QScreen> screen_;
+  QPointer<QWindow> window_;
   QString stateDir_;
   bool loaded_ = false;
   yasb::widgets::IconStateMap currentState_;
