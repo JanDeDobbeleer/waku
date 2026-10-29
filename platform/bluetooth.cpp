@@ -26,7 +26,7 @@
 #include <set>
 #include <thread>
 
-#include "platform/winrt_apartment.h"
+#include "kernel/win32/winrt_apartment.h"
 
 namespace yasb::platform {
 
@@ -694,7 +694,7 @@ class BluetoothWorker : public QObject {
 
  public slots:
   void start() {
-    ensureWinrtApartment();
+    wabar::kernel::ensureWinrtApartment();
     started_ = true;
     startAdapterWatch();
     refreshLePending_ = true;
@@ -721,7 +721,7 @@ class BluetoothWorker : public QObject {
 
   void refresh() {
     if (!started_) return;
-    ensureWinrtApartment();
+    wabar::kernel::ensureWinrtApartment();
     const bool refreshLe = refreshLePending_ || leCache_.empty();
     refreshLePending_ = false;
     try {
@@ -766,7 +766,7 @@ class BluetoothWorker : public QObject {
 
   void scan() {
     if (!started_) return;
-    ensureWinrtApartment();
+    wabar::kernel::ensureWinrtApartment();
     emit scanStarted();
     try {
       const std::optional<bool> radio = radioIsOn();
@@ -799,7 +799,7 @@ class BluetoothWorker : public QObject {
   }
 
   void setRadio(bool on) {
-    ensureWinrtApartment();
+    wabar::kernel::ensureWinrtApartment();
     const bool ok = setRadioPower(on);
     if (!started_) {
       radioRunning_->store(false);
@@ -823,7 +823,7 @@ class BluetoothWorker : public QObject {
   }
 
   void connectDevice(const QString& address, bool connect) {
-    ensureWinrtApartment();
+    wabar::kernel::ensureWinrtApartment();
     const QString action = connect ? QStringLiteral("connect") : QStringLiteral("disconnect");
     const auto found = devices_.find(address);
     if (found == devices_.end()) {
@@ -881,7 +881,7 @@ class BluetoothWorker : public QObject {
 
   void onAdapterChanged(const QString& kind) {
     if (!started_) return;
-    ensureWinrtApartment();
+    wabar::kernel::ensureWinrtApartment();
     if (kind.startsWith(QLatin1String("Device"))) {
       refreshLePending_ = true;
       scheduleRefresh();
@@ -906,7 +906,7 @@ class BluetoothWorker : public QObject {
 
   void onDeviceConnectionChanged(quint64 address, bool connected) {
     if (!started_ || connectRunning_->load()) return;
-    ensureWinrtApartment();
+    wabar::kernel::ensureWinrtApartment();
     const auto found = devices_.find(formatBtAddress(address));
     if (found == devices_.end()) {
       refreshLePending_ = true;

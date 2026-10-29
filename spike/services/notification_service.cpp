@@ -2,8 +2,9 @@
 
 #include <QDate>
 #include <QDateTime>
-#include <QGuiApplication>
 #include <QVariantMap>
+
+#include "kernel/qt/live_desktop.h"
 
 namespace wabar::services {
 namespace {
@@ -16,9 +17,9 @@ QString timeText(const QDateTime& created) {
 }
 
 std::unique_ptr<platform::NotificationSource> systemSource() {
-  // The listener and the WNF subscription read the real desktop; the offscreen platform never
+  // The listener and the WNF subscription read the real desktop; a desktop that is not live never
   // runs them.
-  if (QGuiApplication::platformName() == QStringLiteral("offscreen")) return nullptr;
+  if (!kernel::liveDesktop()) return nullptr;
   return platform::createSystemNotificationSource();
 }
 

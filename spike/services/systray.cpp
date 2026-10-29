@@ -2,10 +2,10 @@
 
 #include <QCoreApplication>
 #include <QDebug>
-#include <QGuiApplication>
 #include <QQmlEngine>
 #include <utility>
 
+#include "kernel/qt/live_desktop.h"
 #include "platform/systray_click.h"
 #include "platform/systray_types.h"
 #include "spike/services/tray_image_provider.h"
@@ -22,16 +22,14 @@ struct RealHost {
   QString reason;
 };
 
-bool g_disabled = false;
-
 // The hook host or nothing.
 RealHost makeRealHost() {
   RealHost result;
-  if (g_disabled) {
+  if (kernel::capabilityDisabled(QStringLiteral("tray"))) {
     result.reason = QStringLiteral("tray unavailable: disabled by --no-tray");
     return result;
   }
-  if (QGuiApplication::platformName() == QStringLiteral("offscreen")) {
+  if (!kernel::liveDesktop()) {
     result.reason = QStringLiteral("tray unavailable: offscreen platform");
     return result;
   }
@@ -137,8 +135,6 @@ Systray* Systray::create(QQmlEngine* engine, QJSEngine*) {
 void Systray::setFactoryForTests(std::function<std::unique_ptr<Systray>()> factory) {
   testFactory() = std::move(factory);
 }
-
-void Systray::setDisabled(bool disabled) { g_disabled = disabled; }
 
 void Systray::setFilter(bool showSystemIcons, const QStringList& hiddenExeNames) {
   registry_.setFilter(showSystemIcons ? QSet<QUuid>() : systemGuids(), hiddenExeNames);

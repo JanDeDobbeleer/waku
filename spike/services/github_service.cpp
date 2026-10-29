@@ -2,13 +2,13 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
-#include <QGuiApplication>
 #include <QThreadPool>
 #include <QVariantMap>
 #include <QtDebug>
 #include <algorithm>
 #include <exception>
 
+#include "kernel/qt/live_desktop.h"
 #include "widgets/github/github_format.h"
 
 namespace wabar::services {
@@ -83,10 +83,7 @@ std::unique_ptr<GithubClient> createSystemGithubClient() {
 }
 
 GitHub::GitHub(QObject* parent)
-    : GitHub(QGuiApplication::platformName() == QStringLiteral("offscreen")
-                 ? nullptr
-                 : createSystemGithubClient(),
-             parent) {}
+    : GitHub(kernel::liveDesktop() ? createSystemGithubClient() : nullptr, parent) {}
 
 GitHub::GitHub(std::unique_ptr<GithubClient> client, QObject* parent)
     : QObject(parent), client_(std::move(client)) {

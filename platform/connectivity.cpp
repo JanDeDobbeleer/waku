@@ -8,7 +8,7 @@
 
 #include <algorithm>
 
-#include "platform/winrt_apartment.h"
+#include "kernel/win32/winrt_apartment.h"
 
 namespace yasb::platform {
 namespace {
@@ -58,7 +58,7 @@ WifiInfo classifyConnections(const std::vector<ConnectionSnapshot>& online,
 
 std::optional<WifiInfo> queryConnectionInfo() {
   try {
-    ensureWinrtApartment();
+    wabar::kernel::ensureWinrtApartment();
     std::vector<ConnectionSnapshot> online;
     for (const auto& profile : wnc::NetworkInformation::GetConnectionProfiles()) {
       if (profile.GetNetworkConnectivityLevel() == wnc::NetworkConnectivityLevel::InternetAccess)

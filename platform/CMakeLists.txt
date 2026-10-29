@@ -48,16 +48,12 @@ add_library(yasb_platform STATIC
   window_focus.cpp
   workerw.h
   workerw.cpp
-  winrt_apartment.h
-  winrt_apartment.cpp
   wlan.h
   wlan.cpp
   dnd.h
   dnd.cpp
   power.h
   power.cpp
-  shell_open.h
-  shell_open.cpp
   theme.h
   theme.cpp
   touch_keyboard.h
@@ -82,7 +78,7 @@ target_compile_definitions(yasb_platform PUBLIC
   YASB_TRAY_PIPE_NAME="${YASB_TRAY_PIPE_NAME}" YASB_TRAY_MUTEX_NAME="${YASB_TRAY_MUTEX_NAME}")
 target_link_libraries(yasb_platform
   PUBLIC Qt6::Core
-  PRIVATE wabar_options pdh setupapi psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32
+  PRIVATE wabar_options wabar_kernel pdh setupapi psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32
           wlanapi ws2_32 bthprops cfgmgr32 shlwapi dwmapi oleaut32 uuid dxva2 powrprof secur32 advapi32 winhttp)
 # GitHub widget HTTPS (github_api.cpp); headers stay QtCore-only.
 find_package(Qt6 REQUIRED COMPONENTS Network)

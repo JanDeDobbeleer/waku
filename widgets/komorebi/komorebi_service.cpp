@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "core/widgets/event_bus.h"
+#include "kernel/win32/shell_launch.h"
 #include "platform/command_line.h"
 #include "widgets/komorebi/komorebi_state.h"
 
@@ -25,7 +26,7 @@ void runCommands(const std::vector<QStringList>& commands) {
   if (commands.size() == 1) {
     platform::launchKomorebic(commands.front());
   } else {
-    platform::launchHiddenShell(KomorebiService::shellChain(commands));
+    wabar::kernel::launchHiddenShell(KomorebiService::shellChain(commands));
   }
 }
 

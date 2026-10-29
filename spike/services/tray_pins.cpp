@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <climits>
 
+#include "kernel/qt/app_data.h"
+
 namespace wabar::services {
 
 namespace {
@@ -154,7 +156,7 @@ void TrayPins::setStateDir(const QString& dir) {
 
 void TrayPins::reload() {
   try {
-    if (stateDir_.isEmpty()) stateDir_ = yasb::widgets::appDataDir(QStringLiteral("wabar"));
+    if (stateDir_.isEmpty()) stateDir_ = kernel::appDataDir();
     const yasb::widgets::SystrayStateStore store(stateDir_, effectiveScreenId());
     currentState_ = store.load();
   } catch (const std::exception& error) {

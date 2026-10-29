@@ -331,7 +331,7 @@ TEST(GithubApi, MarkReadRequestsMatchPython) {
 TEST(GithubApi, TokenResolutionOrderAndFile) {
   QTemporaryDir dir;
   ASSERT_TRUE(dir.isValid());
-  const QString file = dir.filePath("YASB/github_token");
+  const QString file = dir.filePath("wabar/github_token");
   EXPECT_EQ(resolveGithubToken("", "", file), "");
   ASSERT_TRUE(saveGithubTokenFile(file, "from-file"));
   EXPECT_EQ(readGithubTokenFile(file), "from-file");

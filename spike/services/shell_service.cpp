@@ -5,8 +5,7 @@
 #include <QDir>
 #include <QProcess>
 
-#include "platform/komorebi.h"
-#include "platform/shell_open.h"
+#include "kernel/win32/shell_launch.h"
 
 namespace wabar::services {
 
@@ -16,8 +15,7 @@ bool startDetached(const QString& program, const QStringList& arguments) {
   QProcess process;
   process.setProgram(program);
   process.setArguments(arguments);
-  process.setCreateProcessArgumentsModifier(
-      [](QProcess::CreateProcessArguments* args) { args->flags |= CREATE_NO_WINDOW; });
+  kernel::hideConsole(process);
   return process.startDetached();
 }
 
@@ -31,8 +29,8 @@ QString defaultConfigHome() {
 }  // namespace
 
 Shell::Shell(QObject* parent)
-    : Shell(Launcher{startDetached, ::yasb::platform::launchHiddenShell,
-                     [](const QString& target) { ::yasb::platform::shellOpen(target); }},
+    : Shell(Launcher{startDetached, kernel::launchHiddenShell,
+                     [](const QString& target) { kernel::shellOpen(target); }},
             defaultConfigHome(), parent) {}
 
 Shell::Shell(Launcher launcher, QString configHome, QObject* parent)

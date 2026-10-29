@@ -20,8 +20,8 @@ namespace platform = ::yasb::platform;
 // and mirrors the backend's queued `statusUpdated` snapshots as one `changed`. The engine destroys
 // it, which destroys the backend: cancel connect, shutdown, quit and join the thread.
 //
-// `available` is false (and the backend is never created) on the offscreen platform, after
-// setDisabled(true), and on a machine without a Bluetooth adapter. `devices` is a
+// `available` is false (and the backend is never created) when kernel::liveDesktop("bluetooth")
+// is false, and on a machine without a Bluetooth adapter. `devices` is a
 // list of maps: id (the address, pass it back to connectDevice), name, connected, paired,
 // canConnect (classic audio devices only), type (device type name) and batteryPercent (-1 when
 // unknown), connected devices first. Unpaired devices are left out.
@@ -41,9 +41,6 @@ class Bluetooth : public QObject {
   // Test seam: any backend (null = unavailable). Started at once.
   Bluetooth(std::unique_ptr<platform::BluetoothBackend> backend, QObject* parent);
   ~Bluetooth() override;
-
-  // setDisabled(true): the real Bluetooth stays unavailable and never starts a backend.
-  static void setDisabled(bool disabled);
 
   bool available() const { return backend_ != nullptr; }
   bool radioOn() const { return status_.radioOn; }

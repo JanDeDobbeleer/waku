@@ -8,14 +8,15 @@
 #include <QJsonDocument>
 #include <algorithm>
 
+#include "kernel/qt/app_data.h"
+
 namespace yasb::widgets {
 
 PinStore::PinStore(QString filePath, QObject* parent)
     : QObject(parent), filePath_(std::move(filePath)) {}
 
 QString PinStore::defaultFile() {
-  return QDir(qEnvironmentVariable("LOCALAPPDATA"))
-      .filePath(QStringLiteral("YASB/taskbar_pinned.json"));
+  return QDir(wabar::kernel::appDataDir()).filePath(QStringLiteral("taskbar_pinned.json"));
 }
 
 qint64 PinStore::fileStamp() const {

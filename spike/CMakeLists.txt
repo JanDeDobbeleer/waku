@@ -6,7 +6,6 @@
 wabar_contribute(
   SERVICES_SOURCES
     services/stat_source.h
-    services/stat_source.cpp
     services/system_stats.h
     services/system_stats.cpp
     services/child_process.h
@@ -53,7 +52,7 @@ wabar_contribute(
     services/wallpaper_transition.cpp
   # The generated type registration includes headers by name.
   SERVICES_INCLUDE_DIRS services
-  SERVICES_LIBS yasb_platform yasb_widgets wabar_control
+  SERVICES_LIBS yasb_platform yasb_widgets wabar_control wabar_kernel
 )
 
 # wabar_control: the pipe between a running bar and wabarc.

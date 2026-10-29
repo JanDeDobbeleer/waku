@@ -16,7 +16,7 @@ class PinStore : public QObject {
   Q_OBJECT
 
  public:
-  // `filePath` is %LOCALAPPDATA%\YASB\taskbar_pinned.json in production (see defaultFile()).
+  // `filePath` is %LOCALAPPDATA%\wabar\taskbar_pinned.json in production (see defaultFile()).
   explicit PinStore(QString filePath, QObject* parent = nullptr);
 
   static QString defaultFile();

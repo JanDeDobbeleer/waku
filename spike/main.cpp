@@ -3,10 +3,10 @@
 #include <QQmlEngine>
 #include <QQuickWindow>
 
+#include "kernel/qt/live_desktop.h"
 #include "spike/bar/bar_host.h"
 #include "spike/bar/control_handler.h"
 #include "spike/control/control.h"
-#include "spike/services/systray.h"
 #include "spike/services/wallpapers_service.h"
 
 int main(int argc, char* argv[]) {
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
   parser.addOption(appBarOpt);
   parser.addOption(safeOpt);
   parser.process(app);
-  wabar::services::Systray::setDisabled(parser.isSet(noTrayOpt));
+  wabar::kernel::setCapabilityDisabled(QStringLiteral("tray"), parser.isSet(noTrayOpt));
 
   const QString configHome =
       wabar::resolveConfigHome(parser.value(configHomeOpt), QStringLiteral(SPIKE_CONFIG_DIR));

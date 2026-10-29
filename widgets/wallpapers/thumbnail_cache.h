@@ -7,7 +7,7 @@
 namespace yasb::widgets {
 
 // Port of services/wallpapers/thumbnails.py: PNG thumbnails keyed by file identity and size, kept
-// under %LOCALAPPDATA%\YASB\wallpaper_thumbnails (or `folder`). Every method may run on any
+// under %LOCALAPPDATA%\wabar\wallpaper_thumbnails (or `folder`). Every method may run on any
 // thread; the files are the only shared state.
 class ThumbnailCache {
  public:

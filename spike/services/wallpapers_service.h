@@ -72,7 +72,8 @@ class HotkeyHost {
 //
 // `files` is a list of maps: path, name, thumbnail (image URL) and current (bool), in Explorer
 // name order. `available` is false (nothing is ever set) when IDesktopWallpaper cannot be
-// created: the offscreen platform and setDisabled(true). The hotkey is never registered then.
+// created: not a live desktop (kernel::liveDesktop("wallpapers")). The hotkey is never registered
+// then.
 class Wallpapers : public QObject, public wabar::WallpaperControl {
   Q_OBJECT
   QML_ELEMENT
@@ -86,7 +87,7 @@ class Wallpapers : public QObject, public wabar::WallpaperControl {
 
  public:
   // Everything a test replaces. Null members are the real ones (cache: the shared folder under
-  // %LOCALAPPDATA%\YASB); `realBackend=false` with a null `backend` means unavailable.
+  // %LOCALAPPDATA%\wabar); `realBackend=false` with a null `backend` means unavailable.
   struct Deps {
     yasb::widgets::WallpaperManager::BackendFactory backend;
     yasb::widgets::WallpaperManager::Picker picker;
@@ -109,8 +110,6 @@ class Wallpapers : public QObject, public wabar::WallpaperControl {
   static Wallpapers* create(QQmlEngine* engine, QJSEngine*);
   // Tests: create() builds the singleton with this factory instead of the real one.
   static void setFactoryForTests(std::function<std::unique_ptr<Wallpapers>()> factory);
-  // `wabar --no-wallpapers` (once wired): no IDesktopWallpaper, no hotkey.
-  static void setDisabled(bool disabled);
 
   bool available() const { return available_; }
   QString imagePath() const { return imagePath_; }

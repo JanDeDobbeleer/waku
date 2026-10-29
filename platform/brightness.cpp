@@ -26,8 +26,8 @@
 #include <mutex>
 #include <thread>
 
+#include "kernel/win32/winrt_apartment.h"
 #include "platform/brightness_policy.h"
-#include "platform/winrt_apartment.h"
 
 namespace yasb::platform {
 namespace {
@@ -383,7 +383,7 @@ class SystemBrightness final : public BrightnessControl {
   }
 
   void run() {
-    ensureWinrtApartment();
+    wabar::kernel::ensureWinrtApartment();
     for (;;) {
       std::function<void()> task;
       {

@@ -6,6 +6,8 @@
 #include <QDebug>
 #include <stdexcept>
 
+#include "kernel/win32/windows_build.h"
+
 #pragma comment(lib, "dwmapi.lib")
 
 namespace yasb::widgets {
@@ -83,27 +85,14 @@ std::uint32_t hexToRgbaInt(const QString& hex) {
   return v;
 }
 
-unsigned windowsBuild() {
-  using RtlGetVersionFn = LONG(WINAPI*)(OSVERSIONINFOW*);
-  static const unsigned build = [] {
-    const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
-    const auto fn =
-        ntdll ? reinterpret_cast<RtlGetVersionFn>(GetProcAddress(ntdll, "RtlGetVersion")) : nullptr;
-    OSVERSIONINFOW info{};
-    info.dwOSVersionInfoSize = sizeof(info);
-    return fn && fn(&info) == 0 ? static_cast<unsigned>(info.dwBuildNumber) : 0u;
-  }();
-  return build;
-}
-
-bool isMicaSupported() { return windowsBuild() >= 22000; }
+bool isMicaSupported() { return wabar::kernel::windowsBuild() >= 22000; }
 
 void enableBlur(quintptr hwndValue, bool darkMode, bool roundCorners,
                 const QString& roundCornersType, const QString& borderColor) {
   const HWND hwnd = toHwnd(hwndValue);
   if (!IsWindow(hwnd)) return;
   try {
-    if (windowsBuild() >= 22000) {
+    if (wabar::kernel::windowsBuild() >= 22000) {
       setAccentPolicy(hwnd, kAccentBlurBehind, 0x01202020);
       if (darkMode) {
         const int one = 1;
@@ -128,7 +117,7 @@ void enableMica(quintptr hwndValue) {
   try {
     const MARGINS margins{-1, -1, -1, -1};
     DwmExtendFrameIntoClientArea(hwnd, &margins);
-    if (windowsBuild() >= 22621) {
+    if (wabar::kernel::windowsBuild() >= 22621) {
       const int v = kBackdropMainWindow;
       DwmSetWindowAttribute(hwnd, kSystemBackdropType, &v, sizeof(v));
     } else {
@@ -146,7 +135,8 @@ void enableDwmFrame(quintptr hwndValue) {
   try {
     const MARGINS margins{1, 1, 1, 1};
     DwmExtendFrameIntoClientArea(hwnd, &margins);
-    if (windowsBuild() >= 22000) setCornerPreference(hwnd, kCornerRound, QStringLiteral("System"));
+    if (wabar::kernel::windowsBuild() >= 22000)
+      setCornerPreference(hwnd, kCornerRound, QStringLiteral("System"));
   } catch (const std::exception& e) {
     qDebug() << "Failed to apply DWM frame:" << e.what();
   }

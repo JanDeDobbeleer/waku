@@ -53,9 +53,6 @@ class Systray : public QObject {
   // the real host. An empty function restores the real path.
   static void setFactoryForTests(std::function<std::unique_ptr<Systray>()> factory);
 
-  // `wabar --no-tray`: the real Systray stays unavailable and never touches Explorer.
-  static void setDisabled(bool disabled);
-
   bool available() const { return host_ != nullptr; }
   QString unavailableReason() const { return reason_; }
   TrayIconModel* icons() { return &model_; }

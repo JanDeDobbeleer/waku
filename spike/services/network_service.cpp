@@ -1,7 +1,8 @@
 #include "spike/services/network_service.h"
 
-#include <QGuiApplication>
 #include <algorithm>
+
+#include "kernel/qt/live_desktop.h"
 
 namespace wabar::services {
 
@@ -47,7 +48,7 @@ QVariantMap networkMap(const platform::WifiNetwork& network) {
 }  // namespace
 
 std::shared_ptr<NetworkSource> createSystemNetworkSource() {
-  if (QGuiApplication::platformName() == QStringLiteral("offscreen")) return nullptr;
+  if (!kernel::liveDesktop()) return nullptr;
   return std::make_shared<SystemNetworkSource>();
 }
 

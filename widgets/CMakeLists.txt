@@ -36,4 +36,4 @@ add_library(yasb_widgets STATIC
 target_include_directories(yasb_widgets PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(yasb_widgets
   PUBLIC yasb_ui yasb_platform nlohmann_json::nlohmann_json
-  PRIVATE wabar_options)
+  PRIVATE wabar_options wabar_kernel)

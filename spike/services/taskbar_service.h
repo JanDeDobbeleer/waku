@@ -45,8 +45,8 @@ struct TaskbarWindow {
 // Threads: GUI thread only, except TaskbarIcons, which loads icons on its own one-thread pool and
 // returns results as queued signals; it is joined when this object is destroyed.
 //
-// `available` is false when no tracker can run (offscreen platform, `setDisabled(true)`); the
-// pinned apps still show and launch.
+// `available` is false when no tracker can run (not a live desktop, or "taskbar" disabled in
+// kernel/qt/live_desktop.h); the pinned apps still show and launch.
 class TaskbarService : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -77,8 +77,6 @@ class TaskbarService : public QObject {
   static TaskbarService* create(QQmlEngine* engine, QJSEngine*);
   // Tests: create() builds the singleton with this factory instead of the real one.
   static void setFactoryForTests(std::function<std::unique_ptr<TaskbarService>()> factory);
-  // `wabar --no-taskbar` (once wired): the real service has no tracker.
-  static void setDisabled(bool disabled);
 
   bool available() const { return tracker_ != nullptr; }
   QString unavailableReason() const { return reason_; }

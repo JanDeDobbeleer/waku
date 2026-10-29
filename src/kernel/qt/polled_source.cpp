@@ -1,14 +1,14 @@
-#include "spike/services/stat_source.h"
+#include "kernel/qt/polled_source.h"
 
 #include <algorithm>
 
-namespace wabar::services {
+namespace wabar::kernel {
 
-StatSource::StatSource(QObject* parent) : QObject(parent) {
+PolledSource::PolledSource(QObject* parent) : QObject(parent) {
   connect(&timer_, &QTimer::timeout, this, [this] { sample(); });
 }
 
-void StatSource::setInterval(int ms) {
+void PolledSource::setInterval(int ms) {
   ms = std::max(ms, 100);
   if (ms == interval_) return;
   interval_ = ms;
@@ -16,7 +16,7 @@ void StatSource::setInterval(int ms) {
   emit intervalChanged();
 }
 
-void StatSource::setHistorySize(int size) {
+void PolledSource::setHistorySize(int size) {
   size = std::clamp(size, 2, 3600);
   if (size == historySize_) return;
   historySize_ = size;
@@ -24,31 +24,31 @@ void StatSource::setHistorySize(int size) {
   emit historySizeChanged();
 }
 
-QVariantList StatSource::history() const {
+QVariantList PolledSource::history() const {
   QVariantList list;
   for (double v : history_) list << v;
   return list;
 }
 
-void StatSource::recordHistory(double value) {
+void PolledSource::recordHistory(double value) {
   history_.push_back(value);
   while (static_cast<int>(history_.size()) > historySize_) history_.pop_front();
 }
 
-void StatSource::setActive(bool active) {
+void PolledSource::setActive(bool active) {
   if (active == active_) return;
   active_ = active;
   restart();
   emit activeChanged();
 }
 
-void StatSource::componentComplete() {
-  complete_ = true;
+void PolledSource::begin() {
+  begun_ = true;
   restart();
 }
 
-void StatSource::restart() {
-  if (!complete_ || !active_) {
+void PolledSource::restart() {
+  if (!begun_ || !active_) {
     timer_.stop();
     return;
   }
@@ -56,10 +56,10 @@ void StatSource::restart() {
   sample();
 }
 
-void StatSource::setReady() {
+void PolledSource::setReady() {
   if (ready_) return;
   ready_ = true;
   emit readyChanged();
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::kernel

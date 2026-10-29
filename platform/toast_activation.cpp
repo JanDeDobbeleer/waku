@@ -25,8 +25,8 @@
 #include <string>
 #include <vector>
 
+#include "kernel/win32/shell_launch.h"
 #include "platform/media_session.h"
-#include "platform/shell_open.h"
 
 namespace yasb::platform {
 namespace {
@@ -153,7 +153,7 @@ std::optional<CLSID> findActivator(const QString& aumid) {
 bool openUri(const QString& launch) {
   if (!isOpenableToastUri(launch)) return false;
   AllowSetForegroundWindow(ASFW_ANY);
-  shellOpen(launch);
+  wabar::kernel::shellOpen(launch);
   return true;
 }
 
@@ -217,7 +217,7 @@ bool showApp(const QString& aumid) {
   if (aumid.isEmpty()) return false;
   if (activateAppByAumid(aumid)) return true;
   if (!hasShellApp(aumid)) return false;
-  shellOpen(QStringLiteral("shell:AppsFolder\\") + aumid);
+  wabar::kernel::shellOpen(QStringLiteral("shell:AppsFolder\\") + aumid);
   return true;
 }
 

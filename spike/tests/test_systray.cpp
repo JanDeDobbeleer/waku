@@ -9,6 +9,7 @@
 #include <set>
 #include <vector>
 
+#include "kernel/qt/live_desktop.h"
 #include "platform/systray_click.h"
 #include "spike/services/systray.h"
 
@@ -227,9 +228,9 @@ TEST(Systray, RealConstructorIsUnavailableOffscreen) {
 }
 
 TEST(Systray, NoTrayKeepsTheRealOneUnavailable) {
-  Systray::setDisabled(true);
+  wabar::kernel::setCapabilityDisabled(QStringLiteral("tray"), true);
   Systray systray(nullptr);
-  Systray::setDisabled(false);
+  wabar::kernel::setCapabilityDisabled(QStringLiteral("tray"), false);
   EXPECT_FALSE(systray.available());
   EXPECT_EQ(systray.unavailableReason(), QStringLiteral("tray unavailable: disabled by --no-tray"));
 }

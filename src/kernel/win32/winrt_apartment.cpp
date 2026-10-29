@@ -1,8 +1,8 @@
-#include "platform/winrt_apartment.h"
+#include "kernel/win32/winrt_apartment.h"
 
 #include <winrt/base.h>
 
-namespace yasb::platform {
+namespace wabar::kernel {
 
 void ensureWinrtApartment() {
   thread_local bool initialized = false;
@@ -15,4 +15,4 @@ void ensureWinrtApartment() {
   }
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::kernel

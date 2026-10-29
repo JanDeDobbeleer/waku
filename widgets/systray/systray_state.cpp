@@ -129,14 +129,6 @@ IconState savedStateFor(const IconStateMap& state, const platform::TrayIconData&
   return saved ? *saved : IconState{false, -1};
 }
 
-QString appDataDir(const QString& folder) {
-  QString base = qEnvironmentVariable("LOCALAPPDATA");
-  if (base.isEmpty()) base = QDir::homePath() + QStringLiteral("/AppData/Local");
-  const QString dir = QDir(base).filePath(folder);
-  QDir().mkpath(dir);
-  return dir;
-}
-
 QString SystrayStateStore::path() const {
   return QDir(dir_).filePath(QStringLiteral("systray_state_%1.json").arg(screenId_));
 }

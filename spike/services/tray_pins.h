@@ -92,7 +92,7 @@ class TrayPins : public QObject {
   // its window instead: `screen` follows window->screen(), including when the window moves.
   void setWindow(QWindow* window);
   QString stateDir() const { return stateDir_; }
-  // Defaults to appDataDir("wabar"). Set it before screenId (tests); later it reloads.
+  // Defaults to kernel::appDataDir(). Set it before screenId (tests); later it reloads.
   void setStateDir(const QString& dir);
   TrayPinList* pinned() { return &pinned_; }
   TrayPinList* unpinned() { return &unpinned_; }

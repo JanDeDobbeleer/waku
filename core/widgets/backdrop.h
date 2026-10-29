@@ -9,8 +9,6 @@ namespace yasb::widgets {
 // input.
 std::uint32_t hexToRgbaInt(const QString& hex);
 
-// Windows build number (e.g. 22631), 0 if it cannot be read.
-unsigned windowsBuild();
 bool isMicaSupported();
 
 // Ports of core/utils/win32/backdrop.py. `hwnd` is QWidget::winId(). Failures are logged, never

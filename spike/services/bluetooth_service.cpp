@@ -1,18 +1,16 @@
 #include "spike/services/bluetooth_service.h"
 
-#include <QGuiApplication>
 #include <QVariantMap>
 #include <algorithm>
+
+#include "kernel/qt/live_desktop.h"
 
 namespace wabar::services {
 
 namespace {
 
-bool g_disabled = false;
-
 std::unique_ptr<platform::BluetoothBackend> makeRealBackend() {
-  if (g_disabled) return nullptr;
-  if (QGuiApplication::platformName() == QStringLiteral("offscreen")) return nullptr;
+  if (!kernel::liveDesktop(QStringLiteral("bluetooth"))) return nullptr;
   if (!platform::hasBluetoothAdapter()) return nullptr;
   return platform::createBluetoothBackend();
 }
@@ -36,8 +34,6 @@ Bluetooth::Bluetooth(std::unique_ptr<platform::BluetoothBackend> backend, QObjec
 }
 
 Bluetooth::~Bluetooth() = default;
-
-void Bluetooth::setDisabled(bool disabled) { g_disabled = disabled; }
 
 void Bluetooth::onStatus(const platform::BluetoothStatus& status) {
   status_ = status;

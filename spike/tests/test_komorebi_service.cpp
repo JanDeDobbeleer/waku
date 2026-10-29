@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "core/widgets/event_bus.h"
+#include "kernel/win32/shell_launch.h"
 #include "platform/komorebi.h"
 #include "widgets/komorebi/komorebi_service.h"
 #include "widgets/komorebi/komorebi_state.h"
@@ -105,7 +106,7 @@ TEST(KomorebiServiceTest, HiddenShellRunsQuotedCommandChains) {
   const QString chain =
       QStringLiteral("\"cmd.exe\" /c echo first> \"%1\" && \"cmd.exe\" /c echo second>> \"%1\"")
           .arg(out);
-  ASSERT_TRUE(platform::launchHiddenShell(chain));
+  ASSERT_TRUE(wabar::kernel::launchHiddenShell(chain));
   QFile file(out);
   ASSERT_TRUE(QTest::qWaitFor([&] { return file.exists() && QFileInfo(out).size() >= 14; }, 10000));
   ASSERT_TRUE(file.open(QIODevice::ReadOnly));

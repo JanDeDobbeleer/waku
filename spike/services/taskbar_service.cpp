@@ -1,7 +1,6 @@
 #include "spike/services/taskbar_service.h"
 
 #include <QDebug>
-#include <QGuiApplication>
 #include <QJsonObject>
 #include <QPixmap>
 #include <QQmlEngine>
@@ -11,10 +10,10 @@
 #include <exception>
 #include <utility>
 
+#include "kernel/qt/live_desktop.h"
+
 namespace wabar::services {
 namespace {
-
-bool g_disabled = false;
 
 std::function<std::unique_ptr<TaskbarService>()>& testFactory() {
   static std::function<std::unique_ptr<TaskbarService>()> factory;
@@ -39,10 +38,10 @@ constexpr platform::WindowHandle kPseudoBase = platform::WindowHandle(1) << 63;
 
 TaskbarService::TaskbarService(QObject* parent) : QObject(parent) {
   Deps deps;
-  if (g_disabled) {
+  if (kernel::capabilityDisabled(QStringLiteral("taskbar"))) {
     deps.trackerAvailable = false;
     deps.unavailableReason = QStringLiteral("taskbar unavailable: disabled by --no-taskbar");
-  } else if (QGuiApplication::platformName() == QStringLiteral("offscreen")) {
+  } else if (!kernel::liveDesktop()) {
     deps.trackerAvailable = false;
     deps.unavailableReason = QStringLiteral("taskbar unavailable: offscreen platform");
   } else {
@@ -109,8 +108,6 @@ TaskbarService* TaskbarService::create(QQmlEngine* engine, QJSEngine*) {
 void TaskbarService::setFactoryForTests(std::function<std::unique_ptr<TaskbarService>()> factory) {
   testFactory() = std::move(factory);
 }
-
-void TaskbarService::setDisabled(bool disabled) { g_disabled = disabled; }
 
 void TaskbarService::attach(QWindow* window) {
   if (!tracker_ || !window || tracker_->isInitialized()) return;

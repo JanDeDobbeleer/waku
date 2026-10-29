@@ -294,25 +294,3 @@ TEST(SystraySavedState, NothingSavedMeansUnpinnedWithoutAPosition) {
   const IconStateMap state;
   EXPECT_EQ(savedStateFor(state, icon(1, 1)), (IconState{false, -1}));
 }
-
-// ---- where the state lives ----
-
-TEST(SystrayAppDataDir, TheFolderNameIsAParameterWithTheWidgetsBuildAsDefault) {
-  QTemporaryDir local;
-  ASSERT_TRUE(local.isValid());
-  const QByteArray saved = qgetenv("LOCALAPPDATA");
-  qputenv("LOCALAPPDATA", local.path().toUtf8());
-
-  const QString widgets = appDataDir();
-  const QString wabar = appDataDir(QStringLiteral("wabar"));
-  EXPECT_EQ(QDir(widgets).dirName(), QStringLiteral("YASB"));
-  EXPECT_EQ(QDir(wabar).dirName(), QStringLiteral("wabar"));
-  EXPECT_TRUE(QDir(widgets).exists());
-  EXPECT_TRUE(QDir(wabar).exists());
-  EXPECT_EQ(QDir(wabar).absolutePath(), QDir(local.path()).filePath(QStringLiteral("wabar")));
-
-  if (saved.isNull())
-    qunsetenv("LOCALAPPDATA");
-  else
-    qputenv("LOCALAPPDATA", saved);
-}

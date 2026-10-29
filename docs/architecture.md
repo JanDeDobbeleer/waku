@@ -46,7 +46,7 @@ skeleton, steps 5+ move code into it.
   `.qml` files and tests to global lists. `wabar_contribute()` is the same append for the legacy
   `spike/` folders. The decisions are in the comment at the top of the file.
 - `src/CMakeLists.txt` adds `kernel`, `control`, `host`, `ui`, `features`, `app` (each if
-  present). `src/kernel/` is an empty INTERFACE `wabar_kernel` (include root `src/`) until step 5.
+  present). `src/kernel/` is the STATIC `wabar_kernel` (include root `src/`), see below.
 - `src/modules/qml_modules.cmake` defines `wabar.services` and `wabar.widgets` from the global lists.
   It is included from the top-level `CMakeLists.txt`, not added as a subdirectory, because
   qmlcachegen names its outputs after the `.qml` path relative to the declaring directory and a
@@ -56,6 +56,35 @@ skeleton, steps 5+ move code into it.
 - `tools\check.ps1` step `structure` checks rules S1-S8 (proposal, section 4.2), reading `DEPENDS`
   from the `wabar_feature(` calls: enforcing under `src/` and `tests/`, report-only for the legacy
   folders.
+
+### The kernel (`src/kernel/`)
+
+Helpers with no domain knowledge that two or more units use today and that change for reasons
+outside any feature (admission criteria: proposal, section 6; a pull request that adds a kernel
+file names its two users). Qt Core and Gui only; the Windows SDK only under `kernel/win32/`.
+Namespace `wabar::kernel`, include `"kernel/<qt|win32>/<file>.h"`.
+
+| File | What | Users |
+|---|---|---|
+| `win32/windows_build.*` | `windowsBuild()`, cached `RtlGetVersion` (allowlist row below) | host backdrop, `platform/pdh.cpp`, `platform/power.cpp` |
+| `win32/winrt_apartment.*` | `ensureWinrtApartment()` | bluetooth, brightness, connectivity, wlan |
+| `win32/shell_launch.*` | `shellOpen`, `launchHiddenShell`, `startDetachedHidden`, `hideConsole` | Shell, ControlCenter, toast activation, komorebi, `Process` |
+| `qt/live_desktop.*` | `liveDesktop([capability])`, `setCapabilityDisabled`, `capabilityDisabled` | the services' real constructors, `spike/main.cpp` (`--no-tray`) |
+| `qt/polled_source.*` | `PolledSource`, the polled-sample base (QML face: `services::StatSource`) | `Memory`, `Cpu`, `Battery`, `Network` |
+| `qt/app_data.*` | `appDataDir()`, `migrateLegacyAppData()` | taskbar pins, GitHub token, tray state, wallpaper thumbnails |
+
+Rules the kernel owns:
+
+- **One data folder**: every file wabar keeps lives in `%LOCALAPPDATA%\wabar` (`appDataDir()`,
+  created on demand). Nothing writes to `%LOCALAPPDATA%\YASB` any more. The first `appDataDir()` call
+  of a process copies `taskbar_pinned.json`, `github_token` and `systray_state_*.json` from `YASB`
+  when `YASB` exists; it never moves or overwrites, logs one line when it copied something and
+  leaves a marker file `migrated_from_yasb`, so the copy happens once (a file the user deletes from
+  `wabar` does not come back). Wallpaper thumbnails are a cache and are rebuilt, not copied.
+- **Live desktop**: a service that touches the real machine in its real constructor asks
+  `kernel::liveDesktop()`; it is false on the offscreen platform (tests, screenshots). A command-line
+  flag switches one capability off by name (`setCapabilityDisabled("tray", true)`); ask
+  `liveDesktop("tray")`. No service tests `platformName()` itself.
 
 ## Threading
 
@@ -90,13 +119,15 @@ No new singleton without a row here and a reason.
 | media source-app name cache, shell-app cache | `platform/media_source_apps.cpp` | AUMID to display name; `QMutex`-guarded, written from the media session thread only |
 | `wabar.services.Systray` | `spike/services/systray.{h,cpp}` | the one tray host of a `wabar` run (the hook in Explorer), shared by every Tray widget of the bar; created by the QML engine on first use and destroyed with it, which stops the host. |
 | `wabar.services.Network` | `spike/services/network_service.{h,cpp}` | the one Wi-Fi/Ethernet/VPN state of a `wabar` run, shared by every Wifi widget; created by the QML engine on first use and destroyed with it. Polls on the global `QThreadPool` (one sample at a time, applied on the GUI thread); the Wi-Fi scan/connect backend and its thread (`createWlanBackend`) start on the first refresh or connect and stop in the destructor. No source on the offscreen platform |
-| cached Windows build number | `core/widgets/backdrop.cpp` (`windowsBuild()`) | immutable |
-| `wabar.services.Bluetooth` | `spike/services/bluetooth_service.{h,cpp}` | the one Bluetooth backend of a `wabar` run (radio, paired devices, battery, connect/disconnect on the `RealBluetoothBackend` thread), shared by every Bluetooth widget; created by the QML engine on first use and owned by it, destroyed with it, which joins the backend thread. Never creates a backend on the offscreen platform, after `setDisabled(true)` or without an adapter (`platform::hasBluetoothAdapter`). |
+| cached Windows build number | `src/kernel/win32/windows_build.cpp` (`windowsBuild()`) | immutable |
+| live-desktop disable flags | `src/kernel/qt/live_desktop.cpp` | set of capability names behind a `QMutex`; written once at startup (`--no-tray`), read by the services' real constructors |
+| app data migration record | `src/kernel/qt/app_data.cpp` (`appDataDir`) | set of base folders already migrated in this process, behind a `QMutex`; the on-disk marker `migrated_from_yasb` makes the copy happen once per machine |
+| `wabar.services.Bluetooth` | `spike/services/bluetooth_service.{h,cpp}` | the one Bluetooth backend of a `wabar` run (radio, paired devices, battery, connect/disconnect on the `RealBluetoothBackend` thread), shared by every Bluetooth widget; created by the QML engine on first use and owned by it, destroyed with it, which joins the backend thread. Never creates a backend when `kernel::liveDesktop("bluetooth")` is false or without an adapter (`platform::hasBluetoothAdapter`). |
 | `wabar.services.Notifications` | `spike/services/notification_service.{h,cpp}` | the Action Center toasts for every Notifications widget of a `wabar` run, created by the QML engine as a singleton; wraps `platform::NotificationService` (WNF subscription and listener worker thread, stopped and joined when the engine destroys it); has no source on the offscreen platform |
 | `wabar.services.TaskbarService` | `spike/services/taskbar_service.{h,cpp}` | the one window tracker (`platform::WindowTracker`: shell hook and WinEvent hooks), pinned-apps store (`taskbar_pinned.json`) and window-icon cache of a `wabar` run, shared by every Taskbar widget; created by the QML engine on first use and destroyed with it (the tracker stops, the icon loader's one-thread pool is joined). Registers `image://windowicon`. The tracker starts when the first Taskbar widget hands over its bar window; it never starts on the offscreen platform. |
 | `wabar.services.ControlCenter` | `spike/services/control_center_service.{h,cpp}` | the system side of every ControlCenter widget of a `wabar` run, created by the QML engine as a singleton: Do Not Disturb (its own `platform::DndWatcher`, WNF subscription stopped by its destructor), app theme, touch keyboard, power plans and modes, user name and picture, and the session and power actions behind an injectable launcher (shutdown, restart and sign out need a second request). Owns one `platform::BrightnessControl` (DDC/CI worker thread plus the power-setting window thread, joined by `stop()` in the destructor). Volume, microphone and the player are not repeated: the widget uses `AudioOutput`, `AudioInput` and `Media`. Inert on the offscreen platform |
 | `wabar.services.GitHub` | `spike/services/github_service.{h,cpp}` | the GitHub notifications of a `wabar` run for every GitHub widget, created by the QML engine as a singleton on the GUI thread. Polls on a `QTimer`; each fetch is a one-shot task on the global `QThreadPool` (own network transport, ends with the request, nothing to join) and `platform::sendHttpAsync` carries mark-as-read and the device-flow requests; results return through a guard `QObject` owned by the client, so a response after the service is destroyed is dropped. Reads `YASB_GITHUB_TOKEN` or the token file the Python build uses, holds the token in memory only. No client on the offscreen platform |
-| `wabar.services.Wallpapers` | `spike/services/wallpapers_service.{h,cpp}` | the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `wabar` run, shared by every Wallpapers widget; created by the QML engine on first use (`create()` registers `image://wallpaper`) and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles`, `ThumbnailCache` and `DesktopWallpaperBackend` (animated `engine` off). No thread of its own: the hotkey is `RegisterHotKey` (documented) on the GUI thread through a native event filter, unregistered in the destructor; thumbnails are decoded on Qt's image-reader thread by a provider that holds only the `ThumbnailCache`. Inert, no hotkey, on the offscreen platform or after `setDisabled(true)`. |
+| `wabar.services.Wallpapers` | `spike/services/wallpapers_service.{h,cpp}` | the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `wabar` run, shared by every Wallpapers widget; created by the QML engine on first use (`create()` registers `image://wallpaper`) and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles`, `ThumbnailCache` and `DesktopWallpaperBackend` (animated `engine` off). No thread of its own: the hotkey is `RegisterHotKey` (documented) on the GUI thread through a native event filter, unregistered in the destructor; thumbnails are decoded on Qt's image-reader thread by a provider that holds only the `ThumbnailCache`. Inert, no hotkey, when `kernel::liveDesktop("wallpapers")` is false. |
 
 Function-local `static const` regexes and lookup tables are immutable and not listed.
 
@@ -119,7 +150,7 @@ with the build it was verified on and its fallback. Add a row in the same commit
 |---|---|---|---|
 | `user32!SetWindowCompositionAttribute` with `WCA_ACCENT_POLICY` (19), local `AccentPolicy` / `CompositionAttribData` structs | `core/widgets/backdrop.cpp` (`setAccentPolicy`) | Windows 11 build 26300, ARM64 | resolved with `GetProcAddress`; missing symbol or failure throws inside `enableBlur`, which catches and logs; bar keeps its plain background |
 | `ntdll!NtQuerySystemInformation` class 80 (`SystemMemoryListInformation`), local `MemoryListInformation` struct | `platform/memory.cpp` (`cachedBytes`) | Windows 11 build 26300, ARM64 | `GetPerformanceInfo` `SystemCache` when the symbol is missing or the call fails |
-| `ntdll!RtlGetVersion` (documented for drivers; used because `GetVersionEx` lies to unmanifested apps) | `core/widgets/backdrop.cpp` (`windowsBuild`), `platform/pdh.cpp` (CPU counter choice), `platform/power.cpp` (`isWindows10`) | Windows 11 build 26300, ARM64 | build 0: backdrop takes the pre-Windows 11 paths, PDH uses `% Processor Utility` and falls back to `% Processor Time` |
+| `ntdll!RtlGetVersion` (documented for drivers; used because `GetVersionEx` lies to unmanifested apps) | `src/kernel/win32/windows_build.cpp` (`windowsBuild`; users: `core/widgets/backdrop.cpp`, `platform/pdh.cpp` CPU counter choice, `platform/power.cpp` `isWindows10`) | Windows 11 build 26300, ARM64 | build 0: backdrop takes the pre-Windows 11 paths, PDH uses `% Processor Utility` and falls back to `% Processor Time` |
 | Numeric DWM attributes: `DWMWA_USE_IMMERSIVE_DARK_MODE` (20), `DWMWA_WINDOW_CORNER_PREFERENCE` (33), `DWMWA_BORDER_COLOR` (34), `DWMWA_SYSTEMBACKDROP_TYPE` (38), undocumented Mica attribute 1029, colour sentinels `0xFFFFFFFF`/`0xFFFFFFFE` | `core/widgets/backdrop.cpp` | Windows 11 build 26300, ARM64 | gated on `windowsBuild()` (22000 / 22621); `DwmSetWindowAttribute` failures are caught and logged |
 | `DEVPKEY_Bluetooth_Battery` ({104EA319-6EE2-4701-BD47-8DDBF425BBE5}, 2), a PnP property key read with `CM_Get_DevNode_PropertyW` | `platform/bluetooth.cpp` (`readBattery`) | Windows 11 build 26300, ARM64 (key and layout from Python YASB) | read failure or non-byte type gives no battery value; the menu then shows no battery |
 | `KSPROPSETID_BtAudio` ({7FA06C40-B8F6-4C7E-8556-E8C33A12E54D}) one-shot ids 0 (reconnect) and 1 (disconnect) sent through `IKsControl::KsProperty` | `platform/bluetooth.cpp` (`setAudioConnection`) | key and ids from Python YASB; not exercised live on build 26300 | no KS filter or a refusing driver returns `no_ks_controls` / `oneshot_failed`; the menu shows "Failed to connect/disconnect device" |

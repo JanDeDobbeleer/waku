@@ -16,7 +16,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "platform/winrt_apartment.h"
+#include "kernel/win32/winrt_apartment.h"
 
 namespace yasb::platform {
 namespace {
@@ -280,7 +280,7 @@ class WlanWorker : public QObject {
   void connectTo(const WifiNetwork& network, const QString& ssid, const QString& password,
                  bool hidden) {
     try {
-      ensureWinrtApartment();
+      wabar::kernel::ensureWinrtApartment();
       const WifiConnectStatus status = connectAdapter(network, ssid, password, hidden);
       emit connectFinished(static_cast<int>(status), ssid, network);
     } catch (const winrt::hresult_error& error) {
@@ -292,7 +292,7 @@ class WlanWorker : public QObject {
 
   void disconnectCurrent() {
     try {
-      ensureWinrtApartment();
+      wabar::kernel::ensureWinrtApartment();
       firstAdapter().Disconnect();
     } catch (...) {
     }

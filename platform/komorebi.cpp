@@ -8,15 +8,12 @@
 #include <utility>
 #include <vector>
 
+#include "kernel/win32/shell_launch.h"
+
 namespace yasb::platform {
 namespace {
 
 const QString kKomorebic = QStringLiteral("komorebic.exe");
-
-void hideConsole(QProcess& process) {
-  process.setCreateProcessArgumentsModifier(
-      [](QProcess::CreateProcessArguments* args) { args->flags |= CREATE_NO_WINDOW; });
-}
 
 bool isProcessRunning(const wchar_t* exeName) {
   HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -35,7 +32,7 @@ bool isProcessRunning(const wchar_t* exeName) {
 KomorebicResult runKomorebic(const QStringList& args, int timeoutMs) {
   KomorebicResult result;
   QProcess process;
-  hideConsole(process);
+  wabar::kernel::hideConsole(process);
   process.setProgram(kKomorebic);
   process.setArguments(args);
   process.start();
@@ -56,17 +53,6 @@ KomorebicResult runKomorebic(const QStringList& args, int timeoutMs) {
   return result;
 }
 
-bool startDetached(const QString& program, const QStringList& args, const QString& nativeArgs) {
-  QProcess process;
-  hideConsole(process);
-  process.setProgram(program);
-  process.setArguments(args);
-  if (!nativeArgs.isEmpty()) process.setNativeArguments(nativeArgs);
-  process.setStandardOutputFile(QProcess::nullDevice());
-  process.setStandardErrorFile(QProcess::nullDevice());
-  return process.startDetached();
-}
-
 // Collapses whitespace like Python's " ".join(s.split()).
 QString simplifiedStderr(const QByteArray& stderrBytes) {
   return QString::fromUtf8(stderrBytes).simplified();
@@ -79,17 +65,8 @@ KomorebiBackend defaultKomorebiBackend() {
 }
 
 bool launchKomorebic(const QStringList& args) {
-  const bool ok = startDetached(kKomorebic, args, {});
+  const bool ok = wabar::kernel::startDetachedHidden(kKomorebic, args);
   if (!ok) qWarning().noquote() << "Failed to run komorebic" << args.join(QLatin1Char(' '));
-  return ok;
-}
-
-bool launchHiddenShell(const QString& commandLine) {
-  // Python wraps the string as `cmd.exe /c "<command>"`; without the outer quotes cmd strips the
-  // first and last quote of a command that starts with one and runs a mangled line.
-  const bool ok = startDetached(QStringLiteral("cmd.exe"), {},
-                                QStringLiteral("/c \"") + commandLine + QStringLiteral("\""));
-  if (!ok) qWarning().noquote() << "Failed to run" << commandLine;
   return ok;
 }
 

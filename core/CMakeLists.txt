@@ -9,4 +9,4 @@ add_library(yasb_ui STATIC
 target_include_directories(yasb_ui PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(yasb_ui
   PUBLIC Qt6::Core Qt6::Gui
-  PRIVATE wabar_options)
+  PRIVATE wabar_options wabar_kernel)

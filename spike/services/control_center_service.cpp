@@ -1,14 +1,14 @@
 #include "spike/services/control_center_service.h"
 
 #include <QCoreApplication>
-#include <QGuiApplication>
 #include <QStringList>
 #include <QUrl>
 #include <QVariantMap>
 #include <algorithm>
 
+#include "kernel/qt/live_desktop.h"
+#include "kernel/win32/shell_launch.h"
 #include "platform/dnd.h"
-#include "platform/shell_open.h"
 #include "platform/theme.h"
 #include "platform/touch_keyboard.h"
 #include "platform/user_info.h"
@@ -16,8 +16,6 @@
 namespace wabar::services {
 
 namespace {
-
-bool isOffscreen() { return QGuiApplication::platformName() == QStringLiteral("offscreen"); }
 
 // PowerOperations._connect_about_to_quit: the command runs once the event loop has ended, so the
 // bar is gone before the machine restarts or signs out.
@@ -58,7 +56,7 @@ ControlCenter::Launcher systemLauncher() {
     runAfterQuit({QStringLiteral("/s"), QStringLiteral("/hybrid"), QStringLiteral("/t"),
                   QStringLiteral("0")});
   };
-  l.open = [](const QString& uri) { platform::shellOpen(uri); };
+  l.open = [](const QString& uri) { kernel::shellOpen(uri); };
   return l;
 }
 
@@ -67,10 +65,11 @@ QString idString(const QUuid& id) { return id.toString(QUuid::WithoutBraces); }
 }  // namespace
 
 ControlCenter::ControlCenter(QObject* parent)
-    : ControlCenter(isOffscreen() ? Backend{} : systemBackend(),
-                    isOffscreen() ? Launcher{} : systemLauncher(),
-                    isOffscreen() ? nullptr : platform::createSystemBrightness(nullptr), parent) {
-  available_ = !isOffscreen();
+    : ControlCenter(kernel::liveDesktop() ? systemBackend() : Backend{},
+                    kernel::liveDesktop() ? systemLauncher() : Launcher{},
+                    kernel::liveDesktop() ? platform::createSystemBrightness(nullptr) : nullptr,
+                    parent) {
+  available_ = kernel::liveDesktop();
   if (!available_) return;
   // Focus Assist changes made outside the bar (Settings, the action centre).
   auto* watcher = new platform::DndWatcher(this);

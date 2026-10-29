@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <vector>
 
+#include "kernel/win32/windows_build.h"
+
 namespace yasb::platform {
 namespace {
 
@@ -164,17 +166,9 @@ bool setPowerMode(const QUuid& guid) {
 }
 
 bool isWindows10() {
-  using RtlGetVersionFn = LONG(WINAPI*)(OSVERSIONINFOW*);
-  static const bool windows10 = [] {
-    const HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
-    const auto getVersion =
-        ntdll ? reinterpret_cast<RtlGetVersionFn>(GetProcAddress(ntdll, "RtlGetVersion")) : nullptr;
-    OSVERSIONINFOW info{};
-    info.dwOSVersionInfoSize = sizeof(info);
-    if (!getVersion || getVersion(&info) != 0) return false;
-    return info.dwMajorVersion == 10 && info.dwBuildNumber < 22000;
-  }();
-  return windows10;
+  // Windows 10 and 11 both report major version 10; builds below 22000 are Windows 10.
+  const unsigned build = wabar::kernel::windowsBuild();
+  return build != 0 && build < 22000;
 }
 
 void lockWorkstation() { LockWorkStation(); }

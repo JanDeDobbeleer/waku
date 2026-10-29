@@ -4,6 +4,8 @@
 
 #include <algorithm>
 
+#include "kernel/win32/shell_launch.h"
+
 namespace wabar::services {
 
 Process::Process(QObject* parent) : QObject(parent) {
@@ -71,8 +73,7 @@ void Process::setRunning(bool running) {
 void Process::run() {
   if (process_ || program_.isEmpty()) return;
   process_ = new QProcess(this);
-  process_->setCreateProcessArgumentsModifier(
-      [](QProcess::CreateProcessArguments* args) { args->flags |= CREATE_NO_WINDOW; });
+  kernel::hideConsole(*process_);
   connect(process_, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
     // finished() is not emitted when the program cannot start.
     if (error == QProcess::FailedToStart) finish(-1);

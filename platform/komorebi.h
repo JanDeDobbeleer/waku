@@ -32,9 +32,6 @@ KomorebiBackend defaultKomorebiBackend();
 // Fire-and-forget `komorebic <args>` without a console window.
 bool launchKomorebic(const QStringList& args);
 
-// Fire-and-forget `cmd.exe /c <commandLine>` without a console window (Python's shell=True path).
-bool launchHiddenShell(const QString& commandLine);
-
 // MonitorFromWindow(hwnd, MONITOR_DEFAULTTONULL); komorebi's monitor "id" is this HMONITOR.
 std::optional<long long> monitorFromWindow(quintptr hwnd);
 

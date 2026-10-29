@@ -19,6 +19,8 @@
 #include <exception>
 #include <set>
 
+#include "kernel/qt/app_data.h"
+
 namespace yasb::platform {
 namespace {
 
@@ -398,7 +400,7 @@ HttpRequest githubMarkAllReadRequest(const QString& token, const QDateTime& nowU
 }
 
 QString githubTokenFilePath() {
-  return QDir(qEnvironmentVariable("LOCALAPPDATA")).filePath(QStringLiteral("YASB/github_token"));
+  return QDir(wabar::kernel::appDataDir()).filePath(QStringLiteral("github_token"));
 }
 
 QString resolveGithubToken(const QString& configToken, const QString& envToken,

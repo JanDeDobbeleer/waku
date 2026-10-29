@@ -19,6 +19,8 @@
 #include <exception>
 #include <utility>
 
+#include "kernel/qt/app_data.h"
+#include "kernel/qt/live_desktop.h"
 #include "platform/window_focus.h"
 #include "widgets/wallpapers/wallpaper_files.h"
 
@@ -27,14 +29,10 @@ namespace {
 
 namespace widgets = ::yasb::widgets;
 
-bool g_disabled = false;
-
 std::function<std::unique_ptr<Wallpapers>()>& testFactory() {
   static std::function<std::unique_ptr<Wallpapers>()> factory;
   return factory;
 }
-
-bool isOffscreen() { return QGuiApplication::platformName() == QStringLiteral("offscreen"); }
 
 template <typename F>
 void guarded(const char* what, F&& body) {
@@ -49,8 +47,7 @@ void guarded(const char* what, F&& body) {
 
 std::shared_ptr<widgets::ThumbnailCache> defaultCache() {
   return std::make_shared<widgets::ThumbnailCache>(
-      QDir(qEnvironmentVariable("LOCALAPPDATA"))
-          .filePath(QStringLiteral("YASB/wallpaper_thumbnails")));
+      QDir(kernel::appDataDir()).filePath(QStringLiteral("wallpaper_thumbnails")));
 }
 
 // RegisterHotKey (documented) with a null window: WM_HOTKEY is posted to the registering thread's
@@ -203,7 +200,7 @@ Wallpapers::Wallpapers(QObject* parent) : Wallpapers(Deps{}, parent) {}
 
 Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std::move(deps)) {
   cache_ = deps_.cache ? deps_.cache : defaultCache();
-  if (!deps_.backend && deps_.realBackend && !g_disabled && !isOffscreen()) {
+  if (!deps_.backend && deps_.realBackend && kernel::liveDesktop(QStringLiteral("wallpapers"))) {
     deps_.backend = [] { return platform::makeDesktopWallpaperBackend(); };
   }
   if (!deps_.dryRun) deps_.dryRun = qEnvironmentVariableIntValue("WABAR_WALLPAPER_DRYRUN") != 0;
@@ -242,8 +239,6 @@ Wallpapers* Wallpapers::create(QQmlEngine* engine, QJSEngine*) {
 void Wallpapers::setFactoryForTests(std::function<std::unique_ptr<Wallpapers>()> factory) {
   testFactory() = std::move(factory);
 }
-
-void Wallpapers::setDisabled(bool disabled) { g_disabled = disabled; }
 
 void Wallpapers::setImagePath(const QString& path) {
   if (path == imagePath_) return;
