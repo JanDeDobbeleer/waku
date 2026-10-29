@@ -97,6 +97,93 @@ Pill { objectName: "p"; text: "static"; interactive: false
   EXPECT_EQ(item(h, QStringLiteral("p"))->property("clicks").toInt(), 0);
 }
 
+TEST(PillWidget, OnABarItIsFlatAndTakesTheBarFill) {
+  Harness h;
+  write(h.dir.filePath(QStringLiteral("theme.qml")),
+        QStringLiteral(
+            "import tidy\nThemeSpec { barFill: \"#00000000\"; barFillHover: \"#26c6d0f5\" }\n"));
+  h.start(widgetConfig(QStringLiteral(R"(Pill { objectName: "p"; text: "x" })")));
+  ASSERT_TRUE(started(h));
+  QQuickItem* pill = item(h, QStringLiteral("p"));
+  EXPECT_TRUE(pill->property("flat").toBool());
+  EXPECT_EQ(pill->property("fill").value<QColor>().alpha(), 0);
+  EXPECT_EQ(pill->property("hoverFill").value<QColor>(), QColor(0xc6, 0xd0, 0xf5, 0x26));
+  EXPECT_EQ(pill->property("color").value<QColor>().alpha(), 0);
+}
+
+TEST(PillWidget, InAPopupItKeepsTheVisibleFill) {
+  Harness h;
+  write(h.dir.filePath(QStringLiteral("theme.qml")),
+        QStringLiteral("import tidy\nThemeSpec { barFill: \"#00000000\" }\n"));
+  h.start(widgetConfig(QStringLiteral(R"(
+Pill {
+    objectName: "anchor"; text: "a"
+    PopupWindow {
+        anchorItem: parent
+        Pill { objectName: "row"; text: "row" }
+    }
+})")));
+  ASSERT_TRUE(started(h));
+  QQuickItem* anchor = item(h, QStringLiteral("anchor"));
+  EXPECT_EQ(anchor->property("fill").value<QColor>().alpha(), 0);
+  QQuickItem* row = nullptr;
+  for (QWindow* w : QGuiApplication::allWindows()) {
+    if (auto* q = qobject_cast<QQuickWindow*>(w))
+      if (QQuickItem* found = findItem(q, QStringLiteral("row"))) row = found;
+  }
+  ASSERT_NE(row, nullptr);
+  EXPECT_FALSE(row->property("flat").toBool());
+  EXPECT_EQ(row->property("fill").value<QColor>(), QColor(0xff, 0xff, 0xff, 0x22));
+}
+
+namespace {
+// The Text item with this text under `root`.
+QQuickItem* textChild(QQuickItem* root, const QString& text) {
+  for (QQuickItem* child : root->childItems()) {
+    if (child->property("text").toString() == text && child->property("font").isValid() &&
+        child->property("elide").isValid())
+      return child;
+    if (QQuickItem* found = textChild(child, text)) return found;
+  }
+  return nullptr;
+}
+}  // namespace
+
+TEST(PillWidget, AnIconIsDrawnInTheIconFont) {
+  Harness h;
+  write(h.dir.filePath(QStringLiteral("theme.qml")),
+        QStringLiteral("import tidy\nThemeSpec { iconFont: \"Test Icons\"; iconSize: 18 }\n"));
+  h.start(widgetConfig(QStringLiteral(R"(Pill { objectName: "p"; icon: ""; text: "hi" })")));
+  ASSERT_TRUE(started(h));
+  QQuickItem* pill = item(h, QStringLiteral("p"));
+  QQuickItem* glyph = textChild(pill, QString(QChar(0xe702)));
+  ASSERT_NE(glyph, nullptr);
+  const QFont font = glyph->property("font").value<QFont>();
+  EXPECT_EQ(font.family(), QStringLiteral("Test Icons"));
+  EXPECT_EQ(font.pixelSize(), 18);
+  QQuickItem* label = textChild(pill, QStringLiteral("hi"));
+  ASSERT_NE(label, nullptr);
+  EXPECT_NE(label->property("font").value<QFont>().family(), QStringLiteral("Test Icons"));
+}
+
+TEST(WorkspaceDotWidget, TheFocusedOneIsAWideAccentPill) {
+  Harness h;
+  h.start(widgetConfig(QStringLiteral(R"(
+WorkspaceDot { objectName: "on"; focused: true },
+WorkspaceDot { objectName: "used"; hasWindows: true },
+WorkspaceDot { objectName: "empty" })")));
+  ASSERT_TRUE(started(h));
+  QQuickItem* on = item(h, QStringLiteral("on"));
+  QQuickItem* used = item(h, QStringLiteral("used"));
+  QQuickItem* empty = item(h, QStringLiteral("empty"));
+  ASSERT_TRUE(
+      QTest::qWaitFor([&] { return on->implicitWidth() > used->implicitWidth() + 10; }, 3000));
+  EXPECT_EQ(on->property("restColor").value<QColor>().rgb(), QColor(0x5b, 0x8d, 0xef).rgb());
+  EXPECT_GT(used->property("restColor").value<QColor>().alpha(),
+            empty->property("restColor").value<QColor>().alpha());
+  EXPECT_EQ(used->implicitWidth(), empty->implicitWidth());
+}
+
 TEST(ClockWidget, FormatsTheTimeWithTheGivenFormat) {
   Harness h;
   h.start(widgetConfig(QStringLiteral(R"(Clock { objectName: "clock"; format: "HH:mm:ss" })")));

@@ -16,6 +16,9 @@ void ThemeValues::assignFrom(const ThemeValues& other) {
     if (!property.isWritable()) continue;  // the derived fills follow their colours
     property.write(this, property.read(&other));
   }
+  // The bar fills stay "follow the fill" when the other one does.
+  barFill_ = other.barFill_;
+  barFillHover_ = other.barFillHover_;
 }
 
 }  // namespace tidy

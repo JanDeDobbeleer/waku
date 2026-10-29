@@ -16,6 +16,7 @@ qt_add_qml_module(tidy_widgets
     Volume.qml
     Media.qml
     Workspaces.qml
+    WorkspaceDot.qml
     TrayIconButton.qml
     Tray.qml
     ActiveLayout.qml

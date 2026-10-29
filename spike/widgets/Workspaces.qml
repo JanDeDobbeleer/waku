@@ -8,13 +8,16 @@ import tidy.services as S
 //
 //     Workspaces { hideEmpty: true; scrollable: false }
 //
-// `hideEmpty` hides workspaces that are neither shown nor hold windows.
+// `hideEmpty` hides workspaces that are neither shown nor hold windows. `style` is "names" (a pill
+// with the workspace name, the default) or "dots" (a small circle per workspace and a wide accent
+// pill for the focused one, like Python YASB).
 Row {
     id: root
 
     property int pillWidth: Theme.pillHeight + 2
     property bool hideEmpty: false
     property bool scrollable: true
+    property string style: "names"
     property color focusedFill: Theme.accentFill
     property color activeFill: Theme.fillActive
     property color usedFill: Theme.fillUsed
@@ -29,12 +32,26 @@ Row {
     }
 
     visible: S.Workspaces.connected && monitor !== null
-    spacing: 4
+    spacing: style === "dots" ? 0 : 4
 
-    Repeater {
-        model: root.monitor ? root.monitor.workspaces : []
+    Component {
+        id: dotsDelegate
 
-        delegate: Rectangle {
+        WorkspaceDot {
+            required property var modelData
+
+            visible: !root.hideEmpty || modelData.active || modelData.hasWindows
+            focused: modelData.focused
+            active: modelData.active
+            hasWindows: modelData.hasWindows
+            onClicked: S.Workspaces.focus(root.handle, modelData.id)
+        }
+    }
+
+    Component {
+        id: namesDelegate
+
+        Rectangle {
             required property var modelData
 
             visible: !root.hideEmpty || modelData.active || modelData.hasWindows
@@ -63,6 +80,11 @@ Row {
                 onTapped: S.Workspaces.focus(root.handle, modelData.id)
             }
         }
+    }
+
+    Repeater {
+        model: root.monitor ? root.monitor.workspaces : []
+        delegate: root.style === "dots" ? dotsDelegate : namesDelegate
     }
 
     WheelHandler {

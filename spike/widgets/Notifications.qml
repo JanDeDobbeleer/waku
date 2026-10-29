@@ -16,11 +16,12 @@ Pill {
 
     property bool hideEmpty: false
     property bool showCount: false
-    property string glyph: ""
-    property string unreadGlyph: "•"
+    property string glyph: "\ue91c"
+    property string unreadGlyph: "\ued0c"
 
     visible: S.Notifications.available && !(hideEmpty && S.Notifications.count === 0)
-    text: (S.Notifications.unread ? unreadGlyph : glyph) + (showCount ? " " + S.Notifications.count : "")
+    icon: S.Notifications.unread ? unreadGlyph : glyph
+    text: showCount ? String(S.Notifications.count) : ""
     tooltip: S.Notifications.count + (S.Notifications.count === 1 ? " notification" : " notifications")
 
     onClicked: panel.toggle()

@@ -6,6 +6,7 @@ import tidy.services as S
 //
 //     Cpu { format: "CPU %1%"; interval: 2000; warnAbove: 90 }
 //
+// `glyph` is the chip icon before the text (empty for none); with it, `format: "%1%"` reads like Python YASB.
 // `format`: %1 is the load in percent. The pill turns `warnFill` at `warnAbove` percent and above.
 // Hovering shows the load of every core.
 Pill {
@@ -13,6 +14,7 @@ Pill {
 
     property int interval: 2000
     property string format: "CPU %1%"
+    property string glyph: "\ueea1"
     property real warnAbove: 90
     property color warnFill: Theme.warnFill
 
@@ -21,9 +23,10 @@ Pill {
     }
 
     interactive: false
+    icon: glyph
     tooltip: !source.ready ? "" : source.cores + " cores"
              + (source.frequency > 0 ? " at " + (source.frequency / 1000).toFixed(1) + " GHz" : "")
              + "\n" + source.perCore.map(c => Math.round(c) + "%").join("  ")
-    fill: source.percent >= warnAbove ? warnFill : Theme.fill
+    fill: source.percent >= warnAbove ? warnFill : restFill
     text: format.replace("%1", source.ready ? Math.round(source.percent) : "…")
 }

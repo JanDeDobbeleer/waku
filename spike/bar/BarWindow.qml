@@ -23,7 +23,8 @@ Window {
     Rectangle {
         objectName: "background"
         anchors.fill: parent
-        color: win.spec.hasBackground ? win.spec.background : Theme.surface
+        // With islands the groups draw their own background (BarLayout) and the wallpaper shows between.
+        color: Theme.islands ? "transparent" : win.spec.hasBackground ? win.spec.background : Theme.surface
     }
 
     Loader {

@@ -49,17 +49,27 @@ Pill {
 
     function render(template) {
         const parts = {
-            "{wifi_icon}": glyph(),
+            "{wifi_icon}": "",
             "{wifi_name}": name(),
             "{signal}": kind === "wifi" ? S.Network.signalPercent : "",
             "{ip_addr}": S.Network.ipAddress,
-            "{vpn_icon}": S.Network.vpnActive ? vpnIcon : "",
+            "{vpn_icon}": "",
             "{vpn_name}": S.Network.vpnName
         };
         let text = template;
         for (const key in parts)
             text = text.split(key).join(parts[key]);
         return text.replace(/\s+/g, " ").trim();
+    }
+
+    // The glyphs a template asks for ({wifi_icon}, {vpn_icon}), drawn in Theme.iconFont.
+    function glyphs(template) {
+        const parts = [];
+        if (template.includes("{wifi_icon}"))
+            parts.push(glyph());
+        if (template.includes("{vpn_icon}") && S.Network.vpnActive)
+            parts.push(vpnIcon);
+        return parts.join(" ");
     }
 
     function details() {
@@ -74,7 +84,9 @@ Pill {
     }
 
     visible: S.Network.available
-    text: render(kind === "ethernet" ? (showAlt ? ethernetAltFormat : ethernetFormat) : (showAlt ? altFormat : format))
+    readonly property string template: kind === "ethernet" ? (showAlt ? ethernetAltFormat : ethernetFormat) : (showAlt ? altFormat : format)
+    icon: glyphs(template)
+    text: render(template)
     tooltip: details()
 
     onClicked: popup ? panel.toggle() : showAlt = !showAlt

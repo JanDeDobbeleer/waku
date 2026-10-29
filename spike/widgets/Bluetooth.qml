@@ -17,9 +17,9 @@ Pill {
 
     property string label: "%1"
     property string labelAlt: "%1 %2"
-    property string iconOff: "󰂲"
-    property string iconOn: "󰂯"
-    property string iconConnected: "󰂱"
+    property string iconOff: "\ue702"
+    property string iconOn: "\ue702"
+    property string iconConnected: "\ue702"
     property string separator: ", "
     property string noDevice: "No devices connected"
     property bool showAlt: false
@@ -35,7 +35,8 @@ Pill {
     }
 
     visible: S.Bluetooth.available
-    text: (showAlt ? labelAlt : label).replace("%1", stateIcon()).replace("%2", names()).replace("%3", S.Bluetooth.connectedCount)
+    icon: stateIcon()
+    text: (showAlt ? labelAlt : label).replace("%1", "").trim().replace("%2", names()).replace("%3", S.Bluetooth.connectedCount)
     tooltip: S.Bluetooth.connectedCount > 0 ? "Connected devices\n" + S.Bluetooth.connectedNames.map(n => "• " + n).join("\n") : noDevice
 
     onClicked: panel.toggle()

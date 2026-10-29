@@ -7,7 +7,7 @@ import tidy.services as S
 // playing. A click opens the panel, a right click opens the Settings app.
 //
 //     ControlCenter {
-//         glyph: "⚙"
+//         glyph: "\ue62a"
 //         columns: 3
 //         quickActions: ["dnd", "mute", "micMute", "screenshot", "touchKeyboard", "darkMode"]
 //         sectionsOrder: ["systemControls", "quickActions", "sliders", "power", "media"]
@@ -24,7 +24,7 @@ import tidy.services as S
 Pill {
     id: root
 
-    property string glyph: "⚙"
+    property string glyph: "\ue62a"
     property var sectionsOrder: ["systemControls", "quickActions", "sliders", "power", "media"]
     property var quickActions: ["dnd", "mute", "micMute", "screenshot", "touchKeyboard", "darkMode"]
     property int columns: 3
@@ -201,7 +201,7 @@ Pill {
         return null;
     }
 
-    text: glyph
+    icon: glyph
     tooltip: "Control center"
 
     onClicked: panel.toggle()

@@ -53,6 +53,12 @@ TEST(ThemeValuesTest, DefaultsAreTheShippedLook) {
   EXPECT_EQ(spec.property("surface").value<QColor>(), kDefaultSurface);
   EXPECT_EQ(spec.property("accent").value<QColor>(), QColor(0x5b, 0x8d, 0xef));
   EXPECT_EQ(spec.property("fill").value<QColor>(), kDefaultFill);
+  EXPECT_EQ(spec.property("barFill").value<QColor>(), kDefaultFill);
+  EXPECT_EQ(spec.property("barFillHover").value<QColor>(),
+            spec.property("fillHover").value<QColor>());
+  EXPECT_EQ(spec.property("iconFont").toString(), QStringLiteral("Segoe Fluent Icons"));
+  EXPECT_EQ(spec.property("iconSize").toInt(), 16);
+  EXPECT_EQ(spec.property("fontWeight").toInt(), 400);
   EXPECT_EQ(spec.property("popupSurface").value<QColor>(), QColor(0x18, 0x18, 0x20, 0xf0));
   EXPECT_EQ(spec.property("popupBorder").value<QColor>(), QColor(0xff, 0xff, 0xff, 0x33));
   EXPECT_EQ(spec.property("fontSize").toInt(), 13);
@@ -61,6 +67,9 @@ TEST(ThemeValuesTest, DefaultsAreTheShippedLook) {
   EXPECT_EQ(spec.property("radius").toInt(), -1);
   EXPECT_EQ(spec.property("padding").toInt(), 10);
   EXPECT_EQ(spec.property("spacing").toInt(), 12);
+  EXPECT_FALSE(spec.property("islands").toBool());
+  EXPECT_EQ(spec.property("islandRadius").toInt(), 16);
+  EXPECT_EQ(spec.property("groupPadding").toInt(), 12);
 }
 
 TEST(ThemeValuesTest, TheDefaultFontIsTheSystemFont) {
@@ -292,4 +301,70 @@ TEST(ThemeHost, ANegativeRadiusIsAFullPillAndABigOneIsClamped) {
   EXPECT_DOUBLE_EQ(pill->property("radius").toDouble(), pill->height() / 2);
   themeOf(h)->setProperty("radius", 500);
   EXPECT_DOUBLE_EQ(pill->property("radius").toDouble(), pill->height() / 2);
+}
+
+// ---- islands ----
+
+namespace {
+
+QString islandConfig() {
+  return QStringLiteral(R"(
+import QtQuick
+import tidy
+Config {
+    Bar {
+        layout: BarLayout {
+            start: [ Rectangle { objectName: "a"; width: 60; height: 20 } ]
+            center: [ Rectangle { objectName: "b"; width: 40; height: 20; visible: false } ]
+            end: [ Rectangle { objectName: "c"; width: 50; height: 20 } ]
+        }
+    }
+}
+)");
+}
+
+bool shown(Harness& h, const char* name) {
+  QQuickItem* i = findItem(h.window(), QString::fromLatin1(name));
+  return i && i->isVisible();
+}
+
+}  // namespace
+
+TEST(ThemeHost, IslandsAreOffByDefault) {
+  Harness h;
+  h.start(islandConfig());
+  ASSERT_TRUE(h.host->reload());
+  settle();
+  EXPECT_FALSE(shown(h, "island-start"));
+  EXPECT_FALSE(shown(h, "island-end"));
+  EXPECT_NE(colorOf(h, QStringLiteral("background"), "color").alpha(), 0);
+}
+
+TEST(ThemeHost, IslandsSitOverTheirGroupsAndSkipEmptyOnes) {
+  Harness h;
+  writeTheme(h, themeText(QStringLiteral("islands: true; groupPadding: 10; islandRadius: 8")));
+  h.start(islandConfig());
+  ASSERT_TRUE(h.host->reload());
+  settle();
+  QQuickItem* start = findItem(h.window(), QStringLiteral("island-start"));
+  QQuickItem* end = findItem(h.window(), QStringLiteral("island-end"));
+  QQuickItem* a = findItem(h.window(), QStringLiteral("a"));
+  QQuickItem* c = findItem(h.window(), QStringLiteral("c"));
+  ASSERT_TRUE(start && end && a && c);
+  EXPECT_TRUE(start->isVisible());
+  EXPECT_TRUE(end->isVisible());
+  EXPECT_FALSE(shown(h, "island-center"));
+  EXPECT_DOUBLE_EQ(start->width(), 60 + 20);
+  EXPECT_DOUBLE_EQ(start->mapToItem(h.window()->contentItem(), QPointF()).x(),
+                   a->mapToItem(h.window()->contentItem(), QPointF()).x() - 10);
+  EXPECT_DOUBLE_EQ(end->width(), 50 + 20);
+  EXPECT_DOUBLE_EQ(end->mapToItem(h.window()->contentItem(), QPointF()).x(),
+                   c->mapToItem(h.window()->contentItem(), QPointF()).x() - 10);
+  EXPECT_DOUBLE_EQ(start->height(), h.window()->height());
+  EXPECT_EQ(colorOf(h, QStringLiteral("background"), "color").alpha(), 0);
+
+  // A group that fills later gets its island
+  findItem(h.window(), QStringLiteral("b"))->setVisible(true);
+  settle();
+  EXPECT_TRUE(shown(h, "island-center"));
 }

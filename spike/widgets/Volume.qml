@@ -6,7 +6,7 @@ import tidy.services as S
 // right click opens the sound settings. Hovering shows the current output device. Hidden when
 // there is no audio output.
 //
-//     Volume { step: 5; format: "🔊 %1%"; popup: false }
+//     Volume { step: 5; format: "%1%"; popup: false }
 //
 // `format`: %1 is the volume in percent. `mutedFormat` is shown while muted. With `popup: false`
 // a click mutes instead of opening the panel.
@@ -14,8 +14,10 @@ Pill {
     id: root
 
     property int step: 5
-    property string format: "🔊 %1%"
-    property string mutedFormat: "🔇 muted"
+    property string format: "%1%"
+    property string mutedFormat: "muted"
+    property string glyph: "\ue767"
+    property string mutedGlyph: "\ue74f"
     property bool popup: true
 
     function deviceName() {
@@ -26,6 +28,7 @@ Pill {
     }
 
     visible: S.AudioOutput.available
+    icon: S.AudioOutput.muted ? mutedGlyph : glyph
     text: S.AudioOutput.muted ? mutedFormat : format.replace("%1", S.AudioOutput.volume)
     tooltip: deviceName() !== "" ? deviceName() : "Output volume"
 

@@ -20,7 +20,8 @@ import tidy.services as S
 Pill {
     id: root
 
-    property string label: ""
+    property string label: ""
+    property string glyph: "\ueb00"
     property string labelAlt: "Notifications {data}"
     property bool showAlt: false
     property int interval: 600000
@@ -46,6 +47,7 @@ Pill {
         }]
 
     visible: S.GitHub.available && !(hideEmpty && S.GitHub.signedIn && S.GitHub.unreadCount === 0)
+    icon: glyph
     text: (showAlt ? labelAlt : label).split("{data}").join(S.GitHub.unreadCount)
     tooltip: !S.GitHub.signedIn ? "GitHub: not signed in" : S.GitHub.error !== "" ? S.GitHub.error : "Notifications " + S.GitHub.unreadCount
 
