@@ -18,7 +18,5 @@ wabar_contribute(
     Notifications.qml
     ControlCenter.qml
     GitHub.qml
-    Wallpapers.qml
-    WallpaperGallery.qml
     SafeConfig.qml
 )

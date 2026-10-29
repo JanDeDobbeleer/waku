@@ -12,14 +12,6 @@ add_library(yasb_widgets STATIC
   komorebi/komorebi_service.h
   komorebi/komorebi_state.cpp
   komorebi/komorebi_state.h
-  wallpapers/thumbnail_cache.cpp
-  wallpapers/thumbnail_cache.h
-  wallpapers/wallpaper_files.cpp
-  wallpapers/wallpaper_files.h
-  wallpapers/wallpaper_layout.cpp
-  wallpapers/wallpaper_layout.h
-  wallpapers/wallpaper_manager.cpp
-  wallpapers/wallpaper_manager.h
 )
 target_include_directories(yasb_widgets PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(yasb_widgets

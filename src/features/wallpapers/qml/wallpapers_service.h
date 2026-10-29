@@ -11,27 +11,20 @@
 #include <memory>
 #include <optional>
 
-#include "platform/desktop_wallpaper.h"
-#include "spike/control/wallpaper_control.h"
-#include "spike/services/wallpaper_transition.h"
-#include "widgets/wallpapers/thumbnail_cache.h"
-#include "widgets/wallpapers/wallpaper_manager.h"
+#include "features/wallpapers/desktop_wallpaper.h"
+#include "features/wallpapers/qml/wallpaper_transition.h"
+#include "features/wallpapers/thumbnail_cache.h"
+#include "features/wallpapers/wallpaper_hotkey.h"
+#include "features/wallpapers/wallpaper_manager.h"
+
+// The control unit still lives in spike/control/ and moves in a later step. Rule S2 checks quoted
+// includes only, so this one is an angle include until then; make it quoted when control moves.
+#include <spike/control/wallpaper_control.h>
 
 class QJSEngine;
 class QQmlEngine;
 
-namespace wabar::services {
-
-namespace platform = ::yasb::platform;
-
-// A global hotkey as RegisterHotKey wants it: MOD_ALT 1, MOD_CONTROL 2, MOD_SHIFT 4, MOD_WIN 8.
-struct HotkeyCombo {
-  unsigned modifiers = 0;
-  unsigned virtualKey = 0;
-};
-// "alt+e", "ctrl+shift+f5", "win+space": modifiers alt/ctrl/control/shift/win/windows/super/meta
-// plus one letter, digit, F1..F24 or space. Case and spaces do not matter. nullopt otherwise.
-std::optional<HotkeyCombo> parseHotkey(const QString& keys);
+namespace wabar::wallpapers {
 
 // The file a `wabarc wallpaper set` target means. `target` is a full path (any readable image
 // file) or a file name inside `folder` (case-insensitive; without an extension the supported
@@ -45,21 +38,11 @@ struct ResolvedWallpaper {
 };
 ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& folder);
 
-// Where the hotkey lives. The real one calls RegisterHotKey on the GUI thread and receives
-// WM_HOTKEY through a native event filter in Qt's own message loop; tests replace it.
-class HotkeyHost {
- public:
-  virtual ~HotkeyHost() = default;
-  // False when the combination is taken or the call fails (the caller logs and carries on).
-  virtual bool registerKey(const HotkeyCombo& combo, std::function<void()> pressed) = 0;
-  virtual void unregisterKey() = 0;
-};
-
 // The wallpaper folder, the current wallpaper and the gallery of every Wallpapers widget of a
 // `wabar` run, as a QML singleton. Wraps the UI-free classes of the Widgets build:
-// yasb::widgets::WallpaperManager (set, random, auto-change timer; the animated change is the Qt
-// Quick WallpaperTransition, see docs/plans/2026-10-29-wabar-wallpapers-design.md),
-// collectImageFiles, ThumbnailCache and platform::DesktopWallpaperBackend. Registers
+// wabar::wallpapers::WallpaperManager (set, random, auto-change timer; the animated change is the
+// Qt Quick WallpaperTransition, see docs/plans/2026-10-29-wabar-wallpapers-design.md),
+// collectImageFiles, ThumbnailCache and DesktopWallpaperBackend. Registers
 // image://wallpaper/<path>?<stamp>.
 //
 // Threads: GUI thread, no thread of its own (the transition's decoder thread is described there).
@@ -89,9 +72,9 @@ class Wallpapers : public QObject, public wabar::WallpaperControl {
   // Everything a test replaces. Null members are the real ones (cache: the shared folder under
   // %LOCALAPPDATA%\wabar); `realBackend=false` with a null `backend` means unavailable.
   struct Deps {
-    yasb::widgets::WallpaperManager::BackendFactory backend;
-    yasb::widgets::WallpaperManager::Picker picker;
-    std::shared_ptr<yasb::widgets::ThumbnailCache> cache;
+    wabar::wallpapers::WallpaperManager::BackendFactory backend;
+    wabar::wallpapers::WallpaperManager::Picker picker;
+    std::shared_ptr<wabar::wallpapers::ThumbnailCache> cache;
     std::unique_ptr<HotkeyHost> hotkeys;
     // Builds the transition for (image, animation); null means the real WallpaperTransition.
     std::function<std::unique_ptr<WallpaperTransition>(const QString&, const QString&)> transition;
@@ -118,7 +101,7 @@ class Wallpapers : public QObject, public wabar::WallpaperControl {
   QString current() const { return current_; }
   bool galleryOpen() const { return galleryOpen_; }
   QString galleryScreen() const { return galleryScreen_; }
-  const std::shared_ptr<yasb::widgets::ThumbnailCache>& cache() const { return cache_; }
+  const std::shared_ptr<wabar::wallpapers::ThumbnailCache>& cache() const { return cache_; }
 
   // What Wallpapers.qml passes in: the folder, the toggle hotkey ("" for none), the screen mode
   // for it (cursor, primary, active; anything else is primary) and the auto-change interval in
@@ -163,9 +146,9 @@ class Wallpapers : public QObject, public wabar::WallpaperControl {
 
   Deps deps_;
   bool available_ = false;
-  std::shared_ptr<yasb::widgets::ThumbnailCache> cache_;
-  std::unique_ptr<platform::DesktopWallpaperBackend> backend_;
-  std::unique_ptr<yasb::widgets::WallpaperManager> manager_;
+  std::shared_ptr<wabar::wallpapers::ThumbnailCache> cache_;
+  std::unique_ptr<DesktopWallpaperBackend> backend_;
+  std::unique_ptr<wabar::wallpapers::WallpaperManager> manager_;
   QString imagePath_;
   QString hotkey_;
   int autoChangeSeconds_ = 0;
@@ -184,12 +167,12 @@ class Wallpapers : public QObject, public wabar::WallpaperControl {
 // (the QML sourceSize) and kept in the shared ThumbnailCache. Holds only the cache.
 class WallpaperThumbnailProvider : public QQuickImageProvider {
  public:
-  explicit WallpaperThumbnailProvider(std::shared_ptr<yasb::widgets::ThumbnailCache> cache);
+  explicit WallpaperThumbnailProvider(std::shared_ptr<wabar::wallpapers::ThumbnailCache> cache);
 
   QImage requestImage(const QString& id, QSize* size, const QSize& requestedSize) override;
 
  private:
-  std::shared_ptr<yasb::widgets::ThumbnailCache> cache_;
+  std::shared_ptr<wabar::wallpapers::ThumbnailCache> cache_;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::wallpapers

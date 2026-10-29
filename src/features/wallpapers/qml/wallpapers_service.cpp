@@ -1,8 +1,5 @@
-#include "spike/services/wallpapers_service.h"
+#include "features/wallpapers/qml/wallpapers_service.h"
 
-#include <windows.h>
-
-#include <QAbstractNativeEventFilter>
 #include <QCoreApplication>
 #include <QCursor>
 #include <QDateTime>
@@ -19,15 +16,14 @@
 #include <exception>
 #include <utility>
 
+#include "features/wallpapers/wallpaper_files.h"
+#include "features/wallpapers/win32/wallpaper_hotkey_win.h"
+#include "features/wallpapers/win32/window_focus.h"
 #include "kernel/qt/app_data.h"
 #include "kernel/qt/live_desktop.h"
-#include "platform/window_focus.h"
-#include "widgets/wallpapers/wallpaper_files.h"
 
-namespace wabar::services {
+namespace wabar::wallpapers {
 namespace {
-
-namespace widgets = ::yasb::widgets;
 
 std::function<std::unique_ptr<Wallpapers>()>& testFactory() {
   static std::function<std::unique_ptr<Wallpapers>()> factory;
@@ -45,51 +41,10 @@ void guarded(const char* what, F&& body) {
   }
 }
 
-std::shared_ptr<widgets::ThumbnailCache> defaultCache() {
-  return std::make_shared<widgets::ThumbnailCache>(
+std::shared_ptr<ThumbnailCache> defaultCache() {
+  return std::make_shared<ThumbnailCache>(
       QDir(kernel::appDataDir()).filePath(QStringLiteral("wallpaper_thumbnails")));
 }
-
-// RegisterHotKey (documented) with a null window: WM_HOTKEY is posted to the registering thread's
-// queue, which is the GUI thread, and Qt's message loop hands every message to native event
-// filters. Owner: the Wallpapers singleton; removed in unregisterKey() and the destructor.
-class RealHotkeyHost final : public HotkeyHost, public QAbstractNativeEventFilter {
- public:
-  ~RealHotkeyHost() override { unregisterKey(); }
-
-  bool registerKey(const HotkeyCombo& combo, std::function<void()> pressed) override {
-    unregisterKey();
-    constexpr unsigned kNoRepeat = 0x4000;  // MOD_NOREPEAT
-    if (!RegisterHotKey(nullptr, kId, combo.modifiers | kNoRepeat, combo.virtualKey)) return false;
-    pressed_ = std::move(pressed);
-    registered_ = true;
-    if (QCoreApplication::instance()) QCoreApplication::instance()->installNativeEventFilter(this);
-    return true;
-  }
-
-  void unregisterKey() override {
-    if (!registered_) return;
-    UnregisterHotKey(nullptr, kId);
-    if (QCoreApplication::instance()) QCoreApplication::instance()->removeNativeEventFilter(this);
-    registered_ = false;
-    pressed_ = nullptr;
-  }
-
-  bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr*) override {
-    if (!registered_ || eventType != "windows_generic_MSG" || !message) return false;
-    const MSG* msg = static_cast<const MSG*>(message);
-    if (msg->message != WM_HOTKEY || msg->wParam != kId) return false;
-    guarded("hotkey", [&] {
-      if (pressed_) pressed_();
-    });
-    return true;
-  }
-
- private:
-  static constexpr int kId = 0x7A11;
-  bool registered_ = false;
-  std::function<void()> pressed_;
-};
 
 bool hasFolderPart(const QString& target) {
   return target.contains(QLatin1Char('/')) || target.contains(QLatin1Char('\\')) ||
@@ -124,7 +79,7 @@ QString errorAnswer(const QString& why) { return QStringLiteral("error: ") + why
 ResolvedWallpaper resolveWallpaperTarget(const QString& rawTarget, const QString& folder) {
   const QString target = rawTarget.trimmed();
   if (target.isEmpty()) return {{}, QStringLiteral("no file given")};
-  const QStringList types = widgets::supportedImageTypes();
+  const QStringList types = supportedImageTypes();
   if (hasFolderPart(target)) return validateImageFile(target, types);
 
   if (folder.isEmpty()) {
@@ -132,7 +87,7 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& rawTarget, const QString
             QStringLiteral("no wallpaper folder is configured (WallpaperSettings.imagePath); "
                            "give a full path")};
   }
-  const QStringList all = widgets::collectImageFiles({folder}, types);
+  const QStringList all = collectImageFiles({folder}, types);
   auto find = [&all](const QString& name) {
     QStringList found;
     for (const QString& file : all) {
@@ -161,47 +116,12 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& rawTarget, const QString
               .arg(target, QDir::toNativeSeparators(folder))};
 }
 
-std::optional<HotkeyCombo> parseHotkey(const QString& keys) {
-  HotkeyCombo combo;
-  for (QString part : keys.split(QLatin1Char('+'))) {
-    part = part.simplified().remove(QLatin1Char(' ')).toLower();
-    if (part.isEmpty()) continue;
-    if (part == QLatin1String("alt")) {
-      combo.modifiers |= 1;
-    } else if (part == QLatin1String("ctrl") || part == QLatin1String("control")) {
-      combo.modifiers |= 2;
-    } else if (part == QLatin1String("shift")) {
-      combo.modifiers |= 4;
-    } else if (part == QLatin1String("win") || part == QLatin1String("windows") ||
-               part == QLatin1String("super") || part == QLatin1String("meta")) {
-      combo.modifiers |= 8;
-    } else {
-      if (combo.virtualKey != 0) return std::nullopt;
-      if (part.size() == 1 && ((part[0] >= QLatin1Char('a') && part[0] <= QLatin1Char('z')) ||
-                               (part[0] >= QLatin1Char('0') && part[0] <= QLatin1Char('9')))) {
-        combo.virtualKey = static_cast<unsigned>(part[0].toUpper().unicode());
-      } else if (part == QLatin1String("space")) {
-        combo.virtualKey = VK_SPACE;
-      } else if (part.size() >= 2 && part[0] == QLatin1Char('f')) {
-        bool ok = false;
-        const int number = part.mid(1).toInt(&ok);
-        if (!ok || number < 1 || number > 24) return std::nullopt;
-        combo.virtualKey = static_cast<unsigned>(VK_F1 + number - 1);
-      } else {
-        return std::nullopt;
-      }
-    }
-  }
-  if (combo.virtualKey == 0) return std::nullopt;
-  return combo;
-}
-
 Wallpapers::Wallpapers(QObject* parent) : Wallpapers(Deps{}, parent) {}
 
 Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std::move(deps)) {
   cache_ = deps_.cache ? deps_.cache : defaultCache();
   if (!deps_.backend && deps_.realBackend && kernel::liveDesktop(QStringLiteral("wallpapers"))) {
-    deps_.backend = [] { return platform::makeDesktopWallpaperBackend(); };
+    deps_.backend = [] { return makeDesktopWallpaperBackend(); };
   }
   if (!deps_.dryRun) deps_.dryRun = qEnvironmentVariableIntValue("WABAR_WALLPAPER_DRYRUN") != 0;
   if (deps_.backend) {
@@ -210,11 +130,11 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
   available_ = backend_ != nullptr;
   if (!available_) return;
 
-  widgets::WallpaperManager::Dependencies managerDeps;
+  WallpaperManager::Dependencies managerDeps;
   managerDeps.backend = deps_.backend;
   managerDeps.picker = deps_.picker;
-  manager_ = std::make_unique<widgets::WallpaperManager>(std::move(managerDeps));
-  if (!deps_.hotkeys) deps_.hotkeys = std::make_unique<RealHotkeyHost>();
+  manager_ = std::make_unique<WallpaperManager>(std::move(managerDeps));
+  if (!deps_.hotkeys) deps_.hotkeys = makeWin32HotkeyHost();
   readCurrent();
 }
 
@@ -285,9 +205,9 @@ void Wallpapers::refresh() {
   guarded("refresh", [&] {
     readCurrent();
     QVariantList list;
-    const QString currentKey = widgets::normalizedPathKey(current_);
+    const QString currentKey = normalizedPathKey(current_);
     if (!imagePath_.isEmpty()) {
-      for (const QString& file : widgets::collectImageFiles({imagePath_})) {
+      for (const QString& file : collectImageFiles({imagePath_})) {
         const QFileInfo info(file);
         const QString url =
             QStringLiteral("image://wallpaper/") +
@@ -298,7 +218,7 @@ void Wallpapers::refresh() {
             {QStringLiteral("name"), info.fileName()},
             {QStringLiteral("thumbnail"), url},
             {QStringLiteral("current"),
-             !current_.isEmpty() && widgets::normalizedPathKey(file) == currentKey},
+             !current_.isEmpty() && normalizedPathKey(file) == currentKey},
         });
       }
     }
@@ -373,15 +293,14 @@ void Wallpapers::random() {
       return;
     }
     // Pick here (never the one shown now) so the change can animate like a gallery click.
-    const QStringList all = widgets::collectImageFiles({imagePath_});
+    const QStringList all = collectImageFiles({imagePath_});
     if (all.isEmpty()) return;
     QString next;
     do {
       const int count = static_cast<int>(all.size());
       next = all.at(deps_.picker ? deps_.picker(count) % count
                                  : static_cast<int>(QRandomGenerator::global()->bounded(count)));
-    } while (all.size() > 1 &&
-             widgets::normalizedPathKey(next) == widgets::normalizedPathKey(current_) &&
+    } while (all.size() > 1 && normalizedPathKey(next) == normalizedPathKey(current_) &&
              (deps_.picker == nullptr));
     setWallpaper(next);
   });
@@ -415,7 +334,7 @@ QString Wallpapers::controlRandom(bool dryRun) {
       return;
     }
     readCurrent();
-    const QStringList all = widgets::collectImageFiles({imagePath_});
+    const QStringList all = collectImageFiles({imagePath_});
     if (all.isEmpty()) {
       answer = errorAnswer(QStringLiteral("no wallpapers found in %1")
                                .arg(imagePath_.isEmpty() ? QStringLiteral("(no folder configured)")
@@ -423,10 +342,10 @@ QString Wallpapers::controlRandom(bool dryRun) {
       return;
     }
     // Never the one shown now, unless it is the only one.
-    const QString currentKey = widgets::normalizedPathKey(current_);
+    const QString currentKey = normalizedPathKey(current_);
     QStringList candidates;
     for (const QString& file : all) {
-      if (widgets::normalizedPathKey(file) != currentKey) candidates << file;
+      if (normalizedPathKey(file) != currentKey) candidates << file;
     }
     if (candidates.isEmpty()) candidates = all;
     const int count = static_cast<int>(candidates.size());
@@ -447,7 +366,7 @@ QString Wallpapers::controlStep(int step, bool dryRun) {
       return;
     }
     readCurrent();
-    const QStringList all = widgets::collectImageFiles({imagePath_});
+    const QStringList all = collectImageFiles({imagePath_});
     if (all.isEmpty()) {
       answer = errorAnswer(QStringLiteral("no wallpapers found in %1")
                                .arg(imagePath_.isEmpty() ? QStringLiteral("(no folder configured)")
@@ -455,10 +374,10 @@ QString Wallpapers::controlStep(int step, bool dryRun) {
       return;
     }
     const int count = static_cast<int>(all.size());
-    const QString currentKey = widgets::normalizedPathKey(current_);
+    const QString currentKey = normalizedPathKey(current_);
     int at = -1;
     for (int i = 0; i < count && at < 0; ++i) {
-      if (widgets::normalizedPathKey(all.at(i)) == currentKey) at = i;
+      if (normalizedPathKey(all.at(i)) == currentKey) at = i;
     }
     const int target = at < 0 ? (step > 0 ? 0 : count - 1) : (at + step + count) % count;
     answer = controlStart(nativePath(all.at(target)), dryRun);
@@ -481,7 +400,7 @@ QString Wallpapers::screenNameFor(const QString& mode) const {
   if (mode == QLatin1String("cursor")) {
     chosen = QGuiApplication::screenAt(QCursor::pos());
   } else if (mode == QLatin1String("active")) {
-    if (const auto monitor = platform::foregroundMonitorRect()) {
+    if (const auto monitor = foregroundMonitorRect()) {
       for (QScreen* screen : QGuiApplication::screens()) {
         if (screen->geometry().topLeft() == monitor->topLeft()) chosen = screen;
       }
@@ -514,7 +433,7 @@ void Wallpapers::closeGallery() {
 // --- image provider
 
 WallpaperThumbnailProvider::WallpaperThumbnailProvider(
-    std::shared_ptr<yasb::widgets::ThumbnailCache> cache)
+    std::shared_ptr<wabar::wallpapers::ThumbnailCache> cache)
     : QQuickImageProvider(QQuickImageProvider::Image,
                           QQuickImageProvider::ForceAsynchronousImageLoading),
       cache_(std::move(cache)) {}
@@ -551,4 +470,4 @@ QImage WallpaperThumbnailProvider::requestImage(const QString& id, QSize* size,
   }
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::wallpapers

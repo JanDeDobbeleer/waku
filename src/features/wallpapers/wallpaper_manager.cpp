@@ -1,4 +1,4 @@
-#include "widgets/wallpapers/wallpaper_manager.h"
+#include "features/wallpapers/wallpaper_manager.h"
 
 #include <QDebug>
 #include <QDir>
@@ -9,9 +9,9 @@
 #include <memory>
 #include <utility>
 
-#include "widgets/wallpapers/wallpaper_files.h"
+#include "features/wallpapers/wallpaper_files.h"
 
-namespace yasb::widgets {
+namespace wabar::wallpapers {
 
 WallpaperManager::CommandRunner systemCommandRunner(QObject* owner) {
   QPointer<QObject> parent(owner);
@@ -41,7 +41,7 @@ WallpaperManager::CommandRunner systemCommandRunner(QObject* owner) {
 
 WallpaperManager::WallpaperManager(Dependencies deps, QObject* parent)
     : QObject(parent), deps_(std::move(deps)) {
-  if (!deps_.backend) deps_.backend = [] { return platform::makeDesktopWallpaperBackend(); };
+  if (!deps_.backend) deps_.backend = [] { return makeDesktopWallpaperBackend(); };
   if (!deps_.runner) deps_.runner = systemCommandRunner(this);
   if (!deps_.picker) {
     auto generator = std::make_shared<std::mt19937>(std::random_device{}());
@@ -59,7 +59,7 @@ void WallpaperManager::stop() {
   timerRunning_ = false;
 }
 
-platform::DesktopWallpaperBackend* WallpaperManager::backend() {
+DesktopWallpaperBackend* WallpaperManager::backend() {
   if (!backend_) backend_ = deps_.backend();
   return backend_.get();
 }
@@ -160,4 +160,4 @@ void WallpaperManager::runNextCommand(const QString& imagePath, qsizetype index)
   });
 }
 
-}  // namespace yasb::widgets
+}  // namespace wabar::wallpapers

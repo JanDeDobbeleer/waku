@@ -12,21 +12,25 @@
 #include <memory>
 #include <vector>
 
+#include "features/wallpapers/qml/wallpaper_transition.h"
+#include "features/wallpapers/qml/wallpapers_service.h"
+#include "features/wallpapers/testing/fake_wallpaper_backend.h"
 #include "spike/bar/control_handler.h"
 #include "spike/control/control.h"
 #include "spike/control/wallpaper_control.h"
-#include "spike/services/wallpaper_transition.h"
-#include "spike/services/wallpapers_service.h"
 #include "spike/tests/bar_fixtures.h"
 
 namespace {
 
-namespace plat = yasb::platform;
-using wabar::services::HotkeyCombo;
-using wabar::services::HotkeyHost;
-using wabar::services::resolveWallpaperTarget;
-using wabar::services::Wallpapers;
-using wabar::services::WallpaperTransition;
+namespace plat = wabar::wallpapers;
+using wabar::wallpapers::DesktopState;
+using wabar::wallpapers::FakeBackend;
+using wabar::wallpapers::FakeHotkeys;
+using wabar::wallpapers::HotkeyCombo;
+using wabar::wallpapers::HotkeyHost;
+using wabar::wallpapers::resolveWallpaperTarget;
+using wabar::wallpapers::Wallpapers;
+using wabar::wallpapers::WallpaperTransition;
 
 // ---- fakes ----
 
@@ -56,40 +60,6 @@ class FakeControl final : public WallpaperControl {
   QString answer = QStringLiteral("ok: fake");
 };
 
-struct DesktopState {
-  QString wallpaper;
-  QStringList sets;
-};
-
-class FakeBackend final : public plat::DesktopWallpaperBackend {
- public:
-  explicit FakeBackend(std::shared_ptr<DesktopState> state) : state_(std::move(state)) {}
-  bool setWallpaper(const QString&, const QString& path, QString*) override {
-    state_->wallpaper = path;
-    state_->sets << path;
-    return true;
-  }
-  std::vector<plat::WallpaperMonitor> monitors() override {
-    return {{QStringLiteral("mon-1"), QRect(0, 0, 100, 100)}};
-  }
-  QString wallpaperOf(const QString&) override { return state_->wallpaper; }
-
- private:
-  std::shared_ptr<DesktopState> state_;
-};
-
-class FakeHotkeys final : public HotkeyHost {
- public:
-  bool registerKey(const HotkeyCombo& combo, std::function<void()> pressed) override {
-    attempts.push_back(combo);
-    callback = std::move(pressed);
-    return true;
-  }
-  void unregisterKey() override { callback = nullptr; }
-  std::vector<HotkeyCombo> attempts;
-  std::function<void()> callback;
-};
-
 void makeImage(const QString& path, const QColor& color) {
   QImage image(QSize(40, 20), QImage::Format_RGB32);
   image.fill(color);
@@ -112,7 +82,7 @@ std::unique_ptr<WallpaperTransition> fakeTransition(const std::shared_ptr<Transi
                                                     const QString& path, const QString& animation) {
   log->played << path + QLatin1Char('|') + animation;
   WallpaperTransition::Platform platform;
-  platform.readSettings = [] { return yasb::widgets::DesktopSettings{}; };
+  platform.readSettings = [] { return wabar::wallpapers::DesktopSettings{}; };
   platform.oldImagePath = [] { return QStringLiteral("old"); };
   platform.attach = [](std::uintptr_t, QString* failure) -> std::optional<plat::WorkerWAttachment> {
     if (failure) *failure = QStringLiteral("no WorkerW");
@@ -152,7 +122,7 @@ struct Fixture {
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [this](int count) { return picks[next++ % picks.size()] % count; };
-    deps.cache = std::make_shared<yasb::widgets::ThumbnailCache>(cacheFolder.path());
+    deps.cache = std::make_shared<wabar::wallpapers::ThumbnailCache>(cacheFolder.path());
     deps.hotkeys = std::move(owned);
     deps.transition = [log = transitions](const QString& path, const QString& animation) {
       return fakeTransition(log, path, animation);
@@ -195,7 +165,7 @@ struct SmallFolder {
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [this](int count) { return pick % count; };
-    deps.cache = std::make_shared<yasb::widgets::ThumbnailCache>(cacheFolder.path());
+    deps.cache = std::make_shared<wabar::wallpapers::ThumbnailCache>(cacheFolder.path());
     deps.hotkeys = std::make_unique<FakeHotkeys>();
     deps.realBackend = false;
     service = std::make_unique<Wallpapers>(std::move(deps), nullptr);

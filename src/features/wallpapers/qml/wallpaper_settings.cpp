@@ -1,13 +1,13 @@
-#include "spike/services/wallpaper_settings.h"
+#include "features/wallpapers/qml/wallpaper_settings.h"
 
 #include <QDebug>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <exception>
 
-#include "spike/services/wallpapers_service.h"
+#include "features/wallpapers/qml/wallpapers_service.h"
 
-namespace wabar::services {
+namespace wabar::wallpapers {
 namespace {
 
 constexpr auto kGalleryUrl = "qrc:/qt/qml/wabar/widgets/WallpaperGallery.qml";
@@ -91,4 +91,4 @@ void WallpaperSettings::createGallery() {
   gallery_ = gallery;
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::wallpapers

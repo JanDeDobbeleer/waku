@@ -1,4 +1,4 @@
-#include "platform/desktop_wallpaper.h"
+#include "features/wallpapers/desktop_wallpaper.h"
 
 // clang-format off
 #include <windows.h>
@@ -9,7 +9,7 @@
 #include <QDebug>
 #include <string>
 
-namespace yasb::platform {
+namespace wabar::wallpapers {
 namespace {
 
 // Initialises COM for the calling thread when nobody has, and balances it on destruction.
@@ -140,4 +140,4 @@ int compareLogical(const QString& a, const QString& b) {
   return StrCmpLogicalW(reinterpret_cast<PCWSTR>(a.utf16()), reinterpret_cast<PCWSTR>(b.utf16()));
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::wallpapers

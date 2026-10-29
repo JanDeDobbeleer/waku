@@ -14,15 +14,15 @@
 #include <nlohmann/json.hpp>
 #include <vector>
 
-#include "platform/desktop_wallpaper.h"
-#include "widgets/wallpapers/thumbnail_cache.h"
-#include "widgets/wallpapers/wallpaper_files.h"
-#include "widgets/wallpapers/wallpaper_manager.h"
+#include "features/wallpapers/desktop_wallpaper.h"
+#include "features/wallpapers/thumbnail_cache.h"
+#include "features/wallpapers/wallpaper_files.h"
+#include "features/wallpapers/wallpaper_manager.h"
 
 using nlohmann::json;
-using namespace yasb::widgets;
-using yasb::platform::DesktopWallpaperBackend;
-using yasb::platform::WallpaperMonitor;
+using namespace wabar::wallpapers;
+using wabar::wallpapers::DesktopWallpaperBackend;
+using wabar::wallpapers::WallpaperMonitor;
 
 namespace {
 

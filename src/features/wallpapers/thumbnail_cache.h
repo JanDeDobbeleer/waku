@@ -4,7 +4,7 @@
 #include <QString>
 #include <optional>
 
-namespace yasb::widgets {
+namespace wabar::wallpapers {
 
 // Port of services/wallpapers/thumbnails.py: PNG thumbnails keyed by file identity and size, kept
 // under %LOCALAPPDATA%\wabar\wallpaper_thumbnails (or `folder`). Every method may run on any
@@ -30,4 +30,4 @@ class ThumbnailCache {
   QString folder_;
 };
 
-}  // namespace yasb::widgets
+}  // namespace wabar::wallpapers

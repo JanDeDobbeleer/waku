@@ -9,9 +9,9 @@
 #include <utility>
 #include <vector>
 
-#include "platform/workerw.h"
+#include "features/wallpapers/win32/workerw.h"
 
-namespace yasb::widgets {
+namespace wabar::wallpapers {
 
 // Geometry of the wallpaper transition (services/wallpapers/engine.py). The goal is to lay the new
 // image out on the same pixels Windows will, so the desktop does not jump when the overlay ends.
@@ -27,7 +27,7 @@ struct ScreenArea {
 };
 
 struct DesktopSettings {
-  platform::WallpaperFit fit = platform::WallpaperFit::Fill;
+  WallpaperFit fit = WallpaperFit::Fill;
   QColor background = QColor(0, 0, 0);
   // MaxVirtualDesktopDimension and MaxMonitorDimension; nullopt makes Windows skip the resize.
   std::optional<std::pair<int, int>> transcodeLimits;
@@ -65,4 +65,4 @@ std::vector<ScaledImage> layoutForScreens(const QPixmap& source, std::vector<Scr
 // Reveal shape of the new wallpaper at progress t (0..1). Unknown animations reveal everything.
 QPainterPath revealPath(const QString& animation, int dx, int dy, int dw, int dh, double t);
 
-}  // namespace yasb::widgets
+}  // namespace wabar::wallpapers

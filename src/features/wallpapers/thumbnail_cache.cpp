@@ -1,4 +1,4 @@
-#include "widgets/wallpapers/thumbnail_cache.h"
+#include "features/wallpapers/thumbnail_cache.h"
 
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -10,9 +10,9 @@
 #include <tuple>
 #include <vector>
 
-#include "widgets/wallpapers/wallpaper_files.h"
+#include "features/wallpapers/wallpaper_files.h"
 
-namespace yasb::widgets {
+namespace wabar::wallpapers {
 namespace {
 
 // Bump when the thumbnail pixels change meaning. Python's cache hashes differently, so the two
@@ -79,4 +79,4 @@ void ThumbnailCache::prune() const {
   }
 }
 
-}  // namespace yasb::widgets
+}  // namespace wabar::wallpapers

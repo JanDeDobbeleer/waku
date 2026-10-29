@@ -11,14 +11,17 @@
 #include <memory>
 #include <vector>
 
-#include "spike/services/wallpaper_transition.h"
-#include "spike/services/wallpapers_service.h"
+#include "features/wallpapers/qml/wallpaper_transition.h"
+#include "features/wallpapers/qml/wallpapers_service.h"
+#include "features/wallpapers/testing/fake_wallpaper_backend.h"
 
 namespace {
 
-namespace plat = yasb::platform;
-using wabar::services::Wallpapers;
-using wabar::services::WallpaperTransition;
+namespace plat = wabar::wallpapers;
+using wabar::wallpapers::DesktopState;
+using wabar::wallpapers::FakeBackend;
+using wabar::wallpapers::Wallpapers;
+using wabar::wallpapers::WallpaperTransition;
 
 constexpr QRgb kOld = 0xFFFF0000;  // red
 constexpr QRgb kNew = 0xFF0000FF;  // blue
@@ -38,7 +41,7 @@ struct FakeCalls {
 WallpaperTransition::Platform fakePlatform(std::shared_ptr<FakeCalls> calls, bool attachOk = true,
                                            bool readable = true) {
   WallpaperTransition::Platform platform;
-  platform.readSettings = [] { return yasb::widgets::DesktopSettings{}; };
+  platform.readSettings = [] { return wabar::wallpapers::DesktopSettings{}; };
   platform.oldImagePath = [] { return QStringLiteral("old"); };
   platform.attach = [calls, attachOk](std::uintptr_t,
                                       QString* failure) -> std::optional<plat::WorkerWAttachment> {
@@ -209,28 +212,6 @@ TEST(WallpaperTransition, DestroyingWhileDecodingIsSafe) {
 
 namespace {
 
-struct DesktopState {
-  QString wallpaper;
-  QStringList sets;
-};
-
-class FakeBackend final : public plat::DesktopWallpaperBackend {
- public:
-  explicit FakeBackend(std::shared_ptr<DesktopState> state) : state_(std::move(state)) {}
-  bool setWallpaper(const QString&, const QString& path, QString*) override {
-    state_->wallpaper = path;
-    state_->sets << path;
-    return true;
-  }
-  std::vector<plat::WallpaperMonitor> monitors() override {
-    return {{QStringLiteral("mon-1"), QRect(0, 0, 100, 100)}};
-  }
-  QString wallpaperOf(const QString&) override { return state_->wallpaper; }
-
- private:
-  std::shared_ptr<DesktopState> state_;
-};
-
 struct ServiceFixture {
   explicit ServiceFixture(bool attachOk = true, bool readable = true, bool dryRun = false) {
     EXPECT_TRUE(folder.isValid());
@@ -241,7 +222,7 @@ struct ServiceFixture {
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [](int) { return 0; };
-    deps.cache = std::make_shared<yasb::widgets::ThumbnailCache>(cacheFolder.path());
+    deps.cache = std::make_shared<wabar::wallpapers::ThumbnailCache>(cacheFolder.path());
     deps.hotkeys = std::make_unique<NoHotkeys>();
     deps.realBackend = false;
     deps.dryRun = dryRun;
@@ -255,8 +236,8 @@ struct ServiceFixture {
     service->setImagePath(folder.path());
   }
 
-  struct NoHotkeys final : wabar::services::HotkeyHost {
-    bool registerKey(const wabar::services::HotkeyCombo&, std::function<void()>) override {
+  struct NoHotkeys final : wabar::wallpapers::HotkeyHost {
+    bool registerKey(const wabar::wallpapers::HotkeyCombo&, std::function<void()>) override {
       return true;
     }
     void unregisterKey() override {}

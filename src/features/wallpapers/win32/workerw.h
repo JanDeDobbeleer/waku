@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-namespace yasb::platform {
+namespace wabar::wallpapers {
 
 // The desktop wallpaper settings the wallpaper transition mirrors (HKCU\Control Panel\Desktop and
 // HKCU\Control Panel\Colors). Every reader falls back to Windows' own default.
@@ -33,4 +33,4 @@ struct WorkerWAttachment {
 // WorkerW cannot be found.
 std::optional<WorkerWAttachment> attachToWorkerW(std::uintptr_t hwnd, QString* failure);
 
-}  // namespace yasb::platform
+}  // namespace wabar::wallpapers

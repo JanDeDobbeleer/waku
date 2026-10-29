@@ -1,11 +1,11 @@
-#include "widgets/wallpapers/wallpaper_files.h"
+#include "features/wallpapers/wallpaper_files.h"
 
 #include <QDir>
 #include <QFileInfo>
 #include <algorithm>
 #include <nlohmann/json.hpp>
 
-namespace yasb::widgets {
+namespace wabar::wallpapers {
 namespace {
 
 // os.walk order: the files of a directory first, then each sub-directory in turn. Symlinked
@@ -44,7 +44,7 @@ QStringList imagePathsFrom(const nlohmann::json& imagePath) {
   return result;
 }
 
-QStringList supportedImageTypes(const platform::WindowsBuild& build) {
+QStringList supportedImageTypes(const WindowsBuild& build) {
   QStringList types{QStringLiteral("png"), QStringLiteral("jpg"), QStringLiteral("jpeg"),
                     QStringLiteral("gif"), QStringLiteral("bmp"), QStringLiteral("tif"),
                     QStringLiteral("tiff")};
@@ -54,7 +54,7 @@ QStringList supportedImageTypes(const platform::WindowsBuild& build) {
   return types;
 }
 
-QStringList supportedImageTypes() { return supportedImageTypes(platform::windowsBuildAndUbr()); }
+QStringList supportedImageTypes() { return supportedImageTypes(windowsBuildAndUbr()); }
 
 QStringList collectImageFiles(const QStringList& paths, const QStringList& types) {
   QStringList files;
@@ -63,9 +63,8 @@ QStringList collectImageFiles(const QStringList& paths, const QStringList& types
     if (QFileInfo(path).isDir()) walk(path, types, files);
   }
   // Python's sorted() is stable; so is this.
-  std::stable_sort(files.begin(), files.end(), [](const QString& a, const QString& b) {
-    return platform::compareLogical(a, b) < 0;
-  });
+  std::stable_sort(files.begin(), files.end(),
+                   [](const QString& a, const QString& b) { return compareLogical(a, b) < 0; });
   return files;
 }
 
@@ -95,4 +94,4 @@ QHash<QString, int> findWallpapers(const QStringList& files,
   return found;
 }
 
-}  // namespace yasb::widgets
+}  // namespace wabar::wallpapers

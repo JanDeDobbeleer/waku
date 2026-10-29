@@ -5,9 +5,9 @@
 #include <QStringList>
 #include <nlohmann/json_fwd.hpp>
 
-#include "platform/desktop_wallpaper.h"
+#include "features/wallpapers/desktop_wallpaper.h"
 
-namespace yasb::widgets {
+namespace wabar::wallpapers {
 
 // Port of core/widgets/services/wallpapers/images.py (folder scanning half).
 
@@ -16,7 +16,7 @@ QStringList imagePathsFrom(const nlohmann::json& imagePath);
 
 // Extensions Windows accepts as a wallpaper on this build; webp needs build 26220.7653 or
 // 26100.8037.
-QStringList supportedImageTypes(const platform::WindowsBuild& build);
+QStringList supportedImageTypes(const WindowsBuild& build);
 QStringList supportedImageTypes();
 
 // Every usable wallpaper under `paths`, in Explorer name order (StrCmpLogicalW). Like Python the
@@ -32,4 +32,4 @@ QHash<QString, int> findWallpapers(const QStringList& files,
 // os.path.normcase(os.path.normpath(path)).
 QString normalizedPathKey(const QString& path);
 
-}  // namespace yasb::widgets
+}  // namespace wabar::wallpapers

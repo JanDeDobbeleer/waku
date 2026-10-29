@@ -7,7 +7,7 @@
 #include <QPointer>
 #include <QString>
 
-namespace wabar::services {
+namespace wabar::wallpapers {
 
 class Wallpapers;
 
@@ -83,4 +83,4 @@ class WallpaperSettings : public QObject {
   QPointer<QObject> gallery_;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::wallpapers

@@ -1,4 +1,4 @@
-#include "widgets/wallpapers/wallpaper_layout.h"
+#include "features/wallpapers/wallpaper_layout.h"
 
 #include <QPainter>
 #include <QPolygonF>
@@ -6,7 +6,7 @@
 #include <cmath>
 #include <set>
 
-namespace yasb::widgets {
+namespace wabar::wallpapers {
 namespace {
 
 QPixmap scaledTo(const QPixmap& px, int w, int h) {
@@ -65,8 +65,7 @@ std::vector<ScaledImage> scaleTile(const QPixmap& px, const std::vector<ScreenAr
 }
 
 // One monitor: centre, stretch, fit or fill. Fill anchors at a third of the vertical overflow.
-ScaledImage scaleForScreen(const QPixmap& px, int sw, int sh, platform::WallpaperFit fit) {
-  using platform::WallpaperFit;
+ScaledImage scaleForScreen(const QPixmap& px, int sw, int sh, WallpaperFit fit) {
   if (fit == WallpaperFit::Stretch) return {scaledTo(px, sw, sh), 0, 0};
   QPixmap scaled = px;
   if (fit == WallpaperFit::Fill || fit == WallpaperFit::Fit)
@@ -132,11 +131,11 @@ QPainterPath clipSlideTop(int dx, int dy, int dw, int dh, double t) {
 
 DesktopSettings readDesktopSettings() {
   DesktopSettings settings;
-  settings.fit = platform::readWallpaperFit();
-  const std::uint32_t rgb = platform::readDesktopBackgroundRgb();
+  settings.fit = readWallpaperFit();
+  const std::uint32_t rgb = readDesktopBackgroundRgb();
   settings.background = QColor((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF);
-  settings.transcodeLimits = platform::readTranscodeLimits();
-  settings.panoramaThreshold = platform::readPanoramaThreshold(true);
+  settings.transcodeLimits = readTranscodeLimits();
+  settings.panoramaThreshold = readPanoramaThreshold(true);
   return settings;
 }
 
@@ -189,7 +188,6 @@ bool wantsAutospan(QSize image, const std::vector<ScreenArea>& areas, double thr
 std::vector<ScaledImage> layoutForScreens(const QPixmap& source, std::vector<ScreenArea> areas,
                                           double dpr, const DesktopSettings& settings,
                                           QSize fallbackSize) {
-  using platform::WallpaperFit;
   if (source.isNull()) return {};
   // Lay out what Windows lays out: its transcoded copy, not the file.
   QPixmap px = applyTranscodeCap(source, settings.transcodeLimits);
@@ -235,4 +233,4 @@ QPainterPath revealPath(const QString& animation, int dx, int dy, int dw, int dh
   return rectPath(dx, dy, dw, dh);
 }
 
-}  // namespace yasb::widgets
+}  // namespace wabar::wallpapers

@@ -3,11 +3,11 @@
 #include <QQmlEngine>
 #include <QQuickWindow>
 
+#include "features/wallpapers/qml/wallpapers_service.h"
 #include "kernel/qt/live_desktop.h"
 #include "spike/bar/bar_host.h"
 #include "spike/bar/control_handler.h"
 #include "spike/control/control.h"
-#include "spike/services/wallpapers_service.h"
 
 int main(int argc, char* argv[]) {
   // As app/main.cpp setFontEngine(): Qt's DirectWrite font database maps every installed font
@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
       wabar::makeControlHandler(host, parser.isSet(safeOpt), {},
                                 // Built on the first wallpaper command if no config did.
                                 [&engine]() -> wabar::WallpaperControl* {
-                                  return engine.singletonInstance<wabar::services::Wallpapers*>(
+                                  return engine.singletonInstance<wabar::wallpapers::Wallpapers*>(
                                       QStringLiteral("wabar.services"),
                                       QStringLiteral("Wallpapers"));
                                 }));

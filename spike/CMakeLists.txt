@@ -25,12 +25,6 @@ wabar_contribute(
     services/control_center_service.cpp
     services/github_service.h
     services/github_service.cpp
-    services/wallpapers_service.h
-    services/wallpapers_service.cpp
-    services/wallpaper_settings.h
-    services/wallpaper_settings.cpp
-    services/wallpaper_transition.h
-    services/wallpaper_transition.cpp
   # The generated type registration includes headers by name.
   SERVICES_INCLUDE_DIRS services
   SERVICES_LIBS yasb_platform yasb_widgets wabar_control wabar_kernel

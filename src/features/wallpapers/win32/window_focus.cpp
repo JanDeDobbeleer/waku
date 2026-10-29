@@ -1,8 +1,8 @@
-#include "platform/window_focus.h"
+#include "features/wallpapers/win32/window_focus.h"
 
 #include <windows.h>
 
-namespace yasb::platform {
+namespace wabar::wallpapers {
 
 void forceForegroundFocus(std::uintptr_t handle) {
   HWND hwnd = reinterpret_cast<HWND>(handle);
@@ -33,4 +33,4 @@ std::optional<QRect> foregroundMonitorRect() {
   return QRect(r.left, r.top, r.right - r.left, r.bottom - r.top);
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::wallpapers

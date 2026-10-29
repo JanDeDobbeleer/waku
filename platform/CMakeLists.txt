@@ -8,8 +8,6 @@ add_library(yasb_platform STATIC
   brightness.cpp
   connectivity.h
   connectivity.cpp
-  desktop_wallpaper.h
-  desktop_wallpaper.cpp
   github_api.h
   github_api.cpp
   media_session.h
@@ -23,10 +21,8 @@ add_library(yasb_platform STATIC
   toast_activation.cpp
   toast_xml.h
   toast_xml.cpp
-  window_focus.h
-  window_focus.cpp
-  workerw.h
-  workerw.cpp
+  pdh.h
+  pdh.cpp
   wlan.h
   wlan.cpp
   dnd.h

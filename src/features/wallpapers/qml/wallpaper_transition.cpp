@@ -1,4 +1,4 @@
-#include "spike/services/wallpaper_transition.h"
+#include "features/wallpapers/qml/wallpaper_transition.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -14,17 +14,17 @@
 #include <algorithm>
 #include <exception>
 
-namespace wabar::services {
+namespace wabar::wallpapers {
 
-void paintWallpaperFrame(QPainter& painter, const std::vector<widgets::ScreenArea>& areas,
-                         const std::vector<widgets::ScaledImage>& oldImages,
-                         const std::vector<widgets::ScaledImage>& newImages, double dpr,
+void paintWallpaperFrame(QPainter& painter, const std::vector<ScreenArea>& areas,
+                         const std::vector<ScaledImage>& oldImages,
+                         const std::vector<ScaledImage>& newImages, double dpr,
                          const QColor& background, const QString& animation, double t) {
   const bool fade = animation != QLatin1String("circle") &&
                     animation != QLatin1String("slide_top") &&
                     animation != QLatin1String("diamond") && animation != QLatin1String("split");
   for (size_t i = 0; i < areas.size(); ++i) {
-    const widgets::ScreenArea& a = areas[i];
+    const ScreenArea& a = areas[i];
     const QRectF monitor(a.x, a.y, a.w, a.h);
 
     if (t < 1.0) {
@@ -32,20 +32,20 @@ void paintWallpaperFrame(QPainter& painter, const std::vector<widgets::ScreenAre
       painter.setClipRect(monitor);
       painter.fillRect(monitor, background);
       if (i < oldImages.size()) {
-        const widgets::ScaledImage& old = oldImages[i];
+        const ScaledImage& old = oldImages[i];
         painter.drawPixmap(QPointF(a.x + old.offsetX / dpr, a.y + old.offsetY / dpr), old.pixmap);
       }
       painter.restore();
     }
 
     if (i >= newImages.size()) continue;
-    const widgets::ScaledImage& fresh = newImages[i];
+    const ScaledImage& fresh = newImages[i];
     painter.save();
     painter.setClipRect(monitor);
     if (fade) {
       painter.setOpacity(std::clamp(t, 0.0, 1.0));
     } else {
-      painter.setClipPath(widgets::revealPath(animation, a.x, a.y, a.w, a.h, t), Qt::IntersectClip);
+      painter.setClipPath(revealPath(animation, a.x, a.y, a.w, a.h, t), Qt::IntersectClip);
     }
     if (!fade) painter.fillRect(monitor, background);
     painter.drawPixmap(QPointF(a.x + fresh.offsetX / dpr, a.y + fresh.offsetY / dpr), fresh.pixmap);
@@ -60,10 +60,9 @@ WallpaperScene::WallpaperScene(QQuickItem* parent) : QQuickPaintedItem(parent) {
   setOpaquePainting(true);
 }
 
-void WallpaperScene::setContent(std::vector<widgets::ScreenArea> areas,
-                                std::vector<widgets::ScaledImage> oldImages,
-                                std::vector<widgets::ScaledImage> newImages, double dpr,
-                                QColor background, QString animation) {
+void WallpaperScene::setContent(std::vector<ScreenArea> areas, std::vector<ScaledImage> oldImages,
+                                std::vector<ScaledImage> newImages, double dpr, QColor background,
+                                QString animation) {
   areas_ = std::move(areas);
   old_ = std::move(oldImages);
   new_ = std::move(newImages);
@@ -92,10 +91,10 @@ void WallpaperScene::paint(QPainter* painter) {
 
 WallpaperTransition::Platform WallpaperTransition::systemPlatform() {
   Platform platform;
-  platform.readSettings = [] { return widgets::readDesktopSettings(); };
-  platform.oldImagePath = [] { return yasb::platform::transcodedWallpaperPath(); };
+  platform.readSettings = [] { return readDesktopSettings(); };
+  platform.oldImagePath = [] { return wabar::wallpapers::transcodedWallpaperPath(); };
   platform.attach = [](std::uintptr_t hwnd, QString* failure) {
-    return yasb::platform::attachToWorkerW(hwnd, failure);
+    return wabar::wallpapers::attachToWorkerW(hwnd, failure);
   };
   platform.decode = [](const QString& newPath, const QString& oldPath) {
     QImageReader reader(newPath);
@@ -180,13 +179,13 @@ void WallpaperTransition::onImagesLoaded(const QImage& newImage, const QImage& o
 
     const double dpr = window_->devicePixelRatio() > 0 ? window_->devicePixelRatio() : 1.0;
     const QRect worker = attachment->workerRect;
-    std::vector<widgets::ScreenArea> areas;
+    std::vector<ScreenArea> areas;
     for (const QRect& monitor : attachment->monitors) {
-      widgets::ScreenArea area;
-      area.x = widgets::roundHalfEven((monitor.left() - worker.left()) / dpr);
-      area.y = widgets::roundHalfEven((monitor.top() - worker.top()) / dpr);
-      area.w = widgets::roundHalfEven(monitor.width() / dpr);
-      area.h = widgets::roundHalfEven(monitor.height() / dpr);
+      ScreenArea area;
+      area.x = roundHalfEven((monitor.left() - worker.left()) / dpr);
+      area.y = roundHalfEven((monitor.top() - worker.top()) / dpr);
+      area.w = roundHalfEven(monitor.width() / dpr);
+      area.h = roundHalfEven(monitor.height() / dpr);
       area.dpr = dpr;
       areas.push_back(area);
     }
@@ -211,8 +210,8 @@ void WallpaperTransition::onImagesLoaded(const QImage& newImage, const QImage& o
     }
     dpr_ = areas.empty() ? dpr : areas.front().dpr;
     areas_ = std::move(areas);
-    scaledNew_ = widgets::layoutForScreens(pixmapNew, areas_, dpr_, settings_, size_);
-    scaledOld_ = widgets::layoutForScreens(pixmapOld, areas_, dpr_, settings_, size_);
+    scaledNew_ = layoutForScreens(pixmapNew, areas_, dpr_, settings_, size_);
+    scaledOld_ = layoutForScreens(pixmapOld, areas_, dpr_, settings_, size_);
 
     window_->setPosition(0, 0);
     window_->resize(size_);
@@ -282,4 +281,4 @@ QImage WallpaperTransition::renderFrame() const {
   return image;
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::wallpapers

@@ -1,11 +1,11 @@
-#include "platform/workerw.h"
+#include "features/wallpapers/win32/workerw.h"
 
 #include <windows.h>
 
 #include <QByteArray>
 #include <string>
 
-namespace yasb::platform {
+namespace wabar::wallpapers {
 namespace {
 
 constexpr const wchar_t* kDesktopKey = L"Control Panel\\Desktop";
@@ -186,4 +186,4 @@ std::optional<WorkerWAttachment> attachToWorkerW(std::uintptr_t handle, QString*
   return attachment;
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::wallpapers

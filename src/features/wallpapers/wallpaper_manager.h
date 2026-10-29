@@ -7,9 +7,9 @@
 #include <memory>
 #include <random>
 
-#include "platform/desktop_wallpaper.h"
+#include "features/wallpapers/desktop_wallpaper.h"
 
-namespace yasb::widgets {
+namespace wabar::wallpapers {
 
 // Port of services/wallpapers/manager.py (WallpaperManager). One per runtime, shared by every
 // wallpapers widget through the polling-worker registry's service map (key "wallpapers"): the
@@ -21,7 +21,7 @@ namespace yasb::widgets {
 class WallpaperManager : public QObject {
   Q_OBJECT
  public:
-  using BackendFactory = std::function<std::unique_ptr<platform::DesktopWallpaperBackend>()>;
+  using BackendFactory = std::function<std::unique_ptr<DesktopWallpaperBackend>()>;
   // Runs one post-change command line (cmd.exe semantics) and calls `done` with its stderr.
   using CommandRunner =
       std::function<void(const QString& command, std::function<void(const QString&)> done)>;
@@ -58,12 +58,12 @@ class WallpaperManager : public QObject {
   Q_INVOKABLE void stop();
 
  private:
-  platform::DesktopWallpaperBackend* backend();
+  DesktopWallpaperBackend* backend();
   void runAfter(const QString& imagePath);
   void runNextCommand(const QString& imagePath, qsizetype index);
 
   Dependencies deps_;
-  std::unique_ptr<platform::DesktopWallpaperBackend> backend_;
+  std::unique_ptr<DesktopWallpaperBackend> backend_;
   QStringList imagePaths_;
   QStringList runAfter_;
   QTimer timer_;
@@ -75,4 +75,4 @@ class WallpaperManager : public QObject {
 // The default command runner: `cmd.exe /c "<command>"` as a child QProcess.
 WallpaperManager::CommandRunner systemCommandRunner(QObject* owner);
 
-}  // namespace yasb::widgets
+}  // namespace wabar::wallpapers

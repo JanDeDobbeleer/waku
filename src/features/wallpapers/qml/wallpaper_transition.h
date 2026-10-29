@@ -14,25 +14,22 @@
 #include <utility>
 #include <vector>
 
-#include "platform/workerw.h"
-#include "widgets/wallpapers/wallpaper_layout.h"
+#include "features/wallpapers/wallpaper_layout.h"
+#include "features/wallpapers/win32/workerw.h"
 
 class QPainter;
 class QQuickWindow;
 class QTimer;
 
-namespace wabar::services {
-
-namespace widgets = ::yasb::widgets;
-namespace platform = ::yasb::platform;
+namespace wabar::wallpapers {
 
 // Draws one frame of the reveal for every monitor area: the old image, then the new image clipped
 // by the animation's shape at progress `t` (0..1). circle, slide_top, diamond and split use
-// widgets::revealPath; "fade" (also any unknown name) blends the new image in with opacity `t`.
+// revealPath; "fade" (also any unknown name) blends the new image in with opacity `t`.
 // Free so tests can render a frame to a QImage.
-void paintWallpaperFrame(QPainter& painter, const std::vector<widgets::ScreenArea>& areas,
-                         const std::vector<widgets::ScaledImage>& oldImages,
-                         const std::vector<widgets::ScaledImage>& newImages, double dpr,
+void paintWallpaperFrame(QPainter& painter, const std::vector<ScreenArea>& areas,
+                         const std::vector<ScaledImage>& oldImages,
+                         const std::vector<ScaledImage>& newImages, double dpr,
                          const QColor& background, const QString& animation, double t);
 
 // The one Qt Quick item of the overlay scene. GUI thread (scene graph painting runs on it for the
@@ -41,18 +38,17 @@ class WallpaperScene : public QQuickPaintedItem {
   Q_OBJECT
  public:
   explicit WallpaperScene(QQuickItem* parent = nullptr);
-  void setContent(std::vector<widgets::ScreenArea> areas,
-                  std::vector<widgets::ScaledImage> oldImages,
-                  std::vector<widgets::ScaledImage> newImages, double dpr, QColor background,
+  void setContent(std::vector<ScreenArea> areas, std::vector<ScaledImage> oldImages,
+                  std::vector<ScaledImage> newImages, double dpr, QColor background,
                   QString animation);
   void setProgress(double value);
   double progress() const { return progress_; }
   void paint(QPainter* painter) override;
 
  private:
-  std::vector<widgets::ScreenArea> areas_;
-  std::vector<widgets::ScaledImage> old_;
-  std::vector<widgets::ScaledImage> new_;
+  std::vector<ScreenArea> areas_;
+  std::vector<ScaledImage> old_;
+  std::vector<ScaledImage> new_;
   double dpr_ = 1.0;
   QColor background_ = Qt::black;
   QString animation_;
@@ -61,7 +57,7 @@ class WallpaperScene : public QQuickPaintedItem {
 
 // Plays the reveal of a new wallpaper over the old one on a frameless QQuickWindow that is
 // re-parented to WorkerW (above the wallpaper, below the desktop icons), then emits finished() so
-// the caller can hand the image to Windows. Qt Quick port of widgets::WallpaperEngine; no Qt
+// the caller can hand the image to Windows. Qt Quick port of WallpaperEngine; no Qt
 // Widgets. The window lingers kLingerMs after finished() so the desktop never shows the old
 // picture before Windows has switched, and is gone on cancel() and on destruction.
 //
@@ -77,9 +73,9 @@ class WallpaperTransition : public QObject {
  public:
   // The OS reads, injectable so tests never touch the registry, the real WorkerW or any file.
   struct Platform {
-    std::function<widgets::DesktopSettings()> readSettings;
+    std::function<DesktopSettings()> readSettings;
     std::function<QString()> oldImagePath;
-    std::function<std::optional<platform::WorkerWAttachment>(std::uintptr_t, QString*)> attach;
+    std::function<std::optional<WorkerWAttachment>(std::uintptr_t, QString*)> attach;
     // Runs on the worker thread: the new image, then the old one. Null images mean unreadable.
     std::function<std::pair<QImage, QImage>(const QString&, const QString&)> decode;
     // False in tests: the window is built and filled but never shown.
@@ -108,9 +104,9 @@ class WallpaperTransition : public QObject {
   double progress() const { return progress_; }
   void setProgress(double value);
   bool windowVisible() const;
-  const std::vector<widgets::ScreenArea>& areas() const { return areas_; }
-  const std::vector<widgets::ScaledImage>& scaledNew() const { return scaledNew_; }
-  const std::vector<widgets::ScaledImage>& scaledOld() const { return scaledOld_; }
+  const std::vector<ScreenArea>& areas() const { return areas_; }
+  const std::vector<ScaledImage>& scaledNew() const { return scaledNew_; }
+  const std::vector<ScaledImage>& scaledOld() const { return scaledOld_; }
   // Renders the frame at the current progress, in logical pixels of the overlay (tests).
   QImage renderFrame() const;
 
@@ -126,18 +122,18 @@ class WallpaperTransition : public QObject {
   QString animation_;
   Platform platform_;
   int animationMs_;
-  widgets::DesktopSettings settings_;
+  DesktopSettings settings_;
   State state_ = State::Idle;
   double progress_ = 0.0;
   double dpr_ = 1.0;
   QSize size_;
-  std::vector<widgets::ScreenArea> areas_;
-  std::vector<widgets::ScaledImage> scaledNew_;
-  std::vector<widgets::ScaledImage> scaledOld_;
+  std::vector<ScreenArea> areas_;
+  std::vector<ScaledImage> scaledNew_;
+  std::vector<ScaledImage> scaledOld_;
   QQuickWindow* window_ = nullptr;
   WallpaperScene* scene_ = nullptr;
   QVariantAnimation* animationTimer_ = nullptr;
   QTimer* lingerTimer_ = nullptr;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::wallpapers
