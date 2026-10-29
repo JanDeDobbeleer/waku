@@ -63,21 +63,59 @@ class Bar : public QObject {
   QQmlComponent* layout_ = nullptr;
 };
 
-// The root of bar.qml: the bars it declares, in order.
+// The root of bar.qml: the bars it declares, in order, and any other object declared next to
+// them (a "part", such as the non-visual WallpaperSettings). Its default property takes both;
+// a Bar goes to the bar list, anything else is kept alive as a child of the Config.
+//
+// A part is activated by the host once the config is installed, never while it is only being
+// validated: the host calls its `activate()` (a Q_INVOKABLE, found by name so that wabar does not
+// depend on the part's module). A part is deactivated by being destroyed with the config.
 class Config : public QObject {
   Q_OBJECT
   QML_ELEMENT
-  Q_CLASSINFO("DefaultProperty", "bars")
+  Q_CLASSINFO("DefaultProperty", "data")
+  Q_PROPERTY(QQmlListProperty<QObject> data READ data FINAL)
   Q_PROPERTY(QQmlListProperty<wabar::Bar> bars READ bars FINAL)
 
  public:
   explicit Config(QObject* parent = nullptr) : QObject(parent) {}
 
+  QQmlListProperty<QObject> data() {
+    return QQmlListProperty<QObject>(this, this, &Config::appendData, &Config::dataCount,
+                                     &Config::dataAt, &Config::clearData);
+  }
   QQmlListProperty<Bar> bars() { return QQmlListProperty<Bar>(this, &bars_); }
   const QList<Bar*>& barList() const { return bars_; }
+  const QList<QObject*>& partList() const { return parts_; }
 
  private:
+  static void appendData(QQmlListProperty<QObject>* list, QObject* object) {
+    auto* self = static_cast<Config*>(list->data);
+    if (!object) return;
+    self->data_.append(object);
+    if (!object->parent()) object->setParent(self);
+    if (auto* bar = qobject_cast<Bar*>(object)) {
+      self->bars_.append(bar);
+    } else {
+      self->parts_.append(object);
+    }
+  }
+  static qsizetype dataCount(QQmlListProperty<QObject>* list) {
+    return static_cast<Config*>(list->data)->data_.size();
+  }
+  static QObject* dataAt(QQmlListProperty<QObject>* list, qsizetype index) {
+    return static_cast<Config*>(list->data)->data_.at(index);
+  }
+  static void clearData(QQmlListProperty<QObject>* list) {
+    auto* self = static_cast<Config*>(list->data);
+    self->data_.clear();
+    self->bars_.clear();
+    self->parts_.clear();
+  }
+
+  QList<QObject*> data_;
   QList<Bar*> bars_;
+  QList<QObject*> parts_;
 };
 
 }  // namespace wabar

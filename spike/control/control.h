@@ -3,13 +3,14 @@
 #include <QLocalServer>
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <functional>
 
 namespace wabar {
 
-// The control channel: how `wabarc` (reload, status, quit) talks to the running bar. A named
-// pipe (QLocalServer) per config home, so two instances with different config homes do not meet,
-// and a running instance doubles as the single-instance guard for its config home.
+// The control channel: how `wabarc` (reload, status, quit, wallpaper ...) talks to the running bar.
+// A named pipe (QLocalServer) per config home, so two instances with different config homes do not
+// meet, and a running instance doubles as the single-instance guard for its config home.
 //
 // Protocol: the client sends one line (a command), the server answers with one line and closes.
 // Commands are answered on the GUI thread of the instance.
@@ -20,6 +21,14 @@ QString controlPipeName(const QString& configHome);
 // The config home to use: the command-line value if given, else $WABAR_CONFIG_HOME, else
 // `fallback`.
 QString resolveConfigHome(const QString& optionValue, const QString& fallback);
+
+// A command line is one string: words separated by spaces, a word with spaces or quotes is written
+// in double quotes and a quote inside is doubled ("My ""best"" pic.jpg"). There are no backslash
+// escapes, so a Windows path stays as it is. joinCommand quotes what needs it; splitCommand is
+// its inverse and returns false for an unterminated quote.
+QString quoteArgument(const QString& argument);
+QString joinCommand(const QStringList& words);
+bool splitCommand(const QString& line, QStringList* words);
 
 // Answers one command with one line.
 using ControlHandler = std::function<QString(const QString& command)>;

@@ -94,7 +94,75 @@ class RealHotkeyHost final : public HotkeyHost, public QAbstractNativeEventFilte
   std::function<void()> pressed_;
 };
 
+bool hasFolderPart(const QString& target) {
+  return target.contains(QLatin1Char('/')) || target.contains(QLatin1Char('\\')) ||
+         target.contains(QLatin1Char(':'));
+}
+
+QString nativePath(const QString& path) {
+  return QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath());
+}
+
+ResolvedWallpaper validateImageFile(const QString& path, const QStringList& types) {
+  const QFileInfo info(path);
+  if (!info.exists()) return {{}, QStringLiteral("no such file: %1").arg(nativePath(path))};
+  if (!info.isFile()) return {{}, QStringLiteral("not a file: %1").arg(nativePath(path))};
+  if (!types.contains(info.suffix().toLower())) {
+    return {{},
+            QStringLiteral("not a supported image type (%1): %2")
+                .arg(types.join(QStringLiteral(", ")), nativePath(path))};
+  }
+  QImageReader reader(info.absoluteFilePath());
+  if (!reader.canRead()) {
+    return {{}, QStringLiteral("cannot read the image: %1").arg(nativePath(path))};
+  }
+  return {nativePath(path), {}};
+}
+
+QString okAnswer(const QString& path) { return QStringLiteral("ok: ") + path; }
+QString errorAnswer(const QString& why) { return QStringLiteral("error: ") + why; }
+
 }  // namespace
+
+ResolvedWallpaper resolveWallpaperTarget(const QString& rawTarget, const QString& folder) {
+  const QString target = rawTarget.trimmed();
+  if (target.isEmpty()) return {{}, QStringLiteral("no file given")};
+  const QStringList types = widgets::supportedImageTypes();
+  if (hasFolderPart(target)) return validateImageFile(target, types);
+
+  if (folder.isEmpty()) {
+    return {{},
+            QStringLiteral("no wallpaper folder is configured (WallpaperSettings.imagePath); "
+                           "give a full path")};
+  }
+  const QStringList all = widgets::collectImageFiles({folder}, types);
+  auto find = [&all](const QString& name) {
+    QStringList found;
+    for (const QString& file : all) {
+      if (QFileInfo(file).fileName().compare(name, Qt::CaseInsensitive) == 0) found << file;
+    }
+    return found;
+  };
+  QStringList matches = find(target);
+  if (matches.isEmpty()) {
+    // "sunset" may mean sunset.jpg or sunset.png.
+    for (const QString& type : types) matches << find(target + QLatin1Char('.') + type);
+  }
+  if (matches.size() > 1) {
+    QStringList shown;
+    for (const QString& match : matches) shown << nativePath(match);
+    return {{},
+            QStringLiteral("'%1' is ambiguous in %2: %3")
+                .arg(target, QDir::toNativeSeparators(folder), shown.join(QStringLiteral("; ")))};
+  }
+  if (matches.size() == 1) return validateImageFile(matches.first(), types);
+  // Not a listed image: a real file of the folder gets the precise reason (wrong type, ...).
+  const QString inFolder = QDir(folder).filePath(target);
+  if (QFileInfo(inFolder).isFile()) return validateImageFile(inFolder, types);
+  return {{},
+          QStringLiteral("no wallpaper named '%1' in %2")
+              .arg(target, QDir::toNativeSeparators(folder))};
+}
 
 std::optional<HotkeyCombo> parseHotkey(const QString& keys) {
   HotkeyCombo combo;
@@ -256,7 +324,9 @@ void Wallpapers::readCurrent() {
   emit currentChanged();
 }
 
-void Wallpapers::setWallpaper(const QString& path) {
+void Wallpapers::setWallpaper(const QString& path) { setWallpaperImpl(path, false); }
+
+void Wallpapers::setWallpaperImpl(const QString& path, bool dryRun) {
   if (!available_ || !QFileInfo(path).isFile()) return;
   guarded("set wallpaper", [&] {
     if (transition_) {
@@ -264,18 +334,18 @@ void Wallpapers::setWallpaper(const QString& path) {
       transition_.reset();
     }
     if (engineEnabled_) {
-      playTransition(path);
+      playTransition(path, dryRun);
     } else {
-      commitWallpaper(path);
+      commitWallpaper(path, dryRun);
     }
   });
 }
 
-void Wallpapers::playTransition(const QString& path) {
+void Wallpapers::playTransition(const QString& path, bool dryRun) {
   transition_ = deps_.transition ? deps_.transition(path, animation_)
                                  : std::make_unique<WallpaperTransition>(path, animation_);
   if (!transition_) {
-    commitWallpaper(path);
+    commitWallpaper(path, dryRun);
     return;
   }
   connect(transition_.get(), &WallpaperTransition::skipped, this, [this](const QString& reason) {
@@ -284,13 +354,14 @@ void Wallpapers::playTransition(const QString& path) {
     qWarning().noquote() << "Wallpaper animation skipped:" << reason;
   });
   // finished() follows skipped(), so a skipped animation sets the wallpaper at once.
-  connect(transition_.get(), &WallpaperTransition::finished, this,
-          [this, path] { guarded("set wallpaper", [&] { commitWallpaper(path); }); });
+  connect(transition_.get(), &WallpaperTransition::finished, this, [this, path, dryRun] {
+    guarded("set wallpaper", [&] { commitWallpaper(path, dryRun); });
+  });
   transition_->start();
 }
 
-void Wallpapers::commitWallpaper(const QString& path) {
-  if (deps_.dryRun) {
+void Wallpapers::commitWallpaper(const QString& path, bool dryRun) {
+  if (deps_.dryRun || dryRun) {
     qInfo().noquote() << "Wallpapers: dry run, not setting" << path;
     return;
   }
@@ -319,6 +390,95 @@ void Wallpapers::random() {
              (deps_.picker == nullptr));
     setWallpaper(next);
   });
+}
+
+// --- wabarc wallpaper ...
+
+QString Wallpapers::controlStart(const QString& path, bool dryRun) {
+  setWallpaperImpl(path, dryRun);
+  return okAnswer(path);
+}
+
+QString Wallpapers::controlSet(const QString& target, bool dryRun) {
+  QString answer;
+  guarded("wallpaper set", [&] {
+    if (!available_) {
+      answer = errorAnswer(QStringLiteral("the wallpaper service is not available"));
+      return;
+    }
+    const ResolvedWallpaper resolved = resolveWallpaperTarget(target, imagePath_);
+    answer = resolved.ok() ? controlStart(resolved.path, dryRun) : errorAnswer(resolved.error);
+  });
+  return answer.isEmpty() ? errorAnswer(QStringLiteral("the wallpaper could not be set")) : answer;
+}
+
+QString Wallpapers::controlRandom(bool dryRun) {
+  QString answer;
+  guarded("wallpaper random", [&] {
+    if (!available_) {
+      answer = errorAnswer(QStringLiteral("the wallpaper service is not available"));
+      return;
+    }
+    readCurrent();
+    const QStringList all = widgets::collectImageFiles({imagePath_});
+    if (all.isEmpty()) {
+      answer = errorAnswer(QStringLiteral("no wallpapers found in %1")
+                               .arg(imagePath_.isEmpty() ? QStringLiteral("(no folder configured)")
+                                                         : QDir::toNativeSeparators(imagePath_)));
+      return;
+    }
+    // Never the one shown now, unless it is the only one.
+    const QString currentKey = widgets::normalizedPathKey(current_);
+    QStringList candidates;
+    for (const QString& file : all) {
+      if (widgets::normalizedPathKey(file) != currentKey) candidates << file;
+    }
+    if (candidates.isEmpty()) candidates = all;
+    const int count = static_cast<int>(candidates.size());
+    const int index = deps_.picker ? deps_.picker(count) % count
+                                   : static_cast<int>(QRandomGenerator::global()->bounded(count));
+    answer = controlStart(nativePath(candidates.at(index)), dryRun);
+  });
+  return answer.isEmpty() ? errorAnswer(QStringLiteral("the wallpaper could not be set")) : answer;
+}
+
+// step +1 is the file after the current one, -1 the one before; both wrap around. When the
+// current wallpaper is not in the folder, next is the first file and previous the last.
+QString Wallpapers::controlStep(int step, bool dryRun) {
+  QString answer;
+  guarded("wallpaper step", [&] {
+    if (!available_) {
+      answer = errorAnswer(QStringLiteral("the wallpaper service is not available"));
+      return;
+    }
+    readCurrent();
+    const QStringList all = widgets::collectImageFiles({imagePath_});
+    if (all.isEmpty()) {
+      answer = errorAnswer(QStringLiteral("no wallpapers found in %1")
+                               .arg(imagePath_.isEmpty() ? QStringLiteral("(no folder configured)")
+                                                         : QDir::toNativeSeparators(imagePath_)));
+      return;
+    }
+    const int count = static_cast<int>(all.size());
+    const QString currentKey = widgets::normalizedPathKey(current_);
+    int at = -1;
+    for (int i = 0; i < count && at < 0; ++i) {
+      if (widgets::normalizedPathKey(all.at(i)) == currentKey) at = i;
+    }
+    const int target = at < 0 ? (step > 0 ? 0 : count - 1) : (at + step + count) % count;
+    answer = controlStart(nativePath(all.at(target)), dryRun);
+  });
+  return answer.isEmpty() ? errorAnswer(QStringLiteral("the wallpaper could not be set")) : answer;
+}
+
+QString Wallpapers::controlNext(bool dryRun) { return controlStep(1, dryRun); }
+QString Wallpapers::controlPrevious(bool dryRun) { return controlStep(-1, dryRun); }
+
+QString Wallpapers::controlGallery() {
+  if (!available_) return errorAnswer(QStringLiteral("the wallpaper service is not available"));
+  toggleGallery();
+  return okAnswer(galleryOpen_ ? QStringLiteral("gallery opened")
+                               : QStringLiteral("gallery closed"));
 }
 
 QString Wallpapers::screenNameFor(const QString& mode) const {

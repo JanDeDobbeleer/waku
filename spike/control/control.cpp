@@ -17,6 +17,56 @@ QString controlPipeName(const QString& configHome) {
   return QStringLiteral("wabar-") + QString::fromLatin1(hash.toHex().left(12));
 }
 
+QString quoteArgument(const QString& argument) {
+  bool plain = !argument.isEmpty();
+  for (QChar c : argument) {
+    if (c.isSpace() || c == QLatin1Char('"')) plain = false;
+  }
+  if (plain) return argument;
+  QString quoted = argument;
+  quoted.replace(QLatin1Char('"'), QStringLiteral("\"\""));
+  return QLatin1Char('"') + quoted + QLatin1Char('"');
+}
+
+QString joinCommand(const QStringList& words) {
+  QStringList quoted;
+  for (const QString& word : words) quoted << quoteArgument(word);
+  return quoted.join(QLatin1Char(' '));
+}
+
+bool splitCommand(const QString& line, QStringList* words) {
+  words->clear();
+  QString current;
+  bool inWord = false;
+  bool quoted = false;
+  for (qsizetype i = 0; i < line.size(); ++i) {
+    const QChar c = line.at(i);
+    if (quoted) {
+      if (c != QLatin1Char('"')) {
+        current += c;
+      } else if (i + 1 < line.size() && line.at(i + 1) == QLatin1Char('"')) {
+        current += c;
+        ++i;
+      } else {
+        quoted = false;
+      }
+    } else if (c == QLatin1Char('"')) {
+      quoted = true;
+      inWord = true;
+    } else if (c.isSpace()) {
+      if (inWord) words->append(current);
+      current.clear();
+      inWord = false;
+    } else {
+      current += c;
+      inWord = true;
+    }
+  }
+  if (quoted) return false;
+  if (inWord) words->append(current);
+  return true;
+}
+
 QString resolveConfigHome(const QString& optionValue, const QString& fallback) {
   if (!optionValue.isEmpty()) return optionValue;
   if (const QString fromEnv = qEnvironmentVariable("WABAR_CONFIG_HOME"); !fromEnv.isEmpty()) {

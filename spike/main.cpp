@@ -7,6 +7,7 @@
 #include "spike/bar/control_handler.h"
 #include "spike/control/control.h"
 #include "spike/services/systray.h"
+#include "spike/services/wallpapers_service.h"
 
 int main(int argc, char* argv[]) {
   // As app/main.cpp setFontEngine(): Qt's DirectWrite font database maps every installed font
@@ -55,8 +56,15 @@ int main(int argc, char* argv[]) {
 
   // One bar per config home: `wabarc` finds it by the same name, and a second start would put
   // a second bar over the first.
-  wabar::ControlServer control(wabar::controlPipeName(configHome),
-                              wabar::makeControlHandler(host, parser.isSet(safeOpt)));
+  wabar::ControlServer control(
+      wabar::controlPipeName(configHome),
+      wabar::makeControlHandler(host, parser.isSet(safeOpt), {},
+                                // Built on the first wallpaper command if no config did.
+                                [&engine]() -> wabar::WallpaperControl* {
+                                  return engine.singletonInstance<wabar::services::Wallpapers*>(
+                                      QStringLiteral("wabar.services"),
+                                      QStringLiteral("Wallpapers"));
+                                }));
   if (!control.listen()) {
     qCritical().noquote() << "wabar is already running for" << configHome
                           << "(wabarc quit stops it)";

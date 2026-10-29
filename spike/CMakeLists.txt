@@ -51,6 +51,8 @@ qt_add_qml_module(wabar_services
     services/github_service.cpp
     services/wallpapers_service.h
     services/wallpapers_service.cpp
+    services/wallpaper_settings.h
+    services/wallpaper_settings.cpp
     services/wallpaper_transition.h
     services/wallpaper_transition.cpp
 )
@@ -58,7 +60,8 @@ target_include_directories(wabar_services PUBLIC ${CMAKE_SOURCE_DIR}
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/services)  # generated type registration includes headers by name
 target_compile_definitions(wabar_services PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(wabar_services PUBLIC Qt6::Qml Qt6::Quick yasb_platform yasb_widgets)
+target_link_libraries(wabar_services PUBLIC Qt6::Qml Qt6::Quick yasb_platform yasb_widgets
+  wabar_control)
 
 # wabar_control: the pipe between a running bar and wabarc.
 add_subdirectory(control)

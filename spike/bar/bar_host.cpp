@@ -150,7 +150,8 @@ bool BarHost::validateTheme(QString* error) {
 }
 
 void BarHost::applyTheme() {
-  auto* theme = engine_->singletonInstance<Theme*>(QStringLiteral("wabar"), QStringLiteral("Theme"));
+  auto* theme =
+      engine_->singletonInstance<Theme*>(QStringLiteral("wabar"), QStringLiteral("Theme"));
   if (!theme) return;
   const ThemeSpec defaults;
   if (options_.safe || !QFileInfo::exists(themePath())) {
@@ -300,6 +301,19 @@ void BarHost::install(std::unique_ptr<Loaded> loaded) {
   loaded_.reset();
   loaded_ = std::move(loaded);
   for (Entry& entry : loaded_->entries) present(entry);
+  // Objects declared next to the bars start work now that the config is the live one.
+  if (loaded_->config) {
+    for (QObject* part : loaded_->config->partList()) {
+      if (part->metaObject()->indexOfMethod("activate()") < 0) continue;
+      try {
+        QMetaObject::invokeMethod(part, "activate");
+      } catch (const std::exception& e) {
+        qWarning().noquote() << "wabar: a config part failed to start:" << e.what();
+      } catch (...) {
+        qWarning().noquote() << "wabar: a config part failed to start";
+      }
+    }
+  }
 }
 
 void BarHost::present(Entry& entry) {

@@ -105,6 +105,42 @@ until that build is retired.
 - **The manager's own engine.** It stays off (it is a `QWidget`); the Qt Quick transition above replaces it.
 - `default`/`magnified`/`slide` gallery types, mouse-wheel/page-key scrolling, `run_after` commands,
   other keybinding actions (`change_wallpaper`), `system` accent colour, tooltips.
-- A hotkey without a Wallpapers item: the hotkey belongs to the singleton, so it exists only once a
-  `Wallpapers` item was created and called `configure`.
 - Double-click to apply (Python): a single click applies, which is what the brief asks for.
+
+## No widget: `WallpaperSettings` and `wabarc wallpaper`
+
+- **`WallpaperSettings`** (`wabar.services`, `spike/services/wallpaper_settings.*`) is a non-visual QML
+  type declared next to the bars: `Config { WallpaperSettings { imagePath: ...; hotkey: "alt+e";
+  engine: true; animation: "split" } Bar { ... } }`. It has `imagePath`, `hotkey`, `hotkeyScreen`,
+  `autoChange`, `engine`, `animation` and the gallery look (`imageWidth`, `orientation`,
+  `cornerRadius`, `accentColor`). `Config`'s default property is now `data` (any object; a `Bar`
+  goes to the bar list, anything else is kept as a child and listed in `partList()`); the old `bars`
+  property stays.
+- **Activation.** `BarHost::install` calls `activate()` (found by name, so `wabar` does not link
+  `wabar.services`) on every part once the config is live. Not in the validation pass: that runs in
+  a throwaway engine and must not build a second service or grab the hotkey. `activate()` fetches
+  the `Wallpapers` singleton of the engine (creating it), calls `configure` and `configureEngine`,
+  and creates the gallery window (`WallpaperGallery.qml`, loaded by URL) as its child, so the hotkey
+  and `wabarc wallpaper gallery` work with no widget. Destroying the object (a reload, quitting)
+  switches the folder, hotkey and engine off; the next config's settings then switch them on.
+- **Sharing.** The singleton is shared with any `Wallpapers` widget; the last `configure` wins. Use
+  one or the other: both create a gallery and two would open at once.
+- **CLI.** `wabarc wallpaper set|random|next|previous [--dry-run]` and `gallery`. The client sends one
+  line; arguments with spaces are quoted by doubling (`"a ""b"" c"`, no backslash escapes, so a
+  Windows path is left alone: `joinCommand`/`splitCommand` in `spike/control/control.h`). A relative
+  path with a folder part is made absolute by the client; a bare name is looked up in the folder.
+  The handler parses `wallpaper <verb> [--dry-run] [arg]` and calls the `wabar::WallpaperControl`
+  interface (`spike/control/wallpaper_control.h`), which `Wallpapers` implements and tests fake. The
+  service is looked up when a command arrives, so a bar without wallpaper settings builds it only
+  on the first command.
+- **Answers.** `ok: <full path>` once the change has started (the animation may still run), `ok:
+  gallery opened|closed`, or `error: <why>` with nothing changed. `set` checks that the target
+  exists, is a regular file, has a supported extension (`supportedImageTypes`) and a header Qt can
+  read. `next`/`previous` use the Explorer-ordered list and wrap; when the current wallpaper is not
+  in the folder `next` is the first file and `previous` the last. `random` never picks the current
+  one.
+- **Dry run.** `--dry-run` is a per-call argument of the service (`Wallpapers::Deps::dryRun` and
+  `WABAR_WALLPAPER_DRYRUN` still work): the animation plays and the setter is skipped. Because the
+  wallpaper does not change, repeated `next --dry-run` shows the same file.
+- **Left out.** The hotkey and CLI do not animate the auto-change timer (as before); a
+  `WallpaperSettings` removed from `bar.qml` is switched off by the reload that drops it.

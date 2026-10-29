@@ -12,6 +12,7 @@
 #include <optional>
 
 #include "platform/desktop_wallpaper.h"
+#include "spike/control/wallpaper_control.h"
 #include "spike/services/wallpaper_transition.h"
 #include "widgets/wallpapers/thumbnail_cache.h"
 #include "widgets/wallpapers/wallpaper_manager.h"
@@ -31,6 +32,18 @@ struct HotkeyCombo {
 // "alt+e", "ctrl+shift+f5", "win+space": modifiers alt/ctrl/control/shift/win/windows/super/meta
 // plus one letter, digit, F1..F24 or space. Case and spaces do not matter. nullopt otherwise.
 std::optional<HotkeyCombo> parseHotkey(const QString& keys);
+
+// The file a `wabarc wallpaper set` target means. `target` is a full path (any readable image
+// file) or a file name inside `folder` (case-insensitive; without an extension the supported
+// ones are tried). On success `path` is the full path; otherwise `error` says why (no "error: "
+// prefix). Checks that the file exists, is a regular file, has a supported image extension and
+// a header Qt can read.
+struct ResolvedWallpaper {
+  QString path;
+  QString error;
+  bool ok() const { return error.isEmpty(); }
+};
+ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& folder);
 
 // Where the hotkey lives. The real one calls RegisterHotKey on the GUI thread and receives
 // WM_HOTKEY through a native event filter in Qt's own message loop; tests replace it.
@@ -54,10 +67,13 @@ class HotkeyHost {
 // a shared ThumbnailCache and reads image files, nothing else. The hotkey arrives on the GUI
 // thread.
 //
+// Several `Wallpapers` widgets and a `WallpaperSettings` share this one service; the last one
+// to call configure()/configureEngine() wins.
+//
 // `files` is a list of maps: path, name, thumbnail (image URL) and current (bool), in Explorer
 // name order. `available` is false (nothing is ever set) when IDesktopWallpaper cannot be
 // created: the offscreen platform and setDisabled(true). The hotkey is never registered then.
-class Wallpapers : public QObject {
+class Wallpapers : public QObject, public wabar::WallpaperControl {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
@@ -79,7 +95,8 @@ class Wallpapers : public QObject {
     // Builds the transition for (image, animation); null means the real WallpaperTransition.
     std::function<std::unique_ptr<WallpaperTransition>(const QString&, const QString&)> transition;
     bool realBackend = true;
-    // Play the transition but never call SetWallpaper (WABAR_WALLPAPER_DRYRUN=1 sets it).
+    // Play the transition but never call SetWallpaper (WABAR_WALLPAPER_DRYRUN=1 sets it). A
+    // `wabarc ... --dry-run` does the same for one call.
     bool dryRun = false;
   };
 
@@ -118,6 +135,14 @@ class Wallpapers : public QObject {
   Q_INVOKABLE void random();
   Q_INVOKABLE void toggleGallery();
   Q_INVOKABLE void closeGallery();
+  // `wabarc wallpaper ...` (WallpaperControl): the answer is "ok: <full path>" once the change
+  // has started (the animation may still run), or "error: <why>" with nothing changed. `dryRun`
+  // plays the animation and skips the setter, for this call only.
+  QString controlSet(const QString& target, bool dryRun) override;
+  QString controlRandom(bool dryRun) override;
+  QString controlNext(bool dryRun) override;
+  QString controlPrevious(bool dryRun) override;
+  QString controlGallery() override;
   // The hotkey was pressed (public for tests).
   void onHotkey() { toggleGallery(); }
 
@@ -131,8 +156,11 @@ class Wallpapers : public QObject {
   QString screenNameFor(const QString& mode) const;
   void readCurrent();
   void applyToManager();
-  void commitWallpaper(const QString& path);
-  void playTransition(const QString& path);
+  void commitWallpaper(const QString& path, bool dryRun);
+  void playTransition(const QString& path, bool dryRun);
+  void setWallpaperImpl(const QString& path, bool dryRun);
+  QString controlStep(int step, bool dryRun);
+  QString controlStart(const QString& path, bool dryRun);
 
   Deps deps_;
   bool available_ = false;

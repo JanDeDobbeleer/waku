@@ -32,7 +32,10 @@ add_executable(wabar_services_tests
   test_github.cpp
   test_wallpapers.cpp
   test_wallpaper_transition.cpp
+  test_wallpaper_control.cpp
 )
+# The control tests run wabarc.exe.
+add_dependencies(wabar_services_tests wabarc)
 target_compile_definitions(wabar_services_tests PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 # The static QML plugins are linked so `import wabar` resolves in the test engines.

@@ -3,6 +3,7 @@
 qt_add_library(wabar_control STATIC
   control.h
   control.cpp
+  wallpaper_control.h
 )
 target_include_directories(wabar_control PUBLIC ${CMAKE_SOURCE_DIR})
 target_compile_definitions(wabar_control PRIVATE
