@@ -24,9 +24,9 @@
 #include <thread>
 #include <vector>
 
-#include "platform/media_session.h"
+#include "features/media/media_session.h"
 
-namespace yasb::platform {
+namespace wabar::media {
 namespace {
 
 namespace wmc = winrt::Windows::Media::Control;
@@ -370,4 +370,4 @@ std::unique_ptr<MediaSessionSource> createSystemMediaSource() {
   return std::make_unique<SystemMediaSource>();
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::media

@@ -2,3 +2,4 @@
 # checks this at configure time). Deleting a feature is deleting its folder and its line here.
 add_subdirectory(shell)
 add_subdirectory(github)
+add_subdirectory(media)

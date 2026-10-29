@@ -8,29 +8,13 @@
 #include <memory>
 #include <vector>
 
-#include "spike/services/media_service.h"
+#include "features/media/qml/media_service.h"
+#include "features/media/testing/fake_media_source.h"
 
-using namespace wabar::services;
-namespace platform = yasb::platform;
+using namespace wabar::media;
+using namespace wabar::media::testing;
 
 namespace {
-
-struct Command {
-  QString appId;
-  platform::MediaCommand command;
-  double value;
-};
-
-class FakeSource final : public platform::MediaSessionSource {
- public:
-  void start(platform::MediaSessionSink* sink) override { sink_ = sink; }
-  void stop() override { sink_ = nullptr; }
-  void command(const QString& appId, platform::MediaCommand command, double value) override {
-    commands.push_back({appId, command, value});
-  }
-  platform::MediaSessionSink* sink_ = nullptr;
-  std::vector<Command> commands;
-};
 
 QByteArray encodedImage(const char* format, QColor color = QColor(200, 80, 40)) {
   QImage image(8, 8, QImage::Format_RGB32);
@@ -42,20 +26,20 @@ QByteArray encodedImage(const char* format, QColor color = QColor(200, 80, 40)) 
   return bytes;
 }
 
-platform::MediaSessionData session(const QString& title, const QByteArray& thumbnail = {},
-                                   bool playing = true) {
-  platform::MediaSessionData data;
+MediaSessionData session(const QString& title, const QByteArray& thumbnail = {},
+                         bool playing = true) {
+  MediaSessionData data;
   data.appId = QStringLiteral("Fake.Player.App");
   data.sourceName = QStringLiteral("Fake Player");
-  platform::MediaProperties properties;
+  MediaProperties properties;
   properties.title = title;
   properties.artist = QStringLiteral("Artist");
   properties.albumTitle = QStringLiteral("Album");
   properties.thumbnail = thumbnail;
   data.properties = properties;
   // lastUpdated <= 0 is an unset WinRT DateTime, which the service ignores by design.
-  data.timeline = platform::MediaTimeline{10, 1000, 200};
-  platform::MediaPlayback playback;
+  data.timeline = MediaTimeline{10, 1000, 200};
+  MediaPlayback playback;
   playback.status = playing ? 4 : 5;
   playback.prevEnabled = false;
   playback.nextEnabled = true;
@@ -75,7 +59,7 @@ struct Harness {
     media = std::make_unique<Media>(std::move(fake), nullptr);
   }
 
-  void publish(const std::vector<platform::MediaSessionData>& sessions) {
+  void publish(const std::vector<MediaSessionData>& sessions) {
     const QString current = sessions.empty() ? QString() : sessions.front().appId;
     source->sink_->sessionsChanged(sessions, current, true);
     QTest::qWait(50);
@@ -141,8 +125,8 @@ TEST(MediaService, ExposesTheCurrentSession) {
 
 TEST(MediaService, UnsetTimelineIsIgnored) {
   Harness h;
-  platform::MediaSessionData data = session(QStringLiteral("Song"));
-  data.timeline = platform::MediaTimeline{10, 0, 200};  // 1601 epoch in WinRT: unset
+  MediaSessionData data = session(QStringLiteral("Song"));
+  data.timeline = MediaTimeline{10, 0, 200};  // 1601 epoch in WinRT: unset
   h.publish({data});
   EXPECT_EQ(h.media->duration(), 0);
 }
@@ -152,7 +136,7 @@ TEST(MediaService, FollowsPlayAndPause) {
   h.publish({session(QStringLiteral("Song"), {}, true)});
   EXPECT_TRUE(h.media->playing());
   h.source->sink_->playbackChanged(QStringLiteral("Fake.Player.App"), [] {
-    platform::MediaPlayback p;
+    MediaPlayback p;
     p.status = 5;
     return p;
   }());
@@ -199,10 +183,10 @@ TEST(MediaService, CommandsReachTheCurrentSession) {
   h.media->seek(42);
   ASSERT_EQ(h.source->commands.size(), 4u);
   for (const Command& c : h.source->commands) EXPECT_EQ(c.appId, QStringLiteral("Fake.Player.App"));
-  EXPECT_EQ(h.source->commands[0].command, platform::MediaCommand::PlayPause);
-  EXPECT_EQ(h.source->commands[1].command, platform::MediaCommand::Next);
-  EXPECT_EQ(h.source->commands[2].command, platform::MediaCommand::Previous);
-  EXPECT_EQ(h.source->commands[3].command, platform::MediaCommand::Seek);
+  EXPECT_EQ(h.source->commands[0].command, MediaCommand::PlayPause);
+  EXPECT_EQ(h.source->commands[1].command, MediaCommand::Next);
+  EXPECT_EQ(h.source->commands[2].command, MediaCommand::Previous);
+  EXPECT_EQ(h.source->commands[3].command, MediaCommand::Seek);
   EXPECT_EQ(h.source->commands[3].value, 42);
 }
 

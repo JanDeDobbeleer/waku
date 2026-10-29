@@ -10,8 +10,6 @@ wabar_contribute(
     services/system_stats.cpp
     services/audio_service.h
     services/audio_service.cpp
-    services/media_service.h
-    services/media_service.cpp
     services/glazewm_client.h
     services/glazewm_client.cpp
     services/komorebi_client.h

@@ -9,7 +9,7 @@
 #include <optional>
 #include <vector>
 
-namespace yasb::platform {
+namespace wabar::media {
 
 // Plain snapshots read from GlobalSystemMediaTransportControls (no COM objects are retained).
 struct MediaProperties {
@@ -176,4 +176,4 @@ QString resolveSourceAppName(const QString& aumid);
 // source_apps.get_source_app_class_name.
 QString sourceAppClassName(const QString& displayName);
 
-}  // namespace yasb::platform
+}  // namespace wabar::media

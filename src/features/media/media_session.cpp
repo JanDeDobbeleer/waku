@@ -1,11 +1,11 @@
-#include "platform/media_session.h"
+#include "features/media/media_session.h"
 
 #include <QDateTime>
 #include <QPointer>
 #include <algorithm>
 #include <utility>
 
-namespace yasb::platform {
+namespace wabar::media {
 
 // Re-posts every source event to the service's thread. Events for a destroyed service are dropped
 // by Qt together with the service's posted events.
@@ -305,4 +305,4 @@ void MediaSessionService::switchCurrentSession(int direction) {
   interpolateAndEmit();
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::media

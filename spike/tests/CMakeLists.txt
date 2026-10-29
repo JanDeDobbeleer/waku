@@ -4,7 +4,6 @@ wabar_contribute(
   TESTS
     test_stat_sources.cpp
     test_audio.cpp
-    test_media.cpp
     test_wm_clients.cpp
     test_workspaces.cpp
     test_screen_match.cpp

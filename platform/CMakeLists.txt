@@ -14,10 +14,8 @@ add_library(yasb_platform STATIC
   glazewm.cpp
   komorebi.h
   komorebi.cpp
-  media_session.h
-  media_session.cpp
-  media_session_winrt.cpp
-  media_source_apps.cpp
+  memory.h
+  memory.cpp
   notifications.h
   notifications.cpp
   notifications_system.cpp

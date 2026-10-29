@@ -7,11 +7,9 @@
 #include <QString>
 #include <memory>
 
-#include "platform/media_session.h"
+#include "features/media/media_session.h"
 
-namespace wabar::services {
-
-namespace platform = ::yasb::platform;
+namespace wabar::media {
 
 // MIME type of encoded image bytes by their magic number; "application/octet-stream" when the
 // format is not recognised.
@@ -20,7 +18,7 @@ QString imageMimeType(const QByteArray& bytes);
 QString imageDataUrl(const QByteArray& bytes);
 
 // The current system media session (GSMTC) as a QML singleton, shared by every widget. Wraps
-// platform::MediaSessionService, which owns the session thread; this object lives on the GUI
+// MediaSessionService, which owns the session thread; this object lives on the GUI
 // thread and re-emits the service's change signals as one `changed`. The engine destroys it,
 // which stops the service and joins the session thread. `position` is interpolated by the service
 // on a GUI-thread timer while a session plays. `thumbnailUrl` is the album art the player
@@ -46,7 +44,7 @@ class Media : public QObject {
  public:
   explicit Media(QObject* parent = nullptr);
   // Test seam: a fake session source.
-  Media(std::unique_ptr<platform::MediaSessionSource> source, QObject* parent);
+  Media(std::unique_ptr<MediaSessionSource> source, QObject* parent);
   ~Media() override;
 
   bool available() const { return current() != nullptr; }
@@ -71,12 +69,12 @@ class Media : public QObject {
   void changed();
 
  private:
-  const platform::MediaSessionState* current() const { return service_.currentSession(); }
+  const MediaSessionState* current() const { return service_.currentSession(); }
   void onServiceChanged();
 
-  platform::MediaSessionService service_;
+  MediaSessionService service_;
   QByteArray thumbnailBytes_;
   QString thumbnailUrl_;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::media

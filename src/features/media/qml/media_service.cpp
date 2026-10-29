@@ -1,6 +1,6 @@
-#include "spike/services/media_service.h"
+#include "features/media/qml/media_service.h"
 
-namespace wabar::services {
+namespace wabar::media {
 
 QString imageMimeType(const QByteArray& bytes) {
   if (bytes.startsWith("\x89PNG\r\n\x1a\n")) return QStringLiteral("image/png");
@@ -19,11 +19,10 @@ QString imageDataUrl(const QByteArray& bytes) {
       .arg(imageMimeType(bytes), QString::fromLatin1(bytes.toBase64()));
 }
 
-Media::Media(QObject* parent) : Media(platform::createSystemMediaSource(), parent) {}
+Media::Media(QObject* parent) : Media(createSystemMediaSource(), parent) {}
 
-Media::Media(std::unique_ptr<platform::MediaSessionSource> source, QObject* parent)
+Media::Media(std::unique_ptr<MediaSessionSource> source, QObject* parent)
     : QObject(parent), service_(std::move(source), this) {
-  using platform::MediaSessionService;
   for (auto signal :
        {&MediaSessionService::mediaDataChanged, &MediaSessionService::currentSessionChanged,
         &MediaSessionService::mediaPropertiesChanged, &MediaSessionService::timelineInfoChanged,
@@ -55,4 +54,4 @@ bool Media::canPrevious() const { return current() && current()->prevEnabled; }
 bool Media::canPlayPause() const { return current() && current()->playEnabled; }
 bool Media::canNext() const { return current() && current()->nextEnabled; }
 
-}  // namespace wabar::services
+}  // namespace wabar::media

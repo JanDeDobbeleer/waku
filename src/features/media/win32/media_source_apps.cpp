@@ -9,10 +9,10 @@
 #include <algorithm>
 #include <optional>
 
+#include "features/media/media_session.h"
 #include "kernel/win32/app_activation.h"
-#include "platform/media_session.h"
 
-namespace yasb::platform {
+namespace wabar::media {
 namespace {
 
 QString baseName(const QString& path) {
@@ -75,4 +75,4 @@ QString sourceAppClassName(const QString& displayName) {
   return displayName.toLower().replace(u' ', u'-');
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::media
