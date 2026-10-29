@@ -46,7 +46,7 @@ or hardware; tests use fakes. Remove an item when it is done.
   (`ease_min_value`) and always uses 0.5. An explicit empty `scrolling_label.separator` becomes a
   space (the generated struct cannot keep the schema's `" "` default).
 - Beyond Python: `timelineInfoChanged` is re-emitted after a session switch.
-- Live: only a read-only smoke test (`YASB_LIVE_MEDIA_SMOKE=1`), no session playing. Thumbnails,
+- Live: only a read-only smoke test (`WABAR_LIVE_MEDIA_SMOKE=1`), no session playing. Thumbnails,
   event handling and play/pause/skip commands untested.
 
 ## wifi
