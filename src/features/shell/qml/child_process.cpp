@@ -1,12 +1,10 @@
-#include "spike/services/child_process.h"
-
-#include <qt_windows.h>
+#include "features/shell/qml/child_process.h"
 
 #include <algorithm>
 
 #include "kernel/win32/shell_launch.h"
 
-namespace wabar::services {
+namespace wabar::shell {
 
 Process::Process(QObject* parent) : QObject(parent) {
   connect(&intervalTimer_, &QTimer::timeout, this, [this] { run(); });
@@ -97,4 +95,4 @@ void Process::finish(int exitCode) {
   emit finished();
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::shell

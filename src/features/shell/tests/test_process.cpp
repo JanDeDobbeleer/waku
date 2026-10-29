@@ -5,9 +5,9 @@
 #include <functional>
 #include <memory>
 
-#include "spike/services/child_process.h"
+#include "features/shell/qml/child_process.h"
 
-using namespace wabar::services;
+using namespace wabar::shell;
 
 namespace {
 

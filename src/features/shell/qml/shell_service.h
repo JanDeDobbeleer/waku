@@ -7,7 +7,7 @@
 #include <QStringList>
 #include <functional>
 
-namespace wabar::services {
+namespace wabar::shell {
 
 // What a widget does on click, as a QML singleton: start a program, run a command line, open a
 // URL, file or folder. Nothing is returned from a launch beyond whether it started; use Process
@@ -50,4 +50,4 @@ class Shell : public QObject {
   QString configHome_;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::shell

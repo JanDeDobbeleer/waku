@@ -6,9 +6,9 @@
 #include <QTest>
 #include <vector>
 
-#include "spike/services/shell_service.h"
+#include "features/shell/qml/shell_service.h"
 
-using namespace wabar::services;
+using namespace wabar::shell;
 
 namespace {
 

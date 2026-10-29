@@ -1,13 +1,11 @@
-#include "spike/services/shell_service.h"
-
-#include <qt_windows.h>
+#include "features/shell/qml/shell_service.h"
 
 #include <QDir>
 #include <QProcess>
 
 #include "kernel/win32/shell_launch.h"
 
-namespace wabar::services {
+namespace wabar::shell {
 
 namespace {
 
@@ -55,4 +53,4 @@ void Shell::open(const QString& target) {
 
 QString Shell::env(const QString& name) const { return qEnvironmentVariable(qPrintable(name)); }
 
-}  // namespace wabar::services
+}  // namespace wabar::shell
