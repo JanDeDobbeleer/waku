@@ -5,10 +5,9 @@
 #include <memory>
 
 #include "features/brightness/testing/fake_brightness.h"
-#include "spike/services/control_center_service.h"
+#include "features/control_center/qml/control_center_service.h"
 
-using namespace wabar::services;
-namespace platform = yasb::platform;
+using namespace wabar::control_center;
 using wabar::brightness::FakeBrightness;
 
 namespace {
@@ -44,8 +43,8 @@ ControlCenter::Backend backendFor(World* w) {
   b.toggleTouchKeyboard = [w] { ++w->keyboardToggles; };
   b.powerPlans = [w](std::optional<QUuid>* active) {
     if (active) *active = w->activePlan;
-    return std::vector<platform::PowerPlan>{{kBalanced, QStringLiteral("Balanced")},
-                                            {kSaver, QStringLiteral("Power saver")}};
+    return std::vector<PowerPlan>{{kBalanced, QStringLiteral("Balanced")},
+                                  {kSaver, QStringLiteral("Power saver")}};
   };
   b.setPowerPlan = [w](const QUuid& guid) {
     if (w->planResult == 0) w->activePlan = guid;
@@ -53,13 +52,11 @@ ControlCenter::Backend backendFor(World* w) {
   };
   b.powerModeSupported = [w] { return w->modesSupported; };
   b.powerModes = [] {
-    return std::vector<platform::PowerMode>{{QStringLiteral("Best power efficiency"), kSaver},
-                                            {QStringLiteral("Balanced"), kBetter},
-                                            {QStringLiteral("Best performance"), kBest}};
+    return std::vector<PowerMode>{{QStringLiteral("Best power efficiency"), kSaver},
+                                  {QStringLiteral("Balanced"), kBetter},
+                                  {QStringLiteral("Best performance"), kBest}};
   };
-  b.activePowerMode = [w]() -> std::optional<platform::PowerMode> {
-    return platform::PowerMode{w->modeName, QUuid()};
-  };
+  b.activePowerMode = [w]() -> std::optional<PowerMode> { return PowerMode{w->modeName, QUuid()}; };
   b.setPowerMode = [w](const QUuid& guid) {
     w->modeName = guid == kBest ? QStringLiteral("Best performance") : QStringLiteral("Balanced");
     return true;

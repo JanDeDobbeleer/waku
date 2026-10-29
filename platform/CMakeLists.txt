@@ -1,16 +1,8 @@
-# platform: Win32 wrappers. Depends on nothing of ours; Qt Core only for QMetaType in headers.
+# platform: empty. Its Win32 wrappers moved into the features that use them (power, app theme,
+# touch keyboard and user info into src/features/control_center). Removed in step 11.
 add_library(yasb_platform STATIC
-  power.h
-  power.cpp
-  theme.h
-  theme.cpp
-  touch_keyboard.h
-  touch_keyboard.cpp
-  user_info.h
-  user_info.cpp
 )
 target_include_directories(yasb_platform PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(yasb_platform
   PUBLIC Qt6::Core
-  PRIVATE wabar_options wabar_kernel psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32
-          wlanapi ws2_32 bthprops cfgmgr32 shlwapi dwmapi oleaut32 uuid dxva2 powrprof secur32 advapi32)
+  PRIVATE wabar_options)

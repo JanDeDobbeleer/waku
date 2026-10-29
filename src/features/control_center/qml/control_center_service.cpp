@@ -1,4 +1,4 @@
-#include "spike/services/control_center_service.h"
+#include "features/control_center/qml/control_center_service.h"
 
 #include <QCoreApplication>
 #include <QStringList>
@@ -6,14 +6,14 @@
 #include <QVariantMap>
 #include <algorithm>
 
+#include "features/control_center/app_theme.h"
+#include "features/control_center/touch_keyboard.h"
+#include "features/control_center/user_info.h"
 #include "features/notifications/dnd.h"
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/shell_launch.h"
-#include "platform/theme.h"
-#include "platform/touch_keyboard.h"
-#include "platform/user_info.h"
 
-namespace wabar::services {
+namespace wabar::control_center {
 
 namespace {
 
@@ -21,7 +21,7 @@ namespace {
 // bar is gone before the machine restarts or signs out.
 void runAfterQuit(const QStringList& arguments) {
   QObject::connect(qApp, &QCoreApplication::aboutToQuit, qApp,
-                   [arguments] { platform::runShutdown(arguments); });
+                   [arguments] { runShutdown(arguments); });
   QCoreApplication::quit();
 }
 
@@ -29,25 +29,25 @@ ControlCenter::Backend systemBackend() {
   ControlCenter::Backend b;
   b.dndStatus = [] { return wabar::notifications::dndStatus(); };
   b.setDndStatus = [](const QString& mode) { return wabar::notifications::setDndStatus(mode); };
-  b.themeMode = [] { return platform::themeMode(); };
-  b.toggleTheme = [] { return platform::toggleThemeMode(); };
-  b.toggleTouchKeyboard = [] { platform::toggleTouchKeyboard(); };
-  b.powerPlans = [](std::optional<QUuid>* active) { return platform::powerPlans(active); };
-  b.setPowerPlan = [](const QUuid& guid) { return platform::setPowerPlan(guid); };
-  b.powerModeSupported = [] { return !platform::isWindows10() && platform::powerModeSupported(); };
-  b.powerModes = [] { return platform::powerModes(); };
-  b.activePowerMode = [] { return platform::activePowerMode(); };
-  b.setPowerMode = [](const QUuid& guid) { return platform::setPowerMode(guid); };
-  b.userName = [] { return platform::windowsUsername(); };
-  b.avatarPath = [] { return platform::userAvatarPath(); };
+  b.themeMode = [] { return themeMode(); };
+  b.toggleTheme = [] { return toggleThemeMode(); };
+  b.toggleTouchKeyboard = [] { toggleTouchKeyboard(); };
+  b.powerPlans = [](std::optional<QUuid>* active) { return powerPlans(active); };
+  b.setPowerPlan = [](const QUuid& guid) { return setPowerPlan(guid); };
+  b.powerModeSupported = [] { return !isWindows10() && powerModeSupported(); };
+  b.powerModes = [] { return powerModes(); };
+  b.activePowerMode = [] { return activePowerMode(); };
+  b.setPowerMode = [](const QUuid& guid) { return setPowerMode(guid); };
+  b.userName = [] { return windowsUsername(); };
+  b.avatarPath = [] { return userAvatarPath(); };
   return b;
 }
 
 ControlCenter::Launcher systemLauncher() {
   ControlCenter::Launcher l;
-  l.lock = [] { platform::lockWorkstation(); };
-  l.sleep = [] { platform::suspendSystem(); };
-  l.hibernate = [] { platform::hibernateSystem(); };
+  l.lock = [] { lockWorkstation(); };
+  l.sleep = [] { suspendSystem(); };
+  l.hibernate = [] { hibernateSystem(); };
   l.signOut = [] { runAfterQuit({QStringLiteral("/l")}); };
   l.restart = [] {
     runAfterQuit({QStringLiteral("/r"), QStringLiteral("/t"), QStringLiteral("0")});
@@ -260,7 +260,7 @@ void ControlCenter::setBrightnessSource(const QString& id) {
 bool ControlCenter::setPowerPlan(const QString& id) {
   const QUuid guid(id);
   const auto plan = std::find_if(plans_.begin(), plans_.end(),
-                                 [&](const platform::PowerPlan& p) { return p.guid == guid; });
+                                 [&](const PowerPlan& p) { return p.guid == guid; });
   if (plan == plans_.end() || !backend_.setPowerPlan) return false;
   if (activePlan_ && *activePlan_ == guid) return true;
   const bool ok = backend_.setPowerPlan(guid) == 0;
@@ -273,7 +273,7 @@ bool ControlCenter::setPowerPlan(const QString& id) {
 bool ControlCenter::setPowerMode(const QString& id) {
   const QUuid guid(id);
   const auto mode = std::find_if(modes_.begin(), modes_.end(),
-                                 [&](const platform::PowerMode& m) { return m.guid == guid; });
+                                 [&](const PowerMode& m) { return m.guid == guid; });
   if (mode == modes_.end() || !backend_.setPowerMode) return false;
   const bool ok = backend_.setPowerMode(guid);
   readPower();
@@ -317,4 +317,4 @@ bool ControlCenter::requestAction(const QString& id) {
   return false;
 }
 
-}  // namespace wabar::services
+}  // namespace wabar::control_center

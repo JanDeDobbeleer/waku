@@ -1,10 +1,10 @@
-#include "platform/theme.h"
-
 #include <windows.h>
 
 #include <QDebug>
 
-namespace yasb::platform {
+#include "features/control_center/app_theme.h"
+
+namespace wabar::control_center {
 namespace {
 
 constexpr wchar_t kPersonalizeKey[] =
@@ -53,4 +53,4 @@ std::optional<QString> toggleThemeMode() {
   return std::nullopt;
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::control_center

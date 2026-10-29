@@ -1,7 +1,7 @@
-#include "platform/user_info.h"
-
 #include <windows.h>
 #include <sddl.h>
+
+#include "features/control_center/user_info.h"
 #define SECURITY_WIN32
 #include <security.h>
 
@@ -9,7 +9,7 @@
 #include <QString>
 #include <vector>
 
-namespace yasb::platform {
+namespace wabar::control_center {
 namespace {
 
 QString currentUserSid() {
@@ -96,4 +96,4 @@ QString userAvatarPath() {
   return path;
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::control_center

@@ -12,11 +12,9 @@
 #include <vector>
 
 #include "features/brightness/brightness.h"
-#include "platform/power.h"
+#include "features/control_center/power.h"
 
-namespace wabar::services {
-
-namespace platform = ::yasb::platform;
+namespace wabar::control_center {
 
 // The system side of the control center as a QML singleton (ControlCenter): Do Not Disturb, the
 // app theme, the touch keyboard, the screenshot overlay, monitor brightness, power plans and modes,
@@ -64,11 +62,11 @@ class ControlCenter : public QObject {
     std::function<QString()> themeMode;                   // "light" or "dark"
     std::function<std::optional<QString>()> toggleTheme;  // the new mode
     std::function<void()> toggleTouchKeyboard;
-    std::function<std::vector<platform::PowerPlan>(std::optional<QUuid>*)> powerPlans;
+    std::function<std::vector<PowerPlan>(std::optional<QUuid>*)> powerPlans;
     std::function<unsigned long(const QUuid&)> setPowerPlan;  // 0 on success
     std::function<bool()> powerModeSupported;
-    std::function<std::vector<platform::PowerMode>()> powerModes;
-    std::function<std::optional<platform::PowerMode>()> activePowerMode;
+    std::function<std::vector<PowerMode>()> powerModes;
+    std::function<std::optional<PowerMode>()> activePowerMode;
     std::function<bool(const QUuid&)> setPowerMode;
     std::function<QString()> userName;
     std::function<QString()> avatarPath;
@@ -152,14 +150,14 @@ class ControlCenter : public QObject {
   std::optional<qulonglong> brightnessMonitor_;
   std::optional<qulonglong> selectedMonitor_;
   int brightness_ = 0;
-  std::vector<platform::PowerPlan> plans_;
+  std::vector<PowerPlan> plans_;
   std::optional<QUuid> activePlan_;
   bool modeSupported_ = false;
-  std::vector<platform::PowerMode> modes_;
+  std::vector<PowerMode> modes_;
   QString modeName_;
   QString userName_;
   QString avatarPath_;
   QString pending_;
 };
 
-}  // namespace wabar::services
+}  // namespace wabar::control_center

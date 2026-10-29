@@ -1,5 +1,3 @@
-#include "platform/power.h"
-
 #include <windows.h>
 #include <powrprof.h>
 
@@ -8,9 +6,10 @@
 #include <algorithm>
 #include <vector>
 
+#include "features/control_center/power.h"
 #include "kernel/win32/windows_build.h"
 
-namespace yasb::platform {
+namespace wabar::control_center {
 namespace {
 
 constexpr wchar_t kPowerSchemesKey[] =
@@ -187,4 +186,4 @@ bool runShutdown(const QStringList& arguments) {
   return runHidden(QStringLiteral("shutdown ") + arguments.join(QLatin1Char(' ')));
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::control_center

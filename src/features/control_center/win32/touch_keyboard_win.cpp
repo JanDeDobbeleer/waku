@@ -1,5 +1,3 @@
-#include "platform/touch_keyboard.h"
-
 #include <windows.h>
 #include <shellapi.h>
 #include <shlobj.h>
@@ -7,7 +5,9 @@
 #include <QDebug>
 #include <string>
 
-namespace yasb::platform {
+#include "features/control_center/touch_keyboard.h"
+
+namespace wabar::control_center {
 namespace {
 
 // Undocumented TabTip COM server (docs/architecture.md allowlist).
@@ -59,4 +59,4 @@ void toggleTouchKeyboard() {
   if (initialised) CoUninitialize();
 }
 
-}  // namespace yasb::platform
+}  // namespace wabar::control_center

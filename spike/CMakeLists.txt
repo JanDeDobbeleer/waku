@@ -4,11 +4,6 @@
 # wabar.services: the C++ half of the widget API (polled data sources, Process, Shell, ...). The
 # module target itself is defined in src/modules/ from these and the src/features/ contributions.
 wabar_contribute(
-  SERVICES_SOURCES
-    services/control_center_service.h
-    services/control_center_service.cpp
-  # The generated type registration includes headers by name.
-  SERVICES_INCLUDE_DIRS services
   SERVICES_LIBS wabar_audio wabar_bluetooth wabar_brightness wabar_notifications yasb_platform yasb_widgets wabar_control wabar_kernel
 )
 

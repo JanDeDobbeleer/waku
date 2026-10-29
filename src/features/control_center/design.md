@@ -3,6 +3,11 @@
 Date: 2026-10-29. Branch `spike/qt-quick-bar`. Reference: Python YASB `control_center` and the Qt
 Widgets port in `widgets/control_center/`.
 
+Layout (feature `control_center`, namespace `wabar::control_center`): `power.h`, `app_theme.h`,
+`touch_keyboard.h` and `user_info.h` at the root with their Windows code in `win32/`; the
+service and widget in `qml/`; the test in `tests/`. DEPENDS audio media notifications brightness:
+the DND state comes from `features/notifications/dnd.h`, the slider from `features/brightness/brightness.h`.
+
 ## What it does
 
 A bar button (glyph, tooltip) that opens a popup below the bar. The popup holds up to five
@@ -38,7 +43,7 @@ No new platform code and no new undocumented API: every call is already on the a
 
 ## New code
 
-`spike/services/control_center_service.{h,cpp}`: one singleton, `ControlCenter`, for what the
+`qml/control_center_service.{h,cpp}`: one singleton, `ControlCenter`, for what the
 other singletons do not cover. Two injectable structs:
 
 - `Backend`: reads and writes of settings (DND, theme, touch keyboard, power, user).
@@ -54,7 +59,7 @@ QML-facing API (all `changed`-notified, GUI thread):
   `screenshot()`, `openSettings(uri)`, `setBrightness(percent)`, `setBrightnessSource(id)`,
   `setPowerPlan(id)`, `setPowerMode(id)`, `requestAction(id)`, `cancelAction()`.
 
-`spike/widgets/ControlCenter.qml`: the widget, with inline components `Choice` (a collapsible
+`qml/ControlCenter.qml`: the widget, with inline components `Choice` (a collapsible
 list) and `SliderRow`. Options: `glyph`, `sectionsOrder`, `quickActions`, `columns`,
 `showSystemControls`, `showQuickActions`, `showSliders`, `showBrightness`, `showVolume`,
 `showMicrophone`, `showSourceSelectors`, `showPower`, `showMedia`, `profileImageSize`,
@@ -103,7 +108,7 @@ list) and `SliderRow`. Options: `glyph`, `sectionsOrder`, `quickActions`, `colum
 
 ## Tests
 
-`spike/tests/test_control_center.cpp` covers the service with a fake backend, launcher and
+`tests/test_control_center.cpp` covers the service with a fake backend, launcher and
 brightness control: DND toggle and cycle, external DND events, theme and keyboard, screenshot and
 `ms-settings:` filtering, brightness read, write, clamp and source switch, power plan and mode
 lists and failures, unsupported modes, immediate versus confirmed actions, cancel, unknown

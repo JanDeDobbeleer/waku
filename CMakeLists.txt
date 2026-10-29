@@ -56,6 +56,5 @@ include(src/modules/qml_modules.cmake)  # wabar.services, wabar.widgets
 
 include(CTest)
 if(BUILD_TESTING)
-  add_subdirectory(spike/tests)
   add_subdirectory(tests)
 endif()
