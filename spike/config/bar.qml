@@ -23,6 +23,7 @@ Config {
                 Whoami {},
                 Media {},
                 Volume {},
+                // Tray {},                   // notification-area icons (starts the tray hook)
                 Battery {},
                 Cpu {},
                 Memory {}

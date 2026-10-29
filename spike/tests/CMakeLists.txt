@@ -22,6 +22,7 @@ add_executable(tidy_services_tests
   test_tray_model.cpp
   test_systray.cpp
   test_tray_pins.cpp
+  test_tray_widget.cpp
 )
 target_compile_definitions(tidy_services_tests PRIVATE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)

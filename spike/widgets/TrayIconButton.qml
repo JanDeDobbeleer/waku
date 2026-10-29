@@ -1,0 +1,165 @@
+import QtQuick
+import QtQuick.Window
+import tidy
+import tidy.services as S
+
+// One notification-area icon, used by Tray. Not meant to be placed by hand.
+//
+// A left click reaches the program as a click, a double click as a double click, a middle and a
+// right click as theirs. A left click with `pinModifier` held pins or unpins the icon instead and
+// sends nothing to the program. `pinModifier` plus a right click opens a small menu (pin or
+// unpin, move left, move right, refresh); a plain right click still goes to the program.
+//
+// `model` is the row of the icon (roles of TrayIconModel); `pins` is the TrayPins that owns its
+// place; `activated` is emitted after a click that went to the program.
+Item {
+    id: root
+
+    required property var model
+    property var pins: null
+    property int iconSize: 16
+    property int pinModifier: Qt.ControlModifier
+    property bool showTooltip: true
+
+    // Whether the icon is pinned, as of creation and of the last time the menu opened.
+    property bool pinnedNow: pins ? pins.isPinned(model.id) : false
+    readonly property bool hidden: model.hidden === true
+
+    signal activated
+
+    function togglePin() {
+        if (pins)
+            pins.setPinned(model.id, !pins.isPinned(model.id));
+    }
+
+    visible: !hidden
+    width: hidden ? 0 : iconSize + 8
+    height: hidden ? 0 : Math.max(Theme.pillHeight, iconSize + 8)
+
+    Rectangle {
+        anchors.fill: parent
+        radius: Theme.radius >= 0 ? Math.min(Theme.radius, height / 2) : height / 2
+        color: hover.hovered ? Theme.fillHover : "transparent"
+
+        Behavior on color {
+            ColorAnimation {
+                duration: 150
+            }
+        }
+    }
+
+    Image {
+        anchors.centerIn: parent
+        width: root.iconSize
+        height: root.iconSize
+        sourceSize: Qt.size(root.iconSize, root.iconSize)
+        smooth: true
+        cache: false
+        source: root.model.iconUrl
+    }
+
+    Tooltip {
+        text: root.showTooltip ? root.model.tooltip : ""
+    }
+
+    HoverHandler {
+        id: hover
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.NoModifier
+        onTapped: {
+            if (tapCount === 2) {
+                S.Systray.doubleClick(root.model.id);
+                // The release of the double click: the service swallows it, which also clears the
+                // flag so that the next real click is not swallowed.
+                S.Systray.click(root.model.id, Qt.LeftButton);
+            } else {
+                S.Systray.click(root.model.id, Qt.LeftButton);
+            }
+            root.activated();
+        }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+        acceptedModifiers: root.pinModifier
+        onTapped: root.togglePin()
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.MiddleButton
+        acceptedModifiers: Qt.NoModifier
+        onTapped: {
+            S.Systray.click(root.model.id, Qt.MiddleButton);
+            root.activated();
+        }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        acceptedModifiers: Qt.NoModifier
+        onTapped: {
+            S.Systray.click(root.model.id, Qt.RightButton);
+            root.activated();
+        }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        acceptedModifiers: root.pinModifier
+        onTapped: menu.toggle()
+    }
+
+    PopupWindow {
+        id: menu
+        objectName: "trayMenu"
+        anchorItem: root
+        spacing: 4
+
+        onOpened: root.pinnedNow = root.pins ? root.pins.isPinned(root.model.id) : false
+
+        Pill {
+            objectName: "trayMenuPin"
+            width: 140
+            text: root.pinnedNow ? "Unpin" : "Pin to bar"
+            onClicked: {
+                menu.close();
+                root.togglePin();
+            }
+        }
+
+        Pill {
+            objectName: "trayMenuLeft"
+            width: 140
+            text: "Move left"
+            onClicked: {
+                menu.close();
+                if (root.pins)
+                    root.pins.moveBy(root.model.id, -1);
+            }
+        }
+
+        Pill {
+            objectName: "trayMenuRight"
+            width: 140
+            text: "Move right"
+            onClicked: {
+                menu.close();
+                if (root.pins)
+                    root.pins.moveBy(root.model.id, 1);
+            }
+        }
+
+        Pill {
+            objectName: "trayMenuRefresh"
+            width: 140
+            text: "Refresh"
+            onClicked: {
+                menu.close();
+                S.Systray.refresh();
+            }
+        }
+    }
+}
