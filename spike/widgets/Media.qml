@@ -53,121 +53,188 @@ Pill {
               + (S.Media.artist ? " - " + S.Media.artist : "")
     }
 
+    // The media menu of Python YASB: 400 px wide, 12 px around; the art on the left, the track,
+    // the round buttons and the source tag on the right, the times and a thin seek bar below.
     PopupWindow {
         id: panel
         objectName: "mediaPopup"
         anchorItem: root
-        spacing: 10
+        padding: 12
+        spacing: 0
 
         Row {
-            spacing: 12
+            id: top
+
+            readonly property bool hasArt: S.Media.thumbnailUrl !== ""
+
+            width: 376
 
             Image {
-                visible: S.Media.thumbnailUrl !== ""
-                width: 72
-                height: 72
+                visible: top.hasArt
+                width: 100
+                height: 100
                 source: S.Media.thumbnailUrl
-                sourceSize: Qt.size(144, 144)
+                sourceSize: Qt.size(200, 200)
                 fillMode: Image.PreserveAspectCrop
             }
 
             Column {
-                width: 210
-                spacing: 2
+                width: top.width - (top.hasArt ? 100 : 0)
 
                 Text {
                     width: parent.width
+                    leftPadding: 12
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 2
                     elide: Text.ElideRight
                     color: Theme.text
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize
-                    font.bold: true
+                    font.pixelSize: 14
+                    font.weight: Font.DemiBold
                     text: S.Media.title
                 }
 
                 Text {
                     width: parent.width
+                    leftPadding: 12
                     elide: Text.ElideRight
-                    color: Theme.text
-                    opacity: 0.8
+                    color: Qt.alpha(Theme.text, 0.65)
                     font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSize
+                    font.pixelSize: 13
+                    font.weight: Font.DemiBold
                     text: S.Media.artist
                 }
 
-                Text {
+                Item {
                     width: parent.width
-                    elide: Text.ElideRight
-                    color: Theme.text
-                    opacity: 0.6
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.smallFontSize
-                    text: S.Media.album
-                }
+                    height: 46
 
-                Text {
-                    width: parent.width
-                    elide: Text.ElideRight
-                    color: Theme.text
-                    opacity: 0.45
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.smallFontSize
-                    text: S.Media.sourceName
+                    Row {
+                        x: 10
+                        y: 10
+                        spacing: 4
+
+                        Repeater {
+                            model: [
+                                {
+                                    "glyph": "",
+                                    "ok": S.Media.canPrevious,
+                                    "act": 0
+                                },
+                                {
+                                    "glyph": S.Media.playing ? "" : "",
+                                    "ok": S.Media.canPlayPause,
+                                    "act": 1
+                                },
+                                {
+                                    "glyph": "",
+                                    "ok": S.Media.canNext,
+                                    "act": 2
+                                }
+                            ]
+
+                            delegate: Rectangle {
+                                id: button
+
+                                required property var modelData
+
+                                readonly property bool isPlay: modelData.act === 1
+
+                                width: 36
+                                height: 36
+                                radius: 18
+                                color: isPlay ? (hover.hovered ? Qt.darker(Theme.accent, 1.1) : Theme.accent) : (hover.hovered && modelData.ok ? Qt.alpha(Theme.text, 0.1) : "transparent")
+                                opacity: tap.pressed ? 0.7 : 1
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    color: button.isPlay ? Theme.onAccent : (button.modelData.ok ? Theme.text : "#51576d")
+                                    font.family: Theme.iconFont
+                                    font.pixelSize: button.isPlay ? 18 : 14
+                                    text: button.modelData.glyph
+                                }
+
+                                HoverHandler {
+                                    id: hover
+                                }
+
+                                TapHandler {
+                                    id: tap
+                                    onTapped: {
+                                        if (!button.modelData.ok)
+                                            return;
+                                        if (button.modelData.act === 0)
+                                            S.Media.previous();
+                                        else if (button.modelData.act === 1)
+                                            S.Media.playPause();
+                                        else
+                                            S.Media.next();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        visible: S.Media.sourceName !== ""
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: 5
+                        width: sourceText.implicitWidth + 8
+                        height: sourceText.implicitHeight + 4
+                        radius: 3
+                        color: "#babbf1"
+
+                        Text {
+                            id: sourceText
+                            anchors.centerIn: parent
+                            color: Theme.onAccent
+                            font.family: Theme.fontFamily
+                            font.pixelSize: 11
+                            font.weight: Font.DemiBold
+                            text: S.Media.sourceName
+                        }
+                    }
                 }
             }
         }
 
-        Row {
-            spacing: 8
+        Item {
+            width: top.width
+            height: 20 + 12
 
             Text {
-                width: 40
-                color: Theme.text
+                y: 16
+                color: Qt.alpha(Theme.text, 0.55)
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.smallFontSize
+                font.pixelSize: 12
                 text: root.clock(S.Media.position)
             }
 
-            Slider {
-                objectName: "seekSlider"
-                width: 206
-                from: 0
-                to: Math.max(1, S.Media.duration)
-                value: S.Media.position
-                enabled: S.Media.duration > 0
-                onMoved: v => S.Media.seek(v)
-            }
-
             Text {
-                width: 40
-                horizontalAlignment: Text.AlignRight
-                color: Theme.text
+                y: 16
+                anchors.right: parent.right
+                color: Qt.alpha(Theme.text, 0.55)
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.smallFontSize
+                font.pixelSize: 12
                 text: root.clock(S.Media.duration)
             }
         }
 
-        Row {
-            spacing: 8
-
-            Pill {
-                text: "⏮"
-                opacity: S.Media.canPrevious ? 1 : 0.4
-                onClicked: S.Media.previous()
-            }
-
-            Pill {
-                text: S.Media.playing ? "⏸" : "▶"
-                opacity: S.Media.canPlayPause ? 1 : 0.4
-                onClicked: S.Media.playPause()
-            }
-
-            Pill {
-                text: "⏭"
-                opacity: S.Media.canNext ? 1 : 0.4
-                onClicked: S.Media.next()
-            }
+        Slider {
+            objectName: "seekSlider"
+            width: top.width
+            implicitHeight: 14
+            grooveHeight: 2
+            handleSize: 10
+            ringHandle: false
+            handleColor: Theme.accent
+            grooveColor: Qt.alpha(Theme.text, 0.15)
+            from: 0
+            to: Math.max(1, S.Media.duration)
+            value: S.Media.position
+            enabled: S.Media.duration > 0
+            onMoved: v => S.Media.seek(v)
         }
     }
 }

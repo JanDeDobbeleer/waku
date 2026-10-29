@@ -101,14 +101,14 @@ Item {
         Rectangle {
             id: box
 
-            implicitWidth: label.implicitWidth + 2 * Theme.padding
-            implicitHeight: label.implicitHeight + 12
+            implicitWidth: label.implicitWidth + 20
+            implicitHeight: label.implicitHeight + 10
             width: tip.width
             height: tip.height
             color: Theme.popupSurface
             border.color: Theme.popupBorder
             border.width: 1
-            radius: Theme.radius >= 0 ? Math.min(Theme.radius, 10) : 8
+            radius: 4  // Python YASB .tooltip
             opacity: tip.visible ? 1 : 0
 
             Behavior on opacity {
@@ -122,7 +122,8 @@ Item {
                 anchors.centerIn: parent
                 color: Theme.text
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.smallFontSize
+                font.pixelSize: 12
+                font.weight: Font.DemiBold
                 text: root.text
             }
         }

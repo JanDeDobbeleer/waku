@@ -8,8 +8,8 @@ import QtQuick
 //         end:    [ Volume {}, Battery {} ]
 //     }
 //
-// A widget that sets `visible: false` takes no space. `spacing` (default Theme.spacing) and
-// `padding` are in pixels.
+// A widget that sets `visible: false` takes no space. `spacing` (default Theme.spacing),
+// `padding` and its per-edge forms `startPadding`/`endPadding` are in pixels.
 //
 // With Theme.islands each non-empty group sits on an island: a background of Theme.surface (or the
 // Bar's `background`) with rounded bottom corners and concave fillets at the screen edge, as in
@@ -19,6 +19,9 @@ Item {
 
     property int spacing: Theme.spacing
     property int padding: 12
+    // The room before the first start widget and after the last end widget; they follow `padding`.
+    property int startPadding: padding
+    property int endPadding: padding
 
     // One island: an item with the body's geometry (named, so tests find it) and a canvas that also
     // draws the fillets outside the body.
@@ -118,7 +121,7 @@ Item {
     Row {
         id: leftRow
         anchors.left: parent.left
-        anchors.leftMargin: root.padding
+        anchors.leftMargin: root.startPadding
         anchors.verticalCenter: parent.verticalCenter
         spacing: root.spacing
     }
@@ -132,7 +135,7 @@ Item {
     Row {
         id: rightRow
         anchors.right: parent.right
-        anchors.rightMargin: root.padding
+        anchors.rightMargin: root.endPadding
         anchors.verticalCenter: parent.verticalCenter
         spacing: root.spacing
     }

@@ -8,7 +8,10 @@ Memory::Memory(std::shared_ptr<platform::MemoryDataSource> source, QObject* pare
     : StatSource(parent), source_(std::move(source)) {}
 
 void Memory::sample() {
-  sampleAsync(source_, [this](platform::MemorySample s) { sample_ = s; });
+  sampleAsync(source_, [this](platform::MemorySample s) {
+    sample_ = s;
+    recordHistory(s.percent);
+  });
 }
 
 Cpu::Cpu(QObject* parent) : Cpu(platform::createCpuDataSource(), parent) {}
@@ -23,7 +26,10 @@ QVariantList Cpu::perCore() const {
 }
 
 void Cpu::sample() {
-  sampleAsync(source_, [this](platform::CpuSample s) { sample_ = std::move(s); });
+  sampleAsync(source_, [this](platform::CpuSample s) {
+    sample_ = std::move(s);
+    recordHistory(sample_.percent);
+  });
 }
 
 Battery::Battery(QObject* parent) : Battery(platform::createBatteryDataSource(), parent) {}

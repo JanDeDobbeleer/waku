@@ -7,6 +7,10 @@ qt_add_qml_module(tidy_widgets
   VERSION 1.0
   QML_FILES
     Pill.qml
+    StatGraph.qml
+    StatPopup.qml
+    DeviceMenu.qml
+    DeviceRow.qml
     Slider.qml
     Calendar.qml
     Clock.qml

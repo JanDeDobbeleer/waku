@@ -221,3 +221,34 @@ TEST(BatterySource, ReportsUnavailableWithoutABattery) {
   ASSERT_TRUE(waitFor([&] { return battery.ready(); }));  // a sample arrived: there is just none
   EXPECT_FALSE(battery.available());
 }
+
+TEST(StatSource, KeepsTheLastSamplesInTheHistoryRing) {
+  auto fake = std::make_shared<FakeMemory>();
+  Memory memory(fake, nullptr);
+  memory.setHistorySize(3);
+  memory.setInterval(100);
+  memory.componentComplete();
+  ASSERT_TRUE(waitFor([&] { return fake->calls.load() >= 5 && memory.history().size() == 3; }));
+  fake->percent = 90;
+  ASSERT_TRUE(waitFor([&] { return memory.history().last().toDouble() == 90; }));
+  EXPECT_EQ(memory.history().size(), 3);  // the oldest samples dropped out
+  memory.setHistorySize(2);
+  EXPECT_EQ(memory.history().size(), 2);
+  EXPECT_EQ(memory.history().last().toDouble(), 90);
+}
+
+TEST(StatSource, HistoryDefaultsTo60AndStartsEmpty) {
+  Memory memory(std::make_shared<FakeMemory>(), nullptr);
+  EXPECT_EQ(memory.historySize(), 60);
+  EXPECT_TRUE(memory.history().isEmpty());
+}
+
+TEST(CpuSource, HistoryHoldsTheLoadAndExposesCoresAndMaxFrequency) {
+  Cpu cpu(std::make_shared<FakeCpu>(), nullptr);
+  cpu.componentComplete();
+  ASSERT_TRUE(waitFor([&] { return cpu.ready(); }));
+  ASSERT_FALSE(cpu.history().isEmpty());
+  EXPECT_DOUBLE_EQ(cpu.history().first().toDouble(), 12.5);
+  EXPECT_EQ(cpu.coresPhysical(), 1);
+  EXPECT_DOUBLE_EQ(cpu.maxFrequency(), 0);
+}

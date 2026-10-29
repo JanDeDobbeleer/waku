@@ -47,56 +47,33 @@ Pill {
         onTapped: S.Shell.open("ms-settings:bluetooth")
     }
 
-    PopupWindow {
+    DeviceMenu {
         id: panel
         objectName: "bluetoothPopup"
         anchorItem: root
-        spacing: 8
+        title: "Bluetooth"
+        buttonText: S.Bluetooth.radioOn ? "On" : "Off"
+        buttonChecked: S.Bluetooth.radioOn
+        sectionTitle: "Your devices"
+        emptyText: S.Bluetooth.radioOn && S.Bluetooth.devices.length === 0 ? "No paired devices" : ""
+        footerText: "More Bluetooth settings"
+        refreshable: false
+        model: S.Bluetooth.devices
 
-        Row {
-            spacing: 10
+        onButtonClicked: S.Bluetooth.setRadio(!S.Bluetooth.radioOn)
+        onFooterClicked: S.Shell.open("ms-settings:bluetooth")
 
-            Text {
-                width: 200
-                anchors.verticalCenter: parent.verticalCenter
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontSize
-                text: "Bluetooth"
-            }
+        delegate: DeviceRow {
+            required property var modelData
 
-            Pill {
-                objectName: "bluetoothSwitch"
-                text: S.Bluetooth.radioOn ? "On" : "Off"
-                fill: S.Bluetooth.radioOn ? Theme.accentFill : Theme.fill
-                onClicked: S.Bluetooth.setRadio(!S.Bluetooth.radioOn)
-            }
-        }
-
-        Text {
-            visible: S.Bluetooth.radioOn && S.Bluetooth.devices.length === 0
-            color: Theme.text
-            opacity: 0.6
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.smallFontSize
-            text: "No paired devices"
-        }
-
-        Repeater {
-            model: S.Bluetooth.devices
-
-            delegate: Pill {
-                required property var modelData
-
-                width: 300
-                maxTextWidth: 276
-                interactive: modelData.canConnect
-                fill: modelData.connected ? Theme.accentFill : Theme.fill
-                text: modelData.name
-                      + (modelData.batteryPercent >= 0 ? "  " + modelData.batteryPercent + "%" : "")
-                      + (modelData.canConnect ? (modelData.connected ? "  · Disconnect" : "  · Connect") : "")
-                onClicked: modelData.connected ? S.Bluetooth.disconnectDevice(modelData.id) : S.Bluetooth.connectDevice(modelData.id)
-            }
+            glyph: root.iconOn
+            name: modelData.name
+            status: modelData.connected ? "Connected" : "Paired"
+            trailing: modelData.batteryPercent >= 0 ? modelData.batteryPercent + "%" : ""
+            trailingColor: modelData.batteryPercent >= 0 && modelData.batteryPercent <= 20 ? Theme.warn : muted
+            action: modelData.canConnect ? (modelData.connected ? "Disconnect" : "Connect") : ""
+            active: modelData.connected
+            onActionClicked: modelData.connected ? S.Bluetooth.disconnectDevice(modelData.id) : S.Bluetooth.connectDevice(modelData.id)
         }
     }
 }

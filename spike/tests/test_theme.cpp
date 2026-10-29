@@ -70,6 +70,9 @@ TEST(ThemeValuesTest, DefaultsAreTheShippedLook) {
   EXPECT_FALSE(spec.property("islands").toBool());
   EXPECT_EQ(spec.property("islandRadius").toInt(), 16);
   EXPECT_EQ(spec.property("groupPadding").toInt(), 12);
+  EXPECT_EQ(spec.property("barPadding").toInt(), 10);
+  EXPECT_DOUBLE_EQ(spec.property("iconSpacing").toReal(), 6.0);
+  EXPECT_EQ(spec.property("labelPaddingBottom").toInt(), 0);
 }
 
 TEST(ThemeValuesTest, TheDefaultFontIsTheSystemFont) {

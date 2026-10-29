@@ -20,6 +20,9 @@ Item {
     property int iconSize: 16
     property int pinModifier: Qt.ControlModifier
     property bool showTooltip: true
+    // The room around the icon, and (when not negative) the corner radius; the popup grid uses more.
+    property int cellPadding: 4
+    property real cornerRadius: -1
 
     // Whether the icon is pinned, as of creation and of the last time the menu opened.
     property bool pinnedNow: pins ? pins.isPinned(model.id) : false
@@ -33,13 +36,13 @@ Item {
     }
 
     visible: !hidden
-    width: hidden ? 0 : iconSize + 8
-    height: hidden ? 0 : Math.max(Theme.pillHeight, iconSize + 8)
+    width: hidden ? 0 : iconSize + 2 * cellPadding
+    height: hidden ? 0 : Math.max(cellPadding > 4 ? 0 : Theme.pillHeight, iconSize + 2 * cellPadding)
 
     Rectangle {
         anchors.fill: parent
-        radius: Theme.radius >= 0 ? Math.min(Theme.radius, height / 2) : height / 2
-        color: hover.hovered ? Theme.fillHover : "transparent"
+        radius: root.cornerRadius >= 0 ? root.cornerRadius : (Theme.radius >= 0 ? Math.min(Theme.radius, height / 2) : height / 2)
+        color: hover.hovered ? (root.cornerRadius >= 0 ? Theme.fill : Theme.fillHover) : "transparent"
 
         Behavior on color {
             ColorAnimation {

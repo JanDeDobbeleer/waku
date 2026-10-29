@@ -124,11 +124,13 @@ Row {
             id: overflow
             objectName: "trayOverflow"
             anchorItem: chevron
+            padding: 4
+            spacing: 0
 
             Grid {
                 objectName: "trayOverflowGrid"
                 columns: Math.max(1, root.iconsPerRow)
-                spacing: 2
+                spacing: 0
 
                 Repeater {
                     id: popupRepeater
@@ -137,6 +139,8 @@ Row {
                         objectName: "trayIcon-" + model.id
                         pins: trayPins
                         iconSize: root.iconSize
+                        cellPadding: 12
+                        cornerRadius: 6
                         pinModifier: root.pinModifier
                         showTooltip: root.tooltip
                         onHiddenChanged: Qt.callLater(root.recount)

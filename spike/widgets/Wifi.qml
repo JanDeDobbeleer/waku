@@ -104,50 +104,42 @@ Pill {
         onTapped: S.Shell.open("ms-settings:network")
     }
 
-    PopupWindow {
+    DeviceMenu {
         id: panel
         objectName: "wifiPopup"
         anchorItem: root
-        spacing: 6
+        title: "WiFi Networks"
+        busy: S.Network.scanning
+        emptyText: rows.length === 0 ? (S.Network.scanning ? "Scanning..." : "No networks found") : ""
+        footerText: "More Wi-Fi settings"
+        model: rows
+
+        // The scan result; until it arrives, the network the machine is on.
+        readonly property var rows: S.Network.networks.length > 0 ? S.Network.networks : root.kind === "wifi" ? [{
+                    "ssid": S.Network.ssid,
+                    "signal": S.Network.signalPercent,
+                    "secured": false,
+                    "connected": true,
+                    "known": true
+                }] : []
 
         onOpened: S.Network.refresh()
+        onRefreshRequested: S.Network.refresh()
+        onFooterClicked: S.Shell.open("ms-settings:network-wifi")
 
-        Row {
-            spacing: 10
+        delegate: DeviceRow {
+            required property var modelData
 
-            Text {
-                width: 190
-                anchors.verticalCenter: parent.verticalCenter
-                color: Theme.text
-                opacity: 0.6
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.smallFontSize
-                text: S.Network.scanning ? "Scanning..." : "Networks"
-            }
-
-            Pill {
-                objectName: "wifiRefresh"
-                text: "Refresh"
-                onClicked: S.Network.refresh()
-            }
-        }
-
-        Repeater {
-            model: S.Network.networks
-
-            delegate: Pill {
-                required property var modelData
-
-                objectName: "wifiNetwork"
-                width: 256
-                maxTextWidth: 232
-                interactive: modelData.known && !modelData.connected
-                opacity: modelData.known || modelData.connected ? 1 : 0.6
-                fill: modelData.connected ? Theme.accentFill : Theme.fill
-                tooltip: modelData.known ? "" : "Needs a password"
-                text: (modelData.connected ? "✓ " : "") + modelData.ssid + "  " + modelData.signal + "%" + (modelData.secured ? "  🔒" : "")
-                onClicked: S.Network.connectTo(modelData.ssid)
-            }
+            objectName: "wifiNetwork"
+            glyph: root.icons[Math.min(root.bars(modelData.signal), root.icons.length - 1)]
+            name: modelData.ssid
+            status: (modelData.connected ? "Connected" : modelData.known ? "Saved" : modelData.secured ? "" : "Open")
+                    + (modelData.secured ? (modelData.connected || modelData.known ? ", " : "") + "Secured" : "")
+            trailing: modelData.signal + "%"
+            active: modelData.connected
+            dimmed: !modelData.known && !modelData.connected
+            interactive: modelData.known && !modelData.connected
+            onClicked: S.Network.connectTo(modelData.ssid)
         }
     }
 }

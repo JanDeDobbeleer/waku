@@ -17,8 +17,18 @@ Item {
 
     signal moved(real value)
 
+    // Look. The default is the control center's: a 4 px muted groove, an accent filled part and a
+    // round handle with a ring. The media panel sets a thin groove and a small accent handle.
+    property real grooveHeight: 4
+    property real handleSize: 14
+    property color grooveColor: Qt.alpha(Theme.text, 0.7)
+    property color fillColor: Theme.accent
+    // The handle: a ring around a dot (the default), or a plain dot in `handleColor`.
+    property bool ringHandle: true
+    property color handleColor: Theme.text
+
     implicitWidth: 180
-    implicitHeight: 20
+    implicitHeight: Math.max(20, handleSize + 4)
 
     readonly property real ratio: to > from ? Math.max(0, Math.min(1, (value - from) / (to - from))) : 0
 
@@ -31,26 +41,36 @@ Item {
         id: track
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
-        height: 6
-        radius: 3
-        color: Theme.fill
+        height: root.grooveHeight
+        radius: height / 2
+        color: root.grooveColor
 
         Rectangle {
-            width: root.ratio * parent.width
+            width: root.ratio * (parent.width - root.handleSize) + root.handleSize / 2
             height: parent.height
             radius: parent.radius
-            color: Theme.accent
+            color: root.fillColor
         }
     }
 
     Rectangle {
+        id: handle
         x: root.ratio * (root.width - width)
         anchors.verticalCenter: parent.verticalCenter
-        width: 14
-        height: 14
-        radius: 7
-        color: Theme.text
+        width: root.handleSize
+        height: root.handleSize
+        radius: width / 2
+        color: root.ringHandle ? Qt.alpha(Theme.text, 0.55) : root.handleColor
         opacity: root.enabled ? 1 : 0.4
+
+        Rectangle {
+            visible: root.ringHandle
+            anchors.centerIn: parent
+            width: parent.width * 0.55
+            height: width
+            radius: width / 2
+            color: Theme.text
+        }
     }
 
     MouseArea {

@@ -25,7 +25,9 @@ Window {
 
     // The widget the popup belongs to.
     property Item anchorItem: null
-    property real gap: 6
+    // Chrome, from Theme (popupGap, popupRadius, popupBorderWidth, popupFadeMs); set one on a popup to
+    // override it. A popup that lays out its own sections sets `padding: 0`.
+    property real gap: Theme.popupGap
     property real margin: 8
     property int padding: Theme.padding
     property real spacing: 6
@@ -127,13 +129,13 @@ Window {
         height: popup.height
         color: Theme.popupSurface
         border.color: Theme.popupBorder
-        border.width: 1
-        radius: Theme.radius >= 0 ? Theme.radius : 10
+        border.width: Theme.popupBorderWidth
+        radius: Theme.popupRadius
         opacity: popup.visible ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation {
-                duration: 120
+                duration: Theme.popupFadeMs
             }
         }
 

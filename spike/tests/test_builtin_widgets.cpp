@@ -257,6 +257,77 @@ TEST(MemoryWidget, ReplacesAllThreePlaceholders) {
       << qPrintable(text(h, QStringLiteral("mem")));
 }
 
+TEST(CpuWidget, AClickOpensThePopupWithGraphAndCards) {
+  Harness h;
+  h.start(
+      widgetConfig(QStringLiteral(R"(Cpu { objectName: "cpu"; interval: 200; format: "%1%" })")));
+  ASSERT_TRUE(started(h));
+  QQuickWindow* popup = findWindow(QStringLiteral("cpuPopup"));
+  ASSERT_NE(popup, nullptr);
+  EXPECT_FALSE(popup->isVisible());
+  QQuickItem* cpu = item(h, QStringLiteral("cpu"));
+  ASSERT_TRUE(
+      QTest::qWaitFor([&] { return !cpu->property("text").toString().contains(u'…'); }, 5000));
+  QTest::mouseClick(h.window(), Qt::LeftButton, Qt::NoModifier, centerOf(h, QStringLiteral("cpu")));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return popup->isVisible(); }, 2000));
+  QQuickItem* graph = findItem(popup, QStringLiteral("statGraph"));
+  ASSERT_NE(graph, nullptr);
+  EXPECT_TRUE(
+      QTest::qWaitFor([&] { return graph->property("points").toList().size() >= 2; }, 5000));
+  EXPECT_NE(findItem(popup, QStringLiteral("statValue3")), nullptr);  // four cards
+  EXPECT_EQ(findItem(popup, QStringLiteral("statValue4")), nullptr);
+}
+
+TEST(CpuWidget, ARightClickTogglesTheAlternativeLabel) {
+  Harness h;
+  h.start(widgetConfig(QStringLiteral(
+      R"(Cpu { objectName: "cpu"; interval: 200; format: "load %1"; altFormat: "alt %1" })")));
+  ASSERT_TRUE(started(h));
+  const QRegularExpression load(QStringLiteral(R"(^load \d+$)"));
+  ASSERT_TRUE(
+      QTest::qWaitFor([&] { return load.match(text(h, QStringLiteral("cpu"))).hasMatch(); }, 5000));
+  QTest::mouseClick(h.window(), Qt::RightButton, Qt::NoModifier,
+                    centerOf(h, QStringLiteral("cpu")));
+  const QRegularExpression alt(QStringLiteral(R"(^alt \d+$)"));
+  EXPECT_TRUE(
+      QTest::qWaitFor([&] { return alt.match(text(h, QStringLiteral("cpu"))).hasMatch(); }, 2000));
+  QQuickWindow* popup = findWindow(QStringLiteral("cpuPopup"));
+  ASSERT_NE(popup, nullptr);
+  EXPECT_FALSE(popup->isVisible());
+}
+
+TEST(MemoryWidget, AClickOpensThePopupWithSixCards) {
+  Harness h;
+  h.start(widgetConfig(QStringLiteral(R"(Memory { objectName: "mem"; interval: 200 })")));
+  ASSERT_TRUE(started(h));
+  QQuickWindow* popup = findWindow(QStringLiteral("memoryPopup"));
+  ASSERT_NE(popup, nullptr);
+  QQuickItem* mem = item(h, QStringLiteral("mem"));
+  ASSERT_TRUE(
+      QTest::qWaitFor([&] { return !mem->property("text").toString().contains(u'…'); }, 5000));
+  QTest::mouseClick(h.window(), Qt::LeftButton, Qt::NoModifier, centerOf(h, QStringLiteral("mem")));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return popup->isVisible(); }, 2000));
+  EXPECT_NE(findItem(popup, QStringLiteral("statValue5")), nullptr);
+  EXPECT_EQ(findItem(popup, QStringLiteral("statValue6")), nullptr);
+}
+
+TEST(MemoryWidget, ARightClickTogglesTheAlternativeLabel) {
+  Harness h;
+  h.start(widgetConfig(QStringLiteral(
+      R"(Memory { objectName: "mem"; interval: 200; format: "a%1"; altFormat: "b%1" })")));
+  ASSERT_TRUE(started(h));
+  ASSERT_TRUE(QTest::qWaitFor(
+      [&] {
+        const QString t = text(h, QStringLiteral("mem"));
+        return t.startsWith('a') && !t.contains(u'…');
+      },
+      5000));
+  QTest::mouseClick(h.window(), Qt::RightButton, Qt::NoModifier,
+                    centerOf(h, QStringLiteral("mem")));
+  EXPECT_TRUE(
+      QTest::qWaitFor([&] { return text(h, QStringLiteral("mem")).startsWith('b'); }, 2000));
+}
+
 TEST(BatteryWidget, IsHiddenExactlyWhenThereIsNoBattery) {
   Harness h;
   h.start(widgetConfig(QStringLiteral(R"(Battery { objectName: "bat"; interval: 200 })")));

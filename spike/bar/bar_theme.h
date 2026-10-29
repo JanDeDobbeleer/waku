@@ -40,6 +40,14 @@ class ThemeValues : public QObject {
   // Popups and tooltips: nearly opaque, because they sit over arbitrary windows.
   Q_PROPERTY(QColor popupSurface MEMBER popupSurface_ NOTIFY changed FINAL)
   Q_PROPERTY(QColor popupBorder MEMBER popupBorder_ NOTIFY changed FINAL)
+  // Popup chrome, as Python YASB draws it: the corner radius, the border width and the gap to the
+  // bar in pixels, the fade in time in milliseconds (0 = none) and the colour of text on an
+  // accent filled control (the active quick action, the play button, today in the calendar).
+  Q_PROPERTY(int popupRadius MEMBER popupRadius_ NOTIFY changed FINAL)
+  Q_PROPERTY(int popupBorderWidth MEMBER popupBorderWidth_ NOTIFY changed FINAL)
+  Q_PROPERTY(int popupGap MEMBER popupGap_ NOTIFY changed FINAL)
+  Q_PROPERTY(int popupFadeMs MEMBER popupFadeMs_ NOTIFY changed FINAL)
+  Q_PROPERTY(QColor onAccent MEMBER onAccent_ NOTIFY changed FINAL)
 
   // Derived from the colours above, read only: a translucent version for a widget background.
   Q_PROPERTY(QColor accentFill READ accentFill NOTIFY changed FINAL)
@@ -69,6 +77,12 @@ class ThemeValues : public QObject {
   Q_PROPERTY(bool islands MEMBER islands_ NOTIFY changed FINAL)
   Q_PROPERTY(int islandRadius MEMBER islandRadius_ NOTIFY changed FINAL)
   Q_PROPERTY(int groupPadding MEMBER groupPadding_ NOTIFY changed FINAL)
+  // Bar widget metrics, Python YASB's `.widget` box: `barPadding` is the horizontal padding of a
+  // widget on a bar (a popup row keeps `padding`), `iconSpacing` the gap between a widget's icon
+  // and its text, `labelPaddingBottom` the padding under the text (it lifts the text by half of it).
+  Q_PROPERTY(int barPadding MEMBER barPadding_ NOTIFY changed FINAL)
+  Q_PROPERTY(qreal iconSpacing MEMBER iconSpacing_ NOTIFY changed FINAL)
+  Q_PROPERTY(int labelPaddingBottom MEMBER labelPaddingBottom_ NOTIFY changed FINAL)
 
  public:
   QColor barFill() const { return barFill_.isValid() ? barFill_ : fill_; }
@@ -117,6 +131,11 @@ class ThemeValues : public QObject {
   QColor barFillHover_;  // invalid: follows fillHover_
   QColor popupSurface_{0x18, 0x18, 0x20, 0xf0};
   QColor popupBorder_{0xff, 0xff, 0xff, 0x33};
+  int popupRadius_ = 8;
+  int popupBorderWidth_ = 1;
+  int popupGap_ = 6;
+  int popupFadeMs_ = 80;
+  QColor onAccent_{0x23, 0x26, 0x34};
   QString fontFamily_;
   int fontSize_ = 13;
   int smallFontSize_ = 12;
@@ -130,6 +149,9 @@ class ThemeValues : public QObject {
   bool islands_ = false;
   int islandRadius_ = 16;
   int groupPadding_ = 12;
+  int barPadding_ = 10;
+  qreal iconSpacing_ = 6;
+  int labelPaddingBottom_ = 0;
 };
 
 // The root of theme.qml:

@@ -102,192 +102,264 @@ Pill {
         id: panel
         objectName: "githubPopup"
         anchorItem: root
-        spacing: 8
+        padding: 0
+        spacing: 0
+
+        readonly property color muted: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.6)
+        readonly property color subtle: "#949cbb"
+        readonly property real menuWidth: 500
+        readonly property real menuHeight: 700
+        readonly property real headerHeight: 46
+        readonly property real footerHeight: 34
 
         onOpened: S.GitHub.refresh()
 
-        Text {
-            visible: !S.GitHub.signedIn
-            color: Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize
-            text: S.GitHub.signingIn && S.GitHub.userCode !== "" ? "Enter this code at github.com/login/device" : "Sign in to GitHub to see your notifications"
-        }
+        Item {
+            width: panel.menuWidth
+            height: panel.headerHeight
 
-        Text {
-            objectName: "githubUserCode"
-            visible: !S.GitHub.signedIn && S.GitHub.userCode !== ""
-            color: Theme.text
-            font.family: Theme.fontFamily
-            font.pixelSize: 24
-            font.bold: true
-            text: S.GitHub.userCode
-        }
-
-        Text {
-            visible: !S.GitHub.signedIn && S.GitHub.signingIn && S.GitHub.userCode === ""
-            color: Theme.text
-            opacity: 0.6
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.smallFontSize
-            text: "Connecting to GitHub..."
-        }
-
-        Text {
-            visible: !S.GitHub.signedIn && S.GitHub.signInError !== ""
-            width: 320
-            wrapMode: Text.Wrap
-            color: Theme.text
-            opacity: 0.8
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.smallFontSize
-            text: S.GitHub.signInError
-        }
-
-        Row {
-            visible: !S.GitHub.signedIn
-            spacing: 8
-
-            Pill {
-                objectName: "githubSignIn"
-                visible: !S.GitHub.signingIn
-                text: "Sign in"
-                onClicked: S.GitHub.signIn()
-            }
-
-            Pill {
-                objectName: "githubOpenBrowser"
-                visible: S.GitHub.userCode !== ""
-                text: "Open GitHub"
-                onClicked: S.Shell.open(S.GitHub.verificationUri)
-            }
-
-            Pill {
-                objectName: "githubCancel"
-                visible: S.GitHub.signingIn
-                text: "Cancel"
-                onClicked: S.GitHub.cancelSignIn()
+            Text {
+                x: 12
+                y: 12
+                color: Theme.text
+                font.family: Theme.fontFamily
+                font.pixelSize: 18
+                textFormat: Text.RichText
+                text: "<b>GitHub</b> Notifications"
             }
         }
 
-        Text {
-            visible: S.GitHub.signedIn && S.GitHub.error !== ""
-            width: 340
-            wrapMode: Text.Wrap
-            color: Theme.text
-            opacity: 0.8
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.smallFontSize
-            text: S.GitHub.error
-        }
+        Item {
+            id: bodyArea
+            width: panel.menuWidth
+            height: panel.menuHeight - panel.headerHeight - panel.footerHeight
 
-        Text {
-            visible: S.GitHub.signedIn && S.GitHub.items.length === 0 && S.GitHub.error === ""
-            color: Theme.text
-            opacity: 0.6
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSize
-            text: root.onlyUnread ? "No unread notifications" : "No notifications"
-        }
+            Text {
+                objectName: "githubEmpty"
+                visible: S.GitHub.signedIn && S.GitHub.items.length === 0 && S.GitHub.error === ""
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 8
+                horizontalAlignment: Text.AlignHCenter
+                color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.4)
+                font.family: Theme.fontFamily
+                font.pixelSize: 18
+                text: root.onlyUnread ? "No unread notifications" : "No notifications"
+            }
 
-        Column {
-            visible: S.GitHub.signedIn && S.GitHub.items.length > 0
-            spacing: 6
+            Text {
+                visible: S.GitHub.signedIn && S.GitHub.items.length === 0 && S.GitHub.error === ""
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 44
+                color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.4)
+                font.family: Theme.iconFont
+                font.pixelSize: 88
+                text: root.glyph
+            }
 
-            Repeater {
-                model: root.sections
+            Flickable {
+                anchors.fill: parent
+                contentHeight: content.implicitHeight + 12
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
 
-                delegate: Column {
-                    id: section
-                    required property var modelData
-
-                    spacing: 2
+                Column {
+                    id: content
+                    x: 12
+                    width: bodyArea.width - 24
+                    spacing: 8
 
                     Text {
-                        visible: section.modelData.title !== ""
+                        visible: !S.GitHub.signedIn
+                        width: parent.width
+                        wrapMode: Text.Wrap
                         color: Theme.text
-                        opacity: 0.6
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSize
+                        text: S.GitHub.signingIn && S.GitHub.userCode !== "" ? "Enter this code at github.com/login/device" : "Sign in to GitHub to see your notifications"
+                    }
+
+                    Text {
+                        objectName: "githubUserCode"
+                        visible: !S.GitHub.signedIn && S.GitHub.userCode !== ""
+                        color: Theme.text
+                        font.family: Theme.fontFamily
+                        font.pixelSize: 24
+                        font.bold: true
+                        text: S.GitHub.userCode
+                    }
+
+                    Text {
+                        visible: !S.GitHub.signedIn && S.GitHub.signingIn && S.GitHub.userCode === ""
+                        color: panel.muted
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.smallFontSize
-                        font.bold: true
-                        text: section.modelData.title
+                        text: "Connecting to GitHub..."
+                    }
+
+                    Text {
+                        visible: !S.GitHub.signedIn && S.GitHub.signInError !== ""
+                        width: parent.width
+                        wrapMode: Text.Wrap
+                        color: Theme.text
+                        opacity: 0.8
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.smallFontSize
+                        text: S.GitHub.signInError
+                    }
+
+                    Row {
+                        visible: !S.GitHub.signedIn
+                        spacing: 8
+
+                        Pill {
+                            objectName: "githubSignIn"
+                            visible: !S.GitHub.signingIn
+                            text: "Sign in"
+                            onClicked: S.GitHub.signIn()
+                        }
+
+                        Pill {
+                            objectName: "githubOpenBrowser"
+                            visible: S.GitHub.userCode !== ""
+                            text: "Open GitHub"
+                            onClicked: S.Shell.open(S.GitHub.verificationUri)
+                        }
+
+                        Pill {
+                            objectName: "githubCancel"
+                            visible: S.GitHub.signingIn
+                            text: "Cancel"
+                            onClicked: S.GitHub.cancelSignIn()
+                        }
+                    }
+
+                    Text {
+                        visible: S.GitHub.signedIn && S.GitHub.error !== ""
+                        width: parent.width
+                        wrapMode: Text.Wrap
+                        color: Theme.text
+                        opacity: 0.8
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.smallFontSize
+                        text: S.GitHub.error
                     }
 
                     Repeater {
-                        model: section.modelData.items
+                        model: S.GitHub.signedIn ? root.sections : []
 
-                        delegate: Rectangle {
-                            id: card
+                        delegate: Column {
+                            id: section
                             required property var modelData
 
-                            objectName: "githubItem"
-                            width: 340
-                            height: Math.max(body.implicitHeight, 24) + 12
-                            radius: 6
-                            color: cardArea.containsMouse ? Theme.fillHover : Theme.fill
-
-                            MouseArea {
-                                id: cardArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                onClicked: {
-                                    const url = S.GitHub.open(card.modelData.id);
-                                    if (url !== "")
-                                        S.Shell.open(url);
-                                    panel.close();
-                                }
-                            }
+                            width: content.width
+                            spacing: 8
 
                             Text {
-                                id: icon
-                                x: 8
-                                anchors.verticalCenter: parent.verticalCenter
+                                visible: section.modelData.title !== ""
+                                topPadding: 8
+                                leftPadding: 4
                                 color: Theme.text
-                                opacity: card.modelData.unread ? 1 : 0.5
                                 font.family: Theme.fontFamily
-                                font.pixelSize: Theme.fontSize
-                                text: card.modelData.icon
+                                font.pixelSize: 16
+                                text: section.modelData.title
                             }
 
-                            Column {
-                                id: body
-                                x: 32
-                                y: 6
-                                width: parent.width - 40 - (comments.visible ? comments.width + 8 : 0)
-                                spacing: 1
+                            Rectangle {
+                                width: parent.width
+                                height: itemColumn.implicitHeight + 2
+                                radius: 14
+                                color: Qt.rgba(35 / 255, 38 / 255, 52 / 255, 0.2)
+                                border.color: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.1)
+                                border.width: 1
 
-                                Text {
-                                    width: parent.width
-                                    elide: Text.ElideRight
-                                    color: Theme.text
-                                    opacity: card.modelData.unread ? 1 : 0.6
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSize
-                                    font.bold: card.modelData.unread
-                                    text: S.GitHub.truncate(card.modelData.title, root.maxFieldSize)
+                                Column {
+                                    id: itemColumn
+                                    x: 1
+                                    y: 1
+                                    width: parent.width - 2
+
+                                    Repeater {
+                                        model: section.modelData.items
+
+                                        delegate: Rectangle {
+                                            id: card
+                                            required property var modelData
+                                            required property int index
+
+                                            objectName: "githubItem"
+                                            width: itemColumn.width
+                                            height: Math.max(body.implicitHeight, 24) + 20
+                                            radius: index === 0 || index === section.modelData.items.length - 1 ? 12 : 0
+                                            color: cardArea.containsMouse ? Theme.fill : "transparent"
+
+                                            MouseArea {
+                                                id: cardArea
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                onClicked: {
+                                                    const url = S.GitHub.open(card.modelData.id);
+                                                    if (url !== "")
+                                                        S.Shell.open(url);
+                                                    panel.close();
+                                                }
+                                            }
+
+                                            Text {
+                                                id: icon
+                                                x: 14
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: 20
+                                                color: Theme.text
+                                                opacity: card.modelData.unread ? 1 : 0.5
+                                                font.family: Theme.iconFont
+                                                font.pixelSize: 16
+                                                text: card.modelData.icon
+                                            }
+
+                                            Column {
+                                                id: body
+                                                x: 14 + 20 + 10
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                width: parent.width - x - 12 - (comments.visible ? comments.width + 8 : 0)
+                                                spacing: 2
+
+                                                Text {
+                                                    width: parent.width
+                                                    elide: Text.ElideRight
+                                                    color: Theme.text
+                                                    opacity: card.modelData.unread ? 1 : 0.6
+                                                    font.family: Theme.fontFamily
+                                                    font.pixelSize: 14
+                                                    font.weight: card.modelData.unread ? Font.DemiBold : Font.Normal
+                                                    text: S.GitHub.truncate(card.modelData.title, root.maxFieldSize)
+                                                }
+
+                                                Text {
+                                                    width: parent.width
+                                                    elide: Text.ElideRight
+                                                    color: panel.subtle
+                                                    font.family: Theme.fontFamily
+                                                    font.pixelSize: 12
+                                                    text: S.GitHub.truncate((root.showCategories ? "" : card.modelData.type + " • ") + card.modelData.repo + (card.modelData.time !== "" ? " • Updated " + card.modelData.time : ""), root.maxFieldSize)
+                                                }
+                                            }
+
+                                            Text {
+                                                id: comments
+                                                visible: root.showComments && card.modelData.comments >= 0
+                                                x: parent.width - width - 12
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                color: "#737994"
+                                                font.family: Theme.fontFamily
+                                                font.pixelSize: 12
+                                                font.weight: Font.DemiBold
+                                                text: (root.commentGlyph !== "" ? root.commentGlyph + " " : "") + card.modelData.comments
+                                            }
+                                        }
+                                    }
                                 }
-
-                                Text {
-                                    width: parent.width
-                                    elide: Text.ElideRight
-                                    color: Theme.text
-                                    opacity: 0.6
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.smallFontSize
-                                    text: S.GitHub.truncate((root.showCategories ? "" : card.modelData.type + " • ") + card.modelData.repo + (card.modelData.time !== "" ? " • Updated " + card.modelData.time : ""), root.maxFieldSize)
-                                }
-                            }
-
-                            Text {
-                                id: comments
-                                visible: root.showComments && card.modelData.comments >= 0
-                                x: parent.width - width - 8
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: Theme.text
-                                opacity: 0.7
-                                font.family: Theme.fontFamily
-                                font.pixelSize: Theme.smallFontSize
-                                text: (root.commentGlyph !== "" ? root.commentGlyph + " " : "") + card.modelData.comments
                             }
                         }
                     }
@@ -295,21 +367,25 @@ Pill {
             }
         }
 
-        Row {
-            visible: S.GitHub.signedIn && S.GitHub.items.length > 0
-            spacing: 12
+        Item {
+            width: panel.menuWidth
+            height: panel.footerHeight
 
             Text {
+                visible: S.GitHub.signedIn
+                x: 12
                 anchors.verticalCenter: parent.verticalCenter
-                color: Theme.text
-                opacity: 0.6
+                color: panel.subtle
                 font.family: Theme.fontFamily
-                font.pixelSize: Theme.smallFontSize
+                font.pixelSize: 12
                 text: "Unread notifications (" + S.GitHub.unreadCount + ")"
             }
 
             Pill {
                 objectName: "githubMarkAll"
+                visible: S.GitHub.signedIn && S.GitHub.items.length > 0
+                x: parent.width - width - 8
+                anchors.verticalCenter: parent.verticalCenter
                 text: "Mark all as read"
                 onClicked: {
                     S.GitHub.markAllRead();

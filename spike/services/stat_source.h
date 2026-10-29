@@ -8,6 +8,8 @@
 #include <QQmlParserStatus>
 #include <QThreadPool>
 #include <QTimer>
+#include <QVariantList>
+#include <deque>
 #include <memory>
 #include <optional>
 
@@ -25,6 +27,9 @@ class StatSource : public QObject, public QQmlParserStatus {
   Q_PROPERTY(int interval READ interval WRITE setInterval NOTIFY intervalChanged FINAL)
   Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
   Q_PROPERTY(bool ready READ ready NOTIFY readyChanged FINAL)
+  // The last `historySize` samples of the main value (percent), oldest first, for a graph.
+  Q_PROPERTY(int historySize READ historySize WRITE setHistorySize NOTIFY historySizeChanged FINAL)
+  Q_PROPERTY(QVariantList history READ history NOTIFY updated)
 
  public:
   explicit StatSource(QObject* parent = nullptr);
@@ -34,6 +39,9 @@ class StatSource : public QObject, public QQmlParserStatus {
   bool active() const { return active_; }
   void setActive(bool active);
   bool ready() const { return ready_; }
+  int historySize() const { return historySize_; }
+  void setHistorySize(int size);
+  QVariantList history() const;
 
   void classBegin() override {}
   void componentComplete() override;
@@ -43,8 +51,12 @@ class StatSource : public QObject, public QQmlParserStatus {
   void activeChanged();
   void readyChanged();
   void updated();
+  void historySizeChanged();
 
  protected:
+  // Appends one sample to the history ring, dropping the oldest beyond `historySize`.
+  void recordHistory(double value);
+
   // Starts one asynchronous sample; implementations call sampleAsync().
   virtual void sample() = 0;
 
@@ -84,6 +96,8 @@ class StatSource : public QObject, public QQmlParserStatus {
   bool ready_ = false;
   bool complete_ = false;
   bool inFlight_ = false;
+  int historySize_ = 60;
+  std::deque<double> history_;
 };
 
 }  // namespace tidy::services

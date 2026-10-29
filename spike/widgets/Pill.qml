@@ -24,7 +24,11 @@ Rectangle {
     property string text: ""
     property color textColor: Theme.text
     property int fontSize: Theme.fontSize
-    property int padding: Theme.padding
+    // Horizontal padding: Theme.barPadding on a bar (Python YASB's `.widget` padding), Theme.padding
+    // in a popup.
+    property int padding: flat ? Theme.barPadding : Theme.padding
+    // Extra room left and right of the icon and text, in pixels (Python's `.label` margin).
+    property int contentMargin: 0
     // The widest the text may be, in pixels; longer text is elided. 0 means no limit.
     property int maxTextWidth: 0
     // A glyph in Theme.iconFont before the text; empty for none.
@@ -48,7 +52,7 @@ Rectangle {
     // `delta` is the wheel's angleDelta.y: positive away from the user.
     signal scrolled(int delta)
 
-    implicitWidth: row.implicitWidth + 2 * padding
+    implicitWidth: row.implicitWidth + 2 * padding + 2 * contentMargin
     implicitHeight: Theme.pillHeight
     radius: Theme.radius >= 0 ? Math.min(Theme.radius, height / 2) : height / 2
     color: interactive && hover.hovered ? hoverFill : fill
@@ -62,7 +66,7 @@ Rectangle {
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: 6
+        spacing: root.flat ? Theme.iconSpacing : 6
 
         Text {
             visible: root.icon !== ""
@@ -76,6 +80,8 @@ Rectangle {
         Text {
             visible: root.text !== ""
             anchors.verticalCenter: parent.verticalCenter
+            // Python's label padding-bottom lifts the text by half of it
+            anchors.verticalCenterOffset: root.flat ? -Theme.labelPaddingBottom / 2 : 0
             width: root.maxTextWidth > 0 ? Math.min(implicitWidth, root.maxTextWidth) : implicitWidth
             elide: Text.ElideRight
             color: root.textColor
