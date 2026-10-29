@@ -7,49 +7,51 @@ for the wabar layout is `docs/plans/2026-10-29-wabar-architecture-proposal.md`. 
 
 ## Layering
 
-The old by-layer layout still holds until the restructure (migration step 4) replaces it:
-
-```
-```
-
-Each layer is its own static library. The legacy libraries and every target under `src/` link
-`wabar_options` (`cmake/wabar_options.cmake`: `/W4 /WX /permissive- /guard:cf /sdl ...`); the
-former `spike/` targets do not yet (migration step 9):
+Dependencies point one way: `app` -> `features` -> (`host`, `control`, `ui`) -> `kernel`. Every unit
+under `src/` is its own static library (or QML module), the include root is `src/`, and the rules
+S1-S8 of `tools\check.ps1` (step `structure`) enforce the direction on includes and QML use. Every
+own target, the executables and `wabar_tests` link `wabar_options` (`cmake/wabar_options.cmake`:
+`/W4 /WX /permissive- /guard:cf /sdl ...`).
 
 | Target | Folder | Sources | Links PUBLIC | Links PRIVATE |
 |---|---|---|---|---|
-| `yasb_platform` | `platform/` | `platform/` | `Qt6::Core` | `pdh setupapi psapi ...` (Win32 libs), `Qt6::Network` |
-| `wabar_services`, `wabar_widgets` | `src/modules/qml_modules.cmake` | QML modules `wabar.services` and `wabar.widgets`, assembled from contributions (below) | `yasb_widgets`, the feature libraries, Qt Quick | |
-| `wabar` (exe), `wabarc` (exe) | `spike/` | `spike/main.cpp`, `spike/cli/main.cpp` | | |
-| `YASBNativeTrayHook[_arm64]` (DLL) | `src/features/tray/hook/` | `src/features/tray/hook/trayhook.cpp` | | static CRT, built next to `wabar.exe` |
+| `wabar_kernel` | `src/kernel/` | shared helpers (below) | `Qt6::Core`, `Qt6::Gui` | `wabar_options`, Win32 libs |
+| `wabar_control` | `src/control/` | the control pipe between a running bar and `wabarc` (no Qt Quick) | `wabar_kernel`, `Qt6::Core`, `Qt6::Network` | `wabar_options` |
+| `wabar_host_base` | `src/host/` | `screen_match`, `popup_placement`, `app_bar.h` and `win32/` (app bar, DWM backdrop) | `wabar_kernel` | `wabar_options`, `dwmapi shell32 user32` |
+| `wabar_host` | `src/host/` | the wabar host: QML module `wabar` (`qml/`, `win32/bar_host_win32.cpp`) | `wabar_host_base`, `wabar_control`, Qt Quick | `wabar_options` |
+| `wabar_<f>` | `src/features/<f>/` | one feature (`wabar_feature()`) | `wabar_kernel`, the `DEPENDS` features | `wabar_options`, the feature's system libraries |
+| `wabar_services`, `wabar_widgets` | `src/modules/qml_modules.cmake` | QML modules `wabar.services` and `wabar.widgets`, assembled from contributions (below) | the feature libraries, Qt Quick | `wabar_options` |
+| `wabar` (exe), `wabarc` (exe) | `src/app/wabar/`, `src/app/wabarc/` | `main.cpp` of each; `SafeConfig.qml` joins `wabar.widgets` | | `wabar_options`, the modules / `wabar_control` |
+| `YASBNativeTrayHook[_arm64]` (DLL) | `src/features/tray/hook/` | `trayhook.cpp` | | static CRT, `/W4 /WX` set by hand, built next to `wabar.exe` |
+| `wabar_tests` (exe) | `tests/` | `tests/main.cpp`, `tests/integration/` and every `TESTS` contribution (`src/**/tests/`) | | `wabar_options`, `GTest`, `Qt6::Test` |
 
-All targets share the repo root as include directory (includes are written `"core/..."`), so the
-compiler alone does not reject a header-only include against the arrow. `tools\check.ps1` (also
-with `-Fast` and in the pre-commit hook) has a `layering` step that fails on any `#include "..."`
-from `platform/` into `core/`, `widgets/` or `spike/`; from `core/` into `widgets/` or `spike/`; and
-from `widgets/` into `spike/`.
+The one relaxation of the warning level is `wabar_qt_generated_code()` in `cmake/wabar_options.cmake`:
+`/wd4702` on the files qmlcachegen generates for the three QML modules.
 
-### The `src/` skeleton (migration in progress)
+Rule S2 lets any feature include the root headers of `control/` (the interface headers such as
+`WallpaperControl` are a stable shared abstraction, not a feature edge).
 
-`docs/plans/2026-10-29-wabar-architecture-proposal.md` is being carried out; step 4 added the
-skeleton, steps 5+ move code into it.
+### The `src/` layout
+
+`docs/plans/2026-10-29-wabar-architecture-proposal.md` has been carried out up to step 9 (the
+`spike/`, `platform/`, `widgets/` and `core/` folders are gone); steps 10 (names) and 11 (docs) remain.
 
 - `cmake/wabar_feature.cmake`: `wabar_feature(NAME <f> DEPENDS ... SOURCES ... WIN32_SOURCES ...
   QML_SOURCES ... QML_FILES ... TESTS ... SYSTEM_LIBS ...)` builds `wabar_<f>` (STATIC, or
   INTERFACE when QML only), links `wabar_kernel` and the `DEPENDS` libraries, checks the inner
   folder layout and that each `DEPENDS` feature is declared earlier, and appends its QML C++,
-  `.qml` files and tests to global lists. `wabar_contribute()` is the same append for the legacy
-  `spike/` folders. The decisions are in the comment at the top of the file.
-- `src/CMakeLists.txt` adds `kernel`, `control`, `host`, `ui`, `features`, `app` (each if
-  present). `src/kernel/` is the STATIC `wabar_kernel` (include root `src/`), see below.
+  `.qml` files and tests to global lists. `wabar_contribute()` is the same append for kernel, host, ui and app. The decisions are in
+  the comment at the top of the file.
+- `src/CMakeLists.txt` adds `kernel`, `control`, `host`, `ui`, `features`, `app`, then includes the modules.
+  `src/kernel/` is the STATIC `wabar_kernel` (include root `src/`), see below.
 - `src/modules/qml_modules.cmake` defines `wabar.services` and `wabar.widgets` from the global lists.
-  It is included from the top-level `CMakeLists.txt`, not added as a subdirectory, because
+  It is included from `src/CMakeLists.txt`, not added as a subdirectory, because
   qmlcachegen names its outputs after the `.qml` path relative to the declaring directory and a
   `../` path breaks the build on Windows. Every `.qml` file gets `QT_RESOURCE_ALIAS <basename>`,
   so resource paths stay `qrc:/qt/qml/wabar/widgets/<Name>.qml`.
 - `tests/CMakeLists.txt` defines `wabar_tests` from `tests/main.cpp` and the `TESTS` list.
 - `tools\check.ps1` step `structure` checks rules S1-S8 (proposal, section 4.2), reading `DEPENDS`
-  from the `wabar_feature(` calls: enforcing under `src/` and `tests/`, report-only for the legacy
+  from the `wabar_feature(` calls; every violation fails the step.
 
 ### The kernel (`src/kernel/`)
 
@@ -64,7 +66,7 @@ Namespace `wabar::kernel`, include `"kernel/<qt|win32>/<file>.h"`.
 | `win32/winrt_apartment.*` | `ensureWinrtApartment()` | bluetooth, brightness, network (`connectivity_win`, `wlan_win`) |
 | `win32/shell_launch.*` | `shellOpen`, `launchHiddenShell`, `startDetachedHidden`, `hideConsole` | Shell, ControlCenter, toast activation, komorebi, `Process` |
 | `win32/app_activation.*` | AUMID lookups and `activateAppByAumid` (documented Win32/COM only) | media source names, toast activation |
-| `qt/live_desktop.*` | `liveDesktop([capability])`, `setCapabilityDisabled`, `capabilityDisabled` | the services' real constructors, `spike/main.cpp` (`--no-tray`) |
+| `qt/live_desktop.*` | `liveDesktop([capability])`, `setCapabilityDisabled`, `capabilityDisabled` | the services' real constructors, `src/app/wabar/main.cpp` (`--no-tray`) |
 | `qt/polled_source.*` | `PolledSource`, the polled-sample base | `Memory`, `Cpu`, `Battery`, `Network` |
 | `qml/stat_source.h` | `StatSource`, the QML face of `PolledSource` (`QML_ANONYMOUS`, `QQmlParserStatus`); compiled into `wabar.services`, not into `wabar_kernel` | `Memory`, `Cpu`, `Battery`, `Network` |
 | `qt/app_data.*` | `appDataDir()`, `migrateLegacyAppData()` | taskbar pins, GitHub token, tray state, wallpaper thumbnails |
@@ -100,7 +102,7 @@ hand results back with queued signals or `QMetaObject::invokeMethod`.
 | komorebi pipe thread (`std::thread`) | `KomorebiService` (`src/features/workspaces/komorebi_service.h`) via `komorebi::KomorebiPipeListener` (`src/features/workspaces/komorebi.h`, `win32/komorebi_pipe.cpp`) | owns the `\\.\pipe\yasb-native-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls | `stop()`: sets the stop event (cancels waits and overlapped I/O), `join`, then `komorebic unsubscribe-pipe`; started lazily by the first subscription; the owner calls it |
 | systray hook thread (`std::thread`) | `SystrayHook` (`src/features/tray/win32/tray_hook.h`), owned by `wabar.services.Systray`, started by the first Tray widget | creates nothing itself: the GUI thread creates the watchdog mutex and the `\\.\pipe\yasb_native_systray_monitor` pipe in the constructor; the worker injects `YASBNativeTrayHook[_arm64].dll` into Explorer (`SetWindowsHookEx`), owns the OVERLAPPED I/O, read buffer and completion event, parses each pipe message and emits queued signals to the GUI thread; retries after Explorer restarts (1 s no Explorer, 5 s failed injection, 3 s after the DLL disconnects) | `stop()` (also called by the destructor): sets the stop flag, releases the injection hook, cancels pending I/O, releases and closes the mutex (the DLL's watchdog then detaches and restores Shell_TrayWnd's window procedure within 5 s), `join` |
 
-Platform data sources (`platform/`) are sampled off the GUI thread by the wabar stat sources; anything
+Platform data sources (`src/features/*/win32/`) are sampled off the GUI thread by the wabar stat sources; anything
 they cache globally must be locked.
 
 ## Singletons and process-wide state
@@ -161,14 +163,6 @@ Every undocumented API still to come gets a row here. `IDesktopWallpaper` itself
 | `IPolicyConfig` ({f8679f50-850a-41cf-9c72-430f290290c8}) from `CLSID_PolicyConfigClient`, hand-laid vtable (`SetDefaultEndpoint` at slot 10 after `IUnknown`) | `features/audio/win32/audio_endpoints_win.cpp` (`setDefaultDevice`) | layout and ids from pycaw (same call Python YASB makes); not exercised live, so the default output is never changed by tests | `CoCreateInstance` or the call failing logs once and returns false; the source menu keeps the old default |
 | `IQuietHoursSettings` ({6BFF4732-81EC-4FFB-AE67-B6C1BC29631F}) from `CLSID_QuietHoursSettings` ({F53321FA-34F8-4B7F-B9A3-361877CB94CF}), `get_UserSelectedProfile` / `put_UserSelectedProfile` directly after `IUnknown`, profile ids `Microsoft.QuietHoursProfile.*` | `features/notifications/win32/dnd_win.cpp` | Windows 11 build 26300, ARM64 (read verified live: `disabled`); the write path is not exercised live | creation or read failure reports `unknown`, which the Do Not Disturb tile shows as active (as Python does); a failed write logs and the tile state is unchanged |
 | `ntdll!RtlSubscribeWnfStateChangeNotification` with WNF state name `WNF_SHEL_QUIETHOURS_ACTIVE_PROFILE_CHANGED` (0x0D83063EA3BF1C75), the callback ignores the buffer and re-reads the profile through `IQuietHoursSettings` | `features/notifications/win32/dnd_win.cpp` (`DndWatcher`) | name from Python YASB; not exercised live on 26300 | a missing symbol or a non-zero status logs a warning and the Do Not Disturb button then updates only on its own clicks |
-spike/ (wabar)  ->  widgets/  ->  platform   (core/ is gone: it moved into src/host/)
-| `yasb_widgets` | `widgets/` | service and state code of the systray, taskbar and wallpapers widgets | `yasb_platform`, `nlohmann_json` | |
-| `wabar_host_base` | `src/host/` | `screen_match`, `popup_placement`, `app_bar.h` and `win32/` (app bar, DWM backdrop) | `wabar_kernel` | `wabar_options`, `dwmapi shell32 user32` |
-| `wabar_host` | `src/host/` | the wabar host: QML module `wabar` (`qml/`, `win32/bar_host_win32.cpp`) | `wabar_host_base`, `wabar_control`, Qt Quick | |
-| `wabar_control` | `src/control/` | the control pipe between a running bar and `wabarc` (no Qt Quick) | `wabar_kernel`, `Qt6::Core`, `Qt6::Network` | `wabar_options` |
-| `wabar_tests` (exe) | `tests/` | `tests/main.cpp` and `tests/integration/` and every `TESTS` contribution (`src/**/tests/`) | | `GTest`, `Qt6::Test` |
-  folders. Rule S2 lets any feature include the root headers of `control/` (the interface headers
-  such as `WallpaperControl` are a stable shared abstraction, not a feature edge).
 | `user32!SetWindowCompositionAttribute` with `WCA_ACCENT_POLICY` (19), local `AccentPolicy` / `CompositionAttribData` structs | `src/host/win32/backdrop.cpp` (`setAccentPolicy`) | Windows 11 build 26300, ARM64 | resolved with `GetProcAddress`; missing symbol or failure throws inside `enableBlur`, which catches and logs; bar keeps its plain background |
 | `ntdll!RtlGetVersion` (documented for drivers; used because `GetVersionEx` lies to unmanifested apps) | `src/kernel/win32/windows_build.cpp` (`windowsBuild`; users: `src/host/win32/backdrop.cpp`, `src/features/system_stats/win32/pdh.cpp` CPU counter choice, `features/control_center/win32/power_win.cpp` `isWindows10`) | Windows 11 build 26300, ARM64 | build 0: backdrop takes the pre-Windows 11 paths, PDH uses `% Processor Utility` and falls back to `% Processor Time` |
 | Numeric DWM attributes: `DWMWA_USE_IMMERSIVE_DARK_MODE` (20), `DWMWA_WINDOW_CORNER_PREFERENCE` (33), `DWMWA_BORDER_COLOR` (34), `DWMWA_SYSTEMBACKDROP_TYPE` (38), undocumented Mica attribute 1029, colour sentinels `0xFFFFFFFF`/`0xFFFFFFFE` | `src/host/win32/backdrop.cpp` | Windows 11 build 26300, ARM64 | gated on `windowsBuild()` (22000 / 22621); `DwmSetWindowAttribute` failures are caught and logged |

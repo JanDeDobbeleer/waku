@@ -6,7 +6,6 @@
 # wabar_host (STATIC + QML module `wabar`, URI and version unchanged): the QML types a config
 #   imports (Config, Bar, BarLayout, Theme, PopupWindow, Tooltip, PopupPlacement) and BarHost that
 #   builds the windows from them (qml/), plus the Windows native hooks of BarHost (win32/).
-#   Like the other QML module targets it does not link wabar_options until step 9.
 #
 # testing/ (bar_fixtures.h: the Harness) and tests/ are not compiled into either target: the
 # tests join the one wabar_tests binary through wabar_contribute(); testing/ is header-only.
@@ -57,9 +56,10 @@ qt_add_qml_module(wabar_host
 )
 # The generated type registration includes headers by name, hence the private include directory.
 target_include_directories(wabar_host PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/qml)
-target_compile_definitions(wabar_host PRIVATE
-  UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(wabar_host PUBLIC Qt6::Quick Qt6::Qml wabar_host_base wabar_control wabar_kernel)
+target_link_libraries(wabar_host
+  PUBLIC Qt6::Quick Qt6::Qml wabar_host_base wabar_control wabar_kernel
+  PRIVATE wabar_options)
+wabar_qt_generated_code(wabar_host)
 
 wabar_contribute(
   TESTS

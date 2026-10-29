@@ -1,6 +1,6 @@
-# wabar_tests: the one test binary (proposal, section 8). Its sources are main.cpp here plus every
-# TESTS contribution: wabar_feature(... TESTS ...) under src/ and wabar_contribute(TESTS ...) in the
-# legacy spike/tests/, plus tests/integration/. Added after every contributor (top-level CMakeLists.txt).
+# wabar_tests: the one test binary (proposal, section 8). Its sources are main.cpp here, the
+# integration tests, and every TESTS contribution (wabar_feature(... TESTS ...) and
+# wabar_contribute(TESTS ...) under src/). Added after src/ (top-level CMakeLists.txt).
 # Select one feature by suite name: ctest -R Tray, or --gtest_filter=Tray*.
 include(GoogleTest)
 find_package(Qt6 REQUIRED COMPONENTS Test)
@@ -12,16 +12,16 @@ list(REMOVE_DUPLICATES test_libs)
 # tests/integration: tests that load built-in widgets of several features together (they may
 # include anything); every unit's own tests come through the TESTS contributions.
 add_executable(wabar_tests main.cpp
+  integration/test_all_widgets_load.cpp
   integration/test_builtin_widgets.cpp
   integration/test_safe_mode.cpp
   integration/test_widget_popups.cpp
   ${test_sources})
 # The control tests run wabarc.exe.
 add_dependencies(wabar_tests wabarc)
-target_compile_definitions(wabar_tests PRIVATE
-  UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 # The static QML plugins are linked so `import wabar` resolves in the test engines.
 target_link_libraries(wabar_tests PRIVATE
+  wabar_options
   wabar_host wabar_hostplugin wabar_widgets wabar_widgetsplugin
   wabar_services wabar_servicesplugin
   ${test_libs}
@@ -35,7 +35,7 @@ add_custom_command(TARGET wabar_tests POST_BUILD
           --no-translations --no-system-d3d-compiler --no-opengl-sw --no-compiler-runtime
           --include-plugins qoffscreen
           --qmldir "${PROJECT_SOURCE_DIR}/src/host/qml"
-          --qmldir "${PROJECT_SOURCE_DIR}/spike/widgets"
+          --qmldir "${PROJECT_SOURCE_DIR}/src/app/wabar"
           --qmldir "${PROJECT_SOURCE_DIR}/src"
           --dir "$<TARGET_FILE_DIR:wabar_tests>" "$<TARGET_FILE:wabar_tests>"
   VERBATIM)

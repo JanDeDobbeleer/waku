@@ -1,38 +1,34 @@
 <#
 .SYNOPSIS
-    Definition-of-done check for wabar: format, layering, JSON subscripts, build and tests.
+    Definition-of-done check for wabar: format, structure, JSON subscripts, build and tests.
 .DESCRIPTION
     Steps, in order:
-      1. format     clang-format --dry-run -Werror over *.cpp/*.h in src, tests and the legacy
-                    core, platform, widgets, spike (with -Staged: only the staged versions of
-                    staged files, which is what the pre-commit hook uses).
-      2. layering   fails on an #include "..." against the legacy layer arrow
-                    spike -> widgets -> core -> platform
-                    (with -Staged: only staged files, reading their staged content).
-      2b. structure rules S1-S8 of the wabar architecture (DEPENDS read from the wabar_feature(
-                    calls in src/features/*/CMakeLists.txt); enforcing under src/ and tests/,
-                    report-only (warnings, exit 0) for the legacy folders; -Verbose lists them.
-                    With -Staged: per-file rules on staged files, global rules on the index.
+      1. format     clang-format --dry-run -Werror over *.cpp/*.h in src and tests (with -Staged:
+                    only the staged versions of staged files, which is what the pre-commit hook
+                    uses).
+      2. structure  rules S1-S8 of the wabar architecture (DEPENDS read from the wabar_feature(
+                    calls in src/features/*/CMakeLists.txt); every violation under src/ and tests/
+                    fails the step. With -Staged: per-file rules on staged files, global rules on
+                    the index.
       3. json-subscript
                     heuristic grep for the const nlohmann::json operator[] in product code (src,
-                    tests, core, platform, widgets).
+                    tests).
       4. configure  cmake --preset <Preset>       (skipped with -Fast)
       5. build      cmake --build --preset <Preset> (skipped with -Fast)
       6. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 (skipped with -Fast)
     -Analyze replaces steps 4-6 with an isolated MSVC /analyze build and clang-tidy.
     Configure, build and test each run in their own cmd.exe after the matching vcvars*.bat, with
-    VCPKG_ROOT=C:\vcpkg (override with the VCPKG_ROOT_OVERRIDE environment variable).
+    VCPKG_ROOT=C:cpkg (override with the VCPKG_ROOT_OVERRIDE environment variable).
     Exits 1 if any step fails. Requires PowerShell 7 (pwsh).
 .PARAMETER Fast
-    Only the format, layering, structure and JSON-subscript checks.
+    Only the format, structure and JSON-subscript checks.
 .PARAMETER Analyze
     Instead of ordinary build/tests, run MSVC /analyze and clang-tidy on production units in an
     isolated build\<Preset>-analyze directory. Requires LLVM clang-tidy.
 .PARAMETER SkipFormat
     Skip the clang-format check.
 .PARAMETER Staged
-    Format-, layering- and structure-check only files staged in the index, reading their staged
-    content.
+    Format- and structure-check only files staged in the index, reading their staged content.
 .PARAMETER Preset
     CMake configure/build preset. Default arm64-debug.
 .EXAMPLE
@@ -59,7 +55,7 @@ if ($Analyze -and ($Fast -or $Staged)) {
     exit 1
 }
 
-$formatDirs = @('src', 'tests', 'core', 'platform', 'widgets', 'spike')
+$formatDirs = @('src', 'tests')
 $results = New-Object System.Collections.Generic.List[object]
 
 function Add-Result([string]$Step, [string]$Status, [string]$Detail, [double]$Seconds) {
@@ -170,68 +166,17 @@ if ($SkipFormat) {
     }
 }
 
-# 2. layering --------------------------------------------------------------------------------
-# All targets share the repo root as include directory, so CMake alone cannot stop a header from
-# being included against the arrow (spike -> widgets -> core -> platform). The
-# first matching folder prefix wins; its list holds the include prefixes it must not use.
-Write-Step 'layering (#include directions)'
-$sw = [Diagnostics.Stopwatch]::StartNew()
-$layerRules = @(
-    @{ Dir = 'platform/'; Deny = @('core/', 'widgets/', 'spike/') },
-    @{ Dir = 'core/';     Deny = @('widgets/', 'spike/') },
-    @{ Dir = 'widgets/';  Deny = @('spike/') }
-)
-$layerDirs = @('core', 'platform', 'widgets')
-if ($Staged) {
-    $layerFiles = @(git diff --cached --name-only --diff-filter=ACMR -- $layerDirs)
-} else {
-    $layerFiles = @(git ls-files --cached --others --exclude-standard -- $layerDirs)
-}
-$layerFiles = @($layerFiles | Where-Object { $_ -match '\.(cpp|h)$' } | Sort-Object -Unique)
-$violations = New-Object System.Collections.Generic.List[string]
-foreach ($f in $layerFiles) {
-    $rule = $layerRules | Where-Object { $f.StartsWith($_.Dir) } | Select-Object -First 1
-    if (-not $rule) { continue }
-    if ($Staged) {
-        $lines = @(git show ":$f" 2>$null)
-    } elseif (Test-Path -LiteralPath $f) {
-        $lines = @(Get-Content -LiteralPath $f)
-    } else {
-        continue
-    }
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ("$($lines[$i])" -match '^\s*#\s*include\s+"([^"]+)"') {
-            $inc = $Matches[1]
-            foreach ($deny in $rule.Deny) {
-                if ($inc.StartsWith($deny)) {
-                    $violations.Add("${f}:$($i + 1): includes `"$inc`" ($($rule.Dir) must not include $deny)")
-                    break
-                }
-            }
-        }
-    }
-}
-if ($violations.Count -eq 0) {
-    Add-Result 'layering' 'PASS' "$($layerFiles.Count) files respect wabar (spike) -> widgets -> core -> platform" $sw.Elapsed.TotalSeconds
-} else {
-    Write-Host 'Includes against the layering arrow (see AGENTS.md, Layering):'
-    $violations | ForEach-Object { Write-Host "  $_" }
-    Add-Result 'layering' 'FAIL' "$($violations.Count) include(s) against the arrow" $sw.Elapsed.TotalSeconds
-}
-
-# 2b. structure ------------------------------------------------------------------------------
+# 2. structure ------------------------------------------------------------------------------
 # Rules S1-S8 of docs/plans/2026-10-29-wabar-architecture-proposal.md (section 4.2). The DEPENDS
 # graph comes from the wabar_feature( calls in src/features/*/CMakeLists.txt, read with a regex, so
 # no build tree is needed. Units: kernel, control, host, ui, features/<f>, app/<exe>; tests/ (the
 # top-level folder) holds the test main and the integration tests.
-# Mode: ENFORCING for src/ and tests/ (a violation fails the step); REPORT-ONLY for the legacy
-# folders not yet moved (warnings with a count; the step still passes). S3-S5 are the rules that
-# mean something for a legacy file; list the legacy warnings with -Verbose.
+# Mode: ENFORCING (any violation fails the step).
 # Decisions beyond the proposal: S3 and S4 also allow */tests/** and tests/ (tests build QML
 # engines and Win32 fakes); S2 requires includes rooted at src/ (a bare "x.h" fails, "x.moc" is
 # fine); S1 also requires each .cpp/.qml of a feature to be named in its CMakeLists.txt and the
 # NAME to equal the folder name.
-Write-Step 'structure (S1-S8; enforcing under src/ and tests/, report-only for legacy folders)'
+Write-Step 'structure (S1-S8)'
 $sw = [Diagnostics.Stopwatch]::StartNew()
 $structureRules = [ordered]@{
     S1 = 'every source under src/ belongs to exactly one unit and is declared by it'
@@ -243,7 +188,6 @@ $structureRules = [ordered]@{
     S7 = 'QML-facing header basenames unique across the services module; .qml basenames unique per module'
     S8 = 'DEPENDS name existing features and form an acyclic graph'
 }
-$structureLegacyDirs = @('core', 'platform', 'widgets', 'spike', 'hook')
 $windowsHeaders = '^(windows|winrt/.*|shlobj|shellapi|shobjidl|shobjidl_core|shlwapi|shldisp|exdisp|' +
     'propsys|propkey|propvarutil|propidl|objbase|combaseapi|ole2|ocidl|unknwn|initguid|winternl|' +
     'tlhelp32|psapi|powrprof|pdh|mmdeviceapi|endpointvolume|devicetopology|functiondiscoverykeys_devpkey|' +
@@ -263,23 +207,18 @@ function Get-CheckLines([string]$Path) {
 
 # The whole tree (index with -Staged) for the global rules; the checked set for per-file rules.
 if ($Staged) {
-    $treeFiles = @(git ls-files --cached -- src tests $structureLegacyDirs)
-    $checkFiles = @(git diff --cached --name-only --diff-filter=ACMR -- src tests $structureLegacyDirs)
+    $treeFiles = @(git ls-files --cached -- src tests)
+    $checkFiles = @(git diff --cached --name-only --diff-filter=ACMR -- src tests)
 } else {
-    $treeFiles = @(git ls-files --cached --others --exclude-standard -- src tests $structureLegacyDirs)
+    $treeFiles = @(git ls-files --cached --others --exclude-standard -- src tests)
     $checkFiles = $treeFiles
 }
 $treeFiles = @($treeFiles | Where-Object { $_ -and ($Staged -or (Test-Path -LiteralPath $_)) } | Sort-Object -Unique)
 $checkFiles = @($checkFiles | Where-Object { $_ -match '\.(cpp|h|qml)$' } | Sort-Object -Unique)
 
 $enforced = New-Object System.Collections.Generic.List[string]
-$legacy = New-Object System.Collections.Generic.List[object]
 function Add-StructureViolation([string]$Rule, [string]$File, [string]$Text) {
-    if ($File.StartsWith('src/') -or $File.StartsWith('tests/')) {
-        $enforced.Add("${Rule} ${File}: $Text")
-    } else {
-        $legacy.Add([pscustomobject]@{ Rule = $Rule; Line = "${Rule} ${File}: $Text" })
-    }
+    $enforced.Add("${Rule} ${File}: $Text")
 }
 
 # S8 and the DEPENDS map: features[<f>] = @{ Depends = @(...); CMake = <text> }.
@@ -341,7 +280,7 @@ function Get-Unit([string]$File) {
 $qmlOwner = @{}
 $serviceOwner = @{}
 $headerSeen = @{}
-$servicesHeaders = @($treeFiles | Where-Object { $_ -match '^src/.+/qml/[^/]+\.h$' -or $_ -match '^spike/services/[^/]+\.h$' })
+$servicesHeaders = @($treeFiles | Where-Object { $_ -match '^src/.+/qml/[^/]+\.h$' })
 foreach ($h in $servicesHeaders) {
     $base = Split-Path $h -Leaf
     if ($headerSeen.ContainsKey($base)) {
@@ -360,8 +299,8 @@ foreach ($h in $servicesHeaders) {
     }
 }
 $moduleQml = @{
-    'wabar.widgets' = @($treeFiles | Where-Object { ($_ -match '^src/.+\.qml$' -and $_ -notmatch '^src/host/') -or $_ -match '^spike/widgets/[^/]+\.qml$' })
-    'wabar'         = @($treeFiles | Where-Object { $_ -match '^src/host/.+\.qml$' -or $_ -match '^spike/bar/[^/]+\.qml$' })
+    'wabar.widgets' = @($treeFiles | Where-Object { $_ -match '^src/.+\.qml$' -and $_ -notmatch '^src/host/' })
+    'wabar'         = @($treeFiles | Where-Object { $_ -match '^src/host/.+\.qml$' })
 }
 foreach ($module in $moduleQml.Keys) {
     $seen = @{}
@@ -466,20 +405,15 @@ foreach ($f in $checkFiles) {
     }
 }
 
-$legacyCounts = @($legacy | Group-Object Rule | Sort-Object Name | ForEach-Object { "$($_.Name)=$($_.Count)" }) -join ' '
-if ($legacy.Count -gt 0) {
-    Write-Host "Report-only: $($legacy.Count) legacy warning(s) outside src/ ($legacyCounts); -Verbose lists them"
-    $legacy | ForEach-Object { Write-Verbose "  warning $($_.Line)" }
-}
 $scope = 'files'
 if ($Staged) { $scope = 'staged files' }
 if ($enforced.Count -eq 0) {
-    Add-Result 'structure' 'PASS' "$($checkFiles.Count) $scope, $($features.Count) features; legacy report-only: $($legacy.Count) warning(s) $legacyCounts" $sw.Elapsed.TotalSeconds
+    Add-Result 'structure' 'PASS' "$($checkFiles.Count) $scope, $($features.Count) features" $sw.Elapsed.TotalSeconds
 } else {
-    Write-Host 'Structure violations under src/ and tests/:'
+    Write-Host 'Structure violations:'
     $structureRules.GetEnumerator() | ForEach-Object { Write-Host "  $($_.Key)  $($_.Value)" }
     $enforced | ForEach-Object { Write-Host "  $_" }
-    Add-Result 'structure' 'FAIL' "$($enforced.Count) violation(s) under src/ or tests/" $sw.Elapsed.TotalSeconds
+    Add-Result 'structure' 'FAIL' "$($enforced.Count) violation(s)" $sw.Elapsed.TotalSeconds
 }
 
 # 3. json-subscript ---------------------------------------------------------------------------
@@ -493,7 +427,7 @@ if ($enforced.Count -eq 0) {
 #            end the line with the comment "json-subscript-ok".
 Write-Step 'json-subscript (const nlohmann::json operator[] heuristic)'
 $sw = [Diagnostics.Stopwatch]::StartNew()
-$productDirs = @('src', 'tests', 'core', 'platform', 'widgets')
+$productDirs = @('src', 'tests')
 if ($Staged) {
     $jsonFiles = @(git diff --cached --name-only --diff-filter=ACMR -- $productDirs)
 } else {
@@ -582,7 +516,7 @@ if ($Analyze) {
                 $entries | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $wabarDir 'compile_commands.json')
                 $units = @($entries | Where-Object {
                     $relative = [IO.Path]::GetRelativePath($repo, $_.file).Replace('\', '/')
-                    $relative -match '^(src|core|platform|widgets)/.*\.cpp$'
+                    $relative -match '^src/.*\.cpp$'
                 } | ForEach-Object { $_.file } | Sort-Object -Unique)
                 $commands = New-Object System.Collections.Generic.List[string]
                 $commands.Add('set failures=0')

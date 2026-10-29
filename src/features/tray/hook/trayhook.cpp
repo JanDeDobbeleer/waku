@@ -354,7 +354,7 @@ LRESULT CALLBACK ManualSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 // Monitors a named mutex held by the host process.
 // If the host crashes or exits, the OS releases the
 // mutex automatically, and this thread detects it and self-detaches the DLL.
-DWORD WINAPI WatchdogThread(LPVOID lpParam) {
+DWORD WINAPI WatchdogThread(LPVOID /*lpParam*/) {
   HANDLE hMutex = OpenMutexW(SYNCHRONIZE, FALSE, YASB_MUTEX_PATH);
   if (!hMutex) {
     // Mutex doesn't exist - host is already gone
@@ -417,11 +417,10 @@ DWORD WINAPI WatchdogThread(LPVOID lpParam) {
 
   // 4. Safe to unload - the wndproc is restored and no DLL code is on any stack
   OutputDebugStringA("[DLL] Detach: FreeLibraryAndExitThread now.\n");
-  FreeLibraryAndExitThread(g_hModule, 0);
-  return 0;
+  FreeLibraryAndExitThread(g_hModule, 0);  // does not return
 }
 
-DWORD WINAPI InitThread(LPVOID lpParam) {
+DWORD WINAPI InitThread(LPVOID /*lpParam*/) {
   // Increment our own refcount so UnhookWindowsHookEx (called by the host side
   // once the pipe connects) does not unload us from Explorer.
   WCHAR dllPath[MAX_PATH];
@@ -468,7 +467,7 @@ static bool IsExplorer() {
   return base && _wcsicmp(base + 1, L"explorer.exe") == 0;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID /*lpReserved*/) {
   if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
     // Only initialise when injected into explorer.exe.
     // When loaded locally by the injector to get GetMsgProc's address, do nothing.

@@ -1,16 +1,15 @@
 # Assembles the QML modules wabar.services and wabar.widgets from the contributions of every unit
-# (wabar_feature() in src/features/*, wabar_contribute() in the legacy spike/ folders). Included by
-# the top-level CMakeLists.txt after every contributor, so the global lists are complete here.
+# (wabar_feature() in src/features/*, wabar_contribute() in kernel, host, ui and app). Included by
+# src/CMakeLists.txt after every contributor, so the global lists are complete here.
 #
-# Why include() from the top level and not add_subdirectory(src/modules): qt_add_qml_module names
+# Why include() from src/CMakeLists.txt and not add_subdirectory(src/modules): qt_add_qml_module names
 # each qmlcachegen output after the .qml file's path relative to CMAKE_CURRENT_SOURCE_DIR
 # (".rcc/qmlcache/<target>_<relative path>_qml.cpp", Qt 6.10 Qt6QmlMacros.cmake). From src/modules
 # a feature file is "../features/<f>/qml/X.qml", which yields a directory "wabar_widgets_.." that
 # Windows cannot create (trailing dots are stripped), and the build fails. The modules must be
-# declared from a directory that contains every contributing file: the repository root while
-# spike/ still contributes, src/ once everything has moved (step 9).
+# declared from a directory that contains every contributing file: src/.
 #
-# URIs, versions and resource paths are the user-facing API and stay as they were in spike/:
+# URIs, versions and resource paths are the user-facing API and stay as they were:
 # qrc:/qt/qml/wabar/services/... and qrc:/qt/qml/wabar/widgets/<Name>.qml.
 #
 # QML files come from many folders. Each one gets QT_RESOURCE_ALIAS <basename>, set here because a
@@ -20,7 +19,7 @@
 # (QTP0004) ignore aliases. The build-directory copy of each module (qmldir, .qmltypes, the .qml
 # files under their alias) lands in <build>/src/modules/{services,widgets}.
 #
-# The output folders are deliberately not URI-shaped (not .../wabar/services), as in spike/ before:
+# The output folders are deliberately not URI-shaped (not .../wabar/services), as before the move into src/:
 # a URI-shaped folder puts <build>/src/modules on the qmlcachegen and qmllint import path, the
 # compiler then resolves `import wabar.services as S` and compiles about 160 more bindings of the
 # built-in widgets to C++ (aotstats: 708 instead of 550 compiled functions). That is a codegen
@@ -65,13 +64,12 @@ qt_add_qml_module(wabar_services
   NO_GENERATE_EXTRA_QMLDIRS
   SOURCES ${services_sources}
 )
-# ${PROJECT_SOURCE_DIR}: the legacy include root of the spike/ services and their tests (until
-# step 9); src/ comes from wabar_kernel through the feature libraries.
-target_include_directories(wabar_services PUBLIC ${PROJECT_SOURCE_DIR}
-  PRIVATE ${services_include_dirs})
-target_compile_definitions(wabar_services PRIVATE
-  UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(wabar_services PUBLIC Qt6::Qml Qt6::Quick ${services_libs})
+# src/ comes from wabar_kernel through the feature libraries.
+target_include_directories(wabar_services PRIVATE ${services_include_dirs})
+target_link_libraries(wabar_services
+  PUBLIC Qt6::Qml Qt6::Quick ${services_libs}
+  PRIVATE wabar_options)
+wabar_qt_generated_code(wabar_services)
 
 # wabar.widgets: the built-in widgets, plain QML on top of wabar.services. Inside the module the
 # services are imported under the name S because the widgets share names with them (Cpu, Memory,
@@ -84,4 +82,5 @@ qt_add_qml_module(wabar_widgets
   NO_GENERATE_EXTRA_QMLDIRS
   QML_FILES ${widgets_qml_files}
 )
-target_link_libraries(wabar_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE wabar_host wabar_services)
+target_link_libraries(wabar_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE wabar_options wabar_host wabar_services)
+wabar_qt_generated_code(wabar_widgets)

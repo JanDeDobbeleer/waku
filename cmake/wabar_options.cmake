@@ -1,11 +1,9 @@
 # wabar_options: compile and link flags for our own targets (was yasb_options). Applied PRIVATE,
 # so third-party code keeps its warning level.
 #
-# Who links it (migration step 4): the legacy libraries that already linked yasb_options
-# (yasb_platform, yasb_widgets) and every target under src/ (wabar_feature() adds it).
-# The former spike/ targets (wabar_bar, wabar_control, the two QML module targets, the exes and
-# the test binary) do not link it yet: they set only the definitions below by hand. Step 9 links
-# it there and fixes what /W4 /WX reveals.
+# Every own target links it PRIVATE: the libraries (kernel, control, features, host), the QML
+# module targets (wabar, wabar.services, wabar.widgets), the two executables and wabar_tests.
+# Define a new target's flags here, never per target.
 #
 # YASB_ANALYZE keeps its name until the rename step (10): tools\check.ps1 and docs/building.md
 # pass it.
@@ -21,3 +19,30 @@ target_compile_options(wabar_options INTERFACE
   /W4 /WX /permissive- /guard:cf /sdl /utf-8 /EHsc /Zc:__cplusplus
   /external:anglebrackets /external:W0)
 target_link_options(wabar_options INTERFACE /GUARD:CF /DYNAMICBASE /NXCOMPAT)
+
+# wabar_qt_generated_code(<qml module target>): the one place that relaxes a warning for code we do
+# not write. The AOT output of qmlcachegen (<build>/.../.rcc/qmlcache/*.cpp) instantiates Qt
+# templates and trips C4702 (unreachable code) inside QtCore/qvariant.h and QtQml/qjsengine.h;
+# /external:W0 does not silence it because MSVC reports C4702 at the instantiation, after the
+# header's external scope has ended. Only those generated files get /wd4702; the module's own
+# sources keep /W4 /WX. Deferred because Qt adds the generated sources when the directory ends.
+function(_wabar_qt_generated_code_apply target)
+  # The static plugin targets Qt creates for the module compile generated code too.
+  foreach(plugin IN ITEMS ${target}plugin ${target}plugin_init)
+    if(TARGET ${plugin})
+      target_link_libraries(${plugin} PRIVATE wabar_options)
+    endif()
+  endforeach()
+  get_target_property(sources ${target} SOURCES)
+  foreach(source IN LISTS sources)
+    if(source MATCHES "/\.rcc/qmlcache/")
+      set_source_files_properties(${source} TARGET_DIRECTORY ${target}
+        PROPERTIES COMPILE_OPTIONS /wd4702)
+    endif()
+  endforeach()
+endfunction()
+function(wabar_qt_generated_code target)
+  # EVAL: a deferred call expands its variables when it runs, and ${target} is gone by then.
+  cmake_language(EVAL CODE
+    "cmake_language(DEFER CALL _wabar_qt_generated_code_apply ${target})")
+endfunction()

@@ -1,6 +1,6 @@
 # wabar_feature(): one feature's declaration (docs/plans/2026-10-29-wabar-architecture-proposal.md,
-# section 7.2), and wabar_contribute(), the lower-level call it and the legacy spike/ folders use to
-# feed the two aggregated QML modules and the test binary.
+# section 7.2), and wabar_contribute(), the lower-level call it and the other units (kernel, host,
+# ui, app) use to feed the two aggregated QML modules and the test binary.
 #
 #   wabar_feature(NAME <f>
 #     DEPENDS       <features...>   features whose root headers and QML types <f> may use
@@ -20,8 +20,7 @@
 # - wabar_<f> is STATIC when SOURCES or WIN32_SOURCES is given, else INTERFACE (QML-only features
 #   such as clock), so a DEPENDS on any feature always links.
 # - wabar_<f> links PUBLIC wabar_kernel and wabar_<d> for each DEPENDS, PRIVATE wabar_options and
-#   SYSTEM_LIBS. Feature libraries get the strict flags (/W4 /WX ...); the QML-facing C++ is compiled
-#   in the module target, which does not link wabar_options until step 9.
+#   SYSTEM_LIBS. The QML-facing C++ is compiled in the module target, which links wabar_options too.
 # - DEPENDS must name a feature declared earlier in src/features/CMakeLists.txt (configure error
 #   otherwise). Declaration order is thus a topological order and a cycle cannot configure (S8).
 # - Paths are checked against the inner layout: WIN32_SOURCES under win32/, QML_* under qml/, TESTS

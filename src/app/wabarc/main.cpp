@@ -112,8 +112,8 @@ int main(int argc, char* argv[]) {
   }
 
   // The same default as the bar, so that the two meet without any option.
-  const QString configHome =
-      wabar::resolveConfigHome(parser.value(configHomeOpt), QStringLiteral(SPIKE_CONFIG_DIR));
+  const QString configHome = wabar::resolveConfigHome(parser.value(configHomeOpt),
+                                                      QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
   const wabar::ControlReply reply =
       wabar::sendControlCommand(wabar::controlPipeName(configHome), line);
 

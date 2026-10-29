@@ -43,8 +43,8 @@ int main(int argc, char* argv[]) {
   parser.process(app);
   wabar::kernel::setCapabilityDisabled(QStringLiteral("tray"), parser.isSet(noTrayOpt));
 
-  const QString configHome =
-      wabar::resolveConfigHome(parser.value(configHomeOpt), QStringLiteral(SPIKE_CONFIG_DIR));
+  const QString configHome = wabar::resolveConfigHome(parser.value(configHomeOpt),
+                                                      QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
 
   QQmlEngine engine;
   wabar::BarHost::Options options;

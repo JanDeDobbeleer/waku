@@ -1,4 +1,4 @@
-// The sample wabar config. Point the spike at another folder with --config-home <dir>.
+// The sample wabar config. Point wabar at another folder with --config-home <dir>.
 // Edit and save: the bars reload. A mistake keeps the previous bars and shows an error pill.
 import wabar
 import wabar.widgets          // the built-in widgets

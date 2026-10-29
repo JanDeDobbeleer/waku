@@ -1,7 +1,7 @@
 # Agent guide (wabar)
 
 Read this before changing anything. It applies to every agent session and to humans. Background:
-`docs/architecture.md`, `docs/building.md`, `SECURITY.md`, `spike/README.md`.
+`docs/architecture.md`, `docs/building.md`, `SECURITY.md`, `src/app/README.md`.
 
 wabar is a C++20/Qt 6.10 Qt Quick bar for Windows, configured in QML. The retired Qt Widgets build
 (yasb-native) is kept at the git tag `yasb-native-final` and in `docs/archive/`. Python YASB is a
@@ -54,11 +54,9 @@ the test preset. Presets live in `CMakePresets.json`; `compile_commands.json` is
 
 ## Definition of done
 
-`tools\check.ps1` exits 0. It runs the clang-format check, the include-layering check, the
-`structure` check (rules S1-S8 of the architecture proposal), the json-subscript check, the
-`arm64-debug` build and `ctest`. `tools\check.ps1 -Fast` runs only the first four. `structure`
-enforces under `src/` and `tests/` and only reports (warnings, exit 0) for the legacy folders;
-`-Verbose` lists those warnings.
+`tools\check.ps1` exits 0. It runs the clang-format check, the `structure` check (rules S1-S8 of the
+architecture proposal), the json-subscript check, the `arm64-debug` build and `ctest`.
+`tools\check.ps1 -Fast` runs only the first three. Every own target builds with `/W4 /WX`.
 
 `pwsh -NoProfile -File tools\check.ps1 -Analyze` runs the fast checks and opt-in local static
 analysis instead of tests, in an isolated build directory. It requires clang-tidy; see
@@ -76,27 +74,14 @@ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 ## Layering
 
-Dependencies point one way only; the `layering` step of `tools\check.ps1` rejects an include against
-the arrow. This layout is replaced by the capability layout of the architecture proposal
-(`docs/plans/2026-10-29-wabar-architecture-proposal.md`) in the restructure; until then:
-
-```
-spike (wabar)  ->  widgets  ->  core/{bar,widgets} (ui)  ->  platform
-```
-
-| Layer | Folders | May include |
-|---|---|---|
-| wabar | `spike/` | everything below |
-| widgets | `widgets/` | ui, platform |
-| ui | `core/bar/`, `core/widgets/` | Qt |
-| platform | `platform/` | Win32, Qt Core only |
-
-The restructure is in progress (migration step 4 done): `src/` has the skeleton (`kernel/`,
-`features/`, `modules/`), `cmake/wabar_feature.cmake` declares a feature (`wabar_feature(NAME <f>
-DEPENDS ... SOURCES ... WIN32_SOURCES ... QML_SOURCES ... QML_FILES ... TESTS ... SYSTEM_LIBS ...)`,
-one line in `src/features/CMakeLists.txt`), and `src/modules/qml_modules.cmake` builds the QML
-modules `wabar.services` and `wabar.widgets` from the contributions of `src/features/` and the
-legacy `spike/` folders. Code moved under `src/` follows the `structure` rules, not this table.
+Dependencies point one way: `app` -> `features` -> (`host`, `control`, `ui`) -> `kernel`. The
+`structure` step of `tools\check.ps1` enforces rules S1-S8 (includes, Windows and QML headers, QML use
+across features, `DEPENDS`) on `src/` and `tests/`. `cmake/wabar_feature.cmake` declares a feature
+(`wabar_feature(NAME <f> DEPENDS ... SOURCES ... WIN32_SOURCES ... QML_SOURCES ... QML_FILES ...
+TESTS ... SYSTEM_LIBS ...)`, one line in `src/features/CMakeLists.txt`), and
+`src/modules/qml_modules.cmake` builds the QML modules `wabar.services` and `wabar.widgets` from the
+contributions of `src/`. The executables are in `src/app/`; the sample config home is
+`examples/config`.
 
 Details: `docs/architecture.md`.
 
@@ -106,7 +91,7 @@ Details: `docs/architecture.md`.
   `clang-format -i` on every `.cpp`/`.h` you touch. clang-format lives on `PATH` or in
   `C:\Program Files\LLVM\bin`.
 - Members use a trailing underscore: `name_`. Do not add new `m_name` members.
-- Includes are rooted at the repo: `#include "platform/audio.h"`, never `"audio.h"`.
+- Includes are rooted at `src/`: `#include "kernel/qt/app_data.h"`, never `"app_data.h"`.
 - Qt string literals: `QStringLiteral("...")`. Do not introduce `u"..."_s` or `QLatin1String` in new
   code except where an API needs a Latin-1 view.
 - `NOMINMAX`, `WIN32_LEAN_AND_MEAN`, `UNICODE` come from the `wabar_options` target; do not redefine

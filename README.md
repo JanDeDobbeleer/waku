@@ -3,8 +3,8 @@
 wabar (/ˈwæbɑːr/, "wab-bar": "Windows, actually. With a bar.") is a Qt Quick top bar for Windows
 (C++20, Qt 6.10), configured in QML. It started as a native port of [YASB](https://github.com/amnweb/yasb);
 the retired Qt Widgets build is at the git tag `yasb-native-final` and described in
-[docs/archive](docs/archive/README.md). See [spike/README.md](spike/README.md) for how to run and
-configure it.
+[docs/archive](docs/archive/README.md). See [src/app/README.md](src/app/README.md) for how to run and
+configure it; a sample config is in [examples/config](examples/config).
 
 ## Documentation
 

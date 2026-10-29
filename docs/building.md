@@ -31,7 +31,7 @@ On an x64 host use `vcvarsall.bat x64` and the same presets.
 
 Everything lands in `build\<preset>`: `wabar.exe`, `wabarc.exe`, the tray hook DLL next to them and
 `wabar_tests.exe` with the Qt DLLs and the offscreen platform plugin that `windeployqt`
-copies next to it. The unpackaged debug build runs from that folder. `spike/README.md` explains how
+copies next to it. The unpackaged debug build runs from that folder. `src/app/README.md` explains how
 to run the bar and `wabarc`.
 
 ## Tray hook DLL
@@ -49,12 +49,12 @@ platform. Pass `--no-tray` to `wabar.exe` for runs that must not hook Explorer.
 
 ## Checks
 
-`tools\check.ps1` is the definition of done: clang-format check, include-layering check,
-json-subscript check, `arm64-debug` build and `ctest`. It sets up the MSVC environment itself.
+`tools\check.ps1` is the definition of done: clang-format check, structure check
+(rules S1-S8), json-subscript check, `arm64-debug` build and `ctest`. It sets up the MSVC environment itself.
 
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1          # everything
-pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast    # format + layering + json-subscript
+pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast    # format + structure + json-subscript
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -SkipFormat -Preset arm64-release
 pwsh -NoProfile -File tools\check.ps1 -Analyze                       # local static analysis
 ```
@@ -66,7 +66,7 @@ Configure also writes `build\<preset>\compile_commands.json` for clang tooling. 
 
 `-Analyze` requires PowerShell 7, the build prerequisites above and LLVM `clang-tidy` on `PATH`
 or in `C:\Program Files\LLVM\bin`. It runs the fast checks, then a clean MSVC `/analyze` build
-and clang-tidy over production compilation units in `core`, `platform` and `widgets`. It does not
+and clang-tidy over production compilation units under `src`. It does not
 run tests, launch the bar or register an app-bar. `-Fast` and `-Staged` cannot be combined with
 `-Analyze`; hooks still run only fast checks.
 

@@ -20,11 +20,13 @@ set_target_properties(YASBNativeTrayHook PROPERTIES
   AUTOMOC OFF
   # Static CRT: the DLL lives inside Explorer, which does not ship ours.
   MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-  # Next to yasb-native.exe (app/ sets the same folder).
+  # Next to wabar.exe (src/app/wabar sets the same folder).
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 target_compile_definitions(YASBNativeTrayHook PRIVATE
   YASB_TRAY_PIPE_NAME="${YASB_TRAY_PIPE_NAME}" YASB_TRAY_MUTEX_NAME="${YASB_TRAY_MUTEX_NAME}")
-target_compile_options(YASBNativeTrayHook PRIVATE /guard:cf /GS /sdl)
+# Strict warnings like wabar_options, set by hand: the DLL has no Qt, a static CRT and its own
+# definitions, so it does not link wabar_options.
+target_compile_options(YASBNativeTrayHook PRIVATE /W4 /WX /guard:cf /GS /sdl)
 if(_hook_arm64)
   target_compile_definitions(YASBNativeTrayHook PRIVATE BUILD_ARM64)
   target_link_options(YASBNativeTrayHook PRIVATE /guard:cf /DYNAMICBASE /NXCOMPAT /CETCOMPAT:NO)

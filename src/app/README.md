@@ -25,5 +25,6 @@ to Waybar, the bar for Wayland. It is written in lower case and plain ASCII in c
 - `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
   the built-in bar and ignores the config.
 
-Design notes and plans are in [docs/plans](../docs/plans). The sample config is in
-[spike/config](config).
+Design notes and plans are in [docs/plans](../../docs/plans). The sample config is in
+[examples/config](../../examples/config); a development build uses it when neither `--config-home`
+nor `WABAR_CONFIG_HOME` is given.
