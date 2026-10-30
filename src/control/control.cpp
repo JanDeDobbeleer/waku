@@ -115,7 +115,7 @@ void ControlServer::serve(QLocalSocket* socket) {
     if (guard) guard->disconnectFromServer();
   });
 
-  connect(socket, &QLocalSocket::readyRead, socket, [this, socket] {
+  auto onReadyRead = [this, socket] {
     // Everything read so far stays in the socket's buffer until a full line has arrived.
     if (socket->bytesAvailable() > kMaxCommandBytes + 1) {
       socket->write("error: command too long\n");
@@ -132,9 +132,14 @@ void ControlServer::serve(QLocalSocket* socket) {
     } catch (...) {
       reply = QStringLiteral("error: the command failed");
     }
+    // The client closes once it has read the line. Disconnecting here would let Windows
+    // discard the reply before the client reads it (DisconnectNamedPipe drops unread data).
+    // The idle timer above is the backstop for a client that never closes.
     socket->write(reply.toUtf8() + '\n');
-    socket->disconnectFromServer();
-  });
+  };
+  connect(socket, &QLocalSocket::readyRead, socket, onReadyRead);
+  // The client may have written before this slot was connected; no further readyRead comes then.
+  if (socket->bytesAvailable() > 0) QTimer::singleShot(0, socket, onReadyRead);
 }
 
 ControlReply sendControlCommand(const QString& name, const QString& command, int timeoutMs) {
