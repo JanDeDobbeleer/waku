@@ -34,4 +34,44 @@ target_link_libraries(wabar_quickshell
   PRIVATE wabar_options)
 wabar_qt_generated_code(wabar_quickshell)
 
+# wabar_quickshell_qml_module(<target> <uri>
+#     [QML_FILES ...] [SINGLETONS ...] [INTERNAL ...] [SOURCES ...] [DEPENDENCIES ...])
+# One more Quickshell module made of QML files (and optionally C++ in qml/), linked into
+# wabar_quickshell so the executables and the tests get it without naming it. Call it from the
+# module's own folder. SINGLETONS are `pragma Singleton` files, INTERNAL ones are not exported.
+# The QML imports wabar and wabar.services at run time; DEPENDENCIES only declares that.
+function(wabar_quickshell_qml_module target uri)
+  cmake_parse_arguments(PARSE_ARGV 2 arg "" "" "QML_FILES;SINGLETONS;INTERNAL;SOURCES;DEPENDENCIES")
+  set(all ${arg_QML_FILES} ${arg_SINGLETONS} ${arg_INTERNAL})
+  foreach(file IN LISTS all)
+    cmake_path(GET file FILENAME name)
+    set_source_files_properties(${file} PROPERTIES QT_RESOURCE_ALIAS ${name})
+  endforeach()
+  set_source_files_properties(${arg_SINGLETONS} PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+  if(arg_INTERNAL)
+    set_source_files_properties(${arg_INTERNAL} PROPERTIES QT_QML_INTERNAL_TYPE TRUE)
+  endif()
+  qt_add_library(${target} STATIC)
+  qt_add_qml_module(${target}
+    URI ${uri}
+    VERSION 0.1
+    NO_GENERATE_EXTRA_QMLDIRS
+    QML_FILES ${all}
+    SOURCES ${arg_SOURCES}
+    DEPENDENCIES ${arg_DEPENDENCIES}
+  )
+  target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/qml)
+  target_link_libraries(${target}
+    PUBLIC Qt6::Quick Qt6::Qml wabar_host
+    PRIVATE wabar_options)
+  wabar_qt_generated_code(${target})
+  target_link_libraries(wabar_quickshell PUBLIC ${target} ${target}plugin)
+endfunction()
+
 add_subdirectory(wayland)
+add_subdirectory(widgets)
+add_subdirectory(hyprland)
+add_subdirectory(upower)
+add_subdirectory(pipewire)
+add_subdirectory(systemtray)
+add_subdirectory(bluetooth)
