@@ -84,3 +84,20 @@ qt_add_qml_module(wabar_widgets
 )
 target_link_libraries(wabar_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE wabar_options wabar_host wabar_services)
 wabar_qt_generated_code(wabar_widgets)
+
+# Quickshell.Io: QML written for Quickshell imports it. The types live in wabar.services; this
+# module only re-exports them through the `import` line of its qmldir (the line is written by the
+# IMPORTS argument). wabar_services links it, so the executables and the tests get its static plugin
+# without naming it. Design: src/features/quickshell_io/design.md.
+qt_add_library(wabar_quickshell_io_module STATIC)
+qt_add_qml_module(wabar_quickshell_io_module
+  URI Quickshell.Io
+  VERSION 1.0
+  OUTPUT_DIRECTORY ${wabar_modules_dir}/quickshell_io
+  NO_GENERATE_EXTRA_QMLDIRS
+  NO_GENERATE_QMLTYPES
+  NO_PLUGIN
+  IMPORTS wabar.services
+)
+target_link_libraries(wabar_quickshell_io_module PRIVATE wabar_options)
+target_link_libraries(wabar_services PUBLIC wabar_quickshell_io_module)
