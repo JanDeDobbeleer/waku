@@ -106,3 +106,9 @@ manual click-through check, and the release gate in `2026-10-30-handoff.md`.
   ScreenState_QMLTYPE_963 to ScreenState_QMLTYPE_2519` and `Cannot read property 'dashboard' of
   null`. A restart is clean. The engine should clear singletons when it reloads (Quickshell reloads
   the whole engine).
+
+- **Arc tips (second fix).** At pixel level, the far end of each arc, where it turns tangent to the
+  frame, let one pixel of the window behind show through. Each arc piece now extends 3 logical px
+  under the frame and under the panel. Checked at 10 times zoom on both ends of the dashboard
+  where it meets the top frame: no gap. The other flush panels use the same piece but were not
+  zoomed.
