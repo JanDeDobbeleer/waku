@@ -46,14 +46,14 @@ class Region : public QObject {
   Q_OBJECT
   QML_ELEMENT
   Q_CLASSINFO("DefaultProperty", "regions")
-  Q_PROPERTY(qreal x MEMBER x_ NOTIFY shapeChanged FINAL)
-  Q_PROPERTY(qreal y MEMBER y_ NOTIFY shapeChanged FINAL)
-  Q_PROPERTY(qreal width MEMBER width_ NOTIFY shapeChanged FINAL)
-  Q_PROPERTY(qreal height MEMBER height_ NOTIFY shapeChanged FINAL)
+  Q_PROPERTY(qreal x MEMBER x_ NOTIFY xChanged FINAL)
+  Q_PROPERTY(qreal y MEMBER y_ NOTIFY yChanged FINAL)
+  Q_PROPERTY(qreal width MEMBER width_ NOTIFY widthChanged FINAL)
+  Q_PROPERTY(qreal height MEMBER height_ NOTIFY heightChanged FINAL)
   Q_PROPERTY(wabar::host::RegionShape::Enum shape MEMBER shape_ NOTIFY shapeChanged FINAL)
-  Q_PROPERTY(QQuickItem* item READ item WRITE setItem NOTIFY shapeChanged FINAL)
-  Q_PROPERTY(
-      wabar::host::Intersection::Enum intersection MEMBER intersection_ NOTIFY shapeChanged FINAL)
+  Q_PROPERTY(QQuickItem* item READ item WRITE setItem NOTIFY itemChanged FINAL)
+  Q_PROPERTY(wabar::host::Intersection::Enum intersection MEMBER intersection_ NOTIFY
+                 intersectionChanged FINAL)
   Q_PROPERTY(QQmlListProperty<wabar::host::Region> regions READ regions FINAL)
 
  public:
@@ -75,8 +75,9 @@ class Region : public QObject {
   // emit; the poller reads the region each time.)
   void shapeChanged();
   void regionsChanged();
-  // This region or any region below it changed (shape, item, intersection or the child list). The
-  // mask poller listens to the root; an item that moves does not emit, the window's frame does.
+  // This region or any region below it changed (any property, item, intersection or the child
+  // list). The mask poller listens to the root; an item that moves does not emit, the window's
+  // frame does.
   void treeChanged();
 
  private:

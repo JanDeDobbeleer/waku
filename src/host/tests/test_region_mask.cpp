@@ -230,3 +230,99 @@ TEST(RegionMaskTest, AChangedRegionIsTestedAgainUnderARestingCursor) {
   h.host->maskHub()->tick();
   EXPECT_FALSE(clickThrough(h));
 }
+
+namespace {
+
+QStringList* g_warnings = nullptr;
+QtMessageHandler g_previousHandler = nullptr;
+
+void collectWarnings(QtMsgType type, const QMessageLogContext& context, const QString& message) {
+  if (g_warnings && type >= QtWarningMsg) g_warnings->append(message);
+  if (g_previousHandler) g_previousHandler(type, context, message);
+}
+
+// Collects warnings while alive.
+struct WarningCapture {
+  WarningCapture() {
+    g_warnings = &messages;
+    g_previousHandler = qInstallMessageHandler(collectWarnings);
+  }
+  ~WarningCapture() {
+    qInstallMessageHandler(g_previousHandler);
+    g_warnings = nullptr;
+  }
+  QStringList messages;
+};
+
+}  // namespace
+
+TEST(RegionMaskTest, EachRegionPropertyHasItsOwnNotifySignal) {
+  Region region;
+  const QMetaObject* meta = region.metaObject();
+  for (const char* name : {"x", "y", "width", "height", "shape", "item", "intersection"}) {
+    const QMetaProperty property = meta->property(meta->indexOfProperty(name));
+    ASSERT_TRUE(property.isValid()) << name;
+    EXPECT_EQ(property.notifySignal().name(), QByteArray(name) + "Changed") << name;
+  }
+}
+
+TEST(RegionMaskTest, ABindingThatReadsAnotherRegionPropertyDoesNotLoop) {
+  WarningCapture capture;
+  Harness h;
+  h.start(maskShell(QStringLiteral("import wabar"), QStringLiteral(R"(
+    property int w: 120
+    property int h: 80
+    mask: Region {
+        id: region
+        x: region.width / 4
+        y: region.height / 4
+        width: win.w
+        height: win.h
+    }
+)")));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  settle();
+  for (const QString& message : capture.messages) {
+    EXPECT_FALSE(message.contains(QStringLiteral("inding loop"))) << qPrintable(message);
+  }
+  QsWindow* window = h.shellWindow();
+  std::optional<RegionNode> mask = window->maskNode();
+  ASSERT_TRUE(mask.has_value());
+  EXPECT_EQ(mask->rect, QRectF(30, 20, 120, 80));
+
+  // The mask still follows every property.
+  window->setProperty("w", 200);
+  window->setProperty("h", 40);
+  settle();
+  mask = window->maskNode();
+  ASSERT_TRUE(mask.has_value());
+  EXPECT_EQ(mask->rect, QRectF(50, 10, 200, 40));
+  for (const QString& message : capture.messages) {
+    EXPECT_FALSE(message.contains(QStringLiteral("inding loop"))) << qPrintable(message);
+  }
+}
+
+TEST(RegionMaskTest, EveryPropertyChangeReachesTheMaskPoller) {
+  Harness h;
+  h.start(maskShell(QStringLiteral("import wabar"), QStringLiteral(R"(
+    property alias inner: inner
+    mask: Region { id: inner; x: 0; y: 0; width: 50; height: 50 }
+)")));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  settle();
+  QObject* inner = h.shellWindow()->property("inner").value<QObject*>();
+  ASSERT_NE(inner, nullptr);
+  cursorAt(h, 200, 200);
+  h.host->maskHub()->tick();
+  ASSERT_TRUE(clickThrough(h));
+  int evaluations = h.host->maskHub()->evaluations();
+  const std::pair<const char*, int> changes[] = {
+      {"x", 150}, {"y", 150}, {"width", 100}, {"height", 100}};
+  for (const auto& [name, value] : changes) {
+    inner->setProperty(name, value);
+    h.host->maskHub()->tick();
+    EXPECT_GT(h.host->maskHub()->evaluations(), evaluations) << name;
+    evaluations = h.host->maskHub()->evaluations();
+  }
+  EXPECT_FALSE(clickThrough(h));
+}

@@ -5,7 +5,7 @@ namespace wabar::host {
 void Region::setItem(QQuickItem* item) {
   if (item_ == item) return;
   item_ = item;
-  emit shapeChanged();
+  emit itemChanged();
 }
 
 QQmlListProperty<Region> Region::regions() {
