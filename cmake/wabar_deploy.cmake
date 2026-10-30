@@ -1,7 +1,7 @@
 # deploy: assembles a portable folder, dist/wabar by default (WABAR_DIST_DIR):
 #
 #   wabar.exe, wabarc.exe, WabarTrayHook[_arm64].dll   the program and the DLL injected into Explorer
-#   <Qt runtime>                                        windeployqt, scanning src/ and the sample config
+#   <Qt runtime>                                        windeployqt, scanning src/ and cmake/deploy_imports/
 #   modules/wabar/ ...                                  the built-in widgets as a read-only reference:
 #   modules/wabar/widgets/, modules/wabar/services/     .qml, qmldir and .qmltypes of the three QML
 #                                                       modules (import path root: modules/)
@@ -43,7 +43,8 @@ add_custom_target(deploy
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
           $<TARGET_FILE:wabar> $<TARGET_FILE:wabarc> $<TARGET_FILE:WabarTrayHook> "${_dist}"
   COMMAND Qt6::windeployqt ${_windeployqt_flags} --dir "${_dist}"
-          --qmldir "${PROJECT_SOURCE_DIR}/src" "${_dist}/$<TARGET_FILE_NAME:wabar>"
+          --qmldir "${PROJECT_SOURCE_DIR}/src"
+          --qmldir "${PROJECT_SOURCE_DIR}/cmake/deploy_imports" "${_dist}/$<TARGET_FILE_NAME:wabar>"
   ${_module_commands}
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_host_qml} "${_modules}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_widgets_qml} "${_modules}/widgets"
