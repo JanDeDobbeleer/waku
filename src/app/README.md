@@ -28,9 +28,12 @@ to Waybar, the bar for Wayland. It is written in lower case and plain ASCII in c
   Variants, LazyLoader, Theme, ...), `wabar.widgets` (the built-in widgets), `wabar.services` (the C++
   data sources), and `Quickshell` and `Quickshell.Wayland` (the same shell types under Quickshell's
   names, for ported shells).
+- Panels dock to any of the four edges (`examples/sidebar` is a left one); a docked panel
+  reports its edge as `QsWindow.window.dockEdge`.
 - `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
   the built-in shell and ignores the config.
 
 The architecture is in [docs/architecture.md](../../docs/architecture.md), the build and every flag
 in [docs/building.md](../../docs/building.md), and dated plans in [docs/plans](../../docs/plans/README.md).
-The sample config is in [examples/config](../../examples/config).
+The sample config is in [examples/config](../../examples/config), a vertical sidebar in
+[examples/sidebar](../../examples/sidebar).

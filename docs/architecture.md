@@ -167,8 +167,26 @@ registers with the `ShellHost` of its engine. Windows created while the shell bu
 it is installed; a window created later (`Variants`, `LazyLoader`) is shown at once. A window whose
 `content` component fails is left out and its error recorded; the fallback shell appears only when
 no window of the shell could be built. `PanelWindow` geometry is the pure `panelGeometry` in
-`panel_geometry.*`; a panel anchored to the top or the bottom edge alone becomes an app bar, which
-reserves work area only with `--register-app-bar`. Left and right app bars are not yet built.
+`panel_geometry.*`.
+
+A panel is docked to the edge it is anchored to when it is anchored to one edge, not to the
+opposite one, and is stretched (both perpendicular edges) or centred (neither) across it
+(`panelAppBarEdge`). A corner window, a band across the screen and a full-screen window are not
+docked. The derived `dockEdge` (a `DockEdge` value) and `dockVertical` of a `QsWindow` expose that
+edge to the content; they carry the `dock` prefix so a Quickshell shell that declares its own
+`edge` or `vertical` on a window loads. `PopupWindow`, `Tooltip`, `PanelLayout` and `Pill` read
+them: popups open away from the edge (below a top panel, above a bottom one, right of a left one,
+left of a right one), groups run top to bottom on a left or right panel, and a `Pill` stacks its
+icon above its text. `Strip` (`src/ui/Strip.qml`) is the positioner of the built-in widgets that
+hold several items (`Workspaces`, `Taskbar`, `Tray`).
+
+A docked panel is an app bar on its edge (`AppBarEdge` Left 0, Top 1, Right 2, Bottom 3, the ABE
+values) and reserves work area only with `--register-app-bar` and a non-zero `exclusiveZone` or
+thickness (`panelReservedZone`). The window is registered (`ABM_NEW`) only when it reserves space.
+Rects are physical pixels: the origin of `QScreen::geometry()` (Qt keeps it in native coordinates)
+and its size times the device pixel ratio (`computeAppBarRect`). `negotiateAppBarRect` calls
+`ABM_QUERYPOS`, re-applies the thickness to the adjusted rect, then `ABM_SETPOS`, and the window
+moves inward by what the shell granted (another app bar or the Windows taskbar on the same edge).
 
 ## Threading
 
