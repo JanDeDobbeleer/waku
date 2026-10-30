@@ -5,11 +5,13 @@ import wabar as W
 // Bluetooth singleton creates it.
 //
 //   enabled     writable: switches the radio on or off
-//   discovering writable but without effect: the service cannot scan, so it returns to false
+//   discovering writable: true starts one scan (the service runs an inquiry of a few seconds) and
+//               the value turns false when it ends; false cannot stop a scan and snaps back
 //   pairable, discoverable, the timeouts  held values only; Windows controls them
-//   devices     a model (with `values`) of the known (paired or remembered) devices
+//   devices     a model (with `values`) of the known (paired or remembered) devices and the
+//               nearby ones of the last scan (`paired` false)
 //
-// `service` is the Bluetooth service (available, radioOn, devices, setRadio, ...).
+// `service` is the Bluetooth service (available, radioOn, devices, scanning, setRadio, scan, ...).
 QtObject {
     id: root
 
@@ -38,6 +40,7 @@ QtObject {
             return;
         pulling = true;
         enabled = service.radioOn === true;
+        discovering = service.scanning === true;
         pulling = false;
     }
 
@@ -49,14 +52,25 @@ QtObject {
     }
 
     onDiscoveringChanged: {
-        if (discovering)
-            Qt.callLater(() => root.discovering = false);
+        if (pulling || !service)
+            return;
+        if (discovering) {
+            if (service.scanning !== true)
+                service.scan();
+        }
+        // The value follows the service: a scan that did not start, or one that cannot be stopped,
+        // puts it back.
+        if ((service.scanning === true) !== discovering)
+            Qt.callLater(root.pull);
     }
 
     readonly property Connections watch: Connections {
         target: root.service
         ignoreUnknownSignals: true
         function onChanged() {
+            root.pull();
+        }
+        function onScanningChanged() {
             root.pull();
         }
     }

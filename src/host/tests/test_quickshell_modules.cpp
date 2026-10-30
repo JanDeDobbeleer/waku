@@ -525,6 +525,12 @@ Item {
         function setRadio(on) { calls = calls.concat(["radio:" + on]); radioOn = on }
         function connectDevice(id) { calls = calls.concat(["connect:" + id]) }
         function disconnectDevice(id) { calls = calls.concat(["disconnect:" + id]) }
+        property bool scanning: false
+        property bool pairing: false
+        function scan() { calls = calls.concat(["scan"]); scanning = true }
+        function pairDevice(id) { calls = calls.concat(["pair:" + id]); pairing = true }
+        function forgetDevice(id) { calls = calls.concat(["forget:" + id]); pairing = true }
+        function cancelPair() { calls = calls.concat(["cancel"]) }
     }
     Component.onCompleted: Bluetooth.service = fake
     property var adapter: Bluetooth.defaultAdapter
@@ -586,9 +592,30 @@ QtObject {
   EXPECT_TRUE(buds->property("connected").toBool());
   EXPECT_EQ(fake->property("calls").toList().size(), 3);
 
-  // Scanning is not available: discovering returns to false.
+  // discovering starts one scan and follows the service's `scanning`.
   adapter->setProperty("discovering", true);
-  QTRY_VERIFY_WITH_TIMEOUT(!adapter->property("discovering").toBool(), 1000);
+  EXPECT_EQ(fake->property("calls").toList().size(), 4);
+  EXPECT_EQ(fake->property("calls").toList().at(3).toString(), "scan");
+  EXPECT_TRUE(fake->property("scanning").toBool());
+  EXPECT_TRUE(adapter->property("discovering").toBool());
+  // A scan cannot be stopped: false snaps back while it runs.
+  adapter->setProperty("discovering", false);
+  QTRY_VERIFY_WITH_TIMEOUT(adapter->property("discovering").toBool(), 1000);
+  EXPECT_EQ(fake->property("calls").toList().size(), 4);
+  fake->setProperty("scanning", false);
+  EXPECT_FALSE(adapter->property("discovering").toBool());
+
+  // pair, cancelPair and forget go to the service; `pairing` follows it.
+  EXPECT_FALSE(buds->property("pairing").toBool());
+  ASSERT_TRUE(QMetaObject::invokeMethod(buds, "pair"));
+  EXPECT_EQ(fake->property("calls").toList().at(4).toString(), "pair:AA:BB");
+  EXPECT_TRUE(buds->property("pairing").toBool());
+  ASSERT_TRUE(QMetaObject::invokeMethod(buds, "cancelPair"));
+  EXPECT_EQ(fake->property("calls").toList().at(5).toString(), "cancel");
+  fake->setProperty("pairing", false);
+  EXPECT_FALSE(buds->property("pairing").toBool());
+  ASSERT_TRUE(QMetaObject::invokeMethod(buds, "forget"));
+  EXPECT_EQ(fake->property("calls").toList().at(6).toString(), "forget:AA:BB");
 }
 
 TEST(QuickshellBluetooth, NoRadioMeansNoAdapter) {

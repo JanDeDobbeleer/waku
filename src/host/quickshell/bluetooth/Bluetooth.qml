@@ -9,9 +9,10 @@ import wabar.services as S
 //   adapters        a model (with `values`) of that adapter, empty without one
 //   devices         a model (with `values`) of the adapter's known devices
 //
-// Scanning, pairing and trusting are not part of the service: BluetoothAdapter.discovering stays
-// false and BluetoothDevice.pair() does nothing. `service` is the object the values come from
-// (S.Bluetooth); tests replace it.
+// `devices` holds the known devices and, while a scan's results are fresh, the nearby unpaired ones
+// (`paired` false). BluetoothAdapter.discovering scans and BluetoothDevice.pair(), cancelPair() and
+// forget() pair and unpair through the service; trusting is not part of it. `service` is the object
+// the values come from (S.Bluetooth); tests replace it.
 QtObject {
     id: root
 

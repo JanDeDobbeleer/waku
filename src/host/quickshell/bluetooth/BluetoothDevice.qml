@@ -7,10 +7,15 @@ import QtQuick
 //   battery     0 to 1, valid when batteryAvailable
 //   trusted, blocked, wakeAllowed  false and read-only in effect: Windows pairs and trusts a
 //               device itself
-//   pair(), cancelPair(), forget()  do nothing: pairing happens in Windows Settings
+//   pair()      pairs a nearby device with Windows' default pairing; `pairing` is true until it
+//               ends. A device that needs a PIN or a confirmation fails (service.error says the
+//               device needs pairing in Windows Settings)
+//   cancelPair()  cancels a running pair
+//   forget()    forgets a paired device
 //
-// `service` is the Bluetooth service (connectDevice, disconnectDevice); `row` is the device's map:
-// id (address), name, connected, paired, type, batteryPercent.
+// `service` is the Bluetooth service (connectDevice, disconnectDevice, pairDevice, forgetDevice,
+// cancelPair, pairing); `row` is the device's map: id (address), name, connected, paired, type,
+// batteryPercent.
 QtObject {
     id: root
 
@@ -25,7 +30,7 @@ QtObject {
     property bool connected: false
     readonly property bool paired: row.paired === true
     readonly property bool bonded: paired
-    readonly property bool pairing: false
+    readonly property bool pairing: pairingNow
     property bool trusted: paired
     property bool blocked: false
     property bool wakeAllowed: false
@@ -35,6 +40,16 @@ QtObject {
     readonly property string dbusPath: ""
 
     property bool pulling: false
+    property bool pairingNow: false
+
+    readonly property Connections watch: Connections {
+        target: root.service
+        ignoreUnknownSignals: true
+        function onPairingChanged() {
+            if (root.service && root.service.pairing !== true)
+                root.pairingNow = false;
+        }
+    }
 
     onRowChanged: {
         pulling = true;
@@ -61,11 +76,21 @@ QtObject {
     }
 
     function pair() {
+        if (!service)
+            return;
+        service.pairDevice(address);
+        pairingNow = service.pairing === true;
     }
 
     function cancelPair() {
+        if (service)
+            service.cancelPair();
     }
 
     function forget() {
+        if (!service)
+            return;
+        service.forgetDevice(address);
+        pairingNow = service.pairing === true;
     }
 }
