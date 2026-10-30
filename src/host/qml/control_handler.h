@@ -23,7 +23,11 @@ class ShellHost;
 //   other   "error: unknown command '...' (try: reload, status, quit, wallpaper, shortcut)"
 //   surface list | show|hide|toggle|status <name>
 //           the named windows of the shell (surface_control.h): "ok: <text>" or "error: <text>"
-//   other   "error: unknown command '...' (try: reload, status, quit, wallpaper, surface)"
+//   call [<target> <function> [args...]]
+//           runs a function of an IpcHandler (ipc_handler.h): the return value as one line, "ok"
+//           for void, "error: <text>"; without words the handlers and their functions
+//   other   "error: unknown command '...' (try: reload, status, quit, wallpaper, shortcut,
+//           surface, call)"
 // `quit` defaults to QCoreApplication::quit. `wallpapers` is asked when a wallpaper command
 // arrives (the service is created on demand), so a shell without wallpapers never builds it.
 control::ControlHandler makeControlHandler(ShellHost& host, bool safe,

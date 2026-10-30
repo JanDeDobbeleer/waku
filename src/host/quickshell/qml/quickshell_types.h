@@ -8,11 +8,15 @@
 #include <QObject>
 
 #include "host/qml/global_shortcut.h"
+#include "host/qml/ipc_handler.h"
 #include "host/qml/lazy_loader.h"
+#include "host/qml/persistent_properties.h"
 #include "host/qml/region.h"
+#include "host/qml/script_model.h"
 #include "host/qml/shell_config.h"
 #include "host/qml/shell_screen.h"
 #include "host/qml/shell_window.h"
+#include "host/qml/system_clock.h"
 #include "host/qml/window_enums.h"
 
 namespace wabar::quickshell {
@@ -58,6 +62,30 @@ struct QsGlobalShortcut {
   Q_GADGET
   QML_FOREIGN(wabar::host::GlobalShortcut)
   QML_NAMED_ELEMENT(GlobalShortcut)
+};
+
+struct QsIpcHandler {
+  Q_GADGET
+  QML_FOREIGN(wabar::host::IpcHandler)
+  QML_NAMED_ELEMENT(IpcHandler)
+};
+
+struct QsPersistentProperties {
+  Q_GADGET
+  QML_FOREIGN(wabar::host::PersistentProperties)
+  QML_NAMED_ELEMENT(PersistentProperties)
+};
+
+struct QsScriptModel {
+  Q_GADGET
+  QML_FOREIGN(wabar::host::ScriptModel)
+  QML_NAMED_ELEMENT(ScriptModel)
+};
+
+struct QsSystemClock {
+  Q_GADGET
+  QML_FOREIGN(wabar::host::SystemClock)
+  QML_NAMED_ELEMENT(SystemClock)
 };
 
 struct QsShellScreen {

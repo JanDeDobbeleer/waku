@@ -20,6 +20,9 @@
 //                       the windows of the shell that have a `name`: a launcher, an OSD, a menu.
 //                       show and toggle first allow the bar to take the keyboard focus
 //                       (AllowSetForegroundWindow), so a launcher opened from a hotkey gets it
+//     wabarc call [<target> <function> [args...]]
+//                       run a function of an IpcHandler; the answer is its return value on one
+//                       line ("ok" for void). Without arguments: the handlers and their functions
 //
 // `--dry-run` plays the animation but does not set the wallpaper. A command is sent as one line;
 // arguments with spaces are quoted (control.h, joinCommand).
@@ -87,6 +90,7 @@ int main(int argc, char* argv[]) {
       "  shortcut list                  the names of the shortcuts\n"
       "  surface list                   the named windows of the shell and their state\n"
       "  surface show | hide | toggle | status <name>\n"
+      "  call <target> <function> [args...]  run a function of an IpcHandler; call alone lists\n"
       "Add --dry-run to set, random, next or previous to play the animation without "
       "changing the wallpaper."));
   parser.addHelpOption();
@@ -99,14 +103,14 @@ int main(int argc, char* argv[]) {
   parser.addOption(dryRunOpt);
   parser.addPositionalArgument(
       QStringLiteral("command"),
-      QStringLiteral("reload, status, quit, wallpaper, shortcut or surface"));
+      QStringLiteral("reload, status, quit, wallpaper, shortcut, surface or call"));
   parser.process(app);
 
   const QStringList positional = parser.positionalArguments();
   const QString usage = QStringLiteral(
       "usage: wabarc [--config-home <dir>] reload|status|quit|wallpaper "
       "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|shortcut <name>|list|surface "
-      "(list|show|hide|toggle|status <name>)");
+      "(list|show|hide|toggle|status <name>)|call <target> <function> [args...]");
   if (positional.isEmpty()) {
     print(stderr, usage);
     return kUsage;

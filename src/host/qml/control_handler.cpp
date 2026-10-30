@@ -5,6 +5,7 @@
 #include <QTimer>
 
 #include "host/qml/global_shortcut.h"
+#include "host/qml/ipc_handler.h"
 #include "host/qml/shell_host.h"
 #include "host/qml/surface_control.h"
 
@@ -94,6 +95,13 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
       words.removeFirst();
       return answerShortcutCommand(words);
     }
+    if (command == QLatin1String("call") || command.startsWith(QLatin1String("call "))) {
+      QStringList words;
+      if (!control::splitCommand(command, &words))
+        return QStringLiteral("error: unterminated quote");
+      words.removeFirst();
+      return IpcHandler::callByName(words);
+    }
     if (command == QLatin1String("surface") || command.startsWith(QLatin1String("surface "))) {
       QStringList words;
       if (!control::splitCommand(command, &words))
@@ -103,7 +111,7 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
     }
     return QStringLiteral(
                "error: unknown command '%1' (try: reload, status, quit, wallpaper, shortcut, "
-               "surface)")
+               "surface, call)")
         .arg(command.left(40));
   };
 }

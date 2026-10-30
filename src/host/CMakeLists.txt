@@ -74,11 +74,17 @@ qt_add_qml_module(wabar_host
     qml/control_handler.cpp
     qml/global_shortcut.h
     qml/global_shortcut.cpp
+    qml/ipc_handler.h
+    qml/ipc_handler.cpp
     qml/lazy_loader.h
     qml/lazy_loader.cpp
+    qml/persistent_properties.h
+    qml/persistent_properties.cpp
     qml/popup_placement_qml.h
     qml/region.h
     qml/region.cpp
+    qml/script_model.h
+    qml/script_model.cpp
     qml/shell_config.h
     qml/shell_host.h
     qml/shell_host.cpp
@@ -88,6 +94,8 @@ qt_add_qml_module(wabar_host
     qml/shell_window.cpp
     qml/surface_control.h
     qml/surface_control.cpp
+    qml/system_clock.h
+    qml/system_clock.cpp
     qml/window_enums.h
     win32/shell_host_win32.cpp
 )
@@ -113,6 +121,7 @@ wabar_contribute(
     tests/test_region_math.cpp
     tests/test_region_mask.cpp
     tests/test_quickshell.cpp
+    tests/test_quickshell_core.cpp
     tests/test_screen_match.cpp
     tests/test_shell_host.cpp
     tests/test_shell_windows.cpp
