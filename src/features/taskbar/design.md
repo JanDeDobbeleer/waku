@@ -61,6 +61,18 @@ the button), `pinned`, `running`, `active`, `minimized`, `flashing`, `uniqueId`.
 Row order: pinned apps in pin-file order, then the other buttons in the order their first window
 appeared.
 
+`S.WindowControl` (singleton, `qml/window_control.h`): `activate(hwnd)`, `foreground()`,
+`isWindow(hwnd)`. For a shell that knows HWNDs from elsewhere (komorebi's state) and has no tracker
+rows, because the tracker needs a bar window to attach to. `activate` restores the window when it
+is minimised (`ShowWindowAsync(SW_RESTORE)`), then calls `kernel::forceForegroundFocus`; it
+returns true when the window is the foreground window afterwards. Windows' foreground lock can
+still refuse a window of another process: the window's taskbar button then flashes
+(`FlashWindowEx`) and the call returns false. A missing window or `hwnd <= 0` returns false.
+Everything sits behind `WindowControlBackend` (`window_control_backend.h`), with a Win32
+implementation and a fake in `testing/`; without a live desktop all three calls return false or 0.
+No new Windows API. It does not touch the tracker, so it does not toggle or minimise (unlike
+`TaskbarModel.activate`).
+
 ## Decisions
 
 1. **Service plus per-widget model.** The tracker, pin store and icon cache exist once per run

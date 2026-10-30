@@ -10,12 +10,14 @@ wabar_feature(
     pin_support.h
     taskbar_icons.h
     taskbar_icons.cpp
+    window_control_backend.h
     window_system.h
     window_tracker.h
     window_tracker.cpp
   WIN32_SOURCES
     win32/app_identity_win.cpp
     win32/pin_support_win.cpp
+    win32/window_control_win.cpp
     win32/window_system_win.cpp
     win32/window_tracker_hooks_win.cpp
   QML_SOURCES
@@ -23,11 +25,14 @@ wabar_feature(
     qml/taskbar_model.cpp
     qml/taskbar_service.h
     qml/taskbar_service.cpp
+    qml/window_control.h
+    qml/window_control.cpp
   QML_FILES
     qml/Taskbar.qml
   TESTS
     tests/test_taskbar_platform.cpp
     tests/test_taskbar.cpp
+    tests/test_window_control.cpp
   SYSTEM_LIBS
     advapi32
     dwmapi
