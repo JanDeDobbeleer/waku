@@ -25,20 +25,35 @@ std::unique_ptr<NotificationSource> systemSource() {
 
 }  // namespace
 
-Notifications::Notifications(QObject* parent) : Notifications(systemSource(), parent) {}
-
-Notifications::Notifications(std::unique_ptr<NotificationSource> source, QObject* parent)
-    : QObject(parent), hasSource_(source != nullptr), service_(std::move(source), this) {
-  connect(&service_, &NotificationService::countChanged, this, &Notifications::onServiceChanged);
-  connect(&service_, &NotificationService::itemsChanged, this, &Notifications::onServiceChanged);
-  service_.start();
+std::shared_ptr<NotificationService> acquireNotificationService() {
+  static std::weak_ptr<NotificationService> shared;
+  if (auto existing = shared.lock()) return existing;
+  auto created = std::make_shared<NotificationService>(systemSource());
+  shared = created;
+  return created;
 }
 
-Notifications::~Notifications() { service_.stop(); }
+Notifications::Notifications(QObject* parent)
+    : Notifications(acquireNotificationService(), parent) {}
+
+Notifications::Notifications(std::unique_ptr<NotificationSource> source, QObject* parent)
+    : Notifications(std::make_shared<NotificationService>(std::move(source)), parent) {}
+
+Notifications::Notifications(std::shared_ptr<NotificationService> service, QObject* parent)
+    : QObject(parent), service_(std::move(service)) {
+  connect(service_.get(), &NotificationService::countChanged, this,
+          &Notifications::onServiceChanged);
+  connect(service_.get(), &NotificationService::itemsChanged, this,
+          &Notifications::onServiceChanged);
+  service_->start();
+}
+
+// The service stops its source when its last holder lets go.
+Notifications::~Notifications() = default;
 
 void Notifications::onServiceChanged() {
   items_.clear();
-  if (const auto& items = service_.items()) {
+  if (const auto& items = service_->items()) {
     for (const auto& item : *items) {
       items_.append(QVariantMap{{QStringLiteral("id"), static_cast<int>(item.id)},
                                 {QStringLiteral("app"), item.appName},
@@ -50,14 +65,14 @@ void Notifications::onServiceChanged() {
   emit changed();
 }
 
-void Notifications::dismiss(int id) { service_.remove(static_cast<std::uint32_t>(id)); }
+void Notifications::dismiss(int id) { service_->remove(static_cast<std::uint32_t>(id)); }
 
 void Notifications::activate(int id) {
-  const auto& items = service_.items();
+  const auto& items = service_->items();
   if (!items) return;
   for (const auto& item : *items) {
     if (static_cast<int>(item.id) == id) {
-      service_.activate(item);
+      service_->activate(item);
       return;
     }
   }

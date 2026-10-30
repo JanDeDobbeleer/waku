@@ -27,6 +27,8 @@ struct NotificationItem {
   bool logoCircle = false;
   QString hero;
   QString image;
+  QString
+      scenario;  // the toast's `scenario` attribute: default, reminder, alarm, incomingCall, urgent
 
   bool operator==(const NotificationItem&) const = default;
 };
@@ -43,6 +45,7 @@ struct ToastXml {
   QString attribution;
   QString launch;
   QString activationType = QStringLiteral("foreground");
+  QString scenario;
   std::optional<QDateTime> displayTimestamp;
   QString bindingTemplate;
   bool hasBinding = false;

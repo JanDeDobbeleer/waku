@@ -134,6 +134,7 @@ std::optional<ToastXml> parseToastXml(const QString& xml) {
   ToastXml toast;
   toast.launch = root->attr(QStringLiteral("launch"));
   toast.activationType = root->attr(QStringLiteral("activationType"), QStringLiteral("foreground"));
+  toast.scenario = root->attr(QStringLiteral("scenario"));
   if (const QString stamp = root->attr(QStringLiteral("displayTimestamp")); !stamp.isEmpty()) {
     QDateTime parsed = QDateTime::fromString(stamp, Qt::ISODateWithMs);
     if (parsed.isValid()) {
@@ -248,6 +249,7 @@ std::vector<NotificationItem> assembleItems(
     item.createdAt = xml.displayTimestamp.value_or(toast.created);
     item.launch = xml.launch;
     item.activationType = xml.activationType;
+    item.scenario = xml.scenario;
     item.attribution = xml.attribution;
     item.logo = resolveToastImagePath(logo, env);
     item.logoCircle = logo && logo->hintCrop == QLatin1String("circle");

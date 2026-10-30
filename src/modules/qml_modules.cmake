@@ -116,3 +116,19 @@ qt_add_qml_module(wabar_quickshell_mpris_module
 )
 target_link_libraries(wabar_quickshell_mpris_module PRIVATE wabar_options)
 target_link_libraries(wabar_services PUBLIC wabar_quickshell_mpris_module)
+
+# Quickshell.Services.Notifications: forwards to the Notification, NotificationServer,
+# NotificationUrgency and NotificationCloseReason types of wabar.services
+# (src/features/notifications/design.md).
+qt_add_library(wabar_quickshell_notifications_module STATIC)
+qt_add_qml_module(wabar_quickshell_notifications_module
+  URI Quickshell.Services.Notifications
+  VERSION 1.0
+  OUTPUT_DIRECTORY ${wabar_modules_dir}/quickshell_notifications
+  NO_GENERATE_EXTRA_QMLDIRS
+  NO_GENERATE_QMLTYPES
+  NO_PLUGIN
+  IMPORTS wabar.services
+)
+target_link_libraries(wabar_quickshell_notifications_module PRIVATE wabar_options)
+target_link_libraries(wabar_services PUBLIC wabar_quickshell_notifications_module)

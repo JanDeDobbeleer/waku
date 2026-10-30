@@ -63,6 +63,7 @@ class NotificationService final : public QObject {
   Q_INVOKABLE void stop();
 
   int count() const { return count_; }
+  bool hasSource() const { return source_ != nullptr; }
   void clearAll();
 
   // The toast list; nullopt while notification access is turned off (Python `None`).

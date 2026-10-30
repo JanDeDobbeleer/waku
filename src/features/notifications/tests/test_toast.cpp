@@ -54,6 +54,17 @@ TEST(ToastXml, DefaultsAndBrokenXml) {
   EXPECT_FALSE(parseToastXml("").has_value());
 }
 
+TEST(ToastXml, ReadsTheScenario) {
+  const auto urgent = parseToastXml(
+      "<toast scenario=\"urgent\"><visual><binding template=\"ToastGeneric\"/></visual></toast>");
+  ASSERT_TRUE(urgent.has_value());
+  EXPECT_EQ(urgent->scenario, "urgent");
+  const auto plain =
+      parseToastXml("<toast><visual><binding template=\"ToastGeneric\"/></visual></toast>");
+  ASSERT_TRUE(plain.has_value());
+  EXPECT_TRUE(plain->scenario.isEmpty());
+}
+
 TEST(ToastXml, LegacyImageTemplatesShowTheirImageAsTheLogo) {
   const auto toast = parseToastXml(
       "<toast><visual><binding template=\"ToastImageAndText01\"><image id=\"1\" src=\"C:\\a.png\"/>"

@@ -10,6 +10,11 @@
 
 namespace wabar::notifications {
 
+// The process-wide NotificationService, shared by `Notifications` and the Notification* feed types
+// so the listener runs once. Without a live desktop it has no source. GUI thread only; gone when
+// the last holder lets go.
+std::shared_ptr<NotificationService> acquireNotificationService();
+
 // The Action Center toasts as a QML singleton, shared by every Notifications widget. Wraps
 // NotificationService, which owns the WNF subscription and the listener worker thread;
 // this object lives on the GUI thread and the platform service re-posts every source event to it.
@@ -32,19 +37,20 @@ class Notifications : public QObject {
 
  public:
   explicit Notifications(QObject* parent = nullptr);
-  // Test seam: a fake source; null means no source.
+  // Test seams: a fake source (null means no source), or a service shared with a test's feed.
   Notifications(std::unique_ptr<NotificationSource> source, QObject* parent);
+  Notifications(std::shared_ptr<NotificationService> service, QObject* parent);
   ~Notifications() override;
 
-  bool available() const { return hasSource_; }
-  int count() const { return service_.count(); }
-  bool unread() const { return service_.count() > 0; }
+  bool available() const { return service_->hasSource(); }
+  int count() const { return service_->count(); }
+  bool unread() const { return service_->count() > 0; }
   QVariantList items() const { return items_; }
 
-  Q_INVOKABLE void clear() { service_.clearAll(); }
+  Q_INVOKABLE void clear() { service_->clearAll(); }
   Q_INVOKABLE void dismiss(int id);
   Q_INVOKABLE void activate(int id);
-  Q_INVOKABLE void refresh() { service_.refresh(); }
+  Q_INVOKABLE void refresh() { service_->refresh(); }
 
  signals:
   void changed();
@@ -52,8 +58,7 @@ class Notifications : public QObject {
  private:
   void onServiceChanged();
 
-  bool hasSource_;
-  NotificationService service_;
+  std::shared_ptr<NotificationService> service_;
   QVariantList items_;
 };
 

@@ -48,7 +48,7 @@ TEST(NotificationsService, IsEmptyAtFirst) {
 }
 
 TEST(NotificationsService, WithoutASourceIsUnavailable) {
-  Notifications none(nullptr, nullptr);
+  Notifications none(std::unique_ptr<NotificationSource>(), nullptr);
   EXPECT_FALSE(none.available());
   none.clear();
   none.refresh();
