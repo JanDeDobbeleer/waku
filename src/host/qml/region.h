@@ -37,7 +37,9 @@ Q_ENUM_NS(Enum)
 //     mask: Region { x: 0; y: 0; width: 100; height: 40; Region { item: button } }
 //
 // takes input over the first rectangle and over the button. An empty `Region {}` takes no input at
-// all. The `intersection` of the mask itself is not used.
+// all. The `intersection` of the mask itself combines it with the window rectangle, as in
+// Quickshell: Combine uses the mask alone; Intersect, Xor and Subtract give `window <op> mask`.
+// So `intersection: Intersection.Xor` on the mask takes input everywhere except inside it.
 //
 // Threading: GUI thread only. Children are not owned; QML owns them.
 class Region : public QObject {

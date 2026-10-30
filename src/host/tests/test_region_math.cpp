@@ -105,6 +105,53 @@ TEST(RegionMathTest, ACaelestiaStyleMaskIsTheWindowMinusItsPanels) {
   EXPECT_FALSE(regionContains(root, {10, 300}));
 }
 
+TEST(RegionMathTest, TheRootCombineIgnoresTheWindow) {
+  const RegionNode root = rect(10, 10, 20, 20, RegionOp::Combine);
+  const QSizeF window(100, 100);
+  EXPECT_TRUE(regionContainsInWindow(root, {15, 15}, window));
+  EXPECT_FALSE(regionContainsInWindow(root, {50, 50}, window));
+}
+
+TEST(RegionMathTest, TheRootXorIsTheWindowMinusTheRegion) {
+  const RegionNode root = rect(10, 10, 20, 20, RegionOp::Xor);
+  const QSizeF window(100, 100);
+  EXPECT_FALSE(regionContainsInWindow(root, {15, 15}, window));
+  EXPECT_TRUE(regionContainsInWindow(root, {50, 50}, window));
+  EXPECT_FALSE(regionContainsInWindow(root, {150, 50}, window));  // outside the window
+}
+
+TEST(RegionMathTest, TheRootSubtractIsTheWindowMinusTheRegion) {
+  const RegionNode root = rect(10, 10, 20, 20, RegionOp::Subtract);
+  const QSizeF window(100, 100);
+  EXPECT_FALSE(regionContainsInWindow(root, {15, 15}, window));
+  EXPECT_TRUE(regionContainsInWindow(root, {50, 50}, window));
+}
+
+TEST(RegionMathTest, TheRootIntersectClipsToTheWindow) {
+  const RegionNode root = rect(80, 80, 60, 60, RegionOp::Intersect);
+  const QSizeF window(100, 100);
+  EXPECT_TRUE(regionContainsInWindow(root, {90, 90}, window));
+  EXPECT_FALSE(regionContainsInWindow(root, {120, 120}, window));
+}
+
+TEST(RegionMathTest, ACaelestiaRootXorIsTheBarBordersAndOpenPanels) {
+  // The window is 1000x700. The root is the inner area (40, 8, 952, 684) xor-ed with the window; a
+  // panel (300, 8, 200, 100) is cut out of it (an open drawer). Input is the bar, the borders and
+  // the panel; not the inner area outside the panel.
+  RegionNode root = rect(40, 8, 952, 684, RegionOp::Xor);
+  root.children << rect(300, 8, 200, 100, RegionOp::Subtract);
+  const QSizeF window(1000, 700);
+  EXPECT_TRUE(regionContainsInWindow(root, {10, 300}, window));    // the bar
+  EXPECT_TRUE(regionContainsInWindow(root, {500, 3}, window));     // the top border
+  EXPECT_TRUE(regionContainsInWindow(root, {996, 300}, window));   // the right border
+  EXPECT_TRUE(regionContainsInWindow(root, {400, 50}, window));    // inside the panel
+  EXPECT_FALSE(regionContainsInWindow(root, {600, 300}, window));  // the inner area
+  EXPECT_TRUE(maskAcceptsInput(std::optional<RegionNode>(root), {400, 50}, 6, window));
+  EXPECT_FALSE(maskAcceptsInput(std::optional<RegionNode>(root), {600, 300}, 6, window));
+  // The pad still grows the accepted area by about 6 px.
+  EXPECT_TRUE(maskAcceptsInput(std::optional<RegionNode>(root), {600, 8 + 5}, 6, window));
+}
+
 TEST(RegionMathTest, PaddingGrowsTheRegion) {
   const RegionNode r = rect(100, 100, 50, 50);
   EXPECT_FALSE(regionContains(r, {96, 120}));

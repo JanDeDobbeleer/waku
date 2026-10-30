@@ -41,21 +41,41 @@ bool regionContains(const RegionNode& root, const QPointF& point) {
   return inside;
 }
 
-bool regionContainsPadded(const RegionNode& root, const QPointF& point, qreal pad) {
-  if (regionContains(root, point)) return true;
+bool regionContainsInWindow(const RegionNode& root, const QPointF& point, const QSizeF& window) {
+  const bool in = regionContains(root, point);
+  if (!(window.width() > 0) || !(window.height() > 0)) return in;
+  const bool inWindow =
+      point.x() >= 0 && point.x() < window.width() && point.y() >= 0 && point.y() < window.height();
+  switch (root.op) {
+    case RegionOp::Combine:
+      return in;
+    case RegionOp::Intersect:
+      return inWindow && in;
+    case RegionOp::Xor:
+      return inWindow != in;
+    case RegionOp::Subtract:
+      return inWindow && !in;
+  }
+  return in;
+}
+
+bool regionContainsPadded(const RegionNode& root, const QPointF& point, qreal pad,
+                          const QSizeF& window) {
+  if (regionContainsInWindow(root, point, window)) return true;
   if (!(pad > 0)) return false;
   const qreal d = pad * 0.70710678118654752;
   const QPointF offsets[] = {{pad, 0}, {-pad, 0}, {0, pad}, {0, -pad},
                              {d, d},   {d, -d},   {-d, d},  {-d, -d}};
   for (const QPointF& o : offsets) {
-    if (regionContains(root, point + o)) return true;
+    if (regionContainsInWindow(root, point + o, window)) return true;
   }
   return false;
 }
 
-bool maskAcceptsInput(const std::optional<RegionNode>& mask, const QPointF& point, qreal pad) {
+bool maskAcceptsInput(const std::optional<RegionNode>& mask, const QPointF& point, qreal pad,
+                      const QSizeF& window) {
   if (!mask) return true;
-  return regionContainsPadded(*mask, point, pad);
+  return regionContainsPadded(*mask, point, pad, window);
 }
 
 QPointF cursorInWindow(const QPoint& physical, const QPoint& screenOrigin, qreal dpr,

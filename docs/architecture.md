@@ -222,9 +222,11 @@ alone does not click through, but `WS_EX_LAYERED | WS_EX_TRANSPARENT` does, and
   outside the window is simply outside the region.
 - Region math is a pure function over `RegionNode` (`src/host/region_math.*`): the shape (a
   rectangle or an ellipse, or the bounds of `item` mapped to the window), then each child folded in
-  order by its `Intersection` (Combine = union, Intersect, Xor, Subtract). An empty `Region {}`
-  contains nothing, so the window is fully click-through; no `mask` means the whole window takes
-  input.
+  order by its `Intersection` (Combine = union, Intersect, Xor, Subtract). The root's own
+  `Intersection` combines it with the window rectangle (`regionContainsInWindow`): Combine uses the
+  root alone, the others give `window <op> root`, so a root `Xor` (Caelestia) takes input outside
+  the inner area plus inside the open panels. An empty `Region {}` contains nothing, so the window
+  is fully click-through; no `mask` means the whole window takes input.
 - The cursor comes from `ShellHost::NativeHooks::cursorPosition`. `win32()` sets it only when
   `kernel::liveDesktop()`; tests and the offscreen platform have none (or a fake), so masks are
   inert there and no test reads the real cursor or flips a real window.

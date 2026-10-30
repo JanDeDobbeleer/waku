@@ -47,7 +47,7 @@ bool MaskPoller::poll() {
                      screen ? screen->devicePixelRatio() : 1.0, window_->geometry().topLeft());
   // Outside the window nothing is hit anyway; the answer then follows the region test, which has
   // the window already click-through there unless the cursor is within the pad of a region.
-  setPassThrough(!maskAcceptsInput(mask, local, kPadPx));
+  setPassThrough(!maskAcceptsInput(mask, local, kPadPx, window_->size()));
   return passThrough_;
 }
 

@@ -88,21 +88,25 @@ TEST(RegionMaskTest, ACaelestiaStyleMaskLoadsAndEvaluates) {
   const std::optional<RegionNode> mask = window->maskNode();
   ASSERT_TRUE(mask.has_value());
   EXPECT_EQ(mask->children.size(), 2);
-  EXPECT_TRUE(regionContains(*mask, {60, 60}));
-  EXPECT_FALSE(regionContains(*mask, {120, 120}));  // inside the first panel
-  EXPECT_FALSE(regionContains(*mask, {320, 220}));  // inside the second
-  EXPECT_FALSE(regionContains(*mask, {5, 5}));      // outside the root rectangle
+  const QSizeF size = h.window()->size();
+  // The root Xor: input is the window minus (inner area minus the open panels).
+  EXPECT_FALSE(regionContainsInWindow(*mask, {60, 60}, size));   // the inner area
+  EXPECT_TRUE(regionContainsInWindow(*mask, {120, 120}, size));  // inside the first panel
+  EXPECT_TRUE(regionContainsInWindow(*mask, {320, 220}, size));  // inside the second
+  EXPECT_TRUE(regionContainsInWindow(*mask, {5, 5}, size));      // the border
 
   // The live decision, with the poll driven by hand.
   auto* poller = window->maskPoller();
   ASSERT_NE(poller, nullptr);
   EXPECT_TRUE(poller->running());
-  cursorAt(h, 60, 60);
+  cursorAt(h, 125, 125);
   EXPECT_FALSE(poller->poll());
   EXPECT_FALSE(clickThrough(h));
-  cursorAt(h, 125, 125);
+  cursorAt(h, 60, 60);
   EXPECT_TRUE(poller->poll());
   EXPECT_TRUE(clickThrough(h));
+  cursorAt(h, 3, 3);
+  EXPECT_FALSE(poller->poll());
 }
 
 TEST(RegionMaskTest, NestedAndItemRegionsFollowTheItem) {

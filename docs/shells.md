@@ -24,7 +24,11 @@ PanelWindow {
   `Intersect`, `Xor`, `Subtract`) and child regions (the default property, `regions`). Children are
   folded into their parent in order.
 - `mask: Region {}` makes the window fully click-through. No `mask` means the whole window takes
-  input. The `intersection` of the mask itself is not used.
+  input. The `intersection` of the mask itself combines it with the window rectangle, as in
+  Quickshell: `Combine` (the default) uses the mask alone; `Intersect`, `Xor` and `Subtract` give
+  `window <op> mask`. In the example above the window takes input everywhere except inside the
+  inner area (minus the open panels), which is how a bar plus its borders plus open drawers is
+  masked.
 - `PopupWindow` has no `mask`.
 - The mask is enforced by polling the cursor at 120 Hz and making the window transparent for input
   outside the region, padded by 6 px. Keep two things in mind:
