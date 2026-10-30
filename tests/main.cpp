@@ -12,7 +12,12 @@ namespace {
 class QtEnvironment final : public testing::Environment {
  public:
   void SetUp() override {
-    qputenv("QT_QPA_PLATFORM", "offscreen");
+    // WABAR_TEST_SCREEN_CONFIG: a JSON screen layout for the offscreen platform (the child runs of
+    // ShellScreenUnits).
+    QByteArray platform = "offscreen";
+    const QByteArray layout = qgetenv("WABAR_TEST_SCREEN_CONFIG");
+    if (!layout.isEmpty()) platform += ":configfile=" + layout;
+    qputenv("QT_QPA_PLATFORM", platform);
     qputenv("QT_QUICK_BACKEND", "software");
     qputenv("QML_DISABLE_DISK_CACHE", "1");  // as the app: edits reload from the source file
     app_ = std::make_unique<QGuiApplication>(argc_, argv_);

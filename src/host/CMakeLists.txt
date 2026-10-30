@@ -128,6 +128,7 @@ wabar_contribute(
     tests/test_quickshell_modules.cpp
     tests/test_screen_match.cpp
     tests/test_shell_host.cpp
+    tests/test_shell_screen.cpp
     tests/test_shell_windows.cpp
     tests/test_theme.cpp
     tests/test_wallpaper_handler.cpp

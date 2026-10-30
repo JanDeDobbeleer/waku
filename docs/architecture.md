@@ -220,6 +220,14 @@ focus mode changes, `ShellHost::syncAppBar` compares the new request with the la
 `IAppBar::reposition` (the same `ABM_QUERYPOS`/`ABM_SETPOS` without a new `ABM_NEW`), or removes the
 bar when the panel is no longer docked.
 
+`ShellScreen` mirrors `QScreen`. `width` and `height` are logical (device-independent) pixels, the
+units of window sizes and margins: `QScreen::size()` is the physical size divided by
+`devicePixelRatio`, so a 3840x2560 panel at ratio 1.5 reports 2560x1707 (measured with Qt 6.10.2 on
+Windows). `x` and `y` are the origin of `QScreen::geometry()`: native pixels in Qt 6, the space in
+which window positions are set (`geometryOn` adds logical offsets to that origin). `devicePixelRatio`
+turns a logical size into physical pixels (`width * devicePixelRatio`). `test_shell_screen.cpp`
+checks this on offscreen screens at ratio 1.5 and 2.0 with a non-zero origin.
+
 ### Input masks
 
 A window's `mask` (`Region`, `src/host/qml/region.*`) restricts where it takes input; the rest

@@ -15,7 +15,10 @@ class QQmlEngine;
 namespace wabar::host {
 
 // One screen as QML sees it (Quickshell `ShellScreen`): a window's `screen` and an entry of
-// `ScreenList.screens`. Geometry is logical pixels in the virtual desktop. Owned by a ScreenList.
+// `ScreenList.screens`. Mirrors QScreen: `width` and `height` are logical (device-independent)
+// pixels, the units of window sizes; `x` and `y` are the origin of QScreen::geometry() (native
+// pixels in Qt 6, the space window positions use); multiply a size by `devicePixelRatio` for
+// physical pixels. Owned by a ScreenList.
 class ShellScreen : public QObject {
   Q_OBJECT
   QML_ELEMENT
