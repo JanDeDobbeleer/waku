@@ -6,7 +6,7 @@
 #   implementation, and the DWM backdrop helpers (win32/).
 # wabar_host (STATIC + QML module `wabar` 2.0): the QML types a shell imports (ShellRoot, Scope,
 #   PanelWindow, FloatingWindow, QsWindow, Variants, LazyLoader, ScreenList, Panel, PanelLayout,
-#   Theme, PopupWindow, Tooltip, PopupPlacement, the enums) and ShellHost that loads them (qml/),
+#   Theme, PopupWindow, Tooltip, PopupPlacement, WindowThumbnail, the enums) and ShellHost that loads them (qml/),
 #   plus the Windows native hooks of ShellHost (win32/).
 # quickshell/: the modules `Quickshell` and `Quickshell.Wayland`, the same types under Quickshell's
 #   names so ported shells load (QML_FOREIGN registrations, no code of their own).
@@ -32,6 +32,8 @@ add_library(wabar_host_base STATIC
   region_math.cpp
   screen_match.h
   screen_match.cpp
+  thumbnail.h
+  thumbnail.cpp
   taskbar_control.h
   taskbar_control.cpp
   win32/app_bar.cpp
@@ -39,6 +41,7 @@ add_library(wabar_host_base STATIC
   win32/backdrop.cpp
   win32/hotkeys_win.cpp
   win32/taskbar_control.cpp
+  win32/thumbnail_win.cpp
 )
 target_link_libraries(wabar_host_base
   PUBLIC wabar_kernel
@@ -104,6 +107,8 @@ qt_add_qml_module(wabar_host
     qml/transform_watcher.h
     qml/transform_watcher.cpp
     qml/window_enums.h
+    qml/window_thumbnail.h
+    qml/window_thumbnail.cpp
     win32/shell_host_win32.cpp
 )
 # The generated type registration includes headers by name, hence the private include directory.
@@ -138,6 +143,7 @@ wabar_contribute(
     tests/test_shell_windows.cpp
     tests/test_taskbar_control.cpp
     tests/test_theme.cpp
+    tests/test_window_thumbnail.cpp
     tests/test_wallpaper_handler.cpp
   TEST_LIBS wabar_host_base
 )

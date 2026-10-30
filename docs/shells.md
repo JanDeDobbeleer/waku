@@ -97,3 +97,23 @@ binding that the transform between the two items changed. `import Quickshell` (a
 `Wallpapers.qml`, `Workspaces.qml`, `Bluetooth.qml` or `Media.qml` next to `shell.qml` is your own
 type, never wabar's service of that name. The shell reloads only when a `.qml` file or a `qmldir`
 under the config home changes; a state or cache file written there does not reload it.
+
+### Live window previews (`WindowThumbnail`)
+
+`WindowThumbnail` shows another window live, as the Windows taskbar flyout does. It registers a
+DWM thumbnail (documented `DwmRegisterThumbnail` family) on the QML window that holds the item.
+
+```qml
+WindowThumbnail { hwnd: 12345; width: 320; height: 180 }
+```
+
+- `hwnd` is the source window as a number (the `hwnd` of a taskbar window entry); 0 shows nothing.
+  `active: false` unregisters it (use it for hidden flyouts). `fit` is `PreserveAspectFit` (default)
+  or `Stretch`. `item.opacity` is honoured, ancestors' opacity included.
+- `sourceWidth` and `sourceHeight` give the window's size in physical pixels (use them to size the
+  card by the window's aspect). `available` says the preview is registered and the source exists;
+  when it is false show your own fallback (an icon card).
+- The compositor draws the thumbnail above the whole destination window. QML content cannot overlay
+  it (a title bar or a close button must sit beside it, not on it), a parent's `clip` does not clip
+  it, and `grabToImage()` does not capture it.
+- It does nothing on the offscreen platform.
