@@ -110,13 +110,12 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
 ## No widget: `WallpaperSettings` and `wabarc wallpaper`
 
 - **`WallpaperSettings`** (`wabar.services`, `qml/wallpaper_settings.*`) is a non-visual QML
-  type declared next to the bars: `Config { WallpaperSettings { imagePath: ...; hotkey: "alt+e";
-  engine: true; animation: "split" } Bar { ... } }`. It has `imagePath`, `hotkey`, `hotkeyScreen`,
+  type declared next to the windows: `ShellRoot { WallpaperSettings { imagePath: ...; hotkey: "alt+e";
+  engine: true; animation: "split" } Panel { ... } }`. It has `imagePath`, `hotkey`, `hotkeyScreen`,
   `autoChange`, `engine`, `animation` and the gallery look (`imageWidth`, `orientation`,
-  `cornerRadius`, `accentColor`). `Config`'s default property is now `data` (any object; a `Bar`
-  goes to the bar list, anything else is kept as a child and listed in `partList()`); the old `bars`
-  property stays.
-- **Activation.** `BarHost::install` calls `activate()` (found by name, so `wabar` does not link
+  `cornerRadius`, `accentColor`). `ShellRoot` and `Scope` keep any object they declare; one that is not
+  a window is a part.
+- **Activation.** `ShellHost::install` calls `activate()` (found by name, so `wabar` does not link
   `wabar.services`) on every part once the config is live. Not in the validation pass: that runs in
   a throwaway engine and must not build a second service or grab the hotkey. `activate()` fetches
   the `Wallpapers` singleton of the engine (creating it), calls `configure` and `configureEngine`,
@@ -143,4 +142,4 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
   `WABAR_WALLPAPER_DRYRUN` still work): the animation plays and the setter is skipped. Because the
   wallpaper does not change, repeated `next --dry-run` shows the same file.
 - **Left out.** The hotkey and CLI do not animate the auto-change timer (as before); a
-  `WallpaperSettings` removed from `bar.qml` is switched off by the reload that drops it.
+  `WallpaperSettings` removed from `shell.qml` is switched off by the reload that drops it.

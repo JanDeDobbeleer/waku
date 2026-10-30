@@ -17,11 +17,12 @@ S1-S8; the table at the top of that step is the exact text). Every own target, t
 |---|---|---|---|---|
 | `wabar_kernel` | `src/kernel/` | shared helpers (below) | `Qt6::Core`, `Qt6::Gui` | `wabar_options`, Win32 libs |
 | `wabar_control` | `src/control/` | the control pipe between a running bar and `wabarc` (no Qt Quick) | `wabar_kernel`, `Qt6::Core`, `Qt6::Network` | `wabar_options` |
-| `wabar_host_base` | `src/host/` | `screen_match`, `popup_placement`, `app_bar.h` and `win32/` (app bar, DWM backdrop) | `wabar_kernel` | `wabar_options`, `dwmapi shell32 user32` |
-| `wabar_host` | `src/host/` | the bar runtime: QML module `wabar` (`qml/`, `win32/bar_host_win32.cpp`) | `wabar_host_base`, `wabar_control`, Qt Quick | `wabar_options` |
+| `wabar_host_base` | `src/host/` | `screen_match`, `popup_placement`, `panel_geometry`, `app_bar.h` and `win32/` (app bar, DWM backdrop) | `wabar_kernel` | `wabar_options`, `dwmapi shell32 user32` |
+| `wabar_host` | `src/host/` | the shell runtime: QML module `wabar` (`qml/`: `ShellHost`, the window types, `win32/shell_host_win32.cpp`) | `wabar_host_base`, `wabar_control`, Qt Quick | `wabar_options`, `Qt6::QmlPrivate` (one use: a compiled shell's root type, `shell_host.cpp`) |
+| `wabar_quickshell`, `wabar_quickshell_wayland` | `src/host/quickshell/` | QML modules `Quickshell` and `Quickshell.Wayland`: the `wabar` shell types registered again under Quickshell's names (`QML_FOREIGN`) and two QML wrappers | `wabar_host`, Qt Quick | `wabar_options` |
 | `wabar_<f>` | `src/features/<f>/` | one feature (`wabar_feature()`) | `wabar_kernel`, the `DEPENDS` features | `wabar_options`, the feature's system libraries |
 | `wabar_services`, `wabar_widgets` | `src/modules/qml_modules.cmake` | QML modules `wabar.services` and `wabar.widgets`, assembled from contributions (below) | the feature libraries, Qt Quick | `wabar_options` |
-| `wabar` (exe), `wabarc` (exe) | `src/app/wabar/`, `src/app/wabarc/` | `main.cpp` of each; `SafeConfig.qml` joins `wabar.widgets` | | `wabar_options`, the modules / `wabar_control` |
+| `wabar` (exe), `wabarc` (exe) | `src/app/wabar/`, `src/app/wabarc/` | `main.cpp` of each; `SafeShell.qml` joins `wabar.widgets` | | `wabar_options`, the modules / `wabar_control` |
 | `WabarTrayHook[_arm64]` (DLL) | `src/features/tray/hook/` | `trayhook.cpp` | | static CRT, `/W4 /WX` set by hand, built next to `wabar.exe` |
 | `wabar_tests` (exe) | `tests/` | `tests/main.cpp`, `tests/integration/` and every `TESTS` contribution (`src/**/tests/`) | | `wabar_options`, `GTest`, `Qt6::Test` |
 
@@ -41,7 +42,7 @@ their `win32/` or `qml/` C++ headers, and `testing/` only from tests. The graph 
 | `kernel` | Qt Core, Qt Gui; the Windows SDK only in `kernel/win32/` |
 | `control` | `kernel`, Qt Core, Qt Network |
 | `host` | `kernel`, `control`, Qt Quick |
-| `ui` (QML only) | the `host` QML types (`Theme`, `Tooltip`, `PopupWindow`) |
+| `ui` (QML only) | the `host` QML types (`Theme`, `Tooltip`, `PopupWindow`, `QsWindow`) |
 | every feature | `kernel`; its QML also uses the `host` QML types and `ui` |
 | `audio`, `bluetooth`, `network`, `github` | `shell` (the "open settings" and "open URL" clicks use the `Shell` service) |
 | `control_center` | `audio`, `media`, `notifications`, `brightness` |
@@ -115,12 +116,16 @@ Rules the kernel owns:
 
 ## QML modules and built-in widgets
 
-Three QML modules, version 1.0. Their URIs are the user-facing API and do not change.
+Five QML modules. Their URIs are the user-facing API and do not change. `wabar` is 2.0 (the
+Quickshell vocabulary replaced `Config`, `Bar` and `BarLayout`; the mapping is in
+`docs/building.md`); the others are 1.0, and the two `Quickshell` modules 0.1.
 
 | URI | Built from | Holds |
 |---|---|---|
-| `wabar` | `src/host/qml/` | `Config`, `Bar`, `BarLayout`, `Theme`, `PopupWindow`, `Tooltip` (the bar runtime) |
-| `wabar.widgets` | every feature's `qml/*.qml`, `src/ui/*.qml`, `src/app/wabar/SafeConfig.qml` | the built-in widgets and the shared look |
+| `wabar` | `src/host/qml/` | `ShellRoot`, `Scope`, `PanelWindow`, `FloatingWindow`, `QsWindow` (attached), `Variants`, `LazyLoader`, `ScreenList`, `ShellScreen`, `WlrLayershell` (attached), the enums `ExclusionMode`, `WlrLayer`, `WlrKeyboardFocus`, `Edges`, `Backdrop`; the presets `Panel` and `PanelLayout`; `Theme`, `ThemeSpec`, `PopupWindow`, `Tooltip`, `PopupPlacement`. Internal: `WindowChrome`, `FallbackShell` |
+| `Quickshell` | `src/host/quickshell/` | `ShellRoot`, `Scope`, `PanelWindow`, `FloatingWindow`, `PopupWindow`, `Variants`, `LazyLoader`, `QsWindow`, `ShellScreen`, `ExclusionMode`, `Edges`: the same types as `wabar`. Not yet: the `Quickshell` singleton (`screens` is `ScreenList.screens` until then) |
+| `Quickshell.Wayland` | `src/host/quickshell/wayland/` | `WlrLayershell` (attached to a `PanelWindow`), `WlrLayer`, `WlrKeyboardFocus` |
+| `wabar.widgets` | every feature's `qml/*.qml`, `src/ui/*.qml`, `src/app/wabar/SafeShell.qml` | the built-in widgets and the shared look |
 | `wabar.services` | every feature's `qml/*.{h,cpp}`, `src/kernel/qml/` | the C++ data sources and actions |
 
 - `src/modules/qml_modules.cmake` assembles the last two from the contributions. It is included
@@ -142,10 +147,26 @@ source of one is `src/features/<f>/qml/<Name>.qml`. `deploy` also copies those f
 and `.qmltypes` to `dist/wabar/modules/` as a read-only reference (`docs/building.md`).
 
 A user changes a built-in widget by copying its file into the config home's `widgets/` folder,
-which `bar.qml` imports as a directory (`import "widgets"`), and editing the copy. Give the copy a
-new name and use that name in `bar.qml`. A copy that keeps the built-in's name relies on QML's
+which `shell.qml` imports as a directory (`import "widgets"`), and editing the copy. Give the copy a
+new name and use that name in `shell.qml`. A copy that keeps the built-in's name relies on QML's
 import order and is not covered by tests. `qmllint -I <dist>/wabar/modules` lints the copy. The
 config format is described in `docs/plans/2026-10-28-qt-quick-bar-config-design.md`.
+
+### The shell runtime
+
+`ShellHost` (`src/host/qml/shell_host.*`) loads `<config home>\shell.qml`. Before it replaces the
+running shell it compiles the new file in a throwaway engine and checks that the root is a
+`ShellRoot`; nothing is created there, so no window, widget or service starts. Then the old shell
+goes (its app bars first), the theme is applied and the new shell is created in the main engine.
+
+Every window type derives from `QsWindow` (`shell_window.*`): a declaration that owns a backing
+`QQuickWindow` and puts its children into that window's content item. On completion a window
+registers with the `ShellHost` of its engine. Windows created while the shell builds are shown when
+it is installed; a window created later (`Variants`, `LazyLoader`) is shown at once. A window whose
+`content` component fails is left out and its error recorded; the fallback shell appears only when
+no window of the shell could be built. `PanelWindow` geometry is the pure `panelGeometry` in
+`panel_geometry.*`; a panel anchored to the top or the bottom edge alone becomes an app bar, which
+reserves work area only with `--register-app-bar`. Left and right app bars are not yet built.
 
 ## Threading
 
@@ -191,6 +212,8 @@ No new singleton without a row here and a reason.
 | `wabar.services.Bluetooth` | `src/features/bluetooth/qml/bluetooth_service.{h,cpp}` | the one Bluetooth backend of a `wabar` run (radio, paired devices, battery, connect/disconnect on the `RealBluetoothBackend` thread), shared by every Bluetooth widget; created by the QML engine on first use and owned by it, destroyed with it, which joins the backend thread. Never creates a backend when `kernel::liveDesktop("bluetooth")` is false or without an adapter (`bluetooth::hasBluetoothAdapter`). |
 | `wabar.services.Notifications` | `src/features/notifications/qml/notification_service.{h,cpp}` | the Action Center toasts for every Notifications widget of a `wabar` run, created by the QML engine as a singleton; wraps `wabar::notifications::NotificationService` (WNF subscription and listener worker thread, stopped and joined when the engine destroys it); has no source on the offscreen platform |
 | `wabar.services.ControlCenter` | `src/features/control_center/qml/control_center_service.{h,cpp}` | the system side of every ControlCenter widget of a `wabar` run, created by the QML engine as a singleton: Do Not Disturb (its own `wabar::notifications::DndWatcher`, WNF subscription stopped by its destructor), app theme, touch keyboard, power plans and modes, user name and picture, and the session and power actions behind an injectable launcher (shutdown, restart and sign out need a second request). Owns one `wabar::brightness::BrightnessControl` (DDC/CI worker thread plus the power-setting window thread, joined by `stop()` in the destructor). Volume, microphone and the player are not repeated: the widget uses `AudioOutput`, `AudioInput` and `Media`. Inert on the offscreen platform |
+| `wabar.ScreenList` | `src/host/qml/shell_screen.{h,cpp}` | the screens shells are built for, one per engine (QML singleton). `ShellHost` replaces its `ShellScreen` objects before each build (tests give it any screens); without a host it holds the application's screens. Quickshell's `Quickshell.screens` will forward to it |
+| context property `ShellHost` | `src/host/qml/shell_host.cpp` | the one `ShellHost` of an engine, on its root context; every `QsWindow` registers with it on completion (`ShellHost::of`). Cleared when the host is destroyed |
 
 Function-local `static const` regexes and lookup tables are immutable and not listed.
 

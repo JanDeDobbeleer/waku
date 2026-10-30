@@ -4,7 +4,7 @@ wabar (/ˈwæbɑːr/, "wab-bar") stands for "Windows, actually. With a bar." It 
 Windows, written in C++20 and Qt 6.10 (Qt Quick) and configured in QML. The name nods to
 [Waybar](https://github.com/Alexays/Waybar), the bar for Wayland.
 
-The bar is a set of QML files. `bar.qml` says which bars to show and which widgets go where;
+The bar is a set of QML files. `shell.qml` says which bars to show and which widgets go where;
 `theme.qml` sets the look. Save either file and the bars reload. Built-in widgets cover the clock,
 workspaces (komorebi and GlazeWM), media, volume, Bluetooth, Wi-Fi, battery, CPU, memory, the tray,
 the taskbar, notifications, GitHub, wallpapers and a control center. You can copy any of them into

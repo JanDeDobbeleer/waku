@@ -15,18 +15,21 @@ to Waybar, the bar for Wayland. It is written in lower case and plain ASCII in c
     not set the wallpaper
 
   Exit code: 0 ok, 1 the bar answered an error, 2 no bar is running, 3 usage error. The wallpaper
-  folder, hotkey and animation come from a `WallpaperSettings { ... }` next to the bars in `bar.qml`
+  folder, hotkey and animation come from a `WallpaperSettings { ... }` next to the windows in `shell.qml`
   (`import wabar.services as S`, then `S.WallpaperSettings`: the services share names with the
   widgets, so import them under an alias) or from a `Wallpapers` widget.
-- Config home: a folder with `bar.qml`, optionally `theme.qml` and your own widgets in `widgets/`.
+- Config home: a folder with `shell.qml`, optionally `theme.qml` and your own widgets in `widgets/`.
   Select it with `--config-home <dir>` or `WABAR_CONFIG_HOME`; without either, `wabar` and `wabarc`
   use the `examples/config` of the checkout they were built from. A personal config
   conventionally lives in `%USERPROFILE%\.config\wabar`; pass that folder with `--config-home`.
-  Edit and save: the bars reload.
-- QML modules: `wabar` (Config, Bar, BarLayout, Theme), `wabar.widgets` (the built-in widgets) and
-  `wabar.services` (the C++ data sources).
+  Edit and save: the shell reloads. A 1.x `bar.qml` without a `shell.qml` shows an error that
+  names the rename (`docs/building.md`).
+- QML modules: `wabar` 2.0 (ShellRoot, Scope, PanelWindow, FloatingWindow, Panel, PanelLayout,
+  Variants, LazyLoader, Theme, ...), `wabar.widgets` (the built-in widgets), `wabar.services` (the C++
+  data sources), and `Quickshell` and `Quickshell.Wayland` (the same shell types under Quickshell's
+  names, for ported shells).
 - `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
-  the built-in bar and ignores the config.
+  the built-in shell and ignores the config.
 
 The architecture is in [docs/architecture.md](../../docs/architecture.md), the build and every flag
 in [docs/building.md](../../docs/building.md), and dated plans in [docs/plans](../../docs/plans/README.md).

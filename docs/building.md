@@ -36,7 +36,7 @@ to it. The targets are `wabar`, `wabarc`, `WabarTrayHook` (`WabarTrayHook_arm64`
 
 ## Run
 
-Run `wabar` from the build folder. It needs a config home: a folder with `bar.qml` (and optionally
+Run `wabar` from the build folder. It needs a config home: a folder with `shell.qml` (and optionally
 `theme.qml` and `widgets/`). The repository has a sample in `examples/config`.
 
 ```powershell
@@ -49,8 +49,8 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | Flag | Effect |
 |---|---|
 | `--config-home <dir>` | The config home. Default: `$WABAR_CONFIG_HOME`, else the `examples/config` of the checkout the build came from. |
-| `--register-app-bar` | Let bars that ask (`reserveSpace`) reserve screen work area. Without it no bar reserves space. |
-| `--safe` | Start the built-in bar with the default theme and ignore the config home. |
+| `--register-app-bar` | Let windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve screen work area. Without it no window reserves space. |
+| `--safe` | Start the built-in shell with the default theme and ignore the config home. |
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
 | `--help` | Print the options. |
 
@@ -60,13 +60,38 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | Command | Effect |
 |---|---|
 | `wabarc reload` | Reload the config of the running bar. |
-| `wabarc status` | Print what the bar is doing. |
+| `wabarc status` | Print what the shell is doing: `running; windows=N; safe=yes|no; error=...`. |
 | `wabarc quit` | Stop the bar. |
 | `wabarc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
 | `wabarc wallpaper random`, `next`, `previous` | Pick from the wallpaper folder; `next` and `previous` wrap. |
 | `wabarc wallpaper gallery` | Open or close the wallpaper picker. |
 
 `--dry-run` after `wallpaper` (not `gallery`) plays the animation without setting the wallpaper.
+
+### Moving a wabar 1 config to wabar 2
+
+wabar 2 uses Quickshell's names (`docs/plans/2026-10-29-wabar-extensibility-proposal.md`, section
+11). A config home with a `bar.qml` and no `shell.qml` loads the fallback shell, whose error pill
+names the rename. There are no aliases; edit the file:
+
+| wabar 1 | wabar 2 |
+|---|---|
+| file `bar.qml` | file `shell.qml` |
+| `Config` | `ShellRoot` (`Scope` groups objects inside it) |
+| `Bar` | `Panel` (a preset: one `PanelWindow` per matching screen) |
+| `position: Bar.Top` | `edge: Panel.Top` |
+| `height` | `thickness` |
+| `reserveSpace` | `exclusive` |
+| `backdrop: Bar.Blur` | `backdrop: Backdrop.Blur` |
+| `layout: BarLayout {}` | `content: PanelLayout {}` |
+| `PopupWindow { anchorItem: x }` | `PopupWindow { anchor.item: x }` |
+| `Window.window.spec`, `Window.window.monitorHandle` | `QsWindow.window`, `QsWindow.window.monitorHandle` |
+| `wabarc status`: `bars=N` | `windows=N` |
+
+The Quickshell form of a panel is a `PanelWindow` (`anchors`, `margins`, `implicitHeight`,
+`exclusiveZone`, `exclusionMode`, `layer`, `keyboardFocus`), one per screen through
+`Variants { model: ScreenList.screens }`. `import Quickshell` and `import Quickshell.Wayland` give
+the same types under Quickshell's module names.
 Exit codes: 0 ok, 1 the bar answered an error, 2 no bar is running, 3 usage error. More on running
 the bar: `src/app/README.md`.
 

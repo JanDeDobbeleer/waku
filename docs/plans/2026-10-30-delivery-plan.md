@@ -32,10 +32,19 @@ Lanes that do not touch `src/host/qml/` can start now. Step 1 owns `src/host/qml
 
 ```
 Wave 1 (now, parallel)
-  A  step 1  surface model + Quickshell names        opus     src/host/, src/ui/, examples/
+  A  step 1  surface model + Quickshell names        opus     src/host/, src/ui/, examples/   DONE
   B  spikes  S7 mask polling, S8 plugin load, S9 fonts sonnet  throwaway programs, no repo change
   C  item 3  Process shape, FileView, Quickshell      sonnet   src/features/shell/, kernel if needed
 
+Lane A status (done, branch of lane A): the rename table is applied. `Config` -> `ShellRoot`
+(+ `Scope`), `Bar` -> `Panel` (preset over `PanelWindow`), `BarLayout` -> `PanelLayout`,
+`Window.window.spec` -> `QsWindow.window`, `anchorItem` -> `anchor.item`, `BarHost` ->
+`ShellHost`, `bar.qml` -> `shell.qml`; `wabar` 2.0 plus the `Quickshell` and
+`Quickshell.Wayland` modules. Merge point for lane C: the `Quickshell` singleton belongs in the
+`Quickshell` module (`src/host/quickshell/`); its `screens` forwards to `wabar.ScreenList`
+(`src/host/qml/shell_screen.h`, `ScreenList::of(engine)`), and `env`/`execDetached`/... come from
+lane C's code. A QML singleton `Quickshell.qml` in that module that composes both avoids a
+feature include from `host`.
 Gate 1: Fable reviews A and C diffs; orchestrator merges, full ctest on the merge.
 
 Wave 2 (parallel, after gate 1; spike results decide D)
