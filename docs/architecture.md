@@ -167,7 +167,10 @@ build), checks the PE machine against the process, then reads the file's embedde
 `QtPluginMetaData` with `QPluginLoader::metaData()` (no load) and compares `version` (major and
 minor) and `debug` with this build. A failing plugin refuses its whole folder, because the
 throwaway engine that `ShellHost::validate` creates copies the main engine's import paths and the
-granularity of a path is a folder. Tests: `tests/integration/test_plugin_import.cpp` and the plugin
+granularity of a path is a folder. `ShellHost::reload` also runs `configPluginFailures` over every
+other `qmldir` under the config home (import roots already checked are skipped; symbolic links,
+`.git`, `node_modules` and depth beyond 8 are not walked) and refuses the reload with the file and
+reason when one fails. Tests: `tests/integration/test_plugin_import.cpp` and the plugin
 `tests/plugin/`.
 
 ### The shell runtime

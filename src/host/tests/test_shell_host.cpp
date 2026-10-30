@@ -228,6 +228,32 @@ TEST(ShellHostTest, ABrokenReloadKeepsThePreviousShellAndReportsTheError) {
   EXPECT_TRUE(pill->isVisible());
 }
 
+TEST(ShellHostTest, AMismatchedPluginBesideTheShellRefusesTheReload) {
+  Harness h;
+  h.start(shellConfig());
+  const QString lib = h.dir.filePath(QStringLiteral("lib"));
+  ASSERT_TRUE(QDir().mkpath(lib));
+  write(QDir(lib).filePath(QStringLiteral("qmldir")),
+        QStringLiteral("module Lib\nplugin FakePlugin\n"));
+  write(QDir(lib).filePath(QStringLiteral("FakePlugin.dll")), QStringLiteral("not a library"));
+  EXPECT_FALSE(h.host->reload());
+  EXPECT_TRUE(h.host->error().contains(QStringLiteral("FakePlugin.dll")))
+      << qPrintable(h.host->error());
+  EXPECT_TRUE(h.host->error().contains(QStringLiteral("refused")));
+  // Removing the plugin file clears the problem: the engine reports a missing plugin itself.
+  QFile::remove(QDir(lib).filePath(QStringLiteral("FakePlugin.dll")));
+  EXPECT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+}
+
+TEST(ShellHostTest, AQmldirWithoutAPluginDoesNotBlockTheReload) {
+  Harness h;
+  h.start(shellConfig());
+  const QString lib = h.dir.filePath(QStringLiteral("lib"));
+  ASSERT_TRUE(QDir().mkpath(lib));
+  write(QDir(lib).filePath(QStringLiteral("qmldir")), QStringLiteral("module Lib\n"));
+  EXPECT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+}
+
 TEST(ShellHostTest, FixingTheShellClearsTheError) {
   Harness h;
   h.start(shellConfig(QStringLiteral("good")));

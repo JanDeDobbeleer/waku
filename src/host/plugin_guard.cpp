@@ -100,13 +100,13 @@ PluginVerdict checkPluginFile(const QString& libraryPath) {
   return checkPluginMetadata(loader.metaData(), QT_VERSION, kDebugBuild);
 }
 
-QStringList findPluginFiles(const QString& root) {
-  QStringList files;
-  QDirIterator it(root, {QStringLiteral("qmldir")}, QDir::Files, QDirIterator::Subdirectories);
-  while (it.hasNext()) {
-    const QFileInfo qmldir(it.next());
+namespace {
+
+// The plugin libraries one qmldir names.
+void pluginFilesOfQmldir(const QFileInfo& qmldir, QStringList* files) {
+  {
     QFile file(qmldir.filePath());
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) continue;
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) return;
     while (!file.atEnd()) {
       QStringList words = QString::fromUtf8(file.readLine())
                               .simplified()
@@ -120,14 +120,61 @@ QStringList findPluginFiles(const QString& root) {
       const QStringList order = kDebugBuild ? QStringList{debug, plain} : QStringList{plain, debug};
       for (const QString& candidate : order) {
         if (QFileInfo::exists(candidate)) {
-          files << QDir::cleanPath(candidate);
+          *files << QDir::cleanPath(candidate);
           break;
         }
       }
     }
   }
+}
+
+bool sameFolder(const QString& a, const QString& b) {
+  return QDir::cleanPath(a).compare(QDir::cleanPath(b), Qt::CaseInsensitive) == 0;
+}
+
+constexpr int kMaxScanDepth = 8;
+
+void collectQmldirs(const QDir& dir, const QStringList& skipRoots, int depth, QStringList* out) {
+  if (QFileInfo::exists(dir.filePath(QStringLiteral("qmldir")))) {
+    out->append(dir.filePath(QStringLiteral("qmldir")));
+  }
+  if (depth >= kMaxScanDepth) return;
+  const QFileInfoList children =
+      dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+  for (const QFileInfo& child : children) {
+    const QString name = child.fileName();
+    if (name == QLatin1String(".git") || name == QLatin1String("node_modules")) continue;
+    bool skipped = false;
+    for (const QString& skip : skipRoots) {
+      if (sameFolder(skip, child.absoluteFilePath())) skipped = true;
+    }
+    if (!skipped) collectQmldirs(QDir(child.absoluteFilePath()), skipRoots, depth + 1, out);
+  }
+}
+
+}  // namespace
+
+QStringList findPluginFiles(const QString& root) {
+  QStringList files;
+  QDirIterator it(root, {QStringLiteral("qmldir")}, QDir::Files, QDirIterator::Subdirectories);
+  while (it.hasNext()) pluginFilesOfQmldir(QFileInfo(it.next()), &files);
   files.removeDuplicates();
   return files;
+}
+
+QList<PluginFailure> configPluginFailures(const QString& configHome, const QStringList& skipRoots) {
+  QList<PluginFailure> failures;
+  if (configHome.isEmpty() || !QFileInfo(configHome).isDir()) return failures;
+  QStringList qmldirs;
+  collectQmldirs(QDir(QFileInfo(configHome).absoluteFilePath()), skipRoots, 0, &qmldirs);
+  QStringList files;
+  for (const QString& qmldir : qmldirs) pluginFilesOfQmldir(QFileInfo(qmldir), &files);
+  files.removeDuplicates();
+  for (const QString& file : files) {
+    const PluginVerdict verdict = checkPluginFile(file);
+    if (!verdict.ok) failures.append({file, verdict.reason});
+  }
+  return failures;
 }
 
 QStringList importRoots(const QString& configHome, const QStringList& extra) {

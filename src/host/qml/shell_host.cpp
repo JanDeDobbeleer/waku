@@ -18,6 +18,7 @@
 #include <QUrl>
 #include <QWindow>
 
+#include "host/plugin_guard.h"
 #include "host/qml/shell_screen.h"
 #include "host/qml/shell_window.h"
 
@@ -322,6 +323,14 @@ bool ShellHost::reload() {
       error = QStringLiteral("%1 not found in %2")
                   .arg(options_.entryFile, QDir::toNativeSeparators(options_.configHome));
     }
+    qWarning().noquote() << "wabar:" << error;
+  } else if (const QList<PluginFailure> refused =
+                 configPluginFailures(options_.configHome, engine_->importPathList());
+             !refused.isEmpty()) {
+    // A qmldir outside the guarded import roots (beside shell.qml, under `import "./lib"`) names
+    // a plugin that does not fit this process: loading it could crash the bar.
+    error = QStringLiteral("plugin %1 refused: %2")
+                .arg(QDir::toNativeSeparators(refused.first().file), refused.first().reason);
     qWarning().noquote() << "wabar:" << error;
   } else if (validate(QUrl::fromLocalFile(entryPath()), ShellRoot::staticMetaObject, false,
                       &error) &&

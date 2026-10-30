@@ -25,6 +25,11 @@ What the guard does and does not do (`src/host/plugin_guard.*`):
   refuses the whole folder, with one log line per plugin, when the plugin is not a Windows library
   for this processor, was built with another Qt major or minor version, or is a debug build in a
   release wabar (or the reverse). The file is read, not loaded.
+- The same check runs over every other `qmldir` under `<config home>` (a `qmldir` beside
+  `shell.qml`, or in a folder reached by `import "./lib"`) each time the shell loads or reloads. A
+  plugin that fails refuses the load, and the error names the file and the reason. The scan skips
+  symbolic links, `.git` and `node_modules`, and stops at depth 8. A plugin reached from outside
+  the config home through a relative `import "../x"` is not scanned.
 - The guard prevents a crash from a mismatched build. It is not a trust check: it does not verify a
   signature, an author or the plugin's behaviour, and it does not sandbox the plugin.
 - Put only plugins you built or trust in these folders, and keep `<config home>` writable by you

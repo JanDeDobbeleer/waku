@@ -41,6 +41,18 @@ PluginVerdict checkPluginFile(const QString& libraryPath);
 // left out (the engine reports a missing plugin itself).
 QStringList findPluginFiles(const QString& root);
 
+// A plugin that failed its check, with the reason.
+struct PluginFailure {
+  QString file;
+  QString reason;
+};
+
+// Every plugin named by a `qmldir` anywhere under `configHome` (a `qmldir` beside shell.qml, under
+// a folder reached by `import "./lib"`, ...) that fails checkPluginFile. Folders in `skipRoots`
+// (the import roots already checked) are not entered; symbolic links, `.git` and `node_modules`
+// are not followed, and the walk stops at depth 8, so the scan stays cheap.
+QList<PluginFailure> configPluginFailures(const QString& configHome, const QStringList& skipRoots);
+
 // `<configHome>/modules` when it is a folder, then each `extra` folder, absolute, without
 // duplicates, only the existing folders.
 QStringList importRoots(const QString& configHome, const QStringList& extra);
