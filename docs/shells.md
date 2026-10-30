@@ -37,6 +37,34 @@ PanelWindow {
   - Hover and drag effects outside the region do not run: the window gets no mouse events there.
 - Nothing is enforced on the offscreen platform or in tests.
 
+### Global shortcuts without keys
+
+A Hyprland-style shortcut has a name and no keys; the compositor binds the key. On Windows nothing
+binds it, so give the shortcut a name and bind a key to `wabarc shortcut <name>` in a hotkey tool
+such as whkd or AutoHotkey:
+
+```qml
+GlobalShortcut {
+    name: "launcher"            // no `keys`: nothing is registered by wabar
+    onPressed: launcher.visible = !launcher.visible
+}
+```
+
+```ahk
+; AutoHotkey v2
+#Space::Run('wabarc shortcut launcher', , 'Hide')
+```
+
+```
+# whkd
+win + space : wabarc shortcut launcher
+```
+
+`wabarc shortcut <name>` fires `onPressed` and then `onReleased` of every shortcut with that name.
+`wabarc shortcut list` prints the names. A shortcut that does set `keys` (`keys: "alt + space"`)
+registers the key itself, unless wabar runs with `--no-hotkeys` or the key is taken; it still
+answers `wabarc shortcut <name>`.
+
 ### Variable fonts (`--font-engine`)
 
 wabar starts with Qt's GDI font engine, which keeps memory low but ignores variable-font axes
