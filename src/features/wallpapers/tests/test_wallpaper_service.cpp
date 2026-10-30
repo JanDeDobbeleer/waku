@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QFile>
 #include <QImage>
+#include <QPointer>
 #include <QTemporaryDir>
 #include <memory>
 #include <vector>
@@ -84,6 +85,12 @@ struct Fixture {
 
     state = std::make_shared<DesktopState>();
     transitions = std::make_shared<TransitionLog>();
+    service = make();
+  }
+
+  // A new service on the same fake desktop with its own fake hotkeys (`hotkeys` points at the
+  // latest). A reload destroys the singleton, so a reload test builds one per generation.
+  std::unique_ptr<Wallpapers> make() {
     auto owned = std::make_unique<FakeHotkeys>();
     hotkeys = owned.get();
     Wallpapers::Deps deps;
@@ -95,7 +102,7 @@ struct Fixture {
       return fakeTransition(log, path, animation);
     };
     deps.realBackend = false;
-    service = std::make_unique<Wallpapers>(std::move(deps), nullptr);
+    return std::make_unique<Wallpapers>(std::move(deps), nullptr);
   }
 
   QString inFolder(const QString& name) const {
@@ -422,28 +429,40 @@ TEST(WallpaperSettingsTest, TheWindowsStillBuildAndThePartIsKeptByTheShell) {
   EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("a"));
 }
 
-TEST(WallpaperSettingsTest, AReloadSwitchesTheOldSettingsOffAndTheNewOnes) {
+TEST(WallpaperSettingsTest, AReloadReplacesTheServiceAndConfiguresTheNewOne) {
   Fixture f;
   Fixture* fixture = &f;
-  Wallpapers::setFactoryForTests([fixture]() { return std::move(fixture->service); });
+  // A reload destroys the singleton and creates it again, so every generation gets its own.
+  Wallpapers::setFactoryForTests([fixture]() { return fixture->make(); });
   Harness h;
   h.start(settingsConfig(f.folder.path()));
   ASSERT_TRUE(h.host->reload());
-  auto* service = h.engine.singletonInstance<Wallpapers*>(QStringLiteral("wabar.services"),
-                                                          QStringLiteral("Wallpapers"));
-  Wallpapers::setFactoryForTests({});
-  ASSERT_TRUE(service);
-  EXPECT_FALSE(service->imagePath().isEmpty());
+  auto current = [&] {
+    return h.engine.singletonInstance<Wallpapers*>(QStringLiteral("wabar.services"),
+                                                   QStringLiteral("Wallpapers"));
+  };
+  QPointer<Wallpapers> first = current();
+  ASSERT_TRUE(first);
+  EXPECT_FALSE(first->imagePath().isEmpty());
+  EXPECT_EQ(f.hotkeys->attempts.size(), 1u);
 
   write(h.shellFile(), settingsConfig(f.elsewhere.path()));
   ASSERT_TRUE(h.host->reload());
-  EXPECT_EQ(QDir::toNativeSeparators(service->imagePath()),
+  QPointer<Wallpapers> second = current();
+  ASSERT_TRUE(second);
+  EXPECT_FALSE(first);  // the old service (and its hotkey) went with the singleton
+  EXPECT_EQ(QDir::toNativeSeparators(second->imagePath()),
             f.native(QDir::fromNativeSeparators(f.elsewhere.path())));
-  EXPECT_EQ(f.hotkeys->attempts.size(), 2u);  // switched off, then on again
+  EXPECT_EQ(f.hotkeys->attempts.size(), 1u);  // the new service registered its own
+  EXPECT_TRUE(f.hotkeys->callback);
 
   write(h.shellFile(), shellConfig());  // no settings any more
   ASSERT_TRUE(h.host->reload());
-  EXPECT_TRUE(service->imagePath().isEmpty());
+  Wallpapers* third = current();
+  Wallpapers::setFactoryForTests({});
+  ASSERT_TRUE(third);
+  EXPECT_FALSE(second);
+  EXPECT_TRUE(third->imagePath().isEmpty());
   EXPECT_FALSE(f.hotkeys->callback);
 }
 
