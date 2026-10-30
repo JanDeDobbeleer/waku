@@ -21,10 +21,12 @@
 #include <QMetaObject>
 #include <QPointer>
 #include <QThread>
+#include <QUuid>
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <map>
+#include <mutex>
 #include <set>
 #include <thread>
 
@@ -154,6 +156,79 @@ bool preferDevice(const BluetoothDevice& candidate, const BluetoothDevice& exist
   return false;
 }
 
+namespace {
+
+bool sameDevice(const BluetoothDevice& a, const BluetoothDevice& b) {
+  if (a.isLe == b.isLe) return false;  // two classic (or two LE) entries are two devices
+  if (a.name.isEmpty() || a.name == a.address) return false;
+  if (a.name.compare(b.name, Qt::CaseInsensitive) != 0) return false;
+  return a.deviceType == b.deviceType || a.deviceType == BtDeviceType::Generic ||
+         b.deviceType == BtDeviceType::Generic;
+}
+
+BluetoothDevice mergeGroup(const std::vector<const BluetoothDevice*>& group) {
+  const BluetoothDevice* base = group.front();
+  for (const BluetoothDevice* device : group) {
+    if (!device->isLe) {
+      base = device;
+      break;
+    }
+  }
+  BluetoothDevice merged = *base;
+  for (const BluetoothDevice* device : group) {
+    if (device == base) continue;
+    merged.otherAddresses << device->address;
+    merged.otherAddresses << device->otherAddresses;
+    merged.connected = merged.connected || device->connected;
+    merged.paired = merged.paired || device->paired;
+    merged.remembered = merged.remembered || device->remembered;
+    if (merged.deviceType == BtDeviceType::Generic) {
+      merged.deviceType = device->deviceType;
+      if (merged.majorClass == 0) merged.majorClass = device->majorClass;
+    }
+    if (merged.containerId.isEmpty()) merged.containerId = device->containerId;
+    if (merged.profiles.isEmpty()) merged.profiles = device->profiles;
+    if (!merged.battery && device->battery) merged.battery = device->battery;
+  }
+  if (!merged.connected) merged.battery.reset();
+  return merged;
+}
+
+}  // namespace
+
+std::vector<BluetoothDevice> mergeSameDevices(const std::vector<BluetoothDevice>& devices) {
+  std::vector<std::vector<const BluetoothDevice*>> groups;
+  std::map<QString, size_t> byContainer;
+  for (const BluetoothDevice& device : devices) {
+    const QString container = device.containerId.trimmed().toLower();
+    if (!container.isEmpty()) {
+      const auto found = byContainer.find(container);
+      if (found != byContainer.end()) {
+        groups[found->second].push_back(&device);
+      } else {
+        byContainer[container] = groups.size();
+        groups.push_back({&device});
+      }
+      continue;
+    }
+    bool placed = false;
+    for (auto& group : groups) {
+      const bool taken =
+          std::any_of(group.begin(), group.end(),
+                      [&](const BluetoothDevice* member) { return member->isLe == device.isLe; });
+      if (!taken && sameDevice(*group.front(), device)) {
+        group.push_back(&device);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) groups.push_back({&device});
+  }
+  std::vector<BluetoothDevice> result;
+  for (const auto& group : groups) result.push_back(mergeGroup(group));
+  return result;
+}
+
 // --- Windows access --------------------------------------------------------------------------
 
 namespace {
@@ -183,6 +258,44 @@ constexpr ULONG kOneshotReconnect = 0;
 constexpr ULONG kOneshotDisconnect = 1;
 
 QString toQString(const winrt::hstring& text) { return QString::fromWCharArray(text.c_str()); }
+
+// The container id shared by the classic and LE nodes of one physical device. Cached per device id:
+// the WinRT lookup costs a round trip. Empty when Windows reports none.
+QString containerIdFor(const QString& deviceId) {
+  static std::mutex lock;
+  static std::map<QString, QString> cache;
+  {
+    std::lock_guard<std::mutex> guard(lock);
+    const auto found = cache.find(deviceId);
+    if (found != cache.end()) return found->second;
+  }
+  QString result;
+  try {
+    const auto keys = winrt::single_threaded_vector<winrt::hstring>(
+        {winrt::hstring(L"System.Devices.Aep.ContainerId"),
+         winrt::hstring(L"System.Devices.ContainerId")});
+    const auto info = enumeration::DeviceInformation::CreateFromIdAsync(
+                          winrt::hstring(deviceId.toStdWString()), keys)
+                          .get();
+    for (const winrt::hstring& key : keys) {
+      const auto value = info.Properties().TryLookup(key);
+      if (!value) continue;
+      const winrt::guid id = winrt::unbox_value_or<winrt::guid>(value, winrt::guid{});
+      if (id == winrt::guid{}) continue;
+      result = QUuid(id.Data1, id.Data2, id.Data3, id.Data4[0], id.Data4[1], id.Data4[2],
+                     id.Data4[3], id.Data4[4], id.Data4[5], id.Data4[6], id.Data4[7])
+                   .toString(QUuid::WithoutBraces);
+      break;
+    }
+  } catch (...) {
+    return {};
+  }
+  if (!result.isEmpty()) {
+    std::lock_guard<std::mutex> guard(lock);
+    cache[deviceId] = result;
+  }
+  return result;
+}
 
 struct HandleCloser {
   void operator()(HANDLE handle) const {
@@ -437,6 +550,8 @@ void enrichDevices(std::vector<BluetoothDevice>& devices) {
         } catch (...) {
         }
       }
+      if (device.containerId.isEmpty() && !device.deviceId.isEmpty())
+        device.containerId = containerIdFor(device.deviceId);
       if (device.connected)
         device.battery = readBattery(device.addressInt);
       else
@@ -851,13 +966,14 @@ class BluetoothWorker : public QObject {
       }
       radioOn_ = true;
       devices_.clear();
-      for (const BluetoothDevice& device : paired) {
+      for (const BluetoothDevice& device : mergeSameDevices(paired)) {
         if (!device.address.isEmpty()) devices_[device.address] = device;
       }
       syncDeviceWatchers(paired);
       publish();
+      const std::vector<BluetoothDevice> merged = mergeSameDevices(devices);
       emit scanCompleted(static_cast<int>(BtScanStatus::Success),
-                         QVector<BluetoothDevice>(devices.begin(), devices.end()));
+                         QVector<BluetoothDevice>(merged.begin(), merged.end()));
     } catch (...) {
       emit scanCompleted(static_cast<int>(BtScanStatus::Error), {});
     }
@@ -972,10 +1088,19 @@ class BluetoothWorker : public QObject {
   void onDeviceConnectionChanged(quint64 address, bool connected) {
     if (!started_ || connectRunning_->load()) return;
     wabar::kernel::ensureWinrtApartment();
-    const auto found = devices_.find(formatBtAddress(address));
+    const QString text = formatBtAddress(address);
+    const auto found = devices_.find(text);
     if (found == devices_.end()) {
-      refreshLePending_ = true;
+      const bool merged = std::any_of(devices_.begin(), devices_.end(), [&](const auto& entry) {
+        return entry.second.otherAddresses.contains(text);
+      });
+      // A merged-away entry changed: rebuild the row, no new LE listing needed.
+      if (!merged) refreshLePending_ = true;
       scheduleRefresh();
+      return;
+    }
+    if (!found->second.otherAddresses.isEmpty()) {
+      scheduleRefresh();  // the row combines several entries: recompute it
       return;
     }
     BluetoothDevice& device = found->second;
@@ -1046,12 +1171,21 @@ class BluetoothWorker : public QObject {
   }
 
   void applyDevices(const std::vector<BluetoothDevice>& devices) {
+    if (btDebug()) {
+      for (const BluetoothDevice& device : devices) {
+        qWarning().noquote() << "BTDBG entry" << device.name << device.address
+                             << (device.isLe ? "LE" : "classic")
+                             << btDeviceTypeName(device.deviceType) << "container"
+                             << device.containerId << "connected" << device.connected;
+      }
+    }
     devices_.clear();
-    for (const BluetoothDevice& device : devices) {
+    for (const BluetoothDevice& device : mergeSameDevices(devices)) {
       if (!device.address.isEmpty()) devices_[device.address] = device;
     }
     bindRadio();
-    syncDeviceWatchers(values());
+    // Watch every address, merged away or not: an LE connection change must reach the row.
+    syncDeviceWatchers(devices);
   }
 
   void bindRadio() {

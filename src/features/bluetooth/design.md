@@ -34,6 +34,24 @@ A radio reported Off clears the devices at once. While `changed` is observed, a 
 the list as a safety net; unobserved, nothing polls. `WABAR_BT_DEBUG=1` logs each refresh (radio
 result, counts, timings) to stderr.
 
+## One row per physical device
+
+Windows lists a dual-mode device as a classic entry and an LE entry with different addresses (an
+iPhone's LE node even advertises another name). `mergeSameDevices` collapses them in `applyDevices`
+and in `scan`. The key is the container id: `System.Devices.Aep.ContainerId` (then
+`System.Devices.ContainerId`) of the entry's `DeviceInformation`, read in `enrichDevices` through
+`containerIdFor` and cached per device id. It is documented WinRT, shared by the classic and LE nodes
+of one device (checked live: both nodes of the owner's headset share one id, the LE node of the
+phone shares the classic iPhone's id). Without a container id, a classic and an LE entry merge when
+the case-insensitive name matches and the device type is equal or one side is Generic. Two classic
+entries, or two entries with different container ids, never merge.
+
+The row keeps the classic entry (address, name, type), `connected`, `paired` and `remembered` are
+true if any entry is, the battery is the first known one (dropped when not connected), and the other
+addresses go to `otherAddresses`. The device watchers still cover every address; a connection change
+on a merged row triggers a refresh instead of an in-place edit. `WABAR_BT_DEBUG=1` logs each entry
+with its container id.
+
 ## Depends on
 
 kernel in C++ (`ensureWinrtApartment`); `shell` for the QML `S.Shell.open` clicks.

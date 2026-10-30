@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <vector>
 
 namespace wabar::bluetooth {
 
@@ -40,6 +41,11 @@ struct BluetoothDevice {
   bool paired = false;
   bool remembered = false;
   QString deviceId;
+  // Shared by the classic and LE nodes of one physical device (empty when unknown).
+  QString containerId;
+  // Addresses of the entries merged into this row (mergeSameDevices); the row keeps the classic
+  // one.
+  QStringList otherAddresses;
   int majorClass = 0;
   BtDeviceType deviceType = BtDeviceType::Generic;
   QString icon;
@@ -83,6 +89,11 @@ BtDeviceType deviceTypeFromCod(int major, int minor);
 BtDeviceType deviceTypeFromLeAppearance(int category, int subcategory);
 QStringList profilesFromCod(int major, bool connected);
 bool preferDevice(const BluetoothDevice& candidate, const BluetoothDevice& existing);
+// Collapses the classic and LE entries of one physical device into one row. Entries with the same
+// container id merge. Entries without one merge when a classic and an LE entry share the display
+// name and the device type (a Generic type matches any). Distinct devices that only share a name
+// stay apart when their container ids differ. Order of first appearance is kept.
+std::vector<BluetoothDevice> mergeSameDevices(const std::vector<BluetoothDevice>& devices);
 
 // Asynchronous Bluetooth operations behind the menu and the bar label (port of BluetoothManager).
 // All methods return at once; work runs on a backend thread and results come back as queued

@@ -37,3 +37,70 @@ TEST(BluetoothTypes, PreferKnownThenConnected) {
   EXPECT_TRUE(preferDevice(b, a));
   EXPECT_FALSE(preferDevice(a, b));
 }
+
+namespace {
+
+BluetoothDevice entry(const QString& name, const QString& address, bool le) {
+  BluetoothDevice device;
+  device.name = name;
+  device.address = address;
+  device.isLe = le;
+  device.paired = true;
+  return device;
+}
+
+}  // namespace
+
+TEST(BluetoothMerge, SameContainerCollapsesClassicAndLe) {
+  BluetoothDevice le = entry("Jan 1337", "AA:00:00:00:00:02", true);
+  le.containerId = "{C1}";
+  BluetoothDevice classic = entry("Jan 1337", "AA:00:00:00:00:01", false);
+  classic.containerId = "{c1}";
+  classic.deviceType = BtDeviceType::Headphones;
+  const auto merged = mergeSameDevices({le, classic});
+  ASSERT_EQ(merged.size(), 1u);
+  EXPECT_EQ(merged[0].address, "AA:00:00:00:00:01");
+  EXPECT_FALSE(merged[0].isLe);
+  EXPECT_EQ(merged[0].otherAddresses, QStringList{"AA:00:00:00:00:02"});
+  EXPECT_EQ(merged[0].deviceType, BtDeviceType::Headphones);
+}
+
+TEST(BluetoothMerge, SameNameDifferentContainersStayApart) {
+  BluetoothDevice a = entry("Jan 1337", "AA:00:00:00:00:01", false);
+  a.containerId = "{C1}";
+  BluetoothDevice b = entry("Jan 1337", "AA:00:00:00:00:02", true);
+  b.containerId = "{C2}";
+  EXPECT_EQ(mergeSameDevices({a, b}).size(), 2u);
+}
+
+TEST(BluetoothMerge, FallsBackToNameAndTypeWithoutContainer) {
+  BluetoothDevice classic = entry("Buds", "AA:00:00:00:00:01", false);
+  classic.deviceType = BtDeviceType::Headphones;
+  BluetoothDevice le = entry("buds", "AA:00:00:00:00:02", true);
+  le.deviceType = BtDeviceType::Headphones;
+  EXPECT_EQ(mergeSameDevices({classic, le}).size(), 1u);
+  // Another type, another device.
+  le.deviceType = BtDeviceType::Phone;
+  EXPECT_EQ(mergeSameDevices({classic, le}).size(), 2u);
+  // Two classic entries with one name are never merged by name.
+  BluetoothDevice second = classic;
+  second.address = "AA:00:00:00:00:03";
+  EXPECT_EQ(mergeSameDevices({classic, second}).size(), 2u);
+}
+
+TEST(BluetoothMerge, ConnectedAndBatteryCombine) {
+  BluetoothDevice classic = entry("Jan 1337", "AA:00:00:00:00:01", false);
+  classic.containerId = "{C1}";
+  classic.paired = false;
+  classic.remembered = true;
+  BluetoothDevice le = entry("Jan 1337", "AA:00:00:00:00:02", true);
+  le.containerId = "{C1}";
+  le.connected = true;
+  le.battery = 80;
+  const auto merged = mergeSameDevices({classic, le});
+  ASSERT_EQ(merged.size(), 1u);
+  EXPECT_TRUE(merged[0].connected);
+  EXPECT_TRUE(merged[0].paired);
+  EXPECT_TRUE(merged[0].remembered);
+  EXPECT_EQ(merged[0].battery, std::optional<int>(80));
+}
