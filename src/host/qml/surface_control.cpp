@@ -49,7 +49,7 @@ QString answerSurfaceCommand(const QStringList& words, ShellHost* host) {
   const QList<QsWindow*> all = host->namedWindows();
   if (listing) {
     QMap<QString, QList<QsWindow*>> byName;  // sorted, so the answer is stable
-    for (QsWindow* window : all) byName[window->name()] << window;
+    for (QsWindow* window : all) byName[window->surfaceName()] << window;
     if (byName.isEmpty()) return QStringLiteral("ok: none");
     QStringList parts;
     for (auto it = byName.constBegin(); it != byName.constEnd(); ++it) {
@@ -63,7 +63,7 @@ QString answerSurfaceCommand(const QStringList& words, ShellHost* host) {
   if (windows.isEmpty()) {
     QStringList names;
     for (const QsWindow* window : all) {
-      if (!names.contains(window->name())) names << window->name();
+      if (!names.contains(window->surfaceName())) names << window->surfaceName();
     }
     names.sort();
     return QStringLiteral("error: no surface named '%1' (known: %2)")

@@ -435,6 +435,49 @@ ShellRoot {
             QStringLiteral("ok: osd hidden (2 windows)"));
 }
 
+TEST(OverlayControl, AWindowComponentWithItsOwnRequiredNameIsFoundByThatName) {
+  // Caelestia's StyledWindow declares `required property string name`, which shadows wabar's.
+  Harness h;
+  write(h.dir.filePath(QStringLiteral("StyledWindow.qml")), QStringLiteral(R"(
+import wabar
+PanelWindow {
+    required property string name
+    implicitWidth: 200
+    implicitHeight: 100
+    visible: false
+}
+)"));
+  ASSERT_TRUE(started(h, QStringLiteral(R"(
+import wabar
+ShellRoot {
+    StyledWindow { name: "drawers" }
+}
+)")));
+  const ControlHandler handler = makeControlHandler(*h.host, false);
+  EXPECT_EQ(handler(QStringLiteral("surface list")), QStringLiteral("ok: drawers=hidden"));
+  EXPECT_EQ(handler(QStringLiteral("surface show drawers")), QStringLiteral("ok: drawers shown"));
+  EXPECT_TRUE(h.host->namedWindows(QStringLiteral("drawers")).value(0)->backingWindowVisible());
+  EXPECT_EQ(handler(QStringLiteral("surface hide drawers")), QStringLiteral("ok: drawers hidden"));
+}
+
+TEST(OverlayControl, AWindowWithoutANameFallsBackToItsObjectName) {
+  Harness h;
+  ASSERT_TRUE(started(h, QStringLiteral(R"(
+import wabar
+ShellRoot {
+    PanelWindow {
+        objectName: "menu"
+        implicitWidth: 200
+        implicitHeight: 100
+        visible: false
+    }
+}
+)")));
+  const ControlHandler handler = makeControlHandler(*h.host, false);
+  EXPECT_EQ(handler(QStringLiteral("surface list")), QStringLiteral("ok: menu=hidden"));
+  EXPECT_EQ(handler(QStringLiteral("surface toggle menu")), QStringLiteral("ok: menu shown"));
+}
+
 TEST(OverlayControl, UnnamedWindowsAreNotListedAndStatusCarriesThePid) {
   Harness h;
   h.start(shellConfig());

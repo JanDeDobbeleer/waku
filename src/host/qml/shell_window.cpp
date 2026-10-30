@@ -190,7 +190,17 @@ void QsWindow::setVisible(bool visible) {
   if (live) activateOnShow_ = visible;
   emit visibleChanged();
   updateVisibility();
-  if (live && host_ && !name_.isEmpty()) host_->noteVisibility(name_, visible);
+  if (live && host_ && !surfaceName().isEmpty()) host_->noteVisibility(surfaceName(), visible);
+}
+
+QString QsWindow::surfaceName() const {
+  // QObject::property goes through the QML object's own meta object, so a `name` declared by the
+  // component shadows the C++ getter here.
+  const QVariant declared = property("name");
+  if (declared.metaType().id() == QMetaType::QString && !declared.toString().isEmpty()) {
+    return declared.toString();
+  }
+  return name_.isEmpty() ? objectName() : name_;
 }
 
 void QsWindow::setName(const QString& name) {

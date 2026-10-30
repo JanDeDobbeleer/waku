@@ -164,7 +164,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   // The id of the window for `wabarc surface ...` and hotkeys; unique per shell. One name can
   // belong to several windows (a Variants makes one per screen) and every verb applies to all of
   // them. Not FINAL: a ported shell that declares its own `name` property on a window (caelestia's
-  // StyledWindow does) still loads, and the window then has no wabar name.
+  // StyledWindow does) still loads, and the surface verbs use that property (surfaceName()).
   Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
   // Milliseconds between `visible` turning false and the window leaving the screen, so the content
   // can animate out. Showing the window again during the delay cancels the hide.
@@ -217,6 +217,10 @@ class QsWindow : public QObject, public QQmlParserStatus {
   void setVisible(bool visible);
   QString name() const { return name_; }
   void setName(const QString& name);
+  // The id the surface verbs and the visibility memory use: the `name` property as the QML object
+  // has it (so a component that declares its own `name`, as Caelestia's StyledWindow does, is found
+  // by that), else wabar's `name`, else `objectName`. Empty: the window is not addressable.
+  QString surfaceName() const;
   int hideDelay() const { return hideDelay_; }
   void setHideDelay(int milliseconds);
   bool dismissOnBlur() const { return dismissOnBlur_; }

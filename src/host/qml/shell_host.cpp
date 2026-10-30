@@ -465,8 +465,8 @@ QList<QsWindow*> ShellHost::namedWindows(const QString& name) const {
   if (!loaded_) return list;
   for (const Entry& entry : loaded_->entries) {
     QsWindow* window = entry.window;
-    if (!window || !entry.presented || window->name().isEmpty()) continue;
-    if (name.isEmpty() || window->name() == name) list << window;
+    if (!window || !entry.presented || window->surfaceName().isEmpty()) continue;
+    if (name.isEmpty() || window->surfaceName() == name) list << window;
   }
   return list;
 }
@@ -499,8 +499,8 @@ void ShellHost::present(Entry& entry) {
   entry.presented = true;
   // A window the user showed or hid before a reload is in the same state after it. The shell is not
   // live yet, so this neither takes the keyboard focus nor is noted again.
-  if (const auto it = visibility_.constFind(window->name());
-      !window->name().isEmpty() && it != visibility_.constEnd()) {
+  if (const auto it = visibility_.constFind(window->surfaceName());
+      !window->surfaceName().isEmpty() && it != visibility_.constEnd()) {
     window->setVisible(it.value());
   }
   if (window->backingWindowVisible()) {
