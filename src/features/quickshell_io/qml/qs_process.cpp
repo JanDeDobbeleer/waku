@@ -12,7 +12,7 @@ QsProcess::QsProcess(QObject* parent) : QObject(parent) {}
 QsProcess::~QsProcess() {
   if (!process_) return;
   process_->disconnect(this);
-  kill();
+  kill(15);
   process_->waitForFinished(500);
   delete process_;
   process_ = nullptr;
@@ -23,6 +23,7 @@ void QsProcess::setCommand(const QStringList& command) {
   if (command == command_) return;
   command_ = command;
   emit commandChanged();
+  startIfReady();
 }
 
 void QsProcess::setEnvironment(const QVariantMap& environment) {
@@ -66,19 +67,22 @@ void QsProcess::setStderrParser(DataStreamParser* parser) {
 }
 
 void QsProcess::setRunning(bool running) {
+  wantRunning_ = running;
   if (running == (process_ != nullptr)) return;
   if (running)
-    start();
+    startIfReady();
   else
-    kill();
+    kill(15);
+}
+
+void QsProcess::startIfReady() {
+  if (wantRunning_ && !process_ && !command_.isEmpty()) start();
 }
 
 void QsProcess::start() {
   if (process_) return;
-  if (command_.isEmpty()) {
-    qWarning() << "Process: running was set to true but command is empty";
-    return;
-  }
+  wantRunning_ = false;
+  killSignal_ = 0;
   auto* process = new QProcess(this);
   CommandSpec spec;
   spec.command = command_;
@@ -119,12 +123,15 @@ void QsProcess::start() {
           [this](int code, QProcess::ExitStatus status) { onFinished(code, status); });
 
   process_ = process;
-  process->start(command_.first(), command_.mid(1));
+  // Before start(): a program that cannot start reports that from inside start(), and the order
+  // of the two changes must be on, then off.
   emit runningChanged();
+  process->start(command_.first(), command_.mid(1));
 }
 
-void QsProcess::kill() {
+void QsProcess::kill(int signal) {
   if (!process_) return;
+  if (killSignal_ == 0) killSignal_ = signal;
   if (job_ && job_->adopted())
     job_->terminate();
   else
@@ -145,19 +152,38 @@ void QsProcess::drain() {
 
 void QsProcess::onFinished(int exitCode, QProcess::ExitStatus status) {
   if (!process_) return;
+  // Windows has no signals, so the job's exit code says nothing: a process we killed ends as a
+  // crash with the signal number, the way Quickshell reports a signalled process.
+  if (killSignal_ != 0) {
+    exitCode = killSignal_;
+    status = QProcess::CrashExit;
+  }
+  finishRun(exitCode, static_cast<ExitStatus>(status));
+}
+
+void QsProcess::finishRun(int exitCode, ExitStatus status) {
+  if (!process_) return;
   drain();
   if (stdout_) stdout_->streamEnded();
   if (stderr_) stderr_->streamEnded();
   if (job_) {
-    if (status == QProcess::NormalExit) job_->release();  // background children may live on
+    if (status == NormalExit) job_->release();  // background children may live on
     job_.reset();
   }
-  process_->deleteLater();
+  QProcess* finished = process_;
   process_ = nullptr;
   pid_ = 0;
+  if (finished->state() == QProcess::NotRunning) {
+    finished->deleteLater();
+  } else {
+    // Still dying (exec() replaces a run without waiting): delete it when it is gone.
+    finished->disconnect(this);
+    connect(finished, &QProcess::finished, finished, &QObject::deleteLater);
+  }
+  killSignal_ = 0;
   emit processIdChanged();
   emit runningChanged();
-  emit exited(exitCode, static_cast<ExitStatus>(status));
+  emit exited(exitCode, status);
 }
 
 void QsProcess::exec(const QVariant& context) {
@@ -167,9 +193,11 @@ void QsProcess::exec(const QVariant& context) {
     return;
   }
   if (process_) {
-    kill();
-    process_->waitForFinished(2000);  // delivers finished() and so exited() for the old run
+    // End the old run now instead of waiting for the kill to finish: the GUI thread stays free.
+    kill(15);
+    finishRun(killSignal_, CrashExit);
   }
+  wantRunning_ = false;  // the new run starts below, once everything is applied
   setCommand(spec->command);
   if (context.metaType().id() == QMetaType::QVariantMap) {
     const QVariantMap map = context.toMap();
@@ -179,7 +207,8 @@ void QsProcess::exec(const QVariant& context) {
     if (map.contains(QStringLiteral("workingDirectory")))
       setWorkingDirectory(spec->workingDirectory);
   }
-  start();
+  wantRunning_ = true;
+  startIfReady();
 }
 
 void QsProcess::startDetached() {
@@ -198,7 +227,7 @@ void QsProcess::signal(int signal) {
     case 3:
     case 9:
     case 15:
-      kill();
+      kill(signal);
       break;
     default:
       break;  // Windows has no other signals

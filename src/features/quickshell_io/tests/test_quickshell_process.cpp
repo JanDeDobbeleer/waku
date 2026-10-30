@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <gtest/gtest.h>
+#include <tlhelp32.h>
 
 #include <QDir>
 #include <QFile>
@@ -41,6 +42,23 @@ bool processGone(qint64 pid, int timeoutMs) {
   const DWORD result = WaitForSingleObject(handle, static_cast<DWORD>(timeoutMs));
   CloseHandle(handle);
   return result == WAIT_OBJECT_0;
+}
+
+// The pids of the processes named `exe` whose parent is `parent`.
+QList<qint64> childrenOf(qint64 parent, const wchar_t* exe) {
+  QList<qint64> pids;
+  HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (snapshot == INVALID_HANDLE_VALUE) return pids;
+  PROCESSENTRY32W entry{};
+  entry.dwSize = sizeof(entry);
+  for (BOOL ok = Process32FirstW(snapshot, &entry); ok; ok = Process32NextW(snapshot, &entry)) {
+    if (entry.th32ParentProcessID == static_cast<DWORD>(parent) &&
+        _wcsicmp(entry.szExeFile, exe) == 0) {
+      pids << entry.th32ProcessID;
+    }
+  }
+  CloseHandle(snapshot);
+  return pids;
 }
 
 // A Process with a collector on stdout.
@@ -158,6 +176,54 @@ TEST(QuickshellProcess, SettingRunningFalseKillsTheProcess) {
   run.process.setRunning(false);
   ASSERT_TRUE(run.finish());
   EXPECT_FALSE(run.process.running());
+  // As a SIGTERM'd process reports in Quickshell: a crash exit with the signal number.
+  EXPECT_EQ(run.exited.first().at(0).toInt(), 15);
+  EXPECT_EQ(run.exited.first().at(1).toInt(), static_cast<int>(QsProcess::CrashExit));
+}
+
+TEST(QuickshellProcess, ASignalReportsItsNumberAsTheExitCode) {
+  Child run;
+  run.process.setCommand(sleeper());
+  QSignalSpy started(&run.process, &QsProcess::started);
+  run.process.setRunning(true);
+  ASSERT_TRUE(waitFor([&] { return started.count() == 1; }));
+  run.process.signal(9);
+  ASSERT_TRUE(run.finish());
+  EXPECT_EQ(run.exited.first().at(0).toInt(), 9);
+  EXPECT_EQ(run.exited.first().at(1).toInt(), static_cast<int>(QsProcess::CrashExit));
+}
+
+TEST(QuickshellProcess, RunningSetBeforeTheCommandStartsWhenTheCommandArrives) {
+  Child run;
+  run.process.setRunning(true);  // nothing to run yet
+  EXPECT_FALSE(run.process.running());
+  run.process.setCommand(cmd(QStringLiteral("echo late")));
+  ASSERT_TRUE(run.finish());
+  EXPECT_EQ(run.out.text().trimmed(), QStringLiteral("late"));
+  EXPECT_EQ(run.exited.first().at(0).toInt(), 0);
+  EXPECT_FALSE(run.process.running());
+  // The wish is spent: changing the command again starts nothing.
+  run.process.setCommand(cmd(QStringLiteral("echo again")));
+  QTest::qWait(200);
+  EXPECT_EQ(run.exited.count(), 1);
+}
+
+TEST(QuickshellProcess, ExecOverARunningProcessEndsTheOldRunWithoutWaiting) {
+  Child run;
+  run.process.setCommand(sleeper());
+  QSignalSpy started(&run.process, &QsProcess::started);
+  run.process.setRunning(true);
+  ASSERT_TRUE(waitFor([&] { return started.count() == 1; }));
+  const qint64 oldPid = run.process.processId().toLongLong();
+
+  run.process.exec(QVariant(cmd(QStringLiteral("echo replaced"))));
+  // The old run is over at once: exited() came before exec() returned.
+  ASSERT_EQ(run.exited.count(), 1);
+  EXPECT_EQ(run.exited.first().at(1).toInt(), static_cast<int>(QsProcess::CrashExit));
+  ASSERT_TRUE(waitFor([&] { return run.exited.count() == 2; }));
+  EXPECT_EQ(run.exited.at(1).at(0).toInt(), 0);
+  EXPECT_EQ(run.out.text().trimmed(), QStringLiteral("replaced"));
+  EXPECT_TRUE(processGone(oldPid, 5000));
 }
 
 TEST(QuickshellProcess, SignalKillsOnlyForTerminatingNumbers) {
@@ -176,10 +242,18 @@ TEST(QuickshellProcess, SignalKillsOnlyForTerminatingNumbers) {
 TEST(QuickshellProcess, ProgramThatCannotStartLeavesItNotRunning) {
   QsProcess process;
   process.setCommand({QStringLiteral("definitely-not-a-program-wabar.exe")});
-  QSignalSpy running(&process, &QsProcess::runningChanged);
+  QList<bool> states;
+  QObject::connect(&process, &QsProcess::runningChanged, [&] { states << process.running(); });
+  QSignalSpy started(&process, &QsProcess::started);
+  QSignalSpy exited(&process, &QsProcess::exited);
   process.setRunning(true);
   ASSERT_TRUE(waitFor([&] { return !process.running(); }));
+  QTest::qWait(100);
   EXPECT_FALSE(process.running());
+  EXPECT_EQ(states, (QList<bool>{true, false}));  // on, then off; nothing after
+  EXPECT_EQ(started.count(), 0);
+  EXPECT_EQ(exited.count(), 0);
+  EXPECT_FALSE(process.processId().isValid());
 }
 
 TEST(QuickshellProcess, EmptyCommandDoesNotStart) {
@@ -266,6 +340,29 @@ TEST(QuickshellProcessJob, TerminateKillsTheAdoptedProcess) {
   ASSERT_TRUE(job.adopt(child.processId()));
   job.terminate();
   EXPECT_TRUE(child.waitForFinished(5000));
+}
+
+TEST(QuickshellProcessJob, TerminateKillsTheGrandchildrenToo) {
+  // cmd waits a second (so the job has it), starts a hidden ping of its own and runs another.
+  QProcess child;
+  const QStringList line =
+      cmd(QStringLiteral("ping -n 2 127.0.0.1 >nul & start /b ping -n 60 127.0.0.1 >nul & "
+                         "ping -n 60 127.0.0.1 >nul"));
+  child.start(line.first(), line.mid(1));
+  ASSERT_TRUE(child.waitForStarted(5000));
+  ProcessJob job;
+  ASSERT_TRUE(job.adopt(child.processId()));
+  const qint64 cmdPid = child.processId();
+  QList<qint64> grandchildren;
+  ASSERT_TRUE(waitFor(
+      [&] {
+        grandchildren = childrenOf(cmdPid, L"PING.EXE");
+        return grandchildren.size() >= 2;  // the one `start /b` made and the foreground one
+      },
+      10000));
+  job.terminate();
+  EXPECT_TRUE(child.waitForFinished(5000));
+  for (qint64 pid : grandchildren) EXPECT_TRUE(processGone(pid, 5000)) << pid;
 }
 
 TEST(QuickshellProcessJob, ClosingTheJobKillsTheProcessAndReleaseSpares) {

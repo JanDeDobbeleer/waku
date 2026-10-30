@@ -21,11 +21,14 @@
 namespace wabar::quickshell_io {
 
 // Quickshell.Io Process: a tracked child process. Setting `running` to true starts `command` (no
-// shell, no console window); false kills the process and its descendants. `stdout` and `stderr`
-// take a StdioCollector or a SplitParser; without one the stream is discarded. The child and its
-// tree are killed when the object is destroyed. Windows has no signals: signal() kills for the
-// terminating numbers (2, 3, 9, 15) and ignores the rest. GUI thread only; QProcess does the I/O
-// asynchronously. Widgets are trusted code: this starts any program with the bar's privileges.
+// shell, no console window; before the command is set it starts when the command arrives); false
+// kills the process and its descendants. A killed process reports the signal as Quickshell does on
+// Linux: exited(15, CrashExit) for `running = false`, exited(n, CrashExit) for signal(n). `stdout`
+// and `stderr` take a StdioCollector or a SplitParser; without one the stream is discarded. The
+// child and its tree are killed when the object is destroyed. Windows has no signals: signal()
+// kills for the terminating numbers (2, 3, 9, 15) and ignores the rest. GUI thread only; QProcess
+// does the I/O asynchronously. Widgets are trusted code: this starts any program with the bar's
+// privileges.
 class QsProcess : public QObject {
   Q_OBJECT
   QML_NAMED_ELEMENT(Process)
@@ -94,9 +97,13 @@ class QsProcess : public QObject {
   void exited(int exitCode, wabar::quickshell_io::QsProcess::ExitStatus exitStatus);
 
  private:
+  // Starts the process when `running` was asked for, none runs and there is a command.
+  void startIfReady();
   void start();
-  void kill();
+  void kill(int signal);
   void drain();
+  // Ends the current run: reads what is left, closes the streams and reports `exited`.
+  void finishRun(int exitCode, ExitStatus status);
   void onFinished(int exitCode, QProcess::ExitStatus status);
 
   QStringList command_;
@@ -109,6 +116,11 @@ class QsProcess : public QObject {
   QProcess* process_ = nullptr;
   std::unique_ptr<ProcessJob> job_;
   qint64 pid_ = 0;
+  // `running = true` was set and has not been spent: the next start (a command may still be
+  // missing) goes ahead.
+  bool wantRunning_ = false;
+  // The signal that killed the current run, 0 while nobody asked.
+  int killSignal_ = 0;
 };
 
 }  // namespace wabar::quickshell_io
