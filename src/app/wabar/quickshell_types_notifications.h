@@ -33,6 +33,13 @@ struct QsNotification {
   QML_UNCREATABLE("Notification objects come from NotificationServer")
 };
 
+struct QsNotificationAction {
+  Q_GADGET
+  QML_FOREIGN(wabar::notifications::NotificationAction)
+  QML_NAMED_ELEMENT(NotificationAction)
+  QML_UNCREATABLE("NotificationAction objects come from Notification")
+};
+
 struct QsNotificationServer {
   Q_GADGET
   QML_FOREIGN(wabar::notifications::NotificationServer)

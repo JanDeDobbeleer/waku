@@ -40,16 +40,39 @@ class NotificationCloseReason : public QObject {
 // Windows toasts have no low priority.
 NotificationUrgency::Enum urgencyForScenario(const QString& scenario);
 
+// Quickshell's NotificationAction. Windows toasts give none through the Action Center, so no
+// instance exists today; the type lets QML written against `list<NotificationAction>` load.
+class NotificationAction : public QObject {
+  Q_OBJECT
+  QML_NAMED_ELEMENT(NotificationAction)
+  QML_UNCREATABLE("NotificationAction objects come from Notification")
+  Q_PROPERTY(QString identifier READ identifier NOTIFY identifierChanged FINAL)
+  Q_PROPERTY(QString text READ text NOTIFY textChanged FINAL)
+
+ public:
+  explicit NotificationAction(QObject* parent = nullptr) : QObject(parent) {}
+  QString identifier() const { return {}; }
+  QString text() const { return {}; }
+  Q_INVOKABLE void invoke() {}
+
+ signals:
+  void identifierChanged();
+  void textChanged();
+};
+
 // One toast of the Action Center in the shape of Quickshell's Notification. Windows owns the
 // toast, so these members never carry data: `actions` is always empty, `resident`,
-// `hasActionIcons`, `hasInlineReply` and `transient` are false, `expireTimeout` is 0 (the OS
-// decides) and `hints` is empty. `dismiss()` and `close()` remove the toast from the Action
-// Center; `expire()` does nothing. GUI thread only.
+// `hasActionIcons`, `hasInlineReply` and `transient` are false, `expireTimeout` and
+// `lastGeneration` are 0 (the OS decides), `desktopEntry` and `inlineReplyPlaceholder` are empty
+// and `hints` is empty. Each has its `...Changed` signal so handlers load; none ever fires.
+// `dismiss()` and `close()` remove the toast from the Action Center; `expire()` does nothing. GUI
+// thread only.
 class NotificationToast : public QObject {
   Q_OBJECT
   QML_NAMED_ELEMENT(Notification)
   QML_UNCREATABLE("Notification objects come from NotificationServer and NotificationFeed")
-  Q_PROPERTY(int id READ id CONSTANT FINAL)
+  Q_PROPERTY(int id READ id NOTIFY idChanged FINAL)
+  Q_PROPERTY(qint32 lastGeneration READ lastGeneration NOTIFY lastGenerationChanged FINAL)
   Q_PROPERTY(QString appName READ appName NOTIFY appNameChanged FINAL)
   Q_PROPERTY(QString appIcon READ appIcon NOTIFY appIconChanged FINAL)
   Q_PROPERTY(QString summary READ summary NOTIFY summaryChanged FINAL)
@@ -59,13 +82,17 @@ class NotificationToast : public QObject {
                  urgencyChanged FINAL)
   Q_PROPERTY(QDateTime time READ time NOTIFY timeChanged FINAL)
   Q_PROPERTY(QString timeText READ timeText NOTIFY timeChanged FINAL)
-  Q_PROPERTY(double expireTimeout READ expireTimeout CONSTANT FINAL)
-  Q_PROPERTY(bool resident READ resident CONSTANT FINAL)
-  Q_PROPERTY(bool transient READ isTransient CONSTANT FINAL)
-  Q_PROPERTY(bool hasActionIcons READ hasActionIcons CONSTANT FINAL)
-  Q_PROPERTY(bool hasInlineReply READ hasInlineReply CONSTANT FINAL)
-  Q_PROPERTY(QVariantList actions READ actions CONSTANT FINAL)
-  Q_PROPERTY(QVariantMap hints READ hints CONSTANT FINAL)
+  Q_PROPERTY(double expireTimeout READ expireTimeout NOTIFY expireTimeoutChanged FINAL)
+  Q_PROPERTY(bool resident READ resident NOTIFY residentChanged FINAL)
+  Q_PROPERTY(bool transient READ isTransient NOTIFY transientChanged FINAL)
+  Q_PROPERTY(bool hasActionIcons READ hasActionIcons NOTIFY hasActionIconsChanged FINAL)
+  Q_PROPERTY(bool hasInlineReply READ hasInlineReply NOTIFY hasInlineReplyChanged FINAL)
+  Q_PROPERTY(QString inlineReplyPlaceholder READ inlineReplyPlaceholder NOTIFY
+                 inlineReplyPlaceholderChanged FINAL)
+  Q_PROPERTY(QString desktopEntry READ desktopEntry NOTIFY desktopEntryChanged FINAL)
+  Q_PROPERTY(QList<wabar::notifications::NotificationAction*> actions READ actions NOTIFY
+                 actionsChanged FINAL)
+  Q_PROPERTY(QVariantMap hints READ hints NOTIFY hintsChanged FINAL)
   Q_PROPERTY(bool tracked READ tracked WRITE setTracked NOTIFY trackedChanged FINAL)
   Q_PROPERTY(QString aumid READ aumid CONSTANT FINAL)
 
@@ -89,7 +116,10 @@ class NotificationToast : public QObject {
   bool isTransient() const { return false; }
   bool hasActionIcons() const { return false; }
   bool hasInlineReply() const { return false; }
-  QVariantList actions() const { return {}; }
+  qint32 lastGeneration() const { return 0; }
+  QString inlineReplyPlaceholder() const { return {}; }
+  QString desktopEntry() const { return {}; }
+  QList<NotificationAction*> actions() const { return {}; }
   QVariantMap hints() const { return {}; }
   bool tracked() const { return tracked_; }
   void setTracked(bool tracked);
@@ -99,6 +129,7 @@ class NotificationToast : public QObject {
   Q_INVOKABLE void dismiss();
   Q_INVOKABLE void close() { dismiss(); }
   Q_INVOKABLE void expire() {}
+  Q_INVOKABLE void sendInlineReply(const QString& replyText) { Q_UNUSED(replyText); }
   // Hands the toast to its app (what clicking it in the Action Center does).
   Q_INVOKABLE void activate();
 
@@ -111,6 +142,18 @@ class NotificationToast : public QObject {
   void urgencyChanged();
   void timeChanged();
   void trackedChanged();
+  // Declared for QML written against Quickshell; these values are fixed, so none ever fires.
+  void idChanged();
+  void lastGenerationChanged();
+  void expireTimeoutChanged();
+  void residentChanged();
+  void transientChanged();
+  void hasActionIconsChanged();
+  void hasInlineReplyChanged();
+  void inlineReplyPlaceholderChanged();
+  void desktopEntryChanged();
+  void actionsChanged();
+  void hintsChanged();
   // The toast left the Action Center.
   void closed(wabar::notifications::NotificationCloseReason::Enum reason);
 

@@ -218,3 +218,82 @@ NotificationServer {
   EXPECT_FALSE(root->property("keepOnReload").toBool());
   EXPECT_TRUE(root->property("actionsSupported").toBool());
 }
+
+namespace {
+
+QStringList* g_warnings = nullptr;
+QtMessageHandler g_previousHandler = nullptr;
+
+void collectWarnings(QtMsgType type, const QMessageLogContext& context, const QString& message) {
+  if (g_warnings && type >= QtWarningMsg) g_warnings->append(message);
+  if (g_previousHandler) g_previousHandler(type, context, message);
+}
+
+}  // namespace
+
+TEST(NotificationFeed, EveryDocumentedSignalAndPropertyExistsForQml) {
+  Harness h;
+  h.publish({toast(5, QStringLiteral("Five"))});
+  NotificationToast* t = h.feed->notifications()->values().at(0);
+
+  QStringList warnings;
+  g_warnings = &warnings;
+  g_previousHandler = qInstallMessageHandler(collectWarnings);
+  QQmlEngine engine;
+  QQmlComponent component(&engine);
+  component.setData(R"(
+import QtQml
+import Quickshell.Services.Notifications
+QtObject {
+    id: root
+    required property var notif
+    property int fired: 0
+    property var connections: Connections {
+        target: root.notif
+        function onIdChanged() { root.fired++ }
+        function onLastGenerationChanged() { root.fired++ }
+        function onTrackedChanged() { root.fired++ }
+        function onAppNameChanged() { root.fired++ }
+        function onAppIconChanged() { root.fired++ }
+        function onSummaryChanged() { root.fired++ }
+        function onBodyChanged() { root.fired++ }
+        function onImageChanged() { root.fired++ }
+        function onUrgencyChanged() { root.fired++ }
+        function onExpireTimeoutChanged() { root.fired++ }
+        function onResidentChanged() { root.fired++ }
+        function onTransientChanged() { root.fired++ }
+        function onHasActionIconsChanged() { root.fired++ }
+        function onHasInlineReplyChanged() { root.fired++ }
+        function onInlineReplyPlaceholderChanged() { root.fired++ }
+        function onDesktopEntryChanged() { root.fired++ }
+        function onActionsChanged() { root.fired++ }
+        function onHintsChanged() { root.fired++ }
+        function onClosed(reason) { root.fired++ }
+    }
+    property int actionCount: notif.actions.length
+    property var hints: notif.hints
+    property double expireTimeout: notif.expireTimeout
+    property bool resident: notif.resident
+    property bool hasActionIcons: notif.hasActionIcons
+    property bool isTransient: notif.transient
+    property string desktopEntry: notif.desktopEntry
+    property int lastGeneration: notif.lastGeneration
+    property var actionType: NotificationAction
+}
+)",
+                    QUrl());
+  std::unique_ptr<QObject> root(
+      component.createWithInitialProperties({{QStringLiteral("notif"), QVariant::fromValue(t)}}));
+  qInstallMessageHandler(g_previousHandler);
+  g_warnings = nullptr;
+  ASSERT_TRUE(root) << component.errorString().toStdString();
+  EXPECT_TRUE(warnings.isEmpty()) << qPrintable(warnings.join(QLatin1Char('\n')));
+  EXPECT_EQ(root->property("actionCount").toInt(), 0);
+  EXPECT_TRUE(root->property("hints").toMap().isEmpty());
+  EXPECT_EQ(root->property("expireTimeout").toDouble(), 0);
+  EXPECT_FALSE(root->property("resident").toBool());
+  EXPECT_FALSE(root->property("hasActionIcons").toBool());
+  EXPECT_FALSE(root->property("isTransient").toBool());
+  EXPECT_TRUE(root->property("desktopEntry").toString().isEmpty());
+  EXPECT_EQ(root->property("lastGeneration").toInt(), 0);
+}

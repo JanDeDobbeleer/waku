@@ -28,7 +28,8 @@ For QML written against `Quickshell.Services.Notifications` (caelestia `services
 |---|---|---|
 | `NotificationFeed` (singleton) | `NotificationFeed` | `notifications` (model with `values`, newest first), `available`, `toastAdded(toast)` for each toast that arrives while the bar runs, `clear()`, `refresh()` |
 | `NotificationServer` | `NotificationServer` | `onNotification: notif => ...` fires like `toastAdded`; the capability flags (`keepOnReload`, `actionsSupported`, `bodyMarkupSupported`, ...) are accepted and ignored; `trackedNotifications` lists toasts with `tracked: true` |
-| `Notification` | `NotificationToast` | `id`, `appName`, `appIcon` (the toast's app logo), `summary` (title), `body`, `image` (inline image, else the hero), `urgency`, `time` (date), `timeText`, `tracked`, `aumid`; `dismiss()`, `close()`, `activate()`, signal `closed(reason)` |
+| `Notification` | `NotificationToast` | `id`, `appName`, `appIcon` (the toast's app logo), `summary` (title), `body`, `image` (inline image, else the hero), `urgency`, `time` (date), `timeText`, `tracked`, `aumid`, and the fixed Quickshell members `actions` (empty), `hints` (empty), `expireTimeout` and `lastGeneration` (0), `resident`, `transient`, `hasActionIcons`, `hasInlineReply` (false), `desktopEntry`, `inlineReplyPlaceholder` (empty). Every property has its `...Changed` signal, so a `Connections` handler loads without a warning; the fixed ones never fire. `dismiss()`, `close()`, `activate()`, `expire()` (no-op), `sendInlineReply()` (no-op), signal `closed(reason)` |
+| `NotificationAction` | `NotificationAction` | `identifier`, `text`, `invoke()`; uncreatable, never instantiated (`actions` is empty) |
 | `NotificationUrgency`, `NotificationCloseReason` | enum holders | `Low`, `Normal`, `Critical`; `Expired`, `Dismissed`, `CloseRequested` |
 
 Toasts that were in the Action Center before the bar started fill the model without `toastAdded`.
@@ -41,7 +42,7 @@ list), `hints` (empty), `resident`, `transient`, `hasActionIcons`, `hasInlineRep
 wabar a notification and `NotificationServer` flags have no effect. `dismiss()` removes the toast
 from the Action Center; `activate()` hands it to its app.
 The `Quickshell.Services.Notifications` module registers `Notification`, `NotificationServer`,
-`NotificationUrgency` and `NotificationCloseReason` again under the same names
+`NotificationUrgency`, `NotificationCloseReason` and `NotificationAction` again under the same names
 (`src/app/wabar/quickshell_types_notifications.h`); `NotificationFeed` stays in `wabar.services`.
 
 ## Threads
