@@ -19,20 +19,32 @@ QString imageDataUrl(const QByteArray& bytes) {
       .arg(imageMimeType(bytes), QString::fromLatin1(bytes.toBase64()));
 }
 
-Media::Media(QObject* parent) : Media(createSystemMediaSource(), parent) {}
+std::shared_ptr<MediaSessionService> acquireMediaService() {
+  static std::weak_ptr<MediaSessionService> shared;
+  if (auto existing = shared.lock()) return existing;
+  auto created = std::make_shared<MediaSessionService>(createSystemMediaSource());
+  shared = created;
+  return created;
+}
+
+Media::Media(QObject* parent) : Media(acquireMediaService(), parent) {}
 
 Media::Media(std::unique_ptr<MediaSessionSource> source, QObject* parent)
-    : QObject(parent), service_(std::move(source), this) {
+    : Media(std::make_shared<MediaSessionService>(std::move(source)), parent) {}
+
+Media::Media(std::shared_ptr<MediaSessionService> service, QObject* parent)
+    : QObject(parent), service_(std::move(service)) {
   for (auto signal :
        {&MediaSessionService::mediaDataChanged, &MediaSessionService::currentSessionChanged,
         &MediaSessionService::mediaPropertiesChanged, &MediaSessionService::timelineInfoChanged,
         &MediaSessionService::playbackInfoChanged}) {
-    connect(&service_, signal, this, &Media::onServiceChanged);
+    connect(service_.get(), signal, this, &Media::onServiceChanged);
   }
-  service_.start();
+  service_->start();
 }
 
-Media::~Media() { service_.stop(); }
+// The service stops its source when its last holder lets go.
+Media::~Media() = default;
 
 void Media::onServiceChanged() {
   const QByteArray bytes = current() ? current()->thumbnail : QByteArray();

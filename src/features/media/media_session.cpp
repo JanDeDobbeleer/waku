@@ -305,4 +305,40 @@ void MediaSessionService::switchCurrentSession(int direction) {
   interpolateAndEmit();
 }
 
+const MediaSessionState* MediaSessionService::findSession(const QString& appId) const {
+  for (const auto& state : sessions_) {
+    if (state.appId == appId) return &state;
+  }
+  return nullptr;
+}
+
+void MediaSessionService::sendTo(const QString& appId, MediaCommand command, double value) {
+  if (!source_ || !findSession(appId)) return;
+  source_->command(appId, command, value);
+}
+
+void MediaSessionService::seekSession(const QString& appId, double seconds) {
+  MediaSessionState* state = find(appId);
+  if (!state || !source_) return;
+  source_->command(appId, MediaCommand::Seek, seconds);
+  state->lastSnapshotPos = seconds;
+  state->lastUpdateTime = clock_();
+  interpolateAndEmit();
+}
+
+void MediaSessionService::selectSession(const QString& appId) {
+  MediaSessionState* next = find(appId);
+  if (!next || appId == currentId_) return;
+  for (auto& state : sessions_) state.isCurrent = false;
+  next->isCurrent = true;
+  currentId_ = appId;
+  const bool ready = next->playbackReady;
+  emit mediaDataChanged();
+  emit mediaPropertiesChanged();
+  if (ready) emit playbackInfoChanged();
+  emit currentSessionChanged();
+  updateTimer();
+  interpolateAndEmit();
+}
+
 }  // namespace wabar::media

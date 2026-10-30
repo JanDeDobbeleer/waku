@@ -11,8 +11,11 @@ wabar_feature(NAME media
   QML_SOURCES
     qml/media_service.cpp
     qml/media_service.h
+    qml/mpris.cpp
+    qml/mpris.h
   QML_FILES
     qml/Media.qml
   TESTS
     tests/test_media.cpp
+    tests/test_mpris.cpp
   SYSTEM_LIBS windowsapp)

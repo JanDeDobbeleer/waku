@@ -337,6 +337,15 @@ class SystemMediaSource final : public MediaSessionSource {
         case MediaCommand::Previous:
           s->TrySkipPreviousAsync();
           break;
+        case MediaCommand::Play:
+          s->TryPlayAsync();
+          break;
+        case MediaCommand::Pause:
+          s->TryPauseAsync();
+          break;
+        case MediaCommand::Stop:
+          s->TryStopAsync();
+          break;
         case MediaCommand::Seek:
           s->TryChangePlaybackPositionAsync(static_cast<int64_t>(value * kTicksPerSecond));
           break;

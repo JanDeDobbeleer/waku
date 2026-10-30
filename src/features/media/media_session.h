@@ -74,7 +74,17 @@ struct MediaSessionState {
   int autoRepeatMode = 0;
 };
 
-enum class MediaCommand { PlayPause, Next, Previous, Seek, SetShuffle, SetRepeat };
+enum class MediaCommand {
+  PlayPause,
+  Next,
+  Previous,
+  Seek,
+  SetShuffle,
+  SetRepeat,
+  Play,
+  Pause,
+  Stop
+};
 
 // Receives source events. A source may call it from any thread.
 class MediaSessionSink {
@@ -136,6 +146,13 @@ class MediaSessionService final : public QObject {
   void cycleRepeat();
   void forceUpdate();
   void switchCurrentSession(int direction);
+
+  // Per-session variants for the player list: they address any session, not only the current one.
+  const MediaSessionState* findSession(const QString& appId) const;
+  void sendTo(const QString& appId, MediaCommand command, double value = 0);
+  void seekSession(const QString& appId, double seconds);
+  // Makes `appId` the current session (no-op for an unknown id).
+  void selectSession(const QString& appId);
 
   // Apply source events on the GUI thread (the sink posts here).
   void applySessions(const std::vector<MediaSessionData>& sessions, const QString& systemCurrentId,

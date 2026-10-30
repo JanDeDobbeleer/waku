@@ -17,6 +17,10 @@ QString imageMimeType(const QByteArray& bytes);
 // `data:<mime>;base64,<bytes>`, or an empty string for no bytes. A QML Image loads it directly.
 QString imageDataUrl(const QByteArray& bytes);
 
+// The one MediaSessionService of the process, shared by `Media` and `Mpris` so GSMTC is opened
+// once. Created on first use (system source); gone when the last holder lets go. GUI thread only.
+std::shared_ptr<MediaSessionService> acquireMediaService();
+
 // The current system media session (GSMTC) as a QML singleton, shared by every widget. Wraps
 // MediaSessionService, which owns the session thread; this object lives on the GUI
 // thread and re-emits the service's change signals as one `changed`. The engine destroys it,
@@ -43,8 +47,9 @@ class Media : public QObject {
 
  public:
   explicit Media(QObject* parent = nullptr);
-  // Test seam: a fake session source.
+  // Test seams: a fake session source, or a service shared with a test's `Mpris`.
   Media(std::unique_ptr<MediaSessionSource> source, QObject* parent);
+  Media(std::shared_ptr<MediaSessionService> service, QObject* parent);
   ~Media() override;
 
   bool available() const { return current() != nullptr; }
@@ -60,19 +65,19 @@ class Media : public QObject {
   bool canPlayPause() const;
   bool canNext() const;
 
-  Q_INVOKABLE void playPause() { service_.playPause(); }
-  Q_INVOKABLE void next() { service_.next(); }
-  Q_INVOKABLE void previous() { service_.previous(); }
-  Q_INVOKABLE void seek(double seconds) { service_.seek(seconds); }
+  Q_INVOKABLE void playPause() { service_->playPause(); }
+  Q_INVOKABLE void next() { service_->next(); }
+  Q_INVOKABLE void previous() { service_->previous(); }
+  Q_INVOKABLE void seek(double seconds) { service_->seek(seconds); }
 
  signals:
   void changed();
 
  private:
-  const MediaSessionState* current() const { return service_.currentSession(); }
+  const MediaSessionState* current() const { return service_->currentSession(); }
   void onServiceChanged();
 
-  MediaSessionService service_;
+  std::shared_ptr<MediaSessionService> service_;
   QByteArray thumbnailBytes_;
   QString thumbnailUrl_;
 };
