@@ -6,6 +6,7 @@
 #include "app/wabar/quickshell_glue.h"
 #include "control/control.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
+#include "host/plugin_guard.h"
 #include "host/qml/control_handler.h"
 #include "host/qml/shell_host.h"
 #include "kernel/qt/live_desktop.h"
@@ -42,7 +43,13 @@ int main(int argc, char* argv[]) {
   QCommandLineOption noHotkeysOpt(
       QStringLiteral("no-hotkeys"),
       QStringLiteral("Register no global hotkey; GlobalShortcut fires only through wabarc."));
+  QCommandLineOption importPathOpt(
+      QStringLiteral("import-path"),
+      QStringLiteral("Add a folder of QML modules (user-built plugins) to the import path. May be "
+                     "repeated. <config home>/modules is always added when it exists."),
+      QStringLiteral("dir"));
   parser.addOption(configHomeOpt);
+  parser.addOption(importPathOpt);
   parser.addOption(noHotkeysOpt);
   parser.addOption(noTrayOpt);
   parser.addOption(appBarOpt);
@@ -55,6 +62,15 @@ int main(int argc, char* argv[]) {
       parser.value(configHomeOpt), QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
 
   QQmlEngine engine;
+  // User-built QML plugins. A folder whose plugin was built for another Qt, flavour or processor
+  // is refused, with one log line, before the engine can load anything from it. --safe loads
+  // none: it ignores the config home, and recovery must not depend on a plugin.
+  if (!parser.isSet(safeOpt)) {
+    for (const QString& root : wabar::host::usableImportRoots(
+             wabar::host::importRoots(configHome, parser.values(importPathOpt)))) {
+      engine.addImportPath(root);
+    }
+  }
   wabar::host::ShellHost::Options options;
   options.configHome = configHome;
   options.allowReserve = parser.isSet(appBarOpt);
