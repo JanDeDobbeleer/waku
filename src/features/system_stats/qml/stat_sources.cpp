@@ -1,6 +1,7 @@
 #include "features/system_stats/qml/stat_sources.h"
 
 #include <algorithm>
+#include <limits>
 
 namespace wabar::system_stats {
 
@@ -25,6 +26,10 @@ QVariantList Cpu::perCore() const {
   QVariantList list;
   for (double v : sample_.percentPerCore) list << v;
   return list;
+}
+
+double Cpu::temperature() const {
+  return sample_.temperature.value_or(std::numeric_limits<double>::quiet_NaN());
 }
 
 void Cpu::sample() {
@@ -55,6 +60,10 @@ double Gpu::memoryPercent() const {
   if (sample_.memoryTotal == 0) return 0;
   return std::min(100.0, 100.0 * static_cast<double>(sample_.memoryUsed) /
                              static_cast<double>(sample_.memoryTotal));
+}
+
+double Gpu::temperature() const {
+  return sample_.temperature.value_or(std::numeric_limits<double>::quiet_NaN());
 }
 
 void Gpu::sample() {

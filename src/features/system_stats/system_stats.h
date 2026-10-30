@@ -16,6 +16,7 @@ struct CpuSample {
   double frequencyMax = 0;
   int coresPhysical = 1;
   int coresLogical = 1;
+  std::optional<double> temperature;  // Celsius; nothing when no thermal zone reads
 };
 
 struct MemorySample {
@@ -48,11 +49,12 @@ struct BatterySample {
 };
 
 struct GpuSample {
-  bool available = false;         // a GPU Engine counter exists
-  double percent = 0;             // busiest engine type over all adapters, 0..100
-  std::uint64_t memoryUsed = 0;   // dedicated video memory in use, bytes
-  std::uint64_t memoryTotal = 0;  // dedicated video memory of the hardware adapters, bytes
-  std::string name;               // name of the first hardware adapter
+  bool available = false;             // a GPU Engine counter exists
+  double percent = 0;                 // busiest engine type over all adapters, 0..100
+  std::uint64_t memoryUsed = 0;       // dedicated video memory in use, bytes
+  std::uint64_t memoryTotal = 0;      // dedicated video memory of the hardware adapters, bytes
+  std::string name;                   // name of the first hardware adapter
+  std::optional<double> temperature;  // Celsius; nothing when the driver reports none
 };
 
 // One mounted volume with a drive letter.

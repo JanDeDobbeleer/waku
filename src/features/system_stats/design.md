@@ -14,6 +14,8 @@ on the services of the same names (`wabar.services`, `qml/stat_sources.h`) and t
 | `win32/battery.*` | `WindowsBatteryDataSource`: `GetSystemPowerStatus` plus the battery IOCTLs for rate, voltage, capacity and health. |
 | `gpu_engines.*` | pure: `gpuEngineKey`, `gpuUsage` (sums the processes on one engine type of one adapter, the busiest engine type wins) |
 | `win32/gpu.cpp` | `PdhGpuDataSource`: PDH `GPU Engine` utilization and `GPU Adapter Memory` dedicated usage; DXGI for the adapter name and dedicated memory size |
+| `temperature.*` | pure: Kelvin and deci-Celsius to Celsius, plausibility range, `selectCpuTemperature` |
+| `win32/thermal.*` | `PdhThermalReader`: PDH `Thermal Zone Information` per-zone readings |
 | `win32/disks.cpp` | `WindowsDiskDataSource`: `GetLogicalDrives`, `GetDriveTypeW`, `GetDiskFreeSpaceExW`, `GetVolumeInformationW` |
 | `qml/stat_source.h` | `StatSource`: the QML face of `kernel::PolledSource` (polling starts at `componentComplete()`). Also the base of the `Network` service. |
 | `qml/stat_sources.*` | `Memory`, `Cpu`, `Battery`: one QML element each, exposing the last sample as properties. |
@@ -37,6 +39,42 @@ on the services of the same names (`wabar.services`, `qml/stat_sources.h`) and t
   from raising a dialog. Volumes with 0 total bytes (empty optical drives) are skipped.
 - Names follow caelestia's `Gpu` (`percentage`, `name`) and `DiskInfo` (`mount`, `used`, `total`,
   `free`, `perc`, `hasRoot`). Sizes are bytes.
+
+## Temperatures
+
+`Cpu.temperature` and `Gpu.temperature` are Celsius. `temperatureAvailable` says whether a real value
+exists; while it is false `temperature` is NaN, never 0 or a guess. Both are read only while the
+service polls (`active`), and only when `kernel::liveDesktop("system_stats")`, so tests and the
+offscreen platform touch no counter and no adapter. Pure conversion and selection live in
+`temperature.*`; the Windows reads live in `win32/thermal.*` (CPU) and `win32/gpu.cpp` (GPU).
+
+- CPU: the PDH set `\Thermal Zone Information(*)` (ACPI thermal zones, admin-free). Per zone,
+  `High Precision Temperature` (tenths of a Kelvin) wins; `Temperature` (whole Kelvin) is the
+  fallback. Readings outside 0 C (exclusive) to 150 C are dropped: sensorless zones report 0 or
+  placeholders. `Cpu.temperature` is the hottest remaining zone.
+- Why the hottest zone: ACPI zone names are paths (`\_SB.TZ0`), not labels, so no zone can be tied
+  to the CPU by name. The hottest zone is the SoC/package proxy, not a per-core die sensor. It is
+  not WMI `MSAcpi_ThermalZoneTemperature` (needs admin) and uses no driver.
+- GPU: `D3DKMTQueryAdapterInfo(KMTQAITYPE_ADAPTERPERFDATA)`, field `Temperature` in deci-Celsius,
+  per hardware DXGI adapter (via `D3DKMTOpenAdapterFromLuid`); the hottest wins. 0 means the driver
+  reports none and gives no value. All structs and thunks are in the Windows SDK `d3dkmthk.h`
+  (gdi32), so there is no undocumented-API row.
+
+Live check on the Surface Pro 11th ed. (Snapdragon X Elite, Windows 11 build 26300), read-only:
+
+- The counter set exists with `Temperature`, `High Precision Temperature`, `Throttle Reasons` and
+  `% Passive Limit`; 37 zones: `\TPOL`, `\_SB.TZ0`, `TZ01`-`TZ05`, `TZ09`-`TZ0C`, `TZ1`-`TZ6`,
+  `TZ11`, `TZ15`-`TZ24`, `TZ31`-`TZ37`, `TZ51`, `TZ99`.
+- 16 zones read a plausible value (31 to 51 C across runs); 13 read 0 (`TPOL`, `TZ01`, `TZ0C`,
+  `TZ15`-`TZ24`); `TZ31`/`TZ32` read -17.8 C, `TZ33`-`TZ37` -40.1 C and `TZ51` -0.1 C
+  (placeholders, dropped by the range check).
+- Response to load: all cores busy for 35 s raised the live zones by 0.4 to 3.3 C; `TZ0` and `TZ1`
+  (47.2 to 50.5 C) rose most, `TZ99` (50.5 to 52.1 C) stayed the hottest. So the hottest-zone
+  value tracks load, weakly: these are ACPI zones, not a die sensor.
+- GPU: the Adreno X1-85 driver opens and answers `ADAPTERPERFDATA` with success, but
+  `Temperature`, `Power` and `FanRPM` are 0 (only the memory frequency is filled). `Gpu.temperature`
+  is therefore unavailable on this machine. The Microsoft Basic Render Driver fails the query
+  (`STATUS_INVALID_PARAMETER`) and is a software adapter anyway.
 
 ## Behaviour
 

@@ -54,6 +54,8 @@ class Cpu : public kernel::StatSource {
   Q_PROPERTY(int cores READ cores NOTIFY updated)
   Q_PROPERTY(int coresPhysical READ coresPhysical NOTIFY updated)
   Q_PROPERTY(double maxFrequency READ maxFrequency NOTIFY updated)
+  Q_PROPERTY(double temperature READ temperature NOTIFY updated)
+  Q_PROPERTY(bool temperatureAvailable READ temperatureAvailable NOTIFY updated)
 
  public:
   explicit Cpu(QObject* parent = nullptr);
@@ -65,6 +67,8 @@ class Cpu : public kernel::StatSource {
   int cores() const { return sample_.coresLogical; }
   int coresPhysical() const { return sample_.coresPhysical; }
   double maxFrequency() const { return sample_.frequencyMax; }
+  double temperature() const;
+  bool temperatureAvailable() const { return sample_.temperature.has_value(); }
 
  protected:
   void sample() override;
@@ -107,6 +111,7 @@ class Battery : public kernel::StatSource {
 // `memory` is the dedicated video memory in use and `memoryTotal` the dedicated memory of the
 // hardware adapters, both in bytes (`memoryTotal` is 0 for an integrated GPU without dedicated
 // memory). All stay 0 and `available` stays false when the counters are missing.
+// `temperature` is Celsius, NaN while `temperatureAvailable` is false (the driver reports none).
 class Gpu : public kernel::StatSource {
   Q_OBJECT
   QML_ELEMENT
@@ -119,6 +124,8 @@ class Gpu : public kernel::StatSource {
   Q_PROPERTY(qlonglong memoryTotal READ memoryTotal NOTIFY updated)
   Q_PROPERTY(double memoryPercent READ memoryPercent NOTIFY updated)
   Q_PROPERTY(QString name READ name NOTIFY updated)
+  Q_PROPERTY(double temperature READ temperature NOTIFY updated)
+  Q_PROPERTY(bool temperatureAvailable READ temperatureAvailable NOTIFY updated)
 
  public:
   explicit Gpu(QObject* parent = nullptr);
@@ -130,6 +137,8 @@ class Gpu : public kernel::StatSource {
   qlonglong memoryTotal() const { return static_cast<qlonglong>(sample_.memoryTotal); }
   double memoryPercent() const;
   QString name() const { return QString::fromStdString(sample_.name); }
+  double temperature() const;
+  bool temperatureAvailable() const { return sample_.temperature.has_value(); }
 
  protected:
   void sample() override;

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <mutex>
 
+#include "features/system_stats/win32/thermal.h"
 #include "kernel/win32/windows_build.h"
 
 namespace wabar::system_stats {
@@ -64,6 +65,7 @@ struct PdhCpuDataSource::Impl {
   double maxFrequency = 0;
   bool failed = false;
   bool logged = false;
+  PdhThermalReader thermal;
   std::mutex mutex;
 
   ~Impl() {
@@ -148,6 +150,7 @@ CpuSample PdhCpuDataSource::sample() {
   result.frequencyMax = impl_->maxFrequency;
   result.frequencyCurrent = impl_->maxFrequency;
   if (!impl_->initialize()) return result;
+  result.temperature = impl_->thermal.cpuTemperature();
   if (PdhCollectQueryData(impl_->query) != ERROR_SUCCESS) return result;
   result.percent = std::clamp(roundOne(readDouble(impl_->total)), 0.0, 100.0);
   const double performance = readDouble(impl_->performance);

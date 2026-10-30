@@ -56,8 +56,11 @@ class FakeCpu final : public FakeSource<CpuDataSource, CpuSample> {
     s.percentPerCore = {10, 15};
     s.frequencyCurrent = 3200;
     s.coresLogical = 2;
+    if (hasTemperature) s.temperature = temperature.load();
     return s;
   }
+  std::atomic<bool> hasTemperature{true};
+  std::atomic<double> temperature{54.5};
 };
 
 class FakeGpu final : public FakeSource<GpuDataSource, GpuSample> {
@@ -69,8 +72,10 @@ class FakeGpu final : public FakeSource<GpuDataSource, GpuSample> {
     s.memoryUsed = 2'000'000'000ULL;
     s.memoryTotal = 8'000'000'000ULL;
     s.name = "Fake GPU";
+    if (hasTemperature) s.temperature = 61.0;
     return s;
   }
+  std::atomic<bool> hasTemperature{true};
   std::atomic<bool> present{true};
 };
 

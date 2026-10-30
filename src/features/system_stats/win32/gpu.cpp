@@ -1,7 +1,15 @@
+// clang-format off
+// d3dkmthk.h needs NTSTATUS and the STATUS_* codes: take them from ntstatus.h, not winnt.h.
+#define WIN32_NO_STATUS
 #include <windows.h>
+#undef WIN32_NO_STATUS
+#include <ntstatus.h>
+#include <winternl.h>
+#include <d3dkmthk.h>
 #include <dxgi.h>
 #include <pdh.h>
 #include <pdhmsg.h>
+// clang-format on
 
 #include <QDebug>
 #include <QString>
@@ -11,12 +19,15 @@
 
 #include "features/system_stats/gpu_engines.h"
 #include "features/system_stats/system_stats.h"
+#include "features/system_stats/temperature.h"
+#include "kernel/qt/live_desktop.h"
 
 namespace wabar::system_stats {
 namespace {
 
 // Documented APIs only: PDH ("GPU Engine" and "GPU Adapter Memory" counters, Windows 10 1709 and
-// later) and DXGI for the adapter names and dedicated memory sizes.
+// later), DXGI for the adapter names and dedicated memory sizes, and the D3DKMT thunks in gdi32
+// (d3dkmthk.h, Windows SDK) for the adapter temperature.
 
 constexpr int kRenewEvery = 20;  // samples between two rebuilds of the engine query
 
@@ -79,6 +90,7 @@ class PdhGpuDataSource final : public GpuDataSource {
     GpuSample result;
     result.name = name_;
     result.memoryTotal = memoryTotal_;
+    result.temperature = readTemperature();
     if (failed_) return result;
     if (!active_.query && !open(active_)) {
       failed_ = true;
@@ -125,10 +137,38 @@ class PdhGpuDataSource final : public GpuDataSource {
       if (SUCCEEDED(adapter->GetDesc1(&desc)) && !(desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)) {
         if (name_.empty()) name_ = QString::fromWCharArray(desc.Description).toStdString();
         memoryTotal_ += desc.DedicatedVideoMemory;
+        luids_.push_back(desc.AdapterLuid);
       }
       adapter->Release();
     }
     factory->Release();
+  }
+
+  // The hottest temperature the drivers of the hardware adapters report (deci-Celsius in
+  // D3DKMT_ADAPTER_PERFDATA), or nothing. A driver that reports 0 (the Qualcomm Adreno driver does)
+  // or fails the query gives no value. Never throws.
+  std::optional<double> readTemperature() const {
+    if (!kernel::liveDesktop(QStringLiteral("system_stats"))) return std::nullopt;
+    std::optional<double> best;
+    for (const LUID& luid : luids_) {
+      D3DKMT_OPENADAPTERFROMLUID open{};
+      open.AdapterLuid = luid;
+      if (D3DKMTOpenAdapterFromLuid(&open) != STATUS_SUCCESS) continue;
+      D3DKMT_ADAPTER_PERFDATA perf{};
+      D3DKMT_QUERYADAPTERINFO query{};
+      query.hAdapter = open.hAdapter;
+      query.Type = KMTQAITYPE_ADAPTERPERFDATA;
+      query.pPrivateDriverData = &perf;
+      query.PrivateDriverDataSize = sizeof(perf);
+      if (D3DKMTQueryAdapterInfo(&query) == STATUS_SUCCESS) {
+        const std::optional<double> celsius = celsiusFromDeciCelsius(perf.Temperature);
+        if (celsius && (!best || *celsius > *best)) best = celsius;
+      }
+      D3DKMT_CLOSEADAPTER close{};
+      close.hAdapter = open.hAdapter;
+      D3DKMTCloseAdapter(&close);
+    }
+    return best;
   }
 
   std::mutex mutex_;
@@ -139,6 +179,7 @@ class PdhGpuDataSource final : public GpuDataSource {
   bool adaptersRead_ = false;
   std::string name_;
   std::uint64_t memoryTotal_ = 0;
+  std::vector<LUID> luids_;
 };
 
 }  // namespace
