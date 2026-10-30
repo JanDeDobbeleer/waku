@@ -42,7 +42,9 @@ void fill(QQuickItem* item, QQuickItem* container) {
 // ---- QsWindow ----
 
 QsWindow::QsWindow(QObject* parent)
-    : QObject(parent), window_(std::make_unique<ProxiedWindow>(this)) {
+    : QObject(parent),
+      window_(std::make_unique<ProxiedWindow>(this)),
+      surfaceFormat_(new SurfaceFormat(this)) {
   window_->setColor(Qt::transparent);
   connect(window_.get(), &QWindow::widthChanged, this, &QsWindow::widthChanged);
   connect(window_.get(), &QWindow::heightChanged, this, &QsWindow::heightChanged);

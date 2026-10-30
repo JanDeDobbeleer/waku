@@ -275,6 +275,35 @@ ShellRoot {
             QStringLiteral("2|%1|true|false|2|1").arg(QGuiApplication::primaryScreen()->name()));
 }
 
+// ---- surfaceFormat ----
+
+TEST(ShellWindowsTest, SurfaceFormatIsAcceptedAndIgnored) {
+  Harness h;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import wabar
+ShellRoot {
+    PanelWindow {
+        objectName: "panel"
+        surfaceFormat.opaque: false
+        anchors.top: true
+        Text { text: "x" }
+    }
+    FloatingWindow { objectName: "floating"; surfaceFormat.opaque: true; Text { text: "y" } }
+}
+)"));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  auto* panel = h.host->shell()->findChild<PanelWindow*>(QStringLiteral("panel"));
+  auto* floating = h.host->shell()->findChild<FloatingWindow*>(QStringLiteral("floating"));
+  ASSERT_NE(panel, nullptr);
+  ASSERT_NE(floating, nullptr);
+  auto* format = panel->property("surfaceFormat").value<QObject*>();
+  ASSERT_NE(format, nullptr);
+  EXPECT_FALSE(format->property("opaque").toBool());  // kept, but nothing reads it
+  EXPECT_TRUE(floating->property("surfaceFormat").value<QObject*>()->property("opaque").toBool());
+  EXPECT_EQ(h.host->windows().size(), 2);
+}
+
 // ---- LazyLoader ----
 
 TEST(ShellWindowsTest, ALazyLoaderBuildsNothingUntilActivated) {

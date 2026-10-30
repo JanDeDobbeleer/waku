@@ -128,6 +128,8 @@ Quickshell vocabulary replaced `Config`, `Bar` and `BarLayout`; the mapping is i
 | `wabar.widgets` | every feature's `qml/*.qml`, `src/ui/*.qml`, `src/app/wabar/SafeShell.qml` | the built-in widgets and the shared look |
 | `wabar.services` | every feature's `qml/*.{h,cpp}`, `src/kernel/qml/` | the C++ data sources and actions |
 
+- `surfaceFormat.opaque` on `PanelWindow` and `FloatingWindow` is accepted and ignored, so Quickshell
+  code that sets it loads. wabar always draws into a swap chain with an alpha channel.
 - `src/modules/qml_modules.cmake` assembles the last two from the contributions. It is included
   from `src/CMakeLists.txt`, not added as a subdirectory, because qmlcachegen names its outputs after
   the `.qml` path relative to the declaring directory and a `../` path breaks the build on Windows.

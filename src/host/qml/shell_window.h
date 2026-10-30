@@ -82,6 +82,23 @@ class PanelMargins : public QObject {
   int bottom_ = 0;
 };
 
+// `surfaceFormat` of a window (Quickshell's QsSurfaceFormat): accepted so ported shells load, and
+// ignored. wabar always draws into a swap chain with an alpha channel.
+class SurfaceFormat : public QObject {
+  Q_OBJECT
+  QML_ANONYMOUS
+  Q_PROPERTY(bool opaque MEMBER opaque_ NOTIFY opaqueChanged FINAL)
+
+ public:
+  explicit SurfaceFormat(QObject* parent = nullptr) : QObject(parent) {}
+
+ signals:
+  void opaqueChanged();
+
+ private:
+  bool opaque_ = false;
+};
+
 // The base of the shell's windows (Quickshell `QsWindow`): a declaration that owns a real window.
 // Its children (the default property) go into the window's content item, as in Quickshell. Not
 // creatable; PanelWindow and FloatingWindow are.
@@ -120,6 +137,9 @@ class QsWindow : public QObject, public QQmlParserStatus {
   Q_PROPERTY(
       bool backingWindowVisible READ backingWindowVisible NOTIFY backingWindowVisibleChanged FINAL)
 
+  // Accepted and ignored: see SurfaceFormat.
+  Q_PROPERTY(wabar::host::SurfaceFormat* surfaceFormat READ surfaceFormat CONSTANT FINAL)
+
   // wabar extensions.
   // Built into the window when it is created (the Panel preset's content).
   Q_PROPERTY(QQmlComponent* content READ content WRITE setContent NOTIFY contentChanged FINAL)
@@ -148,6 +168,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
 
   QQmlListProperty<QObject> data();
   QQuickItem* contentItem() const;
+  SurfaceFormat* surfaceFormat() const { return surfaceFormat_; }
   ShellScreen* screen() const { return screen_; }
   void setScreen(ShellScreen* screen);
   QColor color() const { return color_; }
@@ -230,6 +251,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   bool buildContent();
 
   std::unique_ptr<ProxiedWindow> window_;
+  SurfaceFormat* surfaceFormat_;
   QList<QObject*> data_;
   QPointer<ShellScreen> screen_;
   QPointer<ShellHost> host_;
