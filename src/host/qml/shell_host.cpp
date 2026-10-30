@@ -77,10 +77,10 @@ void collectParts(const Scope* scope, QList<QObject*>* parts) {
 }  // namespace
 
 // Qt keeps the compiled form of a QML file for as long as an object made from it lives, and
-// clearComponentCache() does not drop it. A reload builds the new shell while the old one still
-// stands, so without this it would be made from the old files. A changing query on the URL makes
-// each reload's files new to the engine. The interceptor only touches QML files under the config
-// home.
+// clearComponentCache() does not drop it. Objects of the old shell can outlive it (windows go
+// with deleteLater), so without this the new shell could be made from the old files. A changing
+// query on the URL makes each reload's files new to the engine. The interceptor only touches QML
+// files under the config home.
 class ShellHost::GenerationInterceptor : public QQmlAbstractUrlInterceptor {
  public:
   explicit GenerationInterceptor(QString root) : root_(std::move(root)) {}
@@ -294,8 +294,7 @@ QString ShellHost::failures(const Loaded& loaded, int* built) {
 
 bool ShellHost::reloadSafe() {
   // Nothing in the config home is read: the built-in shell and the default theme, always.
-  loaded_.reset();
-  engine_->clearComponentCache();
+  resetEngine();
   applyTheme();
   QString error;
   std::unique_ptr<Loaded> next =
@@ -342,7 +341,7 @@ bool ShellHost::reload() {
     // The files compile, but creating the shell can still fail. The old shell stays alive and
     // on screen while the new one is built (hidden); install() swaps them on success.
     interceptor_->nextGeneration();
-    engine_->clearComponentCache();
+    resetEngine();
     applyTheme();
     next = build(QUrl::fromLocalFile(entryPath()), &error);
   }
@@ -350,18 +349,10 @@ bool ShellHost::reload() {
   if (next) {
     int built = 0;
     const QString failed = failures(*next, &built);
-    const bool hadWindows = loaded_ && !loaded_->entries.empty();
     if (!failed.isEmpty() && built == 0) {
       // Not one window of the new shell could be built: nothing to show but the error.
       error = failed;
       qWarning().noquote() << "wabar: no window could be built:" << error;
-      next.reset();
-    } else if (next->entries.empty() && hadWindows) {
-      // A shell that makes no windows where the old one had some is a failed delegate or a
-      // wrong filter far more often than a wish; keep what works.
-      error =
-          QStringLiteral("%1 created no windows; the previous shell stays").arg(options_.entryFile);
-      qWarning().noquote() << "wabar:" << error;
       next.reset();
     } else {
       setError(failed);
@@ -375,6 +366,16 @@ bool ShellHost::reload() {
   if (!loaded_) buildFallback();  // nothing to keep: show the error
   emit reloaded(false);
   return false;
+}
+
+void ShellHost::resetEngine() {
+  // The old shell first: nothing made from the old files or holding a singleton may outlive the
+  // clear. Qt drops the singletons the engine owns (deleting them, so their threads and hooks
+  // stop) and creates them again on first use; singletons set from outside keep their value.
+  loaded_.reset();
+  engine_->clearSingletons();
+  engine_->clearComponentCache();
+  emit singletonsCleared();
 }
 
 std::unique_ptr<ShellHost::Loaded> ShellHost::build(const QUrl& url, QString* error) {

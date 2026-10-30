@@ -16,15 +16,26 @@ namespace wabar::app {
 
 inline void connectQuickshell(QQmlEngine* engine, host::ShellHost* host,
                               const QString& configHome) {
-  auto* quickshell = engine->singletonInstance<quickshell_io::QuickshellSingleton*>(
-      QStringLiteral("wabar.services"), QStringLiteral("QuickshellSingleton"));
-  if (!quickshell) return;
-  quickshell->setShellDir(configHome);
-  // Queued: a widget asks for the reload from inside the shell the reload replaces.
-  QObject::connect(
-      quickshell, &quickshell_io::QuickshellSingleton::reloadRequested, host,
-      [host](bool) { host->reload(); }, Qt::QueuedConnection);
-  QObject::connect(host, &host::ShellHost::reloaded, quickshell, [quickshell, host](bool ok) {
+  const auto singleton = [engine] {
+    return engine->singletonInstance<quickshell_io::QuickshellSingleton*>(
+        QStringLiteral("wabar.services"), QStringLiteral("QuickshellSingleton"));
+  };
+  // A reload makes the engine drop its singletons, this one among them: nothing keeps the pointer,
+  // and the wiring is done again for the new instance (host->singletonsCleared).
+  const auto wire = [host, configHome, singleton] {
+    auto* quickshell = singleton();
+    if (!quickshell) return;
+    quickshell->setShellDir(configHome);
+    // Queued: a widget asks for the reload from inside the shell the reload replaces.
+    QObject::connect(
+        quickshell, &quickshell_io::QuickshellSingleton::reloadRequested, host,
+        [host](bool) { host->reload(); }, Qt::QueuedConnection);
+  };
+  wire();
+  QObject::connect(host, &host::ShellHost::singletonsCleared, host, wire);
+  QObject::connect(host, &host::ShellHost::reloaded, host, [host, singleton](bool ok) {
+    auto* quickshell = singleton();
+    if (!quickshell) return;
     if (ok) {
       emit quickshell->reloadCompleted();
     } else {

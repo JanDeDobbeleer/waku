@@ -42,14 +42,21 @@ import wabar
 ShellRoot { Panel { content: PanelLayout { start: [ Text { objectName: "a"; text: "second" } ] } } }
 )"));
   QSignalSpy reloaded(h.host.get(), &ShellHost::reloaded);
-  auto* quickshell = h.engine.singletonInstance<wabar::quickshell_io::QuickshellSingleton*>(
-      QStringLiteral("wabar.services"), QStringLiteral("QuickshellSingleton"));
-  ASSERT_NE(quickshell, nullptr);
-  quickshell->reload();
+  // The engine drops its singletons on each reload: resolve the Quickshell one again every time.
+  const auto quickshellOf = [&h] {
+    return h.engine.singletonInstance<wabar::quickshell_io::QuickshellSingleton*>(
+        QStringLiteral("wabar.services"), QStringLiteral("QuickshellSingleton"));
+  };
+  ASSERT_NE(quickshellOf(), nullptr);
+  quickshellOf()->reload();
   ASSERT_TRUE(QTest::qWaitFor([&] { return reloaded.count() >= 1; }, 3000));
   EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("second"));
 
-  // The outcome reaches the singleton's signals.
+  // The new singleton is wired too, and the outcome reaches its signals.
+  auto* quickshell = quickshellOf();
+  ASSERT_NE(quickshell, nullptr);
+  EXPECT_EQ(QDir::fromNativeSeparators(quickshell->shellDir()),
+            QDir::fromNativeSeparators(h.dir.path()));
   QSignalSpy failed(quickshell, &wabar::quickshell_io::QuickshellSingleton::reloadFailed);
   write(h.shellFile(), QStringLiteral("not qml {{{"));
   quickshell->reload(true);

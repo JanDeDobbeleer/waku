@@ -429,11 +429,11 @@ ShellRoot {
   EXPECT_EQ(findItem(h.window(), QStringLiteral("bad")), nullptr);
 }
 
-TEST(ShellHostTest, AReloadThatFailsWhileCreatingKeepsThePreviousShell) {
+// The check passed, so the engine was reset: the old shell is gone and the fallback shows why.
+TEST(ShellHostTest, AReloadThatFailsWhileCreatingShowsTheFallbackWithTheError) {
   Harness h;
   h.start(shellConfig(QStringLiteral("good")));
   ASSERT_TRUE(h.host->reload());
-  QPointer<QQuickWindow> before = h.window();
 
   // It compiles, so the check passes; the content cannot be created.
   write(h.shellFile(), QStringLiteral(R"(
@@ -446,16 +446,18 @@ ShellRoot {
   EXPECT_FALSE(h.host->reload());
   EXPECT_TRUE(h.host->error().contains(QStringLiteral("notGiven"))) << qPrintable(h.host->error());
   ASSERT_EQ(h.host->windows().size(), 1);
-  EXPECT_EQ(h.window(), before.data());  // the very same window, not a fallback
-  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("good"));
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("<missing>"));  // the old shell is gone
   EXPECT_EQ(findItem(h.window(), QStringLiteral("bad")), nullptr);
+  settle();
+  QQuickItem* pill = findItem(h.window(), QStringLiteral("errorPill"));
+  ASSERT_NE(pill, nullptr);
+  EXPECT_TRUE(pill->isVisible());
 }
 
-TEST(ShellHostTest, AReloadWhoseVariantsDelegateFailsKeepsThePreviousShell) {
+TEST(ShellHostTest, AReloadWhoseVariantsDelegateFailsShowsTheFallback) {
   Harness h;
   h.start(shellConfig(QStringLiteral("good")));
   ASSERT_TRUE(h.host->reload());
-  QPointer<QQuickWindow> before = h.window();
 
   write(h.shellFile(), QStringLiteral(R"(
 import QtQuick
@@ -473,8 +475,7 @@ ShellRoot {
   EXPECT_FALSE(h.host->reload());
   EXPECT_FALSE(h.host->error().isEmpty());
   ASSERT_EQ(h.host->windows().size(), 1);
-  EXPECT_EQ(h.window(), before.data());
-  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("good"));
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("<missing>"));  // the fallback, not "good"
 }
 
 TEST(ShellHostTest, ABrokenFirstLoadThatCompilesStillShowsTheFallback) {
@@ -561,4 +562,132 @@ TEST(ShellHostTest, ANewQmlFileInTheConfigHomeReloads) {
   QSignalSpy reloaded(h.host.get(), &ShellHost::reloaded);
   write(h.dir.filePath(QStringLiteral("Extra.qml")), QStringLiteral("import QtQml\nQtObject {}\n"));
   ASSERT_TRUE(QTest::qWaitFor([&] { return reloaded.count() >= 1; }, 5000));
+}
+
+// ---- singletons across a reload ----
+
+namespace {
+
+QStringList* g_reloadWarnings = nullptr;
+QtMessageHandler g_reloadPrevious = nullptr;
+
+void collectReloadWarnings(QtMsgType type, const QMessageLogContext& context, const QString& text) {
+  if (g_reloadWarnings && type != QtDebugMsg) g_reloadWarnings->append(text);
+  if (g_reloadPrevious) g_reloadPrevious(type, context, text);
+}
+
+// Collects the Qt messages of its lifetime.
+struct WarningCapture {
+  QStringList lines;
+  WarningCapture() {
+    g_reloadWarnings = &lines;
+    g_reloadPrevious = qInstallMessageHandler(collectReloadWarnings);
+  }
+  ~WarningCapture() {
+    qInstallMessageHandler(g_reloadPrevious);
+    g_reloadWarnings = nullptr;
+  }
+  bool has(const QString& needle) const {
+    for (const QString& line : lines) {
+      if (line.contains(needle)) return true;
+    }
+    return false;
+  }
+};
+
+void writeSingletonShell(Harness& h) {
+  write(h.dir.filePath(QStringLiteral("qmldir")), QStringLiteral(R"(
+singleton Counter Counter.qml
+singleton Holder Holder.qml
+Foo Foo.qml
+)"));
+  write(h.dir.filePath(QStringLiteral("Counter.qml")), QStringLiteral(R"(
+pragma Singleton
+import QtQml
+QtObject { property int count: 0 }
+)"));
+  // The ScreenState pattern: a singleton whose property type is a component of another file.
+  write(h.dir.filePath(QStringLiteral("Holder.qml")), QStringLiteral(R"(
+pragma Singleton
+import QtQml
+QtObject { property Foo state: Foo {} }
+)"));
+  write(h.shellFile(), QStringLiteral(R"(
+import QtQuick
+import wabar
+ShellRoot {
+    QtObject {
+        objectName: "probe"
+        property int count: Counter.count
+        property string label: Holder.state.label
+        Component.onCompleted: Counter.count += 1
+    }
+    Panel { content: PanelLayout { start: [ Text { objectName: "a"; text: "x" } ] } }
+}
+)"));
+}
+
+void writeFoo(Harness& h, const QString& label) {
+  write(h.dir.filePath(QStringLiteral("Foo.qml")),
+        QStringLiteral("import QtQml\nQtObject { property string label: \"%1\" }\n").arg(label));
+}
+
+QObject* probeOf(Harness& h) {
+  return h.host->shell() ? h.host->shell()->findChild<QObject*>(QStringLiteral("probe")) : nullptr;
+}
+
+}  // namespace
+
+TEST(ShellHostTest, AReloadMakesNewSingletons) {
+  Harness h;
+  ASSERT_TRUE(h.dir.isValid());
+  writeSingletonShell(h);
+  writeFoo(h, QStringLiteral("one"));
+  h.makeHost();
+  WarningCapture capture;
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  ASSERT_NE(probeOf(h), nullptr);
+  EXPECT_EQ(probeOf(h)->property("count").toInt(), 1);
+
+  // An old singleton would count 2; a new one starts again.
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  ASSERT_NE(probeOf(h), nullptr);
+  EXPECT_EQ(probeOf(h)->property("count").toInt(), 1);
+  EXPECT_FALSE(capture.has(QStringLiteral("Unable to assign")))
+      << qPrintable(capture.lines.join('\n'));
+}
+
+TEST(ShellHostTest, EditingAComponentASingletonUsesAsAPropertyTypeReloadsCleanly) {
+  Harness h;
+  ASSERT_TRUE(h.dir.isValid());
+  writeSingletonShell(h);
+  writeFoo(h, QStringLiteral("one"));
+  h.makeHost();
+  WarningCapture capture;
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  ASSERT_NE(probeOf(h), nullptr);
+  EXPECT_EQ(probeOf(h)->property("label").toString(), QStringLiteral("one"));
+
+  write(h.dir.filePath(QStringLiteral("Foo.qml")),
+        QStringLiteral("import QtQml\nQtObject { property string label: \"two\"; "
+                       "property int extra: 1 }\n"));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  ASSERT_NE(probeOf(h), nullptr);
+  EXPECT_EQ(probeOf(h)->property("label").toString(), QStringLiteral("two"));
+  EXPECT_FALSE(capture.has(QStringLiteral("Unable to assign")))
+      << qPrintable(capture.lines.join('\n'));
+  EXPECT_FALSE(capture.has(QStringLiteral("TypeError"))) << qPrintable(capture.lines.join('\n'));
+}
+
+TEST(ShellHostTest, ReloadTellsHoldersToResolveSingletonsAgain) {
+  Harness h;
+  h.start(shellConfig());
+  QSignalSpy cleared(h.host.get(), &ShellHost::singletonsCleared);
+  ASSERT_TRUE(h.host->reload());
+  ASSERT_TRUE(h.host->reload());
+  EXPECT_EQ(cleared.count(), 2);
+  // A file that fails the check is not a reload: the engine and its singletons stay.
+  write(h.shellFile(), QStringLiteral("not qml {{{"));
+  EXPECT_FALSE(h.host->reload());
+  EXPECT_EQ(cleared.count(), 2);
 }

@@ -101,11 +101,11 @@ manual click-through check, and the release gate in `2026-10-30-handoff.md`.
   are 0 Auto, 1 Celsius, 2 Fahrenheit, 3 Kelvin.
 - **Hairline at the arcs.** Anti-aliasing left a seam between the arcs and the frame. The arcs now
   carry a thin edge in the same colour; no seam shows at 5 times zoom.
-- **Open engine gap: hot reload keeps singletons.** Editing a QML file while the shell runs made the
+- **Engine gap, fixed: hot reload kept singletons.** `ShellHost` now calls `clearSingletons()` on
+  every reload (see `docs/architecture.md`, "Singletons across a reload"). Editing a QML file while the shell runs made the
   engine reload, and QML singletons survived with their old types: `Unable to assign
   ScreenState_QMLTYPE_963 to ScreenState_QMLTYPE_2519` and `Cannot read property 'dashboard' of
-  null`. A restart is clean. The engine should clear singletons when it reloads (Quickshell reloads
-  the whole engine).
+  null`. A restart was clean; a reload now is too.
 
 - **Arc tips (second fix).** At pixel level, the far end of each arc, where it turns tangent to the
   frame, let one pixel of the window behind show through. Each arc piece now extends 3 logical px

@@ -382,6 +382,32 @@ No new singleton without a row here and a reason.
 
 Function-local `static const` regexes and lookup tables are immutable and not listed.
 
+### Singletons across a reload
+
+`ShellHost::reload` starts a clean engine, as Quickshell does. After the check of the new files
+passes, it destroys the old shell, calls `QQmlEngine::clearSingletons()` and `clearComponentCache()`,
+emits `singletonsCleared` and builds the new shell. Without it, a QML singleton kept its old type
+definitions and the new shell failed with `Unable to assign Foo to Foo` and null dereferences. Rules:
+
+- Every singleton the engine owns is destroyed and created again on first use. Nothing may keep a
+  pointer to one across a reload: resolve it with `singletonInstance` at the time of use. The
+  composition root does so (`wallpaper` accessor in `main.cpp`, `connectQuickshell` rewires the
+  `Quickshell` singleton on `singletonsCleared`). A shell part that caches one (`WallpaperSettings`)
+  is destroyed with the old shell and resolves it again in `activate()`.
+- A shell that passes the check but cannot be created leaves the fallback shell with the error: the
+  old shell is gone. A file that fails the check still keeps the old shell and the singletons.
+- State that must survive stays outside the singletons: `PersistentProperties` (per engine), the
+  taskbar marker, `host::Hotkeys`, and the shared `weak_ptr` hubs (media, notifications), which live
+  while any holder lives.
+- Each reload therefore stops and starts the services the new shell uses: the `Systray` host (the
+  hook in Explorer is detached and injected again, so tray icons flicker), the
+  `TaskbarService` tracker (it restarts when a Taskbar widget hands over its bar window),
+  `Notifications`, `Bluetooth`, `Network`, `ControlCenter` (brightness worker), `Wallpapers` (its
+  hotkey and watchers). Each destructor stops and joins its thread (threading table). The image
+  providers they register (`tray`, `appicon`, `windowicon`, `wallpaper`) are replaced when the
+  singleton is created again; one a new shell never touches stays registered with a dead model, so
+  a shell must reach an image through its service first.
+
 ## Error handling
 
 - Exceptions never cross a Qt boundary: slots, lambdas connected to signals, event handlers,

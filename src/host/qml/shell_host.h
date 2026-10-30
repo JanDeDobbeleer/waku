@@ -36,11 +36,16 @@ class QsWindow;
 // reload() first checks shell.qml and theme.qml in a throwaway engine: they compile, their types
 // exist and their roots are a ShellRoot and a ThemeSpec. Nothing is created there, so no widget is
 // built and no service starts. Only then is the Theme singleton filled and the new shell built in
-// the live engine, next to the old one: its windows stay hidden until it is complete, and the old
-// shell goes only when the new one is installed. A file that fails the check, a shell that cannot
-// be created, or one with no window where the old one had some leaves the previous shell in place:
-// `error` holds the first message (each PanelWindow shows it as a pill) and the full list goes to
-// the log.
+// the live engine. A file that fails the check leaves the previous shell in place: `error` holds
+// the first message (each PanelWindow shows it as a pill) and the full list goes to the log.
+//
+// A check that passes starts a clean engine, as Quickshell does: the old shell is destroyed, then
+// the engine drops its QML singletons (QQmlEngine::clearSingletons) and compiled files, then
+// `singletonsCleared` fires and the new shell is built. Singletons survive a plain
+// clearComponentCache() with their old types, and the new shell then mixes old and new types
+// (`Unable to assign Foo to Foo`). Nothing may keep a pointer to a singleton across a reload:
+// resolve it again after `singletonsCleared`. A shell that then cannot be created shows the
+// fallback with the error, because the old one is gone.
 //
 // The windows of a shell (PanelWindow, FloatingWindow, wherever they are declared) register
 // themselves with the host of their engine (the context property `ShellHost`). A window that fails
@@ -111,7 +116,8 @@ class ShellHost : public QObject {
   ~ShellHost() override;
 
   // True when the shell was applied (some windows may still have failed: see `error`). False
-  // leaves the previous shell in place, or shows the fallback when there is none.
+  // leaves the previous shell in place when the files failed the check, and shows the fallback
+  // when the new shell could not be created or there was no shell.
   bool reload();
   // Reloads whenever a file in the config home changes. Does nothing in safe mode.
   void watch();
@@ -157,6 +163,9 @@ class ShellHost : public QObject {
   // A mouse button went down in one of the shell windows.
   void windowPressed();
   void reloaded(bool ok);
+  // The engine dropped its QML singletons and is about to build a shell: whoever holds or wires a
+  // singleton does it again now.
+  void singletonsCleared();
 
  private:
   struct Entry {
@@ -185,6 +194,8 @@ class ShellHost : public QObject {
   // Copies theme.qml (or the defaults, when there is none) into the Theme singleton.
   void applyTheme();
   bool reloadSafe();
+  // Destroys the shell, drops the engine's singletons and compiled files, emits singletonsCleared.
+  void resetEngine();
   std::unique_ptr<Loaded> build(const QUrl& url, QString* error);
   bool buildFallback();
   void install(std::unique_ptr<Loaded> loaded);
