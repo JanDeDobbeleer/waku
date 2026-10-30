@@ -12,6 +12,8 @@ wabar_feature(NAME color_scheme
     hct.cpp
     image_source.h
     image_source.cpp
+    image_stats_cache.h
+    image_stats_cache.cpp
     quantizer.h
     quantizer.cpp
     tonal_palette.h

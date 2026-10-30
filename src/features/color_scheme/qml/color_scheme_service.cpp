@@ -9,6 +9,8 @@
 
 #include "features/color_scheme/dynamic_scheme.h"
 #include "features/color_scheme/image_source.h"
+#include "kernel/qt/app_data.h"
+#include "kernel/qt/live_desktop.h"
 
 namespace wabar::color_scheme {
 
@@ -63,18 +65,35 @@ struct ImageResult {
   QString error;
 };
 
-ImageResult schemeFromImageFile(const QString& path, Variant variant, bool dark, double contrast) {
+// The seed colour of an image file: from `stats` when the file is unchanged, else decoded (and
+// remembered). Nullopt, with `error` set, when the file cannot be read.
+std::optional<Argb> seedOfFile(ImageStatsCache* stats, const QString& path, QString* error) {
+  const QString key = stats ? ImageStatsCache::keyFor(path) : QString();
+  if (!key.isEmpty()) {
+    if (const auto cached = stats->seed(key)) return static_cast<Argb>(*cached);
+  }
+  const QImage image = readImageScaled(path, 128, error);
+  if (image.isNull()) {
+    if (error->isEmpty()) *error = QStringLiteral("cannot read image");
+    return std::nullopt;
+  }
+  const std::optional<Argb> seed = seedColorFromImage(image);
+  if (!seed) {
+    *error = QStringLiteral("empty image");
+    return std::nullopt;
+  }
+  if (!key.isEmpty()) stats->setSeed(key, static_cast<quint32>(*seed));
+  return seed;
+}
+
+ImageResult schemeFromImageFile(ImageStatsCache* stats, const QString& path, Variant variant,
+                                bool dark, double contrast) {
   ImageResult result;
   try {
     QString error;
-    const QImage image = readImageScaled(path, 128, &error);
-    if (image.isNull()) {
-      result.error = error.isEmpty() ? QStringLiteral("cannot read image") : error;
-      return result;
-    }
-    const std::optional<Argb> seed = seedColorFromImage(image);
+    const std::optional<Argb> seed = seedOfFile(stats, path, &error);
     if (!seed) {
-      result.error = QStringLiteral("empty image");
+      result.error = error;
       return result;
     }
     result.scheme = toValue(makeScheme(*seed, variant, dark, contrast));
@@ -88,7 +107,15 @@ ImageResult schemeFromImageFile(const QString& path, Variant variant, bool dark,
 
 }  // namespace
 
-ColorSchemeService::ColorSchemeService(QObject* parent) : QObject(parent) {}
+ColorSchemeService::ColorSchemeService(QObject* parent)
+    : ColorSchemeService(std::make_shared<ImageStatsCache>(
+                             wabar::kernel::liveDesktop(QStringLiteral("color_scheme"))
+                                 ? wabar::kernel::appDataDir() + QStringLiteral("/image_stats.json")
+                                 : QString()),
+                         parent) {}
+
+ColorSchemeService::ColorSchemeService(std::shared_ptr<ImageStatsCache> stats, QObject* parent)
+    : QObject(parent), stats_(std::move(stats)) {}
 
 QStringList ColorSchemeService::variants() const {
   QStringList names;
@@ -129,8 +156,9 @@ void ColorSchemeService::fromImage(const QString& path, const QString& variant, 
   const QString local = toLocalPath(path);
   const Variant chosen = *parsed;
   QPointer<ColorSchemeService> self(this);
-  QThreadPool::globalInstance()->start([self, path, local, chosen, dark, contrast] {
-    ImageResult result = schemeFromImageFile(local, chosen, dark, contrast);
+  const std::shared_ptr<ImageStatsCache> stats = stats_;
+  QThreadPool::globalInstance()->start([self, stats, path, local, chosen, dark, contrast] {
+    ImageResult result = schemeFromImageFile(stats.get(), local, chosen, dark, contrast);
     if (self.isNull()) return;
     QMetaObject::invokeMethod(
         self.data(),
@@ -161,14 +189,21 @@ SchemeValue ColorSchemeService::generate(const QVariant& source, const QString& 
 }
 
 double ColorSchemeService::luminance(const QString& path) const {
-  const QImage image = readImageScaled(toLocalPath(path), kLuminanceSide);
-  return image.isNull() ? -1.0 : meanLuminance(image);
+  const QString local = toLocalPath(path);
+  const QString key = ImageStatsCache::keyFor(local);
+  if (!key.isEmpty()) {
+    if (const auto cached = stats_->luminance(key)) return *cached;
+  }
+  const QImage image = readImageScaled(local, kLuminanceSide);
+  if (image.isNull()) return -1.0;
+  const double value = meanLuminance(image);
+  if (!key.isEmpty()) stats_->setLuminance(key, value);
+  return value;
 }
 
 QColor ColorSchemeService::seedColor(const QString& path) const {
-  const QImage image = readImageScaled(toLocalPath(path), 128);
-  if (image.isNull()) return {};
-  const std::optional<Argb> seed = seedColorFromImage(image);
+  QString error;
+  const std::optional<Argb> seed = seedOfFile(stats_.get(), toLocalPath(path), &error);
   return seed ? toQColor(*seed) : QColor();
 }
 

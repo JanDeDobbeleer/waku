@@ -7,7 +7,9 @@
 #include <QString>
 #include <QStringList>
 #include <QVariant>
+#include <memory>
 
+#include "features/color_scheme/image_stats_cache.h"
 #include "features/color_scheme/qml/color_scheme_types.h"
 
 namespace wabar::color_scheme {
@@ -34,6 +36,8 @@ class ColorSchemeService : public QObject {
 
  public:
   explicit ColorSchemeService(QObject* parent = nullptr);
+  // `stats` remembers the seed colour and luminance of image files between calls and runs.
+  explicit ColorSchemeService(std::shared_ptr<ImageStatsCache> stats, QObject* parent = nullptr);
 
   QStringList variants() const;
 
@@ -68,6 +72,7 @@ class ColorSchemeService : public QObject {
   void fromImageFailed(const QString& path, const QString& error);
 
  private:
+  std::shared_ptr<ImageStatsCache> stats_;
   QString variantOrDefault(const QString& variant) const;
 };
 

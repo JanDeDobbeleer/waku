@@ -16,6 +16,7 @@
 #include "features/color_scheme/dynamic_scheme.h"
 #include "features/color_scheme/hct.h"
 #include "features/color_scheme/image_source.h"
+#include "features/color_scheme/image_stats_cache.h"
 #include "features/color_scheme/qml/color_scheme_service.h"
 #include "features/color_scheme/quantizer.h"
 #include "features/color_scheme/tonal_palette.h"
@@ -822,3 +823,72 @@ QtObject {
 }
 
 }  // namespace
+
+namespace {
+
+QString writeSolidPng(const QTemporaryDir& dir, const QString& name, QColor color) {
+  QImage image(64, 64, QImage::Format_RGB32);
+  image.fill(color);
+  const QString path = dir.filePath(name);
+  EXPECT_TRUE(image.save(path, "PNG"));
+  return path;
+}
+
+}  // namespace
+
+TEST(ColorSchemeImageStats, PersistsAcrossInstancesAndMissesOnChange) {
+  QTemporaryDir dir;
+  ASSERT_TRUE(dir.isValid());
+  const QString image = writeSolidPng(dir, QStringLiteral("a.png"), Qt::red);
+  const QString file = dir.filePath(QStringLiteral("stats.json"));
+  const QString key = ImageStatsCache::keyFor(image);
+  ASSERT_FALSE(key.isEmpty());
+  {
+    ImageStatsCache cache(file);
+    EXPECT_FALSE(cache.seed(key).has_value());
+    cache.setSeed(key, 0xff112233u);
+    cache.setLuminance(key, 0.25);
+  }
+  ImageStatsCache again(file);
+  EXPECT_EQ(again.seed(key), std::optional<quint32>(0xff112233u));
+  EXPECT_EQ(again.luminance(key), std::optional<double>(0.25));
+
+  // A different file content (size or time) is a different key.
+  QImage bigger(128, 128, QImage::Format_RGB32);
+  bigger.fill(Qt::blue);
+  ASSERT_TRUE(bigger.save(image, "PNG"));
+  EXPECT_NE(ImageStatsCache::keyFor(image), key);
+  EXPECT_FALSE(again.seed(ImageStatsCache::keyFor(image)).has_value());
+}
+
+TEST(ColorSchemeImageStats, CorruptFileReadsAsEmpty) {
+  QTemporaryDir dir;
+  ASSERT_TRUE(dir.isValid());
+  const QString file = dir.filePath(QStringLiteral("stats.json"));
+  QFile broken(file);
+  ASSERT_TRUE(broken.open(QIODevice::WriteOnly));
+  broken.write("{ not json");
+  broken.close();
+  ImageStatsCache cache(file);
+  EXPECT_FALSE(cache.seed(QStringLiteral("x")).has_value());
+  cache.setSeed(QStringLiteral("x"), 1u);  // and it writes a good file over it
+  EXPECT_EQ(ImageStatsCache(file).seed(QStringLiteral("x")), std::optional<quint32>(1u));
+}
+
+TEST(ColorSchemeImageStats, ServiceAnswersFromTheCacheWithoutDecoding) {
+  QTemporaryDir dir;
+  ASSERT_TRUE(dir.isValid());
+  const QString image = writeSolidPng(dir, QStringLiteral("a.png"), Qt::black);
+  auto stats = std::make_shared<ImageStatsCache>();
+  ColorSchemeService service(stats);
+  // A black image has luminance 0; the planted value proves the file was not decoded.
+  stats->setLuminance(ImageStatsCache::keyFor(image), 0.75);
+  EXPECT_DOUBLE_EQ(service.luminance(image), 0.75);
+
+  const QString other = writeSolidPng(dir, QStringLiteral("b.png"), Qt::black);
+  EXPECT_NEAR(service.luminance(other), 0.0, 1e-6);
+  EXPECT_TRUE(stats->luminance(ImageStatsCache::keyFor(other)).has_value());  // remembered
+
+  stats->setSeed(ImageStatsCache::keyFor(image), 0xff00ff00u);
+  EXPECT_EQ(service.seedColor(image), QColor(0, 255, 0));
+}
