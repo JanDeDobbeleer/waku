@@ -59,6 +59,12 @@ class Region : public QObject {
  public:
   explicit Region(QObject* parent = nullptr) : QObject(parent) {
     connect(this, &Region::shapeChanged, this, &Region::treeChanged);
+    connect(this, &Region::xChanged, this, &Region::treeChanged);
+    connect(this, &Region::yChanged, this, &Region::treeChanged);
+    connect(this, &Region::widthChanged, this, &Region::treeChanged);
+    connect(this, &Region::heightChanged, this, &Region::treeChanged);
+    connect(this, &Region::itemChanged, this, &Region::treeChanged);
+    connect(this, &Region::intersectionChanged, this, &Region::treeChanged);
     connect(this, &Region::regionsChanged, this, &Region::treeChanged);
   }
 
@@ -71,8 +77,14 @@ class Region : public QObject {
   RegionNode node() const;
 
  signals:
-  // The shape, the item or the intersection was set. (Moving the item or changing a child does not
-  // emit; the poller reads the region each time.)
+  // One notify signal per property, so a binding can read one while writing another. (Moving the
+  // item or changing a child does not emit; the poller reads the region each time.)
+  void xChanged();
+  void yChanged();
+  void widthChanged();
+  void heightChanged();
+  void itemChanged();
+  void intersectionChanged();
   void shapeChanged();
   void regionsChanged();
   // This region or any region below it changed (any property, item, intersection or the child
