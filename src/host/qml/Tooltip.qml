@@ -8,8 +8,8 @@ import QtQuick.Window
 //     }
 //
 // It appears after `delay` ms of hovering, just outside the panel (below a top panel, above a
-// bottom one), and goes when the pointer leaves or any button is pressed. It never takes focus or
-// input. Declare it as a direct child of the item to watch, not inside a Row, Column or other
+// bottom one, right of a left one, left of a right one), and goes when the pointer leaves or any
+// button is pressed. It never takes focus or input. Declare it as a direct child of the item to watch, not inside a Row, Column or other
 // positioner (it fills its parent). A Pill has `tooltip: "..."` for this.
 Item {
     id: root
@@ -40,9 +40,11 @@ Item {
         const origin = target.mapToGlobal(0, 0);
         const screenInfo = target.Screen;
         const w = shellWindow;
-        const edge = w && w.anchors !== undefined && w.anchors.bottom && !w.anchors.top
-            ? PopupPlacement.Above : PopupPlacement.Below;
-        const spot = PopupPlacement.position(Qt.rect(origin.x, bar.y, target.width, bar.height),
+        const edge = PopupPlacement.edgeForDock(w ? w.dockEdge : DockEdge.None);
+        const anchorRect = PopupPlacement.anchorRect(Qt.rect(origin.x, origin.y, target.width, target.height),
+                                                     Qt.rect(bar.x, bar.y, bar.width, bar.height),
+                                                     w ? w.dockVertical : false);
+        const spot = PopupPlacement.position(anchorRect,
                                              Qt.size(tip.width, tip.height),
                                              Qt.rect(screenInfo.virtualX, screenInfo.virtualY, screenInfo.width, screenInfo.height),
                                              edge, gap, margin);

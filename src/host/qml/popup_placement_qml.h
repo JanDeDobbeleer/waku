@@ -22,20 +22,68 @@ class PopupPlacement : public QObject {
 
  public:
   // Which side of the anchor the popup prefers.
-  enum Edge { Below, Above };
+  enum Edge { Below, Above, Right, Left };
   Q_ENUM(Edge)
 
   explicit PopupPlacement(QObject* parent = nullptr) : QObject(parent) {}
 
-  static QPointF place(const QRectF& anchor, const QSizeF& size, const QRectF& screen, Edge edge,
+  static PopupEdge toPopupEdge(int edge) {
+    switch (edge) {
+      case Above:
+        return PopupEdge::Above;
+      case Right:
+        return PopupEdge::Right;
+      case Left:
+        return PopupEdge::Left;
+      default:
+        return PopupEdge::Below;
+    }
+  }
+
+  static QPointF place(const QRectF& anchor, const QSizeF& size, const QRectF& screen, int edge,
                        qreal gap, qreal margin) {
-    return placePopup(anchor, size, screen, edge == Above ? PopupEdge::Above : PopupEdge::Below,
-                      gap, margin);
+    return placePopup(anchor, size, screen, toPopupEdge(edge), gap, margin);
   }
 
   Q_INVOKABLE QPointF position(const QRectF& anchor, const QSizeF& size, const QRectF& screen,
                                int edge, qreal gap, qreal margin) const {
-    return place(anchor, size, screen, edge == Above ? Above : Below, gap, margin);
+    return place(anchor, size, screen, edge, gap, margin);
+  }
+
+  // The side for a window docked to `dockEdge` (a DockEdge value): Below, Above, Right or Left.
+  Q_INVOKABLE int edgeForDock(int dockEdge) const {
+    std::optional<AppBarEdge> edge;
+    switch (dockEdge) {
+      case DockEdge::Top:
+        edge = AppBarEdge::Top;
+        break;
+      case DockEdge::Bottom:
+        edge = AppBarEdge::Bottom;
+        break;
+      case DockEdge::Left:
+        edge = AppBarEdge::Left;
+        break;
+      case DockEdge::Right:
+        edge = AppBarEdge::Right;
+        break;
+      default:
+        break;
+    }
+    switch (popupEdgeForDock(edge)) {
+      case PopupEdge::Above:
+        return Above;
+      case PopupEdge::Right:
+        return Right;
+      case PopupEdge::Left:
+        return Left;
+      default:
+        return Below;
+    }
+  }
+
+  // `item` (global rectangle) extended across the thickness of its panel (`panel`, global).
+  Q_INVOKABLE QRectF anchorRect(const QRectF& item, const QRectF& panel, bool vertical) const {
+    return panelAnchorRect(item, panel, vertical);
   }
 };
 
@@ -43,10 +91,12 @@ class PopupPlacement : public QObject {
 //   item     the item it belongs to
 //   rect     the part of `item` to open next to, in the item's coordinates; unset (empty): the
 //            item across the whole thickness of its window, so the popup opens outside the bar
-//   edges    the side of `rect` it opens on (Edges flags): Top opens above, Bottom below
+//   edges    the side of `rect` it opens on (Edges flags): Top opens above, Bottom below, Left to
+//            the left, Right to the right
 //   gravity  the direction it grows from there; used for the side when `edges` names none
 // wabar keeps its own placement: centred on the anchor, kept on screen, flipped when the side has
-// no room. Unset edges and gravity: below, or above when the window is a bottom panel.
+// no room. Unset edges and gravity: the side away from the panel's edge (below a top panel, above
+// a bottom one, right of a left one, left of a right one), below in a window that is not a panel.
 class PopupAnchor : public QObject {
   Q_OBJECT
   // Creatable only because PopupWindow.qml holds one; users set it through `anchor.item` and
@@ -92,6 +142,8 @@ class PopupAnchor : public QObject {
     for (int flags : {edges_, gravity_}) {
       if (flags & Edges::Top) return PopupPlacement::Above;
       if (flags & Edges::Bottom) return PopupPlacement::Below;
+      if (flags & Edges::Left) return PopupPlacement::Left;
+      if (flags & Edges::Right) return PopupPlacement::Right;
     }
     return fallback;
   }

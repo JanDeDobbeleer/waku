@@ -17,8 +17,9 @@ import QtQuick.Window
 //
 // `anchor` follows Quickshell: `anchor.item`, `anchor.rect` (a part of the item), `anchor.edges`
 // and `anchor.gravity` (Edges.Top opens above, Edges.Bottom below). By default it opens just
-// outside the panel (below a top panel, above a bottom one), centred on the widget and kept inside
-// the screen. A click in the panel, a click in another window, Escape or `close()` closes it.
+// outside the panel (below a top panel, above a bottom one, right of a left one, left of a right
+// one; below in a window that is not a docked panel), centred on the widget and kept inside the
+// screen. A click in the panel, a click in another window, Escape or `close()` closes it.
 // Whatever you put inside is stacked in a column and sizes the window; colours come from Theme
 // (popupSurface, popupBorder).
 Window {
@@ -45,11 +46,10 @@ Window {
     // not reopen it through the widget's own click handler.
     property double closedAt: 0
 
-    // Below the anchor, or above it in a panel docked to the bottom edge.
+    // Away from the edge the panel is docked to (QsWindow.dockEdge): below a top panel, above a
+    // bottom one, right of a left one, left of a right one. Below in any other window.
     function defaultEdge() {
-        const w = shellWindow;
-        return w && w.anchors !== undefined && w.anchors.bottom && !w.anchors.top
-            ? PopupPlacement.Above : PopupPlacement.Below;
+        return PopupPlacement.edgeForDock(shellWindow ? shellWindow.dockEdge : DockEdge.None);
     }
 
     // The screen the anchor item is on, as a Window takes it (Qt.application.screens).
@@ -74,7 +74,10 @@ Window {
             rect = Qt.rect(origin.x, origin.y, anchor.rect.width, anchor.rect.height);
         } else {
             const origin = item.mapToGlobal(0, 0);
-            rect = Qt.rect(origin.x, bar.y, item.width, bar.height);
+            // The item across the thickness of its panel, so the popup clears the whole panel.
+            rect = PopupPlacement.anchorRect(Qt.rect(origin.x, origin.y, item.width, item.height),
+                                             Qt.rect(bar.x, bar.y, bar.width, bar.height),
+                                             shellWindow ? shellWindow.dockVertical : false);
         }
         const spot = PopupPlacement.position(rect, Qt.size(width, height),
                                              Qt.rect(screenInfo.virtualX, screenInfo.virtualY, screenInfo.width, screenInfo.height),

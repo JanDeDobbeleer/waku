@@ -141,6 +141,66 @@ TEST(PopupPlacementTest, GapAndMarginAreHonoured) {
   EXPECT_DOUBLE_EQ(edge.x(), 30);
 }
 
+// A vertical panel: the popup opens to the side and slides along the anchor.
+TEST(PopupPlacementTest, RightOpensBesideTheAnchorAndCentresVertically) {
+  const QRectF anchor(0, 300, 48, 40);
+  const QPointF p = PopupPlacement::place(anchor, kSize, kScreen, PopupPlacement::Right, 6, 8);
+  EXPECT_DOUBLE_EQ(p.x(), 54);        // anchor right 48 + gap
+  EXPECT_DOUBLE_EQ(p.y(), 320 - 50);  // anchor centre 320, minus half the height
+}
+
+TEST(PopupPlacementTest, LeftOpensBesideTheAnchor) {
+  const QRectF anchor(952, 300, 48, 40);
+  const QPointF p = PopupPlacement::place(anchor, kSize, kScreen, PopupPlacement::Left, 6, 8);
+  EXPECT_DOUBLE_EQ(p.x(), 952 - 6 - 200);
+  EXPECT_DOUBLE_EQ(p.y(), 270);
+}
+
+TEST(PopupPlacementTest, SideEdgesSlideAlongTheScreenEdgeAndFlip) {
+  const QPointF top =
+      PopupPlacement::place(QRectF(0, 0, 48, 40), kSize, kScreen, PopupPlacement::Right, 6, 8);
+  EXPECT_DOUBLE_EQ(top.y(), 8);
+  const QPointF bottom =
+      PopupPlacement::place(QRectF(0, 760, 48, 40), kSize, kScreen, PopupPlacement::Right, 6, 8);
+  EXPECT_DOUBLE_EQ(bottom.y(), 800 - 100 - 8);
+  // No room on the right of an anchor at the right edge: flips to its left.
+  const QPointF flipped =
+      PopupPlacement::place(QRectF(952, 300, 48, 40), kSize, kScreen, PopupPlacement::Right, 6, 8);
+  EXPECT_DOUBLE_EQ(flipped.x(), 952 - 6 - 200);
+  // No room on the left of an anchor at the left edge: flips to its right.
+  const QPointF flippedRight =
+      PopupPlacement::place(QRectF(0, 300, 48, 40), kSize, kScreen, PopupPlacement::Left, 6, 8);
+  EXPECT_DOUBLE_EQ(flippedRight.x(), 54);
+}
+
+TEST(PopupPlacementTest, EachDockEdgeOpensAwayFromItsEdge) {
+  using wabar::host::AppBarEdge;
+  using wabar::host::PopupEdge;
+  using wabar::host::popupEdgeForDock;
+  EXPECT_EQ(popupEdgeForDock(AppBarEdge::Top), PopupEdge::Below);
+  EXPECT_EQ(popupEdgeForDock(AppBarEdge::Bottom), PopupEdge::Above);
+  EXPECT_EQ(popupEdgeForDock(AppBarEdge::Left), PopupEdge::Right);
+  EXPECT_EQ(popupEdgeForDock(AppBarEdge::Right), PopupEdge::Left);
+  EXPECT_EQ(popupEdgeForDock(std::nullopt), PopupEdge::Below);
+}
+
+TEST(PopupPlacementTest, TheAnchorIsExtendedAcrossThePanelThickness) {
+  using wabar::host::panelAnchorRect;
+  const QRectF item(200, 4, 60, 24);
+  EXPECT_EQ(panelAnchorRect(item, QRectF(0, 0, 1000, 40), false), QRectF(200, 0, 60, 40));
+  const QRectF sideItem(4, 200, 40, 24);
+  EXPECT_EQ(panelAnchorRect(sideItem, QRectF(0, 0, 48, 800), true), QRectF(0, 200, 48, 24));
+}
+
+TEST(PopupPlacementTest, TheQmlEdgeForADockMatches) {
+  PopupPlacement qml;
+  EXPECT_EQ(qml.edgeForDock(wabar::host::DockEdge::Top), PopupPlacement::Below);
+  EXPECT_EQ(qml.edgeForDock(wabar::host::DockEdge::Bottom), PopupPlacement::Above);
+  EXPECT_EQ(qml.edgeForDock(wabar::host::DockEdge::Left), PopupPlacement::Right);
+  EXPECT_EQ(qml.edgeForDock(wabar::host::DockEdge::Right), PopupPlacement::Left);
+  EXPECT_EQ(qml.edgeForDock(wabar::host::DockEdge::None), PopupPlacement::Below);
+}
+
 // ---- PopupWindow ----
 
 TEST(PopupWindowTest, StartsClosed) {
