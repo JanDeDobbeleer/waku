@@ -19,7 +19,7 @@ namespace wabar::shell {
 class Process : public QObject, public QQmlParserStatus {
   Q_OBJECT
   Q_INTERFACES(QQmlParserStatus)
-  QML_ELEMENT
+  QML_NAMED_ELEMENT(ShellProcess)
   Q_PROPERTY(QString program READ program WRITE setProgram NOTIFY programChanged FINAL)
   Q_PROPERTY(QStringList arguments READ arguments WRITE setArguments NOTIFY argumentsChanged FINAL)
   Q_PROPERTY(int interval READ interval WRITE setInterval NOTIFY intervalChanged FINAL)

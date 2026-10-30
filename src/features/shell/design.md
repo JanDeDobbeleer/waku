@@ -6,7 +6,7 @@ Run programs and open targets from QML. Two QML types, no Windows code of its ow
   `env(name)`, `homeDir`, `configHome`. A widget calls it on click. Launches are detached and hidden
   (no console window); `open` runs ShellExecute on a worker thread, so the GUI thread never blocks.
   The three launches live in `Shell::Launcher`, which tests replace so no real program starts.
-- `Process` (`qml/child_process.*`): runs a command hidden and exposes its output, error output and
+- `ShellProcess` (`qml/child_process.*`, class `Process`; the QML name `Process` belongs to Quickshell, see `quickshell_io`): runs a command hidden and exposes its output, error output and
   exit code. `run()` starts it once, `interval > 0` reruns it; a run is killed after `timeout`, and a
   running child is killed when the object is destroyed.
 
