@@ -42,12 +42,12 @@ struct QsMpris {
   QML_SINGLETON
 
  public:
-  // The singleton of wabar.services, so both names share one session list.
+  // The singleton of wabar.services, so both names share one session list. The ownership stays
+  // with the engine: forcing CppOwnership here made every reload leak the old instance, which
+  // kept its players and its connection to the media service alive next to the new one.
   static wabar::media::Mpris* create(QQmlEngine* engine, QJSEngine*) {
-    auto* mpris = engine->singletonInstance<wabar::media::Mpris*>(QStringLiteral("wabar.services"),
-                                                                  QStringLiteral("Mpris"));
-    QJSEngine::setObjectOwnership(mpris, QJSEngine::CppOwnership);
-    return mpris;
+    return engine->singletonInstance<wabar::media::Mpris*>(QStringLiteral("wabar.services"),
+                                                           QStringLiteral("Mpris"));
   }
 };
 

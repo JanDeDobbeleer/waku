@@ -693,3 +693,58 @@ TEST(ShellHostTest, ReloadTellsHoldersToResolveSingletonsAgain) {
   EXPECT_FALSE(h.host->reload());
   EXPECT_EQ(cleared.count(), 2);
 }
+
+namespace {
+
+// A QML singleton that counts the instances alive.
+class TrackedSingleton : public QObject {
+ public:
+  TrackedSingleton() { ++live; }
+  ~TrackedSingleton() override { --live; }
+  static inline int live = 0;
+};
+
+QObject* makeTrackedSingleton(QQmlEngine*, QJSEngine*) { return new TrackedSingleton; }
+
+// The Quickshell Mpris pattern: a second name for the same singleton object.
+QObject* makeWrappedSingleton(QQmlEngine* engine, QJSEngine*) {
+  auto* tracked = engine->singletonInstance<QObject*>(QStringLiteral("wabar.test.tracked"),
+                                                      QStringLiteral("Tracked"));
+  return tracked;
+}
+
+void registerTrackedSingleton() {
+  static const int id = qmlRegisterSingletonType<TrackedSingleton>(
+      "wabar.test.tracked", 1, 0, "Tracked", &makeTrackedSingleton);
+  static const int wrapped = qmlRegisterSingletonType<TrackedSingleton>(
+      "wabar.test.tracked", 1, 0, "Wrapped", &makeWrappedSingleton);
+  (void)id;
+  (void)wrapped;
+}
+
+}  // namespace
+
+// The old singletons must be gone when the new shell is built: a service that owns a thread, a
+// COM registration or an image provider must not run next to its replacement.
+TEST(ShellHostTest, AReloadDestroysTheOldSingletonsBeforeTheNewShellIsBuilt) {
+  registerTrackedSingleton();
+  Harness h;
+  ASSERT_TRUE(h.dir.isValid());
+  write(h.shellFile(), QStringLiteral(R"(
+import QtQuick
+import wabar
+import wabar.test.tracked
+ShellRoot {
+    QtObject { objectName: "probe"; property string name: Tracked.objectName + Wrapped.objectName }
+    Panel { content: PanelLayout { start: [ Text { objectName: "a"; text: "x" } ] } }
+}
+)"));
+  TrackedSingleton::live = 0;
+  h.makeHost();
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  EXPECT_EQ(TrackedSingleton::live, 1);
+  for (int i = 0; i < 3; ++i) {
+    ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+    EXPECT_EQ(TrackedSingleton::live, 1) << "reload " << i;
+  }
+}
