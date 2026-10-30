@@ -38,7 +38,7 @@ std::optional<QColor> parseColor(const QVariant& value) {
   return color;
 }
 
-// Builds the QML value from a scheme: each role under its name and under the `m3` alias.
+// Builds the QML value from a scheme: each role under its plain name.
 SchemeValue toValue(const DynamicScheme& scheme) {
   SchemeValue value;
   value.valid = true;
@@ -53,7 +53,6 @@ SchemeValue toValue(const DynamicScheme& scheme) {
     const QString key = QString::fromUtf8(name.data(), static_cast<qsizetype>(name.size()));
     const QColor color = toQColor(roleColor(role, scheme));
     value.colors.insert(key, color);
-    value.colors.insert(QStringLiteral("m3") + key, color);
   }
   return value;
 }

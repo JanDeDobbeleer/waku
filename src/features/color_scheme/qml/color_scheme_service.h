@@ -13,9 +13,9 @@
 namespace wabar::color_scheme {
 
 // The `ColorScheme` singleton (wabar.services): Material 3 dynamic colour with no external tool.
-// What caelestia gets from `caelestia scheme` and ImageAnalyser, computed in process:
+// What a shell otherwise gets from an external scheme tool and an image analyser, in process:
 //
-//   ColorScheme.fromColor("#6750A4", "tonalspot", true).colors.m3primary
+//   ColorScheme.fromColor("#6750A4", "tonalspot", true).colors.primary
 //   ColorScheme.fromImage(path, "vibrant", true)   // then onFromImageFinished: (path, scheme)
 //   ColorScheme.luminance(path)                    // 0..1, or -1 when the file cannot be read
 //

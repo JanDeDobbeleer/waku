@@ -710,16 +710,15 @@ TEST(ColorSchemeService, FromColorGivesPlainAndM3AliasedRoles) {
   ASSERT_TRUE(scheme.valid);
   EXPECT_EQ(scheme.variant, QStringLiteral("tonalspot"));
   EXPECT_TRUE(scheme.dark);
-  EXPECT_EQ(scheme.colors.size(), 2 * static_cast<int>(Role::Count_));
+  EXPECT_EQ(scheme.colors.size(), static_cast<int>(Role::Count_));
   const Argb primary =
       roleColor(Role::Primary, makeScheme(kBaselineSeed, Variant::TonalSpot, true));
   const QColor expected(redOf(primary), greenOf(primary), blueOf(primary));
   EXPECT_EQ(scheme.colors.value(QStringLiteral("primary")).value<QColor>(), expected);
-  EXPECT_EQ(scheme.colors.value(QStringLiteral("m3primary")).value<QColor>(), expected);
   EXPECT_TRUE(scheme.colors.contains(QStringLiteral("onSurface")));
-  EXPECT_TRUE(scheme.colors.contains(QStringLiteral("m3surfaceContainerHighest")));
-  EXPECT_TRUE(scheme.colors.contains(QStringLiteral("m3primary_paletteKeyColor")));
-  EXPECT_TRUE(scheme.colors.contains(QStringLiteral("m3onPrimaryFixedVariant")));
+  EXPECT_TRUE(scheme.colors.contains(QStringLiteral("surfaceContainerHighest")));
+  EXPECT_TRUE(scheme.colors.contains(QStringLiteral("primary_paletteKeyColor")));
+  EXPECT_TRUE(scheme.colors.contains(QStringLiteral("onPrimaryFixedVariant")));
   EXPECT_EQ(scheme.source, QColor("#6750A4"));
 }
 

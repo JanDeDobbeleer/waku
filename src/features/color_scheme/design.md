@@ -1,8 +1,8 @@
 # color_scheme: Material 3 dynamic colour
 
 Current design of the capability. A pure C++ engine, one QML singleton, no external tool. It gives a
-ported shell what `caelestia scheme` and `ImageAnalyser` give it: a Material 3 palette from a colour or
-a wallpaper, read as `m3primary`, `m3onSurface` and so on.
+shell a Material 3 palette from a colour or a wallpaper, read as `primary`, `onSurface` and so on. Names
+and prefixes a particular shell expects are that shell's business, in its own QML.
 
 ## Files
 
@@ -29,7 +29,7 @@ a wallpaper, read as `m3primary`, `m3onSurface` and so on.
   `surface`, `surfaceContainerLowest` to `surfaceContainerHighest`, `outline`, `outlineVariant`,
   `inverseSurface`, `scrim`, `shadow`, `surfaceTint`, `primaryFixed`, `onPrimaryFixedVariant`, the
   `secondary`, `tertiary` and `error` families, and `primary_paletteKeyColor` and its four siblings.
-  `colors` holds each role twice: by that name and as `m3<name>` (`m3primary`).
+  `colors` holds each role once, by that name.
 - `ColorScheme.fromColor(color, variant, dark, contrast)` answers at once. `variant` defaults to
   `tonalspot`, `dark` to `true`, `contrast` to 0. A bad variant or colour gives `valid: false`.
 - `ColorScheme.fromImage(path, variant, dark, contrast)` returns at once and emits
