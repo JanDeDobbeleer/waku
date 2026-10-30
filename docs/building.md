@@ -142,8 +142,10 @@ default (`-DWABAR_DIST_DIR=...` changes it; `dist/` is not tracked):
 dist/wabar/
   wabar.exe, wabarc.exe, WabarTrayHook[_arm64].dll
   <Qt runtime>                  from windeployqt, scanning src/ and cmake/deploy_imports/ for QML imports
-                                (the latter lists QtQuick.Layouts, QtQuick.Effects and Qt.labs.folderlistmodel,
-                                which shells written for Quickshell import)
+                                (the latter lists QtQuick.Layouts, QtQuick.Effects, Qt.labs.folderlistmodel,
+                                QtQuick.Templates and QtQuick.Controls.Basic, which shells written for
+                                Quickshell import. Controls.Basic is the only Controls style deployed;
+                                a release build adds about 4.2 MB of DLLs and 0.6 MB of QML)
   examples/config/              the sample config home
   modules/wabar/                the host QML files, qmldir and .qmltypes (module `wabar`)
   modules/wabar/widgets/        the built-in widget .qml files, qmldir, .qmltypes (`wabar.widgets`)

@@ -40,7 +40,9 @@ list), `hints` (empty), `resident`, `transient`, `hasActionIcons`, `hasInlineRep
 `expireTimeout` (0), and `expire()` does nothing. There is no server to register, so no app sends
 wabar a notification and `NotificationServer` flags have no effect. `dismiss()` removes the toast
 from the Action Center; `activate()` hands it to its app.
-The `Quickshell.Services.Notifications` module forwards to these types.
+The `Quickshell.Services.Notifications` module registers `Notification`, `NotificationServer`,
+`NotificationUrgency` and `NotificationCloseReason` again under the same names
+(`src/app/wabar/quickshell_types_notifications.h`); `NotificationFeed` stays in `wabar.services`.
 
 ## Threads
 

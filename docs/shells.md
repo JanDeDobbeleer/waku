@@ -70,3 +70,19 @@ answers `wabarc shortcut <name>`.
 wabar starts with Qt's GDI font engine, which keeps memory low but ignores variable-font axes
 (`font.variableAxes`). A shell that needs axes starts wabar with `--font-engine=directwrite`, at
 the cost of about 2 MB more working set. A `QT_QPA_PLATFORM` set by the caller wins over the flag.
+
+### Qt Quick Controls
+
+`import QtQuick.Templates as T` and `import QtQuick.Controls.Basic` load, headlessly too. Only the
+Basic style is deployed (no native style); the other styles (`Fusion`, `Material`, ...) are not. A release build adds about 4.2 MB of
+DLLs and 0.6 MB of QML for this (`cmake/deploy_imports/DeployImports.qml`).
+
+### `Singleton`, `TransformWatcher` and name shadowing
+
+`Singleton` (a `Scope`) is the root of a `pragma Singleton` file, as in Quickshell. `TransformWatcher`
+has `a`, `b`, `commonParent` and a `transform` property whose `transformChanged()` signal tells a
+binding that the transform between the two items changed. `import Quickshell` (and
+`Quickshell.Io`, `.Services.Mpris`, `.Services.Notifications`) shows Quickshell's type names only: a
+`Wallpapers.qml`, `Workspaces.qml`, `Bluetooth.qml` or `Media.qml` next to `shell.qml` is your own
+type, never wabar's service of that name. The shell reloads only when a `.qml` file or a `qmldir`
+under the config home changes; a state or cache file written there does not reload it.
