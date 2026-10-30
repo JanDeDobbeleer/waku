@@ -39,12 +39,17 @@ int main(int argc, char* argv[]) {
           "Start the built-in shell with the default theme and ignore the config home."));
   QCommandLineOption noTrayOpt(QStringLiteral("no-tray"),
                                QStringLiteral("Never hook Explorer; the Tray widget stays empty."));
+  QCommandLineOption noHotkeysOpt(
+      QStringLiteral("no-hotkeys"),
+      QStringLiteral("Register no global hotkey; GlobalShortcut fires only through wabarc."));
   parser.addOption(configHomeOpt);
+  parser.addOption(noHotkeysOpt);
   parser.addOption(noTrayOpt);
   parser.addOption(appBarOpt);
   parser.addOption(safeOpt);
   parser.process(app);
   wabar::kernel::setCapabilityDisabled(QStringLiteral("tray"), parser.isSet(noTrayOpt));
+  wabar::kernel::setCapabilityDisabled(QStringLiteral("hotkeys"), parser.isSet(noHotkeysOpt));
 
   const QString configHome = wabar::control::resolveConfigHome(
       parser.value(configHomeOpt), QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));

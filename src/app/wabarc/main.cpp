@@ -10,6 +10,11 @@
 //                       a random wallpaper of the folder, the one after or before the current
 //     wabarc wallpaper gallery
 //                       open or close the picker
+//     wabarc shortcut <name>
+//                       fire the GlobalShortcut with that name (bind a key to this command in
+//                       whkd or AutoHotkey)
+//     wabarc shortcut list
+//                       the names of the shortcuts the bar has
 //
 // `--dry-run` plays the animation but does not set the wallpaper. A command is sent as one line;
 // arguments with spaces are quoted (control.h, joinCommand).
@@ -52,6 +57,8 @@ int main(int argc, char* argv[]) {
       "  wallpaper set <file-or-path>   a full path, or a file name in the wallpaper folder\n"
       "  wallpaper random | next | previous\n"
       "  wallpaper gallery              open or close the picker\n"
+      "  shortcut <name>                fire the GlobalShortcut with that name\n"
+      "  shortcut list                  the names of the shortcuts\n"
       "Add --dry-run to set, random, next or previous to play the animation without "
       "changing the wallpaper."));
   parser.addHelpOption();
@@ -63,13 +70,13 @@ int main(int argc, char* argv[]) {
                                QStringLiteral("wallpaper: play the animation, do not set it."));
   parser.addOption(dryRunOpt);
   parser.addPositionalArgument(QStringLiteral("command"),
-                               QStringLiteral("reload, status, quit or wallpaper"));
+                               QStringLiteral("reload, status, quit, wallpaper or shortcut"));
   parser.process(app);
 
   const QStringList positional = parser.positionalArguments();
   const QString usage = QStringLiteral(
       "usage: wabarc [--config-home <dir>] reload|status|quit|wallpaper "
-      "(set [--dry-run] <file-or-path>|random|next|previous|gallery)");
+      "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|shortcut <name>|list");
   if (positional.isEmpty()) {
     print(stderr, usage);
     return kUsage;
@@ -99,11 +106,17 @@ int main(int argc, char* argv[]) {
       words << target;
     }
     line = wabar::control::joinCommand(words);
+  } else if (command == QLatin1String("shortcut")) {
+    if (positional.size() != 2 || parser.isSet(dryRunOpt)) {
+      print(stderr, usage);
+      return kUsage;
+    }
+    line = wabar::control::joinCommand({command, positional.at(1)});
   } else if (positional.size() != 1 ||
              (command != QLatin1String("reload") && command != QLatin1String("status") &&
               command != QLatin1String("quit"))) {
     print(stderr, QStringLiteral("wabarc: unknown command '%1' (try: reload, status, quit, "
-                                 "wallpaper)")
+                                 "wallpaper, shortcut)")
                       .arg(command));
     return kUsage;
   } else if (parser.isSet(dryRunOpt)) {
