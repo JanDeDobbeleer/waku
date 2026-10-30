@@ -32,7 +32,8 @@ Q_ENUM_NS(Enum)
 
 // Whether a PanelWindow takes keyboard focus (wlr-layer-shell `keyboard_interactivity`).
 //   None       never activated (WS_EX_NOACTIVATE): clicks do not steal focus
-//   OnDemand   activated when clicked
+//   OnDemand   activated when clicked, and when the window is shown at run time (show(), toggle(),
+//              `wabarc surface show`); it releases the focus when it hides
 //   Exclusive  treated as OnDemand: Windows has no exclusive keyboard grab
 namespace WlrKeyboardFocus {
 Q_NAMESPACE

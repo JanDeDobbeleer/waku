@@ -39,6 +39,18 @@ void fill(QQuickItem* item, QQuickItem* container) {
 
 }  // namespace
 
+// ---- ProxiedWindow ----
+
+void ProxiedWindow::keyPressEvent(QKeyEvent* event) {
+  // Not accepted until an item takes the key: a TextInput keeps its own use of Escape.
+  event->ignore();
+  QQuickWindow::keyPressEvent(event);
+  if (!event->isAccepted() && event->key() == Qt::Key_Escape && proxy_->dismissOnEscape()) {
+    event->accept();
+    proxy_->hide();
+  }
+}
+
 // ---- QsWindow ----
 
 QsWindow::QsWindow(QObject* parent)
@@ -49,12 +61,18 @@ QsWindow::QsWindow(QObject* parent)
   connect(window_.get(), &QWindow::widthChanged, this, &QsWindow::widthChanged);
   connect(window_.get(), &QWindow::heightChanged, this, &QsWindow::heightChanged);
   connect(window_.get(), &QWindow::visibleChanged, this, &QsWindow::backingWindowVisibleChanged);
-  connect(window_.get(), &QWindow::visibleChanged, this, [this] { updateMaskPoller(); });
+  connect(window_.get(), &QWindow::activeChanged, this, &QsWindow::onActiveChanged);
+  hideTimer_.setSingleShot(true);
+  connect(&hideTimer_, &QTimer::timeout, this, [this] {
+    if (!visible_) hideNow();
+  });
 }
 
 QsWindow::~QsWindow() {
   if (host_) host_->release(this);
-  poller_.reset();
+  // Hiding the window must not run dismissOnBlur or the visibility bookkeeping of a dying window.
+  disconnect(window_.get(), nullptr, this, nullptr);
+  hideTimer_.stop();
   window_->hide();
   // The declared items are this object's QObject children and die after this destructor; take
   // them out of the window first so its content item does not outlive them in a broken state.
@@ -147,8 +165,51 @@ void QsWindow::updateMaskPoller() {
 void QsWindow::setVisible(bool visible) {
   if (visible_ == visible) return;
   visible_ = visible;
+  if (visible) hideTimer_.stop();
+  // Before the shell is installed the window is only being set up: that is not the user showing it.
+  const bool live = complete_ && presentable_;
+  if (live) activateOnShow_ = visible;
   emit visibleChanged();
   updateVisibility();
+  if (live && host_ && !name_.isEmpty()) host_->noteVisibility(name_, visible);
+}
+
+void QsWindow::setName(const QString& name) {
+  if (name_ == name) return;
+  name_ = name;
+  emit nameChanged();
+}
+
+void QsWindow::setHideDelay(int milliseconds) {
+  milliseconds = std::max(0, milliseconds);
+  if (hideDelay_ == milliseconds) return;
+  hideDelay_ = milliseconds;
+  emit hideDelayChanged();
+}
+
+void QsWindow::setDismissOnBlur(bool dismiss) {
+  if (dismissOnBlur_ == dismiss) return;
+  dismissOnBlur_ = dismiss;
+  emit dismissOnBlurChanged();
+}
+
+void QsWindow::setDismissOnEscape(bool dismiss) {
+  if (dismissOnEscape_ == dismiss) return;
+  dismissOnEscape_ = dismiss;
+  emit dismissOnEscapeChanged();
+}
+
+void QsWindow::onActiveChanged() {
+  if (window_->isActive()) {
+    wasActive_ = true;
+    return;
+  }
+  // Active and not any more: the user went elsewhere. A window that was never active (the focus
+  // was refused) is not dismissed, or it would vanish the moment it appeared.
+  if (dismissOnBlur_ && wasActive_ && visible_ && takesFocus()) {
+    wasActive_ = false;
+    setVisible(false);
+  }
 }
 
 void QsWindow::setImplicitWidth(int width) {
@@ -236,20 +297,46 @@ void QsWindow::updateFlags() {
   window_->setFlags(flags);
 }
 
+void QsWindow::stackingChanged() {
+  if (host_ && window_->isVisible()) host_->windowStackingChanged(this);
+}
+
+void QsWindow::hideNow() {
+  hideTimer_.stop();
+  wasActive_ = false;
+  if (!window_->isVisible()) return;
+  window_->hide();
+  emit hidden();
+}
+
 void QsWindow::updateVisibility() {
-  const bool show = complete_ && presentable_ && visible_ && buildError_.isEmpty();
+  const bool ready = complete_ && presentable_ && buildError_.isEmpty();
+  const bool show = ready && visible_;
+  if (show) hideTimer_.stop();
   if (show == window_->isVisible()) return;
   if (!show) {
-    window_->hide();
+    // The user hid it: the content gets `hideDelay` to animate out. Any other reason (the shell
+    // goes away, the window broke) takes it off the screen at once.
+    if (ready && hideDelay_ > 0) {
+      if (!hideTimer_.isActive()) hideTimer_.start(hideDelay_);
+      return;
+    }
+    hideNow();
     return;
   }
   applyGeometry();
+  // Before show(): the platform can activate the window while it shows.
+  wasActive_ = false;
   window_->show();
   afterShow();
   if (!shownOnce_) {
     shownOnce_ = true;
     emit firstShown();
   }
+  const bool activate = activateOnShow_ && takesFocus();
+  activateOnShow_ = false;
+  if (host_) host_->windowShown(this, activate);
+  emit shown();
 }
 
 void QsWindow::componentComplete() {
@@ -422,14 +509,20 @@ void PanelWindow::setLayer(WlrLayer::Enum layer) {
   if (layer_ == layer) return;
   layer_ = layer;
   emit layerChanged();
-  if (complete()) updateFlags();
+  if (complete()) {
+    updateFlags();
+    stackingChanged();
+  }
 }
 
 void PanelWindow::setKeyboardFocus(WlrKeyboardFocus::Enum focus) {
   if (keyboardFocus_ == focus) return;
   keyboardFocus_ = focus;
   emit keyboardFocusChanged();
-  if (complete()) updateFlags();
+  if (complete()) {
+    updateFlags();
+    stackingChanged();
+  }
 }
 
 void PanelWindow::setLayerNamespace(const QString& name) {
@@ -468,7 +561,7 @@ Qt::WindowFlags PanelWindow::windowFlags() const {
 }
 
 void PanelWindow::afterShow() {
-  if (layer_ == WlrLayer::Overlay) backingWindow()->raise();
+  // Top and Overlay are raised by ShellHost::windowShown (NativeHooks::raiseTopmost).
 }
 
 // ---- FloatingWindow ----

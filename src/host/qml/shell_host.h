@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QFileSystemWatcher>
+#include <QHash>
 #include <QList>
 #include <QObject>
 #include <QPointer>
@@ -61,9 +62,16 @@ class ShellHost : public QObject {
     std::function<void(quintptr hwnd, Backdrop::Kind backdrop)> applyBackdrop;
     // HMONITOR of the monitor the window is on.
     std::function<qlonglong(quintptr hwnd)> monitorHandle;
-    // The cursor in physical screen pixels, for window masks (MaskPoller). Null: masks are inert.
-    // win32() sets it only on a live desktop.
-    CursorSource cursorPosition;
+    // Keeps the window above the others (SetWindowPos HWND_TOPMOST, no activation): called each
+    // time a window of the Top or Overlay layer is shown.
+    std::function<void(quintptr hwnd)> raiseTopmost;
+    // Sets or clears WS_EX_NOACTIVATE: clicks on a window with `keyboardFocus: None` never take
+    // the focus. Called each time a window is shown or its layer or keyboard focus changes.
+    std::function<void(quintptr hwnd, bool noActivate)> setNoActivate;
+    // Takes the keyboard focus for the window although another process has the foreground
+    // (kernel::forceForegroundFocus). Called when a window with keyboard focus is shown at run
+    // time.
+    std::function<void(quintptr hwnd)> forceForeground;
 
     static NativeHooks win32();
   };
@@ -121,9 +129,20 @@ class ShellHost : public QObject {
   QList<QQuickWindow*> windows() const;
   ShellRoot* shell() const;
 
+  // The windows with a `name` (`name` empty: all of them), in the order they registered. The
+  // surfaces `wabarc surface ...` addresses.
+  QList<QsWindow*> namedWindows(const QString& name = {}) const;
+
   // ---- called by QsWindow ----
   void adopt(QsWindow* window);
   void release(QsWindow* window);
+  // A window just appeared on the screen: stack it, set whether it takes clicks as activation and,
+  // with `activate`, give it the keyboard focus.
+  void windowShown(QsWindow* window, bool activate);
+  // The layer or the keyboard focus of a window on the screen changed.
+  void windowStackingChanged(QsWindow* window);
+  // A named window was shown or hidden at run time; kept across reloads (see `present`).
+  void noteVisibility(const QString& name, bool visible);
 
  signals:
   void errorChanged();
@@ -178,6 +197,9 @@ class ShellHost : public QObject {
   // The shell being built: windows that complete now are added here, shown by install().
   Loaded* building_ = nullptr;
   QString error_;
+  // name -> shown, for named windows toggled at run time: a reload gives the new windows of that
+  // name the same state, so an open launcher stays open while the user edits the config.
+  QHash<QString, bool> visibility_;
   QFileSystemWatcher watcher_;
   QTimer debounce_;
   bool watching_ = false;

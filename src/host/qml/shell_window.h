@@ -3,6 +3,7 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <QColor>
+#include <QKeyEvent>
 #include <QList>
 #include <QObject>
 #include <QPointer>
@@ -12,6 +13,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QSize>
+#include <QTimer>
 #include <memory>
 
 #include "host/mask_poller.h"
@@ -33,6 +35,10 @@ class ProxiedWindow : public QQuickWindow {
  public:
   explicit ProxiedWindow(QsWindow* proxy) : proxy_(proxy) {}
   QsWindow* proxy() const { return proxy_; }
+
+ protected:
+  // Escape hides a window with `dismissOnEscape` when no item took the key.
+  void keyPressEvent(QKeyEvent* event) override;
 
  private:
   QsWindow* proxy_;
@@ -126,6 +132,8 @@ class QsWindow : public QObject, public QQmlParserStatus {
       wabar::host::ShellScreen* screen READ screen WRITE setScreen NOTIFY screenChanged FINAL)
   // Unset: the wabar surface colour (`background`, else Theme.surface; transparent with islands).
   Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged FINAL)
+  // On or off the screen. A window with `visible: false` has no native window until it is first
+  // shown. Setting it to false starts the `hideDelay`; the window leaves the screen after it.
   Q_PROPERTY(bool visible READ visible WRITE setVisible NOTIFY visibleChanged FINAL)
   Q_PROPERTY(
       int implicitWidth READ implicitWidth WRITE setImplicitWidth NOTIFY implicitWidthChanged FINAL)
@@ -153,6 +161,21 @@ class QsWindow : public QObject, public QQmlParserStatus {
   Q_PROPERTY(wabar::host::Region* mask READ mask WRITE setMask NOTIFY maskChanged FINAL)
 
   // wabar extensions.
+  // The id of the window for `wabarc surface ...` and hotkeys; unique per shell. One name can
+  // belong to several windows (a Variants makes one per screen) and every verb applies to all of
+  // them. Not FINAL: a ported shell that declares its own `name` property on a window (caelestia's
+  // StyledWindow does) still loads, and the window then has no wabar name.
+  Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
+  // Milliseconds between `visible` turning false and the window leaving the screen, so the content
+  // can animate out. Showing the window again during the delay cancels the hide.
+  Q_PROPERTY(int hideDelay READ hideDelay WRITE setHideDelay NOTIFY hideDelayChanged FINAL)
+  // Hide the window when it was active and lost the activation / when Escape is pressed and no
+  // item took the key. Meant for windows with keyboard focus (PanelWindow `keyboardFocus`
+  // OnDemand); a window that cannot be active is never dismissed by blur.
+  Q_PROPERTY(bool dismissOnBlur READ dismissOnBlur WRITE setDismissOnBlur NOTIFY
+                 dismissOnBlurChanged FINAL)
+  Q_PROPERTY(bool dismissOnEscape READ dismissOnEscape WRITE setDismissOnEscape NOTIFY
+                 dismissOnEscapeChanged FINAL)
   // Built into the window when it is created (the Panel preset's content).
   Q_PROPERTY(QQmlComponent* content READ content WRITE setContent NOTIFY contentChanged FINAL)
   Q_PROPERTY(wabar::host::Backdrop::Kind backdrop READ backdrop WRITE setBackdrop NOTIFY
@@ -192,6 +215,14 @@ class QsWindow : public QObject, public QQmlParserStatus {
   void setColor(const QColor& color);
   bool visible() const { return visible_; }
   void setVisible(bool visible);
+  QString name() const { return name_; }
+  void setName(const QString& name);
+  int hideDelay() const { return hideDelay_; }
+  void setHideDelay(int milliseconds);
+  bool dismissOnBlur() const { return dismissOnBlur_; }
+  void setDismissOnBlur(bool dismiss);
+  bool dismissOnEscape() const { return dismissOnEscape_; }
+  void setDismissOnEscape(bool dismiss);
   int implicitWidth() const { return implicitWidth_; }
   void setImplicitWidth(int width);
   int implicitHeight() const { return implicitHeight_; }
@@ -221,6 +252,13 @@ class QsWindow : public QObject, public QQmlParserStatus {
   Q_INVOKABLE QRectF itemRect(QQuickItem* item) const;
   Q_INVOKABLE QPointF mapFromItem(QQuickItem* item, qreal x, qreal y) const;
 
+  // wabar: `visible = true`, `visible = false` and the flip of it. The signals below tell when
+  // the native window really appeared and left. A window with keyboard focus (OnDemand) takes the
+  // keyboard focus when shown this way, from a hotkey or from `wabarc` too.
+  Q_INVOKABLE void show() { setVisible(true); }
+  Q_INVOKABLE void hide() { setVisible(false); }
+  Q_INVOKABLE void toggle() { setVisible(!visible_); }
+
   // ---- the host's side ----
   // The QScreen the window goes on: `screen`, else the primary of the engine's ScreenList.
   QScreen* targetScreen() const;
@@ -231,6 +269,9 @@ class QsWindow : public QObject, public QQmlParserStatus {
   void setMonitorHandle(qlonglong handle);
   // Whether the wabar chrome of this window shows the host's error pill.
   virtual bool showsErrors() const { return false; }
+  // The native window is kept above the others / can take the keyboard focus.
+  virtual bool stackTopmost() const { return false; }
+  virtual bool takesFocus() const { return true; }
 
   void classBegin() override {}
   void componentComplete() override;
@@ -239,6 +280,13 @@ class QsWindow : public QObject, public QQmlParserStatus {
   void screenChanged();
   void colorChanged();
   void visibleChanged();
+  void nameChanged();
+  void hideDelayChanged();
+  void dismissOnBlurChanged();
+  void dismissOnEscapeChanged();
+  // The native window appeared / left the screen (after `hideDelay`). wabar extensions.
+  void shown();
+  void hidden();
   void implicitWidthChanged();
   void implicitHeightChanged();
   void widthChanged();
@@ -261,6 +309,8 @@ class QsWindow : public QObject, public QQmlParserStatus {
   // Called right after the backing window is shown.
   virtual void afterShow() {}
   void updateFlags();
+  // The layer or the keyboard focus changed: apply it to a window that is on the screen.
+  void stackingChanged();
   void updateVisibility();
   void updateMaskPoller();
   bool complete() const { return complete_; }
@@ -273,6 +323,8 @@ class QsWindow : public QObject, public QQmlParserStatus {
 
   void buildChrome();
   bool buildContent();
+  void hideNow();
+  void onActiveChanged();
 
   std::unique_ptr<ProxiedWindow> window_;
   SurfaceFormat* surfaceFormat_;
@@ -286,6 +338,15 @@ class QsWindow : public QObject, public QQmlParserStatus {
   QColor background_;
   Backdrop::Kind backdrop_ = Backdrop::None;
   QString buildError_;
+  QString name_;
+  QTimer hideTimer_;
+  int hideDelay_ = 0;
+  bool dismissOnBlur_ = false;
+  bool dismissOnEscape_ = false;
+  // The window was active since it was shown (so losing the activation means the user left).
+  bool wasActive_ = false;
+  // A runtime show wants the keyboard focus; the initial show of a shell does not take it.
+  bool activateOnShow_ = false;
   qlonglong monitorHandle_ = 0;
   int implicitWidth_ = 100;
   int implicitHeight_ = 100;
@@ -383,6 +444,8 @@ class PanelWindow : public QsWindow {
   int reservedZone() const;
 
   bool showsErrors() const override { return true; }
+  bool stackTopmost() const override { return layer_ >= WlrLayer::Top; }
+  bool takesFocus() const override { return keyboardFocus_ != WlrKeyboardFocus::None; }
 
  signals:
   void exclusiveZoneChanged();

@@ -83,12 +83,13 @@ TEST(ControlHandlerTest, StatusReportsBarsModeAndError) {
   ASSERT_TRUE(h.host->reload());
   const ControlHandler handler = makeControlHandler(*h.host, false);
   EXPECT_EQ(handler(QStringLiteral("status")),
-            QStringLiteral("running; windows=1; safe=no; error=none"));
+            QStringLiteral("running; pid=%1; windows=1; safe=no; error=none")
+                .arg(QCoreApplication::applicationPid()));
 
   write(h.shellFile(), QStringLiteral("not qml {{{"));
   h.host->reload();
   const QString broken = handler(QStringLiteral("status"));
-  EXPECT_TRUE(broken.startsWith(QStringLiteral("running; windows=1; safe=no; error=shell.qml:")))
+  EXPECT_TRUE(broken.contains(QStringLiteral("windows=1; safe=no; error=shell.qml:")))
       << qPrintable(broken);
 
   const ControlHandler safeHandler = makeControlHandler(*h.host, true);

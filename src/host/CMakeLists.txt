@@ -86,6 +86,8 @@ qt_add_qml_module(wabar_host
     qml/shell_screen.cpp
     qml/shell_window.h
     qml/shell_window.cpp
+    qml/surface_control.h
+    qml/surface_control.cpp
     qml/window_enums.h
     win32/shell_host_win32.cpp
 )
@@ -103,7 +105,7 @@ wabar_contribute(
   TESTS
     tests/test_app_bar.cpp
     tests/test_control_handler.cpp
-    tests/test_global_shortcut.cpp
+    tests/test_overlays.cpp
     tests/test_panel_geometry.cpp
     tests/test_mask_poller.cpp
     tests/test_popups.cpp

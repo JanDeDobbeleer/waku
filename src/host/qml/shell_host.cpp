@@ -445,10 +445,49 @@ void ShellHost::release(QsWindow* window) {
   }
 }
 
+QList<QsWindow*> ShellHost::namedWindows(const QString& name) const {
+  QList<QsWindow*> list;
+  if (!loaded_) return list;
+  for (const Entry& entry : loaded_->entries) {
+    QsWindow* window = entry.window;
+    if (!window || !entry.presented || window->name().isEmpty()) continue;
+    if (name.isEmpty() || window->name() == name) list << window;
+  }
+  return list;
+}
+
+void ShellHost::noteVisibility(const QString& name, bool visible) { visibility_[name] = visible; }
+
+void ShellHost::windowShown(QsWindow* window, bool activate) {
+  const NativeHooks& hooks = options_.hooks;
+  QQuickWindow* backing = window->backingWindow();
+  const auto hwnd = static_cast<quintptr>(backing->winId());
+  try {
+    if (hooks.setNoActivate) hooks.setNoActivate(hwnd, !window->takesFocus());
+    if (window->stackTopmost() && hooks.raiseTopmost) hooks.raiseTopmost(hwnd);
+    if (activate) {
+      backing->requestActivate();
+      if (hooks.forceForeground) hooks.forceForeground(hwnd);
+    }
+  } catch (const std::exception& e) {
+    qWarning().noquote() << "wabar: stacking a window failed:" << e.what();
+  } catch (...) {
+    qWarning().noquote() << "wabar: stacking a window failed";
+  }
+}
+
+void ShellHost::windowStackingChanged(QsWindow* window) { windowShown(window, false); }
+
 void ShellHost::present(Entry& entry) {
   QsWindow* window = entry.window;
   if (!window || !window->buildError().isEmpty()) return;
   entry.presented = true;
+  // A window the user showed or hid before a reload is in the same state after it. The shell is not
+  // live yet, so this neither takes the keyboard focus nor is noted again.
+  if (const auto it = visibility_.constFind(window->name());
+      !window->name().isEmpty() && it != visibility_.constEnd()) {
+    window->setVisible(it.value());
+  }
   if (window->backingWindowVisible()) {
     applyNative(entry);
     return;

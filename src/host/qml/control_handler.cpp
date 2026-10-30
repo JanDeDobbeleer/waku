@@ -6,6 +6,7 @@
 
 #include "host/qml/global_shortcut.h"
 #include "host/qml/shell_host.h"
+#include "host/qml/surface_control.h"
 
 namespace wabar::host {
 
@@ -68,7 +69,8 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
     }
     if (command == QLatin1String("status")) {
       const QString error = guard->error();
-      return QStringLiteral("running; windows=%1; safe=%2; error=%3")
+      return QStringLiteral("running; pid=%1; windows=%2; safe=%3; error=%4")
+          .arg(QCoreApplication::applicationPid())
           .arg(guard->windows().size())
           .arg(safe ? QStringLiteral("yes") : QStringLiteral("no"))
           .arg(error.isEmpty() ? QStringLiteral("none") : error);
@@ -85,15 +87,15 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
       words.removeFirst();
       return answerWallpaperCommand(words, wallpapers ? wallpapers() : nullptr);
     }
-    if (command == QLatin1String("shortcut") || command.startsWith(QLatin1String("shortcut "))) {
+    if (command == QLatin1String("surface") || command.startsWith(QLatin1String("surface "))) {
       QStringList words;
       if (!control::splitCommand(command, &words))
         return QStringLiteral("error: unterminated quote");
       words.removeFirst();
-      return answerShortcutCommand(words);
+      return answerSurfaceCommand(words, guard.data());
     }
     return QStringLiteral(
-               "error: unknown command '%1' (try: reload, status, quit, wallpaper, shortcut)")
+               "error: unknown command '%1' (try: reload, status, quit, wallpaper, surface)")
         .arg(command.left(40));
   };
 }
