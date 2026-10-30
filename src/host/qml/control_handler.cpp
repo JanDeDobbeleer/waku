@@ -8,6 +8,8 @@
 #include "host/qml/ipc_handler.h"
 #include "host/qml/shell_host.h"
 #include "host/qml/surface_control.h"
+#include "host/qml/taskbar_command.h"
+#include "host/taskbar_control.h"
 
 namespace wabar::host {
 
@@ -57,11 +59,12 @@ QString answerShortcutCommand(const QStringList& words) {
 }
 
 control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::function<void()> quit,
-                                           control::WallpaperControlProvider wallpapers) {
+                                           control::WallpaperControlProvider wallpapers,
+                                           TaskbarControl* taskbar) {
   if (!quit) quit = [] { QCoreApplication::quit(); };
   QPointer<ShellHost> guard(&host);
-  return [guard, safe, quit = std::move(quit),
-          wallpapers = std::move(wallpapers)](const QString& command) -> QString {
+  return [guard, safe, quit = std::move(quit), wallpapers = std::move(wallpapers),
+          taskbar](const QString& command) -> QString {
     if (!guard) return QStringLiteral("error: the shell is shutting down");
     if (command == QLatin1String("reload")) {
       const bool ok = guard->reload();
@@ -109,9 +112,16 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
       words.removeFirst();
       return answerSurfaceCommand(words, guard.data());
     }
+    if (command == QLatin1String("taskbar") || command.startsWith(QLatin1String("taskbar "))) {
+      QStringList words;
+      if (!control::splitCommand(command, &words))
+        return QStringLiteral("error: unterminated quote");
+      words.removeFirst();
+      return answerTaskbarCommand(words, taskbar);
+    }
     return QStringLiteral(
                "error: unknown command '%1' (try: reload, status, quit, wallpaper, shortcut, "
-               "surface, call)")
+               "surface, taskbar, call)")
         .arg(command.left(40));
   };
 }

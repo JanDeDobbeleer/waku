@@ -8,6 +8,7 @@
 namespace wabar::host {
 
 class ShellHost;
+class TaskbarControl;
 
 // What a running shell answers on its control channel:
 //   reload  reloads the shell: "ok", or "error: <first message>" (when the new shell was rejected
@@ -23,16 +24,20 @@ class ShellHost;
 //   other   "error: unknown command '...' (try: reload, status, quit, wallpaper, shortcut)"
 //   surface list | show|hide|toggle|status <name>
 //           the named windows of the shell (surface_control.h): "ok: <text>" or "error: <text>"
+//   taskbar hide | show | status
+//           hides or restores the Windows taskbar (taskbar_command.h): "ok: taskbar: <state>"
 //   call [<target> <function> [args...]]
 //           runs a function of an IpcHandler (ipc_handler.h): the return value as one line, "ok"
 //           for void, "error: <text>"; without words the handlers and their functions
 //   other   "error: unknown command '...' (try: reload, status, quit, wallpaper, shortcut,
-//           surface, call)"
+//           surface, taskbar, call)"
 // `quit` defaults to QCoreApplication::quit. `wallpapers` is asked when a wallpaper command
 // arrives (the service is created on demand), so a shell without wallpapers never builds it.
+// `taskbar` answers the `taskbar` verbs; null (the offscreen platform) answers an error.
 control::ControlHandler makeControlHandler(ShellHost& host, bool safe,
                                            std::function<void()> quit = {},
-                                           control::WallpaperControlProvider wallpapers = {});
+                                           control::WallpaperControlProvider wallpapers = {},
+                                           TaskbarControl* taskbar = nullptr);
 
 // The `wallpaper` commands on their own (the words after "wallpaper"): the parsing the handler
 // uses, public for tests.

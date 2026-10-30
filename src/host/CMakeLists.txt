@@ -32,10 +32,13 @@ add_library(wabar_host_base STATIC
   region_math.cpp
   screen_match.h
   screen_match.cpp
+  taskbar_control.h
+  taskbar_control.cpp
   win32/app_bar.cpp
   win32/backdrop.h
   win32/backdrop.cpp
   win32/hotkeys_win.cpp
+  win32/taskbar_control.cpp
 )
 target_link_libraries(wabar_host_base
   PUBLIC wabar_kernel
@@ -94,6 +97,8 @@ qt_add_qml_module(wabar_host
     qml/shell_window.cpp
     qml/surface_control.h
     qml/surface_control.cpp
+    qml/taskbar_command.h
+    qml/taskbar_command.cpp
     qml/system_clock.h
     qml/system_clock.cpp
     qml/transform_watcher.h
@@ -131,6 +136,7 @@ wabar_contribute(
     tests/test_shell_host.cpp
     tests/test_shell_screen.cpp
     tests/test_shell_windows.cpp
+    tests/test_taskbar_control.cpp
     tests/test_theme.cpp
     tests/test_wallpaper_handler.cpp
   TEST_LIBS wabar_host_base
