@@ -3,6 +3,7 @@
 #include <QQmlEngine>
 #include <QQuickWindow>
 
+#include "app/wabar/quickshell_glue.h"
 #include "control/control.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "host/qml/control_handler.h"
@@ -55,6 +56,7 @@ int main(int argc, char* argv[]) {
   options.safe = parser.isSet(safeOpt);
   options.hooks = wabar::host::ShellHost::NativeHooks::win32();
   wabar::host::ShellHost host(&engine, std::move(options));
+  wabar::app::connectQuickshell(&engine, &host, configHome);
 
   // One shell per config home: `wabarc` finds it by the same name, and a second start would put
   // a second shell over the first.

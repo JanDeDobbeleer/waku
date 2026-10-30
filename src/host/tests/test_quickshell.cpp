@@ -77,3 +77,45 @@ ShellRoot {}
   std::unique_ptr<QObject> root(component.create());
   EXPECT_NE(qobject_cast<ShellRoot*>(root.get()), nullptr);
 }
+
+TEST(QuickshellModule, TheQuickshellSingletonHasScreensEnvAndShellDir) {
+  Harness h;
+  h.screenCount = 2;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import Quickshell
+
+ShellRoot {
+    QtObject {
+        objectName: "probe"
+        readonly property int screenCount: Quickshell.screens.length
+        readonly property var path: Quickshell.env("PATH")
+        readonly property var missing: Quickshell.env("WABAR_SURELY_NOT_SET_ANYWHERE")
+        readonly property string dir: Quickshell.shellDir
+        readonly property string statePath: Quickshell.statePath("x.json")
+        readonly property bool hasIcon: Quickshell.hasThemeIcon("no-such-icon-anywhere")
+        readonly property real pid: Quickshell.processId
+    }
+    Variants {
+        model: Quickshell.screens
+        PanelWindow {
+            required property ShellScreen modelData
+            screen: modelData
+            anchors.top: true
+            implicitHeight: 20
+        }
+    }
+}
+)"));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  auto* probe = h.host->shell()->findChild<QObject*>(QStringLiteral("probe"));
+  ASSERT_NE(probe, nullptr);
+  EXPECT_EQ(probe->property("screenCount").toInt(), 2);
+  EXPECT_FALSE(probe->property("path").toString().isEmpty());
+  EXPECT_TRUE(probe->property("missing").isNull());
+  EXPECT_FALSE(probe->property("dir").toString().isEmpty());
+  EXPECT_TRUE(probe->property("statePath").toString().endsWith(QStringLiteral("x.json")));
+  EXPECT_FALSE(probe->property("hasIcon").toBool());
+  EXPECT_GT(probe->property("pid").toDouble(), 0);
+  EXPECT_EQ(h.host->windows().size(), 2);  // Variants over Quickshell.screens
+}

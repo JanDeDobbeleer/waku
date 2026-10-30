@@ -60,8 +60,7 @@ class ShellScreen : public QObject {
 // shell (tests give it any screens); without a host it holds the application's screens.
 //
 // Quickshell spells this `Quickshell.screens`. The `Quickshell` singleton is not defined here:
-// it will forward its `screens` to this list (see the report of migration step 1 in
-// docs/plans/2026-10-30-delivery-plan.md).
+// src/host/quickshell/qml/Quickshell.qml forwards its `screens` to this list.
 //
 //     Variants {
 //         model: ScreenList.screens

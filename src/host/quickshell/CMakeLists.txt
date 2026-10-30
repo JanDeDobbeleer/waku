@@ -4,9 +4,11 @@
 # (qml/quickshell_types.h); the QML types are thin wrappers (qml/*.qml). A shell may import both
 # `wabar` and `Quickshell`: the names resolve to the same types.
 #
-# Not here yet: the `Quickshell` singleton (env, execDetached, shellDir, screens, ...) and
-# `Quickshell.Io`; see docs/plans/2026-10-30-delivery-plan.md.
-set(quickshell_qml_files qml/PopupWindow.qml qml/Variants.qml)
+# The `Quickshell` singleton is qml/Quickshell.qml: `screens` from the host's ScreenList, the
+# rest forwarded to wabar.services.QuickshellSingleton (a QML file because the host unit cannot
+# include a feature's headers). `Quickshell.Io` is assembled in src/modules/qml_modules.cmake.
+set(quickshell_qml_files qml/PopupWindow.qml qml/Variants.qml qml/Quickshell.qml)
+set_source_files_properties(qml/Quickshell.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 foreach(file IN LISTS quickshell_qml_files)
   cmake_path(GET file FILENAME name)
   set_source_files_properties(${file} PROPERTIES QT_RESOURCE_ALIAS ${name})

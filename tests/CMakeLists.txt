@@ -14,6 +14,7 @@ list(REMOVE_DUPLICATES test_libs)
 add_executable(wabar_tests main.cpp
   integration/test_all_widgets_load.cpp
   integration/test_builtin_widgets.cpp
+  integration/test_quickshell_glue.cpp
   integration/test_safe_mode.cpp
   integration/test_widget_popups.cpp
   ${test_sources})

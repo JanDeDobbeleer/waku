@@ -41,7 +41,7 @@ properties); the name `Process` belongs to Quickshell.
 - `Quickshell.stateDir`, `cacheDir`, `dataDir` are `%LOCALAPPDATA%\wabar\{state,cache,data}`;
   `shellDir` is the config home. Nothing is created until a `FileView` writes there.
 
-## Quickshell singleton: members and merge point
+## Quickshell singleton: members and the wrapper
 
 Implemented: `env`, `execDetached` (list or object), `processId`, `clipboardText`, `shellDir`,
 `shellPath`, `configPath`, `configDir`, `shellRoot`, `dataDir`/`dataPath`, `stateDir`/`statePath`,
@@ -54,16 +54,17 @@ path or URL as is, `image://icon/<name>` when the Qt theme has the icon, `""` fo
 and an unknown icon, the fallback string, or the name. TODO: an `image://icon/` provider over shell
 icons.
 
-Not here: `screens` (the window lane).
+Not here: `screens` (the host's ScreenList).
 
-`reload(hard)` emits `reloadRequested(hard)`; nothing connects yet. The host connects it to its
-config reload, calls `setShellDir()` with the config home, and emits `reloadCompleted()` or
-`reloadFailed()` itself.
+`reload(hard)` emits `reloadRequested(hard)`. The composition root joins it to the shell host
+(`src/app/wabar/quickshell_glue.h`): it calls `setShellDir()` with the config home, queues a
+`ShellHost::reload()` for each request and emits `reloadCompleted()` or `reloadFailed()` after
+each reload.
 
-**Merge point.** The engine's `Quickshell` singleton must be this class or derive from it:
-`class QuickshellRoot : public QuickshellSingleton`, registered with
-`QML_NAMED_ELEMENT(Quickshell)` and `QML_SINGLETON` in the module `Quickshell`. Until then the
-members are reachable as `QuickshellSingleton` from `wabar.services`.
+**The `Quickshell` name.** `import Quickshell` gives a QML singleton, `Quickshell.qml` in
+`src/host/quickshell/qml/`. It reads `screens` from the host's ScreenList and forwards every other
+member to this class, so the host unit does not include a feature header. Writable members
+(`clipboardText`, `watchFiles`, `workingDirectory`) are copied both ways.
 
 ## Modules
 

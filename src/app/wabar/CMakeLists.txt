@@ -2,7 +2,7 @@
 # compiled into the QML module wabar.widgets like the features' widgets.
 wabar_contribute(WIDGETS_QML_FILES SafeShell.qml)
 
-qt_add_executable(wabar WIN32 main.cpp)
+qt_add_executable(wabar WIN32 main.cpp quickshell_glue.h)
 # WABAR_SAMPLE_CONFIG_DIR: the config home of a development build that has no --config-home and no
 # WABAR_CONFIG_HOME (see resolveConfigHome in control/control.h).
 target_compile_definitions(wabar PRIVATE

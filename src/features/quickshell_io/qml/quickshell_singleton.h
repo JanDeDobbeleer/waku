@@ -16,13 +16,10 @@ namespace wabar::quickshell_io {
 // helpers, clipboardText, processId, iconPath, reload and the version checks. Registered as
 // `QuickshellSingleton` in wabar.services (and so in Quickshell.Io through its import).
 //
-// MERGE POINT: the engine's `Quickshell` singleton (screens, windows) must expose these members
-// under the QML name `Quickshell`. Derive it from this class:
-//   class QuickshellRoot : public QuickshellSingleton { ... screens ... };
-// and register QuickshellRoot with QML_NAMED_ELEMENT(Quickshell) + QML_SINGLETON in module
-// `Quickshell`. The host connects reloadRequested(bool) to its config reload and calls
-// setShellDir() with the config home; it emits reloadCompleted() / reloadFailed() /
-// lastWindowClosed().
+// The QML name `Quickshell` is src/host/quickshell/qml/Quickshell.qml: it adds `screens` and
+// forwards the rest to this class. The composition root (src/app/wabar/quickshell_glue.h) connects
+// reloadRequested(bool) to the shell host's reload, calls setShellDir() with the config home and
+// emits reloadCompleted() / reloadFailed().
 //
 // GUI thread only. Widgets are trusted code: execDetached starts any program.
 class QuickshellSingleton : public QObject {
