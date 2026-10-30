@@ -3,13 +3,18 @@ wabar_feature(NAME audio
   DEPENDS shell
   SOURCES
     audio_endpoints.h
+    audio_stream_source.h
   WIN32_SOURCES
     win32/audio_endpoints_win.cpp
+    win32/audio_streams_win.cpp
   QML_SOURCES
     qml/audio_service.h
     qml/audio_service.cpp
+    qml/audio_streams.h
+    qml/audio_streams.cpp
   QML_FILES
     qml/Volume.qml
   TESTS
     tests/test_audio.cpp
+    tests/test_audio_streams.cpp
   SYSTEM_LIBS ole32 propsys uuid windowsapp)
