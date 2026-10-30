@@ -17,6 +17,7 @@
 #include "host/qml/shell_screen.h"
 #include "host/qml/shell_window.h"
 #include "host/qml/system_clock.h"
+#include "host/qml/transform_watcher.h"
 #include "host/qml/window_enums.h"
 
 namespace wabar::quickshell {
@@ -37,6 +38,12 @@ struct QsSingleton {
   Q_GADGET
   QML_FOREIGN(wabar::host::Singleton)
   QML_NAMED_ELEMENT(Singleton)
+};
+
+struct QsTransformWatcher {
+  Q_GADGET
+  QML_FOREIGN(wabar::host::TransformWatcher)
+  QML_NAMED_ELEMENT(TransformWatcher)
 };
 
 struct QsQsWindow {

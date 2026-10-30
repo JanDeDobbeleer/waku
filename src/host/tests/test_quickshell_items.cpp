@@ -118,3 +118,113 @@ Singleton { property int x: 5 }
   ASSERT_NE(root, nullptr);
   EXPECT_EQ(root->property("x").toInt(), 5);
 }
+
+namespace {
+
+constexpr const char* kTree = R"(
+import QtQuick
+import Quickshell
+
+Item {
+    id: root
+    width: 300; height: 300
+    property int count: 0
+    property alias watcher: w
+
+    Item {
+        id: left
+        objectName: "left"
+        x: 10; y: 10
+        Item {
+            id: mid
+            objectName: "mid"
+            x: 5; y: 5
+            Item { id: itemA; objectName: "itemA"; x: 1; y: 1; width: 20; height: 20 }
+        }
+    }
+    Item {
+        id: right
+        objectName: "right"
+        x: 100
+        Item { id: itemB; objectName: "itemB"; width: 10; height: 10 }
+    }
+    TransformWatcher { id: w; a: itemA; b: itemB }
+    Connections { target: w; function onTransformChanged() { root.count += 1 } }
+    function reset() { count = 0 }
+    function reparentB() { itemB.parent = mid }
+}
+)";
+
+struct Tree {
+  QQmlEngine engine;
+  std::unique_ptr<QObject> root;
+  Tree() {
+    root = create(&engine, kTree);
+    EXPECT_TRUE(QMetaObject::invokeMethod(root.get(), "reset"));
+  }
+  QObject* item(const char* name) const {
+    return root->findChild<QObject*>(QString::fromLatin1(name));
+  }
+  int count() const { return root->property("count").toInt(); }
+};
+
+}  // namespace
+
+TEST(QuickshellTransformWatcher, MovingAnItemOnThePathFires) {
+  Tree t;
+  ASSERT_NE(t.root, nullptr);
+  t.item("left")->setProperty("x", 40);  // an ancestor of a
+  EXPECT_EQ(t.count(), 1);
+  t.item("right")->setProperty("y", 9);  // an ancestor of b
+  EXPECT_EQ(t.count(), 2);
+  t.item("itemA")->setProperty("x", 3);  // a itself
+  EXPECT_EQ(t.count(), 3);
+}
+
+TEST(QuickshellTransformWatcher, ResizingAnItemOnThePathFires) {
+  Tree t;
+  ASSERT_NE(t.root, nullptr);
+  t.item("itemB")->setProperty("width", 30);
+  EXPECT_EQ(t.count(), 1);
+  t.item("mid")->setProperty("height", 50);
+  EXPECT_EQ(t.count(), 2);
+}
+
+TEST(QuickshellTransformWatcher, AnItemOffThePathDoesNotFire) {
+  Tree t;
+  ASSERT_NE(t.root, nullptr);
+  t.root->setProperty("x", 20);  // the common ancestor: the transform between a and b is the same
+  EXPECT_EQ(t.count(), 0);
+}
+
+TEST(QuickshellTransformWatcher, ReparentingRebuildsThePath) {
+  Tree t;
+  ASSERT_NE(t.root, nullptr);
+  ASSERT_TRUE(QMetaObject::invokeMethod(t.root.get(), "reparentB"));
+  EXPECT_GE(t.count(), 1);  // the parent of b changed
+  const int afterReparent = t.count();
+
+  t.item("right")->setProperty("x", 0);  // no longer an ancestor of b
+  EXPECT_EQ(t.count(), afterReparent);
+  t.item("left")->setProperty("x", 70);  // above the new common ancestor (mid): off the path
+  EXPECT_EQ(t.count(), afterReparent);
+  t.item("itemA")->setProperty("y", 4);  // a is a sibling of b under mid now
+  EXPECT_EQ(t.count(), afterReparent + 1);
+  t.item("mid")->setProperty("x", 0);  // the common ancestor
+  EXPECT_EQ(t.count(), afterReparent + 1);
+}
+
+TEST(QuickshellTransformWatcher, ChangingTheItemsFiresAndRewatches) {
+  Tree t;
+  ASSERT_NE(t.root, nullptr);
+  auto* watcher = t.root->property("watcher").value<QObject*>();
+  ASSERT_NE(watcher, nullptr);
+  ASSERT_TRUE(
+      watcher->setProperty("b", QVariant::fromValue(qobject_cast<QQuickItem*>(t.item("left")))));
+  EXPECT_GE(t.count(), 1);
+  const int before = t.count();
+  t.item("right")->setProperty("x", 1);  // not on the path from itemA to left any more
+  EXPECT_EQ(t.count(), before);
+  t.item("itemA")->setProperty("x", 6);
+  EXPECT_EQ(t.count(), before + 1);
+}

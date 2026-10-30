@@ -96,6 +96,8 @@ qt_add_qml_module(wabar_host
     qml/surface_control.cpp
     qml/system_clock.h
     qml/system_clock.cpp
+    qml/transform_watcher.h
+    qml/transform_watcher.cpp
     qml/window_enums.h
     win32/shell_host_win32.cpp
 )
