@@ -1,8 +1,10 @@
 #include <QCommandLineParser>
+#include <QDebug>
 #include <QGuiApplication>
 #include <QQmlEngine>
 #include <QQuickWindow>
 
+#include "app/wabar/font_engine.h"
 #include "app/wabar/quickshell_glue.h"
 #include "control/control.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
@@ -14,8 +16,13 @@
 int main(int argc, char* argv[]) {
   // As app/main.cpp setFontEngine(): Qt's DirectWrite font database maps every installed font
   // (about 1.7k handles and 100 MiB working set). Respect a platform the caller chose.
+  // `--font-engine=directwrite` opts back in for a shell that needs variable-font axes, which the
+  // GDI engine ignores (app/wabar/font_engine.h).
+  QStringList rawArguments;
+  for (int i = 1; i < argc; ++i) rawArguments << QString::fromLocal8Bit(argv[i]);
+  const wabar::app::FontEngineChoice fontEngine = wabar::app::parseFontEngine(rawArguments);
   if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORM")) {
-    qputenv("QT_QPA_PLATFORM", "windows:fontengine=gdi");
+    qputenv("QT_QPA_PLATFORM", wabar::app::platformSpec(fontEngine.engine).toLocal8Bit());
   }
   // The QML disk cache stays on, so a large user shell does not recompile on every start. Qt keys
   // an entry on the source file's size and modification time, so an edit invalidates it. A caller
@@ -40,21 +47,20 @@ int main(int argc, char* argv[]) {
           "Start the built-in shell with the default theme and ignore the config home."));
   QCommandLineOption noTrayOpt(QStringLiteral("no-tray"),
                                QStringLiteral("Never hook Explorer; the Tray widget stays empty."));
-  QCommandLineOption noHotkeysOpt(
-      QStringLiteral("no-hotkeys"),
-      QStringLiteral("Register no global hotkey; GlobalShortcut fires only through wabarc."));
-  QCommandLineOption importPathOpt(
-      QStringLiteral("import-path"),
-      QStringLiteral("Add a folder of QML modules (user-built plugins) to the import path. May be "
-                     "repeated. <config home>/modules is always added when it exists."),
-      QStringLiteral("dir"));
+  // Read from the raw arguments before the application exists; declared here for --help and so
+  // the parser accepts it.
+  QCommandLineOption fontEngineOpt(
+      QStringLiteral("font-engine"),
+      QStringLiteral("gdi (default, small) or directwrite (honours variable-font axes, about 2 MB "
+                     "more memory). QT_QPA_PLATFORM wins when set."),
+      QStringLiteral("engine"));
   parser.addOption(configHomeOpt);
-  parser.addOption(importPathOpt);
-  parser.addOption(noHotkeysOpt);
+  parser.addOption(fontEngineOpt);
   parser.addOption(noTrayOpt);
   parser.addOption(appBarOpt);
   parser.addOption(safeOpt);
   parser.process(app);
+  if (!fontEngine.error.isEmpty()) qWarning().noquote() << "wabar:" << fontEngine.error;
   wabar::kernel::setCapabilityDisabled(QStringLiteral("tray"), parser.isSet(noTrayOpt));
   wabar::kernel::setCapabilityDisabled(QStringLiteral("hotkeys"), parser.isSet(noHotkeysOpt));
 
