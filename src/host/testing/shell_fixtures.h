@@ -18,6 +18,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "control/control.h"
@@ -97,6 +98,10 @@ struct Native {
   int removed = 0;
   std::vector<Backdrop::Kind> backdrops;
   qlonglong monitor = 4242;
+  // The fake cursor (physical pixels) that window masks read; never the real one.
+  std::optional<QPoint> cursor = QPoint(-100000, -100000);
+  // False: no cursor source at all, like a host that is not on a live desktop.
+  bool cursorHook = true;
 
   ShellHost::NativeHooks hooks() {
     class Recording final : public wabar::host::IAppBar {
@@ -118,6 +123,7 @@ struct Native {
       backdrops.push_back(backdrop);
     };
     hooks.monitorHandle = [this](quintptr) { return monitor; };
+    if (cursorHook) hooks.cursorPosition = [this]() { return cursor; };
     return hooks;
   }
 };

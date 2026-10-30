@@ -14,7 +14,9 @@
 #include <QSize>
 #include <memory>
 
+#include "host/mask_poller.h"
 #include "host/panel_geometry.h"
+#include "host/qml/region.h"
 #include "host/qml/shell_screen.h"
 #include "host/qml/window_enums.h"
 
@@ -145,6 +147,10 @@ class QsWindow : public QObject, public QQmlParserStatus {
 
   // Accepted and ignored: see SurfaceFormat.
   Q_PROPERTY(wabar::host::SurfaceFormat* surfaceFormat READ surfaceFormat CONSTANT FINAL)
+  // The input region (Quickshell `mask`): only points inside it take input; the rest click through
+  // to the window below. Null: the whole window takes input. An empty `Region {}`: none does. See
+  // MaskPoller (host/mask_poller.h) for how, and for the live-desktop gate.
+  Q_PROPERTY(wabar::host::Region* mask READ mask WRITE setMask NOTIFY maskChanged FINAL)
 
   // wabar extensions.
   // Built into the window when it is created (the Panel preset's content).
@@ -175,6 +181,11 @@ class QsWindow : public QObject, public QQmlParserStatus {
   QQmlListProperty<QObject> data();
   QQuickItem* contentItem() const;
   SurfaceFormat* surfaceFormat() const { return surfaceFormat_; }
+  Region* mask() const { return mask_.data(); }
+  void setMask(Region* mask);
+  // The mask as a value, or nothing when there is none.
+  std::optional<RegionNode> maskNode() const;
+  MaskPoller* maskPoller() const { return poller_.get(); }
   ShellScreen* screen() const { return screen_; }
   void setScreen(ShellScreen* screen);
   QColor color() const { return color_; }
@@ -239,6 +250,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   void backgroundChanged();
   void monitorHandleChanged();
   void hostChanged();
+  void maskChanged();
   // The first time the backing window is shown: the host applies the native look then.
   void firstShown();
 
@@ -250,6 +262,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   virtual void afterShow() {}
   void updateFlags();
   void updateVisibility();
+  void updateMaskPoller();
   bool complete() const { return complete_; }
 
  private:
@@ -267,6 +280,8 @@ class QsWindow : public QObject, public QQmlParserStatus {
   QPointer<ShellScreen> screen_;
   QPointer<ShellHost> host_;
   QPointer<QQmlComponent> content_;
+  QPointer<Region> mask_;
+  std::unique_ptr<MaskPoller> poller_;
   QColor color_;
   QColor background_;
   Backdrop::Kind backdrop_ = Backdrop::None;

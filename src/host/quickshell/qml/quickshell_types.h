@@ -9,6 +9,7 @@
 
 #include "host/qml/global_shortcut.h"
 #include "host/qml/lazy_loader.h"
+#include "host/qml/region.h"
 #include "host/qml/shell_config.h"
 #include "host/qml/shell_screen.h"
 #include "host/qml/shell_window.h"
@@ -77,5 +78,23 @@ Q_NAMESPACE
 QML_FOREIGN_NAMESPACE(wabar::host::Edges)
 QML_NAMED_ELEMENT(Edges)
 }  // namespace QsEdges
+
+struct QsRegion {
+  Q_GADGET
+  QML_FOREIGN(wabar::host::Region)
+  QML_NAMED_ELEMENT(Region)
+};
+
+namespace QsIntersection {
+Q_NAMESPACE
+QML_FOREIGN_NAMESPACE(wabar::host::Intersection)
+QML_NAMED_ELEMENT(Intersection)
+}  // namespace QsIntersection
+
+namespace QsRegionShape {
+Q_NAMESPACE
+QML_FOREIGN_NAMESPACE(wabar::host::RegionShape)
+QML_NAMED_ELEMENT(RegionShape)
+}  // namespace QsRegionShape
 
 }  // namespace wabar::quickshell

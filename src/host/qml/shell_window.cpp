@@ -49,10 +49,12 @@ QsWindow::QsWindow(QObject* parent)
   connect(window_.get(), &QWindow::widthChanged, this, &QsWindow::widthChanged);
   connect(window_.get(), &QWindow::heightChanged, this, &QsWindow::heightChanged);
   connect(window_.get(), &QWindow::visibleChanged, this, &QsWindow::backingWindowVisibleChanged);
+  connect(window_.get(), &QWindow::visibleChanged, this, [this] { updateMaskPoller(); });
 }
 
 QsWindow::~QsWindow() {
   if (host_) host_->release(this);
+  poller_.reset();
   window_->hide();
   // The declared items are this object's QObject children and die after this destructor; take
   // them out of the window first so its content item does not outlive them in a broken state.
@@ -117,6 +119,29 @@ void QsWindow::setColor(const QColor& color) {
   if (color_ == color) return;
   color_ = color;
   emit colorChanged();
+}
+
+void QsWindow::setMask(Region* mask) {
+  if (mask_ == mask) return;
+  mask_ = mask;
+  emit maskChanged();
+  updateMaskPoller();
+}
+
+std::optional<RegionNode> QsWindow::maskNode() const {
+  if (!mask_) return std::nullopt;
+  return mask_->node();
+}
+
+// The poller exists only on a live desktop: the host hands it a cursor source then (and tests
+// hand it a fake).
+void QsWindow::updateMaskPoller() {
+  if (!poller_) {
+    if (!mask_ || !host_ || !host_->hooks().cursorPosition) return;
+    poller_ = std::make_unique<MaskPoller>(window_.get(), host_->hooks().cursorPosition,
+                                           [this] { return maskNode(); });
+  }
+  poller_->refresh();
 }
 
 void QsWindow::setVisible(bool visible) {
@@ -204,7 +229,12 @@ void QsWindow::setPresentable(bool presentable) {
   updateVisibility();
 }
 
-void QsWindow::updateFlags() { window_->setFlags(windowFlags()); }
+void QsWindow::updateFlags() {
+  Qt::WindowFlags flags = windowFlags();
+  // The mask poller owns this flag while the window is click-through.
+  if (poller_ && poller_->passThrough()) flags |= Qt::WindowTransparentForInput;
+  window_->setFlags(flags);
+}
 
 void QsWindow::updateVisibility() {
   const bool show = complete_ && presentable_ && visible_ && buildError_.isEmpty();
@@ -234,6 +264,7 @@ void QsWindow::componentComplete() {
   emit hostChanged();
   if (host_) {
     host_->adopt(this);
+    updateMaskPoller();
   } else {
     setPresentable(true);
   }

@@ -18,14 +18,16 @@
 add_library(wabar_host_base STATIC
   app_bar.h
   app_bar.cpp
-  hotkeys.h
-  hotkeys.cpp
+  mask_poller.h
+  mask_poller.cpp
   panel_geometry.h
   panel_geometry.cpp
   plugin_guard.h
   plugin_guard.cpp
   popup_placement.h
   popup_placement.cpp
+  region_math.h
+  region_math.cpp
   screen_match.h
   screen_match.cpp
   win32/app_bar.cpp
@@ -73,6 +75,8 @@ qt_add_qml_module(wabar_host
     qml/lazy_loader.h
     qml/lazy_loader.cpp
     qml/popup_placement_qml.h
+    qml/region.h
+    qml/region.cpp
     qml/shell_config.h
     qml/shell_host.h
     qml/shell_host.cpp
@@ -99,7 +103,10 @@ wabar_contribute(
     tests/test_control_handler.cpp
     tests/test_global_shortcut.cpp
     tests/test_panel_geometry.cpp
+    tests/test_mask_poller.cpp
     tests/test_popups.cpp
+    tests/test_region_math.cpp
+    tests/test_region_mask.cpp
     tests/test_quickshell.cpp
     tests/test_screen_match.cpp
     tests/test_shell_host.cpp

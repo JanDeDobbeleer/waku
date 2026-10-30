@@ -14,6 +14,7 @@
 #include <memory>
 
 #include "host/app_bar.h"
+#include "host/mask_poller.h"
 #include "host/qml/bar_theme.h"
 #include "host/qml/shell_config.h"
 #include "host/qml/window_enums.h"
@@ -60,6 +61,9 @@ class ShellHost : public QObject {
     std::function<void(quintptr hwnd, Backdrop::Kind backdrop)> applyBackdrop;
     // HMONITOR of the monitor the window is on.
     std::function<qlonglong(quintptr hwnd)> monitorHandle;
+    // The cursor in physical screen pixels, for window masks (MaskPoller). Null: masks are inert.
+    // win32() sets it only on a live desktop.
+    CursorSource cursorPosition;
 
     static NativeHooks win32();
   };
@@ -111,6 +115,7 @@ class ShellHost : public QObject {
   // user clicked elsewhere in the bar: the host reports those presses (windowPressed).
   bool eventFilter(QObject* watched, QEvent* event) override;
 
+  const NativeHooks& hooks() const { return options_.hooks; }
   QString error() const { return error_; }
   // The backing windows on screen, in the order they registered.
   QList<QQuickWindow*> windows() const;
