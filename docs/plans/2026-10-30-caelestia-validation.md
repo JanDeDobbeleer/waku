@@ -51,10 +51,10 @@ README holds one video only.
 | `Singleton`, `TransformWatcher`, `QtQuick.Templates`, Controls.Basic | added in lane M2 |
 | WebP images could not be decoded | `qwebp` deployed in lane M3 |
 | `Region` has one `shapeChanged` signal for x, y, width, height; a binding that reads its own size loops | open: add separate notify signals |
-| No network throughput in `wabar.services.Network` | open: add rx/tx bytes (`GetIfTable2`) |
+| No network throughput in `wabar.services.Network` | fixed in lane N2: `rxBytesPerSecond`, `txBytesPerSecond`, totals, `adapters` |
 | No CPU or GPU temperature source | open: Windows needs a helper |
 | `Notification` lacks `actions`, `hints`, `expireTimeout` signals | open: toasts have no actions on Windows |
-| Wi-Fi radio switch and VPN control are no-ops | open: service limits |
+| Wi-Fi radio switch and VPN control are no-ops | fixed in lane N2: `setWifiEnabled`, `vpnConnections`, `connectVpn`, `disconnectVpn` |
 | Qt reads `D:/...` as a URL scheme in `Image.source` | Qt behaviour; the port builds `file:///` URLs |
 | `QtObject` has no default property; `Array.prototype.at` and `Qt.version` missing | Qt behaviour; the port works around them |
 
