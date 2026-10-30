@@ -96,6 +96,7 @@ Namespace `wabar::kernel`, include `"kernel/<qt|win32>/<file>.h"`.
 | `win32/window_focus.*` | `forceForegroundFocus(hwnd)`: `SetForegroundWindow` and `SetFocus` with the documented `AttachThreadInput` workaround, so a window shown from a hotkey or from `wabarc` gets the keyboard focus | host (`NativeHooks::forceForeground` for windows with `keyboardFocus` not None), wallpapers (`Wallpapers::focusWindow`, the gallery) |
 | `win32/winrt_apartment.*` | `ensureWinrtApartment()` | bluetooth, brightness, network (`connectivity_win`, `wlan_win`) |
 | `win32/shell_launch.*` | `shellOpen`, `launchHiddenShell`, `startDetachedHidden`, `hideConsole` | Shell, ControlCenter, toast activation, komorebi, `ShellProcess`, `quickshell_io` (`Process`, `execDetached`) |
+| `win32/shell_icons.*` | `IconBitmap`, `shellItemIcon` (`IShellItemImageFactory`, documented), `iconBitmapFromHicon` | taskbar (window and pinned-app icons), apps (`image://appicon`) |
 | `win32/app_activation.*` | AUMID lookups and `activateAppByAumid` (documented Win32/COM only) | media source names, toast activation |
 | `qt/live_desktop.*` | `liveDesktop([capability])`, `setCapabilityDisabled`, `capabilityDisabled` | the services' real constructors, `host::Hotkeys`, `src/app/wabar/main.cpp` (`--no-tray`, `--no-hotkeys`) |
 | `qt/polled_source.*` | `PolledSource`, the polled-sample base | `Memory`, `Cpu`, `Battery`, `Network` |

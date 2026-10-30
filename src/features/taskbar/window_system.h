@@ -9,6 +9,8 @@
 #include <utility>
 #include <vector>
 
+#include "kernel/win32/shell_icons.h"
+
 namespace wabar::taskbar {
 
 // An HWND as an integer. 0 means "no window".
@@ -33,20 +35,8 @@ struct WindowInfo {
   bool operator==(const WindowInfo&) const = default;
 };
 
-// 32-bit BGRA, straight (not premultiplied) alpha, top-down. QtGui is off limits here, so the
-// widget turns this into a QImage (Format_ARGB32).
-struct IconBitmap {
-  int width = 0;
-  int height = 0;
-  QByteArray bgra;
-  // False when the window did not answer WM_GETICON in time; the caller asks again later.
-  bool complete = true;
-  bool isNull() const { return width <= 0 || height <= 0 || bgra.isEmpty(); }
-};
-
-// The shell icon of a parsing name (a path, or "shell:AppsFolder\<aumid>") at about `size` pixels,
-// null when the shell has none. Blocking; call it off the GUI thread.
-IconBitmap shellItemIcon(const QString& parsingName, int size);
+// The icon bitmap type and shellItemIcon() are shared with the apps feature (kernel/win32).
+using kernel::IconBitmap;
 
 // Every OS fact and action the taskbar needs. The Win32 implementation is stateless and safe to
 // call from any thread; tests substitute a fake so nothing real is ever activated or closed.

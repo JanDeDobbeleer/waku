@@ -87,9 +87,9 @@ class PinSupport {
 
 std::shared_ptr<PinSupport> makeWin32PinSupport();
 
-// Shared with window_system_win32.cpp, which owns the bitmap helpers.
-IconBitmap shellItemIcon(const QString& parsingName, int size);
-IconBitmap iconBitmapFromHicon(void* hicon);
+// The bitmap helpers are shared with the apps feature and live in kernel/win32/shell_icons.h.
+using kernel::iconBitmapFromHicon;
+using kernel::shellItemIcon;
 IconBitmap defaultAppIcon();
 
 }  // namespace wabar::taskbar
