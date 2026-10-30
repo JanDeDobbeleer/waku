@@ -62,7 +62,9 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | Command | Effect |
 |---|---|
 | `wabarc reload` | Reload the config of the running bar. |
-| `wabarc status` | Print what the shell is doing: `running; windows=N; safe=yes|no; error=...`. |
+| `wabarc status` | Print what the shell is doing: `running; pid=P; windows=N; safe=yes|no; error=...`. |
+| `wabarc surface list` | List the windows that have a `name`: `ok: launcher=hidden, osd=shown`. |
+| `wabarc surface show`, `hide`, `toggle`, `status <name>` | Show, hide, flip or report the windows with that `name` (all screens). `show` and `toggle` first allow the bar to take the keyboard focus (`AllowSetForegroundWindow`). Example: `examples/launcher`. |
 | `wabarc quit` | Stop the bar. |
 | `wabarc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
 | `wabarc wallpaper random`, `next`, `previous` | Pick from the wallpaper folder; `next` and `previous` wrap. |

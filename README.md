@@ -21,7 +21,7 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 ```
 
 `wabarc` talks to the running bar. Its commands are `reload`, `status`, `quit` and
-`wallpaper set|random|next|previous|gallery`. Details and flags: [src/app/README.md](src/app/README.md).
+`wallpaper set|random|next|previous|gallery` and `surface list|show|hide|toggle|status <name>`. Details and flags: [src/app/README.md](src/app/README.md).
 
 Use `--config-home <dir>` (or `WABAR_CONFIG_HOME`) to point wabar at your own folder, and
 `--no-tray` if you do not want it to hook Explorer. `cmake --build --preset arm64-debug --target

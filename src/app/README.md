@@ -11,6 +11,8 @@ to Waybar, the bar for Wayland. It is written in lower case and plain ASCII in c
     error that lists the candidates)
   - `wabarc wallpaper random`, `next`, `previous`: pick from the wallpaper folder (they wrap)
   - `wabarc wallpaper gallery`: open or close the picker
+  - `wabarc surface list`, `wabarc surface show|hide|toggle|status <name>`: the shell windows that
+    have a `name` (a launcher, an OSD); `show` and `toggle` let the bar take the keyboard focus
   - `--dry-run` after `wallpaper` (`set`, `random`, `next`, `previous`) plays the animation but does
     not set the wallpaper
 

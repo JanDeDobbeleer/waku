@@ -93,6 +93,7 @@ Namespace `wabar::kernel`, include `"kernel/<qt|win32>/<file>.h"`.
 | File | What | Users |
 |---|---|---|
 | `win32/windows_build.*` | `windowsBuild()`, cached `RtlGetVersion` (allowlist row below) | host backdrop, `src/features/system_stats/win32/pdh.cpp`, `src/features/control_center/win32/power_win.cpp` |
+| `win32/window_focus.*` | `forceForegroundFocus(hwnd)`: `SetForegroundWindow` and `SetFocus` with the documented `AttachThreadInput` workaround, so a window shown from a hotkey or from `wabarc` gets the keyboard focus | host (`NativeHooks::forceForeground` for windows with `keyboardFocus` not None), wallpapers (`Wallpapers::focusWindow`, the gallery) |
 | `win32/winrt_apartment.*` | `ensureWinrtApartment()` | bluetooth, brightness, network (`connectivity_win`, `wlan_win`) |
 | `win32/shell_launch.*` | `shellOpen`, `launchHiddenShell`, `startDetachedHidden`, `hideConsole` | Shell, ControlCenter, toast activation, komorebi, `ShellProcess`, `quickshell_io` (`Process`, `execDetached`) |
 | `win32/app_activation.*` | AUMID lookups and `activateAppByAumid` (documented Win32/COM only) | media source names, toast activation |
@@ -201,34 +202,25 @@ and its size times the device pixel ratio (`computeAppBarRect`). `negotiateAppBa
 `ABM_QUERYPOS`, re-applies the thickness to the adjusted rect, then `ABM_SETPOS`, and the window
 moves inward by what the shell granted (another app bar or the Windows taskbar on the same edge).
 
-### Input masks
-
-A window's `mask` (`Region`, `src/host/qml/region.*`) restricts where it takes input; the rest
-clicks through to the window below. Windows has no region-based hit test for a Qt window, so the
-host polls (`MaskPoller`, `src/host/mask_poller.*`). The measured facts behind it: `WS_EX_TRANSPARENT`
-alone does not click through, but `WS_EX_LAYERED | WS_EX_TRANSPARENT` does, and
-`Qt::WindowTransparentForInput` set at run time through `QWindow::setFlag` produces exactly that
-(2 to 4 ms per call). The DWM backdrop is not affected by the flip.
-
-- While a window is visible and has a mask, a `Qt::PreciseTimer` at 8 ms (120 Hz) reads the cursor
-  (`GetCursorPos`, physical pixels; documented, so no allowlist row), converts it to the window's
-  logical coordinates (`cursorInWindow`: screen origin, device pixel ratio, window position) and
-  tests it against the mask grown by 6 px (`regionContainsPadded`: the point and eight points 6 px
-  away). The flag is set only when the answer changes. The poll costs about 0.16% of a core.
-- The poll stops when the window hides or the mask goes, and the flag is cleared then. A cursor
-  outside the window is simply outside the region.
-- Region math is a pure function over `RegionNode` (`src/host/region_math.*`): the shape (a
-  rectangle or an ellipse, or the bounds of `item` mapped to the window), then each child folded in
-  order by its `Intersection` (Combine = union, Intersect, Xor, Subtract). An empty `Region {}`
-  contains nothing, so the window is fully click-through; no `mask` means the whole window takes
-  input.
-- The cursor comes from `ShellHost::NativeHooks::cursorPosition`. `win32()` sets it only when
-  `kernel::liveDesktop()`; tests and the offscreen platform have none (or a fake), so masks are
-  inert there and no test reads the real cursor or flips a real window.
-- Known race: a click in the gap between the cursor reaching a region and the next poll (up to
-  8 ms) goes to the window below. The 6 px pad makes the flip happen before a normal approach
-  arrives. A click that starts on a click-through spot and drags into a region is not seen by the
-  window.
+Overlays (a launcher, an OSD, a power menu): any window can be shown on demand. A window with
+`visible: false` makes no native window and no swap chain until it is first shown (a `QQuickWindow`
+creates both at `show()`); a hidden overlay's content can be built lazily with a `LazyLoader`.
+`show()`, `hide()` and `toggle()` set `visible`; `shown()` and `hidden()` fire when the native window
+appears and leaves; `hideDelay` (ms) keeps the window up after `visible` turns false so the content
+can fade out, and showing again cancels the hide. Layer and keyboard focus reach Windows through
+`ShellHost::NativeHooks`, so tests record them: `Top` and `Overlay` call `raiseTopmost`
+(`SetWindowPos(HWND_TOPMOST)`, no activation) each time the window is shown, `Bottom` stays on the
+Qt hint `Qt::WindowStaysOnBottomHint`, `Background` is still `Bottom`. `keyboardFocus: None` sets
+`WS_EX_NOACTIVATE` (`setNoActivate`) and `Qt::WindowDoesNotAcceptFocus`. Any other value is
+activated when shown at run time (not when the shell is first installed or re-shown after a
+reload): `requestActivate()` plus `forceForeground`, which is `kernel::forceForegroundFocus`
+(`AttachThreadInput`, documented). Windows only grants the foreground to the process that got the
+last input, so `wabarc surface show|toggle` reads the bar's pid from `status` and calls
+`AllowSetForegroundWindow(pid)` first. `dismissOnBlur` hides a focusable window that was active and
+lost the activation; `dismissOnEscape` hides it when Escape reaches the window and no item took it.
+`name` is the id for `wabarc surface list|show|hide|toggle|status <name>` (one name may belong to
+several windows; a verb applies to all). The host keeps `name -> shown` for names toggled at run time
+and gives the windows of the next shell the same state after a reload (`ShellHost::present`).
 
 ## Threading
 
