@@ -65,6 +65,8 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | `wabarc status` | Print what the shell is doing: `running; pid=P; windows=N; safe=yes|no; error=...`. |
 | `wabarc surface list` | List the windows that have a `name`: `ok: launcher=hidden, osd=shown`. |
 | `wabarc surface show`, `hide`, `toggle`, `status <name>` | Show, hide, flip or report the windows with that `name` (all screens). `show` and `toggle` first allow the bar to take the keyboard focus (`AllowSetForegroundWindow`). Example: `examples/launcher`. |
+| `wabarc call` | List the `IpcHandler` targets and their functions. |
+| `wabarc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
 | `wabarc quit` | Stop the bar. |
 | `wabarc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
 | `wabarc wallpaper random`, `next`, `previous` | Pick from the wallpaper folder; `next` and `previous` wrap. |
@@ -139,7 +141,9 @@ default (`-DWABAR_DIST_DIR=...` changes it; `dist/` is not tracked):
 ```
 dist/wabar/
   wabar.exe, wabarc.exe, WabarTrayHook[_arm64].dll
-  <Qt runtime>                  from windeployqt, scanning src/ for QML imports
+  <Qt runtime>                  from windeployqt, scanning src/ and cmake/deploy_imports/ for QML imports
+                                (the latter lists QtQuick.Layouts, QtQuick.Effects and Qt.labs.folderlistmodel,
+                                which shells written for Quickshell import)
   examples/config/              the sample config home
   modules/wabar/                the host QML files, qmldir and .qmltypes (module `wabar`)
   modules/wabar/widgets/        the built-in widget .qml files, qmldir, .qmltypes (`wabar.widgets`)
