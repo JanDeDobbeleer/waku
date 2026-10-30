@@ -60,6 +60,9 @@ struct BluetoothDevice {
 // Port of bluetooth_types.BluetoothStatus.
 struct BluetoothStatus {
   bool radioOn = false;
+  // The radio state could not be read and no device was listed (the stack may not be ready).
+  // The service retries; radioOn and devices keep their last values meanwhile.
+  bool radioUnknown = false;
   QVector<BluetoothDevice> devices;
 
   QVector<BluetoothDevice> connectedDevices() const {

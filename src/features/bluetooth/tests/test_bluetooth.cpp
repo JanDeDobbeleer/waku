@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <QCoreApplication>
+#include <QEventLoop>
 #include <QSignalSpy>
+#include <QTimer>
 #include <QVariantMap>
 #include <memory>
 
@@ -33,6 +36,25 @@ struct Fixture {
   FakeBackend* fake = nullptr;
   std::unique_ptr<Bluetooth> service;
 };
+
+void wait(int ms) {
+  QEventLoop loop;
+  QTimer::singleShot(ms, &loop, &QEventLoop::quit);
+  loop.exec();
+}
+
+BluetoothStatus unknownStatus() {
+  BluetoothStatus status;
+  status.radioUnknown = true;
+  return status;
+}
+
+BluetoothStatus knownStatus() {
+  BluetoothStatus status;
+  status.radioOn = true;
+  status.devices = {device(QStringLiteral("Buds"), true, true, 80)};
+  return status;
+}
 
 }  // namespace
 
@@ -123,4 +145,70 @@ TEST(BluetoothService, AFinishedConnectionRefreshesTheList) {
 TEST(BluetoothService, TheRealServiceIsUnavailableOffscreen) {
   Bluetooth service;
   EXPECT_FALSE(service.available());
+}
+
+TEST(BluetoothServiceStartup, UnknownThenKnownShowsDevicesWithoutAnEvent) {
+  Fixture f;
+  f.service->setRetrySchedule({10, 10, 10, 10});
+  f.fake->publish(unknownStatus());
+  EXPECT_FALSE(f.service->radioOn());
+  wait(60);
+  EXPECT_EQ(f.fake->refreshes, 1);  // the retry asked the backend again
+  f.fake->publish(knownStatus());
+  EXPECT_TRUE(f.service->radioOn());
+  EXPECT_EQ(f.service->connectedCount(), 1);
+  wait(60);
+  EXPECT_EQ(f.fake->refreshes, 1);  // a known state stops the retries
+}
+
+TEST(BluetoothServiceStartup, UnknownKeepsTheLastKnownState) {
+  Fixture f;
+  f.service->setRetrySchedule({10});
+  f.fake->publish(knownStatus());
+  f.fake->publish(unknownStatus());
+  EXPECT_TRUE(f.service->radioOn());
+  EXPECT_EQ(f.service->connectedCount(), 1);
+}
+
+TEST(BluetoothServiceStartup, RetriesStopAfterTheScheduleAndTheRadioShowsOff) {
+  Fixture f;
+  f.service->setRetrySchedule({5, 5});
+  f.fake->publish(knownStatus());
+  for (int i = 0; i < 3; ++i) {
+    f.fake->publish(unknownStatus());
+    wait(40);
+  }
+  EXPECT_EQ(f.fake->refreshes, 2);
+  EXPECT_FALSE(f.service->radioOn());
+  EXPECT_TRUE(f.service->devices().isEmpty());
+  wait(60);
+  EXPECT_EQ(f.fake->refreshes, 2);
+}
+
+TEST(BluetoothServiceStartup, AGenuinelyOffRadioStaysOffWithoutRetries) {
+  Fixture f;
+  f.service->setRetrySchedule({5, 5});
+  f.fake->publish(BluetoothStatus{});  // radio off, known
+  wait(40);
+  EXPECT_EQ(f.fake->refreshes, 0);
+  EXPECT_FALSE(f.service->radioOn());
+}
+
+TEST(BluetoothServiceStartup, TheSafetyNetPollsOnlyWhileObserved) {
+  Fixture f;
+  f.service->setSafetyInterval(10);
+  EXPECT_FALSE(f.service->safetyTimerActive());
+  wait(40);
+  EXPECT_EQ(f.fake->refreshes, 0);
+  {
+    QSignalSpy observer(f.service.get(), &Bluetooth::changed);
+    EXPECT_TRUE(f.service->safetyTimerActive());
+    wait(60);
+    EXPECT_GT(f.fake->refreshes, 0);
+  }
+  wait(20);  // the queued disconnect check runs
+  EXPECT_FALSE(f.service->safetyTimerActive());
+  const int after = f.fake->refreshes;
+  wait(60);
+  EXPECT_EQ(f.fake->refreshes, after);
 }

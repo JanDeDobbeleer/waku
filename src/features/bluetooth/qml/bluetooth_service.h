@@ -2,9 +2,12 @@
 
 #include <QtQml/qqmlregistration.h>
 
+#include <QList>
+#include <QMetaMethod>
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QTimer>
 #include <QVariantList>
 #include <memory>
 
@@ -23,6 +26,11 @@ namespace wabar::bluetooth {
 // list of maps: id (the address, pass it back to connectDevice), name, connected, paired,
 // canConnect (classic audio devices only), type (device type name) and batteryPercent (-1 when
 // unknown), connected devices first. Unpaired devices are left out.
+//
+// Start-up: when Windows reports neither a radio state nor a device (the stack is not ready), the
+// backend flags the snapshot `radioUnknown`. The service asks again after 1, 3, 8 and 20 s and
+// shows "off" only when those retries find nothing. While `changed` has a listener, a 60 s
+// timer reloads the list as a safety net; unobserved, nothing polls.
 class Bluetooth : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -50,15 +58,31 @@ class Bluetooth : public QObject {
   Q_INVOKABLE void connectDevice(const QString& id);
   Q_INVOKABLE void disconnectDevice(const QString& id);
 
+  // Test seams: the retry delays (ms) and the observed safety-net interval (ms).
+  void setRetrySchedule(const QList<int>& delaysMs) { retryDelays_ = delaysMs; }
+  void setSafetyInterval(int ms) { safetyTimer_.setInterval(ms); }
+  bool safetyTimerActive() const { return safetyTimer_.isActive(); }
+
  signals:
   void changed();
 
+ protected:
+  void connectNotify(const QMetaMethod& signal) override;
+  void disconnectNotify(const QMetaMethod& signal) override;
+
  private:
+  bool observed() const;
+  void updateSafetyTimer();
+  void retryTick();
   QVector<BluetoothDevice> connectedDevices() const;
   void onStatus(const BluetoothStatus& status);
 
   std::unique_ptr<BluetoothBackend> backend_;
   BluetoothStatus status_;
+  QList<int> retryDelays_{1000, 3000, 8000, 20000};
+  int retriesDone_ = 0;
+  QTimer retryTimer_;
+  QTimer safetyTimer_;
 };
 
 }  // namespace wabar::bluetooth

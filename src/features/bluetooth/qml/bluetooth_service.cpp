@@ -25,6 +25,16 @@ Bluetooth::Bluetooth(QObject* parent) : Bluetooth(makeRealBackend(), parent) {}
 Bluetooth::Bluetooth(std::unique_ptr<BluetoothBackend> backend, QObject* parent)
     : QObject(parent), backend_(std::move(backend)) {
   if (!backend_) return;
+  retryTimer_.setSingleShot(true);
+  connect(&retryTimer_, &QTimer::timeout, this, &Bluetooth::retryTick);
+  safetyTimer_.setInterval(60000);
+  connect(&safetyTimer_, &QTimer::timeout, this, [this] {
+    if (!backend_ || !isSignalConnected(QMetaMethod::fromSignal(&Bluetooth::changed))) {
+      updateSafetyTimer();
+      return;
+    }
+    backend_->refresh();
+  });
   connect(backend_.get(), &BluetoothBackend::statusUpdated, this, &Bluetooth::onStatus);
   // The backend publishes the new connection through its watchers; ask once more so the list is
   // exact when a connect or disconnect ends.
@@ -36,8 +46,47 @@ Bluetooth::Bluetooth(std::unique_ptr<BluetoothBackend> backend, QObject* parent)
 Bluetooth::~Bluetooth() = default;
 
 void Bluetooth::onStatus(const BluetoothStatus& status) {
+  if (status.radioUnknown) {
+    // Not known yet: keep what is shown and ask again, until the schedule runs out.
+    if (retriesDone_ < retryDelays_.size()) {
+      retryTimer_.start(retryDelays_.at(retriesDone_++));
+      return;
+    }
+    BluetoothStatus off;
+    status_ = off;
+    emit changed();
+    return;
+  }
+  retryTimer_.stop();
+  retriesDone_ = 0;
   status_ = status;
   emit changed();
+}
+
+void Bluetooth::retryTick() {
+  if (backend_) backend_->refresh();
+}
+
+bool Bluetooth::observed() const {
+  return backend_ && isSignalConnected(QMetaMethod::fromSignal(&Bluetooth::changed));
+}
+
+void Bluetooth::updateSafetyTimer() {
+  if (observed() == safetyTimer_.isActive()) return;
+  if (observed())
+    safetyTimer_.start();
+  else
+    safetyTimer_.stop();
+}
+
+void Bluetooth::connectNotify(const QMetaMethod& signal) {
+  if (signal == QMetaMethod::fromSignal(&Bluetooth::changed)) updateSafetyTimer();
+}
+
+void Bluetooth::disconnectNotify(const QMetaMethod& signal) {
+  // Qt calls this in the middle of a disconnect; the check runs from the event loop.
+  if (signal == QMetaMethod::fromSignal(&Bluetooth::changed))
+    QMetaObject::invokeMethod(this, &Bluetooth::updateSafetyTimer, Qt::QueuedConnection);
 }
 
 QVector<BluetoothDevice> Bluetooth::connectedDevices() const {

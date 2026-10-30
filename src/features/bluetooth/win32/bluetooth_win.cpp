@@ -16,6 +16,8 @@
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 
+#include <QDebug>
+#include <QElapsedTimer>
 #include <QMetaObject>
 #include <QPointer>
 #include <QThread>
@@ -309,6 +311,14 @@ std::optional<int> readBattery(quint64 address) {
   return hfpPresent ? hfpLevel : fallback;
 }
 
+// WABAR_BT_DEBUG=1 logs every refresh decision (radio result, counts, branch, thread).
+bool btDebug() {
+  static const bool on = qEnvironmentVariableIntValue("WABAR_BT_DEBUG") != 0;
+  return on;
+}
+
+thread_local QString lastRadioError;
+
 // radio_is_on: true = on, false = adapter present but off, nullopt = no adapter / query failed.
 std::optional<bool> radioIsOn() {
   try {
@@ -320,7 +330,13 @@ std::optional<bool> radioIsOn() {
     }
     if (found) return false;
     return std::nullopt;
+  } catch (const winrt::hresult_error& error) {
+    lastRadioError = QStringLiteral("hresult 0x%1 %2")
+                         .arg(static_cast<quint32>(error.code().value), 8, 16, QLatin1Char('0'))
+                         .arg(toQString(error.message()));
+    return std::nullopt;
   } catch (...) {
+    lastRadioError = QStringLiteral("unknown exception");
     return std::nullopt;
   }
 }
@@ -430,13 +446,30 @@ void enrichDevices(std::vector<BluetoothDevice>& devices) {
 }
 
 // list_le_devices: paired BLE devices known to Windows. nullopt = enumeration failed.
+// The paired-LE selector returns one object per device. The unfiltered FindAllAsync() Python uses
+// also returns every GATT service interface (about 1900 objects, 10 s) and opening each one took
+// 95 s on a Surface Pro 11, which held the first Bluetooth snapshot back.
 std::optional<std::vector<BluetoothDevice>> listLeDevices() {
   try {
     std::map<QString, BluetoothDevice> found;
-    // Unfiltered enumeration like Python's find_all_async(), keeping only BLE device ids.
-    for (const auto& info : enumeration::DeviceInformation::FindAllAsync().get()) {
+    QElapsedTimer timer;
+    timer.start();
+    bool filtered = true;
+    enumeration::DeviceInformationCollection all{nullptr};
+    try {
+      all = enumeration::DeviceInformation::FindAllAsync(
+                bt::BluetoothLEDevice::GetDeviceSelectorFromPairingState(true))
+                .get();
+    } catch (...) {
+      filtered = false;
+    }
+    if (!all) all = enumeration::DeviceInformation::FindAllAsync().get();
+    if (btDebug())
+      qWarning() << "BTDBG LE list" << all.Size() << "filtered" << filtered << timer.elapsed()
+                 << "ms";
+    for (const auto& info : all) {
       const QString id = toQString(info.Id());
-      if (!id.contains(QLatin1String("BTHLEDEVICE#"), Qt::CaseInsensitive) &&
+      if (!filtered && !id.contains(QLatin1String("BTHLEDEVICE#"), Qt::CaseInsensitive) &&
           !id.contains(QLatin1String("BTHLE#DEV_"), Qt::CaseInsensitive))
         continue;
       try {
@@ -461,6 +494,7 @@ std::optional<std::vector<BluetoothDevice>> listLeDevices() {
       } catch (...) {
       }
     }
+    if (btDebug()) qWarning() << "BTDBG LE found" << found.size() << timer.elapsed() << "ms";
     std::vector<BluetoothDevice> result;
     for (auto& entry : found) result.push_back(entry.second);
     return result;
@@ -725,12 +759,19 @@ class BluetoothWorker : public QObject {
     const bool refreshLe = refreshLePending_ || leCache_.empty();
     refreshLePending_ = false;
     try {
+      lastRadioError.clear();
       const std::optional<bool> radio = radioIsOn();
+      if (btDebug()) {
+        qWarning().noquote() << "BTDBG refresh thread" << QThread::currentThread()->objectName()
+                             << "radio" << (radio ? (*radio ? "on" : "off") : "unknown") << "error"
+                             << lastRadioError << "refreshLe" << refreshLe;
+      }
       if (!started_) return;
       // Only RadioState.Off counts as off: the WinRT radio can lag a dongle swap while devices
       // still enumerate.
       if (radio == std::optional<bool>(false)) {
         radioOn_ = false;
+        radioUnknown_ = false;
         devices_.clear();
         leCache_.clear();
         clearDeviceWatchers();
@@ -738,23 +779,43 @@ class BluetoothWorker : public QObject {
         publish();
         return;
       }
-      std::vector<BluetoothDevice> devices = listDevices(false, refreshLe);
-      if (!radio && devices.empty()) {
-        radioOn_ = false;
-        devices_.clear();
-        leCache_.clear();
-        clearDeviceWatchers();
-        publish();
-        return;
+      // Phase 1: classic devices (and the cached LE ones) are quick, so they go out first.
+      std::vector<BluetoothDevice> devices = listDevices(false, false);
+      if (!started_) return;
+      if (btDebug()) {
+        qWarning().noquote() << "BTDBG phase1" << devices.size() << "radio unknown" << !radio;
       }
-      radioOn_ = true;
-      devices_.clear();
-      for (BluetoothDevice& device : devices) {
-        if (!device.address.isEmpty()) devices_[device.address] = device;
+      if (!radio && devices.empty() && leCache_.empty()) {
+        // Nothing yet: the stack may not be ready. Keep the last state and say so; the service
+        // retries and publishes "off" only when the retries are exhausted.
+        radioUnknown_ = true;
+      } else {
+        radioUnknown_ = false;
+        radioOn_ = true;
+        applyDevices(devices);
       }
-      bindRadio();
-      syncDeviceWatchers(values());
       publish();
+      // Phase 2: the LE listing can be slow; it must not hold phase 1 back.
+      if (refreshLe) {
+        if (auto refreshed = listLeDevices()) {
+          if (!started_) return;
+          leCache_.clear();
+          for (BluetoothDevice& device : *refreshed) leCache_[device.address] = device;
+          devices = listDevices(false, false);
+        }
+        if (!started_) return;
+        if (devices.empty() && !radio) {
+          radioUnknown_ = true;
+        } else {
+          radioUnknown_ = false;
+          radioOn_ = true;
+          applyDevices(devices);
+        }
+        if (btDebug()) {
+          qWarning().noquote() << "BTDBG phase2" << devices.size() << "unknown" << radioUnknown_;
+        }
+        publish();
+      }
     } catch (const std::exception& error) {
       publish();
       emit refreshFailed(QString::fromUtf8(error.what()));
@@ -779,7 +840,11 @@ class BluetoothWorker : public QObject {
         emit scanCompleted(static_cast<int>(BtScanStatus::RadioOff), {});
         return;
       }
-      std::vector<BluetoothDevice> devices = listDevices(true, true);
+      if (auto refreshed = listLeDevices()) {
+        leCache_.clear();
+        for (BluetoothDevice& device : *refreshed) leCache_[device.address] = device;
+      }
+      std::vector<BluetoothDevice> devices = listDevices(true, false);
       std::vector<BluetoothDevice> paired;
       for (const BluetoothDevice& device : devices) {
         if (device.paired || device.remembered) paired.push_back(device);
@@ -949,6 +1014,7 @@ class BluetoothWorker : public QObject {
   void publish() {
     BluetoothStatus status;
     status.radioOn = radioOn_;
+    status.radioUnknown = radioUnknown_;
     for (const auto& entry : devices_) status.devices.push_back(entry.second);
     emit statusReady(status);
   }
@@ -965,16 +1031,11 @@ class BluetoothWorker : public QObject {
     publish();
   }
 
-  // list_devices: classic paired + BLE-only, then enriched.
-  std::vector<BluetoothDevice> listDevices(bool inquiry, bool refreshLe) {
+  // list_devices: classic paired + the cached BLE-only devices, then enriched. The LE listing is
+  // separate (listLeDevices) because it is slow.
+  std::vector<BluetoothDevice> listDevices(bool inquiry, bool) {
     std::map<QString, BluetoothDevice> byAddress;
     for (BluetoothDevice& device : listClassic(inquiry)) byAddress[device.address] = device;
-    if (refreshLe || leCache_.empty()) {
-      if (auto refreshed = listLeDevices()) {
-        leCache_.clear();
-        for (BluetoothDevice& device : *refreshed) leCache_[device.address] = device;
-      }
-    }
     for (const auto& entry : leCache_) {
       if (!byAddress.count(entry.first)) byAddress[entry.first] = entry.second;
     }
@@ -982,6 +1043,15 @@ class BluetoothWorker : public QObject {
     for (auto& entry : byAddress) result.push_back(entry.second);
     enrichDevices(result);
     return result;
+  }
+
+  void applyDevices(const std::vector<BluetoothDevice>& devices) {
+    devices_.clear();
+    for (const BluetoothDevice& device : devices) {
+      if (!device.address.isEmpty()) devices_[device.address] = device;
+    }
+    bindRadio();
+    syncDeviceWatchers(values());
   }
 
   void bindRadio() {
@@ -1164,6 +1234,7 @@ class BluetoothWorker : public QObject {
   bool refreshQueued_ = false;
   bool refreshLePending_ = false;
   bool radioOn_ = false;
+  bool radioUnknown_ = false;
   bool radioSubscribed_ = false;
   std::map<QString, BluetoothDevice> devices_;
   std::map<QString, BluetoothDevice> leCache_;
