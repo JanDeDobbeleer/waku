@@ -12,6 +12,7 @@ is `docs/architecture.md`, and each feature has its own `design.md` under `src/f
 | [2026-10-30-delivery-plan.md](2026-10-30-delivery-plan.md) | Who builds what with which model, in what order, and the caelestia validation | Plan. In progress. |
 | [2026-10-30-handoff.md](2026-10-30-handoff.md) | Current state, what is left, how to work and how to resume (read this first to continue) | Handoff. Kept current while the work runs. |
 | [2026-10-30-caelestia-port-plan.md](2026-10-30-caelestia-port-plan.md) | How to port caelestia: licence, config home layout, module order, work packages, expected engine gaps, validation | Plan. The port itself lives outside this repository. |
+| [2026-10-30-caelestia-validation.md](2026-10-30-caelestia-validation.md) | Result of running the caelestia port on wabar: what was seen, what is stubbed, open engine gaps | Result. |
 
 Earlier plans for the retired Qt Widgets build are in [../archive](../archive/README.md); they are
 superseded by the plans above.
