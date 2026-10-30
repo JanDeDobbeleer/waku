@@ -86,6 +86,7 @@ names the rename. There are no aliases; edit the file:
 | `layout: BarLayout {}` | `content: PanelLayout {}` |
 | `PopupWindow { anchorItem: x }` | `PopupWindow { anchor.item: x }` |
 | `Window.window.spec`, `Window.window.monitorHandle` | `QsWindow.window`, `QsWindow.window.monitorHandle` |
+| `Process` from `wabar.services` (a command run on an interval: `program`, `arguments`, `interval`) | `ShellProcess`, same properties. `Process` is now Quickshell's (`import Quickshell.Io`: `command`, `running`, `stdout`) |
 | `wabarc status`: `bars=N` | `windows=N` |
 
 The Quickshell form of a panel is a `PanelWindow` (`anchors`, `margins`, `implicitHeight`,
