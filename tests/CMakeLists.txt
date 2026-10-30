@@ -14,15 +14,15 @@ list(REMOVE_DUPLICATES test_libs)
 add_executable(wabar_tests main.cpp
   integration/test_all_widgets_load.cpp
   integration/test_builtin_widgets.cpp
+  integration/test_plugin_import.cpp
   integration/test_quickshell_glue.cpp
   integration/test_safe_mode.cpp
   integration/test_vertical_panel.cpp
   integration/test_widget_popups.cpp
   ${test_sources})
-# The control tests run wabarc.exe.
-add_dependencies(wabar_tests wabarc)
-# The sample shells the integration tests load.
-target_compile_definitions(wabar_tests PRIVATE WABAR_EXAMPLES_DIR="${PROJECT_SOURCE_DIR}/examples")
+# The control tests run wabarc.exe. The plugin tests load a plugin built here (tests/plugin).
+add_subdirectory(plugin)
+add_dependencies(wabar_tests wabarc wabar_test_module)
 # The static QML plugins are linked so `import wabar` and `import Quickshell` resolve in the test
 # engines.
 target_link_libraries(wabar_tests PRIVATE

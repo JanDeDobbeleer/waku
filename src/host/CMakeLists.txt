@@ -1,7 +1,8 @@
 # host: the shell runtime (proposal, section 3). Targets:
 #
 # wabar_host_base (STATIC, wabar_options): what has no QML in it. screen_match, popup_placement and
-#   panel_geometry (pure functions), the app bar interface (app_bar.h) and its Win32
+#   panel_geometry (pure functions), plugin_guard (checks user-built QML plugins before the engine
+#   sees them), hotkeys (the global hotkey table), the app bar interface (app_bar.h) and its Win32
 #   implementation, and the DWM backdrop helpers (win32/).
 # wabar_host (STATIC + QML module `wabar` 2.0): the QML types a shell imports (ShellRoot, Scope,
 #   PanelWindow, FloatingWindow, QsWindow, Variants, LazyLoader, ScreenList, Panel, PanelLayout,
@@ -20,6 +21,8 @@ add_library(wabar_host_base STATIC
   hotkeys.cpp
   panel_geometry.h
   panel_geometry.cpp
+  plugin_guard.h
+  plugin_guard.cpp
   popup_placement.h
   popup_placement.cpp
   screen_match.h
