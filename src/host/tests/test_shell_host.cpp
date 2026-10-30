@@ -530,3 +530,35 @@ ShellRoot { Panel { content: PanelLayout { start: [ Label {} ] } } }
   EXPECT_TRUE(h.host->error().isEmpty()) << qPrintable(h.host->error());
   EXPECT_EQ(h.text(QStringLiteral("w")), QStringLiteral("second"));
 }
+
+TEST(ShellHostTest, WritingANonQmlFileInTheConfigHomeDoesNotReload) {
+  Harness h;
+  h.start(shellConfig(QStringLiteral("before")));
+  ASSERT_TRUE(h.host->reload());
+  h.host->watch();
+  QSignalSpy reloaded(h.host.get(), &ShellHost::reloaded);
+
+  // A shell persists its state next to its files: that must not rebuild the shell.
+  write(h.dir.filePath(QStringLiteral("state.json")), QStringLiteral("{\"a\":1}"));
+  QDir(h.dir.path()).mkdir(QStringLiteral("cache"));
+  write(h.dir.filePath(QStringLiteral("cache/entry.bin")), QStringLiteral("x"));
+  QTest::qWait(700);
+  write(h.dir.filePath(QStringLiteral("state.json")), QStringLiteral("{\"a\":2}"));
+  QTest::qWait(700);
+  EXPECT_EQ(reloaded.count(), 0);
+
+  // A .qml edit still reloads, after those writes.
+  write(h.shellFile(), shellConfig(QStringLiteral("after")));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return reloaded.count() >= 1; }, 5000));
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("after"));
+}
+
+TEST(ShellHostTest, ANewQmlFileInTheConfigHomeReloads) {
+  Harness h;
+  h.start(shellConfig(QStringLiteral("before")));
+  ASSERT_TRUE(h.host->reload());
+  h.host->watch();
+  QSignalSpy reloaded(h.host.get(), &ShellHost::reloaded);
+  write(h.dir.filePath(QStringLiteral("Extra.qml")), QStringLiteral("import QtQml\nQtObject {}\n"));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return reloaded.count() >= 1; }, 5000));
+}

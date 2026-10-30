@@ -14,6 +14,7 @@
 #include <list>
 #include <memory>
 #include <optional>
+#include <utility>
 
 #include "host/app_bar.h"
 #include "host/mask_poller.h"
@@ -195,6 +196,11 @@ class ShellHost : public QObject {
   void panelLayoutChanged(PanelWindow* panel);
   void setError(const QString& error);
   void refreshWatches();
+  // Path -> (mtime, size) of every .qml file and qmldir under the config home. A change event
+  // reloads only when this differs from `snapshot_`, so a state file or a cache does not.
+  using FileStamps = QHash<QString, std::pair<qint64, qint64>>;
+  FileStamps scanQmlFiles() const;
+  void configHomeChanged();
   QString entryPath() const;
   QString themePath() const;
   // The windows of `loaded` that failed to build, as "N windows failed: <first error>".
@@ -217,6 +223,7 @@ class ShellHost : public QObject {
   QHash<QString, bool> visibility_;
   QFileSystemWatcher watcher_;
   QTimer debounce_;
+  FileStamps snapshot_;
   bool watching_ = false;
 };
 

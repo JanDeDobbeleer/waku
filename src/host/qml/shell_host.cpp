@@ -130,12 +130,12 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
   debounce_.setSingleShot(true);
   debounce_.setInterval(150);
   connect(&debounce_, &QTimer::timeout, this, [this] {
+    snapshot_ = scanQmlFiles();  // before the reload: an edit during it is seen as a change
     reload();
     refreshWatches();
   });
-  connect(&watcher_, &QFileSystemWatcher::directoryChanged, &debounce_,
-          qOverload<>(&QTimer::start));
-  connect(&watcher_, &QFileSystemWatcher::fileChanged, &debounce_, qOverload<>(&QTimer::start));
+  connect(&watcher_, &QFileSystemWatcher::directoryChanged, this, [this] { configHomeChanged(); });
+  connect(&watcher_, &QFileSystemWatcher::fileChanged, this, [this] { configHomeChanged(); });
   if (QCoreApplication::instance()) QCoreApplication::instance()->installEventFilter(this);
 }
 
@@ -614,7 +614,26 @@ void ShellHost::decorate(QObject* window, int backdrop) {
 void ShellHost::watch() {
   if (options_.safe) return;
   watching_ = true;
+  snapshot_ = scanQmlFiles();
   refreshWatches();
+}
+
+ShellHost::FileStamps ShellHost::scanQmlFiles() const {
+  FileStamps stamps;
+  QDirIterator it(options_.configHome, {QStringLiteral("*.qml"), QStringLiteral("qmldir")},
+                  QDir::Files, QDirIterator::Subdirectories);
+  while (it.hasNext()) {
+    const QFileInfo info(it.next());
+    stamps.insert(info.filePath(),
+                  {info.lastModified().toMSecsSinceEpoch(), static_cast<qint64>(info.size())});
+  }
+  return stamps;
+}
+
+void ShellHost::configHomeChanged() {
+  // Any write in a watched folder lands here (a shell saving its state, a cache). Only a change
+  // to a QML file or a qmldir, including theme.qml, rebuilds the shell.
+  if (scanQmlFiles() != snapshot_) debounce_.start();
 }
 
 void ShellHost::refreshWatches() {
