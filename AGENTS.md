@@ -101,6 +101,12 @@ of that step in the script, which is exact; do not restate it here. In short:
 
 Design and the dependency table: `docs/architecture.md`.
 
+Shells are configuration, not engine. A ported or user-written shell (caelestia, a launcher, a dock)
+lives in a config home outside this repository and carries its own tokens, palette, layout and styling.
+The engine holds only what QML cannot do and generic Quickshell compatibility. Do not add a type,
+property, name or default that exists only for one shell; the shell builds it in its own QML. A shell
+under a licence that is not MIT stays out of this repository entirely.
+
 ## Adding a feature
 
 1. Create `src/features/<f>/` with only the folders it needs: the root (domain: interfaces, value

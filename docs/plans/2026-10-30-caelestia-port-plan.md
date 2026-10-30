@@ -4,7 +4,15 @@ Status: plan, 2026-10-30. The port is the validation of the Quickshell-compatibl
 `2026-10-30-caelestia-port-assessment.md` and `2026-10-30-handoff.md`. This file holds plan text
 only. No caelestia source is in the wabar repository.
 
-## 1. Licence and location
+## 1. Principle: the port is configuration
+
+The caelestia port is a user config, not part of wabar. Its tokens, palette naming, layout, fonts and
+styling live only in the port. The engine offers generic Quickshell compatibility and generic
+services; it carries nothing that exists for one shell (rule in `AGENTS.md`). Where caelestia expects
+a name the engine does not give (for example `Colours.palette.m3primary`), the port builds it in its
+own QML (here: a map built from `ColorScheme.colors`).
+
+## 1a. Licence and location
 
 Caelestia is GPL-3.0 (clone at commit b51fdb3, 2026-10-29). Wabar is MIT. GPL code cannot be copied
 into the wabar repository without placing the combined distribution under GPL-3.0. The port
