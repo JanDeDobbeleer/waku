@@ -7,7 +7,7 @@ Pill {
     interactive: false
     text: whoami.output
 
-    Process {
+    ShellProcess {
         id: whoami
         program: "whoami"
         interval: 60000
