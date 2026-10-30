@@ -56,3 +56,27 @@ import Qt.labs.folderlistmodel
 Item { FolderListModel { folder: "file:///" } }
 )");
 }
+
+TEST(QtImports, TemplatesLoad) {
+  expectLoads(R"(
+import QtQuick
+import QtQuick.Templates as T
+Item {
+    width: 100; height: 20
+    T.Slider { from: 0; to: 10; value: 3; width: 100; height: 20 }
+    T.Button { text: "t" }
+}
+)");
+}
+
+TEST(QtImports, ControlsBasicLoads) {
+  expectLoads(R"(
+import QtQuick
+import QtQuick.Controls.Basic
+Item {
+    width: 100; height: 40
+    Button { text: "ok"; width: 60; height: 24 }
+    Slider { y: 24; width: 100 }
+}
+)");
+}
