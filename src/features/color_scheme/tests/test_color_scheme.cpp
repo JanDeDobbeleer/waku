@@ -804,7 +804,7 @@ import QtQml
 import wabar.services
 QtObject {
     property var scheme: ColorScheme.fromColor("#6750A4", "tonalspot", false)
-    property var primary: scheme.colors.m3primary
+    property var primary: scheme.colors.primary
     property var onSurface: ColorScheme.fromColor("#6750A4", "tonalspot", true).colors.onSurface
     property bool valid: scheme.valid
     property string variant: scheme.variant
