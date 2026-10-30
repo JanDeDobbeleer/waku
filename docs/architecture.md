@@ -154,6 +154,19 @@ new name and use that name in `shell.qml`. A copy that keeps the built-in's name
 import order and is not covered by tests. `qmllint -I <dist>/wabar/modules` lints the copy. The
 config format is described in `docs/plans/2026-10-28-qt-quick-bar-config-design.md`.
 
+### User-built QML plugins
+
+`src/host/plugin_guard.*` (Qt Core only) decides which import folders the engine may see; the
+composition root (`src/app/wabar/main.cpp`) adds the survivors with `QQmlEngine::addImportPath`.
+The folders are `<config home>/modules` and each `--import-path`; `--safe` adds none. For every
+`plugin` line of a `qmldir` under a folder the guard resolves `Name.dll` (`Named.dll` in a debug
+build), checks the PE machine against the process, then reads the file's embedded
+`QtPluginMetaData` with `QPluginLoader::metaData()` (no load) and compares `version` (major and
+minor) and `debug` with this build. A failing plugin refuses its whole folder, because the
+throwaway engine that `ShellHost::validate` creates copies the main engine's import paths and the
+granularity of a path is a folder. Tests: `tests/integration/test_plugin_import.cpp` and the plugin
+`tests/plugin/`.
+
 ### The shell runtime
 
 `ShellHost` (`src/host/qml/shell_host.*`) loads `<config home>\shell.qml`. Before it replaces the

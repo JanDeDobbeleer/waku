@@ -51,6 +51,7 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | `--config-home <dir>` | The config home. Default: `$WABAR_CONFIG_HOME`, else the `examples/config` of the checkout the build came from. |
 | `--register-app-bar` | Let windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve screen work area. Without it no window reserves space. |
 | `--safe` | Start the built-in shell with the default theme and ignore the config home. |
+| `--import-path <dir>` | Add a folder of QML modules to the import path. Repeatable. See "User-built QML plugins". |
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wabarc shortcut`. |
 | `--help` | Print the options. |
@@ -98,6 +99,22 @@ The Quickshell form of a panel is a `PanelWindow` (`anchors`, `margins`, `implic
 the same types under Quickshell's module names.
 Exit codes: 0 ok, 1 the bar answered an error, 2 no bar is running, 3 usage error. More on running
 the bar: `src/app/README.md`.
+
+## User-built QML plugins
+
+`<config home>\modules` and every `--import-path <dir>` are added to the QML import path, so a shell
+can `import MyModule` for a Qt QML plugin built outside this repository. A folder follows the Qt
+layout: `modules\MyModule\qmldir`, the plugin DLL named in `qmldir`, and optionally a
+`.qmltypes` file. (The `dist\wabar\modules` folder that `deploy` writes is a different thing: a
+read-only copy of the built-in widgets.)
+
+Build the plugin with the same Qt (major.minor), the same debug or release flavour and the same
+processor as the `wabar.exe` that loads it. Before a folder is added, wabar reads the metadata of
+each plugin in it; one built for another Qt, flavour or processor is refused, one line is logged
+(`wabar: plugin refused: <file> - <reason>`) and the whole folder is left out, so an import from it
+then fails with the usual "module is not installed" error. `--safe` adds no folder. Qt's own `Qt6::Qml`
+documents how to write a plugin; `tests/plugin/` is a minimal one. A plugin runs as native code:
+see `SECURITY.md`.
 
 ## Tray hook DLL
 
