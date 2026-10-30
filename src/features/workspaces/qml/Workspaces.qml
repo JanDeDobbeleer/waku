@@ -10,8 +10,9 @@ import wabar.services as S
 //
 // `hideEmpty` hides workspaces that are neither shown nor hold windows. `style` is "names" (a pill
 // with the workspace name, the default) or "dots" (a small circle per workspace and a wide accent
-// pill for the focused one, like Python YASB).
-Row {
+// pill for the focused one, like Python YASB). On a panel docked to the left or right edge the
+// workspaces stack top to bottom.
+Strip {
     id: root
 
     property int pillWidth: Theme.pillHeight + 2
