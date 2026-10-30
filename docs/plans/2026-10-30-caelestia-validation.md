@@ -93,3 +93,16 @@ manual click-through check, and the release gate in `2026-10-30-handoff.md`.
 - **Empty-state image.** The dino in the notifications panel was laid out 1.5 times too wide at 150%
   scaling, because Qt takes `sourceSize` as a logical size. Its layout width is now explicit and it
   fits the panel with its cloud, cactus and text.
+
+## Update: live use
+
+- **Temperature units.** The dashboard showed Fahrenheit because `services.weatherUnits` defaults to
+  "Auto" (guessed from the OS locale). `config\shell.json` now sets it to Celsius (1); the values
+  are 0 Auto, 1 Celsius, 2 Fahrenheit, 3 Kelvin.
+- **Hairline at the arcs.** Anti-aliasing left a seam between the arcs and the frame. The arcs now
+  carry a thin edge in the same colour; no seam shows at 5 times zoom.
+- **Open engine gap: hot reload keeps singletons.** Editing a QML file while the shell runs made the
+  engine reload, and QML singletons survived with their old types: `Unable to assign
+  ScreenState_QMLTYPE_963 to ScreenState_QMLTYPE_2519` and `Cannot read property 'dashboard' of
+  null`. A restart is clean. The engine should clear singletons when it reloads (Quickshell reloads
+  the whole engine).
