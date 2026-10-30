@@ -1,7 +1,7 @@
-# wabarc.exe: the console client (reload, status, quit, wallpaper). Links the control channel only,
+# wabarc.exe: the console client (reload, status, quit, wallpaper, surface). Links the control channel only,
 # no Qt Quick.
 add_executable(wabarc main.cpp)
 target_compile_definitions(wabarc PRIVATE
   WABAR_SAMPLE_CONFIG_DIR="${PROJECT_SOURCE_DIR}/examples/config")
-target_link_libraries(wabarc PRIVATE wabar_options wabar_control)
+target_link_libraries(wabarc PRIVATE wabar_options wabar_control user32)
 set_target_properties(wabarc PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

@@ -10,11 +10,11 @@
 //                       a random wallpaper of the folder, the one after or before the current
 //     wabarc wallpaper gallery
 //                       open or close the picker
-//     wabarc shortcut <name>
-//                       fire the GlobalShortcut with that name (bind a key to this command in
-//                       whkd or AutoHotkey)
-//     wabarc shortcut list
-//                       the names of the shortcuts the bar has
+//     wabarc surface list
+//     wabarc surface show|hide|toggle|status <name>
+//                       the windows of the shell that have a `name`: a launcher, an OSD, a menu.
+//                       show and toggle first allow the bar to take the keyboard focus
+//                       (AllowSetForegroundWindow), so a launcher opened from a hotkey gets it
 //
 // `--dry-run` plays the animation but does not set the wallpaper. A command is sent as one line;
 // arguments with spaces are quoted (control.h, joinCommand).
@@ -28,11 +28,32 @@
 #include <QCommandLineParser>
 #include <QCoreApplication>
 #include <QDir>
+#include <QRegularExpression>
 #include <cstdio>
 
 #include "control/control.h"
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 namespace {
+
+// The bar can only take the keyboard focus from the foreground app if this process, which the
+// user's input (a hotkey) just started, allows it. The bar's pid is in its `status` answer.
+void allowBarToTakeFocus(const QString& pipeName) {
+#ifdef Q_OS_WIN
+  const wabar::control::ControlReply status =
+      wabar::control::sendControlCommand(pipeName, QStringLiteral("status"));
+  if (status.status != wabar::control::ControlReply::Ok) return;
+  const QRegularExpressionMatch match =
+      QRegularExpression(QStringLiteral("\\bpid=(\\d+)")).match(status.text);
+  if (!match.hasMatch()) return;
+  AllowSetForegroundWindow(static_cast<DWORD>(match.captured(1).toULong()));
+#else
+  Q_UNUSED(pipeName);
+#endif
+}
 
 constexpr int kOk = 0;
 constexpr int kBarError = 1;
@@ -57,8 +78,8 @@ int main(int argc, char* argv[]) {
       "  wallpaper set <file-or-path>   a full path, or a file name in the wallpaper folder\n"
       "  wallpaper random | next | previous\n"
       "  wallpaper gallery              open or close the picker\n"
-      "  shortcut <name>                fire the GlobalShortcut with that name\n"
-      "  shortcut list                  the names of the shortcuts\n"
+      "  surface list                   the named windows of the shell and their state\n"
+      "  surface show | hide | toggle | status <name>\n"
       "Add --dry-run to set, random, next or previous to play the animation without "
       "changing the wallpaper."));
   parser.addHelpOption();
@@ -70,13 +91,14 @@ int main(int argc, char* argv[]) {
                                QStringLiteral("wallpaper: play the animation, do not set it."));
   parser.addOption(dryRunOpt);
   parser.addPositionalArgument(QStringLiteral("command"),
-                               QStringLiteral("reload, status, quit, wallpaper or shortcut"));
+                               QStringLiteral("reload, status, quit, wallpaper or surface"));
   parser.process(app);
 
   const QStringList positional = parser.positionalArguments();
   const QString usage = QStringLiteral(
       "usage: wabarc [--config-home <dir>] reload|status|quit|wallpaper "
-      "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|shortcut <name>|list");
+      "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|surface "
+      "(list|show|hide|toggle|status <name>)");
   if (positional.isEmpty()) {
     print(stderr, usage);
     return kUsage;
@@ -106,29 +128,24 @@ int main(int argc, char* argv[]) {
       words << target;
     }
     line = wabar::control::joinCommand(words);
-  } else if (command == QLatin1String("shortcut")) {
-    if (positional.size() != 2 || parser.isSet(dryRunOpt)) {
-      print(stderr, usage);
-      return kUsage;
-    }
-    line = wabar::control::joinCommand({command, positional.at(1)});
-  } else if (positional.size() != 1 ||
-             (command != QLatin1String("reload") && command != QLatin1String("status") &&
-              command != QLatin1String("quit"))) {
-    print(stderr, QStringLiteral("wabarc: unknown command '%1' (try: reload, status, quit, "
-                                 "wallpaper, shortcut)")
-                      .arg(command));
-    return kUsage;
   } else if (parser.isSet(dryRunOpt)) {
     print(stderr, usage);
     return kUsage;
+  } else {
+    // Any other command goes to the bar as typed: the bar knows its verbs and answers for an
+    // unknown one ("error: unknown command ...").
+    line = wabar::control::joinCommand(positional);
   }
 
   // The same default as the bar, so that the two meet without any option.
   const QString configHome = wabar::control::resolveConfigHome(
       parser.value(configHomeOpt), QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
-  const wabar::control::ControlReply reply =
-      wabar::control::sendControlCommand(wabar::control::controlPipeName(configHome), line);
+  const QString pipeName = wabar::control::controlPipeName(configHome);
+  if (command == QLatin1String("surface") && (positional.value(1) == QLatin1String("show") ||
+                                              positional.value(1) == QLatin1String("toggle"))) {
+    allowBarToTakeFocus(pipeName);
+  }
+  const wabar::control::ControlReply reply = wabar::control::sendControlCommand(pipeName, line);
 
   switch (reply.status) {
     case wabar::control::ControlReply::NotRunning:
