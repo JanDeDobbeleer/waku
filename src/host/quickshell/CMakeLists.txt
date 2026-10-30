@@ -6,9 +6,13 @@
 #
 # The `Quickshell` singleton is qml/Quickshell.qml: `screens` from the host's ScreenList, the
 # rest forwarded to wabar.services.QuickshellSingleton (a QML file because the host unit cannot
-# include a feature's headers). `Quickshell.Io` is assembled in src/modules/qml_modules.cmake.
-set(quickshell_qml_files qml/PopupWindow.qml qml/Variants.qml qml/Quickshell.qml)
-set_source_files_properties(qml/Quickshell.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+# include a feature's headers). `DesktopEntries` (qml/DesktopEntries.qml) forwards to
+# wabar.services.AppsService the same way; its DesktopEntry and DesktopAction types are reached
+# through the qmldir `import wabar.services` line (IMPORTS below), as Quickshell.Io does.
+# `Quickshell.Io` is assembled in src/modules/qml_modules.cmake.
+set(quickshell_qml_files qml/DesktopEntries.qml qml/PopupWindow.qml qml/Variants.qml qml/Quickshell.qml)
+set_source_files_properties(qml/Quickshell.qml qml/DesktopEntries.qml PROPERTIES
+  QT_QML_SINGLETON_TYPE TRUE)
 foreach(file IN LISTS quickshell_qml_files)
   cmake_path(GET file FILENAME name)
   set_source_files_properties(${file} PROPERTIES QT_RESOURCE_ALIAS ${name})
@@ -20,6 +24,7 @@ qt_add_qml_module(wabar_quickshell
   VERSION 0.1
   NO_GENERATE_EXTRA_QMLDIRS
   DEPENDENCIES wabar
+  IMPORTS wabar.services
   QML_FILES ${quickshell_qml_files}
   SOURCES qml/quickshell_types.h
 )

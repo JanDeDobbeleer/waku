@@ -2,6 +2,7 @@
 # checks this at configure time). Deleting a feature is deleting its folder and its line here.
 add_subdirectory(shell)
 add_subdirectory(quickshell_io)
+add_subdirectory(apps)
 add_subdirectory(audio)
 add_subdirectory(bluetooth)
 add_subdirectory(brightness)

@@ -1,0 +1,149 @@
+#pragma once
+
+#include <QtQml/qqmlregistration.h>
+
+#include <QHash>
+#include <QObject>
+#include <QPointer>
+#include <QString>
+#include <QStringList>
+#include <QTimer>
+#include <QVariantList>
+#include <functional>
+#include <memory>
+#include <mutex>
+
+#include "features/apps/apps_platform.h"
+#include "features/apps/catalog.h"
+#include "features/apps/frecency.h"
+#include "features/apps/qml/app_icon_provider.h"
+#include "features/apps/qml/apps_model.h"
+#include "features/apps/qml/desktop_entry.h"
+
+class QFileSystemWatcher;
+class QJSEngine;
+class QQmlEngine;
+
+namespace wabar::apps {
+
+// The app catalogue of a `wabar` run, as a QML singleton: Start Menu shortcuts (.lnk files below
+// FOLDERID_Programs and FOLDERID_CommonPrograms) and the Store apps of shell:AppsFolder, as
+// Quickshell-shaped DesktopEntry objects. `import Quickshell` shows it as `DesktopEntries`
+// (src/host/quickshell/qml/DesktopEntries.qml forwards here), wabar shells use it directly as
+// `AppsService`. Registers image://appicon/<id> (see AppIconProvider).
+//
+// `applications` is a model of DesktopEntry with a `values` array, sorted by name. `ready` turns
+// true after the first complete scan; shortcuts show up first (`loading` stays true until the Store
+// apps follow). `scanMs` is how long the last scan took on its worker.
+//
+// Threads: GUI thread for everything QML sees. A scan runs on the global QThreadPool (shortcuts,
+// then shell:AppsFolder, each in COM's MTA of that thread) and posts its result to the GUI thread;
+// the destructor detaches a running scan (it only posts to a dead owner, which is dropped). The
+// icon provider has its own pool. A QFileSystemWatcher on the Start Menu folders restarts the
+// scan after `debounceMs` of quiet.
+class AppsService : public QObject {
+  Q_OBJECT
+  QML_ELEMENT
+  QML_SINGLETON
+  Q_PROPERTY(wabar::apps::AppsModel* applications READ applications CONSTANT FINAL)
+  Q_PROPERTY(bool ready READ ready NOTIFY readyChanged FINAL)
+  Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged FINAL)
+  Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
+  Q_PROPERTY(int scanMs READ scanMs NOTIFY scanFinished FINAL)
+
+ public:
+  // Everything a test replaces. The real constructor fills it when kernel::liveDesktop("apps");
+  // otherwise it stays empty: no folders, no Store apps, nothing launches, no icons.
+  struct Deps {
+    QStringList folders;
+    ShortcutResolver resolver;
+    AppsFolderEnumerator appsFolder;
+    AppLauncher launcher;
+    IconLoader iconLoader;
+    QString frecencyPath;  // "": not persisted
+    bool watch = false;
+    int debounceMs = 1500;
+    bool async = true;  // false: refresh() scans on the calling thread (tests)
+  };
+
+  // Deliberately not default-constructible: create() must run to register the image provider.
+  explicit AppsService(QObject* parent);
+  explicit AppsService(Deps deps, QObject* parent = nullptr);
+  ~AppsService() override;
+
+  static AppsService* create(QQmlEngine* engine, QJSEngine*);
+  // Tests: create() builds the singleton with this factory instead of the real one.
+  static void setFactoryForTests(std::function<std::unique_ptr<AppsService>()> factory);
+
+  AppsModel* applications() { return &model_; }
+  bool ready() const { return ready_; }
+  bool loading() const { return loading_; }
+  int count() const { return model_.count(); }
+  int scanMs() const { return scanMs_; }
+  const std::shared_ptr<IconIndex>& iconIndex() const { return iconIndex_; }
+  const IconLoader& iconLoader() const { return deps_.iconLoader; }
+
+  // Quickshell's DesktopEntries.byId: the entry with this id (case-insensitive), null when none.
+  Q_INVOKABLE wabar::apps::DesktopEntry* byId(const QString& id) const;
+  // Quickshell's DesktopEntries.heuristicLookup: the entry a window class or process name most
+  // likely belongs to (id, name, executable name, last id segment, AUMID), null when none.
+  Q_INVOKABLE wabar::apps::DesktopEntry* heuristicLookup(const QString& name) const;
+  // The entries matching `query`, best first (see rank.h), at most `limit` (all when <= 0). A
+  // blank query lists the most used apps first.
+  Q_INVOKABLE QVariantList search(const QString& query, int limit = 0) const;
+  // Start the app, or raise it. True when the shell accepted the request; records the launch for
+  // the ranking.
+  Q_INVOKABLE bool launch(const QString& id);
+  // Start a shortcut elevated (UAC prompt). False for Store apps and unknown ids.
+  Q_INVOKABLE bool launchAsAdmin(const QString& id);
+  // Show the shortcut's target in Explorer. False for Store apps and unknown ids.
+  Q_INVOKABLE bool openLocation(const QString& id);
+  // Rescans the Start Menu and shell:AppsFolder.
+  Q_INVOKABLE void refresh();
+
+  // Whether `id` is a known app, and its record (tests).
+  const AppRecord* recordFor(const QString& id) const;
+
+ signals:
+  void readyChanged();
+  void loadingChanged();
+  void countChanged();
+  // A scan finished and the model holds its result.
+  void scanFinished();
+
+ private:
+  struct ScanState {
+    std::mutex mutex;
+    AppsService* owner = nullptr;  // null once the service is gone
+  };
+  struct ScanResult {
+    std::vector<AppRecord> catalog;
+    bool complete = false;
+    int ms = 0;
+  };
+
+  // Scans on the calling thread and hands the result to `sink`: the shortcuts alone first when
+  // there is a shell:AppsFolder enumerator, then the complete catalogue.
+  static void runScan(const Deps& deps, const std::function<void(ScanResult)>& sink);
+  void applyResult(ScanResult result);
+  void startScan();
+  bool launchMode(const QString& id, LaunchMode mode);
+  DesktopEntry* find(const QString& id) const;
+  void watchFolders();
+
+  Deps deps_;
+  AppsModel model_;
+  FrecencyStore frecency_;
+  std::shared_ptr<IconIndex> iconIndex_ = std::make_shared<IconIndex>();
+  std::shared_ptr<ScanState> state_ = std::make_shared<ScanState>();
+  QHash<QString, DesktopEntry*> entries_;  // by lower-case id
+  QFileSystemWatcher* watcher_ = nullptr;
+  QTimer debounce_;
+  bool ready_ = false;
+  bool loading_ = false;
+  bool scanning_ = false;
+  bool rescan_ = false;
+  int scanMs_ = 0;
+};
+
+}  // namespace wabar::apps
