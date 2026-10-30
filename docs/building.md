@@ -146,6 +146,9 @@ dist/wabar/
                                 QtQuick.Templates and QtQuick.Controls.Basic, which shells written for
                                 Quickshell import. Controls.Basic is the only Controls style deployed;
                                 a release build adds about 4.2 MB of DLLs and 0.6 MB of QML)
+  imageformats/                 qgif, qico, qjpeg, qsvg and qwebp (about 0.35 MB for qwebp). qwebp comes
+                                from the Qt Image Formats module (qtimageformats); `deploy` warns at
+                                configure time when it is missing
   examples/config/              the sample config home
   modules/wabar/                the host QML files, qmldir and .qmltypes (module `wabar`)
   modules/wabar/widgets/        the built-in widget .qml files, qmldir, .qmltypes (`wabar.widgets`)

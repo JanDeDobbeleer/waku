@@ -17,8 +17,16 @@ set(WABAR_DIST_DIR "${PROJECT_SOURCE_DIR}/dist/wabar" CACHE PATH "deploy output 
 set(_dist "${WABAR_DIST_DIR}")
 set(_modules "${_dist}/modules/wabar")
 
+# Image formats: windeployqt takes every imageformats plugin it finds (qgif, qico, qjpeg, qsvg and,
+# from the Qt Image Formats add-on, qwebp). Shells load .webp wallpapers, so qwebp is required; the
+# add-on's other formats (qicns, qtga, qtiff, qwbmp) stay out.
 set(_windeployqt_flags $<IF:$<CONFIG:Debug>,--debug,--release>
-  --no-translations --no-system-d3d-compiler --no-opengl-sw)
+  --no-translations --no-system-d3d-compiler --no-opengl-sw
+  --include-plugins qwebp --exclude-plugins qicns,qtga,qtiff,qwbmp)
+if(NOT EXISTS "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}/imageformats/qwebp.dll")
+  message(WARNING "The qwebp image plugin is missing from Qt (${QT6_INSTALL_PREFIX}): install the "
+                  "Qt Image Formats module (qtimageformats), or .webp images will not load.")
+endif()
 
 # QML module sources: wabar (host), wabar.widgets, wabar.services. The generated qmldir and
 # .qmltypes come from the module targets' output folders.
