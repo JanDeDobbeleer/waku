@@ -7,8 +7,10 @@
 # The `Quickshell` singleton is qml/Quickshell.qml: `screens` from the host's ScreenList, the
 # rest forwarded to wabar.services.QuickshellSingleton (a QML file because the host unit cannot
 # include a feature's headers). `DesktopEntries` (qml/DesktopEntries.qml) forwards to
-# wabar.services.AppsService the same way; its DesktopEntry and DesktopAction types are reached
-# through the qmldir `import wabar.services` line (IMPORTS below), as Quickshell.Io does.
+# wabar.services.AppsService the same way. DesktopEntry, DesktopAction and ElapsedTimer live in
+# features; src/app/wabar/quickshell_types_core.h registers them here under their Quickshell names.
+# The module depends on wabar.services but does not re-export it: `import Quickshell` shows
+# Quickshell's type names and no others, so a shell's own Wallpapers.qml is never shadowed.
 # `Quickshell.Io` is assembled in src/modules/qml_modules.cmake.
 set(quickshell_qml_files qml/DesktopEntries.qml qml/PopupWindow.qml qml/Variants.qml qml/Quickshell.qml)
 set_source_files_properties(qml/Quickshell.qml qml/DesktopEntries.qml PROPERTIES
@@ -23,12 +25,13 @@ qt_add_qml_module(wabar_quickshell
   URI Quickshell
   VERSION 0.1
   NO_GENERATE_EXTRA_QMLDIRS
-  DEPENDENCIES wabar
-  IMPORTS wabar.services
+  DEPENDENCIES wabar wabar.services
   QML_FILES ${quickshell_qml_files}
   SOURCES qml/quickshell_types.h
+          ${PROJECT_SOURCE_DIR}/src/app/wabar/quickshell_types_core.h
 )
-target_include_directories(wabar_quickshell PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/qml)
+target_include_directories(wabar_quickshell PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/qml
+  ${PROJECT_SOURCE_DIR}/src/app/wabar)
 target_link_libraries(wabar_quickshell
   PUBLIC Qt6::Quick Qt6::Qml wabar_host
   PRIVATE wabar_options)

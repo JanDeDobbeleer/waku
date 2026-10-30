@@ -85,50 +85,39 @@ qt_add_qml_module(wabar_widgets
 target_link_libraries(wabar_widgets PUBLIC Qt6::Quick Qt6::Qml PRIVATE wabar_options wabar_host wabar_services)
 wabar_qt_generated_code(wabar_widgets)
 
-# Quickshell.Io: QML written for Quickshell imports it. The types live in wabar.services; this
-# module only re-exports them through the `import` line of its qmldir (the line is written by the
-# IMPORTS argument). wabar_services links it, so the executables and the tests get its static plugin
-# without naming it. Design: src/features/quickshell_io/design.md.
-qt_add_library(wabar_quickshell_io_module STATIC)
-qt_add_qml_module(wabar_quickshell_io_module
-  URI Quickshell.Io
-  VERSION 1.0
-  OUTPUT_DIRECTORY ${wabar_modules_dir}/quickshell_io
-  NO_GENERATE_EXTRA_QMLDIRS
-  NO_GENERATE_QMLTYPES
-  NO_PLUGIN
-  IMPORTS wabar.services
-)
-target_link_libraries(wabar_quickshell_io_module PRIVATE wabar_options)
-target_link_libraries(wabar_services PUBLIC wabar_quickshell_io_module)
+# Quickshell.Io, Quickshell.Services.Mpris and Quickshell.Services.Notifications: QML written for
+# Quickshell imports them. The types live in wabar.services; each module registers its own types a
+# second time under Quickshell's names (src/app/wabar/quickshell_types_*.h, QML_FOREIGN) and only
+# depends on wabar.services. It must not re-export it (a qmldir `import` line would): then
+# `import Quickshell.Io` would show every wabar.services name, and a shell's own Wallpapers.qml or
+# Workspaces.qml would lose to wabar's service of the same name. wabar_quickshell_services (an
+# interface library, not wabar_services: the modules depend on wabar.services, so wabar_services
+# cannot link them) carries the modules and their static plugins; the executables and the tests
+# link it. Designs:
+# src/features/quickshell_io/design.md, media/design.md, notifications/design.md.
+add_library(wabar_quickshell_services INTERFACE)
+function(wabar_quickshell_service_module target uri dir header)
+  qt_add_library(${target} STATIC)
+  qt_add_qml_module(${target}
+    URI ${uri}
+    VERSION 1.0
+    OUTPUT_DIRECTORY ${wabar_modules_dir}/${dir}
+    NO_GENERATE_EXTRA_QMLDIRS
+    DEPENDENCIES wabar.services
+    SOURCES ${PROJECT_SOURCE_DIR}/src/app/wabar/${header}
+  )
+  # The generated registration includes the header by its base name.
+  target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR}/src/app/wabar)
+  target_link_libraries(${target}
+    PUBLIC Qt6::Qml Qt6::Quick wabar_kernel
+    PRIVATE wabar_options)
+  wabar_qt_generated_code(${target})
+  target_link_libraries(wabar_quickshell_services INTERFACE ${target} ${target}plugin)
+endfunction()
 
-# Quickshell.Services.Mpris: forwards to the Mpris, MprisPlayer, MprisLoopState and
-# MprisPlaybackState types of wabar.services (src/features/media/design.md).
-qt_add_library(wabar_quickshell_mpris_module STATIC)
-qt_add_qml_module(wabar_quickshell_mpris_module
-  URI Quickshell.Services.Mpris
-  VERSION 1.0
-  OUTPUT_DIRECTORY ${wabar_modules_dir}/quickshell_mpris
-  NO_GENERATE_EXTRA_QMLDIRS
-  NO_GENERATE_QMLTYPES
-  NO_PLUGIN
-  IMPORTS wabar.services
-)
-target_link_libraries(wabar_quickshell_mpris_module PRIVATE wabar_options)
-target_link_libraries(wabar_services PUBLIC wabar_quickshell_mpris_module)
-
-# Quickshell.Services.Notifications: forwards to the Notification, NotificationServer,
-# NotificationUrgency and NotificationCloseReason types of wabar.services
-# (src/features/notifications/design.md).
-qt_add_library(wabar_quickshell_notifications_module STATIC)
-qt_add_qml_module(wabar_quickshell_notifications_module
-  URI Quickshell.Services.Notifications
-  VERSION 1.0
-  OUTPUT_DIRECTORY ${wabar_modules_dir}/quickshell_notifications
-  NO_GENERATE_EXTRA_QMLDIRS
-  NO_GENERATE_QMLTYPES
-  NO_PLUGIN
-  IMPORTS wabar.services
-)
-target_link_libraries(wabar_quickshell_notifications_module PRIVATE wabar_options)
-target_link_libraries(wabar_services PUBLIC wabar_quickshell_notifications_module)
+wabar_quickshell_service_module(wabar_quickshell_io_module Quickshell.Io quickshell_io
+  quickshell_types_io.h)
+wabar_quickshell_service_module(wabar_quickshell_mpris_module Quickshell.Services.Mpris
+  quickshell_mpris quickshell_types_mpris.h)
+wabar_quickshell_service_module(wabar_quickshell_notifications_module
+  Quickshell.Services.Notifications quickshell_notifications quickshell_types_notifications.h)

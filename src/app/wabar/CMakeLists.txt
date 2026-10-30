@@ -12,6 +12,6 @@ target_compile_definitions(wabar PRIVATE
 target_link_libraries(wabar PRIVATE
   wabar_options
   wabar_host wabar_hostplugin wabar_widgets wabar_widgetsplugin
-  wabar_services wabar_servicesplugin
+  wabar_services wabar_servicesplugin wabar_quickshell_services
   wabar_quickshell wabar_quickshellplugin wabar_quickshell_wayland wabar_quickshell_waylandplugin)
 set_target_properties(wabar PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

@@ -156,3 +156,71 @@ ShellRoot {
   EXPECT_GE(popup->y(), h.window()->y() + h.window()->height());
   EXPECT_GT(popup->x(), 0);
 }
+
+// `import Quickshell` exposes Quickshell's own names only: a shell's local Wallpapers.qml,
+// Workspaces.qml and Bluetooth.qml must not lose to wabar's services of the same names.
+TEST(QuickshellModule, LocalTypesAreNotShadowedByWabarServices) {
+  Harness h;
+  ASSERT_TRUE(h.dir.isValid());
+  for (const char* name : {"Wallpapers", "Workspaces", "Bluetooth", "Media", "Notifications"}) {
+    write(h.dir.filePath(QStringLiteral("%1.qml").arg(QLatin1String(name))),
+          QStringLiteral("import QtQml\nQtObject { property string kind: \"%1\" }\n")
+              .arg(QLatin1String(name)));
+  }
+  h.start(QStringLiteral(R"(
+import Quickshell
+import Quickshell.Io
+import Quickshell.Services.Mpris
+import Quickshell.Services.Notifications
+
+ShellRoot {
+    Wallpapers { id: wallpapers }
+    Workspaces { id: workspaces }
+    Bluetooth { id: bluetooth }
+    Media { id: media }
+    Notifications { id: notifications }
+    Scope {
+        objectName: "probe"
+        property string kinds: [wallpapers, workspaces, bluetooth, media, notifications]
+            .map(o => o.kind).join(",")
+    }
+}
+)"));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  const auto* probe = h.host->shell()->findChild<QObject*>(QStringLiteral("probe"));
+  ASSERT_NE(probe, nullptr);
+  EXPECT_EQ(probe->property("kinds").toString(),
+            QStringLiteral("Wallpapers,Workspaces,Bluetooth,Media,Notifications"));
+}
+
+TEST(QuickshellModule, TheQuickshellNamesStillResolve) {
+  QQmlEngine engine;
+  QQmlComponent component(&engine);
+  component.setData(QByteArrayLiteral(R"(
+import QtQml
+import Quickshell
+import Quickshell.Io
+import Quickshell.Services.Mpris
+import Quickshell.Services.Notifications
+QtObject {
+    property var entries: DesktopEntries
+    property var proc: Process { command: ["x"] }
+    property var parser: StdioCollector {}
+    property var view: FileView {}
+    property var json: JsonAdapter {}
+    property int err: FileViewError.FileNotFound
+    property var mpris: Mpris.players
+    property int playing: MprisPlaybackState.Playing
+    property int loop: MprisLoopState.Track
+    property var server: NotificationServer {}
+    property int urgency: NotificationUrgency.Critical
+    property int reason: NotificationCloseReason.Dismissed
+}
+)"),
+                    QUrl(QStringLiteral("file:///names.qml")));
+  ASSERT_FALSE(component.isError()) << qPrintable(component.errorString());
+  std::unique_ptr<QObject> root(component.create());
+  ASSERT_NE(root, nullptr) << qPrintable(component.errorString());
+  EXPECT_EQ(root->property("playing").toInt(), 1);
+  EXPECT_EQ(root->property("urgency").toInt(), 2);
+}
