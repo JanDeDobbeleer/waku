@@ -335,6 +335,42 @@ ShellRoot {
   EXPECT_EQ(h.text(QStringLiteral("lazy")), QStringLiteral("later"));
 }
 
+TEST(ShellWindowsTest, ALazyLoaderActiveAsyncStartsABackgroundBuildAndFalseDestroys) {
+  Harness h;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import wabar
+ShellRoot {
+    LazyLoader {
+        objectName: "loader"
+        activeAsync: true
+        PanelWindow { anchors.top: true; Text { objectName: "lazy"; text: "async" } }
+    }
+}
+)"));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  auto* loader = h.host->shell()->findChild<LazyLoader*>(QStringLiteral("loader"));
+  ASSERT_NE(loader, nullptr);
+  const int index = loader->metaObject()->indexOfProperty("activeAsync");
+  ASSERT_GE(index, 0);
+  QSignalSpy changed(loader, &LazyLoader::activeAsyncChanged);
+  EXPECT_TRUE(loader->property("activeAsync").toBool());  // started, maybe not built yet
+  ASSERT_TRUE(QTest::qWaitFor([&] { return loader->active(); }, 3000));
+  EXPECT_TRUE(loader->property("activeAsync").toBool());
+  ASSERT_EQ(h.host->windows().size(), 1);
+  EXPECT_EQ(h.text(QStringLiteral("lazy")), QStringLiteral("async"));
+
+  ASSERT_TRUE(loader->setProperty("activeAsync", false));
+  EXPECT_EQ(loader->item(), nullptr);
+  EXPECT_FALSE(loader->property("activeAsync").toBool());
+  EXPECT_TRUE(h.host->windows().isEmpty());
+  EXPECT_GE(changed.count(), 1);
+
+  ASSERT_TRUE(loader->setProperty("activeAsync", true));
+  EXPECT_TRUE(loader->loading() || loader->active());
+  ASSERT_TRUE(QTest::qWaitFor([&] { return loader->active(); }, 3000));
+}
+
 TEST(ShellWindowsTest, AnActiveLazyLoaderBuildsWithTheShell) {
   Harness h;
   h.start(QStringLiteral(R"(

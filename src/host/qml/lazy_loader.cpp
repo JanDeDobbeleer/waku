@@ -25,6 +25,8 @@ class LazyLoader::Incubator : public QQmlIncubator {
 };
 
 LazyLoader::LazyLoader(QObject* parent) : QObject(parent) {
+  connect(this, &LazyLoader::activeChanged, this, &LazyLoader::activeAsyncChanged);
+  connect(this, &LazyLoader::loadingChanged, this, &LazyLoader::activeAsyncChanged);
   drive_.setSingleShot(true);
   drive_.setInterval(0);
   connect(&drive_, &QTimer::timeout, this, [this] {
@@ -75,6 +77,15 @@ void LazyLoader::setActive(bool active) {
     cancel();
     destroyItem();
   }
+}
+
+void LazyLoader::setActiveAsync(bool active) {
+  if (active) {
+    setLoading(true);
+    return;
+  }
+  wantLoading_ = false;
+  setActive(false);
 }
 
 void LazyLoader::componentComplete() {

@@ -26,6 +26,8 @@ namespace wabar::host {
 //   component  what to create (the default property); or `source`, a QML file
 //   loading    true starts an asynchronous build; it turns false and `active` true when done
 //   active     true builds now (finishing a running asynchronous build); false destroys the item
+//   activeAsync  true starts an asynchronous build, false destroys the item; reads true while a
+//              build runs and once the item exists
 //   item       the created object, or null; owned by the loader
 //
 // Threading: GUI thread only. An asynchronous build runs on the engine's incubation controller,
@@ -40,6 +42,7 @@ class LazyLoader : public QObject, public QQmlParserStatus {
   Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged FINAL)
   Q_PROPERTY(bool loading READ loading WRITE setLoading NOTIFY loadingChanged FINAL)
   Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
+  Q_PROPERTY(bool activeAsync READ activeAsync WRITE setActiveAsync NOTIFY activeAsyncChanged FINAL)
   Q_PROPERTY(QObject* item READ item NOTIFY itemChanged FINAL)
 
  public:
@@ -54,6 +57,8 @@ class LazyLoader : public QObject, public QQmlParserStatus {
   void setLoading(bool loading);
   bool active() const { return item_ != nullptr; }
   void setActive(bool active);
+  bool activeAsync() const { return active() || loading(); }
+  void setActiveAsync(bool active);
   QObject* item() const { return item_; }
 
   void classBegin() override {}
@@ -64,6 +69,7 @@ class LazyLoader : public QObject, public QQmlParserStatus {
   void sourceChanged();
   void loadingChanged();
   void activeChanged();
+  void activeAsyncChanged();
   void itemChanged();
 
  private:
