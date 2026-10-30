@@ -1,6 +1,7 @@
 #include "host/qml/global_shortcut.h"
 
 #include <QDebug>
+#include <QPointer>
 #include <algorithm>
 #include <vector>
 
@@ -75,11 +76,16 @@ void GlobalShortcut::applyKeys() {
 }
 
 void GlobalShortcut::fire() {
+  // A handler may destroy this shortcut (a shell reload, a Loader): stop at the first sign of it.
+  const QPointer<GlobalShortcut> self(this);
   pressed_ = true;
   emit pressedChanged();
+  if (!self) return;
   emit pressed();
+  if (!self) return;
   pressed_ = false;
   emit pressedChanged();
+  if (!self) return;
   emit released();
 }
 
@@ -89,8 +95,9 @@ bool GlobalShortcut::fireByName(const QString& name) {
   const std::vector<GlobalShortcut*> shortcuts = liveShortcuts();
   bool fired = false;
   for (GlobalShortcut* shortcut : shortcuts) {
-    if (!shortcut->name_.isEmpty() && shortcut->name_ == name &&
-        std::ranges::find(liveShortcuts(), shortcut) != liveShortcuts().end()) {
+    // A handler may have destroyed this one: look it up before touching it.
+    if (std::ranges::find(liveShortcuts(), shortcut) != liveShortcuts().end() &&
+        !shortcut->name_.isEmpty() && shortcut->name_ == name) {
       shortcut->fire();
       fired = true;
     }

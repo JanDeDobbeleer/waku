@@ -151,6 +151,38 @@ TEST(GlobalShortcutTest, ATakenKeyLeavesItUnregisteredButFirableByName) {
   EXPECT_EQ(presses, 1);
 }
 
+TEST(GlobalShortcutTest, AHandlerThatDestroysTheShortcutDoesNotCrash) {
+  ScopedFakeHotkeys fake;
+  auto* shortcut = new GlobalShortcut;
+  shortcut->setName(QStringLiteral("selfdestruct"));
+  shortcut->componentComplete();
+  int released = 0;
+  QObject::connect(shortcut, &GlobalShortcut::released, [&] { ++released; });
+  QObject::connect(shortcut, &GlobalShortcut::pressed, [shortcut] { delete shortcut; });
+  EXPECT_TRUE(GlobalShortcut::fireByName(QStringLiteral("selfdestruct")));
+  EXPECT_EQ(released, 0);
+  EXPECT_FALSE(GlobalShortcut::names().contains(QStringLiteral("selfdestruct")));
+}
+
+TEST(GlobalShortcutTest, AHandlerThatDestroysAnotherShortcutOfTheSameNameIsSafe) {
+  ScopedFakeHotkeys fake;
+  auto* first = new GlobalShortcut;
+  auto* second = new GlobalShortcut;
+  for (GlobalShortcut* s : {first, second}) {
+    s->setName(QStringLiteral("pair"));
+    s->componentComplete();
+  }
+  int presses = 0;
+  QObject::connect(first, &GlobalShortcut::pressed, [&] {
+    ++presses;
+    delete second;
+  });
+  QObject::connect(second, &GlobalShortcut::pressed, [&] { ++presses; });
+  EXPECT_TRUE(GlobalShortcut::fireByName(QStringLiteral("pair")));
+  EXPECT_EQ(presses, 1);
+  delete first;
+}
+
 TEST(GlobalShortcutTest, NoKeysRegistersNothing) {
   ScopedFakeHotkeys fake;
   GlobalShortcut shortcut;
