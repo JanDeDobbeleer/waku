@@ -94,8 +94,7 @@ int main(int argc, char* argv[]) {
       "  shortcut list                  the names of the shortcuts\n"
       "  surface list                   the named windows of the shell and their state\n"
       "  surface show | hide | toggle | status <name>\n"
-      "  taskbar hide | show | status   hide or restore the Windows taskbar
-      "
+      "  taskbar hide | show | status   hide or restore the Windows taskbar\n"
       "  call <target> <function> [args...]  run a function of an IpcHandler; call alone lists\n"
       "Add --dry-run to set, random, next or previous to play the animation without "
       "changing the wallpaper."));
