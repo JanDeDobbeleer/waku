@@ -1,0 +1,270 @@
+#include <gtest/gtest.h>
+
+#include <QDir>
+#include <QFileInfo>
+#include <QQmlComponent>
+#include <QQmlEngine>
+#include <QSignalSpy>
+#include <QTemporaryDir>
+#include <QTest>
+#include <memory>
+#include <optional>
+
+#include "features/quickshell_io/command_spec.h"
+#include "features/quickshell_io/qml/data_stream_parsers.h"
+#include "features/quickshell_io/qml/quickshell_singleton.h"
+
+using namespace wabar::quickshell_io;
+
+namespace {
+
+struct Fixture {
+  QTemporaryDir dir;
+  std::optional<CommandSpec> launched;
+  bool launchResult = true;
+  std::unique_ptr<QuickshellSingleton> qs;
+
+  Fixture() {
+    QuickshellSingleton::Dirs dirs{
+        dir.filePath(QStringLiteral("shell")), dir.filePath(QStringLiteral("data")),
+        dir.filePath(QStringLiteral("state")), dir.filePath(QStringLiteral("cache"))};
+    qs = std::make_unique<QuickshellSingleton>(
+        dirs,
+        [this](const CommandSpec& spec) {
+          launched = spec;
+          return launchResult;
+        },
+        nullptr);
+  }
+};
+
+}  // namespace
+
+TEST(QuickshellCommandSpec, ParsesAListAndAnObject) {
+  const auto list =
+      commandSpecFrom(QVariant(QStringList{QStringLiteral("a"), QStringLiteral("b")}));
+  ASSERT_TRUE(list);
+  EXPECT_EQ(list->command, (QStringList{QStringLiteral("a"), QStringLiteral("b")}));
+
+  QVariantMap map;
+  map.insert(QStringLiteral("command"), QVariantList{QStringLiteral("x"), 5});
+  map.insert(QStringLiteral("clearEnvironment"), true);
+  map.insert(QStringLiteral("workingDirectory"), QStringLiteral("C:/w"));
+  const auto object = commandSpecFrom(map);
+  ASSERT_TRUE(object);
+  EXPECT_EQ(object->command, (QStringList{QStringLiteral("x"), QStringLiteral("5")}));
+  EXPECT_TRUE(object->clearEnvironment);
+  EXPECT_EQ(object->workingDirectory, QStringLiteral("C:/w"));
+}
+
+TEST(QuickshellCommandSpec, RejectsEmptyAndWrongShapes) {
+  EXPECT_FALSE(commandSpecFrom(QVariant()));
+  EXPECT_FALSE(commandSpecFrom(QVariant(QStringLiteral("cmd /c echo"))));
+  EXPECT_FALSE(commandSpecFrom(QVariant(QStringList{})));
+  EXPECT_FALSE(commandSpecFrom(QVariantMap{}));
+}
+
+TEST(QuickshellCommandSpec, EnvironmentSetsRemovesAndClears) {
+  qputenv("WABAR_QS_KEEP", "1");
+  CommandSpec spec;
+  spec.command = {QStringLiteral("x")};
+  spec.environment = {{QStringLiteral("WABAR_QS_NEW"), QStringLiteral("v")},
+                      {QStringLiteral("WABAR_QS_KEEP"), QVariant()}};
+  QProcessEnvironment env = makeEnvironment(spec);
+  EXPECT_EQ(env.value(QStringLiteral("WABAR_QS_NEW")), QStringLiteral("v"));
+  EXPECT_FALSE(env.contains(QStringLiteral("WABAR_QS_KEEP")));
+
+  spec.clearEnvironment = true;
+  env = makeEnvironment(spec);
+  EXPECT_EQ(env.value(QStringLiteral("WABAR_QS_NEW")), QStringLiteral("v"));
+  // With clearEnvironment a null entry passes the system value through.
+  EXPECT_EQ(env.value(QStringLiteral("WABAR_QS_KEEP")), QStringLiteral("1"));
+  EXPECT_FALSE(env.contains(QStringLiteral("PATH")));
+  qunsetenv("WABAR_QS_KEEP");
+}
+
+TEST(QuickshellParsers, SplitParserJoinsChunksAndFlushesTheTail) {
+  SplitParser parser;
+  QStringList lines;
+  QObject::connect(&parser, &DataStreamParser::read, [&](const QString& l) { lines << l; });
+  parser.feed("a\r\nb");
+  parser.feed("c\nd");
+  EXPECT_EQ(lines, (QStringList{QStringLiteral("a"), QStringLiteral("bc")}));
+  parser.streamEnded();
+  EXPECT_EQ(lines.last(), QStringLiteral("d"));
+}
+
+TEST(QuickshellParsers, SplitParserHonoursACustomAndAnEmptyMarker) {
+  SplitParser parser;
+  QStringList lines;
+  QObject::connect(&parser, &DataStreamParser::read, [&](const QString& l) { lines << l; });
+  parser.setSplitMarker(QStringLiteral(";;"));
+  parser.feed("a;;b;");
+  parser.feed(";c");
+  EXPECT_EQ(lines, (QStringList{QStringLiteral("a"), QStringLiteral("b")}));
+  lines.clear();
+  parser.reset();
+  parser.setSplitMarker(QString());
+  parser.feed("xyz");
+  EXPECT_EQ(lines, (QStringList{QStringLiteral("xyz")}));
+}
+
+TEST(QuickshellParsers, StdioCollectorWaitsForTheEndByDefault) {
+  StdioCollector collector;
+  QSignalSpy finished(&collector, &StdioCollector::streamFinished);
+  collector.feed("hel");
+  collector.feed("lo");
+  EXPECT_TRUE(collector.text().isEmpty());
+  collector.streamEnded();
+  EXPECT_EQ(collector.text(), QStringLiteral("hello"));
+  EXPECT_EQ(collector.data(), QByteArray("hello"));
+  EXPECT_EQ(finished.count(), 1);
+}
+
+TEST(QuickshellParsers, StdioCollectorStreamsWhenWaitForEndIsOff) {
+  StdioCollector collector;
+  collector.setWaitForEnd(false);
+  collector.feed("ab");
+  EXPECT_EQ(collector.text(), QStringLiteral("ab"));
+  collector.reset();
+  EXPECT_TRUE(collector.text().isEmpty());
+}
+
+TEST(QuickshellSingleton, EnvReturnsTheValueOrNull) {
+  Fixture f;
+  qputenv("WABAR_QS_ENV", "value");
+  EXPECT_EQ(f.qs->env(QStringLiteral("WABAR_QS_ENV")).toString(), QStringLiteral("value"));
+  qunsetenv("WABAR_QS_ENV");
+  EXPECT_TRUE(f.qs->env(QStringLiteral("WABAR_QS_ENV")).isNull());
+}
+
+TEST(QuickshellSingleton, ExecDetachedPassesTheSpecToTheLauncher) {
+  Fixture f;
+  f.qs->execDetached(QVariant(QStringList{QStringLiteral("notepad.exe"), QStringLiteral("a.txt")}));
+  ASSERT_TRUE(f.launched);
+  EXPECT_EQ(f.launched->command,
+            (QStringList{QStringLiteral("notepad.exe"), QStringLiteral("a.txt")}));
+
+  f.launched.reset();
+  QVariantMap object{{QStringLiteral("command"), QStringList{QStringLiteral("x")}},
+                     {QStringLiteral("workingDirectory"), QStringLiteral("C:/w")}};
+  f.qs->execDetached(object);
+  ASSERT_TRUE(f.launched);
+  EXPECT_EQ(f.launched->workingDirectory, QStringLiteral("C:/w"));
+
+  f.launched.reset();
+  f.qs->execDetached(QVariant(QStringLiteral("not a list")));
+  EXPECT_FALSE(f.launched);
+}
+
+TEST(QuickshellSingleton, PathsJoinTheFourFolders) {
+  Fixture f;
+  const QString root = QDir::cleanPath(f.dir.path());
+  EXPECT_EQ(f.qs->shellDir(), root + QStringLiteral("/shell"));
+  EXPECT_EQ(f.qs->shellPath(QStringLiteral("a/b.qml")), root + QStringLiteral("/shell/a/b.qml"));
+  EXPECT_EQ(f.qs->statePath(QStringLiteral("s.json")), root + QStringLiteral("/state/s.json"));
+  EXPECT_EQ(f.qs->cachePath(QStringLiteral("c")), root + QStringLiteral("/cache/c"));
+  EXPECT_EQ(f.qs->dataPath(QStringLiteral("d")), root + QStringLiteral("/data/d"));
+  EXPECT_EQ(f.qs->shellPath(QStringLiteral("C:/abs/x")), QStringLiteral("C:/abs/x"));
+  EXPECT_FALSE(QFileInfo::exists(f.qs->stateDir()));  // nothing is created
+}
+
+TEST(QuickshellSingleton, SetShellDirNotifies) {
+  Fixture f;
+  QSignalSpy spy(f.qs.get(), &QuickshellSingleton::shellDirChanged);
+  f.qs->setShellDir(QStringLiteral("C:/cfg"));
+  EXPECT_EQ(spy.count(), 1);
+  EXPECT_EQ(f.qs->shellPath(QStringLiteral("x")), QStringLiteral("C:/cfg/x"));
+}
+
+TEST(QuickshellSingleton, ReloadEmitsTheHostSignal) {
+  Fixture f;
+  QSignalSpy spy(f.qs.get(), &QuickshellSingleton::reloadRequested);
+  f.qs->reload(true);
+  f.qs->reload();
+  ASSERT_EQ(spy.count(), 2);
+  EXPECT_TRUE(spy.at(0).at(0).toBool());
+  EXPECT_FALSE(spy.at(1).at(0).toBool());
+}
+
+TEST(QuickshellSingleton, IconPathStubFallsBackToTheName) {
+  Fixture f;
+  EXPECT_EQ(f.qs->iconPath(QStringLiteral("folder")), QStringLiteral("folder"));
+  EXPECT_EQ(f.qs->iconPath(QStringLiteral("folder"), QVariant(true)), QString());
+  EXPECT_EQ(f.qs->iconPath(QStringLiteral("folder"), QVariant(QStringLiteral("fallback"))),
+            QStringLiteral("fallback"));
+  EXPECT_EQ(f.qs->iconPath(QStringLiteral("C:/i.png")), QStringLiteral("C:/i.png"));
+  EXPECT_EQ(f.qs->iconPath(QStringLiteral("file:///i.png")), QStringLiteral("file:///i.png"));
+}
+
+TEST(QuickshellSingleton, VersionChecksEmulateQuickshell03) {
+  Fixture f;
+  EXPECT_TRUE(f.qs->hasVersion(0, 3));
+  EXPECT_TRUE(f.qs->hasVersion(0, 2));
+  EXPECT_FALSE(f.qs->hasVersion(0, 4));
+  EXPECT_FALSE(f.qs->hasVersion(1, 0));
+  EXPECT_TRUE(f.qs->hasQtVersion(6, 0));
+  EXPECT_FALSE(f.qs->hasQtVersion(99, 0));
+}
+
+TEST(QuickshellSingleton, ProcessIdAndClipboardRoundTrip) {
+  Fixture f;
+  EXPECT_GT(f.qs->processId(), 0);
+  f.qs->setClipboardText(QStringLiteral("wabar clip"));
+  EXPECT_EQ(f.qs->clipboardText(), QStringLiteral("wabar clip"));
+}
+
+TEST(QuickshellSingleton, ElapsedTimerReportsSecondsAndRestarts) {
+  ElapsedTimer timer;
+  QTest::qWait(30);
+  EXPECT_GT(timer.elapsedMs(), 20.0);
+  EXPECT_NEAR(timer.elapsed() * 1000.0, timer.elapsedMs(), 50.0);
+  const double before = timer.restart();
+  EXPECT_GT(before, 0.02);
+  EXPECT_LT(timer.elapsed(), before);
+}
+
+TEST(QuickshellSingleton, IsUsableFromQml) {
+  QQmlEngine engine;
+  QQmlComponent component(&engine);
+  component.setData(R"(
+import QtQml
+import wabar.services
+QtObject {
+    property real seconds: stopwatch.elapsed()
+    property var stopwatch: ElapsedTimer {}
+    property int pid: QuickshellSingleton.processId
+    property var missing: QuickshellSingleton.env("WABAR_QS_SURELY_UNSET_VARIABLE")
+    property bool v: QuickshellSingleton.hasVersion(0, 3)
+}
+)",
+                    QUrl());
+  std::unique_ptr<QObject> root(component.create());
+  ASSERT_TRUE(root) << component.errorString().toStdString();
+  EXPECT_GT(root->property("pid").toInt(), 0);
+  EXPECT_TRUE(root->property("v").toBool());
+  EXPECT_TRUE(root->property("missing").isNull());
+}
+
+TEST(QuickshellIoModule, ImportQuickshellIoExposesTheTypes) {
+  QQmlEngine engine;
+  QQmlComponent component(&engine);
+  component.setData(R"(
+import QtQml
+import Quickshell.Io
+QtObject {
+    property var proc: Process { command: ["cmd.exe"] }
+    property var view: FileView { path: "" }
+    property var collector: StdioCollector {}
+    property var parser: SplitParser { splitMarker: "|" }
+    property int err: FileViewError.NotAFile
+}
+)",
+                    QUrl());
+  std::unique_ptr<QObject> root(component.create());
+  ASSERT_TRUE(root) << component.errorString().toStdString();
+  EXPECT_TRUE(root->property("proc").value<QObject*>());
+  EXPECT_TRUE(root->property("view").value<QObject*>());
+  EXPECT_EQ(root->property("parser").value<QObject*>()->property("splitMarker").toString(),
+            QStringLiteral("|"));
+}

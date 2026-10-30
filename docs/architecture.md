@@ -45,7 +45,7 @@ their `win32/` or `qml/` C++ headers, and `testing/` only from tests. The graph 
 | every feature | `kernel`; its QML also uses the `host` QML types and `ui` |
 | `audio`, `bluetooth`, `network`, `github` | `shell` (the "open settings" and "open URL" clicks use the `Shell` service) |
 | `control_center` | `audio`, `media`, `notifications`, `brightness` |
-| `brightness`, `clock`, `media`, `notifications`, `shell`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces` | no other feature |
+| `brightness`, `clock`, `media`, `notifications`, `quickshell_io`, `shell`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces` | no other feature |
 | `app`, `tests/` | everything |
 
 A feature also includes the root headers of `control/` (such as `WallpaperControl`): they are a
@@ -93,7 +93,7 @@ Namespace `wabar::kernel`, include `"kernel/<qt|win32>/<file>.h"`.
 |---|---|---|
 | `win32/windows_build.*` | `windowsBuild()`, cached `RtlGetVersion` (allowlist row below) | host backdrop, `src/features/system_stats/win32/pdh.cpp`, `src/features/control_center/win32/power_win.cpp` |
 | `win32/winrt_apartment.*` | `ensureWinrtApartment()` | bluetooth, brightness, network (`connectivity_win`, `wlan_win`) |
-| `win32/shell_launch.*` | `shellOpen`, `launchHiddenShell`, `startDetachedHidden`, `hideConsole` | Shell, ControlCenter, toast activation, komorebi, `Process` |
+| `win32/shell_launch.*` | `shellOpen`, `launchHiddenShell`, `startDetachedHidden`, `hideConsole` | Shell, ControlCenter, toast activation, komorebi, `ShellProcess`, `quickshell_io` (`Process`, `execDetached`) |
 | `win32/app_activation.*` | AUMID lookups and `activateAppByAumid` (documented Win32/COM only) | media source names, toast activation |
 | `qt/live_desktop.*` | `liveDesktop([capability])`, `setCapabilityDisabled`, `capabilityDisabled` | the services' real constructors, `src/app/wabar/main.cpp` (`--no-tray`) |
 | `qt/polled_source.*` | `PolledSource`, the polled-sample base | `Memory`, `Cpu`, `Battery`, `Network` |
@@ -166,6 +166,7 @@ hand results back with queued signals or `QMetaObject::invokeMethod`.
 | `BrightnessControl` worker (`std::thread`) | `wabar.services.ControlCenter`, created on first use (`src/features/brightness/win32/brightness_win.cpp`) | owns DDC/CI reads and writes, display metadata (WinRT `DisplayMonitor`) and the coalesced slider writes; results return as queued signals; DDC probes fan out with `std::async` and are joined by the worker | `stop()` (called by `stopAll()`): sets the stop flag, wakes the queue, `join` |
 | notifications worker (`std::thread`, MTA) and WNF callback | `NotificationService`'s `SystemNotificationSource` (`src/features/notifications/win32/notifications_system.cpp`), created on first use by `wabar.services.Notifications` | the worker owns the `UserNotificationListener` and runs list reads (100 ms debounce after each WNF change or menu open), remove, clear (all or one app) and toast activation tasks, sleeping on a condition variable (no polling); the WNF callback runs on a system thread, arms the debounced read and forwards a `u32` count to the sink, which posts both results to the GUI thread. Toast activation (`src/features/notifications/win32/toast_activation_win.cpp`) runs on this thread | `stop()`: unsubscribe WNF (waits for a running callback), wake the queue, `join` |
 | `DndWatcher` WNF callback (system thread) | `DndWatcher` (`src/features/notifications/win32/dnd_win.cpp`), owned by `wabar.services.ControlCenter` | the callback reads `dndStatus()` and posts the result to the GUI thread (`statusChanged`) | `stop()`: unsubscribe WNF (waits for a running callback) |
+| `QThreadPool` threads (quickshell_io) | `FileView` (`src/features/quickshell_io/qml/file_view.{h,cpp}`), one object per QML `FileView` | one `FileAccess::read` or `write` per job (QFile, QSaveFile; the access is thread-safe and holds no Qt Quick object); the result returns through a `QFutureWatcher` owned by the `FileView`, so a result after the object is gone is dropped; writes run one at a time | nothing to join: each job ends with its file operation |
 
 Platform data sources (`src/features/*/win32/`) are sampled off the GUI thread by the stat sources;
 anything they cache globally must be locked.
@@ -179,6 +180,8 @@ No new singleton without a row here and a reason.
 | media source-app name cache, shell-app cache | `src/features/media/win32/media_source_apps.cpp` (names), `src/kernel/win32/app_activation.cpp` (shell-app cache) | AUMID to display name; `QMutex`-guarded, written from the media session thread only |
 | `wabar.services.Systray` | `src/features/tray/qml/systray.{h,cpp}` | the one tray host of a `wabar` run (the hook in Explorer), shared by every Tray widget of the bar; created by the QML engine on first use and destroyed with it, which stops the host. |
 | `wabar.services.Network` | `src/features/network/qml/network_service.{h,cpp}` | the one Wi-Fi/Ethernet/VPN state of a `wabar` run, shared by every Wifi widget; created by the QML engine on first use and destroyed with it. Polls on the global `QThreadPool` (one sample at a time, applied on the GUI thread); the Wi-Fi scan/connect backend and its thread (`createWlanBackend`) start on the first refresh or connect and stop in the destructor. No source on the offscreen platform |
+| `wabar.services.QuickshellSingleton` | `src/features/quickshell_io/qml/quickshell_singleton.{h,cpp}` | Quickshell's window-free `Quickshell` members (env, execDetached, shellDir and the state, cache and data folders, clipboardText, iconPath stub, reload request signal) for QML written for Quickshell. A QML singleton because the real one is; GUI thread only, created on first use, holds the shell folder the host sets. The window part (screens) lives in the engine's `Quickshell` singleton, which derives from this class |
+| `fileAccess()` override | `src/features/quickshell_io/file_access.cpp` | `std::atomic<FileAccess*>`, null in production; only tests set it (a fake disk), before the first `FileView` is created |
 | cached Windows build number | `src/kernel/win32/windows_build.cpp` (`windowsBuild()`) | immutable |
 | live-desktop disable flags | `src/kernel/qt/live_desktop.cpp` | set of capability names behind a `QMutex`; written once at startup (`--no-tray`), read by the services' real constructors |
 | app data migration record | `src/kernel/qt/app_data.cpp` (`appDataDir`) | set of base folders already migrated in this process, behind a `QMutex`; the on-disk marker `migrated_from_yasb` makes the copy happen once per machine |

@@ -190,7 +190,7 @@ Conventional commits: `type(scope): subject`, imperative, lower case, no trailin
 - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`, `revert`.
 - Scopes: the unit names `kernel`, `control`, `host`, `ui`, `app`; the feature names `audio`,
   `bluetooth`, `brightness`, `clock`, `control_center`, `github`, `media`, `network`,
-  `notifications`, `shell`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces`; and
+  `notifications`, `quickshell_io`, `shell`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces`; and
   `build`, `docs`, `test`, `style`, `chore`. The scope is optional. `tools/hooks/commit-msg` checks it.
 - One logical change per commit; `tools\check.ps1` green before committing.
 - Agent-authored commits end with the attribution trailer the session instructions give.
