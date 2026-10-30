@@ -13,6 +13,7 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QThreadPool>
 #include <functional>
 #include <map>
 #include <memory>
@@ -256,12 +257,24 @@ TEST(QuickshellFileView, WriteErrorsComeFromTheFileAccessAndAtomicIsPassed) {
 TEST(QuickshellFileView, DestroyingWhileAJobRunsIsSafe) {
   FakeScope scope;
   scope.disk.files[QStringLiteral("C:/fake/a.txt")] = "x";
+  bool signalled = false;
   {
     auto v = view(QStringLiteral("C:/fake/a.txt"));
+    for (auto signal : {&FileView::loaded, &FileView::saved}) {
+      QObject::connect(v.get(), signal, [&] { signalled = true; });
+    }
+    QObject::connect(v.get(), &FileView::saveFailed, [&] { signalled = true; });
     v->setText(QStringLiteral("y"));
   }
+  // The job runs on a pool thread and ends after the view is gone: the write lands, nothing is
+  // delivered to the dead object.
+  QThreadPool::globalInstance()->waitForDone(5000);
   QTest::qWait(100);
-  SUCCEED();
+  {
+    QMutexLocker lock(&scope.disk.mutex);
+    EXPECT_EQ(scope.disk.files[QStringLiteral("C:/fake/a.txt")], QByteArray("y"));
+  }
+  EXPECT_FALSE(signalled);
 }
 
 TEST(QuickshellFileView, WaitForJobAppliesTheResult) {
