@@ -1,11 +1,11 @@
 // The look of the bars and widgets. Every property is optional; the values below are the
-// defaults. Edit and save: the bars reload.
+// defaults. Edit and save: the shell reloads.
 import wabar
 
 ThemeSpec {
     // Colours (translucent by default: the bars blur what is behind them)
     text: "#ffffff"
-    surface: "#66101018"       // the bar's background, unless a Bar sets its own `background`
+    surface: "#66101018"       // the panel's background, unless a Panel sets its own `background`
     accent: "#5b8def"          // the focused workspace
     warn: "#e5484d"            // high load, low battery, config errors
     good: "#38c172"            // charging
@@ -29,5 +29,5 @@ ThemeSpec {
     pillHeight: 24
     radius: -1
     padding: 10                // inside a widget, left and right
-    spacing: 12                // between widgets in a BarLayout
+    spacing: 12                // between widgets in a PanelLayout
 }

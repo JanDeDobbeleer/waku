@@ -13,7 +13,7 @@
 #include "features/wallpapers/qml/wallpaper_transition.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/testing/fake_wallpaper_backend.h"
-#include "host/testing/bar_fixtures.h"
+#include "host/testing/shell_fixtures.h"
 
 namespace {
 
@@ -340,9 +340,9 @@ import QtQuick
 import wabar
 import wabar.services
 
-Config {
+ShellRoot {
     WallpaperSettings { objectName: "settings"; imagePath: "%1"; hotkey: "ctrl+shift+f5"; engine: true; animation: "fade"; %2 }
-    Bar { layout: BarLayout { start: [ Text { objectName: "a"; text: "a" } ] } }
+    Panel { content: PanelLayout { start: [ Text { objectName: "a"; text: "a" } ] } }
 }
 )")
       .arg(QDir::fromNativeSeparators(folder), extra);
@@ -404,7 +404,7 @@ TEST(WallpaperSettingsTest, ConfiguresAndCreatesTheServiceWithoutAWidget) {
   EXPECT_EQ(service->controlGallery(), QStringLiteral("ok: gallery closed"));
 }
 
-TEST(WallpaperSettingsTest, TheBarsStillBuildAndThePartIsKeptByTheConfig) {
+TEST(WallpaperSettingsTest, TheWindowsStillBuildAndThePartIsKeptByTheShell) {
   Fixture f;
   Fixture* fixture = &f;
   Wallpapers::setFactoryForTests([fixture]() { return std::move(fixture->service); });
@@ -413,10 +413,12 @@ TEST(WallpaperSettingsTest, TheBarsStillBuildAndThePartIsKeptByTheConfig) {
   const bool loaded = h.host->reload();
   Wallpapers::setFactoryForTests({});
   ASSERT_TRUE(loaded) << h.host->error().toStdString();
-  ASSERT_TRUE(h.host->config());
-  EXPECT_EQ(h.host->config()->barList().size(), 1);
-  ASSERT_EQ(h.host->config()->partList().size(), 1);
-  EXPECT_TRUE(h.host->config()->partList().first()->property("active").toBool());
+  ASSERT_TRUE(h.host->shell());
+  EXPECT_EQ(h.host->windows().size(), 1);
+  QObject* settings = h.host->shell()->findChild<QObject*>(QStringLiteral("settings"));
+  ASSERT_NE(settings, nullptr);
+  EXPECT_EQ(settings->parent(), h.host->shell());
+  EXPECT_TRUE(settings->property("active").toBool());
   EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("a"));
 }
 
@@ -433,19 +435,19 @@ TEST(WallpaperSettingsTest, AReloadSwitchesTheOldSettingsOffAndTheNewOnes) {
   ASSERT_TRUE(service);
   EXPECT_FALSE(service->imagePath().isEmpty());
 
-  write(h.barFile(), settingsConfig(f.elsewhere.path()));
+  write(h.shellFile(), settingsConfig(f.elsewhere.path()));
   ASSERT_TRUE(h.host->reload());
   EXPECT_EQ(QDir::toNativeSeparators(service->imagePath()),
             f.native(QDir::fromNativeSeparators(f.elsewhere.path())));
   EXPECT_EQ(f.hotkeys->attempts.size(), 2u);  // switched off, then on again
 
-  write(h.barFile(), barConfig());  // no settings any more
+  write(h.shellFile(), shellConfig());  // no settings any more
   ASSERT_TRUE(h.host->reload());
   EXPECT_TRUE(service->imagePath().isEmpty());
   EXPECT_FALSE(f.hotkeys->callback);
 }
 
-TEST(WallpaperSettingsTest, AConfigWithoutBarsLoadsToo) {
+TEST(WallpaperSettingsTest, AShellWithoutWindowsLoadsToo) {
   Fixture f;
   Fixture* fixture = &f;
   Wallpapers::setFactoryForTests([fixture]() { return std::move(fixture->service); });
@@ -454,7 +456,7 @@ TEST(WallpaperSettingsTest, AConfigWithoutBarsLoadsToo) {
 import QtQuick
 import wabar
 import wabar.services
-Config { WallpaperSettings { imagePath: "%1" } }
+ShellRoot { WallpaperSettings { imagePath: "%1" } }
 )")
               .arg(QDir::fromNativeSeparators(f.folder.path())));
   const bool loaded = h.host->reload();

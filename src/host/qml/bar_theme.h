@@ -73,7 +73,7 @@ class ThemeValues : public QObject {
   Q_PROPERTY(int fontWeight MEMBER fontWeight_ NOTIFY changed FINAL)
 
   // Islands, the adaptive look of Python YASB: with `islands` on, each non-empty widget group
-  // (start, centre, end) of a BarLayout gets its own background, bottom corners rounded by
+  // (start, centre, end) of a PanelLayout gets its own background, bottom corners rounded by
   // `islandRadius` and concave fillets where it meets the screen edge, and the bar window itself
   // draws no background, so the wallpaper shows between the islands. `groupPadding` is the room
   // around a group inside its island.

@@ -1,9 +1,9 @@
 #pragma once
 
-// Helpers for tests that put built-in widgets (wabar.widgets) into a real bar on the offscreen
-// platform. On top of bar_fixtures.h (the Harness).
+// Helpers for tests that put built-in widgets (wabar.widgets) into a real panel on the offscreen
+// platform. On top of shell_fixtures.h (the Harness).
 
-#include "host/testing/bar_fixtures.h"
+#include "host/testing/shell_fixtures.h"
 
 namespace {
 
@@ -12,9 +12,9 @@ QString widgetConfig(const QString& widgets) {
 import QtQuick
 import wabar
 import wabar.widgets
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             start: [ %1 ]
         }
     }

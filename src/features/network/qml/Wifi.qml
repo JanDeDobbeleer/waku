@@ -120,7 +120,7 @@ Pill {
     DeviceMenu {
         id: panel
         objectName: "wifiPopup"
-        anchorItem: root
+        anchor.item: root
         title: "WiFi Networks"
         busy: S.Network.scanning
         emptyText: rows.length === 0 ? (S.Network.scanning ? "Scanning..." : "No networks found") : ""

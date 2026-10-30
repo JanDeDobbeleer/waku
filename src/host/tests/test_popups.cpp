@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "host/qml/popup_placement_qml.h"
-#include "host/testing/bar_fixtures.h"
+#include "host/testing/shell_fixtures.h"
 
 namespace {
 
@@ -10,19 +10,19 @@ QString popupConfig(const QString& barProperties = QString(),
   return QStringLiteral(R"(
 import QtQuick
 import wabar
-Config {
-    Bar {
+ShellRoot {
+    Panel {
         %1
-        layout: BarLayout {
+        content: PanelLayout {
             %2: [
                 Item {
-                    id: anchor
+                    id: anchorBox
                     objectName: "anchor"
                     width: 60
                     height: 24
                     PopupWindow {
                         objectName: "pop"
-                        anchorItem: anchor
+                        anchor.item: anchorBox
                         Text { objectName: "content"; text: "hello"; color: "white"; font.pixelSize: 14 }
                     }
                 }
@@ -38,9 +38,9 @@ QString tooltipConfig(const QString& text = QStringLiteral("hello tip")) {
   return QStringLiteral(R"(
 import QtQuick
 import wabar
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             start: [
                 Rectangle {
                     objectName: "target"
@@ -154,7 +154,7 @@ TEST(PopupWindowTest, StartsClosed) {
 
 TEST(PopupWindowTest, OpensBelowTheBarAndSizesToItsContent) {
   Harness h;
-  h.start(popupConfig(QStringLiteral("height: 40")));
+  h.start(popupConfig(QStringLiteral("thickness: 40")));
   ASSERT_TRUE(started(h));
   QQuickWindow* popup = findWindow(QStringLiteral("pop"));
   QSignalSpy opened(popup, SIGNAL(opened()));
@@ -175,7 +175,7 @@ TEST(PopupWindowTest, OpensBelowTheBarAndSizesToItsContent) {
 
 TEST(PopupWindowTest, ABottomBarOpensItAboveTheWidget) {
   Harness h;
-  h.start(popupConfig(QStringLiteral("height: 40; position: Bar.Bottom")));
+  h.start(popupConfig(QStringLiteral("thickness: 40; edge: Panel.Bottom")));
   ASSERT_TRUE(started(h));
   QQuickWindow* popup = findWindow(QStringLiteral("pop"));
   invoke(popup, "open");
@@ -295,13 +295,13 @@ TEST(PopupWindowTest, ABarGainingActivationDoesNothingToAClosedPopup) {
 
 TEST(PopupWindowTest, ItGetsTheBackdropOfItsBar) {
   Harness h;
-  h.start(popupConfig(QStringLiteral("backdrop: Bar.Blur")));
+  h.start(popupConfig(QStringLiteral("backdrop: Backdrop.Blur")));
   ASSERT_TRUE(started(h));
   const size_t before = h.native.backdrops.size();
   QQuickWindow* popup = findWindow(QStringLiteral("pop"));
   invoke(popup, "open");
   ASSERT_EQ(h.native.backdrops.size(), before + 1);
-  EXPECT_EQ(h.native.backdrops.back(), Bar::Blur);
+  EXPECT_EQ(h.native.backdrops.back(), Backdrop::Blur);
 }
 
 TEST(PopupWindowTest, ChromeFollowsTheThemeDefaults) {
@@ -324,17 +324,17 @@ TEST(PopupWindowTest, ZeroPaddingLetsTheContentFillTheWindow) {
   h.start(QStringLiteral(R"(
 import QtQuick
 import wabar
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             start: [
                 Item {
-                    id: anchor
+                    id: anchorBox
                     width: 60
                     height: 24
                     PopupWindow {
                         objectName: "flat"
-                        anchorItem: anchor
+                        anchor.item: anchorBox
                         padding: 0
                         Rectangle { objectName: "block"; width: 120; height: 50; color: "red" }
                     }
@@ -357,7 +357,7 @@ TEST(PopupWindowTest, ItDoesNotOpenWithoutAnAnchor) {
   h.start(QStringLiteral(R"(
 import QtQuick
 import wabar
-Config { Bar { layout: BarLayout { start: [ Item { PopupWindow { objectName: "orphan" } } ] } } }
+ShellRoot { Panel { content: PanelLayout { start: [ Item { PopupWindow { objectName: "orphan" } } ] } } }
 )"));
   ASSERT_TRUE(started(h));
   QQuickWindow* popup = findWindow(QStringLiteral("orphan"));

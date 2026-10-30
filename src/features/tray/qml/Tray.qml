@@ -123,7 +123,7 @@ Row {
         PopupWindow {
             id: overflow
             objectName: "trayOverflow"
-            anchorItem: chevron
+            anchor.item: chevron
             padding: 4
             spacing: 0
 

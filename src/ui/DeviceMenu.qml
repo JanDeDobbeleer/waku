@@ -5,7 +5,7 @@ import wabar
 // button, a list of rows and a footer with a settings link and a refresh button.
 //
 //     DeviceMenu {
-//         anchorItem: pill
+//         anchor.item: pill
 //         title: "Bluetooth"
 //         buttonText: "On"
 //         model: devices

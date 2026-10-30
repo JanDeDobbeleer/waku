@@ -35,7 +35,8 @@ class Win32AppBar : public IAppBar {
     active_ = true;
     SHAppBarMessage(ABM_NEW, &data_);
 
-    LONG_PTR style = GetWindowLongPtrW(data_.hWnd, GWL_EXSTYLE) | WS_EX_NOACTIVATE;
+    LONG_PTR style = GetWindowLongPtrW(data_.hWnd, GWL_EXSTYLE);
+    if (r.noActivate) style |= WS_EX_NOACTIVATE;
     if (r.alwaysOnTop) style |= WS_EX_TOPMOST;
     SetWindowLongPtrW(data_.hWnd, GWL_EXSTYLE, style);
 

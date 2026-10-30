@@ -57,7 +57,7 @@ Pill {
     PopupWindow {
         id: popup
         objectName: "calendarPopup"
-        anchorItem: root
+        anchor.item: root
         padding: 16
         onOpened: month.reset()
 

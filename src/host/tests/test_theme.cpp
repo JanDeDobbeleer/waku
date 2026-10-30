@@ -2,25 +2,26 @@
 
 #include <QFontDatabase>
 
-#include "host/testing/bar_fixtures.h"
+#include "host/testing/shell_fixtures.h"
 
 namespace {
 
-QString pillConfig(const QString& barProperties = QString()) {
+QString pillConfig(const QString& panelProperties = QString()) {
   return QStringLiteral(R"(
 import QtQuick
 import wabar
 import wabar.widgets
-Config {
-    Bar {
+ShellRoot {
+    Panel {
         %1
-        layout: BarLayout {
+        content: PanelLayout {
+            objectName: "layout"
             start: [ Pill { objectName: "p"; text: "x" } ]
         }
     }
 }
 )")
-      .arg(barProperties);
+      .arg(panelProperties);
 }
 
 QString themeText(const QString& properties) {
@@ -166,7 +167,7 @@ TEST(ThemeHost, WithoutAThemeFileTheDefaultsApply) {
   EXPECT_EQ(colorOf(h, QStringLiteral("p"), "fill"), kDefaultFill);
 }
 
-TEST(ThemeHost, AThemeFileRestylesTheBarAndItsWidgets) {
+TEST(ThemeHost, AThemeFileRestylesThePanelAndItsWidgets) {
   Harness h;
   writeTheme(h,
              themeText(QStringLiteral(
@@ -177,10 +178,10 @@ TEST(ThemeHost, AThemeFileRestylesTheBarAndItsWidgets) {
   EXPECT_EQ(colorOf(h, QStringLiteral("background"), "color"), QColor(0x10, 0x20, 0x30, 0x80));
   EXPECT_EQ(colorOf(h, QStringLiteral("p"), "fill"), QColor(0xff, 0x00, 0x00, 0x40));
   EXPECT_EQ(colorOf(h, QStringLiteral("p"), "textColor"), QColor(0x00, 0xff, 0x00));
-  EXPECT_EQ(findItem(h.window(), QStringLiteral("layout"))->childItems().size() > 0, true);
+  EXPECT_NE(findItem(h.window(), QStringLiteral("layout")), nullptr);
 }
 
-TEST(ThemeHost, ABarsOwnBackgroundBeatsTheThemeSurface) {
+TEST(ThemeHost, APanelsOwnBackgroundBeatsTheThemeSurface) {
   Harness h;
   writeTheme(h, themeText(QStringLiteral("surface: \"#80102030\"")));
   h.start(pillConfig(QStringLiteral("background: \"#ff112233\"")));
@@ -195,7 +196,7 @@ TEST(ThemeHost, TheLayoutSpacingFollowsTheTheme) {
   h.start(pillConfig());
   ASSERT_TRUE(h.host->reload());
   settle();
-  QQuickItem* layout = findItem(h.window(), QStringLiteral("layout"))->childItems().value(0);
+  QQuickItem* layout = findItem(h.window(), QStringLiteral("layout"));
   ASSERT_NE(layout, nullptr);
   EXPECT_EQ(layout->property("spacing").toInt(), 31);
 }
@@ -228,7 +229,7 @@ TEST(ThemeHost, TheThemeFileIsWatched) {
   h.start(pillConfig());
   ASSERT_TRUE(h.host->reload());
   h.host->watch();
-  QSignalSpy reloaded(h.host.get(), &BarHost::reloaded);
+  QSignalSpy reloaded(h.host.get(), &ShellHost::reloaded);
 
   writeTheme(h, themeText(QStringLiteral("fill: \"#4000ff00\"")));
   ASSERT_TRUE(QTest::qWaitFor([&] { return reloaded.count() >= 1; }, 5000));
@@ -243,7 +244,7 @@ TEST(ThemeHost, WidgetsFollowAChangeToTheSingletonWithoutAReload) {
   EXPECT_EQ(colorOf(h, QStringLiteral("p"), "fill"), QColor(1, 2, 3, 4));
 }
 
-TEST(ThemeHost, ABrokenThemeKeepsThePreviousBarsAndTheme) {
+TEST(ThemeHost, ABrokenThemeKeepsThePreviousShellAndTheme) {
   Harness h;
   writeTheme(h, themeText(QStringLiteral("fill: \"#40ff0000\"")));
   h.start(pillConfig());
@@ -315,9 +316,9 @@ QString islandConfig() {
   return QStringLiteral(R"(
 import QtQuick
 import wabar
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             start: [ Rectangle { objectName: "a"; width: 60; height: 20 } ]
             center: [ Rectangle { objectName: "b"; width: 40; height: 20; visible: false } ]
             end: [ Rectangle { objectName: "c"; width: 50; height: 20 } ]
@@ -379,9 +380,9 @@ QString gradientConfig(const QString& layoutProperties) {
   return QStringLiteral(R"(
 import QtQuick
 import wabar
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             objectName: "fill-layout"
             %1
             start: [ Rectangle { objectName: "a"; width: 60; height: 20 } ]

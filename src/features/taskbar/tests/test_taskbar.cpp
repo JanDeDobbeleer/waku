@@ -19,7 +19,7 @@
 #include "features/taskbar/qml/taskbar_model.h"
 #include "features/taskbar/qml/taskbar_service.h"
 #include "features/taskbar/testing/fake_window_system.h"
-#include "host/testing/bar_fixtures.h"
+#include "host/testing/shell_fixtures.h"
 
 namespace {
 
@@ -430,9 +430,9 @@ class TaskbarWidgetTest : public testing::Test {
 import QtQuick
 import wabar
 import wabar.widgets
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             start: [ Taskbar { objectName: "taskbar"; %1 } ]
         }
     }

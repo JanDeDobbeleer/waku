@@ -4,7 +4,7 @@
 #include <QPointer>
 #include <QTimer>
 
-#include "host/qml/bar_host.h"
+#include "host/qml/shell_host.h"
 
 namespace wabar::host {
 
@@ -40,19 +40,21 @@ QString answerWallpaperCommand(const QStringList& words, control::WallpaperContr
   return wallpapers->controlGallery();
 }
 
-control::ControlHandler makeControlHandler(BarHost& host, bool safe, std::function<void()> quit,
+control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::function<void()> quit,
                                            control::WallpaperControlProvider wallpapers) {
   if (!quit) quit = [] { QCoreApplication::quit(); };
-  QPointer<BarHost> guard(&host);
+  QPointer<ShellHost> guard(&host);
   return [guard, safe, quit = std::move(quit),
           wallpapers = std::move(wallpapers)](const QString& command) -> QString {
-    if (!guard) return QStringLiteral("error: the bar is shutting down");
+    if (!guard) return QStringLiteral("error: the shell is shutting down");
     if (command == QLatin1String("reload")) {
-      return guard->reload() ? QStringLiteral("ok") : QStringLiteral("error: ") + guard->error();
+      const bool ok = guard->reload();
+      if (ok && guard->error().isEmpty()) return QStringLiteral("ok");
+      return QStringLiteral("error: ") + guard->error();
     }
     if (command == QLatin1String("status")) {
       const QString error = guard->error();
-      return QStringLiteral("running; bars=%1; safe=%2; error=%3")
+      return QStringLiteral("running; windows=%1; safe=%2; error=%3")
           .arg(guard->windows().size())
           .arg(safe ? QStringLiteral("yes") : QStringLiteral("no"))
           .arg(error.isEmpty() ? QStringLiteral("none") : error);

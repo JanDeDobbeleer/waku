@@ -103,9 +103,9 @@ TEST(CalendarPopupTest, TheSelectedDayStartsAtTodayAndFollowsAClickAndTheMonth) 
 import QtQuick
 import wabar
 import wabar.widgets
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             start: [ Calendar { objectName: "cal"; width: 252; height: 220 } ]
         }
     }

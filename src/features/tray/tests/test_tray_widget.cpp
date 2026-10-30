@@ -15,7 +15,7 @@
 #include "features/tray/tray_host.h"
 #include "features/tray/tray_state.h"
 #include "features/tray/tray_types.h"
-#include "host/testing/bar_fixtures.h"
+#include "host/testing/shell_fixtures.h"
 
 namespace {
 
@@ -100,9 +100,9 @@ class TrayWidgetTest : public testing::Test {
 import QtQuick
 import wabar
 import wabar.widgets
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             start: [ Tray { objectName: "tray"; stateDir: "%1"; %2 } ]
         }
     }

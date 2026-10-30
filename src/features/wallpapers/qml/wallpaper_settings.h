@@ -11,17 +11,17 @@ namespace wabar::wallpapers {
 
 class Wallpapers;
 
-// Configures the Wallpapers service from bar.qml without a bar widget. Declare it next to the
-// bars:
+// Configures the Wallpapers service from shell.qml without a widget. Declare it next to the
+// windows:
 //
-//     Config {
+//     ShellRoot {
 //         WallpaperSettings { imagePath: "C:/Pictures/Wallpapers"; hotkey: "alt+e";
 //                             engine: true; animation: "split" }
-//         Bar { ... }
+//         Panel { ... }
 //     }
 //
-// Not an item: the host calls activate() once the config is installed (see Config in
-// bar_config.h), which creates the Wallpapers singleton, hands it these values and creates the
+// Not an item: the host calls activate() once the shell is installed (see Scope in
+// shell_config.h), which creates the Wallpapers singleton, hands it these values and creates the
 // gallery window (the strip the hotkey and `wabarc wallpaper gallery` open), so the hotkey and
 // the command-line client work with no widget. The properties mean what they mean on the
 // Wallpapers widget; a change after activation is applied at once. Destroying the object (a

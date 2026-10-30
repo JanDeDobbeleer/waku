@@ -1,22 +1,22 @@
 #include <windows.h>
 
-#include "host/qml/bar_host.h"
+#include "host/qml/shell_host.h"
 #include "host/win32/backdrop.h"
 
 namespace wabar::host {
 
-BarHost::NativeHooks BarHost::NativeHooks::win32() {
+ShellHost::NativeHooks ShellHost::NativeHooks::win32() {
   NativeHooks hooks;
   hooks.makeAppBar = [] { return wabar::host::makeWin32AppBar(); };
-  hooks.applyBackdrop = [](quintptr hwnd, Bar::Backdrop backdrop) {
+  hooks.applyBackdrop = [](quintptr hwnd, Backdrop::Kind backdrop) {
     switch (backdrop) {
-      case Bar::Blur:
+      case Backdrop::Blur:
         wabar::host::enableBlur(hwnd, true, true);
         break;
-      case Bar::Mica:
+      case Backdrop::Mica:
         wabar::host::enableMica(hwnd);
         break;
-      case Bar::None:
+      case Backdrop::None:
         break;
     }
   };

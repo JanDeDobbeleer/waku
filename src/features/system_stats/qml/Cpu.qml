@@ -55,7 +55,7 @@ Pill {
     StatPopup {
         id: panel
         objectName: "cpuPopup"
-        anchorItem: root
+        anchor.item: root
         boldTitle: "CPU"
         title: "Usage"
         history: root.source.history

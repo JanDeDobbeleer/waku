@@ -24,7 +24,7 @@ Pill {
     property var labels: ({})
 
     // HMONITOR of the bar this widget is in (set on the bar's window by the host).
-    readonly property real handle: Window.window ? Window.window.monitorHandle : 0
+    readonly property real handle: QsWindow.window ? QsWindow.window.monitorHandle : 0
     readonly property var monitor: {
         for (const m of S.Komorebi.monitors)
             if (m.id === handle) return m;

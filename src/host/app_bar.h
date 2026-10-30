@@ -21,6 +21,8 @@ struct AppBarRequest {
   QString barName;
   bool reserveSpace = false;
   bool alwaysOnTop = false;
+  // WS_EX_NOACTIVATE: a click on the bar does not take the focus (keyboardFocus None).
+  bool noActivate = true;
 };
 
 // The RECT SHAppBarMessage is asked to reserve (pure, testable; port of Win32AppBar.position_bar).

@@ -11,7 +11,7 @@
 #include "control/control.h"
 #include "control/wallpaper_control.h"
 #include "host/qml/control_handler.h"
-#include "host/testing/bar_fixtures.h"
+#include "host/testing/shell_fixtures.h"
 
 namespace {
 
@@ -59,7 +59,7 @@ namespace {
 
 struct HandlerFixture {
   HandlerFixture() {
-    h.start(barConfig());
+    h.start(shellConfig());
     EXPECT_TRUE(h.host->reload());
   }
   ControlHandler handler(bool withService = true) {

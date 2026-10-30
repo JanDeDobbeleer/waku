@@ -300,7 +300,8 @@ foreach ($h in $servicesHeaders) {
 }
 $moduleQml = @{
     'wabar.widgets' = @($treeFiles | Where-Object { $_ -match '^src/.+\.qml$' -and $_ -notmatch '^src/host/' })
-    'wabar'         = @($treeFiles | Where-Object { $_ -match '^src/host/.+\.qml$' })
+    'wabar'         = @($treeFiles | Where-Object { $_ -match '^src/host/.+\.qml$' -and $_ -notmatch '^src/host/quickshell/' })
+    'Quickshell'    = @($treeFiles | Where-Object { $_ -match '^src/host/quickshell/.+\.qml$' })
 }
 foreach ($module in $moduleQml.Keys) {
     $seen = @{}
@@ -363,7 +364,7 @@ foreach ($f in $checkFiles) {
     }
 
     $winOk = ($f -match '(^|/)win32/' -or $f.StartsWith('src/features/tray/hook/') -or $f.StartsWith('src/app/') -or $isTests)
-    # testing/ holds fixtures that build QML engines and windows (host/testing/bar_fixtures.h).
+    # testing/ holds fixtures that build QML engines and windows (host/testing/shell_fixtures.h).
     $qmlOk = ($f -match '(^|/)(qml|testing)/' -or $f.StartsWith('src/app/') -or $isTests)
     for ($i = 0; $i -lt $lines.Count; $i++) {
         $line = "$($lines[$i])"

@@ -69,7 +69,7 @@ Swap " + Math.round(source.swapPercent) + "%"
     StatPopup {
         id: panel
         objectName: "memoryPopup"
-        anchorItem: root
+        anchor.item: root
         boldTitle: "Memory"
         title: "Usage"
         history: root.source.history

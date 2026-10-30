@@ -1,7 +1,7 @@
 #pragma once
 
-// Fixtures shared by the bar tests: a config home in a temp folder, a BarHost on fake native hooks
-// and helpers to look inside a built window.
+// Fixtures shared by the shell tests: a config home in a temp folder, a ShellHost on fake native
+// hooks and helpers to look inside a built window.
 
 #include <gtest/gtest.h>
 
@@ -22,26 +22,27 @@
 
 #include "control/control.h"
 #include "control/wallpaper_control.h"
-#include "host/qml/bar_host.h"
+#include "host/qml/shell_host.h"
+#include "host/qml/shell_window.h"
 
 using namespace wabar::control;
 using namespace wabar::host;
 
 namespace {
 
-// ---- config text ----
+// ---- shell text ----
 
-// One bar with three labelled widgets; `startText` lets a test change what the reload shows.
-QString barConfig(const QString& startText = QStringLiteral("a"),
-                  const QString& barProperties = QString()) {
+// One panel with three labelled widgets; `startText` lets a test change what the reload shows.
+QString shellConfig(const QString& startText = QStringLiteral("a"),
+                    const QString& panelProperties = QString()) {
   return QStringLiteral(R"(
 import QtQuick
 import wabar
 
-Config {
-    Bar {
+ShellRoot {
+    Panel {
         %2
-        layout: BarLayout {
+        content: PanelLayout {
             start: [ Text { objectName: "a"; text: "%1" } ]
             center: [ Text { objectName: "b"; text: "b" } ]
             end: [ Text { objectName: "c"; text: "c" } ]
@@ -49,7 +50,7 @@ Config {
     }
 }
 )")
-      .arg(startText, barProperties);
+      .arg(startText, panelProperties);
 }
 
 void write(const QString& path, const QString& text) {
@@ -77,7 +78,7 @@ QQuickItem* findItem(QQuickItem* root, const QString& name) {
 }
 
 QQuickItem* findItem(QQuickWindow* window, const QString& name) {
-  return findItem(window->contentItem(), name);
+  return window ? findItem(window->contentItem(), name) : nullptr;
 }
 
 QPointF positionIn(QQuickWindow* window, const QString& name) {
@@ -94,10 +95,10 @@ struct AppBarRecord {
 struct Native {
   std::vector<AppBarRecord> created;
   int removed = 0;
-  std::vector<Bar::Backdrop> backdrops;
+  std::vector<Backdrop::Kind> backdrops;
   qlonglong monitor = 4242;
 
-  BarHost::NativeHooks hooks() {
+  ShellHost::NativeHooks hooks() {
     class Recording final : public wabar::host::IAppBar {
      public:
       Recording(Native* owner) : owner_(owner) {}
@@ -109,11 +110,11 @@ struct Native {
      private:
       Native* owner_;
     };
-    BarHost::NativeHooks hooks;
+    ShellHost::NativeHooks hooks;
     hooks.makeAppBar = [this]() -> std::unique_ptr<wabar::host::IAppBar> {
       return std::make_unique<Recording>(this);
     };
-    hooks.applyBackdrop = [this](quintptr, Bar::Backdrop backdrop) {
+    hooks.applyBackdrop = [this](quintptr, Backdrop::Kind backdrop) {
       backdrops.push_back(backdrop);
     };
     hooks.monitorHandle = [this](quintptr) { return monitor; };
@@ -127,22 +128,22 @@ struct Harness {
   QTemporaryDir dir;
   QQmlEngine engine;
   Native native;
-  std::unique_ptr<BarHost> host;
+  std::unique_ptr<ShellHost> host;
   int screenCount = 1;
   bool allowReserve = false;
   bool safe = false;
   QUrl safeUrl;
 
-  QString barFile() const { return dir.filePath(QStringLiteral("bar.qml")); }
+  QString shellFile() const { return dir.filePath(QStringLiteral("shell.qml")); }
 
   void start(const QString& config) {
     ASSERT_TRUE(dir.isValid());
-    write(barFile(), config);
+    write(shellFile(), config);
     makeHost();
   }
 
   void makeHost() {
-    BarHost::Options options;
+    ShellHost::Options options;
     options.configHome = dir.path();
     options.allowReserve = allowReserve;
     options.safe = safe;
@@ -150,15 +151,17 @@ struct Harness {
     options.hooks = native.hooks();
     const int count = screenCount;
     options.screens = [count] {
-      // The offscreen platform has one screen; listing it twice gives two bars to place.
+      // The offscreen platform has one screen; listing it twice gives two windows to place.
       QList<QScreen*> screens;
       for (int i = 0; i < count; ++i) screens << QGuiApplication::primaryScreen();
       return screens;
     };
-    host = std::make_unique<BarHost>(&engine, std::move(options));
+    host = std::make_unique<ShellHost>(&engine, std::move(options));
   }
 
   QQuickWindow* window(int i = 0) const { return host->windows().value(i); }
+  // The declaration behind window(i): a PanelWindow or FloatingWindow.
+  QsWindow* shellWindow(int i = 0) const { return QsWindow::of(window(i)); }
   QString text(const QString& name, int i = 0) {
     QQuickItem* item = findItem(window(i), name);
     return item ? item->property("text").toString() : QStringLiteral("<missing>");

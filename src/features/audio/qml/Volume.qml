@@ -39,7 +39,7 @@ Pill {
     PopupWindow {
         id: panel
         objectName: "volumePopup"
-        anchorItem: root
+        anchor.item: root
         spacing: 8
 
         Text {

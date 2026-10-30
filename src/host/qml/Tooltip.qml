@@ -7,9 +7,9 @@ import QtQuick.Window
 //         Tooltip { text: "what this does" }
 //     }
 //
-// It appears after `delay` ms of hovering, just outside the bar (below a top bar, above a bottom
-// bar), and goes when the pointer leaves or any button is pressed. It never takes focus or input.
-// Declare it as a direct child of the item to watch, not inside a Row, Column or other
+// It appears after `delay` ms of hovering, just outside the panel (below a top panel, above a
+// bottom one), and goes when the pointer leaves or any button is pressed. It never takes focus or
+// input. Declare it as a direct child of the item to watch, not inside a Row, Column or other
 // positioner (it fills its parent). A Pill has `tooltip: "..."` for this.
 Item {
     id: root
@@ -21,6 +21,7 @@ Item {
 
     readonly property Item target: parent
     readonly property var bar: target ? target.Window.window : null
+    readonly property var shellWindow: target ? target.QsWindow.window : null
     readonly property bool shown: tip.visible
 
     function show() {
@@ -37,8 +38,10 @@ Item {
 
     function reposition() {
         const origin = target.mapToGlobal(0, 0);
-        const screenInfo = bar.screen;
-        const edge = bar.spec && bar.spec.position === Bar.Bottom ? PopupPlacement.Above : PopupPlacement.Below;
+        const screenInfo = target.Screen;
+        const w = shellWindow;
+        const edge = w && w.anchors !== undefined && w.anchors.bottom && !w.anchors.top
+            ? PopupPlacement.Above : PopupPlacement.Below;
         const spot = PopupPlacement.position(Qt.rect(origin.x, bar.y, target.width, bar.height),
                                              Qt.size(tip.width, tip.height),
                                              Qt.rect(screenInfo.virtualX, screenInfo.virtualY, screenInfo.width, screenInfo.height),
@@ -88,14 +91,24 @@ Item {
         objectName: "tooltipWindow"
         flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowDoesNotAcceptFocus | Qt.WindowTransparentForInput
         color: "transparent"
-        screen: root.bar ? root.bar.screen : null
+        screen: {
+            if (!root.target || !root.bar)
+                return null;
+            const name = root.target.Screen.name;
+            const list = Qt.application.screens;
+            for (let i = 0; i < list.length; ++i) {
+                if (list[i].name === name)
+                    return list[i];
+            }
+            return null;
+        }
         width: box.implicitWidth
         height: box.implicitHeight
         visible: false
 
         onVisibleChanged: {
-            if (visible && root.bar && root.bar.host && root.bar.spec)
-                root.bar.host.decorate(tip, root.bar.spec.backdrop);
+            if (visible && root.shellWindow && root.shellWindow.host)
+                root.shellWindow.host.decorate(tip, root.shellWindow.backdrop);
         }
 
         Rectangle {

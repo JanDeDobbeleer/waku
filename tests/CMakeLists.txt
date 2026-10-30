@@ -19,11 +19,13 @@ add_executable(wabar_tests main.cpp
   ${test_sources})
 # The control tests run wabarc.exe.
 add_dependencies(wabar_tests wabarc)
-# The static QML plugins are linked so `import wabar` resolves in the test engines.
+# The static QML plugins are linked so `import wabar` and `import Quickshell` resolve in the test
+# engines.
 target_link_libraries(wabar_tests PRIVATE
   wabar_options
   wabar_host wabar_hostplugin wabar_widgets wabar_widgetsplugin
   wabar_services wabar_servicesplugin
+  wabar_quickshell wabar_quickshellplugin wabar_quickshell_wayland wabar_quickshell_waylandplugin
   ${test_libs}
   GTest::gtest Qt6::Test)
 set_target_properties(wabar_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

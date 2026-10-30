@@ -101,7 +101,7 @@ Pill {
     PopupWindow {
         id: panel
         objectName: "githubPopup"
-        anchorItem: root
+        anchor.item: root
         padding: 0
         spacing: 0
 

@@ -10,21 +10,22 @@ import QtQuick.Window
 //
 //         PopupWindow {
 //             id: popup
-//             anchorItem: pill
+//             anchor.item: pill
 //             Text { text: "hello"; color: Theme.text }
 //         }
 //     }
 //
-// It opens just outside the bar (below a top bar, above a bottom bar), centred on the widget and
-// kept inside the screen. A click in the bar, a click in another window, Escape or `close()` closes
-// it. Whatever you put inside
-// is stacked in a column and sizes the window; colours come from Theme (popupSurface,
-// popupBorder).
+// `anchor` follows Quickshell: `anchor.item`, `anchor.rect` (a part of the item), `anchor.edges`
+// and `anchor.gravity` (Edges.Top opens above, Edges.Bottom below). By default it opens just
+// outside the panel (below a top panel, above a bottom one), centred on the widget and kept inside
+// the screen. A click in the panel, a click in another window, Escape or `close()` closes it.
+// Whatever you put inside is stacked in a column and sizes the window; colours come from Theme
+// (popupSurface, popupBorder).
 Window {
     id: popup
 
-    // The widget the popup belongs to.
-    property Item anchorItem: null
+    // What the popup opens next to.
+    readonly property PopupAnchor anchor: PopupAnchor {}
     // Chrome, from Theme (popupGap, popupRadius, popupBorderWidth, popupFadeMs); set one on a popup to
     // override it. A popup that lays out its own sections sets `padding: 0`.
     property real gap: Theme.popupGap
@@ -37,28 +38,53 @@ Window {
     signal opened
     signal closed
 
-    // The bar window the widget is in.
-    readonly property var bar: anchorItem ? anchorItem.Window.window : null
+    // The window the anchor item is in, and the shell window behind it (null in a popup).
+    readonly property var bar: anchor.item ? anchor.item.Window.window : null
+    readonly property var shellWindow: anchor.item ? anchor.item.QsWindow.window : null
     // When it last closed, so that the click that closes it (a press outside, on the widget) does
     // not reopen it through the widget's own click handler.
     property double closedAt: 0
 
+    // Below the anchor, or above it in a panel docked to the bottom edge.
+    function defaultEdge() {
+        const w = shellWindow;
+        return w && w.anchors !== undefined && w.anchors.bottom && !w.anchors.top
+            ? PopupPlacement.Above : PopupPlacement.Below;
+    }
+
+    // The screen the anchor item is on, as a Window takes it (Qt.application.screens).
+    function screenOf(item) {
+        const name = item.Screen.name;
+        const list = Qt.application.screens;
+        for (let i = 0; i < list.length; ++i) {
+            if (list[i].name === name)
+                return list[i];
+        }
+        return null;
+    }
+
     function reposition() {
-        if (!anchorItem || !bar)
+        const item = anchor.item;
+        if (!item || !bar)
             return;
-        const origin = anchorItem.mapToGlobal(0, 0);
-        const screenInfo = bar.screen;
-        const edge = bar.spec && bar.spec.position === Bar.Bottom ? PopupPlacement.Above : PopupPlacement.Below;
-        const spot = PopupPlacement.position(Qt.rect(origin.x, bar.y, anchorItem.width, bar.height),
-                                             Qt.size(width, height),
+        const screenInfo = item.Screen;
+        let rect;
+        if (anchor.hasRect) {
+            const origin = item.mapToGlobal(anchor.rect.x, anchor.rect.y);
+            rect = Qt.rect(origin.x, origin.y, anchor.rect.width, anchor.rect.height);
+        } else {
+            const origin = item.mapToGlobal(0, 0);
+            rect = Qt.rect(origin.x, bar.y, item.width, bar.height);
+        }
+        const spot = PopupPlacement.position(rect, Qt.size(width, height),
                                              Qt.rect(screenInfo.virtualX, screenInfo.virtualY, screenInfo.width, screenInfo.height),
-                                             edge, gap, margin);
+                                             anchor.placementEdge(defaultEdge()), gap, margin);
         x = spot.x;
         y = spot.y;
     }
 
     function open() {
-        if (!anchorItem || !bar)
+        if (!anchor.item || !bar)
             return;
         reposition();
         visible = true;
@@ -77,12 +103,12 @@ Window {
 
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
-    screen: bar ? bar.screen : null
+    screen: anchor.item && bar ? screenOf(anchor.item) : null
     width: surface.implicitWidth
     height: surface.implicitHeight
     visible: false
 
-    // Closing without a click inside: a press in the bar (the host reports it), or the popup
+    // Closing without a click inside: a press in the panel (the host reports it), or the popup
     // losing activation because the user went to another window.
     property bool wasActive: false
 
@@ -99,8 +125,8 @@ Window {
     }
 
     Connections {
-        target: popup.bar ? popup.bar.host : null
-        function onBarPressed() {
+        target: popup.shellWindow ? popup.shellWindow.host : null
+        function onWindowPressed() {
             if (popup.visible)
                 popup.close();
         }
@@ -109,8 +135,8 @@ Window {
     onVisibleChanged: {
         if (visible) {
             wasActive = false;
-            if (bar && bar.host && bar.spec)
-                bar.host.decorate(popup, bar.spec.backdrop);
+            if (shellWindow && shellWindow.host)
+                shellWindow.host.decorate(popup, shellWindow.backdrop);
             requestActivate();
             opened();
         } else {

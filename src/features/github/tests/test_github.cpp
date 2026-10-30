@@ -10,7 +10,7 @@
 
 #include "features/github/qml/github_service.h"
 #include "features/github/testing/fake_github_client.h"
-#include "host/testing/bar_fixtures.h"
+#include "host/testing/shell_fixtures.h"
 
 using namespace wabar::github;
 using namespace wabar::github::testing;
@@ -422,9 +422,9 @@ TEST(GithubWidget, LoadsAndIsHiddenWithoutTheService) {
 import QtQuick
 import wabar
 import wabar.widgets
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             start: [ GitHub { objectName: "gh"; maxNotification: 12; categoriesOrder: ["Release"] } ]
         }
     }

@@ -79,7 +79,7 @@ TEST(PillWidget, InAPopupItKeepsTheVisibleFill) {
 Pill {
     objectName: "anchor"; text: "a"
     PopupWindow {
-        anchorItem: parent
+        anchor.item: parent
         Pill { objectName: "row"; text: "row" }
     }
 })")));

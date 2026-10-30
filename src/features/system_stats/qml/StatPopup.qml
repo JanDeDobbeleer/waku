@@ -5,7 +5,7 @@ import wabar
 // recent history and a grid of stat cards.
 //
 //     StatPopup {
-//         anchorItem: pill
+//         anchor.item: pill
 //         boldTitle: "CPU"
 //         title: "Usage"
 //         history: cpu.history

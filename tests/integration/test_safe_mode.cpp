@@ -1,25 +1,25 @@
 #include <gtest/gtest.h>
 
-#include "host/testing/bar_fixtures.h"
+#include "host/testing/shell_fixtures.h"
 
 namespace {
 
-// A tiny safe config, so the tests start none of the real services the built-in one uses
+// A tiny safe shell, so the tests start none of the real services the built-in one uses
 // (Workspaces and Volume would start komorebi, GlazeWM and audio clients).
 const char* kTinySafe = R"(
 import QtQuick
 import wabar
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             start: [ Text { objectName: "safeText"; text: "safe" } ]
         }
     }
 }
 )";
 
-void useTinySafeConfig(Harness& h) {
-  const QString path = h.dir.filePath(QStringLiteral("safe-config.qml"));
+void useTinySafeShell(Harness& h) {
+  const QString path = h.dir.filePath(QStringLiteral("safe-shell.qml"));
   write(path, QString::fromLatin1(kTinySafe));
   h.safe = true;
   h.safeUrl = QUrl::fromLocalFile(path);
@@ -27,11 +27,11 @@ void useTinySafeConfig(Harness& h) {
 
 }  // namespace
 
-TEST(SafeMode, BuildsTheSafeConfigAndIgnoresTheConfigHome) {
+TEST(SafeMode, BuildsTheSafeShellAndIgnoresTheConfigHome) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());
-  useTinySafeConfig(h);
-  h.start(QStringLiteral("this bar.qml is not valid {{{"));
+  useTinySafeShell(h);
+  h.start(QStringLiteral("this shell.qml is not valid {{{"));
   ASSERT_TRUE(h.host->reload());
   EXPECT_TRUE(h.host->error().isEmpty());
   ASSERT_EQ(h.host->windows().size(), 1);
@@ -41,8 +41,8 @@ TEST(SafeMode, BuildsTheSafeConfigAndIgnoresTheConfigHome) {
 TEST(SafeMode, WorksWithoutAnyFileInTheConfigHome) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());
-  useTinySafeConfig(h);
-  h.makeHost();  // no bar.qml at all
+  useTinySafeShell(h);
+  h.makeHost();  // no shell.qml at all
   ASSERT_TRUE(h.host->reload());
   EXPECT_EQ(h.host->windows().size(), 1);
   EXPECT_TRUE(h.host->error().isEmpty());
@@ -51,7 +51,7 @@ TEST(SafeMode, WorksWithoutAnyFileInTheConfigHome) {
 TEST(SafeMode, TheThemeFileIsIgnored) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());
-  useTinySafeConfig(h);
+  useTinySafeShell(h);
   write(h.dir.filePath(QStringLiteral("theme.qml")),
         QStringLiteral("import wabar\nThemeSpec { accent: \"#ff0000\"; fontSize: 30 }\n"));
   h.makeHost();
@@ -66,17 +66,17 @@ TEST(SafeMode, TheThemeFileIsIgnored) {
 TEST(SafeMode, ABrokenThemeFileDoesNotBreakIt) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());
-  useTinySafeConfig(h);
+  useTinySafeShell(h);
   write(h.dir.filePath(QStringLiteral("theme.qml")), QStringLiteral("not qml {{{"));
   h.makeHost();
   EXPECT_TRUE(h.host->reload());
   EXPECT_TRUE(h.host->error().isEmpty());
 }
 
-TEST(SafeMode, ReloadingRebuildsTheSameBar) {
+TEST(SafeMode, ReloadingRebuildsTheSameShell) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());
-  useTinySafeConfig(h);
+  useTinySafeShell(h);
   h.makeHost();
   ASSERT_TRUE(h.host->reload());
   ASSERT_TRUE(h.host->reload());
@@ -87,18 +87,18 @@ TEST(SafeMode, ReloadingRebuildsTheSameBar) {
 TEST(SafeMode, TheConfigHomeIsNotWatched) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());
-  useTinySafeConfig(h);
-  write(h.barFile(), barConfig(QStringLiteral("a")));
+  useTinySafeShell(h);
+  write(h.shellFile(), shellConfig(QStringLiteral("a")));
   h.makeHost();
   ASSERT_TRUE(h.host->reload());
   h.host->watch();
-  QSignalSpy reloaded(h.host.get(), &BarHost::reloaded);
-  write(h.barFile(), barConfig(QStringLiteral("changed")));
+  QSignalSpy reloaded(h.host.get(), &ShellHost::reloaded);
+  write(h.shellFile(), shellConfig(QStringLiteral("changed")));
   QTest::qWait(500);  // more than the debounce
   EXPECT_EQ(reloaded.count(), 0);
 }
 
-TEST(SafeMode, AFailingSafeConfigStillGetsTheFallbackBar) {
+TEST(SafeMode, AFailingSafeShellStillGetsTheFallbackShell) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());
   h.safe = true;
@@ -106,31 +106,31 @@ TEST(SafeMode, AFailingSafeConfigStillGetsTheFallbackBar) {
   h.makeHost();
   EXPECT_FALSE(h.host->reload());
   EXPECT_FALSE(h.host->error().isEmpty());
-  EXPECT_EQ(h.host->windows().size(), 1);  // the fallback bar
+  EXPECT_EQ(h.host->windows().size(), 1);  // the fallback shell
 }
 
-TEST(SafeMode, TheBuiltInSafeConfigIsAValidConfig) {
+TEST(SafeMode, TheBuiltInSafeShellIsAValidShell) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());
   h.makeHost();
-  EXPECT_EQ(BarHost::safeConfigUrl().toString(),
-            QStringLiteral("qrc:/qt/qml/wabar/widgets/SafeConfig.qml"));
+  EXPECT_EQ(ShellHost::safeShellUrl().toString(),
+            QStringLiteral("qrc:/qt/qml/wabar/widgets/SafeShell.qml"));
   QString error;
-  // Checking builds no widget and starts no service: layouts are lazy components.
-  EXPECT_TRUE(h.host->checkConfig(BarHost::safeConfigUrl(), &error)) << qPrintable(error);
+  // Checking creates nothing: no widget is built and no service starts.
+  EXPECT_TRUE(h.host->checkShell(ShellHost::safeShellUrl(), &error)) << qPrintable(error);
 }
 
-TEST(CheckConfig, AcceptsAGoodConfigAndExplainsABadOne) {
+TEST(CheckShell, AcceptsAGoodShellAndExplainsABadOne) {
   Harness h;
-  h.start(barConfig());
+  h.start(shellConfig());
   QString error;
-  EXPECT_TRUE(h.host->checkConfig(QUrl::fromLocalFile(h.barFile()), &error)) << qPrintable(error);
+  EXPECT_TRUE(h.host->checkShell(QUrl::fromLocalFile(h.shellFile()), &error)) << qPrintable(error);
 
-  write(h.barFile(), QStringLiteral("not qml {{{"));
-  EXPECT_FALSE(h.host->checkConfig(QUrl::fromLocalFile(h.barFile()), &error));
-  EXPECT_TRUE(error.startsWith(QStringLiteral("bar.qml:"))) << qPrintable(error);
+  write(h.shellFile(), QStringLiteral("not qml {{{"));
+  EXPECT_FALSE(h.host->checkShell(QUrl::fromLocalFile(h.shellFile()), &error));
+  EXPECT_TRUE(error.startsWith(QStringLiteral("shell.qml:"))) << qPrintable(error);
 
-  write(h.barFile(), QStringLiteral("import QtQuick\nItem {}\n"));
-  EXPECT_FALSE(h.host->checkConfig(QUrl::fromLocalFile(h.barFile()), &error));
-  EXPECT_TRUE(error.contains(QStringLiteral("must declare a Config"))) << qPrintable(error);
+  write(h.shellFile(), QStringLiteral("import QtQuick\nItem {}\n"));
+  EXPECT_FALSE(h.host->checkShell(QUrl::fromLocalFile(h.shellFile()), &error));
+  EXPECT_TRUE(error.contains(QStringLiteral("must declare a ShellRoot"))) << qPrintable(error);
 }

@@ -47,7 +47,7 @@ Pill {
     PopupWindow {
         id: panel
         objectName: "notificationsPopup"
-        anchorItem: root
+        anchor.item: root
         spacing: 0
 
         readonly property color muted: Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.6)

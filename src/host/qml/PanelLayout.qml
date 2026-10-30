@@ -1,9 +1,9 @@
 import QtQuick
 import QtQuick.Shapes
 
-// The usual content of a Bar: three groups of widgets, start, centre and end.
+// The usual content of a panel: three groups of widgets, start, centre and end.
 //
-//     layout: BarLayout {
+//     content: PanelLayout {
 //         start:  [ Clock {}, Workspaces {} ]
 //         center: [ Title {} ]
 //         end:    [ Volume {}, Battery {} ]
@@ -13,7 +13,7 @@ import QtQuick.Shapes
 // `padding` and its per-edge forms `startPadding`/`endPadding` are in pixels.
 //
 // With Theme.islands each non-empty group sits on an island: a background of Theme.surface (or the
-// Bar's `background`) with rounded bottom corners and concave fillets at the screen edge, as in
+// window's `background`) with rounded bottom corners and concave fillets at the screen edge, as in
 // Python YASB's adaptive bar. An island is the group's row plus Theme.groupPadding on each side.
 //
 // `startFill`, `centerFill` and `endFill` paint an island with a horizontal gradient across its
@@ -22,7 +22,7 @@ import QtQuick.Shapes
 // `centerFill` is empty but both others are not, the centre island runs from the last colour of
 // `startFill` to the first of `endFill`, so the three islands read as one bar (`centerStops`).
 //
-//     layout: BarLayout {
+//     content: PanelLayout {
 //         startFill: ["#ff6a00", "#e8338a", "#8a3ffc"]
 //         endFill:   ["#2f6bff", "#1fb5c9"]
 //     }
@@ -69,11 +69,12 @@ Item {
         required property Item row
         // Gradient colours; empty paints the flat fillColor
         property var stops: []
-        readonly property bool flipped: Window.window && Window.window.spec
-                                        && Window.window.spec.position === Bar.Bottom
-        readonly property color fillColor: Window.window && Window.window.spec
-                                           && Window.window.spec.hasBackground
-                                           ? Window.window.spec.background : Theme.surface
+        // The shell window it is in: islands of a bottom panel open upwards.
+        readonly property var shellWindow: QsWindow.window
+        readonly property bool flipped: shellWindow !== null && shellWindow.anchors !== undefined
+                                        && shellWindow.anchors.bottom && !shellWindow.anchors.top
+        readonly property color fillColor: shellWindow !== null && shellWindow.hasBackground
+                                           ? shellWindow.background : Theme.surface
 
         visible: Theme.islands && row.width > 0
         x: row.x - Theme.groupPadding

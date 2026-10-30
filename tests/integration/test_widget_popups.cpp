@@ -18,9 +18,9 @@ TEST(WidgetPopupsTest, TheControlCenterPanelIs360WideAndTheMediaMenu400) {
 import QtQuick
 import wabar
 import wabar.widgets
-Config {
-    Bar {
-        layout: BarLayout {
+ShellRoot {
+    Panel {
+        content: PanelLayout {
             start: [ ControlCenter { }, Media { } ]
         }
     }

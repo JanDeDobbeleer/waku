@@ -58,7 +58,7 @@ Pill {
     PopupWindow {
         id: panel
         objectName: "mediaPopup"
-        anchorItem: root
+        anchor.item: root
         padding: 12
         spacing: 0
 

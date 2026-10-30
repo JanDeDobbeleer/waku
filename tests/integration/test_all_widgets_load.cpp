@@ -34,7 +34,7 @@ TEST(BuiltInWidgets, EveryFeatureContributesItsWidgets) {
   // One headline widget per feature that has one (brightness and shell are services only).
   for (const char* expected :
        {"Volume", "Bluetooth", "Clock", "ControlCenter", "GitHub", "Media", "Wifi", "Notifications",
-        "Cpu", "Taskbar", "Tray", "Wallpapers", "Workspaces", "Pill", "SafeConfig"}) {
+        "Cpu", "Taskbar", "Tray", "Wallpapers", "Workspaces", "Pill", "SafeShell"}) {
     EXPECT_TRUE(names.contains(QString::fromLatin1(expected))) << expected;
   }
 }

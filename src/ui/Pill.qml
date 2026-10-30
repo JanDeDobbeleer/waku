@@ -16,7 +16,7 @@ import wabar
 // size come from Theme.
 //
 // `icon` is a glyph drawn before the text in Theme.iconFont at Theme.iconSize, in `iconColor`.
-// A Pill on a bar window is `flat` by default and takes Theme.barFill and barFillHover; a Pill in
+// A Pill on a shell window is `flat` by default and takes Theme.barFill and barFillHover; a Pill in
 // a popup keeps Theme.fill and fillHover, so its rows stay visible.
 Rectangle {
     id: root
@@ -36,8 +36,9 @@ Rectangle {
     property color iconColor: textColor
     // The font of `icon`; a widget whose glyph Theme.iconFont lacks sets Theme.iconFontFallback.
     property string iconFont: Theme.iconFont
-    // True when the Pill sits on a bar window (the window has a `spec`), false in a popup.
-    property bool flat: Window.window !== null && Window.window.spec !== undefined
+    // True when the Pill sits in a shell window (QsWindow.window: a PanelWindow or a
+    // FloatingWindow), false in a popup.
+    property bool flat: QsWindow.window !== null
     // The resting and hover background; `restFill` is what a widget returns to when it has nothing
     // to signal.
     readonly property color restFill: flat ? Theme.barFill : Theme.fill

@@ -5,8 +5,8 @@
 
 #include "control/control.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
-#include "host/qml/bar_host.h"
 #include "host/qml/control_handler.h"
+#include "host/qml/shell_host.h"
 #include "kernel/qt/live_desktop.h"
 
 int main(int argc, char* argv[]) {
@@ -27,14 +27,15 @@ int main(int argc, char* argv[]) {
   parser.addHelpOption();
   QCommandLineOption configHomeOpt(
       QStringLiteral("config-home"),
-      QStringLiteral("Folder with bar.qml (default: $WABAR_CONFIG_HOME, else the sample config "
+      QStringLiteral("Folder with shell.qml (default: $WABAR_CONFIG_HOME, else the sample config "
                      "of the repository)."),
       QStringLiteral("dir"));
   QCommandLineOption appBarOpt(QStringLiteral("register-app-bar"),
-                               QStringLiteral("Reserve screen work area for bars that ask."));
+                               QStringLiteral("Reserve screen work area for windows that ask."));
   QCommandLineOption safeOpt(
       QStringLiteral("safe"),
-      QStringLiteral("Start the built-in bar with the default theme and ignore the config home."));
+      QStringLiteral(
+          "Start the built-in shell with the default theme and ignore the config home."));
   QCommandLineOption noTrayOpt(QStringLiteral("no-tray"),
                                QStringLiteral("Never hook Explorer; the Tray widget stays empty."));
   parser.addOption(configHomeOpt);
@@ -48,15 +49,15 @@ int main(int argc, char* argv[]) {
       parser.value(configHomeOpt), QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
 
   QQmlEngine engine;
-  wabar::host::BarHost::Options options;
+  wabar::host::ShellHost::Options options;
   options.configHome = configHome;
   options.allowReserve = parser.isSet(appBarOpt);
   options.safe = parser.isSet(safeOpt);
-  options.hooks = wabar::host::BarHost::NativeHooks::win32();
-  wabar::host::BarHost host(&engine, std::move(options));
+  options.hooks = wabar::host::ShellHost::NativeHooks::win32();
+  wabar::host::ShellHost host(&engine, std::move(options));
 
-  // One bar per config home: `wabarc` finds it by the same name, and a second start would put
-  // a second bar over the first.
+  // One shell per config home: `wabarc` finds it by the same name, and a second start would put
+  // a second shell over the first.
   wabar::control::ControlServer control(
       wabar::control::controlPipeName(configHome),
       wabar::host::makeControlHandler(

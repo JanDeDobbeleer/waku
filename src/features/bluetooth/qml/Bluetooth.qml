@@ -54,7 +54,7 @@ Pill {
     DeviceMenu {
         id: panel
         objectName: "bluetoothPopup"
-        anchorItem: root
+        anchor.item: root
         title: "Bluetooth"
         buttonText: S.Bluetooth.radioOn ? "On" : "Off"
         buttonChecked: S.Bluetooth.radioOn

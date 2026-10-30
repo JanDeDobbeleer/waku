@@ -182,7 +182,7 @@ Row {
             PopupWindow {
                 id: menu
                 objectName: "taskbarMenu"
-                anchorItem: button
+                anchor.item: button
                 spacing: 4
 
                 Pill {

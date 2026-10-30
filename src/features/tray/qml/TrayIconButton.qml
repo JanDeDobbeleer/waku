@@ -121,7 +121,7 @@ Item {
     PopupWindow {
         id: menu
         objectName: "trayMenu"
-        anchorItem: root
+        anchor.item: root
         spacing: 4
 
         onOpened: root.pinnedNow = root.pins ? root.pins.isPinned(root.model.id) : false
