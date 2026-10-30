@@ -97,7 +97,11 @@ void Network::connectNotify(const QMetaMethod& signal) {
 }
 
 void Network::disconnectNotify(const QMetaMethod& signal) {
-  if (signal == QMetaMethod::fromSignal(&Network::throughputChanged)) updateThroughputSampling();
+  // Qt calls this in the middle of a disconnect; stopping the timer there can deadlock, so the
+  // check runs from the event loop.
+  if (signal == QMetaMethod::fromSignal(&Network::throughputChanged)) {
+    QMetaObject::invokeMethod(this, &Network::updateThroughputSampling, Qt::QueuedConnection);
+  }
 }
 
 namespace {
