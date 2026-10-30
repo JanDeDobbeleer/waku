@@ -82,6 +82,10 @@ struct BluetoothStatus {
 
 enum class BtScanStatus { Success, RadioOff, ApiUnavailable, Error };
 
+// The message of a pairing that Windows cannot finish without its own UI (a PIN, a passkey
+// comparison, a confirmation): the user pairs the device in Windows Settings.
+QString pairNeedsSettingsMessage();
+
 // Pure helpers of bluetooth_types.py.
 QString formatBtAddress(quint64 address);
 std::pair<int, int> parseClassOfDevice(quint32 classOfDevice);
@@ -113,6 +117,14 @@ class BluetoothBackend : public QObject {
   virtual bool setRadio(bool on) = 0;
   virtual void connectDevice(const QString& address) = 0;
   virtual void disconnectDevice(const QString& address) = 0;
+  // Pairs a nearby device by its address with Windows' default pairing (no PIN UI of our own);
+  // pairingFinished follows. A device that needs a PIN or a confirmation fails with
+  // pairNeedsSettingsMessage(). Returns false when another pair, forget or connection runs.
+  virtual bool pairDevice(const QString& address) = 0;
+  // Forgets a paired device; pairingFinished follows. Same busy rule as pairDevice.
+  virtual bool unpairDevice(const QString& address) = 0;
+  // Cancels a running pair. Safe from the GUI thread; pairingFinished reports "Pairing cancelled".
+  virtual void cancelPair() = 0;
   virtual bool hasPendingScan() const { return false; }
 
   // Last published snapshot.
@@ -126,6 +138,9 @@ class BluetoothBackend : public QObject {
   void refreshFailed(const QString& message);
   void connectionFinished(bool success, const QString& message,
                           const wabar::bluetooth::BluetoothDevice& device);
+  // The end of pairDevice() or unpairDevice().
+  void pairingFinished(bool success, const QString& message,
+                       const wabar::bluetooth::BluetoothDevice& device);
 
  protected:
   void publishStatus(const BluetoothStatus& status) {

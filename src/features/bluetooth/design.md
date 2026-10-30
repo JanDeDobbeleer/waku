@@ -52,6 +52,23 @@ addresses go to `otherAddresses`. The device watchers still cover every address;
 on a merged row triggers a refresh instead of an in-place edit. `WABAR_BT_DEBUG=1` logs each entry
 with its container id.
 
+## Scan and pairing
+
+`Bluetooth.scan()` runs the existing inquiry on the worker thread (`scanning` is true until it
+ends). The unpaired devices it finds join `devices` with `paired` false, minus any whose address or
+container id is already a listed row. They stay until the next scan, a pair, or the radio going off.
+Only classic devices are found: the LE listing stays limited to paired devices (see Start-up
+refresh). Nothing scans on its own, and the 60 s safety net only refreshes.
+
+`pairDevice(id)` and `forgetDevice(id)` use the documented `DeviceInformationPairing`
+(`PairAsync()` and `UnpairAsync()`, default pairing, no custom ceremony handler). They run on the
+worker thread and share the busy flag of connect, so only one runs at a time; the thread waits in
+100 ms steps so `cancelPair()` (an atomic flag, safe from the GUI thread) or a 60 s timeout can
+cancel the operation. A result that means Windows needs its own UI (a PIN, a passkey comparison, a
+confirmation) sets `error` to "This device needs pairing in Windows Settings". `pairing` covers
+both pair and forget. A success refreshes the list. Tests use `FakeBackend`; no test pairs, forgets
+or scans real hardware.
+
 ## Depends on
 
 kernel in C++ (`ensureWinrtApartment`); `shell` for the QML `S.Shell.open` clicks.

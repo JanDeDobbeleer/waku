@@ -12,5 +12,6 @@ wabar_feature(NAME bluetooth
     qml/Bluetooth.qml
   TESTS
     tests/test_bluetooth.cpp
+    tests/test_bluetooth_scan.cpp
     tests/test_bluetooth_types.cpp
   SYSTEM_LIBS bthprops cfgmgr32 setupapi ole32 uuid winmm windowsapp)

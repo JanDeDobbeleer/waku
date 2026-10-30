@@ -18,6 +18,13 @@ std::unique_ptr<BluetoothBackend> makeRealBackend() {
 // Paired or remembered devices are the ones the bar lists and counts.
 bool listed(const BluetoothDevice& device) { return device.paired || device.remembered; }
 
+// True when `nearby` is the same physical device as one of the listed rows: the same address
+// (also one merged into the row) or the same container id.
+bool sameDevice(const BluetoothDevice& nearby, const BluetoothDevice& row) {
+  if (nearby.address == row.address || row.otherAddresses.contains(nearby.address)) return true;
+  return !nearby.containerId.isEmpty() && nearby.containerId == row.containerId;
+}
+
 }  // namespace
 
 Bluetooth::Bluetooth(QObject* parent) : Bluetooth(makeRealBackend(), parent) {}
@@ -40,6 +47,9 @@ Bluetooth::Bluetooth(std::unique_ptr<BluetoothBackend> backend, QObject* parent)
   // exact when a connect or disconnect ends.
   connect(backend_.get(), &BluetoothBackend::connectionFinished, this,
           [this] { backend_->refresh(); });
+  connect(backend_.get(), &BluetoothBackend::scanStarted, this, [this] { setScanning(true); });
+  connect(backend_.get(), &BluetoothBackend::scanCompleted, this, &Bluetooth::onScanCompleted);
+  connect(backend_.get(), &BluetoothBackend::pairingFinished, this, &Bluetooth::onPairingFinished);
   backend_->start();
 }
 
@@ -60,7 +70,65 @@ void Bluetooth::onStatus(const BluetoothStatus& status) {
   retryTimer_.stop();
   retriesDone_ = 0;
   status_ = status;
+  // Nearby devices belong to a radio that is on.
+  if (!status.radioOn) nearby_.clear();
   emit changed();
+}
+
+void Bluetooth::onScanCompleted(int status, const QVector<BluetoothDevice>& found) {
+  setScanning(false);
+  switch (static_cast<BtScanStatus>(status)) {
+    case BtScanStatus::Success: {
+      nearby_.clear();
+      for (const BluetoothDevice& device : found) {
+        if (!listed(device) && !device.address.isEmpty()) nearby_.push_back(device);
+      }
+      emit changed();
+      break;
+    }
+    case BtScanStatus::RadioOff:
+      nearby_.clear();
+      setError(QStringLiteral("Bluetooth is off"));
+      emit changed();
+      break;
+    case BtScanStatus::ApiUnavailable:
+      setError(QStringLiteral("Bluetooth scanning is not available"));
+      break;
+    case BtScanStatus::Error:
+      setError(QStringLiteral("Bluetooth scan failed"));
+      break;
+  }
+}
+
+void Bluetooth::onPairingFinished(bool success, const QString& message,
+                                  const BluetoothDevice& device) {
+  setPairing(false);
+  if (!success) {
+    setError(message);
+    return;
+  }
+  // The device is paired (or forgotten): it is not nearby any more. The refresh lists it.
+  nearby_.removeIf([&](const BluetoothDevice& d) { return d.address == device.address; });
+  if (backend_) backend_->refresh();
+  emit changed();
+}
+
+void Bluetooth::setScanning(bool scanning) {
+  if (scanning_ == scanning) return;
+  scanning_ = scanning;
+  emit scanningChanged();
+}
+
+void Bluetooth::setPairing(bool pairing) {
+  if (pairing_ == pairing) return;
+  pairing_ = pairing;
+  emit pairingChanged();
+}
+
+void Bluetooth::setError(const QString& error) {
+  if (error_ == error) return;
+  error_ = error;
+  emit errorChanged();
 }
 
 void Bluetooth::retryTick() {
@@ -110,6 +178,18 @@ QVariantList Bluetooth::devices() const {
                      if (a.connected != b.connected) return a.connected;
                      return a.name.localeAwareCompare(b.name) < 0;
                    });
+  QVector<BluetoothDevice> near;
+  for (const BluetoothDevice& device : nearby_) {
+    const bool repeated = std::any_of(shown.begin(), shown.end(), [&](const BluetoothDevice& row) {
+      return sameDevice(device, row);
+    });
+    if (!repeated) near.push_back(device);
+  }
+  std::stable_sort(near.begin(), near.end(),
+                   [](const BluetoothDevice& a, const BluetoothDevice& b) {
+                     return a.name.localeAwareCompare(b.name) < 0;
+                   });
+  shown += near;
   QVariantList result;
   for (const BluetoothDevice& device : shown) {
     QVariantMap map;
@@ -135,6 +215,31 @@ void Bluetooth::connectDevice(const QString& id) {
 
 void Bluetooth::disconnectDevice(const QString& id) {
   if (backend_) backend_->disconnectDevice(id);
+}
+
+void Bluetooth::scan() {
+  if (!backend_ || scanning_) return;
+  setError(QString());
+  setScanning(true);  // at once, so a second call in the same turn does nothing
+  backend_->scan();
+}
+
+void Bluetooth::pairDevice(const QString& id) { startPairing(true, id); }
+
+void Bluetooth::forgetDevice(const QString& id) { startPairing(false, id); }
+
+void Bluetooth::startPairing(bool pair, const QString& id) {
+  if (!backend_ || pairing_) return;
+  setError(QString());
+  const bool started = pair ? backend_->pairDevice(id) : backend_->unpairDevice(id);
+  if (started)
+    setPairing(true);
+  else
+    setError(QStringLiteral("Another Bluetooth operation is in progress"));
+}
+
+void Bluetooth::cancelPair() {
+  if (backend_ && pairing_) backend_->cancelPair();
 }
 
 }  // namespace wabar::bluetooth

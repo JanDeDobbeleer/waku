@@ -77,6 +77,10 @@ QString formatBtAddress(quint64 address) {
   return parts.join(QLatin1Char(':'));
 }
 
+QString pairNeedsSettingsMessage() {
+  return QStringLiteral("This device needs pairing in Windows Settings");
+}
+
 std::pair<int, int> parseClassOfDevice(quint32 cod) {
   return {static_cast<int>((cod >> 8) & 0x1F), static_cast<int>((cod >> 2) & 0x3F)};
 }
@@ -835,6 +839,47 @@ struct DeviceWatch {
 };
 
 // Runs on the backend thread: every blocking call and all WinRT subscriptions live here.
+constexpr auto kPairTimeout = std::chrono::seconds(60);
+constexpr auto kPairPoll = std::chrono::milliseconds(100);
+
+// The text for a pairing that did not end Paired. The statuses that mean Windows needs its own
+// ceremony UI (a PIN, a passkey comparison, a confirmation) all give the same advice.
+QString pairingFailure(enumeration::DevicePairingResultStatus status) {
+  using Status = enumeration::DevicePairingResultStatus;
+  switch (status) {
+    case Status::RequiredHandlerNotRegistered:
+    case Status::RejectedByHandler:
+    case Status::AuthenticationNotAllowed:
+    case Status::InvalidCeremonyData:
+    case Status::ProtectionLevelCouldNotBeMet:
+      return wabar::bluetooth::pairNeedsSettingsMessage();
+    case Status::PairingCanceled:
+      return QStringLiteral("Pairing cancelled");
+    case Status::AuthenticationTimeout:
+      return QStringLiteral("Pairing timed out");
+    case Status::ConnectionRejected:
+      return QStringLiteral("The device rejected the connection");
+    case Status::NotReadyToPair:
+      return QStringLiteral("The device is not ready to pair");
+    case Status::AccessDenied:
+      return QStringLiteral("Windows denied access to pairing");
+    case Status::OperationAlreadyInProgress:
+      return QStringLiteral("Windows is already pairing a device");
+    default:
+      return QStringLiteral("Pairing failed");
+  }
+}
+
+// The DeviceInformation of a device by address (documented WinRT), or an empty object.
+enumeration::DeviceInformation deviceInformationFor(const wabar::bluetooth::BluetoothDevice& d) {
+  if (d.isLe) {
+    const auto le = bt::BluetoothLEDevice::FromBluetoothAddressAsync(d.addressInt).get();
+    return le ? le.DeviceInformation() : nullptr;
+  }
+  const auto classic = bt::BluetoothDevice::FromBluetoothAddressAsync(d.addressInt).get();
+  return classic ? classic.DeviceInformation() : nullptr;
+}
+
 class BluetoothWorker : public QObject {
   Q_OBJECT
  public:
@@ -861,6 +906,8 @@ class BluetoothWorker : public QObject {
   }
 
   void cancelConnect() { cancel_ = true; }
+  // Not a slot: the GUI thread calls it while pairDevice() blocks this thread.
+  void cancelPairing() { pairCancel_ = true; }
 
   void scheduleRefresh() {
     if (refreshQueued_ || !started_) return;
@@ -961,6 +1008,10 @@ class BluetoothWorker : public QObject {
       }
       std::vector<BluetoothDevice> devices = listDevices(true, false);
       std::vector<BluetoothDevice> paired;
+      nearby_.clear();
+      for (const BluetoothDevice& device : mergeSameDevices(devices)) {
+        if (!device.paired && !device.remembered) nearby_[device.address] = device;
+      }
       for (const BluetoothDevice& device : devices) {
         if (device.paired || device.remembered) paired.push_back(device);
       }
@@ -1001,6 +1052,93 @@ class BluetoothWorker : public QObject {
     refreshLePending_ = true;
     refresh();
     radioRunning_->store(false);
+  }
+
+  // Pairs (`pair`) or forgets a device with the documented DeviceInformationPairing. The default
+  // pairing has no PIN UI of ours: a device that needs one fails with the "pair in Windows
+  // Settings" message. Blocks this thread until the operation ends, is cancelled
+  // (cancelPairing) or runs out of time; the busy flag is cleared on every path.
+  void pairDevice(const QString& address, bool pair) {
+    wabar::kernel::ensureWinrtApartment();
+    pairCancel_ = false;
+    BluetoothDevice device;
+    device.address = address;
+    const auto known = devices_.find(address);
+    const auto foundNearby = nearby_.find(address);
+    if (pair && foundNearby != nearby_.end())
+      device = foundNearby->second;
+    else if (known != devices_.end())
+      device = known->second;
+    else if (foundNearby != nearby_.end())
+      device = foundNearby->second;
+    if (device.addressInt == 0) {
+      finishPairing(false, QStringLiteral("Device not found"), device);
+      return;
+    }
+    try {
+      const enumeration::DeviceInformation info = deviceInformationFor(device);
+      if (!info) {
+        finishPairing(false, QStringLiteral("Device not found"), device);
+        return;
+      }
+      const enumeration::DeviceInformationPairing pairing = info.Pairing();
+      if (!pair) {
+        auto operation = pairing.UnpairAsync();
+        if (!waitForPairing(operation)) {
+          finishPairing(false,
+                        pairCancel_ ? QStringLiteral("Pairing cancelled")
+                                    : QStringLiteral("Forgetting the device timed out"),
+                        device);
+          return;
+        }
+        using Status = enumeration::DeviceUnpairingResultStatus;
+        const Status status = operation.GetResults().Status();
+        if (status != Status::Unpaired && status != Status::AlreadyUnpaired) {
+          finishPairing(false, QStringLiteral("Windows could not forget the device"), device);
+          return;
+        }
+        devices_.erase(address);
+        for (const QString& other : device.otherAddresses) devices_.erase(other);
+        leCache_.erase(address);
+        device.paired = false;
+        device.remembered = false;
+        device.connected = false;
+        publish();
+        finishPairing(true, QStringLiteral("Device forgotten"), device);
+        return;
+      }
+      if (pairing.IsPaired()) {
+        finishPairing(true, QStringLiteral("Device paired"), device);
+        return;
+      }
+      if (!pairing.CanPair()) {
+        finishPairing(false, wabar::bluetooth::pairNeedsSettingsMessage(), device);
+        return;
+      }
+      auto operation = pairing.PairAsync();
+      if (!waitForPairing(operation)) {
+        finishPairing(
+            false,
+            pairCancel_ ? QStringLiteral("Pairing cancelled") : QStringLiteral("Pairing timed out"),
+            device);
+        return;
+      }
+      using Status = enumeration::DevicePairingResultStatus;
+      const Status status = operation.GetResults().Status();
+      if (status != Status::Paired && status != Status::AlreadyPaired) {
+        finishPairing(false, pairingFailure(status), device);
+        return;
+      }
+      device.paired = true;
+      nearby_.erase(address);
+      refreshLePending_ = true;
+      refresh();
+      finishPairing(true, QStringLiteral("Device paired"), device);
+    } catch (const winrt::hresult_error&) {
+      finishPairing(false, QStringLiteral("Windows could not reach the device"), device);
+    } catch (...) {
+      finishPairing(false, QStringLiteral("Pairing failed"), device);
+    }
   }
 
   void connectDevice(const QString& address, bool connect) {
@@ -1123,8 +1261,31 @@ class BluetoothWorker : public QObject {
   void scanCompleted(int status, const QVector<wabar::bluetooth::BluetoothDevice>& devices);
   void connectionFinished(bool success, const QString& message,
                           const wabar::bluetooth::BluetoothDevice& device);
+  void pairingFinished(bool success, const QString& message,
+                       const wabar::bluetooth::BluetoothDevice& device);
 
  private:
+  // Waits for a pairing operation in short steps so a cancel or the timeout is honoured. Returns
+  // true when the operation completed; on a cancel or timeout it cancels the operation and returns
+  // false.
+  template <class Operation>
+  bool waitForPairing(const Operation& operation) {
+    const auto deadline = std::chrono::steady_clock::now() + kPairTimeout;
+    while (operation.Status() == winrt::Windows::Foundation::AsyncStatus::Started) {
+      if (pairCancel_ || !started_ || std::chrono::steady_clock::now() >= deadline) {
+        operation.Cancel();
+        return false;
+      }
+      operation.wait_for(kPairPoll);
+    }
+    return operation.Status() == winrt::Windows::Foundation::AsyncStatus::Completed;
+  }
+
+  void finishPairing(bool success, const QString& message, const BluetoothDevice& device) {
+    connectRunning_->store(false);
+    emit pairingFinished(success, message, device);
+  }
+
   void refreshQueuedRun() {
     refreshQueued_ = false;
     refresh();
@@ -1364,6 +1525,8 @@ class BluetoothWorker : public QObject {
   std::atomic<bool>* connectRunning_;
   std::atomic<bool>* radioRunning_;
   std::atomic<bool> cancel_{false};
+  std::atomic<bool> pairCancel_{false};
+  std::map<QString, BluetoothDevice> nearby_;  // unpaired devices of the last scan
   bool started_ = false;
   bool refreshQueued_ = false;
   bool refreshLePending_ = false;
@@ -1396,6 +1559,7 @@ class RealBluetoothBackend final : public BluetoothBackend {
     connect(worker_, &BluetoothWorker::scanCompleted, this, &BluetoothBackend::scanCompleted);
     connect(worker_, &BluetoothWorker::connectionFinished, this,
             &BluetoothBackend::connectionFinished);
+    connect(worker_, &BluetoothWorker::pairingFinished, this, &BluetoothBackend::pairingFinished);
     thread_.setObjectName(QStringLiteral("BluetoothBackend"));
     thread_.start();
   }
@@ -1430,8 +1594,20 @@ class RealBluetoothBackend final : public BluetoothBackend {
   }
   void connectDevice(const QString& address) override { queueConnect(address, true); }
   void disconnectDevice(const QString& address) override { queueConnect(address, false); }
+  bool pairDevice(const QString& address) override { return queuePair(address, true); }
+  bool unpairDevice(const QString& address) override { return queuePair(address, false); }
+  void cancelPair() override { worker_->cancelPairing(); }
 
  private:
+  // Pairing shares the connect flag: one of the two at a time, and no radio change meanwhile.
+  bool queuePair(const QString& address, bool pair) {
+    if (connectRunning_.exchange(true)) return false;
+    QMetaObject::invokeMethod(
+        worker_, [w = worker_, address, pair] { w->pairDevice(address, pair); },
+        Qt::QueuedConnection);
+    return true;
+  }
+
   void queueConnect(const QString& address, bool connect) {
     if (connectRunning_.exchange(true)) {
       BluetoothDevice device;
