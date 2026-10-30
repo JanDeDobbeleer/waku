@@ -288,6 +288,38 @@ lost the activation; `dismissOnEscape` hides it when Escape reaches the window a
 several windows; a verb applies to all). The host keeps `name -> shown` for names toggled at run time
 and gives the windows of the next shell the same state after a reload (`ShellHost::present`).
 
+### The Windows taskbar
+
+`wabar --hide-taskbar` (and `wabarc taskbar hide`) hides the Windows taskbar; it is off by default
+and inert off the live desktop (`kernel::liveDesktop()`: the offscreen platform has no
+`TaskbarSystem`, and the `taskbar` verbs answer an error). Documented APIs only, so no row in the
+allowlist below:
+
+- `SHAppBarMessage` `ABM_GETSTATE` reads the state; `ABM_SETSTATE` with `ABS_AUTOHIDE` turns
+  auto-hide on, which releases the reserved work area (the call waits at most 0.5 s for the primary
+  monitor's work area to be the whole monitor, so the next `ABM_SETPOS` sees it).
+- `EnumWindows` finds every `Shell_TrayWnd` and `Shell_SecondaryTrayWnd`; `ShowWindow` with
+  `SW_HIDE` (`SW_SHOWNA` to restore) keeps the taskbar away from the Win key and the screen edge,
+  which auto-hide alone does not.
+- `RegisterWindowMessage("TaskbarCreated")` is received by a hidden top-level window (message-only
+  windows get no broadcasts) on the GUI thread, only while hiding; the host then hides the new
+  windows again. No thread, no timer, no singleton.
+
+Order: `WabarTaskbar::start` runs after the control pipe is taken (a refused second start touches
+nothing) and before the first `ShellHost::reload`, so every app bar is registered after the work
+area is released. Before the first change `hide()` writes `taskbar_hidden.marker` in `appDataDir()`
+(pid, whether wabar turned auto-hide on, whether it hid the windows). `restore()` undoes only those
+changes and deletes the file. It runs on `aboutToQuit` (so `wabarc quit` too) and in the
+destructor. At the start of every live run a marker whose pid is not a running `wabar.exe` is
+undone first (a crash, `taskbar /F`); a marker of a live wabar is left alone.
+
+Co-existence: if another tool (`thide`) already hides the windows or auto-hide is on, wabar leaves
+that part alone, writes no marker for it and does not undo it. `wabarc taskbar status` reports what
+is seen: `hidden` (no taskbar window visible, whoever hid it), `autohide-was-on` (shown, auto-hide
+on), `visible`. Taskbar windows Explorer creates later (a monitor plugged in while hiding) stay
+visible until the next `TaskbarCreated` or `hide`. Source: `src/host/taskbar_control.{h,cpp}`,
+`win32/taskbar_control.cpp`, `qml/taskbar_command.{h,cpp}`, fakes in `testing/taskbar_fakes.h`.
+
 ## Threading
 
 Everything that touches Qt Quick objects runs on the GUI thread. Worker threads never touch them; they

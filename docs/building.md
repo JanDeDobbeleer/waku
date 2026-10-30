@@ -53,6 +53,7 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | `--safe` | Start the built-in shell with the default theme and ignore the config home. |
 | `--import-path <dir>` | Add a folder of QML modules to the import path. Repeatable. See "User-built QML plugins". |
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
+| `--hide-taskbar` | Hide the Windows taskbar (all monitors) while wabar runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wabarc shortcut`. |
 | `--help` | Print the options. |
 
@@ -67,6 +68,7 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | `wabarc surface show`, `hide`, `toggle`, `status <name>` | Show, hide, flip or report the windows with that `name` (all screens). `show` and `toggle` first allow the bar to take the keyboard focus (`AllowSetForegroundWindow`). Example: `examples/launcher`. |
 | `wabarc call` | List the `IpcHandler` targets and their functions. |
 | `wabarc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
+| `wabarc taskbar hide`, `show`, `status` | Hide the Windows taskbar, restore what wabar changed (it stays shown until `hide`), or print `ok: taskbar: hidden|visible|autohide-was-on`. |
 | `wabarc quit` | Stop the bar. |
 | `wabarc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
 | `wabarc wallpaper random`, `next`, `previous` | Pick from the wallpaper folder; `next` and `previous` wrap. |

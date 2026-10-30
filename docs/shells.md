@@ -65,6 +65,17 @@ win + space : wabarc shortcut launcher
 registers the key itself, unless wabar runs with `--no-hotkeys` or the key is taken; it still
 answers `wabarc shortcut <name>`.
 
+### Hiding the Windows taskbar (`--hide-taskbar`)
+
+A shell that replaces the taskbar (a bar, a dock) starts wabar with `--hide-taskbar`. wabar then
+turns the taskbar's auto-hide on, which releases its work area, and hides its windows on every
+monitor, before the first shell is loaded, so a panel that reserves space (`--register-app-bar`)
+computes it without the taskbar. It restores the taskbar when wabar exits, and the next start
+undoes it if wabar crashed. Without the flag wabar never touches the taskbar. At run time
+`wabarc taskbar hide|show|status` does the same; `show` leaves the taskbar visible until `hide`.
+If another tool already hides the taskbar, wabar leaves that alone: `status` reports what is seen,
+and wabar undoes only what it changed.
+
 ### Variable fonts (`--font-engine`)
 
 wabar starts with Qt's GDI font engine, which keeps memory low but ignores variable-font axes
