@@ -17,8 +17,9 @@ int main(int argc, char* argv[]) {
   }
   // The QML disk cache stays on, so a large user shell does not recompile on every start. Qt keys
   // an entry on the source file's size and modification time, so an edit invalidates it. A caller
-  // that wants none sets QML_DISABLE_DISK_CACHE itself. A transparent, blurred window needs an
-  // alpha swap chain.
+  // that wants none sets QML_DISABLE_DISK_CACHE itself.
+
+  // A transparent, blurred window needs an alpha swap chain.
   QQuickWindow::setDefaultAlphaBuffer(true);
   QGuiApplication app(argc, argv);
 
