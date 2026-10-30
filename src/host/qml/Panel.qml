@@ -14,7 +14,7 @@ import QtQuick
 //     }
 //
 //   screens     "primary", "all" or screen names ("DISPLAY2"); one window each
-//   edge        Panel.Top | Bottom | Left | Right (app bars: Top and Bottom)
+//   edge        Panel.Top | Bottom | Left | Right (an app bar on each; Left and Right are vertical)
 //   thickness   the height of a top or bottom panel, the width of a side one
 //   exclusive   reserve the work area (takes effect with --register-app-bar)
 //   backdrop    Backdrop.None | Blur | Mica
