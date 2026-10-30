@@ -23,6 +23,7 @@
 
 class QJSEngine;
 class QQmlEngine;
+class QWindow;
 
 namespace wabar::wallpapers {
 
@@ -117,6 +118,9 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   Q_INVOKABLE void random();
   Q_INVOKABLE void toggleGallery();
   Q_INVOKABLE void closeGallery();
+  // Gives the gallery window the keyboard focus even when the user opened it from a hotkey or from
+  // `wabarc` (kernel::forceForegroundFocus). Does nothing off the live desktop.
+  Q_INVOKABLE void focusWindow(QWindow* window);
   // `wabarc wallpaper ...` (WallpaperControl): the answer is "ok: <full path>" once the change
   // has started (the animation may still run), or "error: <why>" with nothing changed. `dryRun`
   // plays the animation and skips the setter, for this call only.

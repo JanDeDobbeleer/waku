@@ -13,6 +13,7 @@
 #include <QScreen>
 #include <QUrl>
 #include <QVariantMap>
+#include <QWindow>
 #include <exception>
 #include <utility>
 
@@ -21,6 +22,7 @@
 #include "features/wallpapers/win32/window_focus.h"
 #include "kernel/qt/app_data.h"
 #include "kernel/qt/live_desktop.h"
+#include "kernel/win32/window_focus.h"
 
 namespace wabar::wallpapers {
 namespace {
@@ -428,6 +430,12 @@ void Wallpapers::closeGallery() {
   if (!galleryOpen_) return;
   galleryOpen_ = false;
   emit galleryOpenChanged();
+}
+
+void Wallpapers::focusWindow(QWindow* window) {
+  if (!window || !wabar::kernel::liveDesktop(QStringLiteral("wallpapers"))) return;
+  window->requestActivate();
+  wabar::kernel::forceForegroundFocus(static_cast<std::uintptr_t>(window->winId()));
 }
 
 // --- image provider

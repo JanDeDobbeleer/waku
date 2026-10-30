@@ -71,6 +71,7 @@ Window {
         strip.currentIndex = currentIndex();
         strip.positionViewAtIndex(strip.currentIndex, ListView.Center);
         requestActivate();
+        S.Wallpapers.focusWindow(root);
         keys.forceActiveFocus();
     }
 

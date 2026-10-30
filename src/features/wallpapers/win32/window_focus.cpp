@@ -4,23 +4,6 @@
 
 namespace wabar::wallpapers {
 
-void forceForegroundFocus(std::uintptr_t handle) {
-  HWND hwnd = reinterpret_cast<HWND>(handle);
-  if (!hwnd) return;
-  HWND foreground = GetForegroundWindow();
-  const DWORD foregroundThread = foreground ? GetWindowThreadProcessId(foreground, nullptr) : 0;
-  const DWORD ownThread = GetCurrentThreadId();
-  if (foregroundThread && ownThread && foregroundThread != ownThread) {
-    AttachThreadInput(ownThread, foregroundThread, TRUE);
-    SetForegroundWindow(hwnd);
-    SetFocus(hwnd);
-    AttachThreadInput(ownThread, foregroundThread, FALSE);
-  } else {
-    SetForegroundWindow(hwnd);
-    SetFocus(hwnd);
-  }
-}
-
 std::optional<QRect> foregroundMonitorRect() {
   HWND foreground = GetForegroundWindow();
   if (!foreground) return std::nullopt;
