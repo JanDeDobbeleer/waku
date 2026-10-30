@@ -135,6 +135,9 @@ Window {
     onVisibleChanged: {
         if (visible) {
             wasActive = false;
+            // Opened by binding (`visible: true`) rather than open(): place it as open() would.
+            if (anchor.item && bar)
+                reposition();
             if (shellWindow && shellWindow.host)
                 shellWindow.host.decorate(popup, shellWindow.backdrop);
             requestActivate();

@@ -119,3 +119,40 @@ ShellRoot {
   EXPECT_GT(probe->property("pid").toDouble(), 0);
   EXPECT_EQ(h.host->windows().size(), 2);  // Variants over Quickshell.screens
 }
+
+TEST(QuickshellModule, APopupWindowWithVisibleTrueBoundPlacesItselfNextToItsAnchor) {
+  Harness h;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import Quickshell
+
+ShellRoot {
+    PanelWindow {
+        anchors { top: true; left: true; right: true }
+        implicitHeight: 28
+        Item {
+            id: anchorItem
+            x: 200
+            width: 40
+            height: 20
+            PopupWindow {
+                objectName: "qsPopup"
+                anchor.item: anchorItem
+                anchor.edges: Edges.Bottom
+                visible: true
+                Text { text: "tip" }
+            }
+        }
+    }
+}
+)"));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  QQuickWindow* popup = findWindow(QStringLiteral("qsPopup"));
+  ASSERT_NE(popup, nullptr);
+  // A window inside an item opens when the window of that item does.
+  ASSERT_TRUE(QTest::qWaitFor([&] { return popup->isVisible(); }, 3000));
+  settle();
+  // Below the panel and over the anchor, not in the screen corner a window starts in.
+  EXPECT_GE(popup->y(), h.window()->y() + h.window()->height());
+  EXPECT_GT(popup->x(), 0);
+}
