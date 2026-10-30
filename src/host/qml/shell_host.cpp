@@ -17,6 +17,7 @@
 #include <QScreen>
 #include <QUrl>
 #include <QWindow>
+#include <cmath>
 
 #include "host/plugin_guard.h"
 #include "host/qml/shell_screen.h"
@@ -437,7 +438,9 @@ void ShellHost::adopt(QsWindow* window) {
     window->setPresentable(true);
     return;
   }
-  target->entries.push_back(Entry{window, nullptr, false});
+  Entry entry;
+  entry.window = window;
+  target->entries.push_back(std::move(entry));
   if (target == loaded_.get()) {
     // Made after install, by a Variants or a LazyLoader: shown at once.
     if (!window->buildError().isEmpty()) setError(window->buildError());
@@ -527,25 +530,78 @@ void ShellHost::applyNative(Entry& entry) {
     if (hooks.monitorHandle) window->setMonitorHandle(hooks.monitorHandle(hwnd));
     auto* panel = qobject_cast<PanelWindow*>(window);
     if (!panel || !hooks.makeAppBar) return;
-    const std::optional<AppBarEdge> edge = panel->appBarEdge();
-    if (!edge) return;
-    const int zone = panel->reservedZone();
-    entry.appBar = hooks.makeAppBar();
-    wabar::host::AppBarRequest request;
-    request.hwnd = hwnd;
-    request.edge = *edge;
-    request.thickness =
-        zone > 0 ? zone : panelThickness(*edge, QSize(panel->width(), panel->height()));
-    request.screen = window->targetScreen();
-    request.reserveSpace = options_.allowReserve && zone > 0;
-    request.alwaysOnTop = panel->aboveWindows();
-    request.noActivate = !panel->focusable();
-    entry.appBar->create(request);
+    if (!entry.layoutConnected) {
+      entry.layoutConnected = true;
+      // Everything the request is made of: placement, the reserved zone, layer and focus.
+      for (auto signal : {&PanelWindow::layoutChanged, &PanelWindow::exclusiveZoneChanged,
+                          &PanelWindow::exclusionModeChanged, &PanelWindow::layerChanged,
+                          &PanelWindow::keyboardFocusChanged}) {
+        connect(panel, signal, this, [this, panel] { panelLayoutChanged(panel); });
+      }
+    }
+    syncAppBar(entry);
   } catch (const std::exception& e) {
     qWarning().noquote() << "wabar: the native look of a window failed:" << e.what();
   } catch (...) {
     qWarning().noquote() << "wabar: the native look of a window failed";
   }
+}
+
+void ShellHost::panelLayoutChanged(PanelWindow* panel) {
+  if (!loaded_) return;
+  for (Entry& entry : loaded_->entries) {
+    if (entry.window != panel || !entry.layoutConnected) continue;
+    try {
+      syncAppBar(entry);
+    } catch (const std::exception& e) {
+      qWarning().noquote() << "wabar: updating an app bar failed:" << e.what();
+    } catch (...) {
+      qWarning().noquote() << "wabar: updating an app bar failed";
+    }
+  }
+}
+
+void ShellHost::syncAppBar(Entry& entry) {
+  auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
+  const NativeHooks& hooks = options_.hooks;
+  if (!panel || !hooks.makeAppBar) return;
+  const std::optional<AppBarEdge> edge = panel->appBarEdge();
+  if (!edge) {
+    // Not docked any more (the anchors changed): give the edge back.
+    if (entry.appBar) entry.appBar->remove();
+    entry.appBar.reset();
+    entry.appBarRequest.reset();
+    panel->setAppBarInset(0);
+    return;
+  }
+  const int zone = panel->reservedZone();
+  wabar::host::AppBarRequest request;
+  request.hwnd = static_cast<quintptr>(panel->backingWindow()->winId());
+  request.edge = *edge;
+  request.thickness =
+      zone > 0 ? zone : panelThickness(*edge, QSize(panel->width(), panel->height()));
+  request.screen = panel->targetScreen();
+  request.reserveSpace = options_.allowReserve && zone > 0;
+  request.alwaysOnTop = panel->aboveWindows();
+  request.noActivate = !panel->focusable();
+  if (entry.appBar && entry.appBarRequest && *entry.appBarRequest == request) return;
+
+  if (!entry.appBar) entry.appBar = hooks.makeAppBar();
+  const bool sameBar = entry.appBarRequest && entry.appBarRequest->edge == request.edge &&
+                       entry.appBarRequest->reserveSpace == request.reserveSpace &&
+                       entry.appBarRequest->screen == request.screen;
+  const bool hadBar = entry.appBarRequest.has_value();
+  entry.appBarRequest = request;
+  int inset = 0;
+  if (sameBar) {
+    inset = entry.appBar->reposition(request);
+  } else {
+    // A new bar, or another edge, screen or mode: start over.
+    if (hadBar) entry.appBar->remove();
+    inset = entry.appBar->create(request);
+  }
+  const qreal dpr = request.screen ? request.screen->devicePixelRatio() : 1.0;
+  panel->setAppBarInset(static_cast<int>(std::lround(inset / (dpr > 0 ? dpr : 1.0))));
 }
 
 void ShellHost::decorate(QObject* window, int backdrop) {

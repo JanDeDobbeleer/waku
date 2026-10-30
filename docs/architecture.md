@@ -204,8 +204,13 @@ values) and reserves work area only with `--register-app-bar` and a non-zero `ex
 thickness (`panelReservedZone`). The window is registered (`ABM_NEW`) only when it reserves space.
 Rects are physical pixels: the origin of `QScreen::geometry()` (Qt keeps it in native coordinates)
 and its size times the device pixel ratio (`computeAppBarRect`). `negotiateAppBarRect` calls
-`ABM_QUERYPOS`, re-applies the thickness to the adjusted rect, then `ABM_SETPOS`, and the window
-moves inward by what the shell granted (another app bar or the Windows taskbar on the same edge).
+`ABM_QUERYPOS`, re-applies the thickness to the adjusted rect, then `ABM_SETPOS`. `IAppBar::create`
+returns the inset the shell granted (another app bar or the Windows taskbar on the same edge); the
+host stores it on the `PanelWindow` (`setAppBarInset`, logical pixels) and `applyGeometry` keeps
+the window that far in on every pass. When the placement, the reserved zone, the layer or the
+focus mode changes, `ShellHost::syncAppBar` compares the new request with the last one and calls
+`IAppBar::reposition` (the same `ABM_QUERYPOS`/`ABM_SETPOS` without a new `ABM_NEW`), or removes the
+bar when the panel is no longer docked.
 
 ### Input masks
 

@@ -13,6 +13,7 @@
 #include <functional>
 #include <list>
 #include <memory>
+#include <optional>
 
 #include "host/app_bar.h"
 #include "host/mask_poller.h"
@@ -26,6 +27,7 @@ class QScreen;
 
 namespace wabar::host {
 
+class PanelWindow;
 class QsWindow;
 
 // Builds the shell declared in <config home>\shell.qml and keeps it up to date.
@@ -159,6 +161,9 @@ class ShellHost : public QObject {
   struct Entry {
     QPointer<QsWindow> window;
     std::unique_ptr<wabar::host::IAppBar> appBar;
+    // What the app bar was last asked for; a panel's later layout is compared with it.
+    std::optional<wabar::host::AppBarRequest> appBarRequest;
+    bool layoutConnected = false;
     bool presented = false;
   };
   // Members are destroyed in reverse order: windows first, then the root, then its component.
@@ -184,6 +189,10 @@ class ShellHost : public QObject {
   void install(std::unique_ptr<Loaded> loaded);
   void present(Entry& entry);
   void applyNative(Entry& entry);
+  // Creates, renegotiates or removes the panel's app bar to match its layout now, and tells the
+  // panel how far the shell pushed it in.
+  void syncAppBar(Entry& entry);
+  void panelLayoutChanged(PanelWindow* panel);
   void setError(const QString& error);
   void refreshWatches();
   QString entryPath() const;

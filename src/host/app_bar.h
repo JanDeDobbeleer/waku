@@ -29,6 +29,7 @@ struct AppBarRequest {
   bool alwaysOnTop = false;
   // WS_EX_NOACTIVATE: a click on the bar does not take the focus (keyboardFocus None).
   bool noActivate = true;
+  bool operator==(const AppBarRequest&) const = default;
 };
 
 // A RECT in physical pixels (what SHAppBarMessage reads and writes).
@@ -79,25 +80,42 @@ AppBarGrant negotiateAppBarRect(IAppBarSystem& system, AppBarEdge edge, int thic
 QPoint appBarWindowShift(AppBarEdge edge, int inset);
 
 // Seam so tests and --config-home runs never touch the live desktop's app-bar list.
+//
+// `create` and `reposition` return how far the system pushed the bar inward from the screen edge,
+// in physical pixels (0 when nothing is reserved or the edge was free). They do not move the
+// window: the host stores the inset on the window, which applies it with every geometry pass.
 class IAppBar {
  public:
   virtual ~IAppBar() = default;
-  virtual void create(const AppBarRequest& request) = 0;
+  // Sets the window styles and, when the request reserves space, registers the bar and asks for
+  // its rect (ABM_NEW, ABM_QUERYPOS, ABM_SETPOS).
+  virtual int create(const AppBarRequest& request) = 0;
+  // Asks again for the rect after the thickness, the screen or the margins changed. Without a
+  // registered bar it does what `create` does.
+  virtual int reposition(const AppBarRequest& request) = 0;
   virtual void remove() = 0;
 };
 
-// Records requests; registers nothing.
+// Records requests; registers nothing. `inset` is what every call grants.
 class FakeAppBar : public IAppBar {
  public:
-  void create(const AppBarRequest& request) override { requests.push_back(request); }
+  int create(const AppBarRequest& request) override {
+    requests.push_back(request);
+    return inset;
+  }
+  int reposition(const AppBarRequest& request) override {
+    repositions.push_back(request);
+    return inset;
+  }
   void remove() override { ++removeCount; }
   std::vector<AppBarRequest> requests;
+  std::vector<AppBarRequest> repositions;
   int removeCount = 0;
+  int inset = 0;
 };
 
 // Talks to SHAppBarMessage and sets WS_EX_NOACTIVATE / WS_EX_TOPMOST. Live desktop only. It
-// registers the window as an app bar (ABM_NEW) only when the request reserves space; after
-// ABM_SETPOS it moves the window inward by what the system granted.
+// registers the window as an app bar (ABM_NEW) only when the request reserves space.
 std::unique_ptr<IAppBar> makeWin32AppBar();
 
 }  // namespace wabar::host

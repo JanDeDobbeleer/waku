@@ -155,6 +155,45 @@ TEST(ShellHostTest, RegistersAnAppBarWithTheEdgeAndThickness) {
   EXPECT_TRUE(h.native.created[0].request.noActivate);
 }
 
+TEST(ShellHostTest, TheGrantedAppBarInsetSurvivesALaterGeometryPass) {
+  Harness h;
+  h.allowReserve = true;
+  h.native.appBarInset = 48;  // another app bar holds the top 48 px
+  h.start(shellConfig(QStringLiteral("a"), QStringLiteral("exclusive: true; thickness: 30")));
+  ASSERT_TRUE(h.host->reload());
+  ASSERT_EQ(h.native.created.size(), 1u);
+  const QRect screen = QGuiApplication::primaryScreen()->geometry();
+  EXPECT_EQ(h.window()->geometry().y(), screen.y() + 48);
+  // A margin change makes the panel place itself again; it stays where the shell put it.
+  QsWindow* window = h.shellWindow();
+  window->setProperty("implicitHeight", 36);
+  EXPECT_EQ(h.window()->geometry().y(), screen.y() + 48);
+  window->setProperty("implicitWidth", 31);
+  EXPECT_EQ(h.window()->geometry().y(), screen.y() + 48);
+}
+
+TEST(ShellHostTest, AThicknessChangeAsksTheShellForTheAppBarRectAgain) {
+  Harness h;
+  h.allowReserve = true;
+  h.native.appBarInset = 10;
+  h.start(shellConfig(QStringLiteral("a"), QStringLiteral("exclusive: true; thickness: 30")));
+  ASSERT_TRUE(h.host->reload());
+  ASSERT_EQ(h.native.created.size(), 1u);
+  EXPECT_TRUE(h.native.repositioned.empty());
+  h.shellWindow()->setProperty("exclusiveZone", 44);
+  ASSERT_EQ(h.native.repositioned.size(), 1u);
+  EXPECT_EQ(h.native.repositioned[0].request.thickness, 44);
+  EXPECT_EQ(h.native.created.size(), 1u);
+  // The same layout again asks nothing more.
+  h.shellWindow()->setProperty("exclusiveZone", 44);
+  EXPECT_EQ(h.native.repositioned.size(), 1u);
+  // The grant changes with the next answer.
+  h.native.appBarInset = 20;
+  h.shellWindow()->setProperty("exclusiveZone", 50);
+  EXPECT_EQ(h.native.repositioned.size(), 2u);
+  EXPECT_EQ(h.window()->geometry().y(), QGuiApplication::primaryScreen()->geometry().y() + 20);
+}
+
 TEST(ShellHostTest, ReservesSpaceOnlyWhenThePanelAsksAndTheHostAllows) {
   const struct {
     bool allow;

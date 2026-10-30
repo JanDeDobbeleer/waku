@@ -37,7 +37,7 @@ class Win32AppBarSystem final : public IAppBarSystem {
 
 class Win32AppBar : public IAppBar {
  public:
-  void create(const AppBarRequest& r) override {
+  int create(const AppBarRequest& r) override {
     HWND hwnd = reinterpret_cast<HWND>(r.hwnd);
     LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
     if (r.noActivate) style |= WS_EX_NOACTIVATE;
@@ -46,7 +46,7 @@ class Win32AppBar : public IAppBar {
 
     // A window that does not reserve space is never registered, so a run without
     // --register-app-bar leaves the shell's app bar list alone.
-    if (!r.reserveSpace || !r.screen || r.thickness <= 0) return;
+    if (!r.reserveSpace || !r.screen || r.thickness <= 0) return 0;
 
     data_ = {};
     data_.cbSize = sizeof(data_);
@@ -54,22 +54,14 @@ class Win32AppBar : public IAppBar {
     data_.hWnd = hwnd;
     data_.uCallbackMessage = kAppBarCallbackMessage;
     active_ = SHAppBarMessage(ABM_NEW, &data_) != 0;
-    if (!active_) return;
+    if (!active_) return 0;
+    return negotiate(r);
+  }
 
-    Win32AppBarSystem system(hwnd);
-    const double dpr = r.screen->devicePixelRatio();
-    const AppBarGrant grant =
-        negotiateAppBarRect(system, r.edge, static_cast<int>(std::lround(r.thickness * dpr)),
-                            physicalScreenRect(r.screen->geometry(), dpr));
-    // Another app bar or the taskbar may hold the edge: move the window to where it was granted.
-    if (grant.inset > 0) {
-      RECT window{};
-      if (GetWindowRect(hwnd, &window)) {
-        const QPoint shift = appBarWindowShift(r.edge, grant.inset);
-        SetWindowPos(hwnd, nullptr, window.left + shift.x(), window.top + shift.y(), 0, 0,
-                     SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-      }
-    }
+  int reposition(const AppBarRequest& r) override {
+    if (!active_ || !r.reserveSpace || !r.screen || r.thickness <= 0) return create(r);
+    data_.uEdge = static_cast<UINT>(r.edge);
+    return negotiate(r);
   }
 
   void remove() override {
@@ -79,6 +71,16 @@ class Win32AppBar : public IAppBar {
   }
 
  private:
+  // ABM_QUERYPOS then ABM_SETPOS. Another app bar or the taskbar may hold the edge; the inset is
+  // how far the bar was pushed in, and the host moves the window by it.
+  int negotiate(const AppBarRequest& r) {
+    Win32AppBarSystem system(data_.hWnd);
+    const double dpr = r.screen->devicePixelRatio();
+    return negotiateAppBarRect(system, r.edge, static_cast<int>(std::lround(r.thickness * dpr)),
+                               physicalScreenRect(r.screen->geometry(), dpr))
+        .inset;
+  }
+
   APPBARDATA data_{};
   bool active_ = false;
 };

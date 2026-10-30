@@ -444,6 +444,11 @@ class PanelWindow : public QsWindow {
   std::optional<AppBarEdge> appBarEdge() const { return panelAppBarEdge(anchors_->set()); }
   DockEdge::Enum dockEdge() const override;
   int reservedZone() const;
+  // How far (logical pixels) the shell pushed this panel inward from its screen edge to make room
+  // for another app bar; applyGeometry keeps the panel there. The host sets it after it registers
+  // the bar.
+  int appBarInset() const { return appBarInset_; }
+  void setAppBarInset(int inset);
 
   bool showsErrors() const override { return true; }
   bool stackTopmost() const override { return layer_ >= WlrLayer::Top; }
@@ -455,6 +460,9 @@ class PanelWindow : public QsWindow {
   void layerChanged();
   void keyboardFocusChanged();
   void layerNamespaceChanged();
+  // The window was placed again (anchors, margins, size, screen or inset changed): the host asks
+  // the shell for the app bar rect again if the request differs.
+  void layoutChanged();
 
  protected:
   void applyGeometry() override;
@@ -467,6 +475,7 @@ class PanelWindow : public QsWindow {
   PanelAnchors* anchors_;
   PanelMargins* margins_;
   DockEdge::Enum lastDockEdge_ = DockEdge::None;
+  int appBarInset_ = 0;
   int exclusiveZone_ = 0;
   ExclusionMode::Enum exclusionMode_ = ExclusionMode::Auto;
   WlrLayer::Enum layer_ = WlrLayer::Top;

@@ -565,7 +565,20 @@ void PanelWindow::applyGeometry() {
   if (!screen) return;
   QQuickWindow* window = backingWindow();
   if (window->screen() != screen) window->setScreen(screen);
-  window->setGeometry(geometryOn(screen->geometry()));
+  QRect geometry = geometryOn(screen->geometry());
+  // The shell may have granted the bar less than the screen edge (another app bar holds it).
+  if (const std::optional<AppBarEdge> edge = appBarEdge(); edge && appBarInset_ > 0) {
+    geometry.translate(appBarWindowShift(*edge, appBarInset_));
+  }
+  window->setGeometry(geometry);
+  emit layoutChanged();
+}
+
+void PanelWindow::setAppBarInset(int inset) {
+  inset = std::max(0, inset);
+  if (appBarInset_ == inset) return;
+  appBarInset_ = inset;
+  if (complete()) applyGeometry();
 }
 
 Qt::WindowFlags PanelWindow::windowFlags() const {

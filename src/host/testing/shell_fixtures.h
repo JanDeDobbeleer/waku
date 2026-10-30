@@ -97,6 +97,10 @@ struct AppBarRecord {
 struct Native {
   std::vector<AppBarRecord> created;
   int removed = 0;
+  // What the fake system pushes every app bar inward by, physical pixels; and the requests to
+  // renegotiate (a later thickness or screen change) after the first.
+  int appBarInset = 0;
+  std::vector<AppBarRecord> repositioned;
   std::vector<Backdrop::Kind> backdrops;
   qlonglong monitor = 4242;
   // The fake cursor (physical pixels) that window masks read; never the real one.
@@ -113,8 +117,13 @@ struct Native {
     class Recording final : public wabar::host::IAppBar {
      public:
       Recording(Native* owner) : owner_(owner) {}
-      void create(const wabar::host::AppBarRequest& request) override {
+      int create(const wabar::host::AppBarRequest& request) override {
         owner_->created.push_back({request});
+        return owner_->appBarInset;
+      }
+      int reposition(const wabar::host::AppBarRequest& request) override {
+        owner_->repositioned.push_back({request});
+        return owner_->appBarInset;
       }
       void remove() override { ++owner_->removed; }
 
