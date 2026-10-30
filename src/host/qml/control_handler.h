@@ -17,7 +17,9 @@ class ShellHost;
 //   wallpaper set [--dry-run] <file-or-path> | random | next | previous [--dry-run] | gallery
 //           answered by the wallpaper service: "ok: <text>" or "error: <text>". The words follow
 //           the quoting of splitCommand (control.h). Without a service: "error: ..."
-//   other   "error: unknown command '...' (try: reload, status, quit, wallpaper)"
+//   shortcut <name>  fires the GlobalShortcut with that name: "ok", or "error: no shortcut named
+//           '<name>'"; `shortcut list` answers "ok: <names>" (quoted as joinCommand does)
+//   other   "error: unknown command '...' (try: reload, status, quit, wallpaper, shortcut)"
 // `quit` defaults to QCoreApplication::quit. `wallpapers` is asked when a wallpaper command
 // arrives (the service is created on demand), so a shell without wallpapers never builds it.
 control::ControlHandler makeControlHandler(ShellHost& host, bool safe,
@@ -27,5 +29,8 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe,
 // The `wallpaper` commands on their own (the words after "wallpaper"): the parsing the handler
 // uses, public for tests.
 QString answerWallpaperCommand(const QStringList& words, control::WallpaperControl* wallpapers);
+
+// The `shortcut` command on its own (the words after "shortcut"), public for tests.
+QString answerShortcutCommand(const QStringList& words);
 
 }  // namespace wabar::host

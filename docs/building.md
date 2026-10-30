@@ -52,6 +52,7 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | `--register-app-bar` | Let windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve screen work area. Without it no window reserves space. |
 | `--safe` | Start the built-in shell with the default theme and ignore the config home. |
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
+| `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wabarc shortcut`. |
 | `--help` | Print the options. |
 
 `wabarc.exe` talks to the bar that runs for the same config home (`--config-home <dir>` or
@@ -65,6 +66,8 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | `wabarc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
 | `wabarc wallpaper random`, `next`, `previous` | Pick from the wallpaper folder; `next` and `previous` wrap. |
 | `wabarc wallpaper gallery` | Open or close the wallpaper picker. |
+| `wabarc shortcut <name>` | Fire the `GlobalShortcut` with that name (its `onPressed`, then `onReleased`). Bind a key to this command in whkd or AutoHotkey for a shortcut with no `keys`. |
+| `wabarc shortcut list` | Print the names of the shortcuts the shell declares. A shortcut named `list` cannot be fired. |
 
 `--dry-run` after `wallpaper` (not `gallery`) plays the animation without setting the wallpaper.
 

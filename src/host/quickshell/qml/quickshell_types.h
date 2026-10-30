@@ -7,6 +7,7 @@
 
 #include <QObject>
 
+#include "host/qml/global_shortcut.h"
 #include "host/qml/lazy_loader.h"
 #include "host/qml/shell_config.h"
 #include "host/qml/shell_screen.h"
@@ -50,6 +51,12 @@ struct QsLazyLoader {
   Q_GADGET
   QML_FOREIGN(wabar::host::LazyLoader)
   QML_NAMED_ELEMENT(LazyLoader)
+};
+
+struct QsGlobalShortcut {
+  Q_GADGET
+  QML_FOREIGN(wabar::host::GlobalShortcut)
+  QML_NAMED_ELEMENT(GlobalShortcut)
 };
 
 struct QsShellScreen {

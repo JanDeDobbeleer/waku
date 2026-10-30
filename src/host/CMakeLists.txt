@@ -16,7 +16,8 @@
 # Include root is src/ (#include "host/qml/shell_host.h"), carried by wabar_kernel.
 add_library(wabar_host_base STATIC
   app_bar.h
-  app_bar.cpp
+  hotkeys.h
+  hotkeys.cpp
   panel_geometry.h
   panel_geometry.cpp
   popup_placement.h
@@ -26,6 +27,7 @@ add_library(wabar_host_base STATIC
   win32/app_bar.cpp
   win32/backdrop.h
   win32/backdrop.cpp
+  win32/hotkeys_win.cpp
 )
 target_link_libraries(wabar_host_base
   PUBLIC wabar_kernel
@@ -62,6 +64,8 @@ qt_add_qml_module(wabar_host
     qml/bar_theme.cpp
     qml/control_handler.h
     qml/control_handler.cpp
+    qml/global_shortcut.h
+    qml/global_shortcut.cpp
     qml/lazy_loader.h
     qml/lazy_loader.cpp
     qml/popup_placement_qml.h
@@ -89,6 +93,7 @@ wabar_contribute(
   TESTS
     tests/test_app_bar.cpp
     tests/test_control_handler.cpp
+    tests/test_global_shortcut.cpp
     tests/test_panel_geometry.cpp
     tests/test_popups.cpp
     tests/test_quickshell.cpp

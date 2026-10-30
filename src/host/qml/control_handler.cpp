@@ -4,6 +4,7 @@
 #include <QPointer>
 #include <QTimer>
 
+#include "host/qml/global_shortcut.h"
 #include "host/qml/shell_host.h"
 
 namespace wabar::host {
@@ -40,6 +41,19 @@ QString answerWallpaperCommand(const QStringList& words, control::WallpaperContr
   return wallpapers->controlGallery();
 }
 
+QString answerShortcutCommand(const QStringList& words) {
+  static const QString usage = QStringLiteral("error: usage: shortcut <name> | shortcut list");
+  if (words.size() != 1) return usage;
+  if (words.first() == QLatin1String("list")) {
+    const QStringList names = GlobalShortcut::names();
+    return names.isEmpty() ? QStringLiteral("ok: no shortcuts")
+                           : QStringLiteral("ok: ") + control::joinCommand(names);
+  }
+  if (GlobalShortcut::fireByName(words.first())) return QStringLiteral("ok");
+  return QStringLiteral("error: no shortcut named '%1' (try: shortcut list)")
+      .arg(words.first().left(40));
+}
+
 control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::function<void()> quit,
                                            control::WallpaperControlProvider wallpapers) {
   if (!quit) quit = [] { QCoreApplication::quit(); };
@@ -71,7 +85,15 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
       words.removeFirst();
       return answerWallpaperCommand(words, wallpapers ? wallpapers() : nullptr);
     }
-    return QStringLiteral("error: unknown command '%1' (try: reload, status, quit, wallpaper)")
+    if (command == QLatin1String("shortcut") || command.startsWith(QLatin1String("shortcut "))) {
+      QStringList words;
+      if (!control::splitCommand(command, &words))
+        return QStringLiteral("error: unterminated quote");
+      words.removeFirst();
+      return answerShortcutCommand(words);
+    }
+    return QStringLiteral(
+               "error: unknown command '%1' (try: reload, status, quit, wallpaper, shortcut)")
         .arg(command.left(40));
   };
 }
