@@ -34,6 +34,8 @@ add_library(wabar_host_base STATIC
   screen_match.cpp
   thumbnail.h
   thumbnail.cpp
+  thumbnail_store.h
+  thumbnail_store.cpp
   taskbar_control.h
   taskbar_control.cpp
   win32/app_bar.cpp
@@ -104,6 +106,8 @@ qt_add_qml_module(wabar_host
     qml/taskbar_command.cpp
     qml/system_clock.h
     qml/system_clock.cpp
+    qml/thumbnails.h
+    qml/thumbnails.cpp
     qml/transform_watcher.h
     qml/transform_watcher.cpp
     qml/window_enums.h
@@ -143,6 +147,7 @@ wabar_contribute(
     tests/test_shell_windows.cpp
     tests/test_taskbar_control.cpp
     tests/test_theme.cpp
+    tests/test_thumbnails.cpp
     tests/test_window_thumbnail.cpp
     tests/test_wallpaper_handler.cpp
   TEST_LIBS wabar_host_base
