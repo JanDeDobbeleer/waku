@@ -50,10 +50,10 @@ README holds one video only.
 | Any file write in the config home reloaded the shell | fixed in lane M2 |
 | `Singleton`, `TransformWatcher`, `QtQuick.Templates`, Controls.Basic | added in lane M2 |
 | WebP images could not be decoded | `qwebp` deployed in lane M3 |
-| `Region` has one `shapeChanged` signal for x, y, width, height; a binding that reads its own size loops | open: add separate notify signals |
+| `Region` has one `shapeChanged` signal for x, y, width, height; a binding that reads its own size loops | fixed: one notify signal per property |
 | No network throughput in `wabar.services.Network` | fixed in lane N2: `rxBytesPerSecond`, `txBytesPerSecond`, totals, `adapters` |
-| No CPU or GPU temperature source | open: Windows needs a helper |
-| `Notification` lacks `actions`, `hints`, `expireTimeout` signals | open: toasts have no actions on Windows |
+| No CPU or GPU temperature source | partly fixed: `Cpu.temperature` from the ACPI thermal zones (hottest plausible zone, a proxy); GPU stays unavailable (the Adreno driver reports 0) |
+| `Notification` lacks `actions`, `hints`, `expireTimeout` signals | fixed: every documented member and signal exists, with neutral fixed values |
 | Wi-Fi radio switch and VPN control are no-ops | fixed in lane N2: `setWifiEnabled`, `vpnConnections`, `connectVpn`, `disconnectVpn` |
 | Qt reads `D:/...` as a URL scheme in `Image.source` | Qt behaviour; the port builds `file:///` URLs |
 | `QtObject` has no default property; `Array.prototype.at` and `Qt.version` missing | Qt behaviour; the port works around them |
@@ -65,3 +65,19 @@ dashboard run on wabar with Windows data behind them, in a config home outside t
 Everything caelestia-specific (tokens, palette, layout, fonts) lives in that config. The engine
 carries only generic Quickshell compatibility. The remaining work is the open gaps above, a
 manual click-through check, and the release gate in `2026-10-30-handoff.md`.
+
+## Update: port fixes after the owner's first look
+
+- **Workspace icons between the dots.** Cause: the port gave the bar placeholder windows. The windows
+  now come from `komorebic state`, joined with the taskbar list. Pills (`occupiedBg`) are on. A
+  regression after the later merges (icons missing again) is being fixed.
+- **Sizes too large.** Windows 150% scaling made every caelestia size 1.5 times larger. The port has
+  a master `scale` (default 0.75), `fontScale`, `roundingScale` and an `auto` mode in
+  `config\shell-tokens.json`.
+- **Flyouts clipped at the right edge.** Cause: the stand-in blobs were plain rounded rectangles that
+  only touched the frame. Right, top and bottom flush panels now grow into the frame. The concave
+  fillets where a panel joins the frame are still not drawn.
+- **Corners and spacing.** The frame is 8 logical px thick with an 8 px inner radius, matching the
+  Windows 11 corner. The matching komorebi settings (padding, work-area offset) are in
+  `docs\komorebi-alignment.md` in the port and are not applied. The measured inner curve was about
+  35 px, not the expected 12, and is unexplained.
