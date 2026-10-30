@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 
 // The usual content of a Bar: three groups of widgets, start, centre and end.
 //
@@ -60,7 +61,7 @@ Item {
         return []
     }
 
-    // One island: an item with the body's geometry (named, so tests find it) and a canvas that also
+    // One island: an item with the body's geometry (named, so tests find it) and a shape that also
     // draws the fillets outside the body.
     component Island: Item {
         id: island
@@ -85,75 +86,79 @@ Item {
             x: -Theme.islandRadius
             width: parent.width + 2 * Theme.islandRadius
             height: parent.height
-            sourceComponent: canvasComponent
+            sourceComponent: shapeComponent
         }
 
         Component {
-            id: canvasComponent
-        Canvas {
-            id: canvas
-            // The fillets reach this far past each side
-            readonly property real pad: Theme.islandRadius
-            anchors.fill: parent
-            onWidthChanged: requestPaint()
-            onHeightChanged: requestPaint()
-            onPadChanged: requestPaint()
-            Connections {
-                target: island
-                function onFillColorChanged() { canvas.requestPaint() }
-                function onStopsChanged() { canvas.requestPaint() }
-                function onFlippedChanged() { canvas.requestPaint() }
-                function onXChanged() { canvas.requestPaint() }
-            }
+            id: shapeComponent
+            // A scene graph path, not a JS canvas: no repaint step and no texture upload when a
+            // widget changes width.
+            Shape {
+                id: shape
+                // The fillets reach this far past each side
+                readonly property real pad: Theme.islandRadius
+                readonly property real x0: pad
+                readonly property real x1: width - pad
+                readonly property real c: Math.max(0, Math.min(Theme.islandRadius, (x1 - x0) / 2, height / 2))
+                readonly property real f: Math.max(0, Math.min(Theme.islandRadius, height / 2))
+                readonly property bool leftFlush: island.x <= 0
+                readonly property bool rightFlush: island.x + island.width >= island.parent.width
+                readonly property string outline: {
+                    const h = height
+                    let d = leftFlush
+                        ? "M " + x0 + " 0 L " + x0 + " " + h
+                        : "M " + (x0 - f) + " 0 A " + f + " " + f + " 0 0 1 " + x0 + " " + f
+                          + " L " + x0 + " " + (h - c)
+                          + " A " + c + " " + c + " 0 0 0 " + (x0 + c) + " " + h
+                    d += rightFlush
+                        ? " L " + x1 + " " + h + " L " + x1 + " 0"
+                        : " L " + (x1 - c) + " " + h
+                          + " A " + c + " " + c + " 0 0 0 " + x1 + " " + (h - c)
+                          + " L " + x1 + " " + f
+                          + " A " + f + " " + f + " 0 0 1 " + (x1 + f) + " 0"
+                    return d + " Z"
+                }
 
-            onPaint: {
-                const ctx = getContext("2d")
-                ctx.reset()
-                const h = height
-                const w = width - 2 * pad
-                if (w <= 0 || h <= 0) return
-                const x0 = pad
-                const x1 = pad + w
-                const leftFlush = island.x <= 0
-                const rightFlush = island.x + island.width >= island.parent.width
-                const c = Math.min(Theme.islandRadius, w / 2, h / 2)
-                const f = Math.min(Theme.islandRadius, h / 2)
-                if (island.flipped) {
-                    ctx.translate(0, h)
-                    ctx.scale(1, -1)
+                anchors.fill: parent
+                visible: x1 > x0 && height > 0
+                preferredRendererType: Shape.CurveRenderer
+                transform: Scale {
+                    origin.y: shape.height / 2
+                    yScale: island.flipped ? -1 : 1
                 }
-                const stops = island.stops
-                if (stops && stops.length > 1) {
-                    const g = ctx.createLinearGradient(x0, 0, x1, 0)
-                    for (let i = 0; i < stops.length; ++i)
-                        g.addColorStop(i / (stops.length - 1), stops[i])
-                    ctx.fillStyle = g
-                } else {
-                    ctx.fillStyle = stops && stops.length === 1 ? stops[0] : island.fillColor
+
+                function applyFill() {
+                    const stops = island.stops
+                    if (stops && stops.length > 1) {
+                        let src = "import QtQuick; import QtQuick.Shapes; LinearGradient { x1: " + x0
+                                  + "; y1: 0; x2: " + x1 + "; y2: 0; "
+                        for (let i = 0; i < stops.length; ++i)
+                            src += "GradientStop { position: " + i / (stops.length - 1)
+                                   + "; color: \"" + stops[i] + "\" } "
+                        const old = body.fillGradient
+                        body.fillGradient = Qt.createQmlObject(src + "}", body)
+                        if (old) old.destroy()
+                    } else {
+                        body.fillGradient = null
+                        body.fillColor = stops && stops.length === 1 ? stops[0] : island.fillColor
+                    }
                 }
-                ctx.beginPath()
-                if (leftFlush) {
-                    ctx.moveTo(x0, 0)
-                    ctx.lineTo(x0, h)
-                } else {
-                    ctx.moveTo(x0 - f, 0)
-                    ctx.arc(x0 - f, f, f, -Math.PI / 2, 0, false)
-                    ctx.lineTo(x0, h - c)
-                    ctx.arc(x0 + c, h - c, c, Math.PI, Math.PI / 2, true)
+                Component.onCompleted: applyFill()
+                onX0Changed: applyFill()
+                onX1Changed: applyFill()
+                Connections {
+                    target: island
+                    function onFillColorChanged() { shape.applyFill() }
+                    function onStopsChanged() { shape.applyFill() }
                 }
-                if (rightFlush) {
-                    ctx.lineTo(x1, h)
-                    ctx.lineTo(x1, 0)
-                } else {
-                    ctx.lineTo(x1 - c, h)
-                    ctx.arc(x1 - c, h - c, c, Math.PI / 2, 0, true)
-                    ctx.lineTo(x1, f)
-                    ctx.arc(x1 + f, f, f, Math.PI, 3 * Math.PI / 2, false)
+
+                ShapePath {
+                    id: body
+                    strokeColor: "transparent"
+                    strokeWidth: -1
+                    PathSvg { path: shape.outline }
                 }
-                ctx.closePath()
-                ctx.fill()
             }
-        }
         }
     }
 
