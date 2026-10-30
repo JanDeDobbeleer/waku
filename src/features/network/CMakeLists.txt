@@ -1,12 +1,20 @@
-# Wi-Fi, Ethernet and VPN state, Wi-Fi scan and connect, and the Wifi widget. The Wifi widget opens
+# Wi-Fi, Ethernet and VPN state, Wi-Fi scan and connect, the Wi-Fi radio switch, VPN control,
+# interface throughput, and the Wifi widget. The Wifi widget opens
 # the Windows network settings through Shell (QML only). StatSource comes from kernel/qml.
 wabar_feature(NAME network
   DEPENDS shell
   SOURCES
     connectivity.h
+    radio.h
+    throughput.cpp
+    throughput.h
+    vpn.h
     wlan.h
   WIN32_SOURCES
     win32/connectivity_win.cpp
+    win32/radio_win.cpp
+    win32/throughput_win.cpp
+    win32/vpn_win.cpp
     win32/wlan_win.cpp
   QML_SOURCES
     qml/network_service.cpp
@@ -16,4 +24,5 @@ wabar_feature(NAME network
   TESTS
     tests/test_connectivity.cpp
     tests/test_network.cpp
-  SYSTEM_LIBS wlanapi ws2_32 windowsapp)
+    tests/test_throughput.cpp
+  SYSTEM_LIBS iphlpapi rasapi32 wlanapi ws2_32 windowsapp)

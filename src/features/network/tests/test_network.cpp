@@ -237,3 +237,214 @@ TEST(Network, AFailedConnectAllowsANewOne) {
   emit fake->backend->connectFailed(QStringLiteral("no"));
   EXPECT_TRUE(network.connectTo(QStringLiteral("Work")));
 }
+
+namespace {
+
+InterfaceCounters counters(quint64 id, quint64 rx, quint64 tx, bool up = true) {
+  InterfaceCounters c;
+  c.id = id;
+  c.name = QStringLiteral("Ethernet");
+  c.isUp = up;
+  c.rxBytes = rx;
+  c.txBytes = tx;
+  return c;
+}
+
+}  // namespace
+
+TEST(NetworkThroughput, ReadsNothingWhileUnobserved) {
+  auto fake = std::make_shared<FakeSource>();
+  fake->throughput.set({counters(1, 0, 0)});
+  Network network(fake, nullptr);
+  network.setThroughputInterval(20);
+  network.componentComplete();
+  QTest::qWait(300);
+  EXPECT_EQ(fake->throughput.reads.load(), 0);
+  EXPECT_EQ(network.rxBytesPerSecond(), 0);
+  EXPECT_TRUE(network.adapters().isEmpty());
+}
+
+TEST(NetworkThroughput, SamplesWhileSomethingIsConnectedAndStopsAfter) {
+  auto fake = std::make_shared<FakeSource>();
+  fake->throughput.set({counters(1, 1000, 1000)});
+  Network network(fake, nullptr);
+  network.setThroughputInterval(20);
+
+  QObject context;
+  const QMetaObject::Connection connection =
+      QObject::connect(&network, &Network::throughputChanged, &context, [] {});
+  EXPECT_EQ(fake->throughput.reads.load(), 1);  // the baseline
+
+  fake->throughput.set({counters(1, 51000, 21000)});
+  ASSERT_TRUE(waitFor([&] { return network.rxBytesPerSecond() > 0; }));
+  EXPECT_GT(network.txBytesPerSecond(), 0);
+  EXPECT_DOUBLE_EQ(network.rxBytesTotal(), 50000);
+  EXPECT_DOUBLE_EQ(network.txBytesTotal(), 20000);
+  ASSERT_EQ(network.adapters().size(), 1);
+  EXPECT_EQ(network.adapters()[0].toMap().value("name").toString(), QStringLiteral("Ethernet"));
+  EXPECT_TRUE(network.adapters()[0].toMap().value("isUp").toBool());
+
+  QObject::disconnect(connection);
+  QTest::qWait(100);
+  const int reads = fake->throughput.reads.load();
+  QTest::qWait(200);
+  EXPECT_EQ(fake->throughput.reads.load(), reads);
+  EXPECT_EQ(network.rxBytesPerSecond(), 0);
+  EXPECT_DOUBLE_EQ(network.rxBytesTotal(), 50000);  // the total survives the pause
+}
+
+TEST(NetworkThroughput, ACounterResetAndAVanishedInterfaceStaySane) {
+  auto fake = std::make_shared<FakeSource>();
+  fake->throughput.set({counters(1, 900000, 0), counters(2, 500, 0)});
+  Network network(fake, nullptr);
+  network.setThroughputInterval(20);
+  QObject context;
+  QObject::connect(&network, &Network::throughputChanged, &context, [] {});
+
+  fake->throughput.set({counters(1, 100, 0)});  // 1 was reset, 2 vanished
+  ASSERT_TRUE(waitFor([&] { return network.adapters().size() == 1; }));
+  EXPECT_DOUBLE_EQ(network.rxBytesTotal(), 100);
+  EXPECT_GT(network.rxBytesPerSecond(), 0);
+}
+
+TEST(NetworkThroughput, WithoutAReaderOrASourceItStaysZero) {
+  auto fake = std::make_shared<FakeSource>();
+  fake->withThroughput = false;
+  Network network(fake, nullptr);
+  QObject context;
+  QObject::connect(&network, &Network::throughputChanged, &context, [] {});
+  Network bare(nullptr, nullptr);
+  QObject::connect(&bare, &Network::throughputChanged, &context, [] {});
+  QTest::qWait(100);
+  EXPECT_EQ(network.rxBytesPerSecond(), 0);
+  EXPECT_EQ(bare.rxBytesPerSecond(), 0);
+}
+
+TEST(NetworkWifiRadio, FollowsTheStateWindowsReports) {
+  auto fake = std::make_shared<FakeSource>();
+  Network network(fake, nullptr);
+  network.componentComplete();
+  ASSERT_NE(fake->radio, nullptr);
+  EXPECT_GE(fake->radio->queries, 1);
+  EXPECT_FALSE(network.wifiAvailable());
+  EXPECT_FALSE(network.wifiEnabled());
+
+  emit fake->radio->stateRead(true, true);
+  EXPECT_TRUE(network.wifiAvailable());
+  EXPECT_TRUE(network.wifiEnabled());
+  emit fake->radio->stateRead(false, true);  // unreadable: never "on"
+  EXPECT_FALSE(network.wifiAvailable());
+  EXPECT_FALSE(network.wifiEnabled());
+}
+
+TEST(NetworkWifiRadio, ASwitchFailureLeavesTheRealStateAndReportsTheError) {
+  auto fake = std::make_shared<FakeSource>();
+  Network network(fake, nullptr);
+  network.componentComplete();
+  emit fake->radio->stateRead(true, true);
+  QSignalSpy changed(&network, &Network::wifiChanged);
+
+  EXPECT_TRUE(network.setWifiEnabled(false));
+  EXPECT_TRUE(network.wifiSwitching());
+  ASSERT_EQ(fake->radio->requests.size(), 1u);
+  EXPECT_FALSE(fake->radio->requests[0]);
+  EXPECT_FALSE(network.setWifiEnabled(true));  // one switch at a time
+  EXPECT_EQ(fake->radio->requests.size(), 1u);
+
+  emit fake->radio->switchFinished(false, QStringLiteral("Access denied"));
+  EXPECT_FALSE(network.wifiSwitching());
+  EXPECT_EQ(network.wifiSwitchError(), QStringLiteral("Access denied"));
+  EXPECT_TRUE(network.wifiEnabled());  // still what Windows says
+  EXPECT_GE(changed.count(), 2);
+
+  EXPECT_TRUE(network.setWifiEnabled(false));
+  EXPECT_TRUE(network.wifiSwitchError().isEmpty());
+  emit fake->radio->switchFinished(true, QString());
+  emit fake->radio->stateRead(true, false);
+  EXPECT_TRUE(network.wifiSwitchError().isEmpty());
+  EXPECT_FALSE(network.wifiEnabled());
+}
+
+TEST(NetworkWifiRadio, WithoutARadioBackendTheSwitchFailsSoft) {
+  auto fake = std::make_shared<FakeSource>();
+  fake->withRadio = false;
+  Network network(fake, nullptr);
+  EXPECT_FALSE(network.setWifiEnabled(true));
+  EXPECT_FALSE(network.wifiSwitchError().isEmpty());
+  EXPECT_FALSE(network.wifiSwitching());
+
+  Network bare(nullptr, nullptr);
+  EXPECT_FALSE(bare.setWifiEnabled(true));
+}
+
+TEST(NetworkVpn, ListsTheConfiguredEntriesAndTheirState) {
+  auto fake = std::make_shared<FakeSource>();
+  Network network(fake, nullptr);
+  network.componentComplete();
+  ASSERT_NE(fake->vpn, nullptr);
+  EXPECT_GE(fake->vpn->refreshes, 1);
+  EXPECT_TRUE(network.vpnConnections().isEmpty());
+
+  QSignalSpy changed(&network, &Network::vpnChanged);
+  emit fake->vpn->entriesRead({{QStringLiteral("Work"), false}, {QStringLiteral("Home"), true}});
+  ASSERT_EQ(network.vpnConnections().size(), 2);
+  EXPECT_EQ(network.vpnConnections()[0].toMap().value("name").toString(), QStringLiteral("Work"));
+  EXPECT_FALSE(network.vpnConnections()[0].toMap().value("connected").toBool());
+  EXPECT_TRUE(network.vpnConnections()[1].toMap().value("connected").toBool());
+  EXPECT_EQ(changed.count(), 1);
+  emit fake->vpn->entriesRead({{QStringLiteral("Work"), false}, {QStringLiteral("Home"), true}});
+  EXPECT_EQ(changed.count(), 1);  // unchanged lists are not announced
+}
+
+TEST(NetworkVpn, DialsAndHangsUpKnownEntriesOneAtATime) {
+  auto fake = std::make_shared<FakeSource>();
+  Network network(fake, nullptr);
+  network.componentComplete();
+  emit fake->vpn->entriesRead({{QStringLiteral("Work"), false}, {QStringLiteral("Home"), true}});
+
+  EXPECT_TRUE(network.connectVpn(QStringLiteral("Work")));
+  EXPECT_TRUE(network.vpnBusy());
+  ASSERT_EQ(fake->vpn->dials.size(), 1u);
+  EXPECT_EQ(fake->vpn->dials[0], QStringLiteral("Work"));
+  EXPECT_FALSE(network.disconnectVpn(QStringLiteral("Home")));  // busy
+
+  const int refreshes = fake->vpn->refreshes;
+  emit fake->vpn->operationFinished(QStringLiteral("Work"), false, QStringLiteral("Dial failed"));
+  EXPECT_FALSE(network.vpnBusy());
+  EXPECT_EQ(network.vpnError(), QStringLiteral("Dial failed"));
+  EXPECT_GT(fake->vpn->refreshes, refreshes);
+
+  EXPECT_TRUE(network.disconnectVpn(QStringLiteral("Home")));
+  EXPECT_TRUE(network.vpnError().isEmpty());
+  ASSERT_EQ(fake->vpn->hangUps.size(), 1u);
+  EXPECT_EQ(fake->vpn->hangUps[0], QStringLiteral("Home"));
+  emit fake->vpn->operationFinished(QStringLiteral("Home"), true, QString());
+  EXPECT_FALSE(network.vpnBusy());
+  EXPECT_TRUE(network.vpnError().isEmpty());
+}
+
+TEST(NetworkVpn, RefusesUnknownEntriesAndRedundantRequests) {
+  auto fake = std::make_shared<FakeSource>();
+  Network network(fake, nullptr);
+  network.componentComplete();
+  emit fake->vpn->entriesRead({{QStringLiteral("Work"), false}, {QStringLiteral("Home"), true}});
+
+  EXPECT_FALSE(network.connectVpn(QStringLiteral("Nope")));
+  EXPECT_FALSE(network.vpnError().isEmpty());
+  EXPECT_FALSE(network.connectVpn(QStringLiteral("Home")));     // already connected
+  EXPECT_FALSE(network.disconnectVpn(QStringLiteral("Work")));  // not connected
+  EXPECT_TRUE(fake->vpn->dials.empty());
+  EXPECT_TRUE(fake->vpn->hangUps.empty());
+  EXPECT_FALSE(network.vpnBusy());
+}
+
+TEST(NetworkVpn, WithoutABackendItFailsSoft) {
+  auto fake = std::make_shared<FakeSource>();
+  fake->withVpn = false;
+  Network network(fake, nullptr);
+  network.componentComplete();
+  EXPECT_FALSE(network.connectVpn(QStringLiteral("Work")));
+  EXPECT_FALSE(network.vpnError().isEmpty());
+  Network bare(nullptr, nullptr);
+  EXPECT_FALSE(bare.disconnectVpn(QStringLiteral("Work")));
+}

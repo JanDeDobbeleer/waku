@@ -1,7 +1,8 @@
 # network
 
-Wi-Fi, Ethernet and VPN state for the bar, plus Wi-Fi scan and connect. One QML singleton
-(`Network`, a polled `StatSource`) and one widget (`Wifi.qml`).
+Wi-Fi, Ethernet and VPN state for the bar, plus Wi-Fi scan and connect, interface throughput, the
+Wi-Fi radio switch and VPN control. One QML singleton (`Network`, a polled `StatSource`) and one
+widget (`Wifi.qml`).
 
 ## Layers
 
@@ -9,18 +10,55 @@ Wi-Fi, Ethernet and VPN state for the bar, plus Wi-Fi scan and connect. One QML 
 |---|---|
 | `connectivity.h`, `win32/connectivity_win.cpp` | one connectivity sample: connection profiles through WinRT, classified into Wi-Fi, Ethernet or VPN over either (`classifyConnections`, a pure function), plus the local IP address |
 | `wlan.h`, `win32/wlan_win.cpp` | `WifiBackend` and its wlanapi/WinRT implementation: scan, current connection, connect with a password or a hidden SSID, forget, auto-connect |
+| `throughput.h`, `throughput.cpp`, `win32/throughput_win.cpp` | `ThroughputSource` (interface counters), `ThroughputTracker` (rate and total maths, no clock) and the `GetIfTable2` reader |
+| `radio.h`, `win32/radio_win.cpp` | `WifiRadioBackend` and its `Windows.Devices.Radios` implementation: read the Wi-Fi radio state, switch it |
+| `vpn.h`, `win32/vpn_win.cpp` | `VpnBackend` and its RAS implementation: list entries, dial, hang up |
 | `qml/network_service.*` | `Network` (QML singleton): `NetworkSource` (injectable, so tests never touch the OS), the status properties, the scan list and the connect/disconnect invokables |
 | `qml/Wifi.qml` | the widget: icon pill, network list popup, password prompt; its "open settings" clicks use `Shell` |
-| `testing/fake_network_source.h` | `FakeSource` and `FakeWifiBackend` for the service tests |
+| `testing/fake_network_source.h` | `FakeSource`, `FakeWifiBackend`, `FakeThroughputSource`, `FakeWifiRadio` and `FakeVpn` for the service tests |
 
 ## Threads
 
 The status sample runs on the global `QThreadPool` (one at a time) and is applied on the GUI thread.
 The Wi-Fi backend (`WlanBackend`, a `QThread` created by `createWlanBackend`) starts on the first
-refresh or connect and is stopped and joined in the `Network` destructor. No source and no backend
-on the offscreen platform.
+refresh or connect and is stopped and joined in the `Network` destructor. The radio and VPN
+backends run each call as a one-shot task on the global `QThreadPool` (RAS dial and hang-up may
+block a pool thread for seconds) and post results to the GUI thread; they have nothing to join. The
+throughput sampler is a GUI-thread timer. No source and no backend on the offscreen platform.
+
+## Throughput
+
+`rxBytesPerSecond`, `txBytesPerSecond`, `rxBytesTotal`, `txBytesTotal` and `adapters` all notify
+through `throughputChanged`. The sampler is a 1 s `QTimer` that runs only while something is
+connected to that signal (`connectNotify` and `disconnectNotify` start and stop it), so a bar that
+shows no rate reads nothing. The reader is `GetIfTable2` with the 64-bit `InOctets` and `OutOctets`
+(no 32-bit wrap), loopback rows skipped; the aggregate sums the interfaces that are up. A counter
+that goes backwards counts what it shows (adapter reset); a new interface starts at a baseline; a
+vanished interface drops out and its bytes stay in the totals. A pause (nobody observing) resets the
+baseline and the rates, not the totals. The read is one fast IP helper call on the GUI thread.
+
+## Wi-Fi radio
+
+`wifiEnabled` is only what Windows reports, read at each poll. `setWifiEnabled(bool)` runs
+`Radio::RequestAccessAsync` and `SetStateAsync` on a pool thread, then reads the state back. A
+refusal (no permission, no radio) goes to `wifiSwitchError`; `wifiEnabled` is never set
+optimistically. `wifiAvailable` is false when no Wi-Fi radio could be read.
+
+## VPN
+
+`vpnConnections` lists the RAS phone book entries (`name`, `connected`), refreshed at each poll.
+`connectVpn(name)` (`RasGetEntryDialParams`, `RasDial`, which blocks its pool thread until the dial
+ends) and `disconnectVpn(name)` (`RasHangUp`, then a wait for the handle to go) take a name from that
+list and run one at a time (`vpnBusy`); a failure goes to `vpnError`. Entries without saved
+credentials fail soft. `vpnActive` and `vpnName` still come from the connectivity profiles.
+
+## Open points
+
+- RAS lists the entries of the default phone book; VPNs added by other clients (third-party
+  adapters) do not appear.
+- The VPN list refreshes at the status poll interval, not on RAS notifications.
 
 ## Dependencies
 
 `DEPENDS shell` (QML only). `StatSource` is `kernel/qml/stat_source.h`. Windows import libraries:
-`wlanapi`, `ws2_32`, `windowsapp`.
+`iphlpapi`, `rasapi32`, `wlanapi`, `ws2_32`, `windowsapp`.
