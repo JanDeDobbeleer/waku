@@ -15,6 +15,7 @@ namespace {
 constexpr wchar_t kPrimaryClass[] = L"Shell_TrayWnd";
 constexpr wchar_t kSecondaryClass[] = L"Shell_SecondaryTrayWnd";
 constexpr wchar_t kWatcherClass[] = L"WabarTaskbarWatcher";
+constexpr UINT_PTR kRecheckTimer = 1;
 
 std::vector<HWND> taskbarWindows() {
   std::vector<HWND> found;
@@ -121,6 +122,9 @@ class Win32TaskbarSystem final : public TaskbarSystem {
     RegisterClassW(&wc);  // fails harmlessly when already registered
     watcher_ = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, kWatcherClass, L"", WS_POPUP, 0,
                                0, 0, 0, nullptr, nullptr, wc.hInstance, this);
+    // Explorer shows an auto-hide taskbar again when the work area changes (an app bar is
+    // registered, a monitor is added): a once-a-second check puts the hidden windows back.
+    if (watcher_) SetTimer(watcher_, kRecheckTimer, 1000, nullptr);
   }
 
   static LRESULT CALLBACK proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
@@ -129,7 +133,9 @@ class Win32TaskbarSystem final : public TaskbarSystem {
       SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(create->lpCreateParams));
     } else if (auto* self =
                    reinterpret_cast<Win32TaskbarSystem*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-               self && message == self->restartMessage_ && self->callback_) {
+               self && self->callback_ &&
+               (message == self->restartMessage_ ||
+                (message == WM_TIMER && wparam == kRecheckTimer))) {
       try {
         self->callback_();  // exceptions never cross the window procedure
       } catch (...) {

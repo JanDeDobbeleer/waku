@@ -93,6 +93,19 @@ TEST(TaskbarControlTest, RestoresOnDestruction) {
   EXPECT_FALSE(store.marker.has_value());
 }
 
+TEST(TaskbarControlTest, TheRecheckHidesATaskbarThatCameBack) {
+  Fixture f;
+  f.taskbar.hide();
+  EXPECT_FALSE(f.system.windowsVisible_);
+  // Explorer shows an auto-hide taskbar again when the work area changes; the once-a-second
+  // recheck is the same callback as the restart one.
+  f.system.windowsVisible_ = true;
+  f.system.restartCallback();
+  EXPECT_FALSE(f.system.windowsVisible_);
+  f.taskbar.restore();
+  EXPECT_TRUE(f.system.windowsVisible_);
+}
+
 TEST(TaskbarControlTest, ExplorerRestartHidesTheNewWindowsAgain) {
   Fixture f;
   f.taskbar.hide();

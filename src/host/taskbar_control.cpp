@@ -142,11 +142,12 @@ TaskbarState WabarTaskbar::state() const {
 }
 
 void WabarTaskbar::reassert() {
-  // Explorer started again: its new taskbar windows are visible. Auto-hide lives in the
-  // registry and survives, but is set again if the new Explorer dropped it.
+  // Called when Explorer started again (its new taskbar windows are visible) and once a second
+  // while hiding (Explorer shows an auto-hide taskbar again when the work area changes).
+  // Auto-hide lives in the registry and survives, but is set again if Explorer dropped it.
   if (!hiding_) return;
   if (changedAutoHide_ && !system_.autoHide()) system_.setAutoHide(true);
-  if (changedWindows_) system_.setWindowsHidden(true);
+  if (changedWindows_ && system_.windowsVisible()) system_.setWindowsHidden(true);
 }
 
 }  // namespace wabar::host
