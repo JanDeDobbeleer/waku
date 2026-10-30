@@ -364,6 +364,72 @@ ShellRoot {
   EXPECT_EQ(findItem(h.window(), QStringLiteral("bad")), nullptr);
 }
 
+TEST(ShellHostTest, AReloadThatFailsWhileCreatingKeepsThePreviousShell) {
+  Harness h;
+  h.start(shellConfig(QStringLiteral("good")));
+  ASSERT_TRUE(h.host->reload());
+  QPointer<QQuickWindow> before = h.window();
+
+  // It compiles, so the check passes; the content cannot be created.
+  write(h.shellFile(), QStringLiteral(R"(
+import QtQuick
+import wabar
+ShellRoot {
+    Panel { content: Item { objectName: "bad"; required property int notGiven } }
+}
+)"));
+  EXPECT_FALSE(h.host->reload());
+  EXPECT_TRUE(h.host->error().contains(QStringLiteral("notGiven"))) << qPrintable(h.host->error());
+  ASSERT_EQ(h.host->windows().size(), 1);
+  EXPECT_EQ(h.window(), before.data());  // the very same window, not a fallback
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("good"));
+  EXPECT_EQ(findItem(h.window(), QStringLiteral("bad")), nullptr);
+}
+
+TEST(ShellHostTest, AReloadWhoseVariantsDelegateFailsKeepsThePreviousShell) {
+  Harness h;
+  h.start(shellConfig(QStringLiteral("good")));
+  ASSERT_TRUE(h.host->reload());
+  QPointer<QQuickWindow> before = h.window();
+
+  write(h.shellFile(), QStringLiteral(R"(
+import QtQuick
+import wabar
+ShellRoot {
+    Variants {
+        model: 1
+        PanelWindow {
+            required property int notGiven
+            implicitHeight: 20
+        }
+    }
+}
+)"));
+  EXPECT_FALSE(h.host->reload());
+  EXPECT_FALSE(h.host->error().isEmpty());
+  ASSERT_EQ(h.host->windows().size(), 1);
+  EXPECT_EQ(h.window(), before.data());
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("good"));
+}
+
+TEST(ShellHostTest, ABrokenFirstLoadThatCompilesStillShowsTheFallback) {
+  Harness h;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import wabar
+ShellRoot {
+    Panel { content: Item { required property int notGiven } }
+}
+)"));
+  EXPECT_FALSE(h.host->reload());
+  EXPECT_FALSE(h.host->error().isEmpty());
+  ASSERT_EQ(h.host->windows().size(), 1);
+  settle();
+  QQuickItem* pill = findItem(h.window(), QStringLiteral("errorPill"));
+  ASSERT_NE(pill, nullptr);
+  EXPECT_TRUE(pill->isVisible());
+}
+
 // ---- watching ----
 
 TEST(ShellHostTest, ChangingAFileInTheConfigHomeReloads) {

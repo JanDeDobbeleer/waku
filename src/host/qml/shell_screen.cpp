@@ -30,9 +30,21 @@ ScreenList* ScreenList::of(QQmlEngine* engine) {
 }
 
 void ScreenList::setScreens(const QList<QScreen*>& screens, QScreen* primary) {
+  if (!primary && !screens.isEmpty()) primary = screens.first();
+  // The same screens again change nothing; replacing the objects would rebuild every window of a
+  // live shell that follows the list (a reload builds the new shell next to the old one).
+  if (screens.size() == screens_.size()) {
+    bool same = true;
+    bool primarySeen = false;
+    for (qsizetype i = 0; i < screens.size() && same; ++i) {
+      const bool isPrimary = screens.at(i) == primary && !primarySeen;
+      primarySeen = primarySeen || isPrimary;
+      same = screens_.at(i)->qscreen() == screens.at(i) && screens_.at(i)->primary() == isPrimary;
+    }
+    if (same) return;
+  }
   const QList<ShellScreen*> old = screens_;
   screens_.clear();
-  if (!primary && !screens.isEmpty()) primary = screens.first();
   bool primaryTaken = false;
   for (QScreen* screen : screens) {
     // A test may list one QScreen twice; only the first of them is "primary".

@@ -4,6 +4,7 @@
 #include <QList>
 #include <QObject>
 #include <QPointer>
+#include <QQmlAbstractUrlInterceptor>
 #include <QQmlComponent>
 #include <QString>
 #include <QTimer>
@@ -29,9 +30,12 @@ class QsWindow;
 //
 // reload() first checks shell.qml and theme.qml in a throwaway engine: they compile, their types
 // exist and their roots are a ShellRoot and a ThemeSpec. Nothing is created there, so no widget is
-// built and no service starts. Only then are the Theme singleton filled and the current shell
-// replaced. A file that fails the check leaves the previous shell in place: `error` holds the
-// first message (each PanelWindow shows it as a pill) and the full list goes to the log.
+// built and no service starts. Only then is the Theme singleton filled and the new shell built in
+// the live engine, next to the old one: its windows stay hidden until it is complete, and the old
+// shell goes only when the new one is installed. A file that fails the check, a shell that cannot
+// be created, or one with no window where the old one had some leaves the previous shell in place:
+// `error` holds the first message (each PanelWindow shows it as a pill) and the full list goes to
+// the log.
 //
 // The windows of a shell (PanelWindow, FloatingWindow, wherever they are declared) register
 // themselves with the host of their engine (the context property `ShellHost`). A window that fails
@@ -158,8 +162,13 @@ class ShellHost : public QObject {
   // The windows of `loaded` that failed to build, as "N windows failed: <first error>".
   static QString failures(const Loaded& loaded, int* built);
 
+  // Gives the QML files of the config home a new URL for each reload (see shell_host.cpp), so a
+  // reload built next to the live shell never reuses a file the live shell still holds.
+  class GenerationInterceptor;
+
   QQmlEngine* engine_;
   Options options_;
+  std::unique_ptr<GenerationInterceptor> interceptor_;
   std::unique_ptr<Loaded> loaded_;
   // The shell being built: windows that complete now are added here, shown by install().
   Loaded* building_ = nullptr;

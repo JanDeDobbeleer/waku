@@ -74,6 +74,29 @@ void collectParts(const Scope* scope, QList<QObject*>* parts) {
 
 }  // namespace
 
+// Qt keeps the compiled form of a QML file for as long as an object made from it lives, and
+// clearComponentCache() does not drop it. A reload builds the new shell while the old one still
+// stands, so without this it would be made from the old files. A changing query on the URL makes
+// each reload's files new to the engine. The interceptor only touches QML files under the config
+// home.
+class ShellHost::GenerationInterceptor : public QQmlAbstractUrlInterceptor {
+ public:
+  explicit GenerationInterceptor(QString root) : root_(std::move(root)) {}
+  void nextGeneration() { ++generation_; }
+
+  QUrl intercept(const QUrl& url, DataType type) override {
+    if (generation_ == 0 || type != QmlFile || !url.isLocalFile()) return url;
+    if (!url.toLocalFile().startsWith(root_, Qt::CaseInsensitive)) return url;
+    QUrl versioned = url;
+    versioned.setQuery(QStringLiteral("wabar=%1").arg(generation_));
+    return versioned;
+  }
+
+ private:
+  QString root_;
+  int generation_ = 0;
+};
+
 ShellHost::Loaded::~Loaded() {
   // Take the app bars off the desktop and the windows off the screen now: a Variants destroys its
   // windows later (deleteLater), and the next shell must not overlap the old one.
@@ -88,6 +111,9 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
     : QObject(parent), engine_(engine), options_(std::move(options)) {
   if (!options_.screens) options_.screens = applicationScreens;
   engine_->rootContext()->setContextProperty(QString::fromLatin1(kHostProperty), this);
+  interceptor_ = std::make_unique<GenerationInterceptor>(
+      QDir::fromNativeSeparators(QDir(options_.configHome).absolutePath()));
+  engine_->addUrlInterceptor(interceptor_.get());
   {
     // Registers the wabar types (static plugin) so singletonInstance() finds Theme and ScreenList.
     QQmlComponent chrome(engine_, QUrl(QString::fromLatin1(kChromeUrl)));
@@ -112,6 +138,7 @@ ShellHost::~ShellHost() {
   if (QCoreApplication::instance()) QCoreApplication::instance()->removeEventFilter(this);
   // Windows (and their app bars) go before the root object and component they refer to.
   loaded_.reset();
+  engine_->removeUrlInterceptor(interceptor_.get());
   if (engine_->rootContext()
           ->contextProperty(QString::fromLatin1(kHostProperty))
           .value<QObject*>() == this) {
@@ -299,9 +326,9 @@ bool ShellHost::reload() {
   } else if (validate(QUrl::fromLocalFile(entryPath()), ShellRoot::staticMetaObject, false,
                       &error) &&
              validateTheme(&error)) {
-    // The shell is good, so the old one can go. Qt only reloads changed files when no object
-    // made from the old ones is alive (see QQmlEngine::clearComponentCache).
-    loaded_.reset();
+    // The files compile, but creating the shell can still fail. The old shell stays alive and
+    // on screen while the new one is built (hidden); install() swaps them on success.
+    interceptor_->nextGeneration();
     engine_->clearComponentCache();
     applyTheme();
     next = build(QUrl::fromLocalFile(entryPath()), &error);
@@ -310,10 +337,18 @@ bool ShellHost::reload() {
   if (next) {
     int built = 0;
     const QString failed = failures(*next, &built);
+    const bool hadWindows = loaded_ && !loaded_->entries.empty();
     if (!failed.isEmpty() && built == 0) {
       // Not one window of the new shell could be built: nothing to show but the error.
       error = failed;
       qWarning().noquote() << "wabar: no window could be built:" << error;
+      next.reset();
+    } else if (next->entries.empty() && hadWindows) {
+      // A shell that makes no windows where the old one had some is a failed delegate or a
+      // wrong filter far more often than a wish; keep what works.
+      error =
+          QStringLiteral("%1 created no windows; the previous shell stays").arg(options_.entryFile);
+      qWarning().noquote() << "wabar:" << error;
       next.reset();
     } else {
       setError(failed);
