@@ -194,6 +194,9 @@ class ShellHost : public QObject {
   // Copies theme.qml (or the defaults, when there is none) into the Theme singleton.
   void applyTheme();
   bool reloadSafe();
+  // Reloads when the screens change, so a docked monitor gets its bar and a DPI change its layout.
+  void watchScreens();
+  void watchScreen(QScreen* screen);
   // Destroys the shell, drops the engine's singletons and compiled files, emits singletonsCleared.
   void resetEngine();
   std::unique_ptr<Loaded> build(const QUrl& url, QString* error);
@@ -234,6 +237,8 @@ class ShellHost : public QObject {
   QHash<QString, bool> visibility_;
   QFileSystemWatcher watcher_;
   QTimer debounce_;
+  // A screen added or removed, a new primary screen or a DPI change: one reload after they settle.
+  QTimer screenDebounce_;
   FileStamps snapshot_;
   bool watching_ = false;
 };

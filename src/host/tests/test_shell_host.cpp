@@ -54,6 +54,21 @@ TEST(ShellHostTest, BuildsOneWindowPerPanelAndMatchingScreen) {
   ASSERT_NE(h.host->shell(), nullptr);
 }
 
+TEST(ShellHostTest, AScreenChangeReloadsTheShellOnceAfterItSettles) {
+  Harness h;
+  h.start(shellConfig());
+  ASSERT_TRUE(h.host->reload());
+  int reloads = 0;
+  QObject::connect(h.host.get(), &ShellHost::reloaded, [&reloads] { ++reloads; });
+  QScreen* screen = QGuiApplication::primaryScreen();
+  ASSERT_NE(screen, nullptr);
+  emit qGuiApp->screenAdded(screen);
+  emit qGuiApp->primaryScreenChanged(screen);
+  EXPECT_TRUE(QTest::qWaitFor([&] { return reloads > 0; }, 3000));
+  QTest::qWait(900);
+  EXPECT_EQ(reloads, 1);
+}
+
 TEST(ShellHostTest, AllScreensGetAPanel) {
   Harness h;
   h.screenCount = 2;

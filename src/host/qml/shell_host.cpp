@@ -193,6 +193,7 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
     reload();
     refreshWatches();
   });
+  watchScreens();
   connect(&watcher_, &QFileSystemWatcher::directoryChanged, this, [this] { configHomeChanged(); });
   connect(&watcher_, &QFileSystemWatcher::fileChanged, this, [this] { configHomeChanged(); });
   if (QCoreApplication::instance()) QCoreApplication::instance()->installEventFilter(this);
@@ -368,6 +369,28 @@ bool ShellHost::reloadSafe() {
   install(std::move(next));
   emit reloaded(true);
   return true;
+}
+
+void ShellHost::watchScreens() {
+  screenDebounce_.setSingleShot(true);
+  screenDebounce_.setInterval(600);
+  connect(&screenDebounce_, &QTimer::timeout, this, [this] {
+    if (loaded_) reload();
+  });
+  const auto changed = [this] { screenDebounce_.start(); };
+  connect(qGuiApp, &QGuiApplication::screenAdded, this, [this, changed](QScreen* screen) {
+    watchScreen(screen);
+    changed();
+  });
+  connect(qGuiApp, &QGuiApplication::screenRemoved, this, changed);
+  connect(qGuiApp, &QGuiApplication::primaryScreenChanged, this, changed);
+  for (QScreen* screen : QGuiApplication::screens()) watchScreen(screen);
+}
+
+void ShellHost::watchScreen(QScreen* screen) {
+  if (!screen) return;
+  connect(screen, &QScreen::logicalDotsPerInchChanged, &screenDebounce_,
+          qOverload<>(&QTimer::start));
 }
 
 bool ShellHost::reload() {
