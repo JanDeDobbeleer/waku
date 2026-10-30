@@ -81,3 +81,15 @@ manual click-through check, and the release gate in `2026-10-30-handoff.md`.
   Windows 11 corner. The matching komorebi settings (padding, work-area offset) are in
   `docs\komorebi-alignment.md` in the port and are not applied. The measured inner curve was about
   35 px, not the expected 12, and is unexplained.
+
+## Update: second look
+
+- **Workspaces.** All 7 komorebi workspaces show now (caelestia's default showed 5). The pills render
+  around workspaces II and III, and each holds its windows' icons. The icons are the generic window
+  glyph, not per-app icons yet.
+- **Concave arcs.** Panels now join the frame with fixed-radius arcs (20 logical px). They look smooth
+  at the panel ends in the sidebar capture. They were not checked at pixel level, and a panel
+  corner against another panel is not filleted.
+- **Empty-state image.** The dino in the notifications panel was laid out 1.5 times too wide at 150%
+  scaling, because Qt takes `sourceSize` as a logical size. Its layout width is now explicit and it
+  fits the panel with its cloud, cactus and text.
