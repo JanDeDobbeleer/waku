@@ -8,6 +8,7 @@ is `docs/architecture.md`, and each feature has its own `design.md` under `src/f
 | --- | --- | --- |
 | [2026-10-28-qt-quick-bar-config-design.md](2026-10-28-qt-quick-bar-config-design.md) | QML as the config format: `bar.qml`, `theme.qml`, `widgets/`, hot reload, popups | Implemented. The sample config in `examples/config` follows it. Read it for the reasons behind the config format; its paths (`spike/`) are historical. |
 | [2026-10-29-wabar-architecture-proposal.md](2026-10-29-wabar-architecture-proposal.md) | Vertical slices: `src/{kernel,control,host,ui,features,app}`, `wabar_feature()`, rules S1-S8, migration steps 0-11 | Implemented. Section 11 holds the owner's decisions. `docs/architecture.md` and `AGENTS.md` now carry the rules. |
+| [2026-10-30-caelestia-port-assessment.md](2026-10-30-caelestia-port-assessment.md) | Can wabar host the caelestia Quickshell shell? Feature table, blockers, plan changes | Assessment. Its changes are in section 11 of the extensibility proposal. |
 
 Earlier plans for the retired Qt Widgets build are in [../archive](../archive/README.md); they are
 superseded by the plans above.

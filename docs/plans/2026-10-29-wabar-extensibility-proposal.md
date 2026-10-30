@@ -3,6 +3,8 @@
 Status: proposal, 2026-10-29. Nothing here is implemented. Branch `restructure/wabar` at `34a88e5`.
 Companion documents: `2026-10-29-wabar-architecture-proposal.md` (the units and rules S1-S8) and
 `2026-10-29-wabar-styling-proposal.md` (tokens, style bundles, the shadowing finding).
+Revised 2026-10-30: section 11 adopts Quickshell's exact vocabulary and adds what porting
+caelestia needs (`2026-10-30-caelestia-port-assessment.md`). Section 11 wins where it conflicts.
 
 The owner's goal: users write their whole shell in QML. Not only a top bar: bars on any of the
 four edges, a launcher, a dock, an OSD, notification popups, menus, a clipboard history, widget
@@ -70,8 +72,9 @@ Goals:
 
 Non-goals:
 
-- Parity with QuickShell or Wayland layer-shell. Windows has no layer-shell; section 5 says what
-  cannot be had and what the fallback is.
+- Parity with Wayland layer-shell, and with Quickshell as a whole (revised: source compatibility
+  with Quickshell QML for the subset with a Windows meaning is a goal, section 11). Windows has no
+  layer-shell; section 5 says what cannot be had and what the fallback is.
 - A sandbox for user QML. The config is code and runs as the user (section 8).
 - A GUI editor, a package manager for shells, or a plugin ABI for C++ extensions.
 - Porting every built-in widget to a vertical variant in one go. The migration gives the vertical
@@ -822,3 +825,117 @@ waits for its parent to show; `null` overrides), `Window.screen` assignable from
 `Application.screens`, `requestActivate`; `ColumnLayout`, `ListView.orientation`; `QProcess`
 `readyReadStandardOutput`, `setProcessEnvironment`, `terminate`, `kill`, and the setters
 `startDetached` honours.
+
+## 11. Revision 2026-10-30: Quickshell-exact vocabulary and the caelestia port
+
+The owner added a goal: users port the supported functionality and styling of existing Quickshell
+shells to Windows. The first reference is https://github.com/caelestia-dots/shell. The assessment,
+with the feature table and the evidence, is `2026-10-30-caelestia-port-assessment.md`. This section
+records what it changes in this proposal. Where it conflicts with sections 4 to 7, this section
+wins. Nothing here is decided until the owner answers questions 12 to 15.
+
+### 11.1 What changes
+
+- **Goal and non-goals.** Section 2 says "Parity with QuickShell" is a non-goal. It becomes: source
+  compatibility with Quickshell QML for the subset that has a Windows meaning, with the exclusions
+  listed at the end of this section. "A plugin ABI for C++ extensions" stays a non-goal as a promise,
+  but the engine loads user-built Qt QML plugins from the config home (11.3, item 5).
+- **Names.** Sections 4.1.1 and 4.2.2 rename Quickshell's types. Ported QML would fail on its first
+  line. The vocabulary becomes Quickshell's own; `Panel` and `Overlay` stay as presets over
+  `PanelWindow`. Questions 1 and 2 are answered by this: the root is `ShellRoot`, in `shell.qml`.
+
+| Section 4 name | New name |
+|---|---|
+| `Shell` | `ShellRoot` (and `Scope` for grouping) |
+| `Surface`, `Panel`, `Overlay` | `PanelWindow` (creatable), `FloatingWindow`; `Panel` and `Overlay` remain as presets |
+| `edge`, `thickness`, `length`, `exclusive` | `anchors.{top,bottom,left,right}`, `implicitWidth/Height`, `exclusiveZone`, `exclusionMode` |
+| `screens: [...]` | `Variants { model: Quickshell.screens }`; `screens` stays as a shorthand on the presets |
+| `Window.window.surface` | `QsWindow.window` (attached) |
+| `Persist` | `PersistentProperties { reloadableId }` |
+| `Hotkey { keys }` | `GlobalShortcut { name, appid, description }`; `Hotkey` stays as the key-owning form |
+| `Process { program, stream, line(), json }` | `Process { command, running, stdout: StdioCollector or SplitParser, stderr, environment, workingDirectory, exec(), exited(exitCode, exitStatus) }` |
+| `Shell.env`, `Shell.start` | `Quickshell.env()`, `Quickshell.execDetached()` |
+| `Desktop.screens` | `Quickshell.screens` of `ShellScreen` (`name`, `width`, `height`, `x`, `y`, `model`, `serialNumber`) |
+| `anchorItem`, `anchorRect` | `anchor.item`, `anchor.rect`, `anchor.edges`, `anchor.gravity` |
+| `Loader { active }` for lazy surfaces | `LazyLoader { loading }` |
+| `Apps` | `DesktopEntries`, `DesktopEntry` (`execute()`, `icon`, `categories`) |
+| `S.Windows` | `ToplevelManager.toplevels` (plus `S.Windows` as the wabar form) |
+| `focus: Surface.OnDemand` | `WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand`, through a `Quickshell.Wayland` shim |
+| `input: PassThrough` | `mask: Region {}` (empty region); also `Surface.PassThrough` |
+
+`IpcHandler` already has Quickshell's form and stays.
+
+### 11.2 Input regions come back
+
+Section 5 says an input region is "not offered in 2.0" because `SetWindowRgn` breaks DWM effects.
+Caelestia puts every panel into one full-screen window and cuts the click-through shape with a
+`Region`. It uses `mask:` 27 times. Without a region implementation, a ported shell needs one window
+per panel, which is a rewrite of its `drawers/` module.
+
+Proposed mechanism: no `SetWindowRgn`. While a masked window is shown, poll `GetCursorPos` at 30 Hz,
+test the point against the `Region`, and toggle `WS_EX_TRANSPARENT`. Spike S7 measures click loss at
+region edges and the cost of the poll. If S7 fails, the documented fallback is one window per panel,
+with hover zones as thin edge windows.
+
+The alternative rejected in section 8 ("one full-screen window per screen, every surface an item
+inside it") becomes viable for ported shells once S7 passes. App bar reservation still needs one
+window per reserved edge, so caelestia's four 1 px `ExclusionZone` windows map onto it unchanged.
+
+### 11.3 Engine additions
+
+| # | Item | Size | What |
+|---|---|---|---|
+| 1 | Quickshell window vocabulary | M | The rename above, plus `QsWindow`, `Variants`, `Scope`, `ShellRoot`, `LazyLoader`, `FloatingWindow`, `Region`, `ShellScreen`, `ExclusionMode`; a thin `Quickshell.Wayland` module with `WlrLayershell.layer`, `keyboardFocus`, `namespace`, `exclusionMode` as attached properties over the same state. Same engine work as `Surface`; only names move |
+| 2 | `mask: Region` | M | 11.2 |
+| 3 | `Quickshell.Io` and the `Quickshell` singleton | M | `FileView` (`JsonAdapter`, `FileViewError`), the `Process` shape above, `ElapsedTimer`; `env`, `execDetached`, `shellDir`, `shellPath`, `statePath`, `cachePath`, `dataPath`, `clipboardText`, `processId`, `iconPath`, `reload`. Supersedes the `Process` row of section 4.4 |
+| 4 | `GlobalShortcut`-compatible `Hotkey` | S | `name`, `description`, optional `keys`; `wabarc shortcut <name>` fires it, so whkd or AutoHotkey bind it as a Hyprland config does |
+| 5 | Plugins from the config home | M | `<config home>/modules` and `--import-path` join the QML import path. A user-built Qt QML plugin loads after a Qt version and build id check. `SECURITY.md` says it runs as the user, as the config does. Unlocks about 70% of caelestia's 20,800-line plugin with no engine code |
+| 6 | Material 3 dynamic colour | M | A pure, tested port of material-color-utilities (tonal palettes from an image) and an image luminance helper, in `wallpapers` or the kernel (two users needed for the kernel) |
+| 7 | Service gaps | M | `Media.players` (GSMTC has all sessions); per-app audio streams (`IAudioSessionManager2`); Bluetooth discovery and pairing; `Desktop.capsLock`, `numLock`, `keyboardLayout`, `idleSeconds`; an idle inhibitor (`SetThreadExecutionState`); GPU and disk stat sources; `Notifications` fields on `toastAdded` |
+| 8 | `layer: Background` | S to decide, M to do | The WorkerW attach exists and is allowlisted (`docs/architecture.md:216`). Caelestia's background module needs it. Revisits question 7 |
+| 9 | Capture | L, last | `ScreencopyView` over `Windows.Graphics.Capture`; window previews over DWM thumbnails; WASAPI loopback for `AudioCollector` |
+
+### 11.4 Migration
+
+Item 1 joins step 1, because step 1 is the breaking commit and names are cheapest to change there.
+Item 4 joins step 5 and item 3 joins step 8. New steps, in order after step 16:
+
+| # | Step | Size | Notes |
+|---|---|---|---|
+| 17 | `mask: Region` (item 2) | M | spike S7 first |
+| 18 | Plugins from the config home (item 5) | M | spike S8 first |
+| 19 | Material 3 colour (item 6) | M | pure; parallel with anything |
+| 20 | Service gaps (item 7) | M | one commit per service |
+| 21 | `layer: Background` (item 8) | M | after question 14 |
+| 22 | Capture (item 9) | L | last; optional |
+
+### 11.5 Windows limits for a port
+
+Out, and the docs must say so: session lock and PAM (`LockWorkStation()` only); being the
+notification server and invoking toast actions (Windows owns toasts); DBus tray menus rendered in
+QML (the tray app owns its Win32 menu, so `SystemTrayItem.menu` is null); alpha-thresholded
+compositor blur (Windows blurs the whole window rectangle, so a rounded blurred panel gets Windows'
+corner radius or blurred corners); Hyprland special workspaces and `dispatch`; exclusive keyboard
+focus (question 4).
+
+### 11.6 New spikes
+
+| Unknown | Why it matters | Spike |
+|---|---|---|
+| S7: cursor polling at 30 Hz toggling `WS_EX_TRANSPARENT` as an input region | item 2, caelestia's whole drawers design | a full-screen transparent tool window with a `Region` of three rectangles; click through the gaps and the edges while a second app is in front; record missed and stolen clicks and CPU |
+| S8: loading a user-built Qt QML plugin from the config home into `wabar.exe` | item 5 | build a one-type plugin against the same Qt 6.10 ARM64 and x64; load through the import path; load one built against another Qt version and check the guard |
+| S9: variable-font axes (`GRAD`, `ROND`, `opsz`, `wdth`, `wght`) under `fontengine=gdi` | caelestia's Google Sans Flex and Material Symbols | render both with and without the GDI font engine; if axes need DirectWrite, offer a font engine option |
+
+### 11.7 New open questions
+
+12. **Adopt Quickshell's exact names for the creatable types (11.1)?** Recommended: yes. It is the
+    only way ported QML loads without edits, and the cost is a rename before anything depends on the
+    old names. `Panel` and `Overlay` remain as short forms for hand-written shells.
+13. **Offer `mask: Region` through cursor polling, pending S7?** Recommended: yes, behind the spike.
+    Without it, most large Quickshell shells need a rewrite of their window layout.
+14. **Offer `layer: Background` through WorkerW?** Recommended: yes, with the Explorer-restart
+    fallback documented, once the wallpaper transition no longer owns that code (reverses the
+    recommendation of question 7 for the shell-porting goal).
+15. **Amend "no plugin ABI" to "no ABI promise" and load plugins from the config home?**
+    Recommended: yes, with the version check. It runs code as the user, as the config does already,
+    and it is what lets caelestia's `Config`, `Tokens`, `I18n` and `State` singletons load.
