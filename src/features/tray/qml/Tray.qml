@@ -15,8 +15,9 @@ import wabar.services as S
 // network icons are left out unless `showSystemIcons` is set. `iconsPerRow` is the width of the
 // popup grid. `collapsedText` and `expandedText` are the chevron's glyphs. `stateDir` moves the
 // pin state folder away from %LOCALAPPDATA%\wabar (for tests). When the tray cannot be used the
-// widget says "tray unavailable" and hovering it shows why.
-Row {
+// widget says "tray unavailable" and hovering it shows why. On a panel docked to the left or right
+// edge the icons stack top to bottom.
+Strip {
     id: root
 
     property int iconSize: 16
@@ -75,7 +76,6 @@ Row {
         objectName: "trayUnavailable"
         visible: !S.Systray.available
         interactive: false
-        anchors.verticalCenter: parent.verticalCenter
         text: "tray unavailable"
         tooltip: S.Systray.unavailableReason
     }
@@ -114,7 +114,6 @@ Row {
         id: chevron
         objectName: "trayChevron"
         visible: root.showUnpinned && root.unpinnedInPopup && root.shownUnpinned > 0
-        anchors.verticalCenter: parent.verticalCenter
         text: overflow.visible ? root.expandedText : root.collapsedText
         tooltip: "Hidden icons"
 
