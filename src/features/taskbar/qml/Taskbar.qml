@@ -17,8 +17,9 @@ import wabar.services as S
 // windows on another virtual desktop; `monitorExclusive` shows only the windows on the monitor
 // of this bar. `ignoreTitles`, `ignoreClasses` and `ignoreProcesses` hide windows by exact title,
 // window class and executable name. `showCount` draws the number of windows on a grouped button.
-// There is no hover preview, no peek and no drag to reorder.
-Row {
+// There is no hover preview, no peek and no drag to reorder. On a panel docked to the left or right
+// edge the buttons stack top to bottom and the button in front does not widen.
+Strip {
     id: root
 
     property int iconSize: 16
@@ -58,6 +59,8 @@ Row {
     spacing: 2 * buttonMargin
     leftPadding: buttonMargin
     rightPadding: buttonMargin
+    topPadding: vertical ? buttonMargin : 0
+    bottomPadding: vertical ? buttonMargin : 0
 
     S.TaskbarModel {
         id: buttons
@@ -80,7 +83,7 @@ Row {
 
             required property var model
             readonly property bool grouped: root.showCount && model.windowCount > 1
-            readonly property real sidePadding: model.active ? root.activePadding : root.buttonPadding
+            readonly property real sidePadding: model.active && !root.vertical ? root.activePadding : root.buttonPadding
             readonly property real endPadding: grouped ? (model.active ? root.groupedActivePadding : root.groupedPadding) : sidePadding
 
             objectName: "taskbarButton-" + model.key
