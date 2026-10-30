@@ -47,6 +47,29 @@ struct BatterySample {
   std::optional<double> healthPercent;
 };
 
+struct GpuSample {
+  bool available = false;         // a GPU Engine counter exists
+  double percent = 0;             // busiest engine type over all adapters, 0..100
+  std::uint64_t memoryUsed = 0;   // dedicated video memory in use, bytes
+  std::uint64_t memoryTotal = 0;  // dedicated video memory of the hardware adapters, bytes
+  std::string name;               // name of the first hardware adapter
+};
+
+// One mounted volume with a drive letter.
+struct DiskSample {
+  std::string mount;  // "C:\"
+  std::string name;   // volume label, may be empty
+  std::string fileSystem;
+  std::uint64_t total = 0;
+  std::uint64_t free = 0;
+  std::uint64_t used = 0;
+  double percent = 0;      // used / total * 100
+  bool system = false;     // holds the Windows folder
+  bool removable = false;  // removable media (USB stick, card)
+
+  bool operator==(const DiskSample&) const = default;
+};
+
 class CpuDataSource {
  public:
   virtual ~CpuDataSource() = default;
@@ -65,9 +88,23 @@ class BatteryDataSource {
   virtual std::optional<BatterySample> sample() = 0;
 };
 
+class GpuDataSource {
+ public:
+  virtual ~GpuDataSource() = default;
+  virtual GpuSample sample() = 0;
+};
+
+class DiskDataSource {
+ public:
+  virtual ~DiskDataSource() = default;
+  virtual std::vector<DiskSample> sample() = 0;
+};
+
 std::shared_ptr<CpuDataSource> createCpuDataSource();
 std::shared_ptr<MemoryDataSource> createMemoryDataSource();
 std::shared_ptr<BatteryDataSource> createBatteryDataSource();
+std::shared_ptr<GpuDataSource> createGpuDataSource();
+std::shared_ptr<DiskDataSource> createDiskDataSource();
 
 }  // namespace wabar::system_stats
 
@@ -75,3 +112,5 @@ std::shared_ptr<BatteryDataSource> createBatteryDataSource();
 Q_DECLARE_METATYPE(wabar::system_stats::CpuSample)
 Q_DECLARE_METATYPE(wabar::system_stats::MemorySample)
 Q_DECLARE_METATYPE(wabar::system_stats::BatterySample)
+Q_DECLARE_METATYPE(wabar::system_stats::GpuSample)
+Q_DECLARE_METATYPE(wabar::system_stats::DiskSample)

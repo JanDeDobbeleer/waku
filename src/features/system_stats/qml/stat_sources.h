@@ -2,7 +2,9 @@
 
 #include <QtQml/qqmlregistration.h>
 
+#include <QString>
 #include <QVariantList>
+#include <QVariantMap>
 #include <memory>
 
 #include "features/system_stats/system_stats.h"
@@ -98,6 +100,70 @@ class Battery : public kernel::StatSource {
   std::shared_ptr<BatteryDataSource> source_;
   BatterySample sample_;
   bool available_ = false;
+};
+
+// GPU load and dedicated video memory from the PDH "GPU Engine" and "GPU Adapter Memory" counters.
+// `usage` (also `percent` and `percentage`) is the busiest engine type over all adapters, 0..100;
+// `memory` is the dedicated video memory in use and `memoryTotal` the dedicated memory of the
+// hardware adapters, both in bytes (`memoryTotal` is 0 for an integrated GPU without dedicated
+// memory). All stay 0 and `available` stays false when the counters are missing.
+class Gpu : public kernel::StatSource {
+  Q_OBJECT
+  QML_ELEMENT
+  Q_PROPERTY(bool available READ available NOTIFY updated)
+  Q_PROPERTY(double usage READ percent NOTIFY updated)
+  Q_PROPERTY(double percent READ percent NOTIFY updated)
+  Q_PROPERTY(double percentage READ percent NOTIFY updated)
+  Q_PROPERTY(qlonglong memory READ memory NOTIFY updated)
+  Q_PROPERTY(qlonglong memoryUsed READ memory NOTIFY updated)
+  Q_PROPERTY(qlonglong memoryTotal READ memoryTotal NOTIFY updated)
+  Q_PROPERTY(double memoryPercent READ memoryPercent NOTIFY updated)
+  Q_PROPERTY(QString name READ name NOTIFY updated)
+
+ public:
+  explicit Gpu(QObject* parent = nullptr);
+  Gpu(std::shared_ptr<GpuDataSource> source, QObject* parent);
+
+  bool available() const { return sample_.available; }
+  double percent() const { return sample_.percent; }
+  qlonglong memory() const { return static_cast<qlonglong>(sample_.memoryUsed); }
+  qlonglong memoryTotal() const { return static_cast<qlonglong>(sample_.memoryTotal); }
+  double memoryPercent() const;
+  QString name() const { return QString::fromStdString(sample_.name); }
+
+ protected:
+  void sample() override;
+
+ private:
+  std::shared_ptr<GpuDataSource> source_;
+  GpuSample sample_;
+};
+
+// The mounted volumes with a drive letter (fixed, removable and optical drives; network drives
+// are left out so an unreachable share cannot stall the sample). `disks` is a list of maps with
+// `mount` ("C:\\"), `name` (volume label), `fileSystem`, `total`, `free`, `used` (bytes), `perc`
+// and `percent` (used share, 0..100), `hasRoot` and `system` (the drive holding Windows) and
+// `removable`. `primaryDisk` is the system drive's map (empty when unknown).
+class Disks : public kernel::StatSource {
+  Q_OBJECT
+  QML_ELEMENT
+  Q_PROPERTY(QVariantList disks READ disks NOTIFY updated)
+  Q_PROPERTY(QVariantMap primaryDisk READ primaryDisk NOTIFY updated)
+
+ public:
+  explicit Disks(QObject* parent = nullptr);
+  Disks(std::shared_ptr<DiskDataSource> source, QObject* parent);
+
+  QVariantList disks() const { return disks_; }
+  QVariantMap primaryDisk() const { return primary_; }
+
+ protected:
+  void sample() override;
+
+ private:
+  std::shared_ptr<DiskDataSource> source_;
+  QVariantList disks_;
+  QVariantMap primary_;
 };
 
 }  // namespace wabar::system_stats

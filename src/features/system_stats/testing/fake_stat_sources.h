@@ -60,6 +60,40 @@ class FakeCpu final : public FakeSource<CpuDataSource, CpuSample> {
   }
 };
 
+class FakeGpu final : public FakeSource<GpuDataSource, GpuSample> {
+ public:
+  GpuSample make() override {
+    GpuSample s;
+    s.available = present;
+    s.percent = 35;
+    s.memoryUsed = 2'000'000'000ULL;
+    s.memoryTotal = 8'000'000'000ULL;
+    s.name = "Fake GPU";
+    return s;
+  }
+  std::atomic<bool> present{true};
+};
+
+class FakeDisks final : public FakeSource<DiskDataSource, std::vector<DiskSample>> {
+ public:
+  std::vector<DiskSample> make() override {
+    DiskSample system;
+    system.mount = "C:\\";
+    system.name = "Windows";
+    system.fileSystem = "NTFS";
+    system.total = 500'000'000'000ULL;
+    system.free = 125'000'000'000ULL;
+    system.used = 375'000'000'000ULL;
+    system.percent = 75;
+    system.system = true;
+    DiskSample data;
+    data.mount = "D:\\";
+    data.total = 1'000'000'000'000ULL;
+    data.free = 1'000'000'000'000ULL;
+    return {system, data};
+  }
+};
+
 class FakeBattery final : public FakeSource<BatteryDataSource, std::optional<BatterySample>> {
  public:
   std::optional<BatterySample> make() override {
