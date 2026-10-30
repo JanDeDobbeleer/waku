@@ -395,7 +395,10 @@ definitions and the new shell failed with `Unable to assign Foo to Foo` and null
   `Quickshell` singleton on `singletonsCleared`). A shell part that caches one (`WallpaperSettings`)
   is destroyed with the old shell and resolves it again in `activate()`.
 - A shell that passes the check but cannot be created leaves the fallback shell with the error: the
-  old shell is gone. A file that fails the check still keeps the old shell and the singletons.
+  old shell is gone. A new shell that creates no window while the old one had some (a `Variants`
+  delegate that failed) counts as a failure too: the error is `the shell created no windows` plus
+  the first QML warning of the build, and `reload()` returns false. A first start with no windows
+  stays valid. A file that fails the check still keeps the old shell and the singletons.
 - State that must survive stays outside the singletons: `PersistentProperties` (per engine), the
   taskbar marker, `host::Hotkeys`, and the shared `weak_ptr` hubs (media, notifications), which live
   while any holder lives.
@@ -404,9 +407,10 @@ definitions and the new shell failed with `Unable to assign Foo to Foo` and null
   `TaskbarService` tracker (it restarts when a Taskbar widget hands over its bar window),
   `Notifications`, `Bluetooth`, `Network`, `ControlCenter` (brightness worker), `Wallpapers` (its
   hotkey and watchers). Each destructor stops and joins its thread (threading table). The image
-  providers they register (`tray`, `appicon`, `windowicon`, `wallpaper`) are replaced when the
-  singleton is created again; one a new shell never touches stays registered with a dead model, so
-  a shell must reach an image through its service first.
+  providers they register (`tray`, `appicon`, `windowicon`, `wallpaper`) belong to the engine and
+  are replaced when the singleton is created again. Until then the old provider holds the model
+  (`QPointer`) or the shared index or cache, so it answers with a null image and never touches a
+  destroyed service. A provider must keep it so: no raw pointer to the singleton.
 
 ## Error handling
 

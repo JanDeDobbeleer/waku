@@ -473,7 +473,9 @@ ShellRoot {
 }
 )"));
   EXPECT_FALSE(h.host->reload());
-  EXPECT_FALSE(h.host->error().isEmpty());
+  EXPECT_TRUE(h.host->error().contains(QStringLiteral("no windows")))
+      << qPrintable(h.host->error());
+  EXPECT_TRUE(h.host->error().contains(QStringLiteral("notGiven"))) << qPrintable(h.host->error());
   ASSERT_EQ(h.host->windows().size(), 1);
   EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("<missing>"));  // the fallback, not "good"
 }

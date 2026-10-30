@@ -11,6 +11,7 @@
 #include <QEvent>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QMutex>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickWindow>
@@ -43,6 +44,64 @@ QString describe(const QQmlError& error) {
       .arg(error.column())
       .arg(error.description());
 }
+
+// Keeps the first warning logged while it runs (and passes every message on), so a shell that
+// builds nothing can say why. Qt's handler is process-wide: start/stop bracket one build on the
+// GUI thread, and the destructor always restores the previous handler.
+class WarningCapture {
+ public:
+  WarningCapture() = default;
+  WarningCapture(const WarningCapture&) = delete;
+  WarningCapture& operator=(const WarningCapture&) = delete;
+  ~WarningCapture() { stop(); }
+
+  void start() {
+    if (active_) return;
+    QMutexLocker lock(&mutex());
+    owner() = this;
+    previous() = qInstallMessageHandler(&WarningCapture::handle);
+    active_ = true;
+  }
+  void stop() {
+    if (!active_) return;
+    QMutexLocker lock(&mutex());
+    qInstallMessageHandler(previous());
+    owner() = nullptr;
+    active_ = false;
+  }
+  QString first() const {
+    QMutexLocker lock(&mutex());
+    return first_;
+  }
+
+ private:
+  static QMutex& mutex() {
+    static QMutex m;
+    return m;
+  }
+  static WarningCapture*& owner() {
+    static WarningCapture* o = nullptr;
+    return o;
+  }
+  static QtMessageHandler& previous() {
+    static QtMessageHandler p = nullptr;
+    return p;
+  }
+  static void handle(QtMsgType type, const QMessageLogContext& context, const QString& message) {
+    QtMessageHandler next = nullptr;
+    {
+      QMutexLocker lock(&mutex());
+      next = previous();
+      if (type == QtWarningMsg && owner() && owner()->first_.isEmpty()) {
+        owner()->first_ = message.section(QLatin1Char('\n'), 0, 0).trimmed();
+      }
+    }
+    if (next) next(type, context, message);
+  }
+
+  bool active_ = false;
+  QString first_;
+};
 
 QStringList describeAll(const QList<QQmlError>& errors) {
   QStringList lines;
@@ -315,6 +374,10 @@ bool ShellHost::reload() {
   if (options_.safe) return reloadSafe();
   QString error;
   std::unique_ptr<Loaded> next;
+  // The reset below destroys the old shell: remember whether it had windows, so a new shell
+  // that creates none (a Variants delegate that failed) is an error and not an empty screen.
+  const bool hadWindows = loaded_ && !loaded_->entries.empty();
+  WarningCapture warnings;
   const QString legacyPath = QDir(options_.configHome).filePath(options_.legacyEntryFile);
   if (!QFileInfo::exists(entryPath())) {
     if (!options_.legacyEntryFile.isEmpty() && QFileInfo::exists(legacyPath)) {
@@ -343,13 +406,21 @@ bool ShellHost::reload() {
     interceptor_->nextGeneration();
     resetEngine();
     applyTheme();
+    warnings.start();
     next = build(QUrl::fromLocalFile(entryPath()), &error);
+    warnings.stop();
   }
 
   if (next) {
     int built = 0;
     const QString failed = failures(*next, &built);
-    if (!failed.isEmpty() && built == 0) {
+    if (failed.isEmpty() && next->entries.empty() && hadWindows) {
+      // Nothing failed loudly, yet no window exists and the old shell is already gone.
+      error = QStringLiteral("the shell created no windows");
+      if (!warnings.first().isEmpty()) error += QStringLiteral(": ") + warnings.first();
+      qWarning().noquote() << "wabar:" << error;
+      next.reset();
+    } else if (!failed.isEmpty() && built == 0) {
       // Not one window of the new shell could be built: nothing to show but the error.
       error = failed;
       qWarning().noquote() << "wabar: no window could be built:" << error;
