@@ -50,6 +50,16 @@ enum Flag { None = 0, Top = 1, Left = 2, Right = 4, Bottom = 8 };
 Q_ENUM_NS(Flag)
 }  // namespace Edges
 
+// The screen edge a shell window is docked to: `QsWindow.window.dockEdge`. A PanelWindow is docked
+// when it is anchored to one edge and stretched or centred across it (host/panel_geometry.h);
+// every other window has None. wabar's own: Quickshell has no such property.
+namespace DockEdge {
+Q_NAMESPACE
+QML_NAMED_ELEMENT(DockEdge)
+enum Enum { None = 0, Top = 1, Bottom = 2, Left = 3, Right = 4 };
+Q_ENUM_NS(Enum)
+}  // namespace DockEdge
+
 // The native backdrop of a shell window (DWM): none, the blur behind, or Mica.
 namespace Backdrop {
 Q_NAMESPACE

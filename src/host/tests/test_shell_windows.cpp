@@ -138,7 +138,7 @@ TEST(ShellWindowsTest, SettingTheExclusiveZoneSwitchesAutoToNormal) {
   EXPECT_EQ(panel->exclusionMode(), ExclusionMode::Normal);
   ASSERT_EQ(h.native.created.size(), 1u);
   EXPECT_TRUE(h.native.created[0].request.reserveSpace);
-  EXPECT_EQ(h.native.created[0].request.height, 12);
+  EXPECT_EQ(h.native.created[0].request.thickness, 12);
 }
 
 TEST(ShellWindowsTest, AutoReservesTheThicknessAndIgnoreNothing) {
@@ -147,7 +147,7 @@ TEST(ShellWindowsTest, AutoReservesTheThicknessAndIgnoreNothing) {
   startPanel(autoZone, QStringLiteral("anchors { top: true; left: true; right: true }"));
   ASSERT_EQ(autoZone.native.created.size(), 1u);
   EXPECT_TRUE(autoZone.native.created[0].request.reserveSpace);
-  EXPECT_EQ(autoZone.native.created[0].request.height, 30);
+  EXPECT_EQ(autoZone.native.created[0].request.thickness, 30);
 
   Harness ignore;
   ignore.allowReserve = true;
@@ -155,6 +155,61 @@ TEST(ShellWindowsTest, AutoReservesTheThicknessAndIgnoreNothing) {
                                     "exclusionMode: ExclusionMode.Ignore"));
   ASSERT_EQ(ignore.native.created.size(), 1u);
   EXPECT_FALSE(ignore.native.created[0].request.reserveSpace);
+}
+
+TEST(ShellWindowsTest, ASidePanelIsAnAppBarOnItsOwnEdgeWithItsWidthAsThickness) {
+  const struct {
+    const char* anchors;
+    wabar::host::AppBarEdge edge;
+  } cases[] = {
+      {"anchors { left: true; top: true; bottom: true }", wabar::host::AppBarEdge::Left},
+      {"anchors { right: true; top: true; bottom: true }", wabar::host::AppBarEdge::Right},
+  };
+  for (const auto& c : cases) {
+    Harness h;
+    h.allowReserve = true;
+    startPanel(h, QString::fromLatin1(c.anchors));
+    ASSERT_EQ(h.native.created.size(), 1u) << c.anchors;
+    EXPECT_EQ(h.native.created[0].request.edge, c.edge);
+    EXPECT_EQ(h.native.created[0].request.thickness, 120);  // implicitWidth
+    EXPECT_TRUE(h.native.created[0].request.reserveSpace);
+  }
+}
+
+TEST(ShellWindowsTest, TheDockEdgeAndVerticalAreDerivedFromTheAnchors) {
+  const struct {
+    const char* anchors;
+    int edge;
+    bool vertical;
+  } cases[] = {
+      {"anchors { top: true; left: true; right: true }", DockEdge::Top, false},
+      {"anchors { bottom: true; left: true; right: true }", DockEdge::Bottom, false},
+      {"anchors { left: true; top: true; bottom: true }", DockEdge::Left, true},
+      {"anchors { right: true; top: true; bottom: true }", DockEdge::Right, true},
+      {"anchors { top: true; left: true }", DockEdge::None, false},
+      {"anchors { top: true; left: true; right: true; bottom: true }", DockEdge::None, false},
+  };
+  for (const auto& c : cases) {
+    Harness h;
+    startPanel(h, QString::fromLatin1(c.anchors));
+    QsWindow* window = h.shellWindow();
+    ASSERT_NE(window, nullptr) << c.anchors;
+    EXPECT_EQ(window->property("dockEdge").toInt(), c.edge) << c.anchors;
+    EXPECT_EQ(window->property("dockVertical").toBool(), c.vertical) << c.anchors;
+  }
+}
+
+TEST(ShellWindowsTest, TheDockEdgeFollowsTheAnchorsWhenTheyChange) {
+  Harness h;
+  startPanel(h, QStringLiteral("anchors { top: true; left: true; right: true }"));
+  auto* panel = qobject_cast<PanelWindow*>(h.shellWindow());
+  ASSERT_NE(panel, nullptr);
+  QSignalSpy changed(panel, &QsWindow::dockEdgeChanged);
+  panel->anchors()->setProperty("right", false);
+  panel->anchors()->setProperty("bottom", true);
+  EXPECT_EQ(panel->dockEdge(), DockEdge::Left);
+  EXPECT_GE(changed.count(), 1);
+  EXPECT_TRUE(panel->dockVertical());
 }
 
 TEST(ShellWindowsTest, WlrLayershellAttachedPropertiesWriteThePanelState) {

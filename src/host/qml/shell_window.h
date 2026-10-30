@@ -133,6 +133,12 @@ class QsWindow : public QObject, public QQmlParserStatus {
   Q_PROPERTY(int width READ width NOTIFY widthChanged FINAL)
   Q_PROPERTY(int height READ height NOTIFY heightChanged FINAL)
   Q_PROPERTY(qreal devicePixelRatio READ devicePixelRatio NOTIFY screenChanged FINAL)
+  // wabar: the screen edge the window is docked to, derived from `anchors` (None for a window that
+  // is not a docked PanelWindow), and whether that edge is Left or Right. Read-only. They are named
+  // `dockEdge` and `dockVertical`, not `edge` and `vertical`, so a Quickshell shell that declares
+  // its own `edge` or `vertical` property on a window keeps loading.
+  Q_PROPERTY(wabar::host::DockEdge::Enum dockEdge READ dockEdge NOTIFY dockEdgeChanged FINAL)
+  Q_PROPERTY(bool dockVertical READ dockVertical NOTIFY dockEdgeChanged FINAL)
   // The window is on the screen (it is visible, built, and its shell is installed).
   Q_PROPERTY(
       bool backingWindowVisible READ backingWindowVisible NOTIFY backingWindowVisibleChanged FINAL)
@@ -183,6 +189,10 @@ class QsWindow : public QObject, public QQmlParserStatus {
   int height() const;
   qreal devicePixelRatio() const;
   bool backingWindowVisible() const;
+  virtual DockEdge::Enum dockEdge() const { return DockEdge::None; }
+  bool dockVertical() const {
+    return dockEdge() == DockEdge::Left || dockEdge() == DockEdge::Right;
+  }
   QQmlComponent* content() const { return content_; }
   void setContent(QQmlComponent* content);
   Backdrop::Kind backdrop() const { return backdrop_; }
@@ -223,6 +233,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   void widthChanged();
   void heightChanged();
   void backingWindowVisibleChanged();
+  void dockEdgeChanged();
   void contentChanged();
   void backdropChanged();
   void backgroundChanged();
@@ -301,7 +312,9 @@ class QsWindowAttached : public QObject {
 // layer. Geometry follows `anchors`, `margins`, `implicitWidth` and `implicitHeight` on its
 // screen (host/panel_geometry.h). Anchored to the top or the bottom edge alone it is a Windows
 // app bar, and it reserves work area (`exclusiveZone`, `exclusionMode`) only when the host runs
-// with --register-app-bar. Left and right app bars come later.
+// with --register-app-bar. The rule for a docked window is in panelAppBarEdge()
+// (host/panel_geometry.h): one edge anchored, the opposite not, the perpendicular axis stretched
+// or centred. That edge is `dockEdge`, on all four sides; the app bar uses the same edge.
 //
 //     PanelWindow {
 //         anchors { top: true; left: true; right: true }
@@ -351,6 +364,7 @@ class PanelWindow : public QsWindow {
   QRect geometryOn(const QRect& screen) const;
   // The app bar edge, if it is one, and the pixels it reserves (before the host's gate).
   std::optional<AppBarEdge> appBarEdge() const { return panelAppBarEdge(anchors_->set()); }
+  DockEdge::Enum dockEdge() const override;
   int reservedZone() const;
 
   bool showsErrors() const override { return true; }
@@ -368,8 +382,11 @@ class PanelWindow : public QsWindow {
   void afterShow() override;
 
  private:
+  void updateDockEdge();
+
   PanelAnchors* anchors_;
   PanelMargins* margins_;
+  DockEdge::Enum lastDockEdge_ = DockEdge::None;
   int exclusiveZone_ = 0;
   ExclusionMode::Enum exclusionMode_ = ExclusionMode::Auto;
   WlrLayer::Enum layer_ = WlrLayer::Top;

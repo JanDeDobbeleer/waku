@@ -329,11 +329,35 @@ QPointF QsWindowAttached::mapFromItem(QQuickItem* item, qreal x, qreal y) const 
 PanelWindow::PanelWindow(QObject* parent)
     : QsWindow(parent), anchors_(new PanelAnchors(this)), margins_(new PanelMargins(this)) {
   connect(anchors_, &PanelAnchors::changed, this, [this] {
+    updateDockEdge();
     if (complete()) applyGeometry();
   });
   connect(margins_, &PanelMargins::changed, this, [this] {
     if (complete()) applyGeometry();
   });
+}
+
+DockEdge::Enum PanelWindow::dockEdge() const {
+  const std::optional<AppBarEdge> edge = appBarEdge();
+  if (!edge) return DockEdge::None;
+  switch (*edge) {
+    case AppBarEdge::Left:
+      return DockEdge::Left;
+    case AppBarEdge::Top:
+      return DockEdge::Top;
+    case AppBarEdge::Right:
+      return DockEdge::Right;
+    case AppBarEdge::Bottom:
+      return DockEdge::Bottom;
+  }
+  return DockEdge::None;
+}
+
+void PanelWindow::updateDockEdge() {
+  const DockEdge::Enum edge = dockEdge();
+  if (edge == lastDockEdge_) return;
+  lastDockEdge_ = edge;
+  emit dockEdgeChanged();
 }
 
 void PanelWindow::setExclusiveZone(int zone) {

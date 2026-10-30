@@ -483,7 +483,8 @@ void ShellHost::applyNative(Entry& entry) {
     wabar::host::AppBarRequest request;
     request.hwnd = hwnd;
     request.edge = *edge;
-    request.height = zone > 0 ? zone : panel->height();
+    request.thickness =
+        zone > 0 ? zone : panelThickness(*edge, QSize(panel->width(), panel->height()));
     request.screen = window->targetScreen();
     request.reserveSpace = options_.allowReserve && zone > 0;
     request.alwaysOnTop = panel->aboveWindows();

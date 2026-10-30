@@ -16,6 +16,7 @@
 # Include root is src/ (#include "host/qml/shell_host.h"), carried by wabar_kernel.
 add_library(wabar_host_base STATIC
   app_bar.h
+  app_bar.cpp
   panel_geometry.h
   panel_geometry.cpp
   popup_placement.h
@@ -86,6 +87,7 @@ add_subdirectory(quickshell)
 
 wabar_contribute(
   TESTS
+    tests/test_app_bar.cpp
     tests/test_control_handler.cpp
     tests/test_panel_geometry.cpp
     tests/test_popups.cpp

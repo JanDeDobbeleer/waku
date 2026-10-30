@@ -150,7 +150,7 @@ TEST(ShellHostTest, RegistersAnAppBarWithTheEdgeAndThickness) {
   ASSERT_TRUE(h.host->reload());
   ASSERT_EQ(h.native.created.size(), 1u);
   EXPECT_EQ(h.native.created[0].request.edge, wabar::host::AppBarEdge::Bottom);
-  EXPECT_EQ(h.native.created[0].request.height, 30);
+  EXPECT_EQ(h.native.created[0].request.thickness, 30);
   EXPECT_TRUE(h.native.created[0].request.alwaysOnTop);
   EXPECT_TRUE(h.native.created[0].request.noActivate);
 }

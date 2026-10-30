@@ -27,9 +27,19 @@ QRect panelGeometry(const PanelAnchorSet& anchors, const QMargins& margins,
 }
 
 std::optional<AppBarEdge> panelAppBarEdge(const PanelAnchorSet& anchors) {
-  if (anchors.top && !anchors.bottom) return AppBarEdge::Top;
-  if (anchors.bottom && !anchors.top) return AppBarEdge::Bottom;
+  const bool acrossHorizontally = anchors.left == anchors.right;  // stretched or centred
+  const bool acrossVertically = anchors.top == anchors.bottom;
+  if (anchors.top != anchors.bottom && acrossHorizontally) {
+    return anchors.top ? AppBarEdge::Top : AppBarEdge::Bottom;
+  }
+  if (anchors.left != anchors.right && acrossVertically) {
+    return anchors.left ? AppBarEdge::Left : AppBarEdge::Right;
+  }
   return std::nullopt;
+}
+
+int panelThickness(AppBarEdge edge, const QSize& size) {
+  return isVerticalEdge(edge) ? size.width() : size.height();
 }
 
 int panelReservedZone(const PanelAnchorSet& anchors, const QMargins& margins, int mode,
@@ -38,8 +48,22 @@ int panelReservedZone(const PanelAnchorSet& anchors, const QMargins& margins, in
   constexpr int kNormal = 1;
   const std::optional<AppBarEdge> edge = panelAppBarEdge(anchors);
   if (!edge || mode == kIgnore) return 0;
-  const int margin = *edge == AppBarEdge::Top ? margins.top() : margins.bottom();
-  const int zone = mode == kNormal ? exclusiveZone : size.height();
+  int margin = 0;
+  switch (*edge) {
+    case AppBarEdge::Left:
+      margin = margins.left();
+      break;
+    case AppBarEdge::Top:
+      margin = margins.top();
+      break;
+    case AppBarEdge::Right:
+      margin = margins.right();
+      break;
+    case AppBarEdge::Bottom:
+      margin = margins.bottom();
+      break;
+  }
+  const int zone = mode == kNormal ? exclusiveZone : panelThickness(*edge, size);
   return zone > 0 ? zone + margin : 0;
 }
 

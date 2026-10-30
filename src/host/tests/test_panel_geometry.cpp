@@ -7,6 +7,7 @@ using wabar::host::PanelAnchorSet;
 using wabar::host::panelAppBarEdge;
 using wabar::host::panelGeometry;
 using wabar::host::panelReservedZone;
+using wabar::host::panelThickness;
 
 namespace {
 
@@ -64,13 +65,38 @@ TEST(PanelGeometryTest, MarginsMoveAndShrinkTheWindow) {
             QRect(110, 55, 970, 787));
 }
 
-TEST(PanelGeometryTest, OnlyTopOrBottomAloneIsAnAppBar) {
+TEST(PanelGeometryTest, OneAnchoredEdgeWithTheCrossAxisStretchedOrCentredIsAnAppBar) {
   EXPECT_EQ(panelAppBarEdge(anchors(true, false, true, true)), AppBarEdge::Top);
   EXPECT_EQ(panelAppBarEdge(anchors(false, true, true, true)), AppBarEdge::Bottom);
   EXPECT_EQ(panelAppBarEdge(anchors(true, false, false, false)), AppBarEdge::Top);
+  EXPECT_EQ(panelAppBarEdge(anchors(true, true, true, false)), AppBarEdge::Left);
+  EXPECT_EQ(panelAppBarEdge(anchors(true, true, false, true)), AppBarEdge::Right);
+  EXPECT_EQ(panelAppBarEdge(anchors(false, false, true, false)), AppBarEdge::Left);
+  EXPECT_EQ(panelAppBarEdge(anchors(false, false, false, true)), AppBarEdge::Right);
+}
+
+TEST(PanelGeometryTest, ACornerABandAndAFullScreenWindowAreNotAppBars) {
+  EXPECT_FALSE(panelAppBarEdge(anchors(true, false, true, false)).has_value());  // corner
+  EXPECT_FALSE(panelAppBarEdge(anchors(false, true, false, true)).has_value());  // corner
+  EXPECT_FALSE(panelAppBarEdge(anchors(true, true, false, false)).has_value());  // band
+  EXPECT_FALSE(panelAppBarEdge(anchors(false, false, true, true)).has_value());  // band
   EXPECT_FALSE(panelAppBarEdge(anchors(true, true, true, true)).has_value());
-  EXPECT_FALSE(panelAppBarEdge(anchors(true, true, true, false)).has_value());
   EXPECT_FALSE(panelAppBarEdge(anchors(false, false, false, false)).has_value());
+}
+
+TEST(PanelGeometryTest, ASidePanelSpansTheSideEdge) {
+  const QSize size(48, 40);
+  EXPECT_EQ(panelGeometry(anchors(true, true, true, false), {}, size, kScreen),
+            QRect(100, 50, 48, 800));
+  EXPECT_EQ(panelGeometry(anchors(true, true, false, true), {}, size, kScreen),
+            QRect(100 + 1000 - 48, 50, 48, 800));
+}
+
+TEST(PanelGeometryTest, TheThicknessIsTheWidthOfASidePanel) {
+  EXPECT_EQ(panelThickness(AppBarEdge::Top, QSize(1000, 40)), 40);
+  EXPECT_EQ(panelThickness(AppBarEdge::Bottom, QSize(1000, 40)), 40);
+  EXPECT_EQ(panelThickness(AppBarEdge::Left, QSize(48, 800)), 48);
+  EXPECT_EQ(panelThickness(AppBarEdge::Right, QSize(48, 800)), 48);
 }
 
 TEST(PanelGeometryTest, TheReservedZoneFollowsTheExclusionMode) {
@@ -81,4 +107,15 @@ TEST(PanelGeometryTest, TheReservedZoneFollowsTheExclusionMode) {
   EXPECT_EQ(panelReservedZone(top, {}, kAuto, 0, kSize), 40);  // the window's own thickness
   EXPECT_EQ(panelReservedZone(top, QMargins(0, 6, 0, 0), kAuto, 0, kSize), 46);
   EXPECT_EQ(panelReservedZone(anchors(true, true, true, true), {}, kAuto, 0, kSize), 0);
+}
+
+TEST(PanelGeometryTest, TheReservedZoneOfASidePanelUsesItsWidthAndItsSideMargin) {
+  const PanelAnchorSet left = anchors(true, true, true, false);
+  const PanelAnchorSet right = anchors(true, true, false, true);
+  const QSize size(48, 800);
+  EXPECT_EQ(panelReservedZone(left, {}, kAuto, 0, size), 48);
+  EXPECT_EQ(panelReservedZone(left, QMargins(6, 0, 0, 0), kAuto, 0, size), 54);
+  EXPECT_EQ(panelReservedZone(right, QMargins(6, 0, 9, 0), kAuto, 0, size), 57);
+  EXPECT_EQ(panelReservedZone(left, {}, kNormal, 30, size), 30);
+  EXPECT_EQ(panelReservedZone(left, {}, kIgnore, 30, size), 0);
 }
