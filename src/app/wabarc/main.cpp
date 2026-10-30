@@ -20,6 +20,10 @@
 //                       the windows of the shell that have a `name`: a launcher, an OSD, a menu.
 //                       show and toggle first allow the bar to take the keyboard focus
 //                       (AllowSetForegroundWindow), so a launcher opened from a hotkey gets it
+//     wabarc taskbar hide|show|status
+//                       hide the Windows taskbar (auto-hide on, windows hidden), show it again
+//                       (restores what wabar changed), or report "taskbar: hidden|visible|
+//                       autohide-was-on". `wabar --hide-taskbar` hides it at start
 //     wabarc call [<target> <function> [args...]]
 //                       run a function of an IpcHandler; the answer is its return value on one
 //                       line ("ok" for void). Without arguments: the handlers and their functions
@@ -90,6 +94,8 @@ int main(int argc, char* argv[]) {
       "  shortcut list                  the names of the shortcuts\n"
       "  surface list                   the named windows of the shell and their state\n"
       "  surface show | hide | toggle | status <name>\n"
+      "  taskbar hide | show | status   hide or restore the Windows taskbar
+      "
       "  call <target> <function> [args...]  run a function of an IpcHandler; call alone lists\n"
       "Add --dry-run to set, random, next or previous to play the animation without "
       "changing the wallpaper."));
@@ -103,14 +109,15 @@ int main(int argc, char* argv[]) {
   parser.addOption(dryRunOpt);
   parser.addPositionalArgument(
       QStringLiteral("command"),
-      QStringLiteral("reload, status, quit, wallpaper, shortcut, surface or call"));
+      QStringLiteral("reload, status, quit, wallpaper, shortcut, surface, taskbar or call"));
   parser.process(app);
 
   const QStringList positional = parser.positionalArguments();
   const QString usage = QStringLiteral(
       "usage: wabarc [--config-home <dir>] reload|status|quit|wallpaper "
       "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|shortcut <name>|list|surface "
-      "(list|show|hide|toggle|status <name>)|call <target> <function> [args...]");
+      "(list|show|hide|toggle|status <name>)|taskbar (hide|show|status)|call <target> <function> "
+      "[args...]");
   if (positional.isEmpty()) {
     print(stderr, usage);
     return kUsage;

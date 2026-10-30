@@ -34,6 +34,8 @@ to Waybar, the bar for Wayland. It is written in lower case and plain ASCII in c
   names, for ported shells).
 - Panels dock to any of the four edges (`examples/sidebar` is a left one); a docked panel
   reports its edge as `QsWindow.window.dockEdge`.
+- `--hide-taskbar` hides the Windows taskbar while wabar runs and restores it on exit;
+  `wabarc taskbar hide|show|status` does the same at run time.
 - `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
   the built-in shell and ignores the config.
 

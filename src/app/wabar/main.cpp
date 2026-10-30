@@ -1,8 +1,10 @@
 #include <QCommandLineParser>
 #include <QDebug>
+#include <QDir>
 #include <QGuiApplication>
 #include <QQmlEngine>
 #include <QQuickWindow>
+#include <memory>
 
 #include "app/wabar/font_engine.h"
 #include "app/wabar/quickshell_glue.h"
@@ -11,6 +13,8 @@
 #include "host/plugin_guard.h"
 #include "host/qml/control_handler.h"
 #include "host/qml/shell_host.h"
+#include "host/taskbar_control.h"
+#include "kernel/qt/app_data.h"
 #include "kernel/qt/live_desktop.h"
 
 int main(int argc, char* argv[]) {
@@ -62,8 +66,13 @@ int main(int argc, char* argv[]) {
       QStringLiteral("Add a folder of QML modules (user-built plugins) to the import path. May be "
                      "repeated. <config home>/modules is always added when it exists."),
       QStringLiteral("dir"));
+  QCommandLineOption hideTaskbarOpt(
+      QStringLiteral("hide-taskbar"),
+      QStringLiteral("Hide the Windows taskbar while wabar runs (auto-hide on, taskbar windows "
+                     "hidden) and restore it on exit. Off by default."));
   parser.addOption(configHomeOpt);
   parser.addOption(importPathOpt);
+  parser.addOption(hideTaskbarOpt);
   parser.addOption(noHotkeysOpt);
   parser.addOption(fontEngineOpt);
   parser.addOption(noTrayOpt);
@@ -95,6 +104,24 @@ int main(int argc, char* argv[]) {
   wabar::host::ShellHost host(&engine, std::move(options));
   wabar::app::connectQuickshell(&engine, &host, configHome);
 
+  // The Windows taskbar: inert off the live desktop. A stale marker of a crashed run is undone
+  // first; with --hide-taskbar the taskbar is hidden before the first reload, so a bar that
+  // reserves work area computes it without the taskbar. Restored on aboutToQuit and, at the
+  // latest, when `taskbar` is destroyed. The hide waits for the control pipe (below), so a
+  // second start that is refused does not touch the taskbar.
+  std::unique_ptr<wabar::host::TaskbarSystem> taskbarSystem;
+  std::unique_ptr<wabar::host::TaskbarMarkerStore> taskbarMarkers;
+  std::unique_ptr<wabar::host::WabarTaskbar> taskbar;
+  if (wabar::kernel::liveDesktop()) {
+    taskbarSystem = wabar::host::makeWin32TaskbarSystem();
+    taskbarMarkers = wabar::host::makeFileMarkerStore(
+        QDir(wabar::kernel::appDataDir()).filePath(QStringLiteral("taskbar_hidden.marker")));
+    taskbar = std::make_unique<wabar::host::WabarTaskbar>(*taskbarSystem, *taskbarMarkers,
+                                                          QCoreApplication::applicationPid());
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &app,
+                     [&taskbar] { taskbar->restore(); });
+  }
+
   // One shell per config home: `wabarc` finds it by the same name, and a second start would put
   // a second shell over the first.
   wabar::control::ControlServer control(
@@ -105,13 +132,15 @@ int main(int argc, char* argv[]) {
           [&engine]() -> wabar::control::WallpaperControl* {
             return engine.singletonInstance<wabar::wallpapers::Wallpapers*>(
                 QStringLiteral("wabar.services"), QStringLiteral("Wallpapers"));
-          }));
+          },
+          taskbar.get()));
   if (!control.listen()) {
     qCritical().noquote() << "wabar is already running for" << configHome
                           << "(wabarc quit stops it)";
     return 1;
   }
 
+  if (taskbar) taskbar->start(parser.isSet(hideTaskbarOpt));
   host.reload();
   host.watch();
   return app.exec();
