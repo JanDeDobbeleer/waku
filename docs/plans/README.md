@@ -10,6 +10,7 @@ is `docs/architecture.md`, and each feature has its own `design.md` under `src/f
 | [2026-10-29-wabar-architecture-proposal.md](2026-10-29-wabar-architecture-proposal.md) | Vertical slices: `src/{kernel,control,host,ui,features,app}`, `wabar_feature()`, rules S1-S8, migration steps 0-11 | Implemented. Section 11 holds the owner's decisions. `docs/architecture.md` and `AGENTS.md` now carry the rules. |
 | [2026-10-30-caelestia-port-assessment.md](2026-10-30-caelestia-port-assessment.md) | Can wabar host the caelestia Quickshell shell? Feature table, blockers, plan changes | Assessment. Its changes are in section 11 of the extensibility proposal. |
 | [2026-10-30-delivery-plan.md](2026-10-30-delivery-plan.md) | Who builds what with which model, in what order, and the caelestia validation | Plan. In progress. |
+| [2026-10-30-handoff.md](2026-10-30-handoff.md) | Current state, what is left, how to work and how to resume (read this first to continue) | Handoff. Kept current while the work runs. |
 
 Earlier plans for the retired Qt Widgets build are in [../archive](../archive/README.md); they are
 superseded by the plans above.
