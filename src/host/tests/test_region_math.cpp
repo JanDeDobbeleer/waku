@@ -177,6 +177,26 @@ TEST(RegionMathTest, AMaskAcceptsInputOnlyInsideTheRegion) {
   EXPECT_FALSE(maskAcceptsInput(std::optional<RegionNode>(RegionNode{}), {0, 0}, 6));
 }
 
+TEST(RegionMathTest, ASecondaryScreenAtDprTwoKeepsItsNativeOriginUnscaled) {
+  // A 200% screen right of a 100% primary, raised 200 px: native origin (3840, -200). Qt reports
+  // its origin in native pixels and its size in logical ones, so the physical point
+  // (3840 + 400, -200 + 300) is 200 and 150 logical pixels into the screen. The window sits at
+  // logical (3840 + 100, -200 + 50).
+  const QPointF p =
+      cursorInWindow({3840 + 400, -200 + 300}, {3840, -200}, 2.0, {3840 + 100, -200 + 50});
+  EXPECT_DOUBLE_EQ(p.x(), 100);
+  EXPECT_DOUBLE_EQ(p.y(), 100);
+  // The cursor on the window's top-left corner is the origin of the window.
+  const QPointF corner =
+      cursorInWindow({3840 + 200, -200 + 100}, {3840, -200}, 2.0, {3840 + 100, -200 + 50});
+  EXPECT_DOUBLE_EQ(corner.x(), 0);
+  EXPECT_DOUBLE_EQ(corner.y(), 0);
+  // A half logical pixel survives the conversion.
+  const QPointF half =
+      cursorInWindow({3840 + 201, -200 + 100}, {3840, -200}, 2.0, {3840 + 100, -200 + 50});
+  EXPECT_DOUBLE_EQ(half.x(), 0.5);
+}
+
 TEST(RegionMathTest, CursorConversionScalesFromTheScreenOrigin) {
   // A 150% screen whose native origin is (1920, 0): window at logical (1920 + 100, 50).
   const QPointF p = cursorInWindow({1920 + 300, 150}, {1920, 0}, 1.5, {1920 + 100, 50});
