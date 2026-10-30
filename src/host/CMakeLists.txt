@@ -122,6 +122,7 @@ wabar_contribute(
     tests/test_region_mask.cpp
     tests/test_quickshell.cpp
     tests/test_quickshell_core.cpp
+    tests/test_quickshell_items.cpp
     tests/test_quickshell_modules.cpp
     tests/test_screen_match.cpp
     tests/test_shell_host.cpp

@@ -33,6 +33,12 @@ struct QsScope {
   QML_NAMED_ELEMENT(Scope)
 };
 
+struct QsSingleton {
+  Q_GADGET
+  QML_FOREIGN(wabar::host::Singleton)
+  QML_NAMED_ELEMENT(Singleton)
+};
+
 struct QsQsWindow {
   Q_GADGET
   QML_FOREIGN(wabar::host::QsWindow)

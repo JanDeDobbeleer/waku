@@ -65,4 +65,19 @@ class ShellRoot : public Scope {
   explicit ShellRoot(QObject* parent = nullptr) : Scope(parent) {}
 };
 
+// Quickshell's `Singleton`: the root of a `pragma Singleton` file. Like a Scope it keeps what is
+// declared in it (QtObjects, Timers, Processes) as children, and it draws nothing. The engine
+// creates it on first use; nothing in the shell host activates it.
+//
+//     pragma Singleton
+//     import Quickshell
+//     Singleton { property int x: 3 }
+class Singleton : public Scope {
+  Q_OBJECT
+  QML_ELEMENT
+
+ public:
+  explicit Singleton(QObject* parent = nullptr) : Scope(parent) {}
+};
+
 }  // namespace wabar::host
