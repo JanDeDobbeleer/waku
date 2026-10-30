@@ -57,7 +57,10 @@ class Region : public QObject {
   Q_PROPERTY(QQmlListProperty<wabar::host::Region> regions READ regions FINAL)
 
  public:
-  explicit Region(QObject* parent = nullptr) : QObject(parent) {}
+  explicit Region(QObject* parent = nullptr) : QObject(parent) {
+    connect(this, &Region::shapeChanged, this, &Region::treeChanged);
+    connect(this, &Region::regionsChanged, this, &Region::treeChanged);
+  }
 
   QQuickItem* item() const { return item_.data(); }
   void setItem(QQuickItem* item);
@@ -72,6 +75,9 @@ class Region : public QObject {
   // emit; the poller reads the region each time.)
   void shapeChanged();
   void regionsChanged();
+  // This region or any region below it changed (shape, item, intersection or the child list). The
+  // mask poller listens to the root; an item that moves does not emit, the window's frame does.
+  void treeChanged();
 
  private:
   static void appendRegion(QQmlListProperty<Region>* list, Region* region);

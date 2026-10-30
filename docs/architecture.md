@@ -216,11 +216,20 @@ alone does not click through, but `WS_EX_LAYERED | WS_EX_TRANSPARENT` does, and
 `Qt::WindowTransparentForInput` set at run time through `QWindow::setFlag` produces exactly that
 (2 to 4 ms per call). The DWM backdrop is not affected by the flip.
 
-- While a window is visible and has a mask, a `Qt::PreciseTimer` at 8 ms (120 Hz) reads the cursor
-  (`GetCursorPos`, physical pixels; documented, so no allowlist row), converts it to the window's
-  logical coordinates (`cursorInWindow`: screen origin, device pixel ratio, window position) and
-  tests it against the mask grown by 6 px (`regionContainsPadded`: the point and eight points 6 px
-  away). The flag is set only when the answer changes. The poll costs about 0.16% of a core.
+- One `MaskPollerHub` per `ShellHost` owns the only timer (a `Qt::PreciseTimer`), whatever the
+  number of masked windows; each masked, visible window has a `MaskPoller` registered with it. A
+  tick reads the cursor once (`GetCursorPos`, physical pixels; documented, so no allowlist row) and
+  hands it to every poller, which converts it to its window's logical coordinates
+  (`cursorInWindow`: screen origin, device pixel ratio, window position) and tests it against the
+  mask grown by 6 px (`regionContainsPadded`: the point and eight points 6 px away). The flag is
+  set only when the answer changes.
+- The rate is 8 ms (120 Hz) while the cursor moved within the last 300 ms, 33 ms (30 Hz) otherwise.
+  A tick where the cursor did not move skips a window unless it is dirty: its region changed
+  (`Region::treeChanged`), the window repainted (`QQuickWindow::frameSwapped`, which every moving
+  item causes) or the window moved or resized. Every window is tested at least once a second
+  anyway. So a resting cursor over an idle bar costs a cursor read at 30 Hz and nothing else, and
+  the mask (a region tree built from QML) is rebuilt only when something can have changed, not
+  once per window per tick. The timer stops when no window is masked and visible.
 - The poll stops when the window hides or the mask goes, and the flag is cleared then. A cursor
   outside the window is simply outside the region.
 - Region math is a pure function over `RegionNode` (`src/host/region_math.*`): the shape (a
@@ -234,7 +243,8 @@ alone does not click through, but `WS_EX_LAYERED | WS_EX_TRANSPARENT` does, and
   `kernel::liveDesktop()`; tests and the offscreen platform have none (or a fake), so masks are
   inert there and no test reads the real cursor or flips a real window.
 - Known race: a click in the gap between the cursor reaching a region and the next poll (up to
-  8 ms) goes to the window below. The 6 px pad makes the flip happen before a normal approach
+  8 ms while the cursor moves; up to 33 ms for the first tick after a rest) goes to the window
+  below. The 6 px pad makes the flip happen before a normal approach
   arrives. A click that starts on a click-through spot and drags into a region is not seen by the
   window.
 Overlays (a launcher, an OSD, a power menu): any window can be shown on demand. A window with

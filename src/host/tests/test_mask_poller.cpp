@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <QGuiApplication>
+#include <QTest>
 #include <QWindow>
 #include <optional>
 
@@ -22,14 +23,17 @@ struct Fixture {
   QWindow window;
   std::optional<QPoint> cursor;
   std::optional<RegionNode> mask;
+  qint64 now = 0;  // the hub's clock, milliseconds
+  std::unique_ptr<MaskPollerHub> hub;
   std::unique_ptr<MaskPoller> poller;
 
   Fixture() {
     window.setGeometry(200, 100, 400, 300);
     cursor = QPoint(0, 0);
     mask = rect(0, 0, 100, 50);
-    poller =
-        std::make_unique<MaskPoller>(&window, [this] { return cursor; }, [this] { return mask; });
+    hub = std::make_unique<MaskPollerHub>([this] { return cursor; });
+    hub->setClock([this] { return now; });
+    poller = std::make_unique<MaskPoller>(&window, hub.get(), [this] { return mask; });
   }
   // The cursor at `x, y` in window coordinates.
   void at(int x, int y) { cursor = window.geometry().topLeft() + QPoint(x, y); }
@@ -155,7 +159,132 @@ TEST(MaskPollerTest, AnUnreadableCursorChangesNothing) {
   EXPECT_TRUE(f.poller->running());
 }
 
-TEST(MaskPollerTest, ThePollTimerRunsAtAbout120Hz) {
-  EXPECT_EQ(MaskPoller::kIntervalMs, 8);
-  EXPECT_EQ(MaskPoller::kPadPx, 6);
+TEST(MaskPollerTest, TheHubRunsAt120HzWhileTheCursorMovesAnd30HzWhenItRests) {
+  Fixture f;
+  f.window.show();
+  f.poller->refresh();
+  ASSERT_TRUE(f.hub->running());
+  EXPECT_EQ(f.hub->intervalMs(), MaskPollerHub::kFastIntervalMs);
+  EXPECT_EQ(MaskPollerHub::kFastIntervalMs, 8);
+  EXPECT_EQ(MaskPollerHub::kIdleIntervalMs, 33);
+  // The cursor moves: still fast 299 ms later, idle after 300 ms without movement.
+  f.at(300, 200);
+  f.now = 1000;
+  f.hub->tick();
+  f.now = 1299;
+  f.hub->tick();
+  EXPECT_EQ(f.hub->intervalMs(), MaskPollerHub::kFastIntervalMs);
+  f.now = 1301;
+  f.hub->tick();
+  EXPECT_EQ(f.hub->intervalMs(), MaskPollerHub::kIdleIntervalMs);
+  // Movement brings the fast rate back at once.
+  f.at(310, 200);
+  f.now = 1340;
+  f.hub->tick();
+  EXPECT_EQ(f.hub->intervalMs(), MaskPollerHub::kFastIntervalMs);
+}
+
+TEST(MaskPollerTest, OneTimerServesEveryMaskedWindow) {
+  Fixture f;
+  QWindow second;
+  second.setGeometry(0, 0, 300, 300);
+  QWindow third;
+  third.setGeometry(500, 500, 300, 300);
+  MaskPoller p2(&second, f.hub.get(), [] { return std::optional<RegionNode>(rect(0, 0, 10, 10)); });
+  MaskPoller p3(&third, f.hub.get(), [] { return std::optional<RegionNode>(rect(0, 0, 10, 10)); });
+  f.window.show();
+  second.show();
+  third.show();
+  f.poller->refresh();
+  p2.refresh();
+  p3.refresh();
+  EXPECT_EQ(f.hub->pollerCount(), 3);
+  EXPECT_TRUE(f.hub->running());
+  const int reads = f.hub->cursorReads();
+  f.at(300, 200);
+  f.hub->tick();
+  EXPECT_EQ(f.hub->cursorReads(), reads + 1);  // one cursor read per tick, not one per window
+  second.hide();
+  third.hide();
+  f.hub->tick();
+  EXPECT_EQ(f.hub->pollerCount(), 1);
+  f.window.hide();
+  f.hub->tick();
+  EXPECT_EQ(f.hub->pollerCount(), 0);
+  EXPECT_FALSE(f.hub->running());
+}
+
+TEST(MaskPollerTest, ARestingCursorSkipsTheEvaluation) {
+  Fixture f;
+  f.window.show();
+  f.poller->refresh();
+  f.at(300, 200);
+  f.now = 10;
+  f.hub->tick();  // moved: evaluated
+  const int evaluations = f.hub->evaluations();
+  for (int i = 1; i <= 10; ++i) {
+    f.now = 10 + i * 33;
+    f.hub->tick();
+  }
+  EXPECT_EQ(f.hub->evaluations(), evaluations);
+  EXPECT_TRUE(f.hub->cursorReads() > 0);
+}
+
+TEST(MaskPollerTest, ARestingCursorIsTestedAgainWhenSomethingChanged) {
+  Fixture f;
+  f.window.show();
+  f.poller->refresh();
+  f.at(300, 200);
+  f.now = 10;
+  f.hub->tick();
+  ASSERT_TRUE(f.clickThrough());
+  const int evaluations = f.hub->evaluations();
+  // The region grows over the resting cursor, and the poller is told (a frame, a region change).
+  f.mask = rect(0, 0, 400, 300);
+  f.poller->markDirty();
+  f.now = 43;
+  f.hub->tick();
+  EXPECT_EQ(f.hub->evaluations(), evaluations + 1);
+  EXPECT_FALSE(f.clickThrough());
+  // The window moves under the resting cursor: no signal needed.
+  f.window.setGeometry(1000, 100, 400, 300);
+  f.now = 76;
+  f.hub->tick();
+  EXPECT_EQ(f.hub->evaluations(), evaluations + 2);
+  // And a poller is evaluated at least once a second.
+  f.now = 76 + MaskPollerHub::kRecheckMs;
+  f.hub->tick();
+  EXPECT_EQ(f.hub->evaluations(), evaluations + 3);
+}
+
+TEST(MaskPollerTest, TheFlagFlipsOnTheFirstTickAfterTheCursorMovesFromRest) {
+  Fixture f;
+  f.window.show();
+  f.poller->refresh();
+  f.at(300, 200);
+  f.now = 10;
+  f.hub->tick();
+  f.now = 2000;
+  f.hub->tick();  // long at rest: the idle rate
+  ASSERT_EQ(f.hub->intervalMs(), MaskPollerHub::kIdleIntervalMs);
+  ASSERT_TRUE(f.clickThrough());
+  f.at(50, 25);  // into the region
+  f.now = 2033;
+  f.hub->tick();  // one tick is enough
+  EXPECT_FALSE(f.clickThrough());
+  EXPECT_EQ(f.hub->intervalMs(), MaskPollerHub::kFastIntervalMs);
+}
+
+TEST(MaskPollerTest, ARealTimerTickFlipsTheWindow) {
+  Fixture f;
+  f.hub = std::make_unique<MaskPollerHub>([&f] { return f.cursor; });  // the real clock
+  f.poller = std::make_unique<MaskPoller>(&f.window, f.hub.get(), [&f] { return f.mask; });
+  f.window.show();
+  f.poller->refresh();
+  f.at(300, 200);
+  QTest::qWait(80);
+  EXPECT_TRUE(f.clickThrough());
+  f.at(10, 10);
+  QTest::qWait(80);
+  EXPECT_FALSE(f.clickThrough());
 }

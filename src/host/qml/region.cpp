@@ -17,6 +17,7 @@ void Region::appendRegion(QQmlListProperty<Region>* list, Region* region) {
   if (!region) return;
   auto* self = static_cast<Region*>(list->data);
   self->regions_.append(region);
+  connect(region, &Region::treeChanged, self, &Region::treeChanged);
   emit self->regionsChanged();
 }
 

@@ -112,6 +112,9 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
     : QObject(parent), engine_(engine), options_(std::move(options)) {
   if (!options_.screens) options_.screens = applicationScreens;
   engine_->rootContext()->setContextProperty(QString::fromLatin1(kHostProperty), this);
+  if (options_.hooks.cursorPosition) {
+    maskHub_ = std::make_unique<MaskPollerHub>(options_.hooks.cursorPosition);
+  }
   interceptor_ = std::make_unique<GenerationInterceptor>(
       QDir::fromNativeSeparators(QDir(options_.configHome).absolutePath()));
   engine_->addUrlInterceptor(interceptor_.get());

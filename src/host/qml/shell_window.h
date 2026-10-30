@@ -313,6 +313,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   void stackingChanged();
   void updateVisibility();
   void updateMaskPoller();
+  void connectMask();
   bool complete() const { return complete_; }
 
  private:
@@ -334,6 +335,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   QPointer<QQmlComponent> content_;
   QPointer<Region> mask_;
   std::unique_ptr<MaskPoller> poller_;
+  QMetaObject::Connection maskConnection_;
   QColor color_;
   QColor background_;
   Backdrop::Kind backdrop_ = Backdrop::None;

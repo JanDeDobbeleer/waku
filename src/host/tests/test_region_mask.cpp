@@ -205,3 +205,28 @@ TEST(RegionMaskTest, ARealPollTickFlipsTheWindow) {
   QTest::qWait(60);
   EXPECT_FALSE(clickThrough(h));
 }
+
+TEST(RegionMaskTest, AChangedRegionIsTestedAgainUnderARestingCursor) {
+  Harness h;
+  h.start(maskShell(QStringLiteral("import wabar"), QStringLiteral(R"(
+    property alias inner: inner
+    mask: Region { x: 0; y: 0; width: 50; height: 50; Region { id: inner; x: 0; y: 0; width: 1; height: 1 } }
+)")));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  settle();
+  ASSERT_NE(h.host->maskHub(), nullptr);
+  EXPECT_EQ(h.host->maskHub()->pollerCount(), 1);
+  cursorAt(h, 200, 200);
+  h.host->maskHub()->tick();
+  ASSERT_TRUE(clickThrough(h));
+  const int evaluations = h.host->maskHub()->evaluations();
+  h.host->maskHub()->tick();  // nothing changed, the cursor rests
+  EXPECT_EQ(h.host->maskHub()->evaluations(), evaluations);
+  // A nested region grows over the cursor: the change reaches the root and the poller.
+  QObject* inner = h.shellWindow()->property("inner").value<QObject*>();
+  ASSERT_NE(inner, nullptr);
+  inner->setProperty("width", 400);
+  inner->setProperty("height", 400);
+  h.host->maskHub()->tick();
+  EXPECT_FALSE(clickThrough(h));
+}

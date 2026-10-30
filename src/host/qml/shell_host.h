@@ -127,6 +127,8 @@ class ShellHost : public QObject {
   bool eventFilter(QObject* watched, QEvent* event) override;
 
   const NativeHooks& hooks() const { return options_.hooks; }
+  // The one timer behind every window mask; null when there is no cursor source.
+  MaskPollerHub* maskHub() const { return maskHub_.get(); }
   QString error() const { return error_; }
   // The backing windows on screen, in the order they registered.
   QList<QQuickWindow*> windows() const;
@@ -196,6 +198,7 @@ class ShellHost : public QObject {
   QQmlEngine* engine_;
   Options options_;
   std::unique_ptr<GenerationInterceptor> interceptor_;
+  std::unique_ptr<MaskPollerHub> maskHub_;
   std::unique_ptr<Loaded> loaded_;
   // The shell being built: windows that complete now are added here, shown by install().
   Loaded* building_ = nullptr;

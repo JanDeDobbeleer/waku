@@ -145,7 +145,20 @@ void QsWindow::setMask(Region* mask) {
   if (mask_ == mask) return;
   mask_ = mask;
   emit maskChanged();
+  if (poller_) {
+    connectMask();
+    poller_->markDirty();
+  }
   updateMaskPoller();
+}
+
+// Marks the poller dirty when the mask or any region below it changes.
+void QsWindow::connectMask() {
+  QObject::disconnect(maskConnection_);
+  if (mask_ && poller_) {
+    maskConnection_ =
+        connect(mask_.data(), &Region::treeChanged, poller_.get(), &MaskPoller::markDirty);
+  }
 }
 
 std::optional<RegionNode> QsWindow::maskNode() const {
@@ -157,9 +170,13 @@ std::optional<RegionNode> QsWindow::maskNode() const {
 // hand it a fake).
 void QsWindow::updateMaskPoller() {
   if (!poller_) {
-    if (!mask_ || !host_ || !host_->hooks().cursorPosition) return;
-    poller_ = std::make_unique<MaskPoller>(window_.get(), host_->hooks().cursorPosition,
+    if (!mask_ || !host_ || !host_->maskHub()) return;
+    poller_ = std::make_unique<MaskPoller>(window_.get(), host_->maskHub(),
                                            [this] { return maskNode(); });
+    // A frame means something on the window moved or changed; the poller then tests the cursor
+    // against the mask again even if the cursor rests.
+    connect(window_.get(), &QQuickWindow::frameSwapped, poller_.get(), &MaskPoller::markDirty);
+    connectMask();
   }
   poller_->refresh();
 }

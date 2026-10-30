@@ -30,9 +30,9 @@ PanelWindow {
   inner area (minus the open panels), which is how a bar plus its borders plus open drawers is
   masked.
 - `PopupWindow` has no `mask`.
-- The mask is enforced by polling the cursor at 120 Hz and making the window transparent for input
+- The mask is enforced by polling the cursor (120 Hz while it moves, 30 Hz at rest) and making the window transparent for input
   outside the region, padded by 6 px. Keep two things in mind:
-  - A click within 8 ms of the cursor reaching a region you did not pad can hit the window below.
+  - A click within a few milliseconds of the cursor reaching a region you did not pad can hit the window below.
     Give targets a few pixels of slack.
   - Hover and drag effects outside the region do not run: the window gets no mouse events there.
 - Nothing is enforced on the offscreen platform or in tests.
