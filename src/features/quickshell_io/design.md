@@ -63,8 +63,12 @@ each reload.
 
 **The `Quickshell` name.** `import Quickshell` gives a QML singleton, `Quickshell.qml` in
 `src/host/quickshell/qml/`. It reads `screens` from the host's ScreenList and forwards every other
-member to this class, so the host unit does not include a feature header. Writable members
-(`clipboardText`, `watchFiles`, `workingDirectory`) are copied both ways.
+member to this class, so the host unit does not include a feature header. `watchFiles` and
+`workingDirectory` are copied both ways. `clipboardText` is an alias to a `ClipboardText` object:
+the clipboard is read when a shell first reads the value and cached until the clipboard changes,
+never when the singleton is created. Creation happens on every start and reload, and a read can
+block the GUI thread for seconds while another process holds the clipboard (Qt retries
+`OleGetClipboard` with sleeps; an owner that renders on demand keeps `GetClipboardData` waiting).
 
 ## Modules
 

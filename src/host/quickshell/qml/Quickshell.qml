@@ -21,13 +21,19 @@ QtObject {
     readonly property string stateDir: S.QuickshellSingleton.stateDir
     readonly property string cacheDir: S.QuickshellSingleton.cacheDir
 
+    // Read and write. An alias, not a binding: the system clipboard is read when a shell reads the
+    // value, not each time this singleton is created (every start and reload). A read can block
+    // for seconds while another process holds the clipboard.
+    property alias clipboardText: clipboard.text
+    property QtObject clipboardSource: S.ClipboardText {
+        id: clipboard
+    }
+
     // Read and write: the value is copied both ways, so it follows the singleton and a write
     // reaches it.
-    property string clipboardText: S.QuickshellSingleton.clipboardText
     property bool watchFiles: S.QuickshellSingleton.watchFiles
     property string workingDirectory: S.QuickshellSingleton.workingDirectory
 
-    onClipboardTextChanged: S.QuickshellSingleton.clipboardText = clipboardText
     onWatchFilesChanged: S.QuickshellSingleton.watchFiles = watchFiles
     onWorkingDirectoryChanged: S.QuickshellSingleton.workingDirectory = workingDirectory
 
@@ -94,9 +100,6 @@ QtObject {
     property QtObject forwarder: Connections {
         target: S.QuickshellSingleton
 
-        function onClipboardTextChanged() {
-            root.clipboardText = S.QuickshellSingleton.clipboardText;
-        }
         function onWatchFilesChanged() {
             root.watchFiles = S.QuickshellSingleton.watchFiles;
         }

@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <QClipboard>
 #include <QDir>
 #include <QFileInfo>
+#include <QGuiApplication>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QSignalSpy>
@@ -11,6 +13,7 @@
 #include <optional>
 
 #include "features/quickshell_io/command_spec.h"
+#include "features/quickshell_io/qml/clipboard_text.h"
 #include "features/quickshell_io/qml/data_stream_parsers.h"
 #include "features/quickshell_io/qml/quickshell_singleton.h"
 
@@ -212,6 +215,33 @@ TEST(QuickshellSingleton, ProcessIdAndClipboardRoundTrip) {
   EXPECT_GT(f.qs->processId(), 0);
   f.qs->setClipboardText(QStringLiteral("wabar clip"));
   EXPECT_EQ(f.qs->clipboardText(), QStringLiteral("wabar clip"));
+}
+
+TEST(QuickshellSingleton, ReadsTheClipboardOnFirstUseAndCachesUntilItChanges) {
+  QGuiApplication::clipboard()->setText(QStringLiteral("before"));
+  const int start = ClipboardText::readsForTesting();
+  Fixture f;
+  EXPECT_EQ(ClipboardText::readsForTesting(), start) << "construction must not read";
+
+  QSignalSpy changed(f.qs.get(), &QuickshellSingleton::clipboardTextChanged);
+  EXPECT_EQ(f.qs->clipboardText(), QStringLiteral("before"));
+  EXPECT_EQ(f.qs->clipboardText(), QStringLiteral("before"));
+  EXPECT_EQ(ClipboardText::readsForTesting(), start + 1);
+
+  // Another writer changes the clipboard: the cache is dropped and readers are told.
+  QGuiApplication::clipboard()->setText(QStringLiteral("after"));
+  EXPECT_GE(changed.count(), 1);
+  EXPECT_EQ(f.qs->clipboardText(), QStringLiteral("after"));
+  EXPECT_EQ(ClipboardText::readsForTesting(), start + 2);
+}
+
+TEST(QuickshellSingleton, ClipboardChangesBeforeAReadAreSilent) {
+  Fixture f;
+  QSignalSpy changed(f.qs.get(), &QuickshellSingleton::clipboardTextChanged);
+  const int start = ClipboardText::readsForTesting();
+  QGuiApplication::clipboard()->setText(QStringLiteral("unread"));
+  EXPECT_EQ(changed.count(), 0);
+  EXPECT_EQ(ClipboardText::readsForTesting(), start);
 }
 
 TEST(QuickshellSingleton, ElapsedTimerReportsSecondsAndRestarts) {

@@ -9,6 +9,7 @@
 #include <functional>
 
 #include "features/quickshell_io/command_spec.h"
+#include "features/quickshell_io/qml/clipboard_text.h"
 
 namespace wabar::quickshell_io {
 
@@ -57,8 +58,9 @@ class QuickshellSingleton : public QObject {
   QuickshellSingleton(Dirs dirs, Launcher launcher, QObject* parent = nullptr);
 
   qint64 processId() const;
-  QString clipboardText() const;
-  void setClipboardText(const QString& text);
+  // Read on first use and cached until the clipboard changes (see ClipboardText).
+  QString clipboardText() const { return clipboard_.text(); }
+  void setClipboardText(const QString& text) { clipboard_.setText(text); }
   QString shellDir() const { return dirs_.shell; }
   // The host sets the config home it loaded; the first reading may come before that.
   void setShellDir(const QString& dir);
@@ -108,6 +110,7 @@ class QuickshellSingleton : public QObject {
 
   Dirs dirs_;
   Launcher launcher_;
+  ClipboardText clipboard_;
   bool watchFiles_ = true;
 };
 

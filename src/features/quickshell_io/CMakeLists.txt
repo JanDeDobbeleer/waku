@@ -11,6 +11,8 @@ wabar_feature(NAME quickshell_io
   WIN32_SOURCES
     win32/process_job_win.cpp
   QML_SOURCES
+    qml/clipboard_text.h
+    qml/clipboard_text.cpp
     qml/data_stream_parsers.h
     qml/data_stream_parsers.cpp
     qml/file_view.h

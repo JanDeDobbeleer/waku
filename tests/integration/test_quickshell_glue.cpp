@@ -1,7 +1,11 @@
 // The Quickshell singleton joined to the shell host the way wabar.exe does it.
 #include <gtest/gtest.h>
 
+#include <QClipboard>
+#include <QGuiApplication>
+
 #include "app/wabar/quickshell_glue.h"
+#include "features/quickshell_io/qml/clipboard_text.h"
 #include "host/testing/shell_fixtures.h"
 
 TEST(QuickshellGlue, ShellDirIsTheConfigHomeAndReloadReloadsTheShell) {
@@ -62,4 +66,45 @@ ShellRoot { Panel { content: PanelLayout { start: [ Text { objectName: "a"; text
   quickshell->reload(true);
   ASSERT_TRUE(QTest::qWaitFor([&] { return failed.count() >= 1; }, 3000));
   EXPECT_FALSE(failed.first().first().toString().isEmpty());
+}
+
+// Creating the Quickshell singleton (start and every reload) must not read the system clipboard:
+// a read can block the GUI thread for seconds. A shell that reads clipboardText reads it then.
+TEST(QuickshellGlue, StartAndReloadDoNotReadTheClipboard) {
+  QGuiApplication::clipboard()->setText(QStringLiteral("glue clip"));
+  const int start = wabar::quickshell_io::ClipboardText::readsForTesting();
+  Harness h;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import Quickshell
+import wabar
+
+ShellRoot {
+    QtObject {
+        id: probe
+        objectName: "probe"
+        readonly property string dir: Quickshell.shellDir
+        function clip() { return Quickshell.clipboardText }
+        function setClip(text) { Quickshell.clipboardText = text }
+    }
+    Panel { content: PanelLayout { start: [ Text { objectName: "a"; text: "first" } ] } }
+}
+)"));
+  wabar::app::connectQuickshell(&h.engine, h.host.get(), h.dir.path());
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  EXPECT_EQ(wabar::quickshell_io::ClipboardText::readsForTesting(), start);
+
+  auto* probe = h.host->shell()->findChild<QObject*>(QStringLiteral("probe"));
+  ASSERT_NE(probe, nullptr);
+  QVariant text;
+  ASSERT_TRUE(QMetaObject::invokeMethod(probe, "clip", Q_RETURN_ARG(QVariant, text)));
+  EXPECT_EQ(text.toString(), QStringLiteral("glue clip"));
+  EXPECT_EQ(wabar::quickshell_io::ClipboardText::readsForTesting(), start + 1);
+
+  // A write from QML reaches the system clipboard and reads back.
+  ASSERT_TRUE(QMetaObject::invokeMethod(probe, "setClip", Q_ARG(QVariant, QStringLiteral("set"))));
+  EXPECT_EQ(QGuiApplication::clipboard()->text(), QStringLiteral("set"));
+  ASSERT_TRUE(QMetaObject::invokeMethod(probe, "clip", Q_RETURN_ARG(QVariant, text)));
+  EXPECT_EQ(text.toString(), QStringLiteral("set"));
 }

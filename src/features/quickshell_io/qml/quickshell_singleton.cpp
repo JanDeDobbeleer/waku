@@ -1,9 +1,7 @@
 #include "features/quickshell_io/qml/quickshell_singleton.h"
 
-#include <QClipboard>
 #include <QCoreApplication>
 #include <QDir>
-#include <QGuiApplication>
 #include <QIcon>
 #include <QMetaType>
 #include <QVersionNumber>
@@ -35,21 +33,12 @@ QuickshellSingleton::QuickshellSingleton(QObject* parent)
     : QuickshellSingleton(defaultDirs(), startDetachedSpec, parent) {}
 
 QuickshellSingleton::QuickshellSingleton(Dirs dirs, Launcher launcher, QObject* parent)
-    : QObject(parent), dirs_(std::move(dirs)), launcher_(std::move(launcher)) {}
+    : QObject(parent), dirs_(std::move(dirs)), launcher_(std::move(launcher)) {
+  connect(&clipboard_, &ClipboardText::textChanged, this,
+          &QuickshellSingleton::clipboardTextChanged);
+}
 
 qint64 QuickshellSingleton::processId() const { return QCoreApplication::applicationPid(); }
-
-QString QuickshellSingleton::clipboardText() const {
-  const QClipboard* clipboard = QGuiApplication::clipboard();
-  return clipboard ? clipboard->text() : QString();
-}
-
-void QuickshellSingleton::setClipboardText(const QString& text) {
-  QClipboard* clipboard = QGuiApplication::clipboard();
-  if (!clipboard || clipboard->text() == text) return;
-  clipboard->setText(text);
-  emit clipboardTextChanged();
-}
 
 void QuickshellSingleton::setShellDir(const QString& dir) {
   const QString clean = QDir::cleanPath(dir);
