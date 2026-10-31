@@ -27,6 +27,7 @@
 #include "features/brightness/brightness.h"
 #include "features/brightness/brightness_policy.h"
 #include "kernel/win32/winrt_apartment.h"
+#include "kernel/win32/winrt_strings.h"
 
 namespace wabar::brightness {
 namespace {
@@ -186,7 +187,7 @@ DisplayTarget queryMonitor(const std::wstring& path) {
     using winrt::Windows::Devices::Display::DisplayMonitorConnectionKind;
     const DisplayMonitor monitor = DisplayMonitor::FromInterfaceIdAsync(winrt::hstring(path)).get();
     DisplayTarget target;
-    target.monitorName = QString::fromWCharArray(monitor.DisplayName().c_str()).trimmed();
+    target.monitorName = kernel::toQString(monitor.DisplayName()).trimmed();
     target.connectionType = connectorName(monitor.PhysicalConnector());
     target.internal = monitor.ConnectionKind() == DisplayMonitorConnectionKind::Internal;
     return target;
