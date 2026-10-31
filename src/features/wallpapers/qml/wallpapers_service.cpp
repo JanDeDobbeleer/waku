@@ -314,7 +314,8 @@ void Wallpapers::commitWallpaper(const QString& path, bool dryRun) {
 void Wallpapers::random() {
   if (!available_) return;
   guarded("random wallpaper", [&] {
-    if (!engineEnabled_) {
+    // The manager sets what it picks, so a dry run picks here too.
+    if (!engineEnabled_ && !deps_.dryRun) {
       manager_->changeBackground();
       refresh();
       return;

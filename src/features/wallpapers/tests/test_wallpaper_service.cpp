@@ -280,6 +280,21 @@ TEST(WallpaperService, DryRunWithTheEnginePlaysTheAnimationButNeverSetsIt) {
   EXPECT_TRUE(QTest::qWaitFor([&] { return f.state->sets.size() == 1; }, 3000));
 }
 
+TEST(WallpaperService, DryRunRandomWithoutTheEngineSetsNothing) {
+  SmallFolder f;
+  auto state = std::make_shared<DesktopState>();
+  Wallpapers::Deps deps;
+  deps.backend = [state] { return std::make_unique<FakeBackend>(state); };
+  deps.picker = [](int) { return 0; };
+  deps.hotkeys = std::make_unique<FakeHotkeys>();
+  deps.realBackend = false;
+  deps.dryRun = true;
+  Wallpapers service(std::move(deps), nullptr);
+  service.configure(QDir::fromNativeSeparators(f.folder.path()), QString(), QString(), 0);
+  service.random();
+  EXPECT_TRUE(state->sets.isEmpty());
+}
+
 TEST(WallpaperService, NextPreviousAndRandomWrapOnTheFileList) {
   SmallFolder f;  // a.jpg, img2.png, img10.png
   // The current wallpaper is not in the folder: next is the first file, previous the last.
