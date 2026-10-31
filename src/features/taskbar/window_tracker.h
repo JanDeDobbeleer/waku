@@ -99,10 +99,14 @@ class WindowTracker : public QObject {
     bool isFlashing = false;
   };
 
+  // A fresh query with the tracked fields on top.
   WindowInfo asDict(WindowHandle hwnd, const Tracked& tracked) const;
-  bool isTaskbarWindow(WindowHandle hwnd, const Tracked& tracked) const;
+  // `fresh` (one query of the event) with the tracked fields on top.
+  static WindowInfo merged(WindowHandle hwnd, const Tracked& tracked, WindowInfo fresh);
   bool isUwp(const WindowInfo& info) const;
-  bool updateCached(Tracked& tracked, WindowHandle hwnd) const;
+  static bool isUwpClass(const QString& className);
+  // ApplicationWindow.update(): copies the title and class of `fresh` into the cache.
+  static bool updateCached(Tracked& tracked, const WindowInfo& fresh);
 
   void onWindowCreated(WindowHandle hwnd);
   void onWindowDestroyed(WindowHandle hwnd);

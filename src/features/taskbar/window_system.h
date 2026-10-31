@@ -51,7 +51,14 @@ class WindowSystem {
   // Every top-level window, in z order (EnumWindows).
   virtual std::vector<WindowHandle> enumerateWindows() const = 0;
   // A fresh read of every field. isActive and isFlashing are always false (the tracker owns them).
+  // It opens the window's process, so the tracker reads it once per event.
   virtual WindowInfo query(WindowHandle hwnd) const = 0;
+  // The cheap tests of isTaskbarWindow that need no query: false only for a window that can never
+  // pass it as it is now (not a root window, not visible, a tool window). The system-wide show
+  // events fire for every tooltip, menu and child control; these never get a query.
+  virtual bool mayBeTaskbarWindow(WindowHandle) const { return true; }
+  // The window class alone.
+  virtual QString className(WindowHandle hwnd) const { return query(hwnd).className; }
   // ApplicationWindow.is_taskbar_window(): top level, titled, not immersive shell, passes the
   // taskbar policy and the built-in ignore lists. Uses info.title/className as given.
   virtual bool isTaskbarWindow(const WindowInfo& info) const = 0;

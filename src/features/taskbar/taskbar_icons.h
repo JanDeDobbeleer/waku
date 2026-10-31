@@ -34,6 +34,12 @@ class TaskbarIcons final : public QObject {
   // safe to call there.
   using Loader = std::function<IconBitmap(int physicalSize)>;
   QPixmap iconFor(WindowHandle key, int size, qreal dpr, const Loader& loader);
+  // A window that does not answer WM_GETICON in time is asked again after kRetryMs, doubling up
+  // to kMaxRetryMs while it stays silent.
+  static constexpr int kRetryMs = 2000;
+  static constexpr int kMaxRetryMs = 32000;
+  // The wait before the next retry when `retries` came before it.
+  static int retryDelayMs(int retries);
   // A bitmap scaled to size*dpr physical pixels (null for a null bitmap), for sources that load
   // inline.
   static QPixmap pixmapFromBitmap(const IconBitmap& bitmap, int size, qreal dpr);
@@ -60,6 +66,8 @@ class TaskbarIcons final : public QObject {
   std::map<Key, Entry> cache_;
   std::set<Key> pending_;
   std::map<Key, Loader> loaders_;
+  // Retries so far of a key whose window has not answered; gone once it answers.
+  std::map<Key, int> retries_;
 };
 
 // Python load_icon for a pinned app (AppIcon / FileIcon): the shell icon of the app, else for a

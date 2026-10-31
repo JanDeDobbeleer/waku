@@ -205,6 +205,16 @@ class Win32WindowSystem final : public WindowSystem {
     return info;
   }
 
+  // Conditions isTaskbarWindow (GetAncestor, canAddToTaskbar) also requires.
+  bool mayBeTaskbarWindow(WindowHandle handle) const override {
+    HWND hwnd = toHwnd(handle);
+    if (GetAncestor(hwnd, GA_ROOT) != hwnd || !IsWindowVisible(hwnd)) return false;
+    const auto exStyle = static_cast<DWORD>(GetWindowLongW(hwnd, GWL_EXSTYLE));
+    return (exStyle & WS_EX_TOOLWINDOW) == 0;
+  }
+
+  QString className(WindowHandle hwnd) const override { return windowClass(toHwnd(hwnd)); }
+
   bool isTaskbarWindow(const WindowInfo& info) const override {
     HWND hwnd = toHwnd(info.hwnd);
     if (GetAncestor(hwnd, GA_ROOT) != hwnd) return false;

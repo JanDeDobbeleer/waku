@@ -26,6 +26,8 @@ class FakeSystem final : public WindowSystem {
   struct Row {
     WindowInfo info;
     bool taskbar = true;
+    // False: fails the cheap pre-check (a child, hidden or tool window).
+    bool candidate = true;
     bool iconic = false;
     QString uniqueId = QStringLiteral("app");
     QRect rect{0, 0, 800, 600};
@@ -61,12 +63,22 @@ class FakeSystem final : public WindowSystem {
     return result;
   }
   WindowInfo query(WindowHandle hwnd) const override {
+    ++queries;
     const auto found = rows.find(hwnd);
     return found != rows.end() ? found->second.info : WindowInfo{};
   }
+  bool mayBeTaskbarWindow(WindowHandle hwnd) const override {
+    const auto found = rows.find(hwnd);
+    return found != rows.end() && found->second.candidate;
+  }
+  QString className(WindowHandle hwnd) const override {
+    const auto found = rows.find(hwnd);
+    return found != rows.end() ? found->second.info.className : QString();
+  }
   bool isTaskbarWindow(const WindowInfo& info) const override {
     const auto found = rows.find(info.hwnd);
-    return found != rows.end() && found->second.taskbar && !info.title.trimmed().isEmpty();
+    return found != rows.end() && found->second.taskbar && found->second.candidate &&
+           !info.title.trimmed().isEmpty();
   }
   bool canMinimize(WindowHandle hwnd) const override { return query(hwnd).canMinimize; }
   WindowHandle monitorOfWindow(WindowHandle) const override { return widgetMonitor; }
@@ -105,6 +117,8 @@ class FakeSystem final : public WindowSystem {
   }
 
   std::map<WindowHandle, Row> rows;
+  // How many full queries were made (the expensive read: process, DWM, title).
+  mutable int queries = 0;
   WindowHandle foreground = 0;
   WindowHandle widgetMonitor = 1;
   QStringList log;

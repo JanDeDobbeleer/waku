@@ -57,13 +57,16 @@ void WindowTracker::stop() {
 // --- snapshots
 
 WindowInfo WindowTracker::asDict(WindowHandle hwnd, const Tracked& tracked) const {
-  WindowInfo info = system_->query(hwnd);
-  info.hwnd = hwnd;
-  info.title = tracked.title;
-  info.className = tracked.className;
-  info.isActive = tracked.isActive;
-  info.isFlashing = tracked.isFlashing;
-  return info;
+  return merged(hwnd, tracked, system_->query(hwnd));
+}
+
+WindowInfo WindowTracker::merged(WindowHandle hwnd, const Tracked& tracked, WindowInfo fresh) {
+  fresh.hwnd = hwnd;
+  fresh.title = tracked.title;
+  fresh.className = tracked.className;
+  fresh.isActive = tracked.isActive;
+  fresh.isFlashing = tracked.isFlashing;
+  return fresh;
 }
 
 std::map<WindowHandle, WindowInfo> WindowTracker::windows() const {
@@ -88,10 +91,6 @@ bool WindowTracker::isFlashing(WindowHandle hwnd) const {
   return found != windows_.end() && found->second.isFlashing;
 }
 
-bool WindowTracker::isTaskbarWindow(WindowHandle hwnd, const Tracked& tracked) const {
-  return system_->isTaskbarWindow(asDict(hwnd, tracked));
-}
-
 bool WindowTracker::isUwp(const WindowInfo& info) const {
   const QString cls = info.className.trimmed();
   const QString process = info.processName.value_or(QString()).trimmed();
@@ -100,9 +99,13 @@ bool WindowTracker::isUwp(const WindowInfo& info) const {
          process == QLatin1String("ApplicationFrameHost.exe");
 }
 
-// ApplicationWindow.update(): refresh the cached title and class.
-bool WindowTracker::updateCached(Tracked& tracked, WindowHandle hwnd) const {
-  const WindowInfo fresh = system_->query(hwnd);
+// UWP apps sometimes need a moment before they qualify.
+bool WindowTracker::isUwpClass(const QString& className) {
+  return className == QLatin1String("ApplicationFrameWindow") ||
+         className == QLatin1String("Windows.UI.Core.CoreWindow");
+}
+
+bool WindowTracker::updateCached(Tracked& tracked, const WindowInfo& fresh) {
   const bool changed = tracked.title != fresh.title || tracked.className != fresh.className;
   tracked.title = fresh.title;
   tracked.className = fresh.className;
@@ -265,9 +268,10 @@ void WindowTracker::onWindowMonitorChanged(WindowHandle hwnd) {
     delayedAdd(hwnd, 50);
     return;
   }
-  const WindowInfo oldData = asDict(hwnd, found->second);
-  updateCached(found->second, hwnd);
-  const WindowInfo newData = asDict(hwnd, found->second);
+  const WindowInfo fresh = system_->query(hwnd);
+  const WindowInfo oldData = merged(hwnd, found->second, fresh);
+  updateCached(found->second, fresh);
+  const WindowInfo newData = merged(hwnd, found->second, fresh);
   emit windowMonitorChanged(hwnd, newData);
   if (!(oldData == newData)) emit windowUpdated(hwnd, newData);
 }
@@ -275,8 +279,9 @@ void WindowTracker::onWindowMonitorChanged(WindowHandle hwnd) {
 void WindowTracker::onWindowCloaked(WindowHandle hwnd) {
   const auto found = windows_.find(hwnd);
   if (found == windows_.end()) return;
-  updateCached(found->second, hwnd);
-  const WindowInfo info = asDict(hwnd, found->second);
+  const WindowInfo fresh = system_->query(hwnd);
+  updateCached(found->second, fresh);
+  const WindowInfo info = merged(hwnd, found->second, fresh);
   // Cloaked UWP frames are transient: keep and refresh them and let the widgets filter.
   if (keepCloaked_ || isUwp(info)) {
     emit windowUpdated(hwnd, info);
@@ -292,8 +297,9 @@ void WindowTracker::onWindowUncloaked(WindowHandle hwnd) {
     return;
   }
   // Force-emit so widgets that removed it while cloaked can add it again.
-  updateCached(found->second, hwnd);
-  emit windowUpdated(hwnd, asDict(hwnd, found->second));
+  const WindowInfo fresh = system_->query(hwnd);
+  updateCached(found->second, fresh);
+  emit windowUpdated(hwnd, merged(hwnd, found->second, fresh));
 }
 
 void WindowTracker::onWindowShow(WindowHandle hwnd) {
@@ -311,36 +317,39 @@ void WindowTracker::onWindowHide(WindowHandle hwnd) {
 
 void WindowTracker::addWindow(WindowHandle hwnd, bool active, bool flashing) {
   if (!system_->isWindow(hwnd)) return;
+  const auto retryUwp = [this, hwnd] {
+    QTimer::singleShot(500, this,
+                       [this, hwnd] { guarded("uwp check", [&] { delayedAdd(hwnd, 0); }); });
+  };
+  if (!system_->mayBeTaskbarWindow(hwnd)) {
+    if (isUwpClass(system_->className(hwnd))) retryUwp();
+    return;
+  }
   const WindowInfo fresh = system_->query(hwnd);
   Tracked tracked;
   tracked.title = fresh.title;
   tracked.className = fresh.className;
-  if (!isTaskbarWindow(hwnd, tracked)) {
-    // UWP apps sometimes need a moment before they qualify.
-    if (fresh.className == QLatin1String("ApplicationFrameWindow") ||
-        fresh.className == QLatin1String("Windows.UI.Core.CoreWindow")) {
-      QTimer::singleShot(500, this,
-                         [this, hwnd] { guarded("uwp check", [&] { delayedAdd(hwnd, 0); }); });
-    }
+  if (!system_->isTaskbarWindow(merged(hwnd, tracked, fresh))) {
+    if (isUwpClass(fresh.className)) retryUwp();
     return;
   }
   tracked.isActive = active;
   tracked.isFlashing = flashing;
   windows_[hwnd] = tracked;
-  emit windowAdded(hwnd, asDict(hwnd, tracked));
+  emit windowAdded(hwnd, merged(hwnd, tracked, fresh));
 }
 
 void WindowTracker::delayedAdd(WindowHandle hwnd, int delayMs) {
   const auto attempt = [this, hwnd] {
     guarded("delayed add", [&] {
-      if (isTracked(hwnd) || !system_->isWindow(hwnd)) return;
+      if (isTracked(hwnd) || !system_->isWindow(hwnd) || !system_->mayBeTaskbarWindow(hwnd)) return;
       const WindowInfo fresh = system_->query(hwnd);
       Tracked tracked;
       tracked.title = fresh.title;
       tracked.className = fresh.className;
-      if (!isTaskbarWindow(hwnd, tracked)) return;
+      if (!system_->isTaskbarWindow(merged(hwnd, tracked, fresh))) return;
       windows_[hwnd] = tracked;
-      emit windowAdded(hwnd, asDict(hwnd, tracked));
+      emit windowAdded(hwnd, merged(hwnd, tracked, fresh));
     });
   };
   if (delayMs <= 0)
@@ -360,37 +369,38 @@ void WindowTracker::removeWindow(WindowHandle hwnd) {
 void WindowTracker::updateWindow(WindowHandle hwnd) {
   const auto found = windows_.find(hwnd);
   if (found == windows_.end()) return;
-  const WindowInfo oldData = asDict(hwnd, found->second);
-  updateCached(found->second, hwnd);
+  // One query for the old and the new snapshot: they differ in the cached title and class only.
+  const WindowInfo fresh = system_->query(hwnd);
+  const WindowInfo oldData = merged(hwnd, found->second, fresh);
+  updateCached(found->second, fresh);
+  const WindowInfo newData = merged(hwnd, found->second, fresh);
 
-  if (!isTaskbarWindow(hwnd, found->second)) {
-    const WindowInfo info = asDict(hwnd, found->second);
+  if (!system_->isTaskbarWindow(newData)) {
     // UWP windows survive transient transitions, and cloaked ones stay when asked to.
-    if (isUwp(info) || (info.isCloaked && keepCloaked_)) {
-      emit windowUpdated(hwnd, info);
+    if (isUwp(newData) || (newData.isCloaked && keepCloaked_)) {
+      emit windowUpdated(hwnd, newData);
       return;
     }
     removeWindow(hwnd);
     return;
   }
-  const WindowInfo newData = asDict(hwnd, found->second);
   if (!(oldData == newData)) emit windowUpdated(hwnd, newData);
 }
 
 void WindowTracker::debounceUpdate(WindowHandle hwnd, int delayMs) {
-  if (const auto existing = pendingUpdates_.find(hwnd); existing != pendingUpdates_.end()) {
-    existing->second->stop();
-    existing->second->deleteLater();
-    pendingUpdates_.erase(existing);
+  // One timer per window, restarted by each event within the delay.
+  QTimer*& timer = pendingUpdates_[hwnd];
+  if (!timer) {
+    timer = new QTimer(this);
+    timer->setSingleShot(true);
+    connect(timer, &QTimer::timeout, this, [this, hwnd] {
+      if (const auto pending = pendingUpdates_.find(hwnd); pending != pendingUpdates_.end()) {
+        pending->second->deleteLater();
+        pendingUpdates_.erase(pending);
+      }
+      guarded("debounced update", [&] { updateWindow(hwnd); });
+    });
   }
-  auto* timer = new QTimer(this);
-  timer->setSingleShot(true);
-  connect(timer, &QTimer::timeout, this, [this, hwnd, timer] {
-    pendingUpdates_.erase(hwnd);
-    timer->deleteLater();
-    guarded("debounced update", [&] { updateWindow(hwnd); });
-  });
-  pendingUpdates_[hwnd] = timer;
   timer->start(std::max(0, delayMs));
 }
 

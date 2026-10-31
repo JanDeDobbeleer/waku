@@ -8,6 +8,7 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QTimer>
 #include <atomic>
 #include <map>
 
@@ -196,6 +197,66 @@ TEST_F(TrackerTest, WindowThatStopsQualifyingIsRemovedOnUpdate) {
   EXPECT_EQ(events, (QStringList{"remove 101"}));
 }
 
+// The system-wide show events fire for every tooltip, menu and child control: those never cost
+// the full query (process, DWM, title).
+TEST_F(TrackerTest, AWindowThatCannotQualifyIsSkippedWithoutAQuery) {
+  ASSERT_TRUE(tracker_->start(1));
+  for (WindowHandle hwnd = 200; hwnd < 300; ++hwnd) system_->add(hwnd).candidate = false;
+  events.clear();
+  system_->queries = 0;
+  for (WindowHandle hwnd = 200; hwnd < 300; ++hwnd)
+    tracker_->handleWinEvent(shell::kEventObjectShow, hwnd, 0, 0);
+  QTest::qWait(20);
+  EXPECT_TRUE(events.isEmpty());
+  EXPECT_EQ(system_->queries, 0);  // before: one per event
+}
+
+TEST_F(TrackerTest, AUwpFrameThatCannotQualifyYetIsTriedAgain) {
+  ASSERT_TRUE(tracker_->start(1));
+  FakeSystem::Row& row = system_->add(kFirst);
+  row.info.className = QStringLiteral("ApplicationFrameWindow");
+  row.candidate = false;
+  tracker_->handleWinEvent(shell::kEventObjectShow, kFirst, 0, 0);
+  QTest::qWait(20);
+  EXPECT_FALSE(tracker_->isTracked(kFirst));
+  system_->rows[kFirst].candidate = true;  // it became a visible top-level frame
+  EXPECT_TRUE(QTest::qWaitFor([&] { return tracker_->isTracked(kFirst); }, 2000));
+}
+
+TEST_F(TrackerTest, AnEventQueriesTheWindowOnce) {
+  system_->add(kFirst, QStringLiteral("Before"));
+  ASSERT_TRUE(tracker_->start(1));
+  events.clear();
+  system_->queries = 0;
+  system_->rows[kFirst].info.title = QStringLiteral("After");
+  tracker_->handleShellHook(shell::kWindowReplacing, kFirst);  // an update
+  EXPECT_EQ(system_->queries, 1);                              // before: four
+  EXPECT_EQ(events, (QStringList{"update 101"}));
+  EXPECT_EQ(tracker_->window(kFirst)->title, QStringLiteral("After"));
+
+  system_->queries = 0;
+  system_->add(kSecond);
+  tracker_->handleShellHook(shell::kWindowCreated, kSecond);  // an add
+  EXPECT_EQ(system_->queries, 1);                             // before: three
+  system_->queries = 0;
+  tracker_->handleWinEvent(shell::kEventObjectCloaked, kSecond, 0, 0);
+  QTest::qWait(120);
+  EXPECT_EQ(system_->queries, 2);  // the cloak read and the removal snapshot; before: three
+  EXPECT_FALSE(tracker_->isTracked(kSecond));
+}
+
+TEST_F(TrackerTest, RedrawsWithinTheDelayShareOneTimer) {
+  system_->add(kFirst, QStringLiteral("Before"));
+  ASSERT_TRUE(tracker_->start(1));
+  events.clear();
+  system_->rows[kFirst].info.title = QStringLiteral("After");
+  for (int i = 0; i < 20; ++i) tracker_->handleShellHook(shell::kRedraw, kFirst);
+  EXPECT_EQ(tracker_->findChildren<QTimer*>().size(), 1);
+  EXPECT_TRUE(events.isEmpty());
+  QTest::qWait(150);
+  EXPECT_EQ(events, (QStringList{"update 101"}));
+}
+
 // --- platform helpers
 
 TEST(TaskbarIdentity, CommandLineArgumentsSplitOffTheProgram) {
@@ -230,6 +291,15 @@ TEST(TaskbarIcons, SynchronousLoadScalesToThePhysicalSize) {
   EXPECT_EQ(pixmap.width(), 24);
   EXPECT_DOUBLE_EQ(pixmap.devicePixelRatio(), 1.5);
   EXPECT_TRUE(icons.icon(kFirst, 0, 1.0).isNull());
+}
+
+TEST(TaskbarIcons, ASilentWindowIsAskedLessAndLessOften) {
+  EXPECT_EQ(TaskbarIcons::retryDelayMs(0), 2000);
+  EXPECT_EQ(TaskbarIcons::retryDelayMs(1), 4000);
+  EXPECT_EQ(TaskbarIcons::retryDelayMs(2), 8000);
+  EXPECT_EQ(TaskbarIcons::retryDelayMs(3), 16000);
+  EXPECT_EQ(TaskbarIcons::retryDelayMs(4), 32000);
+  EXPECT_EQ(TaskbarIcons::retryDelayMs(40), TaskbarIcons::kMaxRetryMs);
 }
 
 TEST(TaskbarPinIcons, ToastAumidIconIsCroppedAndPaddedWhenTheShellHasNone) {

@@ -71,6 +71,9 @@ void TaskbarIcons::forget(WindowHandle hwnd) {
   for (auto it = loaders_.begin(); it != loaders_.end();) {
     it = it->first.first == hwnd ? loaders_.erase(it) : std::next(it);
   }
+  for (auto it = retries_.begin(); it != retries_.end();) {
+    it = it->first.first == hwnd ? retries_.erase(it) : std::next(it);
+  }
 }
 
 void TaskbarIcons::request(const Key& key, const Loader& loader) {
@@ -103,15 +106,23 @@ void TaskbarIcons::request(const Key& key, const Loader& loader) {
   }));
 }
 
+int TaskbarIcons::retryDelayMs(int retries) {
+  return std::min(kMaxRetryMs, kRetryMs << std::clamp(retries, 0, 4));
+}
+
 void TaskbarIcons::finish(const Key& key, const QImage& image, bool complete) {
   pending_.erase(key);
   if (!complete) {
-    // The window did not answer in time; ask again a bit later instead of caching a guess.
-    QTimer::singleShot(2000, this, [this, key] {
+    // The window did not answer in time; ask again later instead of caching a guess, less often
+    // while it stays silent (each attempt costs the loader thread two WM_GETICON timeouts).
+    const int delay = retryDelayMs(retries_[key]++);
+    QTimer::singleShot(delay, this, [this, key] {
       const auto loader = loaders_.find(key);
       if (loader != loaders_.end()) request(key, loader->second);
     });
     if (image.isNull()) return;
+  } else {
+    retries_.erase(key);
   }
   cache_[key] = Entry{image, true};
   if (async_) emit iconsChanged();
