@@ -73,7 +73,11 @@ desktop is not live.
 - `DesktopEntry` objects are reused by id across rescans, so a QML reference survives; `changed`
   fires when a field changes. Removed apps are `deleteLater`ed.
 - `QFileSystemWatcher` watches the Start Menu folders and all their subfolders and rescans after
-  1.5 s of quiet.
+  1.5 s of quiet. The real service keeps the watcher and the last complete catalogue in a
+  process-wide `AppCatalog` (a `kernel::LingeringHub`): the service a reload builds starts from that
+  catalogue without a scan unless a folder changed, and the watcher is updated by difference, not
+  registered on every folder again. A rescan posts only its complete result; the shortcuts alone
+  come first only while the list is empty.
 - `image://appicon/<percent-encoded id>`: `QQuickAsyncImageProvider` with its own four-thread pool;
   each request calls `kernel::shellItemIcon` (documented `IShellItemImageFactory`, COM per call)
   and scales down to the request's `sourceSize` (64 when unset, at most 256). The provider reads

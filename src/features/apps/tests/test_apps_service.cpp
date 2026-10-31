@@ -279,6 +279,65 @@ TEST(AppsService, WatcherRescansAfterANewShortcut) {
   EXPECT_EQ(service.count(), 5);
 }
 
+TEST(AppsService, TheServiceOfAReloadStartsFromTheSharedCatalogue) {
+  Fixture fixture;
+  auto deps = fixture.deps();
+  int resolved = 0;
+  const ShortcutResolver resolver = deps.resolver;
+  deps.resolver = [&resolved, resolver](const QString& path) {
+    ++resolved;
+    return resolver(path);
+  };
+  deps.catalog = std::make_shared<AppCatalog>();
+  deps.watch = true;
+  {
+    AppsService first(deps);
+    ASSERT_EQ(first.count(), 4);
+  }
+  ASSERT_GT(resolved, 0);
+  EXPECT_TRUE(deps.catalog->fresh());
+  const int scans = resolved;
+  AppsService second(deps);  // what a reload builds
+  EXPECT_TRUE(second.ready());
+  EXPECT_EQ(second.count(), 4);
+  EXPECT_EQ(resolved, scans);  // no shortcut read again
+  EXPECT_TRUE(second.byId(s("Microsoft.Photos_8wekyb3d8bbwe!App")));
+  // The catalogue watches the Start Menu folders once.
+  QStringList watched = deps.catalog->watched();
+  QStringList expected = watchedDirectories(deps.folders);
+  watched.sort();
+  expected.sort();
+  EXPECT_EQ(watched, expected);
+}
+
+TEST(AppsService, ASharedCatalogueRescansAfterAFolderChange) {
+  Fixture fixture;
+  auto deps = fixture.deps(true);
+  deps.watch = true;
+  deps.debounceMs = 50;
+  deps.catalog = std::make_shared<AppCatalog>();
+  {
+    AppsService first(deps);
+    QSignalSpy finished(&first, &AppsService::scanFinished);
+    ASSERT_TRUE(QTest::qWaitFor([&] { return finished.count() > 0; }, 10000));
+  }
+  AppsService second(deps);
+  ASSERT_EQ(second.count(), 4);
+  touch(fixture.menu.filePath(s("Dev Tools/Gamma.lnk")));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return second.byId(s("Dev Tools/Gamma")) != nullptr; }, 10000));
+  EXPECT_EQ(second.count(), 5);
+}
+
+TEST(AppsService, ARescanReplacesTheListOnce) {
+  Fixture fixture;
+  AppsService service(fixture.deps());
+  ASSERT_EQ(service.count(), 4);
+  QSignalSpy values(service.applications(), &AppsModel::valuesChanged);
+  touch(fixture.menu.filePath(s("Delta.lnk")));
+  service.refresh();
+  EXPECT_EQ(values.count(), 1);  // before: the shortcuts alone, then everything
+  EXPECT_EQ(service.count(), 5);
+}
 TEST(AppsService, DestroyingDuringAScanIsSafe) {
   Fixture fixture;
   {

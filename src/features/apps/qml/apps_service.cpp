@@ -10,9 +10,46 @@
 
 #include "features/apps/rank.h"
 #include "kernel/qt/app_data.h"
+#include "kernel/qt/linger.h"
 #include "kernel/qt/live_desktop.h"
 
 namespace wabar::apps {
+
+AppCatalog::AppCatalog(QObject* parent) : QObject(parent) {
+  watcher_ = new QFileSystemWatcher(this);
+  connect(watcher_, &QFileSystemWatcher::directoryChanged, this, [this] {
+    fresh_ = false;
+    emit foldersChanged();
+  });
+}
+
+void AppCatalog::store(std::vector<AppRecord> catalog, int scanMs) {
+  catalog_ = std::move(catalog);
+  scanMs_ = scanMs;
+  fresh_ = true;
+}
+
+void AppCatalog::watch(const QStringList& directories) {
+  const QStringList current = watcher_->directories();
+  QStringList gone;
+  for (const QString& directory : current) {
+    if (!directories.contains(directory)) gone.append(directory);
+  }
+  QStringList added;
+  for (const QString& directory : directories) {
+    if (!current.contains(directory)) added.append(directory);
+  }
+  if (!gone.isEmpty()) watcher_->removePaths(gone);
+  if (!added.isEmpty()) watcher_->addPaths(added);
+}
+
+QStringList AppCatalog::watched() const { return watcher_->directories(); }
+
+std::shared_ptr<AppCatalog> acquireAppCatalog() {
+  static kernel::LingeringHub<AppCatalog> hub;
+  return hub.acquire([] { return std::make_shared<AppCatalog>(); });
+}
+
 namespace {
 
 std::function<std::unique_ptr<AppsService>()>& testFactory() {
@@ -30,6 +67,7 @@ AppsService::Deps realDeps() {
   deps.iconLoader = realIconLoader();
   deps.frecencyPath = wabar::kernel::appDataDir() + QStringLiteral("/apps_frecency.json");
   deps.watch = true;
+  deps.catalog = acquireAppCatalog();
   return deps;
 }
 
@@ -44,7 +82,20 @@ AppsService::AppsService(Deps deps, QObject* parent)
   debounce_.setSingleShot(true);
   debounce_.setInterval(deps_.debounceMs);
   connect(&debounce_, &QTimer::timeout, this, &AppsService::refresh);
-  if (deps_.watch) {
+  if (deps_.catalog) {
+    connect(deps_.catalog.get(), &AppCatalog::foldersChanged, &debounce_,
+            qOverload<>(&QTimer::start));
+    if (deps_.catalog->fresh()) {
+      // The catalogue of the engine before a reload; nothing changed on disk since.
+      scanning_ = true;
+      ScanResult cached;
+      cached.catalog = deps_.catalog->catalog();
+      cached.complete = true;
+      cached.ms = deps_.catalog->scanMs();
+      applyResult(std::move(cached));
+      return;
+    }
+  } else if (deps_.watch) {
     watcher_ = new QFileSystemWatcher(this);
     connect(watcher_, &QFileSystemWatcher::directoryChanged, &debounce_,
             qOverload<>(&QTimer::start));
@@ -179,14 +230,17 @@ void AppsService::startScan() {
     loading_ = true;
     emit loadingChanged();
   }
+  // The shortcuts alone only while the list is empty: on a rescan they would drop every Store app
+  // from the list until the complete result puts them back (two resets of every launcher list).
+  const bool interim = model_.count() == 0;
   if (!deps_.async) {
-    runScan(deps_, [this](ScanResult result) { applyResult(std::move(result)); });
+    runScan(deps_, interim, [this](ScanResult result) { applyResult(std::move(result)); });
     return;
   }
   auto state = state_;
-  QThreadPool::globalInstance()->start([deps = deps_, state]() {
+  QThreadPool::globalInstance()->start([deps = deps_, interim, state]() {
     try {
-      runScan(deps, [&state](ScanResult result) {
+      runScan(deps, interim, [&state](ScanResult result) {
         std::lock_guard<std::mutex> lock(state->mutex);
         if (!state->owner) return;
         auto shared = std::make_shared<ScanResult>(std::move(result));
@@ -201,16 +255,17 @@ void AppsService::startScan() {
   });
 }
 
-void AppsService::runScan(const Deps& deps, const std::function<void(ScanResult)>& sink) {
+void AppsService::runScan(const Deps& deps, bool interim,
+                          const std::function<void(ScanResult)>& sink) {
   QElapsedTimer timer;
   timer.start();
   std::vector<AppRecord> shortcuts = scanShortcuts(deps.folders, deps.resolver);
-  if (deps.appsFolder) {
+  if (deps.appsFolder && interim) {
     // Shortcuts first; the Store apps take longer.
-    ScanResult interim;
-    interim.catalog = buildCatalog(shortcuts, {});
-    interim.ms = static_cast<int>(timer.elapsed());
-    sink(std::move(interim));
+    ScanResult first;
+    first.catalog = buildCatalog(shortcuts, {});
+    first.ms = static_cast<int>(timer.elapsed());
+    sink(std::move(first));
   }
   std::vector<AppRecord> store;
   if (deps.appsFolder) store = deps.appsFolder();
@@ -222,6 +277,7 @@ void AppsService::runScan(const Deps& deps, const std::function<void(ScanResult)
 }
 
 void AppsService::applyResult(ScanResult result) {
+  if (result.complete && deps_.catalog) deps_.catalog->store(result.catalog, result.ms);
   // Reuse the object of every id that is still there, so QML references survive a rescan.
   QHash<QString, DesktopEntry*> next;
   QList<DesktopEntry*> list;
@@ -270,6 +326,10 @@ void AppsService::applyResult(ScanResult result) {
 }
 
 void AppsService::watchFolders() {
+  if (deps_.catalog) {
+    if (deps_.watch) deps_.catalog->watch(watchedDirectories(deps_.folders));
+    return;
+  }
   if (!watcher_) return;
   const QStringList old = watcher_->directories();
   if (!old.isEmpty()) watcher_->removePaths(old);

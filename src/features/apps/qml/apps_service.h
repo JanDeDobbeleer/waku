@@ -12,6 +12,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 #include "features/apps/apps_platform.h"
 #include "features/apps/catalog.h"
@@ -25,6 +26,46 @@ class QJSEngine;
 class QQmlEngine;
 
 namespace wabar::apps {
+
+// The last complete app catalogue of the process and the watcher on the Start Menu folders, shared
+// by the AppsService of every engine and kept through a reload (acquireAppCatalog, a
+// kernel::LingeringHub). A reload deletes the singleton and builds a new one at once: without the
+// cache the new one scanned again (every .lnk through IShellLink, all of shell:AppsFolder; 0.5 to
+// 3 s of COM on the pool) and registered the watcher on every folder again.
+//
+// Threads: GUI thread only. The watcher is Qt's (its own thread); `foldersChanged` arrives here.
+class AppCatalog : public QObject {
+  Q_OBJECT
+
+ public:
+  explicit AppCatalog(QObject* parent = nullptr);
+
+  // The catalogue of the last complete scan and how long it took, unless a watched folder changed
+  // since.
+  bool fresh() const { return fresh_; }
+  const std::vector<AppRecord>& catalog() const { return catalog_; }
+  int scanMs() const { return scanMs_; }
+  void store(std::vector<AppRecord> catalog, int scanMs);
+
+  // Watches exactly `directories`: adds the new ones and removes the gone ones, not all of them
+  // again after every scan.
+  void watch(const QStringList& directories);
+  QStringList watched() const;
+
+ signals:
+  // A watched folder changed; the catalogue is no longer fresh.
+  void foldersChanged();
+
+ private:
+  QFileSystemWatcher* watcher_ = nullptr;
+  std::vector<AppRecord> catalog_;
+  int scanMs_ = 0;
+  bool fresh_ = false;
+};
+
+// The process's catalogue, created on first use; it outlives its last holder by
+// kernel::kReloadLingerMs.
+std::shared_ptr<AppCatalog> acquireAppCatalog();
 
 // The app catalogue of a `wabar` run, as a QML singleton: Start Menu shortcuts (.lnk files below
 // FOLDERID_Programs and FOLDERID_CommonPrograms) and the Store apps of shell:AppsFolder, as
@@ -40,7 +81,10 @@ namespace wabar::apps {
 // then shell:AppsFolder, each in COM's MTA of that thread) and posts its result to the GUI thread;
 // the destructor detaches a running scan (it only posts to a dead owner, which is dropped). The
 // icon provider has its own pool. A QFileSystemWatcher on the Start Menu folders restarts the
-// scan after `debounceMs` of quiet.
+// scan after `debounceMs` of quiet; with a shared AppCatalog (the real service) the watcher and
+// the last complete catalogue live there, so the service of a reload starts from that catalogue
+// without a scan. A rescan posts only its complete result; the shortcuts alone come first only
+// while the list is empty.
 class AppsService : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -64,6 +108,9 @@ class AppsService : public QObject {
     bool watch = false;
     int debounceMs = 1500;
     bool async = true;  // false: refresh() scans on the calling thread (tests)
+    // The shared catalogue and watcher (the real service); null: this service watches for itself
+    // when `watch`, and every service scans.
+    std::shared_ptr<AppCatalog> catalog;
   };
 
   // Deliberately not default-constructible: create() must run to register the image provider.
@@ -124,7 +171,7 @@ class AppsService : public QObject {
 
   // Scans on the calling thread and hands the result to `sink`: the shortcuts alone first when
   // there is a shell:AppsFolder enumerator, then the complete catalogue.
-  static void runScan(const Deps& deps, const std::function<void(ScanResult)>& sink);
+  static void runScan(const Deps& deps, bool interim, const std::function<void(ScanResult)>& sink);
   void applyResult(ScanResult result);
   void startScan();
   bool launchMode(const QString& id, LaunchMode mode);
