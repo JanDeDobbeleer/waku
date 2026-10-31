@@ -13,6 +13,8 @@ to Waybar, the bar for Wayland. It is written in lower case and plain ASCII in c
   - `wabarc wallpaper gallery`: open or close the picker
   - `wabarc call <target> <function> [args...]`: run a function of an `IpcHandler` declared in the
     shell; `wabarc call` alone lists the targets
+  - `wabarc shortcut <name>`: fire the `GlobalShortcut` with that name; `wabarc shortcut list`
+    prints the names
   - `wabarc surface list`, `wabarc surface show|hide|toggle|status <name>`: the shell windows that
     have a `name` (a launcher, an OSD); `show` and `toggle` let the bar take the keyboard focus
   - `--dry-run` after `wallpaper` (`set`, `random`, `next`, `previous`) plays the animation but does
@@ -30,16 +32,18 @@ to Waybar, the bar for Wayland. It is written in lower case and plain ASCII in c
   names the rename (`docs/building.md`).
 - QML modules: `wabar` 2.0 (ShellRoot, Scope, PanelWindow, FloatingWindow, Panel, PanelLayout,
   Variants, LazyLoader, Theme, ...), `wabar.widgets` (the built-in widgets), `wabar.services` (the C++
-  data sources), and `Quickshell` and `Quickshell.Wayland` (the same shell types under Quickshell's
-  names, for ported shells).
+  data sources), and the Quickshell compatibility modules (`Quickshell`, `Quickshell.Wayland`,
+  `Quickshell.Io` and others: the same types under Quickshell's names, for ported shells; the list
+  is in `docs/architecture.md`).
 - Panels dock to any of the four edges (`examples/sidebar` is a left one); a docked panel
   reports its edge as `QsWindow.window.dockEdge`.
 - `--hide-taskbar` hides the Windows taskbar while wabar runs and restores it on exit;
   `wabarc taskbar hide|show|status` does the same at run time.
 - `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
-  the built-in shell and ignores the config.
+  the built-in shell and ignores the config; `--font-engine=directwrite` honours variable-font axes.
 
 The architecture is in [docs/architecture.md](../../docs/architecture.md), the build and every flag
-in [docs/building.md](../../docs/building.md), and dated plans in [docs/plans](../../docs/plans/README.md).
+in [docs/building.md](../../docs/building.md), notes for shell authors in
+[docs/shells.md](../../docs/shells.md), and dated plans in [docs/plans](../../docs/plans/README.md).
 The sample config is in [examples/config](../../examples/config), a vertical sidebar in
 [examples/sidebar](../../examples/sidebar).

@@ -20,8 +20,10 @@ build\arm64-debug\wabar.exe --config-home examples\config
 build\arm64-debug\wabarc.exe --config-home examples\config status
 ```
 
-`wabarc` talks to the running bar. Its commands are `reload`, `status`, `quit` and
-`wallpaper set|random|next|previous|gallery` and `surface list|show|hide|toggle|status <name>`. Details and flags: [src/app/README.md](src/app/README.md).
+`wabarc` talks to the running bar. Its commands are `reload`, `status`, `quit`,
+`wallpaper set|random|next|previous|gallery`, `surface list|show|hide|toggle|status <name>`,
+`call [<target> <function> [args...]]`, `shortcut <name>|list` and `taskbar hide|show|status`.
+Details and flags: [src/app/README.md](src/app/README.md) and [docs/building.md](docs/building.md).
 
 Use `--config-home <dir>` (or `WABAR_CONFIG_HOME`) to point wabar at your own folder, and
 `--no-tray` if you do not want it to hook Explorer. `cmake --build --preset arm64-debug --target
@@ -34,7 +36,7 @@ deploy` assembles a portable folder in `dist/wabar`.
 | [AGENTS.md](AGENTS.md) | Rules for contributors and agents: commands, structure rules, adding a feature, style, commits |
 | [docs/building.md](docs/building.md) | Prerequisites, presets, deploy, command-line flags, `tools\check.ps1`, hooks |
 | [docs/architecture.md](docs/architecture.md) | Units and layering, threads, singletons, error policy, undocumented-API allowlist |
-| [docs/styling.md](docs/styling.md) | How the look is configured |
+| [docs/shells.md](docs/shells.md) | Notes for shell authors: what differs from Quickshell (input masks, shortcuts) |
 | [src/app/README.md](src/app/README.md) | Running `wabar` and `wabarc`, config home, QML modules |
 | `src/features/<f>/design.md` | The design note of each feature |
 | [docs/plans](docs/plans/README.md) | Dated design notes and plans, with their status |

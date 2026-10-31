@@ -55,6 +55,7 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
 | `--hide-taskbar` | Hide the Windows taskbar (all monitors) while wabar runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wabarc shortcut`. |
+| `--font-engine <engine>` | `gdi` (default, small) or `directwrite` (honours variable-font axes, about 2 MB more memory). A shell that uses variable fonts needs `directwrite`. `QT_QPA_PLATFORM` wins when it is set. |
 | `--help` | Print the options. |
 
 `wabarc.exe` talks to the bar that runs for the same config home (`--config-home <dir>` or
