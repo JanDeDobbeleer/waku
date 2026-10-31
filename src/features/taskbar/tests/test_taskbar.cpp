@@ -478,7 +478,7 @@ TEST_F(TaskbarWidgetTest, TheWindowsOfTheDesktopAppearAsButtons) {
 TEST_F(TaskbarWidgetTest, HideEmptyHidesTheWidgetUntilAWindowAppears) {
   Harness h;
   ASSERT_TRUE(start(h, QStringLiteral("hideEmpty: true")));
-  QTest::qWait(100);
+  QCoreApplication::processEvents();  // the model is built during the start; nothing is pending
   EXPECT_FALSE(findItem(h.window(), QStringLiteral("taskbar"))->isVisible());
 }
 

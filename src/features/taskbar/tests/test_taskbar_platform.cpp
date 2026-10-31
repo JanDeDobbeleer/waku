@@ -56,6 +56,27 @@ class TrackerTest : public testing::Test {
                      });
   }
 
+  // The handlers queued with a zero delay (show, hide, minimize) run on the next pass.
+  static void runQueued() {
+    QCoreApplication::sendPostedEvents();
+    QCoreApplication::processEvents();
+  }
+  // Waits for the first event of a delayed handler (the 50 ms cloak, the 100 ms uncloak, the
+  // 50 ms redraw debounce), then lets anything queued behind it run, so an exact comparison also
+  // sees a second event that should not be there.
+  bool waitForEvents() {
+    const bool any = QTest::qWaitFor([&] { return !events.isEmpty(); }, 5000);
+    runQueued();
+    return any;
+  }
+  // No debounced update is left that could still report.
+  bool noPendingUpdate() const {
+    for (const QTimer* timer : tracker_->findChildren<QTimer*>()) {
+      if (timer->isActive()) return false;
+    }
+    return true;
+  }
+
   std::shared_ptr<FakeSystem> system_;
   std::unique_ptr<WindowTracker> tracker_;
   QStringList events;
@@ -125,7 +146,8 @@ TEST_F(TrackerTest, RedrawIsDebouncedAndReportsTitleChanges) {
   tracker_->handleShellHook(shell::kRedraw, kFirst);
   tracker_->handleShellHook(shell::kRedraw, kFirst);
   EXPECT_TRUE(events.isEmpty());
-  QTest::qWait(150);
+  ASSERT_TRUE(waitForEvents());
+  EXPECT_TRUE(noPendingUpdate());
   EXPECT_EQ(events, (QStringList{"update 101"}));
   EXPECT_EQ(tracker_->window(kFirst)->title, QStringLiteral("After"));
 }
@@ -137,7 +159,9 @@ TEST_F(TrackerTest, CloakedWindowsAreDroppedUnlessKeptOrUwp) {
   events.clear();
   tracker_->handleWinEvent(shell::kEventObjectCloaked, kFirst, 0, 0);
   tracker_->handleWinEvent(shell::kEventObjectCloaked, kSecond, 0, 0);
-  QTest::qWait(120);
+  // Both cloak handlers share the 50 ms delay and run in the order they were queued.
+  ASSERT_TRUE(QTest::qWaitFor([&] { return events.size() >= 2; }, 5000));
+  runQueued();
   EXPECT_FALSE(tracker_->isTracked(kFirst));
   EXPECT_TRUE(tracker_->isTracked(kSecond));
   EXPECT_TRUE(events.contains(QStringLiteral("remove 101")));
@@ -146,7 +170,7 @@ TEST_F(TrackerTest, CloakedWindowsAreDroppedUnlessKeptOrUwp) {
   // Uncloaking brings the dropped window back.
   events.clear();
   tracker_->handleWinEvent(shell::kEventObjectUncloaked, kFirst, 0, 0);
-  QTest::qWait(150);
+  ASSERT_TRUE(waitForEvents());
   EXPECT_EQ(events, (QStringList{"add 101"}));
 }
 
@@ -159,7 +183,7 @@ TEST_F(TrackerTest, KeepCloakedTasksKeepsAndRefreshes) {
   events.clear();
   system_->rows[kFirst].info.isCloaked = true;
   tracker_->handleWinEvent(shell::kEventObjectCloaked, kFirst, 0, 0);
-  QTest::qWait(120);
+  ASSERT_TRUE(waitForEvents());
   EXPECT_TRUE(tracker_->isTracked(kFirst));
   EXPECT_EQ(events, (QStringList{"update 101"}));
 }
@@ -170,10 +194,10 @@ TEST_F(TrackerTest, WinEventsFromChildObjectsAreIgnoredAndHideRemoves) {
   events.clear();
   tracker_->handleWinEvent(shell::kEventObjectHide, kFirst, 1, 0);
   tracker_->handleWinEvent(shell::kEventObjectHide, 0, 0, 0);
-  QTest::qWait(20);
+  runQueued();
   EXPECT_TRUE(events.isEmpty());
   tracker_->handleWinEvent(shell::kEventObjectHide, kFirst, 0, 0);
-  QTest::qWait(20);
+  runQueued();
   EXPECT_EQ(events, (QStringList{"remove 101"}));
 }
 
@@ -184,7 +208,7 @@ TEST_F(TrackerTest, MinimizeEventsOnlyForTrackedWindows) {
   tracker_->handleWinEvent(shell::kEventSystemMinimizeStart, kFirst, 0, 0);
   tracker_->handleWinEvent(shell::kEventSystemMinimizeEnd, kFirst, 0, 0);
   tracker_->handleWinEvent(shell::kEventSystemMinimizeStart, kSecond, 0, 0);
-  QTest::qWait(20);
+  runQueued();
   EXPECT_EQ(events, (QStringList{"minimize 101 1", "minimize 101 0"}));
 }
 
@@ -206,7 +230,7 @@ TEST_F(TrackerTest, AWindowThatCannotQualifyIsSkippedWithoutAQuery) {
   system_->queries = 0;
   for (WindowHandle hwnd = 200; hwnd < 300; ++hwnd)
     tracker_->handleWinEvent(shell::kEventObjectShow, hwnd, 0, 0);
-  QTest::qWait(20);
+  runQueued();
   EXPECT_TRUE(events.isEmpty());
   EXPECT_EQ(system_->queries, 0);  // before: one per event
 }
@@ -217,7 +241,7 @@ TEST_F(TrackerTest, AUwpFrameThatCannotQualifyYetIsTriedAgain) {
   row.info.className = QStringLiteral("ApplicationFrameWindow");
   row.candidate = false;
   tracker_->handleWinEvent(shell::kEventObjectShow, kFirst, 0, 0);
-  QTest::qWait(20);
+  runQueued();
   EXPECT_FALSE(tracker_->isTracked(kFirst));
   system_->rows[kFirst].candidate = true;  // it became a visible top-level frame
   EXPECT_TRUE(QTest::qWaitFor([&] { return tracker_->isTracked(kFirst); }, 2000));
@@ -240,7 +264,8 @@ TEST_F(TrackerTest, AnEventQueriesTheWindowOnce) {
   EXPECT_EQ(system_->queries, 1);                             // before: three
   system_->queries = 0;
   tracker_->handleWinEvent(shell::kEventObjectCloaked, kSecond, 0, 0);
-  QTest::qWait(120);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return !tracker_->isTracked(kSecond); }, 5000));
+  runQueued();
   EXPECT_EQ(system_->queries, 2);  // the cloak read and the removal snapshot; before: three
   EXPECT_FALSE(tracker_->isTracked(kSecond));
 }
@@ -253,7 +278,8 @@ TEST_F(TrackerTest, RedrawsWithinTheDelayShareOneTimer) {
   for (int i = 0; i < 20; ++i) tracker_->handleShellHook(shell::kRedraw, kFirst);
   EXPECT_EQ(tracker_->findChildren<QTimer*>().size(), 1);
   EXPECT_TRUE(events.isEmpty());
-  QTest::qWait(150);
+  ASSERT_TRUE(waitForEvents());
+  EXPECT_TRUE(noPendingUpdate());
   EXPECT_EQ(events, (QStringList{"update 101"}));
 }
 
