@@ -104,13 +104,16 @@ QString exePathFromHwnd(std::uint64_t hwnd) {
   return QString::fromWCharArray(path, static_cast<int>(size));
 }
 
-std::optional<std::uint32_t> explorerPid() {
+std::optional<std::uint32_t> explorerPid(const std::function<bool()>& stopping) {
   wchar_t windowsDir[MAX_PATH] = {};
   if (!GetSystemWindowsDirectoryW(windowsDir, MAX_PATH)) return std::nullopt;
   const QString expected =
       (QString::fromWCharArray(windowsDir) + QStringLiteral("\\explorer.exe")).toLower();
   for (int attempt = 0; attempt < 10; ++attempt) {
-    if (attempt > 0) QThread::msleep(50);
+    if (attempt > 0) {
+      if (stopping && stopping()) return std::nullopt;
+      QThread::msleep(50);
+    }
     HWND shell = GetShellWindow();
     if (!shell) continue;
     DWORD pid = 0;

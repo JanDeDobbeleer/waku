@@ -290,6 +290,7 @@ class FakeInjector : public TrayInjector {
     released.push_back(hook);
     cv.notify_all();
   }
+  void setStopCheck(std::function<bool()> stopping) override { stopCheck = std::move(stopping); }
   bool waitReleased(std::size_t count) {
     std::unique_lock lock(mutex);
     return cv.wait_for(lock, 5s, [&] { return released.size() >= count; });
@@ -299,6 +300,7 @@ class FakeInjector : public TrayInjector {
   bool loaded = true;
   std::uintptr_t hookToReturn = 0;
   std::function<void()> blockInject;
+  std::function<bool()> stopCheck;
   std::atomic<int> pidCalls{0};
   std::mutex mutex;
   std::condition_variable cv;
@@ -357,6 +359,9 @@ class HookSession : public testing::Test {
     bool isHookLoaded(std::uint32_t pid) override { return target_->isHookLoaded(pid); }
     std::uintptr_t inject(std::uint32_t pid) override { return target_->inject(pid); }
     void release(std::uintptr_t hook) override { target_->release(hook); }
+    void setStopCheck(std::function<bool()> stopping) override {
+      target_->setStopCheck(std::move(stopping));
+    }
 
    private:
     FakeInjector* target_;
@@ -697,3 +702,32 @@ TEST(HookDll, MissingDllIsReportedNotThrown) {
 }
 
 }  // namespace
+
+// The real injector waits up to 3.5 s for Explorer's tray window while Explorer restarts; it
+// polls the host's stop check, so stop() (a reload, the exit) does not wait that out.
+TEST_F(HookSession, StopEndsAnInjectionThatWaitsForExplorer) {
+  FakeInjector injector;
+  injector.loaded = false;
+  std::atomic<bool> waiting{false};
+  injector.blockInject = [&] {
+    waiting = true;
+    const auto deadline = std::chrono::steady_clock::now() + 10s;
+    while (!(injector.stopCheck && injector.stopCheck()) &&
+           std::chrono::steady_clock::now() < deadline) {
+      std::this_thread::sleep_for(50ms);
+    }
+  };
+  SystrayHook hook(options(&injector));
+  ASSERT_TRUE(hook.valid());
+  ASSERT_TRUE(injector.stopCheck);
+  EXPECT_FALSE(injector.stopCheck());
+  hook.start();
+  const auto started = std::chrono::steady_clock::now();
+  while (!waiting && std::chrono::steady_clock::now() - started < 5s)
+    std::this_thread::sleep_for(10ms);
+  ASSERT_TRUE(waiting);
+  const auto begin = std::chrono::steady_clock::now();
+  hook.stop();
+  EXPECT_LT(std::chrono::steady_clock::now() - begin, 1s);
+  EXPECT_TRUE(injector.stopCheck());
+}

@@ -46,6 +46,9 @@ class TrayInjector {
   virtual std::uintptr_t inject(std::uint32_t pid) = 0;
   // UnhookWindowsHookEx for a handle returned by inject.
   virtual void release(std::uintptr_t hook) = 0;
+  // The host's stop request: the waits inside explorerPid and inject end early once it returns
+  // true, so stop() does not wait out an Explorer restart. Set once, before the worker starts.
+  virtual void setStopCheck(std::function<bool()> stopping) { (void)stopping; }
 };
 
 // `dllPath` is the full path of WabarTrayHook[_arm64].dll.
@@ -111,6 +114,8 @@ class SystrayHook : public TrayHost {
   std::mutex state_;
   std::condition_variable stopCv_;
   bool stopRequested_ = false;
+  // stopRequested_ without the lock, for the injector's waits.
+  std::atomic<bool> stopping_{false};
   std::atomic<bool> running_{false};
   bool workerActive_ = false;
   void* mutex_ = nullptr;

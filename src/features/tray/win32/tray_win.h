@@ -2,6 +2,7 @@
 
 #include <QString>
 #include <cstdint>
+#include <functional>
 #include <optional>
 
 #include "features/tray/tray_types.h"
@@ -23,8 +24,9 @@ QString trayHookDllName();
 QString exePathFromHwnd(std::uint64_t hwnd);
 
 // PID of the shell's explorer.exe (the shell window's process, image path checked against
-// %windir%\explorer.exe), retrying for about half a second. nullopt when not found.
-std::optional<std::uint32_t> explorerPid();
+// %windir%\explorer.exe), retrying for about half a second, or until stopping returns true.
+// nullopt when not found.
+std::optional<std::uint32_t> explorerPid(const std::function<bool()>& stopping = {});
 
 // True when `moduleName` (a base name, case-insensitive) is loaded in process `pid`.
 bool isModuleLoaded(std::uint32_t pid, const QString& moduleName);

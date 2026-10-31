@@ -42,7 +42,11 @@ class ExplorerInjector final : public TrayInjector {
  public:
   explicit ExplorerInjector(QString dllPath) : dllPath_(std::move(dllPath)) {}
 
-  std::optional<std::uint32_t> explorerPid() override { return wabar::tray::explorerPid(); }
+  std::optional<std::uint32_t> explorerPid() override {
+    return wabar::tray::explorerPid(stopping_);
+  }
+
+  void setStopCheck(std::function<bool()> stopping) override { stopping_ = std::move(stopping); }
 
   bool isHookLoaded(std::uint32_t pid) override {
     return isModuleLoaded(pid, QFileInfo(dllPath_).fileName());
@@ -66,7 +70,8 @@ class ExplorerInjector final : public TrayInjector {
       HWND tray = nullptr;
       for (int attempt = 0; attempt < 60 && !tray; ++attempt) {
         tray = findShellTrayWnd(pid);
-        if (!tray) QThread::msleep(50);
+        if (tray || (stopping_ && stopping_())) break;
+        QThread::msleep(50);
       }
       if (!tray) {
         qCritical() << "Tray hook: Shell_TrayWnd not found";
@@ -97,6 +102,7 @@ class ExplorerInjector final : public TrayInjector {
 
  private:
   QString dllPath_;
+  std::function<bool()> stopping_;
 };
 
 HANDLE asHandle(void* value) { return static_cast<HANDLE>(value); }
@@ -131,6 +137,7 @@ struct SystrayHook::Io {
 
 SystrayHook::SystrayHook(Options options, QObject* parent)
     : TrayHost(parent), options_(std::move(options)) {
+  if (options_.injector) options_.injector->setStopCheck([this] { return stopping_.load(); });
   // The watchdog mutex is held for the whole life of the host; the DLL waits on it and detaches
   // itself when it is released or abandoned.
   mutex_ = CreateMutexW(nullptr, TRUE, reinterpret_cast<LPCWSTR>(options_.mutexName.utf16()));
@@ -171,6 +178,7 @@ void SystrayHook::unhookLocked() {
 }
 
 void SystrayHook::stop() {
+  stopping_ = true;
   {
     std::lock_guard lock(state_);
     stopRequested_ = true;
@@ -253,6 +261,7 @@ bool SystrayHook::ensureInjected() {
   qInfo() << "Tray hook: injecting into Explorer, PID" << *pid;
   const std::uintptr_t hook = options_.injector->inject(*pid);
   if (!hook) {
+    if (!running_) return false;  // stopped while it waited for Explorer
     qCritical() << "Tray hook: injection failed, retrying in 5 s";
     waitStop(kInjectionFailedDelay);
     return false;
