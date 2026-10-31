@@ -2,9 +2,10 @@
 
 #include <QFile>
 #include <QRegularExpression>
-#include <QSaveFile>
 #include <algorithm>
 #include <nlohmann/json.hpp>
+
+#include "kernel/qt/file_write.h"
 
 namespace wabar::tray {
 namespace {
@@ -166,11 +167,7 @@ bool SystrayStateStore::save(const IconStateMap& state) const {
   // json.dumps(indent=2) written by Python in text mode: ASCII-only, CRLF line endings.
   QByteArray text = QByteArray::fromStdString(document.dump(2, ' ', true));
   text.replace("\n", "\r\n");
-  QDir().mkpath(dir_);
-  QSaveFile file(path());
-  if (!file.open(QIODevice::WriteOnly)) return false;
-  file.write(text);
-  return file.commit();
+  return static_cast<bool>(kernel::writeFileAtomic(path(), text));
 }
 
 QString cleanScreenId(const QString& manufacturer, const QString& name, const QString& serial) {
