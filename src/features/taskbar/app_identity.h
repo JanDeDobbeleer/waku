@@ -8,19 +8,6 @@
 
 namespace wabar::taskbar {
 
-// Joins the calling thread to COM for the lifetime of the object (multi-threaded apartment unless
-// the thread already has one). Shell property and icon calls need it off the GUI thread.
-class ComScope {
- public:
-  ComScope();
-  ~ComScope();
-  ComScope(const ComScope&) = delete;
-  ComScope& operator=(const ComScope&) = delete;
-
- private:
-  bool uninitialize_ = false;
-};
-
 // The App User Model ID of a window: the window's own property first, then the one its process
 // runs under (Store apps). nullopt when neither exists.
 std::optional<QString> aumidForWindow(WindowHandle hwnd, std::uint32_t pid);

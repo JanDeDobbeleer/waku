@@ -23,6 +23,8 @@
 #include <QUrl>
 #include <vector>
 
+#include "kernel/win32/com_scope.h"
+
 namespace wabar::taskbar {
 namespace {
 
@@ -93,19 +95,8 @@ QString normalizePath(const QString& path) {
   return QDir::toNativeSeparators(resolved).toLower();
 }
 
-ComScope::ComScope() {
-  const HRESULT result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-  // S_FALSE: already initialised here, still balanced by our CoUninitialize. RPC_E_CHANGED_MODE:
-  // the thread is an STA already, which is just as good and must not be undone.
-  uninitialize_ = SUCCEEDED(result);
-}
-
-ComScope::~ComScope() {
-  if (uninitialize_) CoUninitialize();
-}
-
 std::optional<QString> aumidForWindow(WindowHandle hwnd, std::uint32_t pid) {
-  ComScope com;
+  const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
   IPropertyStore* store = nullptr;
   if (SUCCEEDED(SHGetPropertyStoreForWindow(toHwnd(hwnd), IID_PPV_ARGS(&store))) && store) {
     PROPVARIANT value;
@@ -123,7 +114,7 @@ std::optional<QString> aumidForWindow(WindowHandle hwnd, std::uint32_t pid) {
 }
 
 std::optional<QString> explorerLocation(WindowHandle hwnd) {
-  ComScope com;
+  const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
   IShellWindows* windows = nullptr;
   if (FAILED(
           CoCreateInstance(__uuidof(ShellWindows), nullptr, CLSCTX_ALL, IID_PPV_ARGS(&windows))) ||

@@ -1,11 +1,12 @@
 #include "features/taskbar/taskbar_icons.h"
 
-#include <QCoreApplication>
 #include <QPainter>
 #include <QPointer>
 #include <QRunnable>
 #include <QTimer>
 #include <algorithm>
+
+#include "kernel/qt/gui_post.h"
 
 namespace wabar::taskbar {
 
@@ -106,14 +107,7 @@ void TaskbarIcons::request(const Key& key, const Loader& loader) {
     }
     const QImage image = TaskbarIcons::toImage(bitmap, key.second);
     const bool complete = bitmap.complete;
-    // Posted to the application, not to `self`: testing a QPointer here and then posting to the
-    // raw pointer races with the GUI thread destroying it. `self` is read on the GUI thread only.
-    QMetaObject::invokeMethod(
-        QCoreApplication::instance(),
-        [self, key, image, complete] {
-          if (self) self->finish(key, image, complete);
-        },
-        Qt::QueuedConnection);
+    kernel::postToGui(self, [self, key, image, complete] { self->finish(key, image, complete); });
   }));
 }
 

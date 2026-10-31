@@ -17,6 +17,7 @@
 #include "features/taskbar/app_identity.h"
 #include "features/taskbar/pin_support.h"
 #include "features/taskbar/window_system.h"
+#include "kernel/win32/com_scope.h"
 
 namespace wabar::taskbar {
 namespace {
@@ -114,7 +115,7 @@ bool isGhostUwpApp(const WindowInfo& info) {
   if (info.processName.value_or(QString()) != QLatin1String("ApplicationFrameHost.exe"))
     return false;
   if (!info.isCloaked) return false;
-  ComScope com;
+  const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
   IVirtualDesktopManager* manager = nullptr;
   if (FAILED(CoCreateInstance(__uuidof(VirtualDesktopManager), nullptr, CLSCTX_INPROC_SERVER,
                               IID_PPV_ARGS(&manager))) ||
@@ -268,7 +269,7 @@ class Win32WindowSystem final : public WindowSystem {
   }
 
   IconBitmap windowIcon(WindowHandle handle, int size) const override {
-    ComScope com;
+    const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
     HWND hwnd = toHwnd(handle);
     if (!IsWindow(hwnd)) return {};
     bool answered = true;

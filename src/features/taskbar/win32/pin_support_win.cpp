@@ -21,6 +21,7 @@
 #include <utility>
 
 #include "features/taskbar/app_identity.h"
+#include "kernel/win32/com_scope.h"
 
 namespace wabar::taskbar {
 namespace {
@@ -71,7 +72,7 @@ std::vector<QString> startMenuRoots() {
 }
 
 std::optional<QString> shortcutAumid(const QString& path) {
-  ComScope com;
+  const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
   IShellLinkW* link = nullptr;
   if (FAILED(
           CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&link))) ||
@@ -101,7 +102,7 @@ std::optional<QString> shortcutAumid(const QString& path) {
 }
 
 std::optional<QString> appNameFromAumid(const QString& aumid) {
-  ComScope com;
+  const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
   IShellItem* item = nullptr;
   if (FAILED(SHCreateItemFromParsingName(wide(QStringLiteral("shell:AppsFolder\\") + aumid),
                                          nullptr, IID_PPV_ARGS(&item))) ||
@@ -229,7 +230,7 @@ class Win32PinSupport final : public PinSupport {
   IconBitmap pinnedIcon(const QString& uniqueId, const PinMetadata& metadata,
                         int size) const override {
     const UniqueIdParts parts = parseUniqueId(uniqueId);
-    ComScope com;
+    const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
     if (parts.type == QLatin1String("aumid"))
       return shellItemIcon(QStringLiteral("shell:AppsFolder\\") + parts.value, size);
     if (!metadata.shortcutPath.isEmpty() && QFileInfo(metadata.shortcutPath).isFile())
@@ -356,14 +357,14 @@ class Win32PinSupport final : public PinSupport {
   }
 
   void emptyRecycleBin() override {
-    ComScope com;
+    const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
     // Confirmation and progress UI stay on; only the sound is off (SHERB_NOSOUND).
     const HRESULT result = SHEmptyRecycleBinW(nullptr, nullptr, SHERB_NOSOUND);
     if (FAILED(result)) qWarning() << "Taskbar: failed to empty the Recycle Bin" << result;
   }
 
   std::vector<QuickAccessFolder> quickAccessFolders() const override {
-    ComScope com;
+    const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
     std::vector<QuickAccessFolder> folders;
     IShellItem* quickAccess = nullptr;
     const QString name =
@@ -587,7 +588,7 @@ bool isRecycleBinId(const QString& uniqueId) {
 }
 
 std::optional<ShortcutInfo> readShortcut(const QString& path) {
-  ComScope com;
+  const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
   IShellLinkW* link = nullptr;
   if (FAILED(
           CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&link))) ||
