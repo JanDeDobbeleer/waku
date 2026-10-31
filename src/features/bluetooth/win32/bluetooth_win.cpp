@@ -641,29 +641,6 @@ std::optional<std::vector<BluetoothDevice>> listLeDevices(const std::atomic<bool
 
 // --- Bluetooth audio connect / disconnect (bluetooth_audio.py) --------------------------------
 
-template <class T>
-struct ComPtr {
-  T* ptr = nullptr;
-  ComPtr() = default;
-  ComPtr(const ComPtr&) = delete;
-  ComPtr& operator=(const ComPtr&) = delete;
-  ComPtr(ComPtr&& other) noexcept : ptr(other.ptr) { other.ptr = nullptr; }
-  ComPtr& operator=(ComPtr&& other) noexcept {
-    if (this != &other) {
-      if (ptr) ptr->Release();
-      ptr = other.ptr;
-      other.ptr = nullptr;
-    }
-    return *this;
-  }
-  ~ComPtr() {
-    if (ptr) ptr->Release();
-  }
-  T** put() { return &ptr; }
-  T* operator->() const { return ptr; }
-  explicit operator bool() const { return ptr != nullptr; }
-};
-
 // PKEY_Device_FriendlyName ({a45c254e-df1c-4efd-8020-67d146a850e0}, 14), declared locally because
 // the SDK header needs the property-key definition macros.
 const PROPERTYKEY kFriendlyNameKey = {
@@ -677,13 +654,13 @@ struct AudioEndpoint {
 
 std::vector<AudioEndpoint> audioEndpoints(IMMDeviceEnumerator* enumerator) {
   std::vector<AudioEndpoint> result;
-  ComPtr<IMMDeviceCollection> collection;
+  winrt::com_ptr<IMMDeviceCollection> collection;
   if (FAILED(enumerator->EnumAudioEndpoints(eAll, DEVICE_STATEMASK_ALL, collection.put())))
     return result;
   UINT count = 0;
   collection->GetCount(&count);
   for (UINT i = 0; i < count; ++i) {
-    ComPtr<IMMDevice> device;
+    winrt::com_ptr<IMMDevice> device;
     if (FAILED(collection->Item(i, device.put()))) continue;
     AudioEndpoint endpoint;
     LPWSTR id = nullptr;
@@ -692,7 +669,7 @@ std::vector<AudioEndpoint> audioEndpoints(IMMDeviceEnumerator* enumerator) {
       CoTaskMemFree(id);
     }
     device->GetState(&endpoint.state);
-    ComPtr<IPropertyStore> store;
+    winrt::com_ptr<IPropertyStore> store;
     if (SUCCEEDED(device->OpenPropertyStore(STGM_READ, store.put()))) {
       PROPVARIANT value;
       PropVariantInit(&value);
@@ -728,7 +705,7 @@ bool idHasMac(const QString& deviceId, const QString& mac) {
 }
 
 QString containerId(IMMDevice* device) {
-  ComPtr<IPropertyStore> store;
+  winrt::com_ptr<IPropertyStore> store;
   if (FAILED(device->OpenPropertyStore(STGM_READ, store.put()))) return {};
   // PKEY_Device_ContainerId: groups the render and capture endpoints of one physical device.
   const PROPERTYKEY key = {
@@ -762,19 +739,19 @@ QString setAudioConnection(IMMDeviceEnumerator* enumerator, quint64 addressInt,
   const QString mac = QStringLiteral("%1").arg(addressInt, 12, 16, QLatin1Char('0')).toUpper();
   const QString needle = deviceName.trimmed().toCaseFolded();
   for (const AudioEndpoint& endpoint : audioEndpoints(enumerator)) {
-    ComPtr<IMMDevice> device;
+    winrt::com_ptr<IMMDevice> device;
     if (FAILED(enumerator->GetDevice(reinterpret_cast<LPCWSTR>(endpoint.id.utf16()), device.put())))
       continue;
-    const QString container = containerId(device.ptr);
-    ComPtr<IDeviceTopology> topology;
+    const QString container = containerId(device.get());
+    winrt::com_ptr<IDeviceTopology> topology;
     if (FAILED(device->Activate(__uuidof(IDeviceTopology), CLSCTX_ALL, nullptr,
-                                reinterpret_cast<void**>(topology.put())))) {
+                                topology.put_void()))) {
       continue;
     }
     UINT connectors = 0;
     topology->GetConnectorCount(&connectors);
     for (UINT c = 0; c < connectors; ++c) {
-      ComPtr<IConnector> connector;
+      winrt::com_ptr<IConnector> connector;
       if (FAILED(topology->GetConnector(c, connector.put()))) continue;
       LPWSTR other = nullptr;
       if (FAILED(connector->GetDeviceIdConnectedTo(&other)) || !other) continue;
@@ -790,7 +767,7 @@ QString setAudioConnection(IMMDeviceEnumerator* enumerator, quint64 addressInt,
   for (const Candidate& c : candidates) {
     if (c.seed && !c.container.isEmpty()) containers.insert(c.container);
   }
-  std::vector<ComPtr<IKsControl>> controls;
+  std::vector<winrt::com_ptr<IKsControl>> controls;
   std::set<QString> seen;
   for (const Candidate& c : candidates) {
     if (!containers.empty()) {
@@ -799,13 +776,13 @@ QString setAudioConnection(IMMDeviceEnumerator* enumerator, quint64 addressInt,
       continue;
     }
     if (!seen.insert(c.filterId).second) continue;
-    ComPtr<IMMDevice> ksDevice;
+    winrt::com_ptr<IMMDevice> ksDevice;
     if (FAILED(
             enumerator->GetDevice(reinterpret_cast<LPCWSTR>(c.filterId.utf16()), ksDevice.put())))
       continue;
     controls.emplace_back();
     if (FAILED(ksDevice->Activate(__uuidof(IKsControl), CLSCTX_ALL, nullptr,
-                                  reinterpret_cast<void**>(controls.back().put())))) {
+                                  controls.back().put_void()))) {
       controls.pop_back();
     }
   }
@@ -1243,22 +1220,21 @@ class BluetoothWorker : public QObject {
     }
     cancel_ = false;
     QString error;
-    ComPtr<IMMDeviceEnumerator> enumerator;
+    winrt::com_ptr<IMMDeviceEnumerator> enumerator;
     if (FAILED(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
-                                __uuidof(IMMDeviceEnumerator),
-                                reinterpret_cast<void**>(enumerator.put())))) {
+                                __uuidof(IMMDeviceEnumerator), enumerator.put_void()))) {
       connectRunning_->store(false);
       emit connectionFinished(false, connectError(action, QStringLiteral("no_ks_controls")),
                               device);
       return;
     }
-    const auto audioBefore = audioIsConnected(enumerator.ptr, device.name);
-    error = setAudioConnection(enumerator.ptr, device.addressInt, device.name, connect, cancel_);
+    const auto audioBefore = audioIsConnected(enumerator.get(), device.name);
+    error = setAudioConnection(enumerator.get(), device.addressInt, device.name, connect, cancel_);
     if (!started_) {
       connectRunning_->store(false);
       return;
     }
-    const auto audio = audioIsConnected(enumerator.ptr, device.name);
+    const auto audio = audioIsConnected(enumerator.get(), device.name);
     if (error.isEmpty() && audio != std::optional<bool>(connect)) error = QStringLiteral("timeout");
     // Idle audio with WinRT still reporting Connected is not a real disconnect.
     if (error.isEmpty() && !connect && audioBefore != std::optional<bool>(true)) {
