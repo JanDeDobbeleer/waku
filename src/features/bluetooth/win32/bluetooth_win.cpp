@@ -19,7 +19,6 @@
 #include <QDebug>
 #include <QElapsedTimer>
 #include <QMetaObject>
-#include <QPointer>
 #include <QThread>
 #include <QUuid>
 #include <algorithm>
@@ -880,11 +879,40 @@ enumeration::DeviceInformation deviceInformationFor(const wabar::bluetooth::Blue
   return classic ? classic.DeviceInformation() : nullptr;
 }
 
+// How WinRT delegates reach the worker. They run on WinRT pool threads and can still run after
+// their token was revoked (revoking does not wait for a running delegate, and `DeviceWatcher.Stop`
+// is asynchronous), so they never hold the worker: a QPointer tested on the pool thread and then
+// posted to races with the GUI thread deleting the worker. `post` holds `mutex_` across the post,
+// and ~BluetoothWorker calls `close` first, so once `close` returns no post can reach the worker.
+// A post queued before that is dropped with the worker's event queue.
+class WorkerRelay {
+ public:
+  explicit WorkerRelay(QObject* worker) : worker_(worker) {}
+  // Queues `fn` on the worker's thread, or drops it when the worker is gone.
+  template <class Fn>
+  void post(Fn fn) {
+    std::lock_guard lock(mutex_);
+    if (worker_) QMetaObject::invokeMethod(worker_, std::move(fn), Qt::QueuedConnection);
+  }
+  void close() {
+    std::lock_guard lock(mutex_);
+    worker_ = nullptr;
+  }
+
+ private:
+  std::mutex mutex_;
+  QObject* worker_;
+};
+
 class BluetoothWorker : public QObject {
   Q_OBJECT
  public:
   BluetoothWorker(std::atomic<bool>* connectRunning, std::atomic<bool>* radioRunning)
-      : connectRunning_(connectRunning), radioRunning_(radioRunning) {}
+      : connectRunning_(connectRunning),
+        radioRunning_(radioRunning),
+        relay_(std::make_shared<WorkerRelay>(this)) {}
+  // Runs on the GUI thread after the worker thread was joined (or never started).
+  ~BluetoothWorker() override { relay_->close(); }
 
  public slots:
   void start() {
@@ -1354,10 +1382,8 @@ class BluetoothWorker : public QObject {
     try {
       for (const auto& radio : radios::Radio::GetRadiosAsync().get()) {
         if (radio.Kind() != radios::RadioKind::Bluetooth) continue;
-        QPointer<BluetoothWorker> self(this);
-        radioToken_ = radio.StateChanged([self](auto const&, auto const&) {
-          if (self)
-            QMetaObject::invokeMethod(self, &BluetoothWorker::onRadioChanged, Qt::QueuedConnection);
+        radioToken_ = radio.StateChanged([relay = relay_, worker = this](auto const&, auto const&) {
+          relay->post([worker] { worker->onRadioChanged(); });
         });
         radio_ = radio;
         radioSubscribed_ = true;
@@ -1382,15 +1408,8 @@ class BluetoothWorker : public QObject {
     if (watcher_) return;
     try {
       watcher_ = enumeration::DeviceInformation::CreateWatcher();
-      QPointer<BluetoothWorker> self(this);
-      auto post = [self](const QString& kind) {
-        if (self)
-          QMetaObject::invokeMethod(
-              self,
-              [self, kind] {
-                if (self) self->onAdapterChanged(kind);
-              },
-              Qt::QueuedConnection);
+      auto post = [relay = relay_, worker = this](const QString& kind) {
+        relay->post([worker, kind] { worker->onAdapterChanged(kind); });
       };
       watchReady_ = std::make_shared<std::atomic<bool>>(false);
       auto ready = watchReady_;
@@ -1463,14 +1482,13 @@ class BluetoothWorker : public QObject {
 
   std::optional<DeviceWatch> openWatch(const BluetoothDevice& device) {
     try {
-      QPointer<BluetoothWorker> self(this);
       DeviceWatch watch;
       if (device.isLe) {
         watch.le = bt::BluetoothLEDevice::FromBluetoothAddressAsync(device.addressInt).get();
         if (!watch.le) return std::nullopt;
         watch.token = watch.le.ConnectionStatusChanged(
-            [self](bt::BluetoothLEDevice const& sender, auto const&) {
-              postConnection(self, sender.BluetoothAddress(),
+            [relay = relay_, worker = this](bt::BluetoothLEDevice const& sender, auto const&) {
+              postConnection(*relay, worker, sender.BluetoothAddress(),
                              sender.ConnectionStatus() == bt::BluetoothConnectionStatus::Connected);
             });
         return watch;
@@ -1483,8 +1501,8 @@ class BluetoothWorker : public QObject {
         watch.classic = bt::BluetoothDevice::FromBluetoothAddressAsync(device.addressInt).get();
       if (!watch.classic) return std::nullopt;
       watch.token = watch.classic.ConnectionStatusChanged(
-          [self](bt::BluetoothDevice const& sender, auto const&) {
-            postConnection(self, sender.BluetoothAddress(),
+          [relay = relay_, worker = this](bt::BluetoothDevice const& sender, auto const&) {
+            postConnection(*relay, worker, sender.BluetoothAddress(),
                            sender.ConnectionStatus() == bt::BluetoothConnectionStatus::Connected);
           });
       return watch;
@@ -1493,15 +1511,10 @@ class BluetoothWorker : public QObject {
     }
   }
 
-  static void postConnection(const QPointer<BluetoothWorker>& self, quint64 address,
+  static void postConnection(WorkerRelay& relay, BluetoothWorker* worker, quint64 address,
                              bool connected) {
-    if (!self) return;
-    QMetaObject::invokeMethod(
-        self,
-        [self, address, connected] {
-          if (self) self->onDeviceConnectionChanged(address, connected);
-        },
-        Qt::QueuedConnection);
+    relay.post(
+        [worker, address, connected] { worker->onDeviceConnectionChanged(address, connected); });
   }
 
   static void removeWatch(DeviceWatch& watch) {
@@ -1544,6 +1557,8 @@ class BluetoothWorker : public QObject {
   winrt::event_token updatedToken_;
   winrt::event_token completedToken_;
   std::shared_ptr<std::atomic<bool>> watchReady_;
+  // Shared with every WinRT delegate; see WorkerRelay.
+  std::shared_ptr<WorkerRelay> relay_;
 };
 
 // GUI-thread facade: owns the worker thread and forwards calls to it.
