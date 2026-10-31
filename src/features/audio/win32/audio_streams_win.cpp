@@ -12,11 +12,11 @@
 #include <QPointer>
 #include <QTimer>
 #include <algorithm>
-#include <atomic>
 #include <functional>
 #include <iterator>
 #include <utility>
 
+#include "features/audio/win32/co_string.h"
 #include "kernel/qt/gui_post.h"
 #include "kernel/win32/com_scope.h"
 
@@ -31,31 +31,12 @@ namespace {
 // name or icon changed.
 using Notify = std::function<void(int kind)>;
 
+// winrt::implements does the reference counting and QueryInterface; non_agile keeps the interface
+// set to IUnknown and the one callback interface, as the hand-written base had it.
 template <typename Derived, typename Interface>
-class ComObject : public Interface {
- public:
-  ULONG STDMETHODCALLTYPE AddRef() override { return ++refs_; }
-  ULONG STDMETHODCALLTYPE Release() override {
-    const ULONG remaining = --refs_;
-    if (remaining == 0) delete static_cast<Derived*>(this);
-    return remaining;
-  }
-  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** object) override {
-    if (!object) return E_POINTER;
-    if (iid == __uuidof(IUnknown) || iid == __uuidof(Interface)) {
-      *object = static_cast<Interface*>(this);
-      AddRef();
-      return S_OK;
-    }
-    *object = nullptr;
-    return E_NOINTERFACE;
-  }
+using ComObject = winrt::implements<Derived, Interface, winrt::non_agile>;
 
- private:
-  std::atomic<ULONG> refs_{1};
-};
-
-class SessionEvents final : public ComObject<SessionEvents, IAudioSessionEvents> {
+class SessionEvents : public ComObject<SessionEvents, IAudioSessionEvents> {
  public:
   explicit SessionEvents(Notify notify) : notify_(std::move(notify)) {}
   HRESULT STDMETHODCALLTYPE OnDisplayNameChanged(LPCWSTR, LPCGUID) override { return text(); }
@@ -85,7 +66,7 @@ class SessionEvents final : public ComObject<SessionEvents, IAudioSessionEvents>
   Notify notify_;
 };
 
-class SessionCreated final : public ComObject<SessionCreated, IAudioSessionNotification> {
+class SessionCreated : public ComObject<SessionCreated, IAudioSessionNotification> {
  public:
   explicit SessionCreated(Notify notify) : notify_(std::move(notify)) {}
   HRESULT STDMETHODCALLTYPE OnSessionCreated(IAudioSessionControl*) override {
@@ -97,7 +78,7 @@ class SessionCreated final : public ComObject<SessionCreated, IAudioSessionNotif
   Notify notify_;
 };
 
-class DefaultDeviceEvents final : public ComObject<DefaultDeviceEvents, IMMNotificationClient> {
+class DefaultDeviceEvents : public ComObject<DefaultDeviceEvents, IMMNotificationClient> {
  public:
   explicit DefaultDeviceEvents(Notify notify) : notify_(std::move(notify)) {}
   HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR, DWORD) override {
@@ -117,12 +98,6 @@ class DefaultDeviceEvents final : public ComObject<DefaultDeviceEvents, IMMNotif
  private:
   Notify notify_;
 };
-
-QString takeCoString(LPWSTR text) {
-  const QString result = text ? QString::fromWCharArray(text) : QString();
-  if (text) CoTaskMemFree(text);
-  return result;
-}
 
 QString processImagePath(DWORD pid) {
   if (pid == 0) return {};
@@ -155,9 +130,8 @@ class SystemStreams final : public AudioStreamSource {
     refreshTimer_.setSingleShot(true);
     refreshTimer_.setInterval(40);
     connect(&refreshTimer_, &QTimer::timeout, this, [this] { rebuildAndNotify(); });
-    deviceEvents_ = new DefaultDeviceEvents(post());
-    if (FAILED(enumerator_->RegisterEndpointNotificationCallback(deviceEvents_))) {
-      deviceEvents_->Release();
+    deviceEvents_ = winrt::make_self<DefaultDeviceEvents>(post());
+    if (FAILED(enumerator_->RegisterEndpointNotificationCallback(deviceEvents_.get()))) {
       deviceEvents_ = nullptr;
     }
     rebuild();
@@ -168,8 +142,7 @@ class SystemStreams final : public AudioStreamSource {
   void stop() override {
     refreshTimer_.stop();
     if (enumerator_ && deviceEvents_) {
-      enumerator_->UnregisterEndpointNotificationCallback(deviceEvents_);
-      deviceEvents_->Release();
+      enumerator_->UnregisterEndpointNotificationCallback(deviceEvents_.get());
       deviceEvents_ = nullptr;
     }
     release();
@@ -204,7 +177,7 @@ class SystemStreams final : public AudioStreamSource {
     QString icon;
     winrt::com_ptr<IAudioSessionControl2> control;
     winrt::com_ptr<ISimpleAudioVolume> volume;
-    SessionEvents* events = nullptr;  // registered on `control`; one reference held here
+    winrt::com_ptr<SessionEvents> events;  // registered on `control`
   };
 
   // The callback COM threads call: it only re-posts to the GUI thread. Core Audio may still call
@@ -285,8 +258,7 @@ class SystemStreams final : public AudioStreamSource {
 
   static void unregister(Entry& entry) {
     if (entry.events) {
-      if (entry.control) entry.control->UnregisterAudioSessionNotification(entry.events);
-      entry.events->Release();
+      if (entry.control) entry.control->UnregisterAudioSessionNotification(entry.events.get());
       entry.events = nullptr;
     }
   }
@@ -295,11 +267,8 @@ class SystemStreams final : public AudioStreamSource {
     for (Entry& entry : entries_) unregister(entry);
     entries_.clear();
     endpointId_.clear();
-    if (manager_ && created_) manager_->UnregisterSessionNotification(created_);
-    if (created_) {
-      created_->Release();
-      created_ = nullptr;
-    }
+    if (manager_ && created_) manager_->UnregisterSessionNotification(created_.get());
+    created_ = nullptr;
     manager_ = nullptr;
   }
 
@@ -329,11 +298,8 @@ class SystemStreams final : public AudioStreamSource {
       }
       LPWSTR rawId = nullptr;
       if (SUCCEEDED(device->GetId(&rawId))) endpointId_ = takeCoString(rawId);
-      created_ = new SessionCreated(post());
-      if (FAILED(manager_->RegisterSessionNotification(created_))) {
-        created_->Release();
-        created_ = nullptr;
-      }
+      created_ = winrt::make_self<SessionCreated>(post());
+      if (FAILED(manager_->RegisterSessionNotification(created_.get()))) created_ = nullptr;
     }
     std::vector<Entry> next;
     winrt::com_ptr<IAudioSessionEnumerator> sessions;
@@ -363,11 +329,9 @@ class SystemStreams final : public AudioStreamSource {
         entry.volume = control.try_as<ISimpleAudioVolume>();
         entry.control = control2;
         readText(entry);
-        entry.events = new SessionEvents(post());
-        if (FAILED(entry.control->RegisterAudioSessionNotification(entry.events))) {
-          entry.events->Release();
+        entry.events = winrt::make_self<SessionEvents>(post());
+        if (FAILED(entry.control->RegisterAudioSessionNotification(entry.events.get())))
           entry.events = nullptr;
-        }
         next.push_back(std::move(entry));
       }
     }
@@ -379,8 +343,8 @@ class SystemStreams final : public AudioStreamSource {
   const kernel::ComScope com_{kernel::ComApartment::SingleThreaded};
   winrt::com_ptr<IMMDeviceEnumerator> enumerator_;
   winrt::com_ptr<IAudioSessionManager2> manager_;
-  DefaultDeviceEvents* deviceEvents_ = nullptr;
-  SessionCreated* created_ = nullptr;
+  winrt::com_ptr<DefaultDeviceEvents> deviceEvents_;
+  winrt::com_ptr<SessionCreated> created_;
   std::vector<Entry> entries_;
   QTimer refreshTimer_;
   // The endpoint `manager_` belongs to; a device event that leaves it the default keeps it.

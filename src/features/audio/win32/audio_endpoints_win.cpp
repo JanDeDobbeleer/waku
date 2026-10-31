@@ -11,13 +11,13 @@
 
 #include <QDebug>
 #include <QPointer>
-#include <atomic>
 #include <cmath>
 #include <functional>
 #include <map>
 #include <optional>
 #include <utility>
 
+#include "features/audio/win32/co_string.h"
 #include "kernel/qt/gui_post.h"
 #include "kernel/win32/com_scope.h"
 
@@ -45,57 +45,28 @@ struct __declspec(uuid("f8679f50-850a-41cf-9c72-430f290290c8")) IPolicyConfig : 
 const CLSID kClsidPolicyConfigClient = {
     0x870af99c, 0x171d, 0x4f9e, {0xaf, 0x0d, 0xe6, 0x3d, 0xf4, 0x0c, 0x2b, 0xc9}};
 
-class VolumeCallback final : public IAudioEndpointVolumeCallback {
+// winrt::implements does the reference counting and QueryInterface; non_agile keeps the interface
+// set to IUnknown and the callback interface, as the hand-written classes had it.
+class VolumeCallback
+    : public winrt::implements<VolumeCallback, IAudioEndpointVolumeCallback, winrt::non_agile> {
  public:
   explicit VolumeCallback(std::function<void()> notify) : notify_(std::move(notify)) {}
-  ULONG STDMETHODCALLTYPE AddRef() override { return ++refs_; }
-  ULONG STDMETHODCALLTYPE Release() override {
-    const ULONG remaining = --refs_;
-    if (remaining == 0) delete this;
-    return remaining;
-  }
-  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** object) override {
-    if (!object) return E_POINTER;
-    if (iid == __uuidof(IUnknown) || iid == __uuidof(IAudioEndpointVolumeCallback)) {
-      *object = static_cast<IAudioEndpointVolumeCallback*>(this);
-      AddRef();
-      return S_OK;
-    }
-    *object = nullptr;
-    return E_NOINTERFACE;
-  }
   HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA) override {
     if (notify_) notify_();
     return S_OK;
   }
 
  private:
-  std::atomic<ULONG> refs_{1};
   std::function<void()> notify_;
 };
 
-class DeviceCallback final : public IMMNotificationClient {
+class DeviceCallback
+    : public winrt::implements<DeviceCallback, IMMNotificationClient, winrt::non_agile> {
  public:
   // kind: 0 default changed (id = new default), 1 state changed (state = new state), 2 a device's
   // friendly name changed.
   using Notify = std::function<void(int kind, EDataFlow flow, ERole role, QString id, DWORD state)>;
   explicit DeviceCallback(Notify notify) : notify_(std::move(notify)) {}
-  ULONG STDMETHODCALLTYPE AddRef() override { return ++refs_; }
-  ULONG STDMETHODCALLTYPE Release() override {
-    const ULONG remaining = --refs_;
-    if (remaining == 0) delete this;
-    return remaining;
-  }
-  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** object) override {
-    if (!object) return E_POINTER;
-    if (iid == __uuidof(IUnknown) || iid == __uuidof(IMMNotificationClient)) {
-      *object = static_cast<IMMNotificationClient*>(this);
-      AddRef();
-      return S_OK;
-    }
-    *object = nullptr;
-    return E_NOINTERFACE;
-  }
   HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR id, DWORD state) override {
     if (notify_) notify_(1, eRender, eConsole, id ? QString::fromWCharArray(id) : QString(), state);
     return S_OK;
@@ -116,7 +87,6 @@ class DeviceCallback final : public IMMNotificationClient {
   }
 
  private:
-  std::atomic<ULONG> refs_{1};
   Notify notify_;
 };
 
@@ -124,12 +94,6 @@ class DeviceCallback final : public IMMNotificationClient {
 // Unregister call failed (AUDCLNT_E_DEVICE_INVALIDATED, exactly when device events fire), while a
 // reload deletes the object.
 using kernel::postToGui;
-
-QString takeCoString(LPWSTR text) {
-  const QString result = text ? QString::fromWCharArray(text) : QString();
-  if (text) CoTaskMemFree(text);
-  return result;
-}
 
 class SystemAudio final : public AudioEndpoints {
  public:
@@ -144,15 +108,14 @@ class SystemAudio final : public AudioEndpoints {
     }
     enumerator_ = enumerator;
     QPointer<SystemAudio> self(this);
-    deviceCallback_ = new DeviceCallback(
+    deviceCallback_ = winrt::make_self<DeviceCallback>(
         [self, this](int kind, EDataFlow flow, ERole role, QString id, DWORD state) {
           postToGui(self, [this, kind, flow, role, id, state] {
             onDeviceEvent(kind, flow, role, id, state);
           });
         });
-    if (FAILED(enumerator_->RegisterEndpointNotificationCallback(deviceCallback_))) {
+    if (FAILED(enumerator_->RegisterEndpointNotificationCallback(deviceCallback_.get()))) {
       qWarning() << "AudioEndpoints: could not register the device callback";
-      deviceCallback_->Release();
       deviceCallback_ = nullptr;
     }
     resolveEndpoint();
@@ -162,8 +125,7 @@ class SystemAudio final : public AudioEndpoints {
 
   void stop() override {
     if (enumerator_ && deviceCallback_) {
-      enumerator_->UnregisterEndpointNotificationCallback(deviceCallback_);
-      deviceCallback_->Release();
+      enumerator_->UnregisterEndpointNotificationCallback(deviceCallback_.get());
       deviceCallback_ = nullptr;
     }
     releaseVolume();
@@ -266,11 +228,8 @@ class SystemAudio final : public AudioEndpoints {
 
  private:
   void releaseVolume() {
-    if (volume_ && volumeCallback_) volume_->UnregisterControlChangeNotify(volumeCallback_);
-    if (volumeCallback_) {
-      volumeCallback_->Release();
-      volumeCallback_ = nullptr;
-    }
+    if (volume_ && volumeCallback_) volume_->UnregisterControlChangeNotify(volumeCallback_.get());
+    volumeCallback_ = nullptr;
     volume_ = nullptr;
   }
 
@@ -294,11 +253,10 @@ class SystemAudio final : public AudioEndpoints {
       return;
     }
     QPointer<SystemAudio> self(this);
-    auto* callback =
-        new VolumeCallback([self, this] { postToGui(self, [this] { emit volumeChanged(); }); });
-    if (FAILED(volume->RegisterControlChangeNotify(callback))) {
+    auto callback = winrt::make_self<VolumeCallback>(
+        [self, this] { postToGui(self, [this] { emit volumeChanged(); }); });
+    if (FAILED(volume->RegisterControlChangeNotify(callback.get()))) {
       qWarning() << "AudioEndpoints: could not register the volume callback";
-      callback->Release();
     } else {
       volumeCallback_ = callback;
     }
@@ -355,8 +313,8 @@ class SystemAudio final : public AudioEndpoints {
   EDataFlow flow_;
   winrt::com_ptr<IMMDeviceEnumerator> enumerator_;
   winrt::com_ptr<IAudioEndpointVolume> volume_;
-  VolumeCallback* volumeCallback_ = nullptr;
-  DeviceCallback* deviceCallback_ = nullptr;
+  winrt::com_ptr<VolumeCallback> volumeCallback_;
+  winrt::com_ptr<DeviceCallback> deviceCallback_;
   QString lastDefault_;
   std::map<QString, DWORD> lastState_;
   std::optional<std::vector<AudioDevice>> devices_;
