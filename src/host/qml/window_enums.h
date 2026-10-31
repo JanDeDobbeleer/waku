@@ -6,7 +6,7 @@
 
 // The enum types of the shell windows. Names and values follow Quickshell (v0.3) so ported QML
 // loads unchanged; the `Quickshell` and `Quickshell.Wayland` modules register the same types again
-// (src/host/quickshell/). `Backdrop` is wabar's own.
+// (src/quickshell/). `Backdrop` is wabar's own.
 namespace wabar::host {
 
 // How a PanelWindow takes part in the work area (Quickshell `ExclusionMode`).

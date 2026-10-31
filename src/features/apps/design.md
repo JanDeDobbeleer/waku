@@ -17,10 +17,10 @@ section 5 (Start menu, Store apps, icons); `docs/plans/2026-10-30-caelestia-port
 limit)` (ranked `DesktopEntry` list), `launch(id)`, `launchAsAdmin(id)`, `openLocation(id)`,
 `refresh()`, `byId`, `heuristicLookup`.
 
-`DesktopEntries.qml` (in `src/host/quickshell/qml`) is a QML singleton that forwards to
+`DesktopEntries.qml` (in `src/quickshell/core/qml`) is a QML singleton that forwards to
 `AppsService`, because the host unit cannot include a feature's headers (rule S2). `DesktopEntry`
 and `DesktopAction` are `wabar.services` types. The `Quickshell` module registers them again under
-the same names (`src/app/wabar/quickshell_types_core.h`) and does not re-export `wabar.services`, so
+the same names (`src/quickshell/core/qml/quickshell_types_core.h`) and does not re-export `wabar.services`, so
 `import Quickshell` shows no other `wabar.services` name. A launcher that declares
 `required property DesktopEntry modelData` therefore compiles.
 

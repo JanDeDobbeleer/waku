@@ -85,7 +85,7 @@ Not here: `screens` (the host's ScreenList).
 each reload.
 
 **The `Quickshell` name.** `import Quickshell` gives a QML singleton, `Quickshell.qml` in
-`src/host/quickshell/qml/`. It reads `screens` from the host's ScreenList and forwards every other
+`src/quickshell/core/qml/`. It reads `screens` from the host's ScreenList and forwards every other
 member to this class, so the host unit does not include a feature header. `watchFiles` and
 `workingDirectory` are copied both ways. `clipboardText` is an alias to a `ClipboardText` object:
 the clipboard is read when a shell first reads the value and cached until the clipboard changes,

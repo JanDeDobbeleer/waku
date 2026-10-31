@@ -70,7 +70,7 @@ std::shared_ptr<AppCatalog> acquireAppCatalog();
 // The app catalogue of a `wabar` run, as a QML singleton: Start Menu shortcuts (.lnk files below
 // FOLDERID_Programs and FOLDERID_CommonPrograms) and the Store apps of shell:AppsFolder, as
 // Quickshell-shaped DesktopEntry objects. `import Quickshell` shows it as `DesktopEntries`
-// (src/host/quickshell/qml/DesktopEntries.qml forwards here), wabar shells use it directly as
+// (src/quickshell/core/qml/DesktopEntries.qml forwards here), wabar shells use it directly as
 // `AppsService`. Registers image://appicon/<id> (see AppIconProvider).
 //
 // `applications` is a model of DesktopEntry with a `values` array, sorted by name. `ready` turns

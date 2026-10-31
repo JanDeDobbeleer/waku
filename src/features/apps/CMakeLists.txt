@@ -1,7 +1,7 @@
 # apps: the app catalogue for a launcher. Start Menu shortcuts (IShellLink) and the Store apps of
 # shell:AppsFolder as Quickshell-shaped DesktopEntry objects, ranked search with frecency, launch
 # (also elevated), and the asynchronous image://appicon provider. No dependencies on other
-# features. `import Quickshell` reaches it as DesktopEntries (src/host/quickshell/qml). See
+# features. `import Quickshell` reaches it as DesktopEntries (src/quickshell/core/qml). See
 # design.md.
 wabar_feature(
   NAME apps

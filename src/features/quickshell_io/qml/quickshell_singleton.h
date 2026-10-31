@@ -17,7 +17,7 @@ namespace wabar::quickshell_io {
 // helpers, clipboardText, processId, iconPath, reload and the version checks. Registered as
 // `QuickshellSingleton` in wabar.services (and so in Quickshell.Io through its import).
 //
-// The QML name `Quickshell` is src/host/quickshell/qml/Quickshell.qml: it adds `screens` and
+// The QML name `Quickshell` is src/quickshell/core/qml/Quickshell.qml: it adds `screens` and
 // forwards the rest to this class. The composition root (src/app/wabar/quickshell_glue.h) connects
 // reloadRequested(bool) to the shell host's reload, calls setShellDir() with the config home and
 // emits reloadCompleted() / reloadFailed().

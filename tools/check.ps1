@@ -301,9 +301,9 @@ foreach ($h in $servicesHeaders) {
     }
 }
 $moduleQml = @{
-    'wabar.widgets' = @($treeFiles | Where-Object { $_ -match '^src/.+\.qml$' -and $_ -notmatch '^src/host/' })
-    'wabar'         = @($treeFiles | Where-Object { $_ -match '^src/host/.+\.qml$' -and $_ -notmatch '^src/host/quickshell/' })
-    'Quickshell'    = @($treeFiles | Where-Object { $_ -match '^src/host/quickshell/.+\.qml$' })
+    'wabar.widgets' = @($treeFiles | Where-Object { $_ -match '^src/.+\.qml$' -and $_ -notmatch '^src/(host|quickshell)/' })
+    'wabar'         = @($treeFiles | Where-Object { $_ -match '^src/host/.+\.qml$' })
+    'Quickshell'    = @($treeFiles | Where-Object { $_ -match '^src/quickshell/.+\.qml$' })
 }
 foreach ($module in $moduleQml.Keys) {
     $seen = @{}
@@ -396,7 +396,7 @@ foreach ($f in $checkFiles) {
             if ($feature -and $inc -match '^control/[^/]+$') { continue }
             # Tests of any feature may include the bar Harness and the widget helpers (host/testing/);
             # the testing/ of their DEPENDS features is allowed below.
-            if ($feature -and $isTests -and $inc -match '^host/testing/[^/]+$') { continue }
+            if (($feature -or $unit -eq 'quickshell') -and $isTests -and $inc -match '^host/testing/[^/]+$') { continue }
             $ok = $false
             if ($feature -and $inc -match '^features/([^/]+)/(.+)$') {
                 $d = $Matches[1]; $rest = $Matches[2]

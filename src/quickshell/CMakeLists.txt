@@ -7,8 +7,10 @@
 # any feature; only app/ and tests/ include it (rule S2). Added after features/ and before app/
 # (src/CMakeLists.txt).
 #
-# wabar_quickshell_services (interface) carries the modules built by
-# wabar_quickshell_service_module() and their static plugins; the executables and the tests link it.
+# core/ builds wabar_quickshell (module `Quickshell`), and every module made with
+# wabar_quickshell_qml_module() links into it. wabar_quickshell_services (interface) carries the
+# modules built by wabar_quickshell_service_module() and their static plugins; the executables and
+# the tests link it.
 add_library(wabar_quickshell_services INTERFACE)
 
 # wabar_quickshell_service_module(<target> <uri> <header>)
@@ -37,6 +39,58 @@ function(wabar_quickshell_service_module target uri header)
   target_link_libraries(wabar_quickshell_services INTERFACE ${target} ${target}plugin)
 endfunction()
 
+# wabar_quickshell_qml_module(<target> <uri>
+#     [QML_FILES ...] [SINGLETONS ...] [INTERNAL ...] [SOURCES ...] [DEPENDENCIES ...])
+# One more Quickshell module made of QML files (and optionally C++ in qml/), linked into
+# wabar_quickshell (core/) so the executables and the tests get it without naming it. Call it
+# from the module's own folder, after core/. SINGLETONS are `pragma Singleton` files, INTERNAL
+# ones are not exported.
+# The QML imports wabar and wabar.services at run time; DEPENDENCIES only declares that.
+function(wabar_quickshell_qml_module target uri)
+  cmake_parse_arguments(PARSE_ARGV 2 arg "" "" "QML_FILES;SINGLETONS;INTERNAL;SOURCES;DEPENDENCIES")
+  set(all ${arg_QML_FILES} ${arg_SINGLETONS} ${arg_INTERNAL})
+  foreach(file IN LISTS all)
+    cmake_path(GET file FILENAME name)
+    set_source_files_properties(${file} PROPERTIES QT_RESOURCE_ALIAS ${name})
+  endforeach()
+  set_source_files_properties(${arg_SINGLETONS} PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+  if(arg_INTERNAL)
+    set_source_files_properties(${arg_INTERNAL} PROPERTIES QT_QML_INTERNAL_TYPE TRUE)
+  endif()
+  qt_add_library(${target} STATIC)
+  qt_add_qml_module(${target}
+    URI ${uri}
+    VERSION 0.1
+    NO_GENERATE_EXTRA_QMLDIRS
+    QML_FILES ${all}
+    SOURCES ${arg_SOURCES}
+    DEPENDENCIES ${arg_DEPENDENCIES}
+  )
+  target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/qml)
+  target_link_libraries(${target}
+    PUBLIC Qt6::Quick Qt6::Qml wabar_host
+    PRIVATE wabar_options wabar_services)
+  wabar_qt_generated_code(${target})
+  target_link_libraries(wabar_quickshell PUBLIC ${target} ${target}plugin)
+endfunction()
+
+add_subdirectory(core)
+add_subdirectory(wayland)
+add_subdirectory(widgets)
+add_subdirectory(hyprland)
+add_subdirectory(bluetooth)
 add_subdirectory(io)
 add_subdirectory(services/mpris)
 add_subdirectory(services/notifications)
+add_subdirectory(services/upower)
+add_subdirectory(services/pipewire)
+add_subdirectory(services/systemtray)
+
+# The tests load the modules through `import Quickshell...` in the bar Harness (host/testing/).
+wabar_contribute(
+  TESTS
+    tests/test_quickshell.cpp
+    tests/test_quickshell_core.cpp
+    tests/test_quickshell_items.cpp
+    tests/test_quickshell_modules.cpp
+)

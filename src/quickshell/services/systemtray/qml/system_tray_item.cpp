@@ -1,4 +1,4 @@
-#include "host/quickshell/systemtray/qml/system_tray_item.h"
+#include "quickshell/services/systemtray/qml/system_tray_item.h"
 
 #include <QFileInfo>
 

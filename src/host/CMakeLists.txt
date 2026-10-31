@@ -8,8 +8,7 @@
 #   PanelWindow, FloatingWindow, QsWindow, Variants, LazyLoader, ScreenList, Panel, PanelLayout,
 #   Theme, PopupWindow, Tooltip, PopupPlacement, WindowThumbnail, the enums) and ShellHost that loads them (qml/),
 #   plus the Windows native hooks of ShellHost (win32/).
-# quickshell/: the modules `Quickshell` and `Quickshell.Wayland`, the same types under Quickshell's
-#   names so ported shells load (QML_FOREIGN registrations, no code of their own).
+# The Quickshell compatibility modules that register these types again are src/quickshell/.
 #
 # testing/ (shell_fixtures.h: the Harness) and tests/ are not compiled into these targets: the
 # tests join the one wabar_tests binary through wabar_contribute(); testing/ is header-only.
@@ -131,8 +130,6 @@ target_link_libraries(wabar_host
   PRIVATE wabar_options Qt6::QmlPrivate)
 wabar_qt_generated_code(wabar_host)
 
-add_subdirectory(quickshell)
-
 wabar_contribute(
   TESTS
     tests/test_app_bar.cpp
@@ -145,10 +142,6 @@ wabar_contribute(
     tests/test_popups.cpp
     tests/test_region_math.cpp
     tests/test_region_mask.cpp
-    tests/test_quickshell.cpp
-    tests/test_quickshell_core.cpp
-    tests/test_quickshell_items.cpp
-    tests/test_quickshell_modules.cpp
     tests/test_screen_match.cpp
     tests/test_shell_host.cpp
     tests/test_shell_screen.cpp
