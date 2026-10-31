@@ -5,6 +5,7 @@
 #include <QThread>
 #include <QUrl>
 #include <algorithm>
+#include <atomic>
 
 #include "kernel/qt/app_data.h"
 #include "kernel/qt/live_desktop.h"
@@ -16,13 +17,18 @@ namespace {
 class LoadTask : public QObject, public QRunnable {
   Q_OBJECT
  public:
-  LoadTask(std::shared_ptr<ThumbnailStore> store, QString source, int width)
-      : store_(std::move(store)), source_(std::move(source)), width_(width) {}
+  LoadTask(std::shared_ptr<ThumbnailStore> store, std::shared_ptr<std::atomic_bool> cancelled,
+           QString source, int width)
+      : store_(std::move(store)),
+        cancelled_(std::move(cancelled)),
+        source_(std::move(source)),
+        width_(width) {}
 
   void run() override {
     QImage image;
     try {
-      image = store_->get(source_, width_);
+      // A provider going away answers its queued loads with an error instead of decoding them.
+      if (!cancelled_->load()) image = store_->get(source_, width_);
     } catch (...) {
       // A failing load fails this request only.
     }
@@ -34,6 +40,7 @@ class LoadTask : public QObject, public QRunnable {
 
  private:
   std::shared_ptr<ThumbnailStore> store_;
+  std::shared_ptr<std::atomic_bool> cancelled_;
   QString source_;
   int width_;
 };
@@ -110,11 +117,15 @@ std::shared_ptr<ThumbnailStore> defaultStore() {
 }  // namespace
 
 ThumbnailProvider::ThumbnailProvider(std::shared_ptr<ThumbnailStore> store)
-    : store_(std::move(store)) {
+    : store_(std::move(store)), cancelled_(std::make_shared<std::atomic_bool>(false)) {
   pool_.setMaxThreadCount(3);
 }
 
-ThumbnailProvider::~ThumbnailProvider() { pool_.waitForDone(); }
+ThumbnailProvider::~ThumbnailProvider() {
+  // The queued loads still run, but answer at once; only the decodes in progress are waited for.
+  cancelled_->store(true);
+  pool_.waitForDone();
+}
 
 void ThumbnailProvider::parseId(const QString& id, QString* source, int* width) {
   *width = 0;
@@ -134,7 +145,7 @@ QQuickImageResponse* ThumbnailProvider::requestImageResponse(const QString& id,
   parseId(id, &source, &width);
   if (width <= 0) width = requestedSize.width();
   auto* response = new ThumbnailResponse;
-  auto* task = new LoadTask(store_, source, width);
+  auto* task = new LoadTask(store_, cancelled_, source, width);
   // The pool deletes the task after run(); the queued connection delivers the image to the
   // response on its own thread and drops it when the response is gone.
   QObject::connect(task, &LoadTask::done, response, &ThumbnailResponse::handleDone,

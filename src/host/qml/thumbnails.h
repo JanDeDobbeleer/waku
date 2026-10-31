@@ -6,6 +6,7 @@
 #include <QQuickAsyncImageProvider>
 #include <QThreadPool>
 #include <QVariantList>
+#include <atomic>
 #include <memory>
 
 #include "host/thumbnail_store.h"
@@ -17,9 +18,10 @@ namespace wabar::host {
 // <path> is a local path or file: URL, percent-encoded or not; w defaults to the Image's
 // sourceSize.width, then to 640. The Image shows its error state for a missing or unreadable file.
 //
-// Threads: requestImageResponse runs on the GUI thread; each load runs on one of the provider's
-// pool threads (three) and touches only the ThumbnailStore, which is thread safe. The destructor
-// waits for the loads.
+// Threads: Qt calls requestImageResponse on its image-reader thread; each load runs on one of the
+// provider's pool threads (three) and touches only the ThumbnailStore, which is thread safe. The
+// destructor answers the queued loads with an error and waits only for the decodes in progress,
+// since it can run on the GUI thread while the engine clears its singletons.
 class ThumbnailProvider : public QQuickAsyncImageProvider {
  public:
   explicit ThumbnailProvider(std::shared_ptr<ThumbnailStore> store);
@@ -32,6 +34,7 @@ class ThumbnailProvider : public QQuickAsyncImageProvider {
 
  private:
   std::shared_ptr<ThumbnailStore> store_;
+  std::shared_ptr<std::atomic_bool> cancelled_;
   QThreadPool pool_;
 };
 

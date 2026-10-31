@@ -4,6 +4,7 @@
 #include <QRunnable>
 #include <QUrl>
 #include <algorithm>
+#include <atomic>
 
 namespace wabar::apps {
 namespace {
@@ -26,12 +27,22 @@ QImage toImage(const wabar::kernel::IconBitmap& bitmap, int size) {
 class IconTask : public QObject, public QRunnable {
   Q_OBJECT
  public:
-  IconTask(std::shared_ptr<IconIndex> index, IconLoader loader, QString id, int size)
-      : index_(std::move(index)), loader_(std::move(loader)), id_(std::move(id)), size_(size) {}
+  IconTask(std::shared_ptr<IconIndex> index, IconLoader loader,
+           std::shared_ptr<std::atomic_bool> cancelled, QString id, int size)
+      : index_(std::move(index)),
+        loader_(std::move(loader)),
+        cancelled_(std::move(cancelled)),
+        id_(std::move(id)),
+        size_(size) {}
 
   void run() override {
     QImage image;
     try {
+      // A provider going away answers its queued loads with an error instead of reading them.
+      if (cancelled_->load()) {
+        emit done(image);
+        return;
+      }
       const QString source = index_->sourceFor(id_);
       if (!source.isEmpty() && loader_) image = toImage(loader_(source, size_), size_);
     } catch (...) {
@@ -46,6 +57,7 @@ class IconTask : public QObject, public QRunnable {
  private:
   std::shared_ptr<IconIndex> index_;
   IconLoader loader_;
+  std::shared_ptr<std::atomic_bool> cancelled_;
   QString id_;
   int size_;
 };
@@ -94,18 +106,24 @@ QString IconIndex::sourceFor(const QString& id) const {
 }
 
 AppIconProvider::AppIconProvider(std::shared_ptr<IconIndex> index, IconLoader loader)
-    : index_(std::move(index)), loader_(std::move(loader)) {
+    : index_(std::move(index)),
+      loader_(std::move(loader)),
+      cancelled_(std::make_shared<std::atomic_bool>(false)) {
   pool_.setMaxThreadCount(4);
 }
 
-AppIconProvider::~AppIconProvider() { pool_.waitForDone(); }
+AppIconProvider::~AppIconProvider() {
+  // A launcher page that just asked for 100 icons must not read them all on the way out.
+  cancelled_->store(true);
+  pool_.waitForDone();
+}
 
 QQuickImageResponse* AppIconProvider::requestImageResponse(const QString& id,
                                                            const QSize& requestedSize) {
   const int wanted = std::max(requestedSize.width(), requestedSize.height());
   const int size = wanted > 0 ? std::min(wanted, kMaxIconSize) : kDefaultIconSize;
   auto* response = new IconResponse;
-  auto* task = new IconTask(index_, loader_, id, size);
+  auto* task = new IconTask(index_, loader_, cancelled_, id, size);
   // The task is a QObject that the pool deletes after run(); the queued connection delivers the
   // image to the response on its own thread, and drops it when the response is gone.
   QObject::connect(task, &IconTask::done, response, &IconResponse::handleDone,

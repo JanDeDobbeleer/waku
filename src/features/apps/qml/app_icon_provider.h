@@ -5,6 +5,7 @@
 #include <QQuickAsyncImageProvider>
 #include <QString>
 #include <QThreadPool>
+#include <atomic>
 #include <functional>
 #include <memory>
 
@@ -38,9 +39,9 @@ class IconIndex {
 // never blocks Qt's image-reader thread or the GUI. An unknown id or an app without an icon fails
 // the request (the Image shows its error state).
 //
-// Threads: requestImageResponse runs on the GUI thread; each load runs on one of the provider's
-// pool threads and touches only the IconIndex (mutex) and the loader. The destructor waits for
-// the loads.
+// Threads: Qt calls requestImageResponse on its image-reader thread; each load runs on one of the
+// provider's pool threads and touches only the IconIndex (mutex) and the loader. The destructor
+// answers the queued loads with an error and waits only for the reads in progress.
 class AppIconProvider : public QQuickAsyncImageProvider {
  public:
   AppIconProvider(std::shared_ptr<IconIndex> index, IconLoader loader);
@@ -51,6 +52,7 @@ class AppIconProvider : public QQuickAsyncImageProvider {
  private:
   std::shared_ptr<IconIndex> index_;
   IconLoader loader_;
+  std::shared_ptr<std::atomic_bool> cancelled_;
   QThreadPool pool_;
 };
 
