@@ -7,9 +7,10 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QSaveFile>
 #include <algorithm>
 #include <vector>
+
+#include "kernel/qt/file_write.h"
 
 namespace wabar::color_scheme {
 
@@ -95,10 +96,7 @@ void ImageStatsCache::save() {
     value.insert(QStringLiteral("t"), static_cast<double>(it->touched));
     root.insert(it.key(), value);
   }
-  QSaveFile out(file_);
-  if (!out.open(QIODevice::WriteOnly)) return;
-  out.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
-  out.commit();
+  kernel::writeFileAtomic(file_, QJsonDocument(root).toJson(QJsonDocument::Compact));
 }
 
 }  // namespace wabar::color_scheme

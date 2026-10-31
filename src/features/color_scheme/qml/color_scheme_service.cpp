@@ -1,6 +1,5 @@
 #include "features/color_scheme/qml/color_scheme_service.h"
 
-#include <QCoreApplication>
 #include <QFileInfo>
 #include <QPointer>
 #include <QThreadPool>
@@ -11,6 +10,7 @@
 #include "features/color_scheme/dynamic_scheme.h"
 #include "features/color_scheme/image_source.h"
 #include "kernel/qt/app_data.h"
+#include "kernel/qt/gui_post.h"
 #include "kernel/qt/live_desktop.h"
 
 namespace wabar::color_scheme {
@@ -160,22 +160,15 @@ void ColorSchemeService::fromImage(const QString& path, const QString& variant, 
   const std::shared_ptr<ImageStatsCache> stats = stats_;
   QThreadPool::globalInstance()->start([self, stats, path, local, chosen, dark, contrast] {
     ImageResult result = schemeFromImageFile(stats.get(), local, chosen, dark, contrast);
-    // Posted to qApp, never to `self`: testing the QPointer here and then posting to it races with
-    // the GUI thread deleting the service (a reload). `self` is read on the GUI thread only. qApp
-    // outlives the task (~QCoreApplication waits for the global pool).
-    QCoreApplication* app = QCoreApplication::instance();
-    if (!app) return;
-    QMetaObject::invokeMethod(
-        app,
-        [self, path, result = std::move(result)] {
-          if (self.isNull()) return;
-          if (result.error.isEmpty()) {
-            emit self->fromImageFinished(path, result.scheme);
-          } else {
-            emit self->fromImageFailed(path, result.error);
-          }
-        },
-        Qt::QueuedConnection);
+    // Never posted to `self` (a reload may delete it meanwhile); qApp outlives the task
+    // (~QCoreApplication waits for the global pool).
+    kernel::postToGui(self, [self, path, result = std::move(result)] {
+      if (result.error.isEmpty()) {
+        emit self->fromImageFinished(path, result.scheme);
+      } else {
+        emit self->fromImageFailed(path, result.error);
+      }
+    });
   });
 }
 
