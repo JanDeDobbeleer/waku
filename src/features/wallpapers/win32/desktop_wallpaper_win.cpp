@@ -9,26 +9,10 @@
 #include <QDebug>
 #include <string>
 
+#include "kernel/win32/com_scope.h"
+
 namespace wabar::wallpapers {
 namespace {
-
-// Initialises COM for the calling thread when nobody has, and balances it on destruction.
-// RPC_E_CHANGED_MODE means the thread already runs another apartment model, which is fine.
-class ComScope {
- public:
-  ComScope() {
-    const HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-    owns_ = SUCCEEDED(hr);
-  }
-  ~ComScope() {
-    if (owns_) CoUninitialize();
-  }
-  ComScope(const ComScope&) = delete;
-  ComScope& operator=(const ComScope&) = delete;
-
- private:
-  bool owns_ = false;
-};
 
 template <typename T>
 class ComPtr {
@@ -56,7 +40,7 @@ class ComBackend final : public DesktopWallpaperBackend {
       if (error) *error = why;
       return false;
     };
-    ComScope com;
+    const kernel::ComScope com(kernel::ComApartment::SingleThreaded);
     ComPtr<IDesktopWallpaper> desktop;
     if (!create(desktop)) return fail(QStringLiteral("IDesktopWallpaper is unavailable"));
     const std::wstring monitor = monitorId.toStdWString();
@@ -72,7 +56,7 @@ class ComBackend final : public DesktopWallpaperBackend {
 
   std::vector<WallpaperMonitor> monitors() override {
     std::vector<WallpaperMonitor> result;
-    ComScope com;
+    const kernel::ComScope com(kernel::ComApartment::SingleThreaded);
     ComPtr<IDesktopWallpaper> desktop;
     if (!create(desktop)) return result;
     UINT count = 0;
@@ -94,7 +78,7 @@ class ComBackend final : public DesktopWallpaperBackend {
   }
 
   QString wallpaperOf(const QString& monitorId) override {
-    ComScope com;
+    const kernel::ComScope com(kernel::ComApartment::SingleThreaded);
     ComPtr<IDesktopWallpaper> desktop;
     if (!create(desktop)) return {};
     const std::wstring monitor = monitorId.toStdWString();

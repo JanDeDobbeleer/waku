@@ -1,11 +1,11 @@
 // The lock screen picture through WinRT LockScreen.SetImageFileAsync (Windows.System.UserProfile,
 // documented). Windows copies the image, so a temporary copy may be overwritten afterwards.
 //
-// Threading: one worker thread (std::thread, MTA), started by the first set(), owns every WinRT
-// object and the PNG copy. set() only stores the path under a mutex and wakes the worker, which
-// sleeps on a condition variable in between; only the latest path is set. The destructor sets the
-// stop flag, wakes the worker and joins it, so the join waits for one WinRT call at most. The GUI
-// thread never blocks on WinRT.
+// Threading: one worker thread (kernel::TaskThread, MTA), started by the first set() on the GUI
+// thread, owns every WinRT object and the PNG copy. set() only stores the path under a mutex and
+// arms one coalesced apply on the worker; only the latest path is set. The destructor stops the
+// worker and joins it, so the join waits for one WinRT call at most. The GUI thread never blocks on
+// WinRT.
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.System.UserProfile.h>
@@ -16,14 +16,15 @@
 #include <QFileInfo>
 #include <QImage>
 #include <QImageReader>
-#include <condition_variable>
+#include <chrono>
 #include <exception>
 #include <mutex>
 #include <optional>
-#include <thread>
 #include <utility>
 
 #include "features/wallpapers/lock_screen.h"
+#include "kernel/win32/task_thread.h"
+#include "kernel/win32/winrt_strings.h"
 
 namespace wabar::wallpapers {
 namespace {
@@ -32,44 +33,27 @@ class WinrtLockScreenSetter final : public LockScreenSetter {
  public:
   explicit WinrtLockScreenSetter(QString cacheDir) : cacheDir_(std::move(cacheDir)) {}
 
-  ~WinrtLockScreenSetter() override {
-    {
-      std::lock_guard lock(mutex_);
-      stop_ = true;
-    }
-    wake_.notify_all();
-    if (thread_.joinable()) thread_.join();
-  }
+  ~WinrtLockScreenSetter() override { worker_.stop(); }
 
   void set(const QString& path) override {
     {
       std::lock_guard lock(mutex_);
       pending_ = path;
-      if (!thread_.joinable()) thread_ = std::thread([this] { run(); });
     }
-    wake_.notify_all();
+    if (!worker_.running()) worker_.start();
+    // A burst of set() calls runs one apply, which takes the latest path.
+    worker_.postDeferred(std::chrono::milliseconds(0), [this] { applyPending(); });
   }
 
  private:
-  void run() {
-    bool apartment = false;
-    try {
-      winrt::init_apartment(winrt::apartment_type::multi_threaded);
-      apartment = true;
-    } catch (const winrt::hresult_error&) {
-      // Already in an apartment; the process-wide MTA (main.cpp) keeps WinRT usable.
+  void applyPending() {
+    QString path;
+    {
+      std::lock_guard lock(mutex_);
+      if (!pending_) return;
+      path = *std::exchange(pending_, std::nullopt);
     }
-    for (;;) {
-      QString path;
-      {
-        std::unique_lock lock(mutex_);
-        wake_.wait(lock, [this] { return stop_ || pending_.has_value(); });
-        if (stop_) break;
-        path = *std::exchange(pending_, std::nullopt);
-      }
-      apply(path);
-    }
-    if (apartment) winrt::uninit_apartment();
+    apply(path);
   }
 
   // The file Windows gets: the image itself, or a PNG copy in the cache folder.
@@ -99,13 +83,12 @@ class WinrtLockScreenSetter final : public LockScreenSetter {
       using winrt::Windows::System::UserProfile::LockScreen;
       const QString native = QDir::toNativeSeparators(QFileInfo(*file).absoluteFilePath());
       const StorageFile storageFile =
-          StorageFile::GetFileFromPathAsync(winrt::hstring(native.toStdWString())).get();
+          StorageFile::GetFileFromPathAsync(kernel::toHString(native)).get();
       LockScreen::SetImageFileAsync(storageFile).get();
       qInfo().noquote() << "Wallpapers: lock screen set:" << path;
     } catch (const winrt::hresult_error& error) {
       qWarning().noquote() << "Wallpapers: lock screen not set:"
-                           << QString::fromWCharArray(error.message().c_str()) << "(" << path
-                           << ")";
+                           << kernel::toQString(error.message()) << "(" << path << ")";
     } catch (const std::exception& error) {
       qWarning().noquote() << "Wallpapers: lock screen not set:" << error.what() << "(" << path
                            << ")";
@@ -116,10 +99,8 @@ class WinrtLockScreenSetter final : public LockScreenSetter {
 
   const QString cacheDir_;
   std::mutex mutex_;
-  std::condition_variable wake_;
-  std::optional<QString> pending_;
-  bool stop_ = false;
-  std::thread thread_;
+  std::optional<QString> pending_;  // guarded by mutex_
+  kernel::TaskThread worker_{QStringLiteral("Wallpapers: lock screen")};
 };
 
 }  // namespace

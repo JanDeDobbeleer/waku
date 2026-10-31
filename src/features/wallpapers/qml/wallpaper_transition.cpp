@@ -1,6 +1,5 @@
 #include "features/wallpapers/qml/wallpaper_transition.h"
 
-#include <QCoreApplication>
 #include <QDebug>
 #include <QEasingCurve>
 #include <QGuiApplication>
@@ -14,6 +13,8 @@
 #include <algorithm>
 #include <exception>
 #include <utility>
+
+#include "kernel/qt/gui_post.h"
 
 namespace wabar::wallpapers {
 
@@ -141,12 +142,7 @@ void WallpaperTransition::start() {
     } catch (...) {
     }
     // The QPointer is only dereferenced on the GUI thread, where it cannot dangle.
-    QMetaObject::invokeMethod(
-        QCoreApplication::instance(),
-        [self, images] {
-          if (self) self->onImagesLoaded(images.first, images.second);
-        },
-        Qt::QueuedConnection);
+    kernel::postToGui(self, [self, images] { self->onImagesLoaded(images.first, images.second); });
   });
   connect(thread, &QThread::finished, thread, &QObject::deleteLater);
   decoder_ = thread;
