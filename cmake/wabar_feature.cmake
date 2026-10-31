@@ -10,6 +10,8 @@
 #     QML_FILES     <files...>      qml/*.qml: widgets, compiled into wabar.widgets
 #     TESTS         <files...>      tests/*.cpp: compiled into the one test binary
 #     SYSTEM_LIBS   <libs...>       Windows import libraries the feature calls
+#     WINRT_PCH     <headers...>    C++/WinRT headers (winrt/base.h, ...) precompiled once for the
+#                                   WIN32_SOURCES; the root SOURCES do not use the PCH
 #     SUBTARGET_SOURCES <files...>) sources of a target the feature builds in its own subfolder
 #                                   (tray/hook, the DLL): listed only so rule S1 sees them; they
 #                                   are not compiled into wabar_<f>
@@ -77,7 +79,7 @@ endfunction()
 
 function(wabar_feature)
   cmake_parse_arguments(PARSE_ARGV 0 arg "" "NAME"
-    "DEPENDS;SOURCES;WIN32_SOURCES;QML_SOURCES;QML_FILES;TESTS;SYSTEM_LIBS;SUBTARGET_SOURCES")
+    "DEPENDS;SOURCES;WIN32_SOURCES;QML_SOURCES;QML_FILES;TESTS;SYSTEM_LIBS;SUBTARGET_SOURCES;WINRT_PCH")
   set(f "${arg_NAME}")
   if(arg_UNPARSED_ARGUMENTS)
     message(FATAL_ERROR "wabar_feature(${f}): unknown arguments ${arg_UNPARSED_ARGUMENTS}")
@@ -121,6 +123,24 @@ function(wabar_feature)
     endif()
     add_library(wabar_${f} INTERFACE)
     target_link_libraries(wabar_${f} INTERFACE wabar_kernel ${dep_targets})
+  endif()
+
+  if(arg_WINRT_PCH)
+    if(NOT arg_WIN32_SOURCES)
+      message(FATAL_ERROR "wabar_feature(${f}): WINRT_PCH without WIN32_SOURCES")
+    endif()
+    # unknwn.h first: C++/WinRT turns on its classic COM support (com_ptr::as, implements of a
+    # COM interface) only when IUnknown is declared before winrt/base.h.
+    set(pch_headers <unknwn.h>)
+    foreach(header IN LISTS arg_WINRT_PCH)
+      list(APPEND pch_headers <${header}>)
+    endforeach()
+    target_precompile_headers(wabar_${f} PRIVATE ${pch_headers})
+    # The root sources never see the Windows headers (rule S3), so they skip the PCH.
+    if(arg_SOURCES)
+      set_source_files_properties(${arg_SOURCES} TARGET_DIRECTORY wabar_${f}
+        PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+    endif()
   endif()
 
   set(services_libs "")

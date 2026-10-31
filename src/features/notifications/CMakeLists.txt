@@ -26,4 +26,5 @@ wabar_feature(NAME notifications
     tests/test_notifications.cpp
     tests/test_toast.cpp
     tests/test_wnf.cpp
-  SYSTEM_LIBS ole32 uuid propsys shell32 advapi32 user32 windowsapp)
+  SYSTEM_LIBS ole32 uuid propsys shell32 advapi32 user32 windowsapp
+  WINRT_PCH winrt/base.h winrt/Windows.Foundation.h winrt/Windows.Foundation.Collections.h)

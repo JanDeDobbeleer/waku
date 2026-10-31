@@ -77,7 +77,9 @@ configure time.
   interface when the feature is QML only), links `wabar_kernel` and the `DEPENDS` libraries, checks
   the folder layout and that each `DEPENDS` feature is declared earlier, and appends the feature's
   QML C++, `.qml` files and tests to global lists. `wabar_contribute()` does the same append for
-  kernel, host, ui and app. The comment at the top of the file holds the decisions.
+  kernel, host, ui and app. The comment at the top of the file holds the decisions. `WINRT_PCH
+  <headers...>` precompiles C++/WinRT headers (after `unknwn.h`) for the `WIN32_SOURCES`; audio,
+  media, network and notifications use it.
 - `src/CMakeLists.txt` adds `kernel`, `control`, `host`, `ui`, `features` and `app`, then includes
   `src/modules/qml_modules.cmake`. `src/features/CMakeLists.txt` has one `add_subdirectory` line
   per feature, in dependency order. Deleting a feature is deleting its folder and that line.

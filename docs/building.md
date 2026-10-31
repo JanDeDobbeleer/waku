@@ -239,4 +239,9 @@ Notes:
 - Warnings are errors (`/WX`) for our targets only; vcpkg and Qt code are unaffected, and headers
   included with angle brackets are treated as external (`/external:anglebrackets /external:W0`).
 - MSVC only: configuring with another compiler stops with an error.
+- A feature whose `win32/` code includes C++/WinRT headers can precompile them with
+  `wabar_feature(... WINRT_PCH winrt/base.h winrt/Windows.Foundation.h ...)`. Measured on the
+  ARM64 debug build (two jobs, nine WinRT translation units of audio, media, network and
+  notifications): recompiling the nine went from 33 s to 15 s of compile time (24 s to 15 s wall),
+  and building the four libraries from scratch from 44 s to 31 s including the four PCHs.
 - Debug builds use `/Z7` because `/ZI` conflicts with `/guard:cf`.

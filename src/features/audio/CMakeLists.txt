@@ -18,4 +18,5 @@ wabar_feature(NAME audio
   TESTS
     tests/test_audio.cpp
     tests/test_audio_streams.cpp
-  SYSTEM_LIBS ole32 propsys uuid windowsapp)
+  SYSTEM_LIBS ole32 propsys uuid windowsapp
+  WINRT_PCH winrt/base.h winrt/Windows.Foundation.h winrt/Windows.Foundation.Collections.h)

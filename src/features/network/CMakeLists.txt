@@ -27,4 +27,5 @@ wabar_feature(NAME network
     tests/test_connectivity.cpp
     tests/test_network.cpp
     tests/test_throughput.cpp
-  SYSTEM_LIBS iphlpapi rasapi32 wlanapi ws2_32 windowsapp)
+  SYSTEM_LIBS iphlpapi rasapi32 wlanapi ws2_32 windowsapp
+  WINRT_PCH winrt/base.h winrt/Windows.Foundation.h winrt/Windows.Foundation.Collections.h)

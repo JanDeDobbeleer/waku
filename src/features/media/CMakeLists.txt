@@ -18,4 +18,5 @@ wabar_feature(NAME media
   TESTS
     tests/test_media.cpp
     tests/test_mpris.cpp
-  SYSTEM_LIBS windowsapp)
+  SYSTEM_LIBS windowsapp
+  WINRT_PCH winrt/base.h winrt/Windows.Foundation.h winrt/Windows.Foundation.Collections.h)
