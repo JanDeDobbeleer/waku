@@ -69,11 +69,13 @@ std::wstring registryString(HKEY key, const wchar_t* name) {
   return value;
 }
 
-// The file Windows saved for a web image, empty when it has none (_get_downloaded_image).
-QString downloadedImage(const QString& url) {
+// Every web image Windows saved for toasts: URL (without the "wpnidm:" prefix) to local file. For
+// a URL listed more than once the first entry with a file wins (_get_downloaded_image).
+std::map<QString, QString> downloadedImages() {
+  std::map<QString, QString> images;
   HKEY root = nullptr;
-  if (RegOpenKeyExW(HKEY_CURRENT_USER, kWpnidmKey, 0, KEY_READ, &root) != ERROR_SUCCESS) return {};
-  QString result;
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, kWpnidmKey, 0, KEY_READ, &root) != ERROR_SUCCESS)
+    return images;
   for (DWORD index = 0;; ++index) {
     wchar_t name[256];
     DWORD length = 256;
@@ -85,20 +87,21 @@ QString downloadedImage(const QString& url) {
     if (RegOpenKeyExW(root, name, 0, KEY_READ, &entry) != ERROR_SUCCESS) continue;
     QString stored = QString::fromStdWString(registryString(entry, L"Url"));
     if (stored.startsWith(QLatin1String("wpnidm:"))) stored.remove(0, 7);
-    if (stored == url) result = QString::fromStdWString(registryString(entry, L"LocalPath"));
+    QString& path = images[stored];
+    if (path.isEmpty()) path = QString::fromStdWString(registryString(entry, L"LocalPath"));
     RegCloseKey(entry);
-    if (!result.isEmpty()) break;
   }
   RegCloseKey(root);
-  return result;
+  return images;
 }
 
-ImagePathEnv imageEnv(const QString& aumid, const QString& family) {
+ImagePathEnv imageEnv(const QString& aumid, const QString& family,
+                      std::function<QString(const QString&)> downloadedImage) {
   ImagePathEnv env;
   env.family = family;
   env.localAppData = qEnvironmentVariable("LOCALAPPDATA");
   env.installFolder = [aumid] { return packageInstallFolder(aumid); };
-  env.downloadedImage = downloadedImage;
+  env.downloadedImage = std::move(downloadedImage);
   return env;
 }
 
@@ -355,7 +358,24 @@ class SystemNotificationSource final : public NotificationSource {
           {id, info.aumid, info.name, info.family, toDateTime(n.CreationTime()), readTexts(n)});
     }
     appInfo_ = std::move(appInfo);
-    return assembleItems(raw, readToastXml, imageEnv);
+    downloadsRead_ = false;
+    const auto lookup = [this](const QString& url) { return downloadedImage(url); };
+    return assembleItems(raw, readToastXml, [&](const QString& aumid, const QString& family) {
+      return imageEnv(aumid, family, lookup);
+    });
+  }
+
+  // The wpnidm key holds an entry per image Windows ever downloaded for a toast (1369 here, 11 ms
+  // to walk), and each web image looked it up from the start. The walk is kept as a map; a URL it
+  // does not have (or has without a file yet) walks the key again, at most once per list read.
+  QString downloadedImage(const QString& url) {
+    auto found = downloads_.find(url);
+    if ((found == downloads_.end() || found->second.isEmpty()) && !downloadsRead_) {
+      downloads_ = downloadedImages();
+      downloadsRead_ = true;
+      found = downloads_.find(url);
+    }
+    return found != downloads_.end() ? found->second : QString();
   }
 
   void activateItem(const NotificationItem& item) {
@@ -430,6 +450,8 @@ class SystemNotificationSource final : public NotificationSource {
   // Worker thread only: the last list read and the per-notification app info cache.
   std::vector<NotificationItem> items_;
   std::map<std::uint32_t, AppInfoData> appInfo_;
+  std::map<QString, QString> downloads_;  // downloadedImages() as of the last walk
+  bool downloadsRead_ = false;            // walked during the current list read
   wum::UserNotificationListener listener_{nullptr};
   // Last, so it is gone before anything its callback touches.
   WnfSubscription wnf_;
