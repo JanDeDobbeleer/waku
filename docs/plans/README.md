@@ -15,6 +15,7 @@ is `docs/architecture.md`, and each feature has its own `design.md` under `src/f
 | [2026-10-30-handoff.md](2026-10-30-handoff.md) | Current state, what is left, how to work and how to resume (read this first to continue) | Handoff. Kept current while the work runs. |
 | [2026-10-30-caelestia-port-plan.md](2026-10-30-caelestia-port-plan.md) | How to port caelestia: licence, config home layout, module order, work packages, expected engine gaps, validation | Plan. The port itself lives outside this repository. |
 | [2026-10-30-caelestia-validation.md](2026-10-30-caelestia-validation.md) | Result of running the caelestia port on wabar: what was seen, what is stubbed, open engine gaps | Result. |
+| [2026-10-31-workarea-sync.md](2026-10-31-workarea-sync.md) | Keeping komorebi's cached work area in sync with wabar's app bar from the engine instead of the port's `pwsh` workaround: evidence, options A-E, the recommended guard in `workspaces`, work breakdown, live checks | Implemented (option C, commits 1, 2 and 4; not commit 3). Open: the live check of section 6. |
 
 Earlier plans for the retired Qt Widgets build are in [../archive](../archive/README.md); they are
 superseded by the plans above.
