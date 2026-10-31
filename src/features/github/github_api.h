@@ -61,7 +61,9 @@ class HttpTransport {
 };
 
 // Blocking QtNetwork transport: each send() runs a local event loop, so use it from a worker
-// thread only.
+// thread only. One transport keeps one network manager, created on the first send(), so the
+// requests of one fetch share connections and the TLS session; create, use and destroy it on one
+// thread.
 std::unique_ptr<HttpTransport> createNetworkTransport(int timeoutMs = 15000);
 
 // Makes the transport of one async request or fetch; called on the worker thread.

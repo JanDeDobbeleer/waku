@@ -53,7 +53,7 @@ class SystemGithubClient final : public GithubClient {
              [options, done = std::move(done), transport = transport_]() -> std::function<void()> {
                GithubFetchResult result;
                try {
-                 // One transport for every request of the fetch.
+                 // One transport (one network manager) for every request of the fetch.
                  const auto http = transport ? transport() : createNetworkTransport();
                  result = fetchGithubNotifications(*http, options);
                } catch (const std::exception& error) {

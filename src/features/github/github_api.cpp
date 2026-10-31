@@ -34,7 +34,9 @@ class NetworkTransport final : public HttpTransport {
   explicit NetworkTransport(int timeoutMs) : timeoutMs_(timeoutMs) {}
 
   HttpResponse send(const HttpRequest& request) override {
-    QNetworkAccessManager manager;
+    // Created on first use so it belongs to the thread that sends.
+    if (!manager_) manager_ = std::make_unique<QNetworkAccessManager>();
+    QNetworkAccessManager& manager = *manager_;
     QNetworkRequest networkRequest{QUrl(request.url)};
     networkRequest.setTransferTimeout(timeoutMs_);
     networkRequest.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("wabar"));
@@ -55,6 +57,7 @@ class NetworkTransport final : public HttpTransport {
 
  private:
   int timeoutMs_;
+  std::unique_ptr<QNetworkAccessManager> manager_;
 };
 
 QByteArray authHeader(const QString& token) { return QByteArrayLiteral("token ") + token.toUtf8(); }
