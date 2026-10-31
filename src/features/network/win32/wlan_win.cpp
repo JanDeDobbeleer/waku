@@ -5,7 +5,10 @@
 #include <winrt/Windows.Security.Credentials.h>
 #include <wlanapi.h>
 
+#include <QCoreApplication>
+#include <QList>
 #include <QMetaObject>
+#include <QPointer>
 #include <QRegularExpression>
 #include <QStringDecoder>
 #include <QThread>
@@ -393,28 +396,70 @@ class WlanWorker : public QObject {
   bool scanning_ = false;
 };
 
+// Worker threads whose backend is gone but which have not finished yet. The process waits for
+// them at exit (bounded), so none outlives QCoreApplication by accident. GUI thread.
+QList<QPointer<QThread>>& retiringThreads() {
+  static QList<QPointer<QThread>> threads;
+  return threads;
+}
+
+void waitForRetiringThreads() {
+  for (const QPointer<QThread>& thread : std::as_const(retiringThreads())) {
+    if (thread) thread->wait(2000);
+  }
+}
+
 // GUI-thread facade: owns the worker thread and forwards calls to it.
+//
+// The destructor does not wait for the worker. A connect in progress (WiFiAdapter::ConnectAsync)
+// or a network list read can take seconds, and the destructor runs on the GUI thread while the
+// engine clears its singletons on a reload. It queues shutdown() (which closes the WLAN handle, so
+// no notification reaches the worker afterwards) and the thread's quit, and hands the thread and
+// the worker to the GUI event loop, which deletes them when the thread has finished. The signals
+// of the worker are connected to this backend, so nothing reaches the next one.
 class WlanBackend final : public WifiBackend {
  public:
   WlanBackend() {
+    thread_ = new QThread;
     worker_ = new WlanWorker;
-    worker_->moveToThread(&thread_);
+    worker_->moveToThread(thread_);
     connect(worker_, &WlanWorker::scanCompleted, this, &WifiBackend::scanCompleted);
     connect(worker_, &WlanWorker::currentConnection, this, &WifiBackend::currentConnection);
     connect(worker_, &WlanWorker::connectFinished, this, &WifiBackend::connectFinished);
     connect(worker_, &WlanWorker::connectFailed, this, &WifiBackend::connectFailed);
     connect(worker_, &WlanWorker::disconnected, this, &WifiBackend::disconnected);
-    thread_.setObjectName(QStringLiteral("WlanBackend"));
-    thread_.start();
+    thread_->setObjectName(QStringLiteral("WlanBackend"));
+    thread_->start();
   }
 
   ~WlanBackend() override {
-    if (thread_.isRunning()) {
-      QMetaObject::invokeMethod(worker_, &WlanWorker::shutdown, Qt::BlockingQueuedConnection);
-      thread_.quit();
-      thread_.wait();
+    if (!thread_->isRunning()) {
+      delete worker_;
+      delete thread_;
+      return;
     }
-    delete worker_;
+    QThread* thread = thread_;
+    WlanWorker* worker = worker_;
+    QMetaObject::invokeMethod(
+        worker,
+        [worker] {
+          worker->shutdown();
+          QThread::currentThread()->quit();
+        },
+        Qt::QueuedConnection);
+    // finished() comes from the worker thread; the context object lives on the GUI thread, so the
+    // deletes run there, after the thread has left its event loop.
+    QObject::connect(thread, &QThread::finished, thread, [thread, worker] {
+      delete worker;
+      thread->deleteLater();
+    });
+    static const bool registered = [] {
+      qAddPostRoutine(waitForRetiringThreads);
+      return true;
+    }();
+    Q_UNUSED(registered);
+    retiringThreads().removeAll(nullptr);
+    retiringThreads().append(thread);
   }
 
   void setUpdatesEnabled(bool enabled) override {
@@ -450,7 +495,7 @@ class WlanBackend final : public WifiBackend {
   }
 
  private:
-  QThread thread_;
+  QThread* thread_ = nullptr;
   WlanWorker* worker_ = nullptr;
 };
 
