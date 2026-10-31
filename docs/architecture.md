@@ -6,7 +6,8 @@ layout are in `docs/plans/2026-10-29-wabar-architecture-proposal.md`.
 
 ## Units and layering
 
-Dependencies point one way: `app` -> `features` -> (`host`, `control`, `ui`) -> `kernel`. Every unit
+Dependencies point one way: `app` -> `quickshell` -> `features` -> (`host`, `control`, `ui`) ->
+`kernel`. Every unit
 under `src/` is its own static library or contributes to a QML module. The include root is `src/`.
 The `structure` step of `tools\check.ps1` enforces the direction on includes and QML use (rules
 S1-S8; the table at the top of that step is the exact text). Every own target, the executables and
@@ -48,6 +49,7 @@ their `win32/` or `qml/` C++ headers, and `testing/` only from tests. The graph 
 | `host` | `kernel`, `control`, Qt Quick |
 | `ui` (QML only) | the `host` QML types (`Theme`, `Tooltip`, `PopupWindow`, `QsWindow`) |
 | every feature | `kernel`; its QML also uses the `host` QML types and `ui` |
+| `quickshell` | `kernel`, `control`, `host/qml/`, the root and `qml/` headers and the QML types of any feature, Qt Quick. Only `app` and tests include it. Layout and the type table: `src/quickshell/README.md` |
 | `audio`, `bluetooth`, `network`, `github` | `quickshell_io` (the "open settings" and "open URL" clicks use the `Shell` service) |
 | `control_center` | `audio`, `media`, `notifications`, `brightness` |
 | `apps`, `brightness`, `clock`, `color_scheme`, `desktop_state`, `media`, `notifications`, `quickshell_io`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces` | no other feature |
@@ -81,10 +83,10 @@ configure time.
   interface when the feature is QML only), links `wabar_kernel` and the `DEPENDS` libraries, checks
   the folder layout and that each `DEPENDS` feature is declared earlier, and appends the feature's
   QML C++, `.qml` files and tests to global lists. `wabar_contribute()` does the same append for
-  kernel, host, ui and app. The comment at the top of the file holds the decisions. `WINRT_PCH
+  kernel, host, ui, quickshell (its tests) and app. The comment at the top of the file holds the decisions. `WINRT_PCH
   <headers...>` precompiles C++/WinRT headers (after `unknwn.h`) for the `WIN32_SOURCES`; audio,
   media, network and notifications use it.
-- `src/CMakeLists.txt` adds `kernel`, `control`, `host`, `ui`, `features` and `app`, then includes
+- `src/CMakeLists.txt` adds `kernel`, `control`, `host`, `ui`, `features`, `quickshell` and `app`, then includes
   `src/modules/qml_modules.cmake`. `src/features/CMakeLists.txt` has one `add_subdirectory` line
   per feature, in dependency order. Deleting a feature is deleting its folder and that line.
 - `tests/CMakeLists.txt` defines `wabar_tests` from `tests/main.cpp`, `tests/integration/` and the

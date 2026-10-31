@@ -83,17 +83,21 @@ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 ## Structure
 
-Layout: `src/{kernel,control,host,ui,features/<f>,app/<exe>}`, `tests/` (the test main and the
-cross-feature tests), `examples/config` (the sample config home), `cmake/`, `tools/`, `docs/`.
-Dependencies point one way: `app` -> `features` -> (`host`, `control`, `ui`) -> `kernel`. The
-include root is `src/`. Every unit is a static library or QML module; a feature is `wabar_<f>`.
+Layout: `src/{kernel,control,host,ui,features/<f>,quickshell,app/<exe>}`, `tests/` (the test main
+and the cross-feature tests), `examples/config` (the sample config home), `cmake/`, `tools/`,
+`docs/`. Dependencies point one way: `app` -> `quickshell` -> `features` -> (`host`, `control`,
+`ui`) -> `kernel`. The include root is `src/`. Every unit is a static library or QML module; a
+feature is `wabar_<f>`. `src/quickshell/` holds the Quickshell compatibility modules
+(`Quickshell`, `Quickshell.Io`, ...): registrations and QML over the engine and the features, no
+engine logic; its `README.md` says where each Quickshell type is implemented.
 
 The `structure` step of `tools\check.ps1` enforces rules S1-S8. The rule text is the table at the top
 of that step in the script, which is exact; do not restate it here. In short:
 
 - S1: every file under `src/` belongs to exactly one unit and is listed in its `CMakeLists.txt`.
 - S2: includes are rooted at `src/` and stay inside the unit, `kernel/`, `control/` and the root
-  headers of `DEPENDS` features.
+  headers of `DEPENDS` features. `quickshell` may also include `host/qml/` and the root and `qml/`
+  headers of any feature; only `app/` and tests include `quickshell/`.
 - S3, S4: Windows SDK and WinRT headers only in `win32/` folders (and the tray hook, `app/`,
   tests); `QtQml`/`QtQuick` and `QML_*` macros only in `qml/` folders (and `testing/`, `app/`,
   tests); `QtWidgets` nowhere.
