@@ -1,10 +1,10 @@
 // GlobalSystemMediaTransportControlsSessionManager source for MediaSessionService.
 //
-// Threading: one dedicated worker thread (MTA) owns every WinRT object. WinRT event handlers run
-// on thread-pool threads and only enqueue a task (an app id and what to re-read) on the worker's
-// queue; the worker reads plain snapshots and hands them to the sink. command() enqueues too, so
-// the GUI thread never touches WinRT. The thread sleeps on a condition variable between events;
-// there is no polling. stop() revokes the handlers, wakes the worker and joins it; a refresh in
+// Threading: one dedicated worker thread (kernel::TaskThread, MTA) owns every WinRT object. WinRT
+// event handlers run on thread-pool threads and only enqueue a task (an app id and what to re-read)
+// on the worker's queue; the worker reads plain snapshots and hands them to the sink. command()
+// enqueues too, so the GUI thread never touches WinRT. The thread sleeps between events; there is
+// no polling. stop() revokes the handlers, wakes the worker and joins it; a refresh in
 // progress stops at the next session, so the join waits for one WinRT read at most. start() after
 // stop() starts a fresh worker.
 #include <winrt/Windows.Foundation.Collections.h>
@@ -16,17 +16,13 @@
 
 #include <QDebug>
 #include <QStringList>
-#include <condition_variable>
-#include <deque>
-#include <functional>
 #include <map>
-#include <memory>
-#include <mutex>
 #include <optional>
-#include <thread>
 #include <vector>
 
 #include "features/media/media_session.h"
+#include "kernel/win32/task_thread.h"
+#include "kernel/win32/winrt_strings.h"
 
 namespace wabar::media {
 namespace {
@@ -38,9 +34,7 @@ using wmc::GlobalSystemMediaTransportControlsSessionManager;
 constexpr double kTicksPerSecond = 10000000.0;
 constexpr double kUnixEpochOffsetSeconds = 11644473600.0;  // 1601-01-01 to 1970-01-01
 
-QString toQString(const winrt::hstring& text) {
-  return QString::fromWCharArray(text.c_str(), static_cast<qsizetype>(text.size()));
-}
+using kernel::toQString;
 
 double seconds(winrt::Windows::Foundation::TimeSpan span) {
   return static_cast<double>(span.count()) / kTicksPerSecond;
@@ -51,60 +45,26 @@ double unixSeconds(winrt::Windows::Foundation::DateTime time) {
          kUnixEpochOffsetSeconds;
 }
 
-// Task queue shared with WinRT handlers; handlers hold it by shared_ptr so a late event after the
-// source is destroyed only touches a queue nobody reads.
-struct Queue {
-  std::mutex mutex;
-  std::condition_variable wake;
-  std::deque<std::function<void()>> tasks;
-  bool stopping = false;
-
-  void post(std::function<void()> task) {
-    {
-      std::lock_guard lock(mutex);
-      if (stopping) return;
-      tasks.push_back(std::move(task));
-    }
-    wake.notify_one();
-  }
-
-  // Checked by the worker between WinRT reads, so stop() does not wait for every session of a
-  // refresh (each read can block on a frozen player).
-  bool stopRequested() {
-    std::lock_guard lock(mutex);
-    return stopping;
-  }
-};
-
 class SystemMediaSource final : public MediaSessionSource {
  public:
   ~SystemMediaSource() override { stop(); }
 
   void start(MediaSessionSink* sink) override {
-    if (thread_.joinable()) return;
-    {
-      // A start() after stop() runs again instead of spawning a thread that exits at once.
-      std::lock_guard lock(queue_->mutex);
-      queue_->stopping = false;
-      queue_->tasks.clear();
-    }
+    if (worker_.running()) return;
     sink_ = sink;
-    thread_ = std::thread([this] { run(); });
+    worker_.start([this] { setUp(); }, [this] { tearDown(); });
   }
 
   void stop() override {
-    if (!thread_.joinable()) return;
-    {
-      std::lock_guard lock(queue_->mutex);
-      queue_->stopping = true;
-    }
-    queue_->wake.notify_all();
-    thread_.join();
+    if (!worker_.running()) return;
+    worker_.stop();
     sink_ = nullptr;
   }
 
   void command(const QString& appId, MediaCommand command, double value) override {
-    queue_->post([this, appId, command, value] { execute(appId, command, value); });
+    // A command while stopped is dropped, not kept for the next start().
+    if (!worker_.running()) return;
+    worker_.post([this, appId, command, value] { execute(appId, command, value); });
   }
 
  private:
@@ -115,19 +75,15 @@ class SystemMediaSource final : public MediaSessionSource {
     winrt::event_token playbackToken;
   };
 
-  void run() {
-    try {
-      winrt::init_apartment(winrt::apartment_type::multi_threaded);
-    } catch (const winrt::hresult_error&) {
-      // Already initialised on this thread; carry on.
-    }
+  // Worker thread, first: the manager, its handlers and one full read.
+  void setUp() {
     try {
       manager_ = GlobalSystemMediaTransportControlsSessionManager::RequestAsync().get();
-      const std::shared_ptr<Queue> queue = queue_;
+      const kernel::TaskThread::Poster post = worker_.poster();
       sessionsToken_ = manager_.SessionsChanged(
-          [queue, this](auto&&, auto&&) { queue->post([this] { refresh(false); }); });
+          [post, this](auto&&, auto&&) { post([this] { refresh(false); }); });
       currentToken_ = manager_.CurrentSessionChanged(
-          [queue, this](auto&&, auto&&) { queue->post([this] { refresh(true); }); });
+          [post, this](auto&&, auto&&) { post([this] { refresh(true); }); });
       // One full read; refresh(false) first would read every session and its thumbnail twice.
       refresh(true);
     } catch (const winrt::hresult_error& error) {
@@ -135,25 +91,10 @@ class SystemMediaSource final : public MediaSessionSource {
     } catch (const std::exception& error) {
       qWarning().noquote() << "Media session manager unavailable:" << error.what();
     }
+  }
 
-    for (;;) {
-      std::function<void()> task;
-      {
-        std::unique_lock lock(queue_->mutex);
-        queue_->wake.wait(lock, [this] { return queue_->stopping || !queue_->tasks.empty(); });
-        if (queue_->stopping) break;
-        task = std::move(queue_->tasks.front());
-        queue_->tasks.pop_front();
-      }
-      try {
-        task();
-      } catch (const winrt::hresult_error& error) {
-        qWarning().noquote() << "Media session task failed:" << toQString(error.message());
-      } catch (const std::exception& error) {
-        qWarning().noquote() << "Media session task failed:" << error.what();
-      }
-    }
-
+  // Worker thread, last: every handler revoked, every WinRT object released.
+  void tearDown() {
     try {
       if (manager_) {
         manager_.SessionsChanged(sessionsToken_);
@@ -164,23 +105,18 @@ class SystemMediaSource final : public MediaSessionSource {
     }
     tracked_.clear();
     manager_ = nullptr;
-    winrt::uninit_apartment();
   }
 
+  // The handlers hold a Poster, not the source, so a late event after the source is destroyed
+  // only reaches a queue nobody reads.
   void bind(const QString& appId, Tracked& tracked) {
-    const std::shared_ptr<Queue> queue = queue_;
-    tracked.propertiesToken =
-        tracked.session.MediaPropertiesChanged([queue, this, appId](auto&&, auto&&) {
-          queue->post([this, appId] { publishProperties(appId); });
-        });
-    tracked.timelineToken =
-        tracked.session.TimelinePropertiesChanged([queue, this, appId](auto&&, auto&&) {
-          queue->post([this, appId] { publishTimeline(appId); });
-        });
-    tracked.playbackToken =
-        tracked.session.PlaybackInfoChanged([queue, this, appId](auto&&, auto&&) {
-          queue->post([this, appId] { publishPlayback(appId); });
-        });
+    const kernel::TaskThread::Poster post = worker_.poster();
+    tracked.propertiesToken = tracked.session.MediaPropertiesChanged(
+        [post, this, appId](auto&&, auto&&) { post([this, appId] { publishProperties(appId); }); });
+    tracked.timelineToken = tracked.session.TimelinePropertiesChanged(
+        [post, this, appId](auto&&, auto&&) { post([this, appId] { publishTimeline(appId); }); });
+    tracked.playbackToken = tracked.session.PlaybackInfoChanged(
+        [post, this, appId](auto&&, auto&&) { post([this, appId] { publishPlayback(appId); }); });
   }
 
   // Never throws: revoking on a session whose app has gone can fail, and that must not abort the
@@ -301,7 +237,9 @@ class SystemMediaSource final : public MediaSessionSource {
       }
     }
     for (const QString& appId : order) {
-      if (queue_->stopRequested()) return;
+      // stop() does not wait for every session of a refresh (each read can block on a frozen
+      // player).
+      if (worker_.stopRequested()) return;
       if (tracked_.count(appId) == 0) {
         Tracked tracked;
         tracked.session = live.at(appId);
@@ -384,8 +322,7 @@ class SystemMediaSource final : public MediaSessionSource {
     }
   }
 
-  std::shared_ptr<Queue> queue_ = std::make_shared<Queue>();
-  std::thread thread_;
+  kernel::TaskThread worker_{QStringLiteral("Media session")};
   MediaSessionSink* sink_ = nullptr;  // set before the thread starts, cleared after it joins
   // Worker-thread only from here down.
   GlobalSystemMediaTransportControlsSessionManager manager_{nullptr};
