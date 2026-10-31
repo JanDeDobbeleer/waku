@@ -1,6 +1,6 @@
 # wabar_kernel: helpers with no domain knowledge that two or more units use (proposal, section 6).
 #   win32/  Windows build number, WinRT apartment, hidden process launch, shell open, app activation,
-#           forced foreground focus, shell icons, COM scope
+#           forced foreground focus, shell icons, COM scope, WinRT strings
 #   qt/     live-desktop gate, polled-source base class, the one app data folder, lingering hubs
 #   qml/    the QML face of the polled source (compiled into wabar.services, not into this library)
 # Include root is src/ (#include "kernel/qt/app_data.h"). Qt Core and Gui only; the Windows SDK
@@ -28,6 +28,7 @@ add_library(wabar_kernel STATIC
   win32/windows_build.cpp
   win32/winrt_apartment.h
   win32/winrt_apartment.cpp
+  win32/winrt_strings.h
 )
 target_include_directories(wabar_kernel PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(wabar_kernel
@@ -49,5 +50,6 @@ wabar_contribute(
     tests/test_window_focus.cpp
     tests/test_shell_icons.cpp
     tests/test_windows_build.cpp
+    tests/test_winrt_strings.cpp
   TEST_LIBS wabar_kernel
 )
