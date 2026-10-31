@@ -7,6 +7,7 @@
 #include <QQmlEngine>
 #include <QSet>
 #include <algorithm>
+#include <optional>
 
 namespace wabar::host {
 
@@ -63,20 +64,25 @@ void PersistentProperties::setReloadableId(const QString& id) {
   emit reloadableIdChanged();
 }
 
+std::optional<QVariant> PersistentProperties::plainValue(const QMetaProperty& property) const {
+  QVariant value = property.read(this);
+  // A `property var` reads as a QJSValue: a persistent value in this engine's heap. Keep its
+  // plain conversion (numbers, strings, lists, maps) so nothing in the process-wide store pins a JS
+  // object between reloads or is freed after the engine that owns it.
+  if (value.metaType() == QMetaType::fromType<QJSValue>()) {
+    value = value.value<QJSValue>().toVariant();
+  }
+  if (!isPlainValue(value)) return std::nullopt;
+  return value;
+}
+
 QVariantMap PersistentProperties::snapshot() const {
   QVariantMap values;
   const QMetaObject* meta = metaObject();
   for (int i = staticMetaObject.propertyCount(); i < meta->propertyCount(); ++i) {
     const QMetaProperty property = meta->property(i);
-    QVariant value = property.read(this);
-    // A `property var` reads as a QJSValue: a persistent value in this engine's heap. Keep its
-    // plain conversion (numbers, strings, lists, maps) so nothing in the process-wide store
-    // pins a JS object between reloads or is freed after the engine that owns it.
-    if (value.metaType() == QMetaType::fromType<QJSValue>()) {
-      value = value.value<QJSValue>().toVariant();
-    }
-    if (!isPlainValue(value)) continue;
-    values.insert(QString::fromLatin1(property.name()), value);
+    if (const std::optional<QVariant> value = plainValue(property))
+      values.insert(QString::fromLatin1(property.name()), *value);
   }
   return values;
 }
@@ -93,7 +99,27 @@ void PersistentProperties::restore(const QVariantMap& values) {
 
 void PersistentProperties::save() {
   if (!complete_ || reloadableId_.isEmpty()) return;
-  store().insert(Key{engine_, reloadableId_}, snapshot());
+  auto& saved = store();
+  const Key key{engine_, reloadableId_};
+  const auto entry = saved.find(key);
+  // A change signal updates only the properties it notifies: an animated value saves itself at
+  // frame rate, and a snapshot read every declared property each time. A direct call (completion)
+  // or an id without an entry yet writes the whole snapshot.
+  const auto changed = notifiedProperties_.constFind(senderSignalIndex());
+  if (entry == saved.end() || changed == notifiedProperties_.cend()) {
+    saved.insert(key, snapshot());
+    return;
+  }
+  const QMetaObject* meta = metaObject();
+  for (const int index : *changed) {
+    const QMetaProperty property = meta->property(index);
+    const QString name = QString::fromLatin1(property.name());
+    if (const std::optional<QVariant> value = plainValue(property)) {
+      entry->insert(name, *value);
+    } else {
+      entry->remove(name);
+    }
+  }
 }
 
 void PersistentProperties::componentComplete() {
@@ -116,7 +142,10 @@ void PersistentProperties::componentComplete() {
   const int slot = staticMetaObject.indexOfSlot("save()");
   for (int i = staticMetaObject.propertyCount(); i < meta->propertyCount(); ++i) {
     const QMetaMethod notify = meta->property(i).notifySignal();
-    if (notify.isValid()) QMetaObject::connect(this, notify.methodIndex(), this, slot);
+    if (!notify.isValid()) continue;
+    QList<int>& properties = notifiedProperties_[notify.methodIndex()];
+    if (properties.isEmpty()) QMetaObject::connect(this, notify.methodIndex(), this, slot);
+    properties.append(i);
   }
   save();
   if (restored) emit reloaded();

@@ -2,10 +2,14 @@
 
 #include <QtQml/qqmlregistration.h>
 
+#include <QHash>
+#include <QList>
+#include <QMetaProperty>
 #include <QObject>
 #include <QQmlParserStatus>
 #include <QString>
 #include <QVariantMap>
+#include <optional>
 
 class QQmlEngine;
 
@@ -60,10 +64,14 @@ class PersistentProperties : public QObject, public QQmlParserStatus {
 
  private:
   void restore(const QVariantMap& values);
+  // The property's value as the store keeps it; nothing for an object or a JS function.
+  std::optional<QVariant> plainValue(const QMetaProperty& property) const;
 
   QString reloadableId_;
   bool complete_ = false;
   const QQmlEngine* engine_ = nullptr;
+  // Change signal (method index) to the declared properties it notifies.
+  QHash<int, QList<int>> notifiedProperties_;
 };
 
 }  // namespace wabar::host
