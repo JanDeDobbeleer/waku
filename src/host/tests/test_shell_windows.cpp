@@ -518,3 +518,42 @@ ShellRoot {
   EXPECT_EQ(top->property("started").toInt(), 1);
   EXPECT_EQ(nested->property("started").toInt(), 1);
 }
+
+// ---- teardown ----
+
+TEST(ShellWindowsTest, BindingsWokenByTheTeardownOfAWindowSeeNoWindow) {
+  // Deleting the backing window unparents the content item, which re-evaluates its bindings: one
+  // that reads the window then must see no window, not a deleted QQuickWindow.
+  QQmlEngine engine;
+  QObject probe;
+  engine.rootContext()->setContextProperty(QStringLiteral("probe"), &probe);
+  QQmlComponent component(&engine);
+  component.setData(QByteArrayLiteral(R"(
+import QtQuick
+import wabar
+FloatingWindow {
+    id: w
+    visible: false
+    content: Component {
+        Item {
+            property string seen: {
+                const p = parent;
+                probe.objectName = "w" + w.width + "h" + w.height + "c" + (w.contentItem !== null)
+                    + "v" + w.backingWindowVisible;
+                return probe.objectName;
+            }
+        }
+    }
+}
+)"),
+                    QUrl(QStringLiteral("file:///teardown.qml")));
+  ASSERT_FALSE(component.isError()) << qPrintable(component.errorString());
+  std::unique_ptr<QObject> window(component.create());
+  ASSERT_NE(qobject_cast<FloatingWindow*>(window.get()), nullptr);
+  QQuickWindow* backing = qobject_cast<QsWindow*>(window.get())->backingWindow();
+  ASSERT_NE(backing, nullptr);
+  EXPECT_EQ(QsWindow::of(backing), window.get());
+  probe.setObjectName(QString());
+  window.reset();
+  EXPECT_EQ(probe.objectName(), QStringLiteral("w0h0cfalsevfalse"));
+}

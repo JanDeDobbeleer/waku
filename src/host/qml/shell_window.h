@@ -34,7 +34,9 @@ class ProxiedWindow : public QQuickWindow {
 
  public:
   explicit ProxiedWindow(QsWindow* proxy) : proxy_(proxy) {}
+  // Null once the QsWindow is being destroyed.
   QsWindow* proxy() const { return proxy_; }
+  void detach() { proxy_ = nullptr; }
 
  protected:
   // Escape hides a window with `dismissOnEscape` when no item took the key.
@@ -249,6 +251,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   bool hasBackground() const { return background_.isValid(); }
   qlonglong monitorHandle() const { return monitorHandle_; }
   QObject* host() const;
+  // Null only while the QsWindow is being destroyed: its teardown can wake bindings that read it.
   QQuickWindow* backingWindow() const { return window_.get(); }
 
   // The position and rectangle of `item` in this window's coordinates (Quickshell).

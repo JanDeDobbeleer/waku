@@ -45,7 +45,8 @@ void ProxiedWindow::keyPressEvent(QKeyEvent* event) {
   // Not accepted until an item takes the key: a TextInput keeps its own use of Escape.
   event->ignore();
   QQuickWindow::keyPressEvent(event);
-  if (!event->isAccepted() && event->key() == Qt::Key_Escape && proxy_->dismissOnEscape()) {
+  if (!event->isAccepted() && event->key() == Qt::Key_Escape && proxy_ &&
+      proxy_->dismissOnEscape()) {
     event->accept();
     proxy_->hide();
   }
@@ -81,6 +82,9 @@ QsWindow::~QsWindow() {
   for (QObject* object : data_) {
     if (auto* item = qobject_cast<QQuickItem*>(object)) item->setParentItem(nullptr);
   }
+  // Deleting the window unparents the chrome and content items, which wakes their bindings. From
+  // here on QsWindow.of() finds no window and the getters see none (reset() nulls window_ first).
+  window_->detach();
   window_.reset();
 }
 
@@ -124,7 +128,7 @@ void QsWindow::clearData(QQmlListProperty<QObject>* list) {
   self->data_.clear();
 }
 
-QQuickItem* QsWindow::contentItem() const { return window_->contentItem(); }
+QQuickItem* QsWindow::contentItem() const { return window_ ? window_->contentItem() : nullptr; }
 
 void QsWindow::setScreen(ShellScreen* screen) {
   if (screen_ == screen) return;
@@ -169,6 +173,7 @@ std::optional<RegionNode> QsWindow::maskNode() const {
 // The poller exists only on a live desktop: the host hands it a cursor source then (and tests
 // hand it a fake).
 void QsWindow::updateMaskPoller() {
+  if (!window_) return;
   if (!poller_) {
     if (!mask_ || !host_ || !host_->maskHub()) return;
     poller_ = std::make_unique<MaskPoller>(window_.get(), host_->maskHub(),
@@ -229,6 +234,7 @@ void QsWindow::setDismissOnEscape(bool dismiss) {
 }
 
 void QsWindow::onActiveChanged() {
+  if (!window_) return;
   if (window_->isActive()) {
     wasActive_ = true;
     return;
@@ -255,15 +261,15 @@ void QsWindow::setImplicitHeight(int height) {
   if (complete_) applyGeometry();
 }
 
-int QsWindow::width() const { return window_->width(); }
-int QsWindow::height() const { return window_->height(); }
+int QsWindow::width() const { return window_ ? window_->width() : 0; }
+int QsWindow::height() const { return window_ ? window_->height() : 0; }
 
 qreal QsWindow::devicePixelRatio() const {
   QScreen* screen = targetScreen();
   return screen ? screen->devicePixelRatio() : 1.0;
 }
 
-bool QsWindow::backingWindowVisible() const { return window_->isVisible(); }
+bool QsWindow::backingWindowVisible() const { return window_ && window_->isVisible(); }
 
 void QsWindow::setContent(QQmlComponent* content) {
   if (content_ == content) return;
@@ -320,6 +326,7 @@ void QsWindow::setPresentable(bool presentable) {
 }
 
 void QsWindow::updateFlags() {
+  if (!window_) return;
   Qt::WindowFlags flags = windowFlags();
   // The mask poller owns this flag while the window is click-through.
   if (poller_ && poller_->passThrough()) flags |= Qt::WindowTransparentForInput;
@@ -327,18 +334,19 @@ void QsWindow::updateFlags() {
 }
 
 void QsWindow::stackingChanged() {
-  if (host_ && window_->isVisible()) host_->windowStackingChanged(this);
+  if (host_ && window_ && window_->isVisible()) host_->windowStackingChanged(this);
 }
 
 void QsWindow::hideNow() {
   hideTimer_.stop();
   wasActive_ = false;
-  if (!window_->isVisible()) return;
+  if (!window_ || !window_->isVisible()) return;
   window_->hide();
   emit hidden();
 }
 
 void QsWindow::updateVisibility() {
+  if (!window_) return;
   const bool ready = complete_ && presentable_ && buildError_.isEmpty();
   const bool show = ready && visible_;
   if (show) hideTimer_.stop();
@@ -572,8 +580,8 @@ int PanelWindow::reservedZone() const {
 
 void PanelWindow::applyGeometry() {
   QScreen* screen = targetScreen();
-  if (!screen) return;
   QQuickWindow* window = backingWindow();
+  if (!screen || !window) return;
   if (window->screen() != screen) window->setScreen(screen);
   QRect geometry = geometryOn(screen->geometry());
   // The shell may have granted the bar less than the screen edge (another app bar holds it).
@@ -613,26 +621,29 @@ FloatingWindow::FloatingWindow(QObject* parent) : QsWindow(parent) {}
 void FloatingWindow::setTitle(const QString& title) {
   if (title_ == title) return;
   title_ = title;
-  backingWindow()->setTitle(title);
+  if (QQuickWindow* window = backingWindow()) window->setTitle(title);
   emit titleChanged();
 }
 
 void FloatingWindow::setMinimumSize(const QSize& size) {
   if (minimumSize_ == size) return;
   minimumSize_ = size;
-  backingWindow()->setMinimumSize(size);
+  if (QQuickWindow* window = backingWindow()) window->setMinimumSize(size);
   emit minimumSizeChanged();
 }
 
 void FloatingWindow::setMaximumSize(const QSize& size) {
   if (maximumSize_ == size) return;
   maximumSize_ = size;
-  if (size.isValid()) backingWindow()->setMaximumSize(size);
+  if (QQuickWindow* window = backingWindow(); window && size.isValid()) {
+    window->setMaximumSize(size);
+  }
   emit maximumSizeChanged();
 }
 
 void FloatingWindow::applyGeometry() {
   QQuickWindow* window = backingWindow();
+  if (!window) return;
   const QSize size(std::max(1, implicitWidth()), std::max(1, implicitHeight()));
   if (placed_) {
     window->resize(size);
