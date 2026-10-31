@@ -95,9 +95,16 @@ void updateCurrentState(IconStateMap& state, const QStringList& pinned,
 void updateIconData(TrayIconData& old, const TrayIconData& incoming) {
   old.messageType = incoming.messageType;
   old.uFlags = incoming.uFlags;
-  old.iconWidth = incoming.iconWidth;
-  old.iconHeight = incoming.iconHeight;
-  old.iconRgba = incoming.iconRgba;
+  // The pixels change only with NIF_ICON. A message without it (NIM_SETVERSION, a tooltip or
+  // state update) carries no pixels and must not blank the icon. NIF_ICON whose handle could not
+  // be read keeps the last good image too; only NIF_ICON with no handle at all clears it.
+  if (incoming.uFlags & kNifIcon) {
+    if (!incoming.iconRgba.isEmpty() || incoming.hIcon == 0) {
+      old.iconWidth = incoming.iconWidth;
+      old.iconHeight = incoming.iconHeight;
+      old.iconRgba = incoming.iconRgba;
+    }
+  }
   old.exe = incoming.exe;
   old.exePath = incoming.exePath;
   old.hWnd = incoming.hWnd ? incoming.hWnd : old.hWnd;

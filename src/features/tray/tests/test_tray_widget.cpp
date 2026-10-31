@@ -47,7 +47,8 @@ plat::TrayIconData makeIcon(const char* name, bool hidden = false) {
   plat::TrayIconData d;
   d.hWnd = 100;
   d.uID = nextId++;
-  d.uFlags = plat::kNifMessage | plat::kNifTip | (hidden ? plat::kNifState : 0);
+  d.uFlags = plat::kNifMessage | plat::kNifIcon | plat::kNifTip | (hidden ? plat::kNifState : 0);
+  d.hIcon = 1;
   d.dwState = hidden ? 1 : 0;
   d.uCallbackMessage = kCallback;
   d.szTip = QString::fromLatin1(name);
