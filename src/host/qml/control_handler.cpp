@@ -8,8 +8,8 @@
 #include "host/qml/ipc_handler.h"
 #include "host/qml/shell_host.h"
 #include "host/qml/surface_control.h"
-#include "host/qml/taskbar_command.h"
-#include "host/taskbar_control.h"
+#include "host/qml/windows_taskbar_command.h"
+#include "host/windows_taskbar.h"
 
 namespace wabar::host {
 
@@ -60,7 +60,7 @@ QString answerShortcutCommand(const QStringList& words) {
 
 control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::function<void()> quit,
                                            control::WallpaperControlProvider wallpapers,
-                                           TaskbarControl* taskbar) {
+                                           WindowsTaskbar* taskbar) {
   if (!quit) quit = [] { QCoreApplication::quit(); };
   QPointer<ShellHost> guard(&host);
   return [guard, safe, quit = std::move(quit), wallpapers = std::move(wallpapers),
@@ -117,7 +117,7 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
       if (!control::splitCommand(command, &words))
         return QStringLiteral("error: unterminated quote");
       words.removeFirst();
-      return answerTaskbarCommand(words, taskbar);
+      return answerWindowsTaskbarCommand(words, taskbar);
     }
     return QStringLiteral(
                "error: unknown command '%1' (try: reload, status, quit, wallpaper, shortcut, "

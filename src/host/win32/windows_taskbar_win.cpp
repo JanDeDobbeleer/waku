@@ -1,10 +1,10 @@
-#include "host/taskbar_control.h"
-
 #include <windows.h>
 #include <shellapi.h>
 
 #include <QString>
 #include <vector>
+
+#include "host/windows_taskbar.h"
 
 namespace wabar::host {
 

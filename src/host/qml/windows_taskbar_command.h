@@ -5,7 +5,7 @@
 
 namespace wabar::host {
 
-class TaskbarControl;
+class WindowsTaskbar;
 
 // The `taskbar` commands of the control channel (the words after "taskbar"):
 //   hide     "ok: taskbar: hidden": turns auto-hide on and hides the taskbar windows
@@ -14,6 +14,6 @@ class TaskbarControl;
 //   status   "ok: taskbar: hidden|visible|autohide-was-on" (what is seen, whoever hid it)
 // Errors: "error: usage: ...", "error: unknown taskbar command '...'", "error: the taskbar is not
 // available" (no control: the offscreen platform). Public for tests.
-QString answerTaskbarCommand(const QStringList& words, TaskbarControl* taskbar);
+QString answerWindowsTaskbarCommand(const QStringList& words, WindowsTaskbar* taskbar);
 
 }  // namespace wabar::host

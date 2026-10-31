@@ -17,9 +17,9 @@ enum class TaskbarState { Visible, Hidden, AutoHide };
 QString taskbarStateName(TaskbarState state);
 
 // What the control verbs and main.cpp use.
-class TaskbarControl {
+class WindowsTaskbar {
  public:
-  virtual ~TaskbarControl() = default;
+  virtual ~WindowsTaskbar() = default;
   // Turns auto-hide on (releases the reserved work area) and hides the taskbar windows. Does
   // nothing when wabar already hides the taskbar.
   virtual void hide() = 0;
@@ -30,7 +30,7 @@ class TaskbarControl {
 };
 
 // The operating system under the logic. The Windows one is makeWin32TaskbarSystem(); tests use the
-// fake of host/testing/taskbar_fakes.h. GUI thread only.
+// fake of host/testing/windows_taskbar_fakes.h. GUI thread only.
 class TaskbarSystem {
  public:
   virtual ~TaskbarSystem() = default;
@@ -48,7 +48,7 @@ class TaskbarSystem {
   virtual void onExplorerRestart(std::function<void()> callback) = 0;
 };
 
-// The Windows implementation (win32/taskbar_control.cpp). Creates a hidden window for the
+// The Windows implementation (win32/windows_taskbar_win.cpp). Creates a hidden window for the
 // TaskbarCreated broadcast, so it needs the GUI thread's message loop.
 std::unique_ptr<TaskbarSystem> makeWin32TaskbarSystem();
 
@@ -78,12 +78,12 @@ std::optional<TaskbarMarker> parseTaskbarMarker(const QString& text);
 
 // The logic. Co-existence: when another tool already hides the taskbar (thide), hide() changes
 // only what is still unchanged and restore() undoes only that; state() reports what is seen.
-class WabarTaskbar : public TaskbarControl {
+class WindowsTaskbarHider : public WindowsTaskbar {
  public:
   // `ownPid`: this process. `system` and `store` outlive the object.
-  WabarTaskbar(TaskbarSystem& system, TaskbarMarkerStore& store, qint64 ownPid);
+  WindowsTaskbarHider(TaskbarSystem& system, TaskbarMarkerStore& store, qint64 ownPid);
   // Restores what this object hid.
-  ~WabarTaskbar() override;
+  ~WindowsTaskbarHider() override;
 
   // The start of a run: undoes a stale marker (recoverStale()), then hides when `hideNow` is set.
   // With `hideNow` false the taskbar is not touched, except to recover.

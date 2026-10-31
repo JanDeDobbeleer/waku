@@ -1,6 +1,6 @@
 #pragma once
 
-// Fakes for the taskbar seams (host/taskbar_control.h). Header-only; tests only. They never touch
+// Fakes for the taskbar seams (host/windows_taskbar.h). Header-only; tests only. They never touch
 // the real taskbar.
 
 #include <QSet>
@@ -8,7 +8,7 @@
 #include <functional>
 #include <optional>
 
-#include "host/taskbar_control.h"
+#include "host/windows_taskbar.h"
 
 namespace wabar::host {
 
@@ -55,8 +55,8 @@ class FakeMarkerStore : public TaskbarMarkerStore {
   int writes = 0;
 };
 
-// A TaskbarControl that only counts calls (for the control verbs).
-class FakeTaskbarControl : public TaskbarControl {
+// A WindowsTaskbar that only counts calls (for the control verbs).
+class FakeWindowsTaskbar : public WindowsTaskbar {
  public:
   void hide() override {
     ++hides;

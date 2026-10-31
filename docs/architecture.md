@@ -327,8 +327,8 @@ allowlist below:
   windows get no broadcasts) on the GUI thread, only while hiding; the host then hides the new
   windows again. No thread, no timer, no singleton.
 
-Order: `WabarTaskbar::start` runs after the control pipe is taken (a refused second start touches
-nothing) and before the first `ShellHost::reload`, so every app bar is registered after the work
+Order: `WindowsTaskbarHider::start` runs after the control pipe is taken (a refused second start
+touches nothing) and before the first `ShellHost::reload`, so every app bar is registered after the work
 area is released. Before the first change `hide()` writes `taskbar_hidden.marker` in `appDataDir()`
 (pid, whether wabar turned auto-hide on, whether it hid the windows). `restore()` undoes only those
 changes and deletes the file. It runs on `aboutToQuit` (so `wabarc quit` too) and in the
@@ -339,8 +339,10 @@ Co-existence: if another tool (`thide`) already hides the windows or auto-hide i
 that part alone, writes no marker for it and does not undo it. `wabarc taskbar status` reports what
 is seen: `hidden` (no taskbar window visible, whoever hid it), `autohide-was-on` (shown, auto-hide
 on), `visible`. Taskbar windows Explorer creates later (a monitor plugged in while hiding) stay
-visible until the next `TaskbarCreated` or `hide`. Source: `src/host/taskbar_control.{h,cpp}`,
-`win32/taskbar_control.cpp`, `qml/taskbar_command.{h,cpp}`, fakes in `testing/taskbar_fakes.h`.
+visible until the next `TaskbarCreated` or `hide`. Source: `src/host/windows_taskbar.{h,cpp}`,
+`win32/windows_taskbar_win.cpp`, `qml/windows_taskbar_command.{h,cpp}`, fakes in
+`testing/windows_taskbar_fakes.h`. The names say "Windows taskbar" to keep them apart from the
+`taskbar` feature (wabar's own task list): `ctest -R WindowsTaskbar` selects these tests.
 
 ### komorebi's work area
 
@@ -348,8 +350,8 @@ komorebi caches each monitor's work area and can miss the `WM_SETTINGCHANGE` tha
 bar change (its channel drops messages during a dock or scaling storm), so windows tile under the
 bar. `KomorebiWorkAreaGuard` (`src/features/workspaces/komorebi_workarea.{h,cpp}`, sender in
 `win32/komorebi_workarea_win.cpp`) is one object created and owned by `src/app/wabar/main.cpp` for
-the run, like `WabarTaskbar`; it is not a singleton and survives reloads. It listens to Qt's screen
-signals (`availableGeometryChanged` and friends), waits 500 ms after the last one, then sends
+the run, like `WindowsTaskbarHider`; it is not a singleton and survives reloads. It listens to Qt's
+screen signals (`availableGeometryChanged` and friends), waits 500 ms after the last one, then sends
 `WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window (`FindWindowW`, class
 `komorebi-hidden`) with `SendMessageTimeoutW` (250 ms), at once and 5 s later. GUI thread, no thread of its
 own (so no row in the thread table), two single-shot timers idle between bursts, documented APIs

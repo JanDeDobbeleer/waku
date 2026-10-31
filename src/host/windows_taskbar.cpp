@@ -1,4 +1,4 @@
-#include "host/taskbar_control.h"
+#include "host/windows_taskbar.h"
 
 #include <QFile>
 #include <QStringList>
@@ -84,17 +84,18 @@ std::unique_ptr<TaskbarMarkerStore> makeFileMarkerStore(const QString& path) {
   return std::make_unique<FileMarkerStore>(path);
 }
 
-WabarTaskbar::WabarTaskbar(TaskbarSystem& system, TaskbarMarkerStore& store, qint64 ownPid)
+WindowsTaskbarHider::WindowsTaskbarHider(TaskbarSystem& system, TaskbarMarkerStore& store,
+                                         qint64 ownPid)
     : system_(system), store_(store), ownPid_(ownPid) {}
 
-WabarTaskbar::~WabarTaskbar() { restore(); }
+WindowsTaskbarHider::~WindowsTaskbarHider() { restore(); }
 
-void WabarTaskbar::start(bool hideNow) {
+void WindowsTaskbarHider::start(bool hideNow) {
   recoverStale();
   if (hideNow) hide();
 }
 
-bool WabarTaskbar::recoverStale() {
+bool WindowsTaskbarHider::recoverStale() {
   if (hiding_) return false;
   const std::optional<TaskbarMarker> marker = store_.read();
   if (!marker) return false;
@@ -106,7 +107,7 @@ bool WabarTaskbar::recoverStale() {
   return marker->changedWindows || marker->changedAutoHide;
 }
 
-void WabarTaskbar::hide() {
+void WindowsTaskbarHider::hide() {
   if (hiding_) return;
   changedAutoHide_ = !system_.autoHide();
   changedWindows_ = system_.windowsVisible();
@@ -122,7 +123,7 @@ void WabarTaskbar::hide() {
   if (changedWindows_) system_.setWindowsHidden(true);
 }
 
-void WabarTaskbar::restore() {
+void WindowsTaskbarHider::restore() {
   if (!hiding_) return;
   hiding_ = false;
   system_.onExplorerRestart({});
@@ -134,12 +135,12 @@ void WabarTaskbar::restore() {
   if (hadMarker) store_.remove();
 }
 
-TaskbarState WabarTaskbar::state() const {
+TaskbarState WindowsTaskbarHider::state() const {
   if (!system_.windowsVisible()) return TaskbarState::Hidden;
   return system_.autoHide() ? TaskbarState::AutoHide : TaskbarState::Visible;
 }
 
-void WabarTaskbar::reassert() {
+void WindowsTaskbarHider::reassert() {
   // Called when Explorer started again (its new taskbar windows are visible) and once a second
   // while hiding (Explorer shows an auto-hide taskbar again when the work area changes).
   // Auto-hide lives in the registry and survives, but is set again if Explorer dropped it.

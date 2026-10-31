@@ -8,7 +8,7 @@
 namespace wabar::host {
 
 class ShellHost;
-class TaskbarControl;
+class WindowsTaskbar;
 
 // What a running shell answers on its control channel:
 //   reload  reloads the shell: "ok", or "error: <first message>" (when the new shell was rejected
@@ -25,7 +25,8 @@ class TaskbarControl;
 //   surface list | show|hide|toggle|status <name>
 //           the named windows of the shell (surface_control.h): "ok: <text>" or "error: <text>"
 //   taskbar hide | show | status
-//           hides or restores the Windows taskbar (taskbar_command.h): "ok: taskbar: <state>"
+//           hides or restores the Windows taskbar (windows_taskbar_command.h): "ok: taskbar:
+//           <state>"
 //   call [<target> <function> [args...]]
 //           runs a function of an IpcHandler (ipc_handler.h): the return value as one line, "ok"
 //           for void, "error: <text>"; without words the handlers and their functions
@@ -37,7 +38,7 @@ class TaskbarControl;
 control::ControlHandler makeControlHandler(ShellHost& host, bool safe,
                                            std::function<void()> quit = {},
                                            control::WallpaperControlProvider wallpapers = {},
-                                           TaskbarControl* taskbar = nullptr);
+                                           WindowsTaskbar* taskbar = nullptr);
 
 // The same answers through the control server's deferred replies: `reload` runs from a queued
 // call on the GUI thread, after the socket's read notification has returned, and answers when the

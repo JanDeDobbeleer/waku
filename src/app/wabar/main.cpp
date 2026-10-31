@@ -18,7 +18,7 @@
 #include "host/qml/control_handler.h"
 #include "host/qml/shell_host.h"
 #include "host/startup_trace.h"
-#include "host/taskbar_control.h"
+#include "host/windows_taskbar.h"
 #include "kernel/qt/app_data.h"
 #include "kernel/qt/live_desktop.h"
 
@@ -142,13 +142,13 @@ int main(int argc, char* argv[]) {
   // second start that is refused does not touch the taskbar.
   std::unique_ptr<wabar::host::TaskbarSystem> taskbarSystem;
   std::unique_ptr<wabar::host::TaskbarMarkerStore> taskbarMarkers;
-  std::unique_ptr<wabar::host::WabarTaskbar> taskbar;
+  std::unique_ptr<wabar::host::WindowsTaskbarHider> taskbar;
   if (wabar::kernel::liveDesktop()) {
     taskbarSystem = wabar::host::makeWin32TaskbarSystem();
     taskbarMarkers = wabar::host::makeFileMarkerStore(
         QDir(wabar::kernel::appDataDir()).filePath(QStringLiteral("taskbar_hidden.marker")));
-    taskbar = std::make_unique<wabar::host::WabarTaskbar>(*taskbarSystem, *taskbarMarkers,
-                                                          QCoreApplication::applicationPid());
+    taskbar = std::make_unique<wabar::host::WindowsTaskbarHider>(
+        *taskbarSystem, *taskbarMarkers, QCoreApplication::applicationPid());
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &app,
                      [&taskbar] { taskbar->restore(); });
   }

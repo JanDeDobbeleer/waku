@@ -1,10 +1,10 @@
-#include "host/qml/taskbar_command.h"
+#include "host/qml/windows_taskbar_command.h"
 
-#include "host/taskbar_control.h"
+#include "host/windows_taskbar.h"
 
 namespace wabar::host {
 
-QString answerTaskbarCommand(const QStringList& words, TaskbarControl* taskbar) {
+QString answerWindowsTaskbarCommand(const QStringList& words, WindowsTaskbar* taskbar) {
   static const QString usage = QStringLiteral("error: usage: taskbar hide | show | status");
   if (words.size() != 1) return usage;
   const QString verb = words.first();
