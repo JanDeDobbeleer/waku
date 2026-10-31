@@ -23,3 +23,9 @@ A second thread owns a message-only window that watches the video-brightness pow
 
 control_center only (`DEPENDS brightness`). A standalone Brightness widget would depend on this
 feature as well.
+
+## Notes moved from docs/architecture.md
+
+The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
+
+- `BrightnessControl` policy thread (`std::thread`, `policyThread_`) (the same `SystemBrightness`, started with it): owns a message-only window (class `wabar brightness policy`) and the `RegisterPowerSettingNotification` registration for the video brightness setting; runs the message loop and handles the brightness change in `onPolicyChange`. Fails soft (no watcher) when the class, window or registration cannot be made; `stopPolicyWatcher()`: posts `WM_CLOSE` to the window (`DestroyWindow`, `PostQuitMessage`, the loop ends and the registration is released), `join`

@@ -115,3 +115,9 @@ lists and failures, unsupported modes, immediate versus confirmed actions, cance
 action, missing launcher, stop on destruction, and the inert offscreen service. The QML is
 type-checked by the build (`qt_add_qml_module`); the widget has no test because no fake can be
 injected into the engine singleton without a factory seam, which this change does not add.
+
+## Notes moved from docs/architecture.md
+
+The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
+
+- `wabar.services.ControlCenter` (`src/features/control_center/qml/control_center_service.{h,cpp}`): the system side of every ControlCenter widget of a `wabar` run, created by the QML engine as a singleton: Do Not Disturb (its own `wabar::notifications::DndWatcher`, WNF subscription stopped by its destructor), app theme, touch keyboard, power plans and modes, user name and picture, and the session and power actions behind an injectable launcher (shutdown, restart and sign out need a second request). Owns one `wabar::brightness::BrightnessControl` (DDC/CI worker thread plus the power-setting window thread, joined by `stop()` in the destructor). Volume, microphone and the player are not repeated: the widget uses `AudioOutput`, `AudioInput` and `Media`. Inert on the offscreen platform

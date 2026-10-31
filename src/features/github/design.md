@@ -92,3 +92,9 @@ The token is never in the config, in QML or in logs; `signedIn` is all QML sees.
 - A token in the config (`token: env`); the environment variable and the token file replace it.
 - Signing out (Python has none either; delete the token file).
 - Opening the browser automatically at sign-in; the popup button does it.
+
+## Notes moved from docs/architecture.md
+
+The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
+
+- `wabar.services.GitHub` (`src/features/github/qml/github_service.{h,cpp}`): the GitHub notifications of a `wabar` run for every GitHub widget, created by the QML engine as a singleton on the GUI thread. Polls on a `QTimer`; each fetch is a one-shot task on the global `QThreadPool` (own network transport, ends with the request, nothing to join) and `github::sendHttpAsync` carries mark-as-read and the device-flow requests; results return through a guard `QObject` owned by the client, so a response after the service is destroyed is dropped. Reads `WABAR_GITHUB_TOKEN` or the token file the Python build uses, holds the token in memory only. No client on the offscreen platform

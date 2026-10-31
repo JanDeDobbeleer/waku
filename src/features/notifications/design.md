@@ -55,3 +55,11 @@ stops are listed in the threads table of `docs/architecture.md`.
 
 kernel only. `toast_activation_win.cpp` still takes `activateAppByAumid` from the media feature's
 header until the kernel app-activation helper replaces it.
+
+## Notes moved from docs/architecture.md
+
+The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
+
+- notifications worker (`std::thread`, MTA) and WNF callback (`NotificationService`'s `SystemNotificationSource` (`src/features/notifications/win32/notifications_system.cpp`), created on first use by `wabar.services.Notifications`): the worker owns the `UserNotificationListener` and runs list reads (100 ms debounce after each WNF change or menu open), remove, clear (all or one app) and toast activation tasks, sleeping on a condition variable (no polling); the WNF callback runs on a system thread, arms the debounced read and forwards a `u32` count to the sink, which posts both results to the GUI thread. Toast activation (`src/features/notifications/win32/toast_activation_win.cpp`) runs on this thread
+
+- `wabar.services.NotificationFeed` (with `NotificationServer` and the `Notification` objects, each property with its `...Changed` signal, and `NotificationAction`) (`src/features/notifications/qml/notification_feed.{h,cpp}`): the Action Center toasts as a Quickshell-shaped model with `toastAdded`, created by the QML engine as a singleton on the GUI thread. A `NotificationHub` (`weak_ptr` in a function-local static from `acquireNotificationHub()`, `shared_ptr` held by the feed and by each `NotificationServer`) owns the toast objects and shares the process's one `NotificationService` with `wabar.services.Notifications` (`acquireNotificationService()`), so the listener thread exists once and is joined when the last holder is destroyed

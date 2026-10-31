@@ -112,3 +112,11 @@ No new Windows API. It does not touch the tracker, so it does not toggle or mini
   `kernel::setCapabilityDisabled("taskbar", true)` and the service would ask
   `kernel::liveDesktop("taskbar")`.
 - Live check against real windows. Tests run on fakes only.
+
+## Notes moved from docs/architecture.md
+
+The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
+
+- `wabar.services.WindowControl` (`src/features/taskbar/qml/window_control.{h,cpp}`): `activate(hwnd)` (restore when minimised, then `kernel::forceForegroundFocus`; the taskbar button flashes and the call returns false when the foreground lock refuses), `foreground()` and `isWindow(hwnd)` for a shell that gets HWNDs from elsewhere (komorebi state) and has no tracker rows. A singleton only because QML needs an object to call; it holds no state, a thin call into Win32 through a `WindowControlBackend`. GUI thread only, no thread, no timer. Inert (false, 0) when `kernel::liveDesktop()` is false
+
+- `wabar.services.TaskbarService` (`src/features/taskbar/qml/taskbar_service.{h,cpp}`): the one window tracker (`wabar::taskbar::WindowTracker`: shell hook and WinEvent hooks), pinned-apps store (`taskbar_pinned.json`) and window-icon cache of a `wabar` run, shared by every Taskbar widget; created by the QML engine on first use and destroyed with it (the tracker stops, the icon loader's one-thread pool is joined). Registers `image://windowicon`. The tracker starts when the first Taskbar widget hands over its bar window; it never starts on the offscreen platform.

@@ -28,7 +28,6 @@ it again. Paths are under `src/features/tray/`.
 | `SystrayService` / `createTrayHost` (one host per run) | `tray_service.*` | root (no UI) | as is, without the legacy factory |
 | `IconStateMap`, `updateCurrentState`, `updateIconData`, `iconStateKey`, `SystrayStateStore` (per-screen JSON), `cleanScreenId` | `tray_state.*` | root (no UI) | as is; the folder is `kernel::appDataDir()` |
 | `scaleTrayIcon` (Lanczos to 32 px plus sharpen) | `icon_scale.*` | root (no UI) | as is |
-| `colorIconToRgba`, `monochromeIconToRgba`, `trayIconPixelsProblem` (the host-side `GetDIBits` conversion and the blank-icon check) | `icon_bits.*` | root (no UI) | new |
 | The hook DLL (`WabarTrayHook[_arm64].dll`) | `hook/trayhook.cpp` | native | copied next to `wabar.exe` |
 
 Logic that was tangled into Widgets classes and was **extracted**:
@@ -103,25 +102,6 @@ The raw RGBA icon cannot go through a `data:` URL the way album art does (it is 
 image, and tray icons can change every second), hence the image provider. The revision in the URL
 makes the `Image` reload when the icon changes.
 
-### Pixels and blank icons
-
-Only a message with `NIF_ICON` changes the stored pixels (`updateIconData`). `NIM_SETVERSION` and
-`NIM_MODIFY` with only `NIF_TIP` or `NIF_STATE` carry no pixels; many programs send them right after
-`NIM_ADD` and on every status or unread-count change. Copying their empty
-pixels used to blank the icon (empty `iconUrl`). `NIF_ICON` whose handle cannot be read keeps the
-last good image; `NIF_ICON` with no handle clears it.
-
-The DLL converts the icon inside Explorer. When it sends `NIF_ICON` without pixels, the host
-retries with `extractIconRgba`, which also reads monochrome icons (no colour bitmap) and records
-why it failed in `TrayIconData::iconError`. A colour bitmap whose alpha bytes are all 0 has no
-alpha channel; the AND mask gives its transparency.
-
-`Systray` logs one line per icon and reason when an icon cannot show:
-`wabar: tray icon <exe>#<id>: <reason>`. Reasons: `no icon received yet`, the read failure (with
-`, keeping the previous image` when one is kept), a pixel buffer that does not fill the icon, and
-`all WxH pixels are fully transparent`. The line holds the executable's base name and the run-local
-id only: no tooltip, path or handle.
-
 ### Options of the `Tray` widget
 
 `iconSize` (16), `hide` (list of exe names), `showUnpinned` (true), `unpinnedInPopup` (false),
@@ -191,3 +171,9 @@ was not tested. A regular `wabar` run reserves no work area; pass `--register-ap
 
 None planned. Open: middle and double click on a real program, and 100 and 150 percent DPI,
 were not run live.
+
+## Notes moved from docs/architecture.md
+
+The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
+
+- systray hook thread (`std::thread`) (`SystrayHook` (`src/features/tray/win32/tray_hook.h`), owned by `wabar.services.Systray`, started by the first Tray widget): creates nothing itself: the GUI thread creates the watchdog mutex and the `\\.\pipe\wabar_systray_monitor` pipe in the constructor; the worker injects `WabarTrayHook[_arm64].dll` into Explorer (`SetWindowsHookEx`), owns the OVERLAPPED I/O, read buffer and completion event, parses each pipe message and emits queued signals to the GUI thread; retries after Explorer restarts (1 s no Explorer, 5 s failed injection, 3 s after the DLL disconnects); `stop()` (also called by the destructor): sets the stop flag, releases the injection hook, cancels pending I/O, releases and closes the mutex (the DLL's watchdog then detaches and restores Shell_TrayWnd's window procedure within 5 s), `join`

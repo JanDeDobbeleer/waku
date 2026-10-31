@@ -50,3 +50,9 @@ thread. `stop()` revokes the handlers, wakes the queue and joins. The source-app
 
 `DEPENDS` none. Windows import library: `windowsapp`. The control center will list `media` in its own
 `DEPENDS` because it uses the `Media` QML type.
+
+## Notes moved from docs/architecture.md
+
+The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
+
+- `wabar.services.Mpris` (and the `MprisPlayer` objects it owns) (`src/features/media/qml/mpris.{h,cpp}`): every GSMTC session as a Quickshell-shaped player list (`Mpris.players`, `Mpris.activePlayer`), created by the QML engine as a singleton on the GUI thread. It does not own the session thread: it shares the process's one `MediaSessionService` with `wabar.services.Media` through `acquireMediaService()` (a `weak_ptr` held in a function-local static, `shared_ptr` held by each singleton), so GSMTC is opened once and the thread is joined when the last holder is destroyed

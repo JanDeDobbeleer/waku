@@ -62,3 +62,9 @@ credentials fail soft. `vpnActive` and `vpnName` still come from the connectivit
 
 `DEPENDS shell` (QML only). `StatSource` is `kernel/qml/stat_source.h`. Windows import libraries:
 `iphlpapi`, `rasapi32`, `wlanapi`, `ws2_32`, `windowsapp`.
+
+## Notes moved from docs/architecture.md
+
+The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
+
+- `wabar.services.Network` (`src/features/network/qml/network_service.{h,cpp}`): the one Wi-Fi/Ethernet/VPN state of a `wabar` run, shared by every Wifi widget; created by the QML engine on first use and destroyed with it. Polls on the global `QThreadPool` (one sample at a time, applied on the GUI thread); the Wi-Fi scan/connect backend and its thread (`createWlanBackend`) start on the first refresh or connect and stop in the destructor. The throughput timer runs only while a QML binding observes `throughputChanged`; the radio and VPN backends are created at the first poll. No source on the offscreen platform

@@ -72,3 +72,9 @@ or scans real hardware.
 ## Depends on
 
 kernel in C++ (`ensureWinrtApartment`); `shell` for the QML `S.Shell.open` clicks.
+
+## Notes moved from docs/architecture.md
+
+The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
+
+- `wabar.services.Bluetooth` (`src/features/bluetooth/qml/bluetooth_service.{h,cpp}`): the one Bluetooth backend of a `wabar` run (radio, paired devices, battery, connect/disconnect, scan, nearby devices, pair and forget on the `RealBluetoothBackend` thread), shared by every Bluetooth widget; created by the QML engine on first use and owned by it, destroyed with it, which joins the backend thread. Never creates a backend when `kernel::liveDesktop("bluetooth")` is false or without an adapter (`bluetooth::hasBluetoothAdapter`). Two GUI-thread `QTimer`s: a single-shot retry (1, 3, 8, 20 s) while the backend reports an unknown radio, and a 60 s safety-net refresh that runs only while a binding or connection observes `changed` (`connectNotify`/`disconnectNotify`).

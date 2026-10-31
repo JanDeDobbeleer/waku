@@ -115,3 +115,9 @@ resolution can be spread over a few threads.
 - Win32 desktop apps without a Start Menu shortcut do not appear.
 - `Quickshell.iconPath("firefox")` style theme names are not apps; only ids from the catalogue use
   `image://appicon`.
+
+## Notes moved from docs/architecture.md
+
+The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
+
+- `wabar.services.AppsService` (`src/features/apps/qml/apps_service.{h,cpp}`): the one app catalogue of a `wabar` run (Start Menu shortcuts and Store apps as `DesktopEntry` objects, ranked search, launch, frecency in `%LOCALAPPDATA%\wabar\apps_frecency.json`), shared by every widget and by `DesktopEntries` of the `Quickshell` module; created by the QML engine on first use and destroyed with it (`create()` registers `image://appicon`). A `QFileSystemWatcher` on the Start Menu folders rescans after 1.5 s of quiet. Empty and inert unless `kernel::liveDesktop("apps")`
