@@ -87,6 +87,9 @@ TEST(WallpapersService, ListsImagesInExplorerOrder) {
   const QVariantMap first = f.service->files().first().toMap();
   EXPECT_FALSE(first.contains(QStringLiteral("thumbnail")));
   EXPECT_FALSE(first.value(QStringLiteral("current")).toBool());
+  // A rescan that finds the same files keeps the list: a gallery keeps its delegates.
+  f.service->refresh();
+  EXPECT_EQ(spy.count(), 1);
 }
 
 TEST(WallpapersService, SettingAWallpaperUpdatesCurrentAndTheFlagOnItsRow) {

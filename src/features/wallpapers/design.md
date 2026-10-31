@@ -33,7 +33,7 @@ No wallpaper logic is re-implemented. The `Wallpapers` singleton wraps the UI-fr
 | Member | Meaning |
 |---|---|
 | `imagePath` (string, read/write) | folder or file the gallery lists; setting it rescans |
-| `files` | list of maps `{path, name, current}` in name order |
+| `files` | list of maps `{path, name, current}` in name order; `filesChanged` only when the list changes |
 | `current` | path of the wallpaper Windows shows (first monitor), empty if unknown |
 | `available` | false when `IDesktopWallpaper` cannot be created (offscreen platform) |
 | `galleryOpen`, `galleryScreen` | gallery state and the name of the screen it opens on |

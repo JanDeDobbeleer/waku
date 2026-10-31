@@ -218,9 +218,27 @@ void Wallpapers::refresh() {
         });
       }
     }
-    files_ = list;
+    // An unchanged list keeps the gallery's delegates and their loaded thumbnails.
+    if (list == files_) return;
+    files_ = std::move(list);
     emit filesChanged();
   });
+}
+
+void Wallpapers::markCurrent() {
+  const QString currentKey = normalizedPathKey(current_);
+  bool changed = false;
+  for (QVariant& row : files_) {
+    QVariantMap map = row.toMap();
+    const bool current =
+        !current_.isEmpty() &&
+        normalizedPathKey(map.value(QStringLiteral("path")).toString()) == currentKey;
+    if (map.value(QStringLiteral("current")).toBool() == current) continue;
+    map.insert(QStringLiteral("current"), current);
+    row = map;
+    changed = true;
+  }
+  if (changed) emit filesChanged();
 }
 
 void Wallpapers::readCurrent() {
@@ -232,6 +250,7 @@ void Wallpapers::readCurrent() {
   });
   if (now == current_) return;
   current_ = now;
+  markCurrent();
   emit currentChanged();
 }
 
@@ -288,7 +307,8 @@ void Wallpapers::commitWallpaper(const QString& path, bool dryRun) {
     return;
   }
   manager_->changeBackground(path);
-  refresh();
+  // The manager has just listed the folder; only the current mark moves.
+  readCurrent();
 }
 
 void Wallpapers::random() {

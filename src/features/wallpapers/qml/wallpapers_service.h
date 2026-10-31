@@ -51,7 +51,8 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& f
 // to call configure()/configureEngine() wins.
 //
 // `files` is a list of maps: path, name and current (bool), in Explorer name order. A shell builds
-// thumbnail URLs with `Thumbnails.url(path, width)`. `available` is false (nothing is ever
+// thumbnail URLs with `Thumbnails.url(path, width)`. filesChanged() fires only when the list
+// changes, so a gallery keeps its delegates when nothing did. `available` is false (nothing is ever
 // set) when IDesktopWallpaper cannot be created: not a live desktop
 // (kernel::liveDesktop("wallpapers")). The hotkey is never registered then.
 class Wallpapers : public QObject, public wabar::control::WallpaperControl {
@@ -135,6 +136,8 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
  private:
   QString screenNameFor(const QString& mode) const;
   void readCurrent();
+  // Sets `current` in files_ from current_ without listing the folder again.
+  void markCurrent();
   void applyToManager();
   void commitWallpaper(const QString& path, bool dryRun);
   void playTransition(const QString& path, bool dryRun);
