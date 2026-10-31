@@ -5,23 +5,15 @@
 
 #include <QDir>
 #include <QFileInfo>
-#include <vector>
 
 #include "features/apps/apps_platform.h"
 #include "kernel/win32/com_scope.h"
+#include "kernel/win32/environment.h"
 
 namespace wabar::apps {
 namespace {
 
-QString expandEnvironment(const QString& text) {
-  if (!text.contains(QLatin1Char('%'))) return text;
-  const auto source = reinterpret_cast<PCWSTR>(text.utf16());
-  const DWORD needed = ExpandEnvironmentStringsW(source, nullptr, 0);
-  if (needed == 0) return text;
-  std::vector<wchar_t> buffer(needed);
-  if (ExpandEnvironmentStringsW(source, buffer.data(), needed) == 0) return text;
-  return QString::fromWCharArray(buffer.data());
-}
+using kernel::expandEnvironment;
 
 ShortcutInfo resolveShortcut(const QString& lnkPath) {
   ShortcutInfo info;
