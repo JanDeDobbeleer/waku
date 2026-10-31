@@ -9,6 +9,7 @@
 #include <winrt/base.h>
 // clang-format on
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QMetaObject>
 #include <QPointer>
@@ -112,6 +113,23 @@ class DeviceCallback final : public IMMNotificationClient {
   Notify notify_;
 };
 
+// Runs `fn` on the GUI thread if `self` is still alive then. Called on Core Audio callback threads,
+// which may still run after an Unregister call failed (AUDCLNT_E_DEVICE_INVALIDATED, exactly when
+// device events fire). The post goes to qApp, never to `self`: testing the QPointer here and then
+// posting to it races with the GUI thread deleting the object (a reload), and postEvent would then
+// write into a freed QObject. `self` is read on the GUI thread only.
+template <typename Object, typename Fn>
+void postToGui(const QPointer<Object>& self, Fn fn) {
+  QCoreApplication* app = QCoreApplication::instance();
+  if (!app) return;
+  QMetaObject::invokeMethod(
+      app,
+      [self, fn = std::move(fn)] {
+        if (self) fn();
+      },
+      Qt::QueuedConnection);
+}
+
 QString takeCoString(LPWSTR text) {
   const QString result = text ? QString::fromWCharArray(text) : QString();
   if (text) CoTaskMemFree(text);
@@ -133,14 +151,9 @@ class SystemAudio final : public AudioEndpoints {
     QPointer<SystemAudio> self(this);
     deviceCallback_ = new DeviceCallback(
         [self, this](int kind, EDataFlow flow, ERole role, QString id, DWORD state) {
-          QObject* target = self.data();
-          if (!target) return;
-          QMetaObject::invokeMethod(
-              target,
-              [self, this, kind, flow, role, id, state] {
-                if (self) onDeviceEvent(kind, flow, role, id, state);
-              },
-              Qt::QueuedConnection);
+          postToGui(self, [this, kind, flow, role, id, state] {
+            onDeviceEvent(kind, flow, role, id, state);
+          });
         });
     if (FAILED(enumerator_->RegisterEndpointNotificationCallback(deviceCallback_))) {
       qWarning() << "AudioEndpoints: could not register the device callback";
@@ -272,16 +285,8 @@ class SystemAudio final : public AudioEndpoints {
       return;
     }
     QPointer<SystemAudio> self(this);
-    auto* callback = new VolumeCallback([self, this] {
-      QObject* target = self.data();
-      if (!target) return;
-      QMetaObject::invokeMethod(
-          target,
-          [self, this] {
-            if (self) emit volumeChanged();
-          },
-          Qt::QueuedConnection);
-    });
+    auto* callback =
+        new VolumeCallback([self, this] { postToGui(self, [this] { emit volumeChanged(); }); });
     if (FAILED(volume->RegisterControlChangeNotify(callback))) {
       qWarning() << "AudioEndpoints: could not register the volume callback";
       callback->Release();

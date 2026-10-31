@@ -7,6 +7,7 @@
 #include <winrt/base.h>
 // clang-format on
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QFileInfo>
 #include <QMetaObject>
@@ -196,14 +197,18 @@ class SystemStreams final : public AudioStreamSource {
     SessionEvents* events = nullptr;  // registered on `control`; one reference held here
   };
 
-  // The callback COM threads call: it only re-posts to the GUI thread.
+  // The callback COM threads call: it only re-posts to the GUI thread. Core Audio may still call
+  // it after an Unregister call failed (AUDCLNT_E_DEVICE_INVALIDATED, exactly when sessions
+  // change). The post goes to qApp, never to this object: testing the QPointer here and then
+  // posting to it races with the GUI thread deleting the source (a reload), and postEvent would
+  // then write into a freed QObject. `self` is read on the GUI thread only.
   Notify post() {
     QPointer<SystemStreams> self(this);
     return [self, this](int kind) {
-      QObject* target = self.data();
-      if (!target) return;
+      QCoreApplication* app = QCoreApplication::instance();
+      if (!app) return;
       QMetaObject::invokeMethod(
-          target,
+          app,
           [self, this, kind] {
             if (self) onEvent(kind);
           },
