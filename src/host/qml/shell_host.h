@@ -219,11 +219,16 @@ class ShellHost : public QObject {
   void syncAppBar(Entry& entry);
   void panelLayoutChanged(PanelWindow* panel);
   void setError(const QString& error);
+  // Walks the config home again and watches what it finds.
   void refreshWatches();
+  // Replaces the watched paths with `paths`.
+  void watchPaths(const QStringList& paths);
   // Path -> (mtime, size) of every .qml file and qmldir under the config home. A change event
-  // reloads only when this differs from `snapshot_`, so a state file or a cache does not.
+  // reloads only when this differs from `snapshot_`, so a state file or a cache does not. With
+  // `paths`, the same walk also lists the paths to watch: the config home, every folder under it
+  // and every .qml file and qmldir.
   using FileStamps = QHash<QString, std::pair<qint64, qint64>>;
-  FileStamps scanQmlFiles() const;
+  FileStamps scanQmlFiles(QStringList* paths = nullptr) const;
   void configHomeChanged();
   QString entryPath() const;
   QString themePath() const;

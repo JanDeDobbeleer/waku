@@ -801,19 +801,30 @@ void ShellHost::decorate(QObject* window, int backdrop) {
 void ShellHost::watch() {
   if (options_.safe) return;
   watching_ = true;
-  snapshot_ = scanQmlFiles();
+  // One walk gives the snapshot and the paths to watch.
+  QStringList paths;
+  snapshot_ = scanQmlFiles(&paths);
   traceStep("config home scanned");
-  refreshWatches();
+  watchPaths(paths);
   traceStep("config home watched");
 }
 
-ShellHost::FileStamps ShellHost::scanQmlFiles() const {
+ShellHost::FileStamps ShellHost::scanQmlFiles(QStringList* paths) const {
   FileStamps stamps;
-  QDirIterator it(options_.configHome, {QStringLiteral("*.qml"), QStringLiteral("qmldir")},
-                  QDir::Files, QDirIterator::Subdirectories);
+  QDir::Filters filters = QDir::Files;
+  if (paths) {
+    *paths = QStringList{options_.configHome};
+    // Folders are listed whatever their name; the name filters apply to files only.
+    filters |= QDir::AllDirs | QDir::NoDotAndDotDot;
+  }
+  QDirIterator it(options_.configHome, {QStringLiteral("*.qml"), QStringLiteral("qmldir")}, filters,
+                  QDirIterator::Subdirectories);
   while (it.hasNext()) {
-    const QFileInfo info(it.next());
-    stamps.insert(info.filePath(),
+    const QString path = it.next();
+    if (paths) *paths << path;
+    const QFileInfo info = it.fileInfo();
+    if (!info.isFile()) continue;
+    stamps.insert(path,
                   {info.lastModified().toMSecsSinceEpoch(), static_cast<qint64>(info.size())});
   }
   return stamps;
@@ -827,11 +838,13 @@ void ShellHost::configHomeChanged() {
 
 void ShellHost::refreshWatches() {
   if (!watching_) return;
+  QStringList paths;
+  scanQmlFiles(&paths);
+  watchPaths(paths);
+}
+
+void ShellHost::watchPaths(const QStringList& paths) {
   // A saved file is often replaced, so every path is added again after each change.
-  QStringList paths{options_.configHome};
-  QDirIterator it(options_.configHome, {QStringLiteral("*.qml"), QStringLiteral("qmldir")},
-                  QDir::Files | QDir::AllDirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
-  while (it.hasNext()) paths << it.next();
   const QStringList old = watcher_.files() + watcher_.directories();
   if (!old.isEmpty()) watcher_.removePaths(old);
   watcher_.addPaths(paths);
