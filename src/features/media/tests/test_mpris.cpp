@@ -52,7 +52,7 @@ struct Harness {
   void publish(const std::vector<MediaSessionData>& sessions, const QString& current = {}) {
     const QString id = current.isEmpty() && !sessions.empty() ? sessions.front().appId : current;
     source->sink_->sessionsChanged(sessions, id, true);
-    QTest::qWait(50);
+    QCoreApplication::processEvents();  // the sink posts to the GUI thread
   }
 };
 
@@ -114,7 +114,6 @@ TEST(Mpris, VanishedSessionRemovesItsPlayer) {
   h.publish({player(QStringLiteral("a.exe"), QStringLiteral("One")),
              player(QStringLiteral("b.exe"), QStringLiteral("Two"))});
   h.publish({player(QStringLiteral("b.exe"), QStringLiteral("Two"))});
-  QTest::qWait(10);
   ASSERT_EQ(h.mpris->players()->count(), 1);
   EXPECT_EQ(h.mpris->players()->values().at(0)->trackTitle(), QStringLiteral("Two"));
   EXPECT_EQ(h.mpris->activePlayer(), h.mpris->players()->values().at(0));

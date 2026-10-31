@@ -63,7 +63,7 @@ struct Harness {
   void publish(const std::vector<MediaSessionData>& sessions) {
     const QString current = sessions.empty() ? QString() : sessions.front().appId;
     source->sink_->sessionsChanged(sessions, current, true);
-    QTest::qWait(50);
+    QCoreApplication::processEvents();  // the sink posts to the GUI thread
   }
 };
 
@@ -143,9 +143,8 @@ TEST(MediaService, ASessionListIsOneRoundOfSignalsAndTicksMoveOnlyThePosition) {
   // The 100 ms tick while playing moves the position only.
   const int before = changed.count();
   const int ticks = position.count();
-  QTest::qWait(350);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return position.count() >= ticks + 2; }, 5000));
   EXPECT_EQ(changed.count(), before);
-  EXPECT_GE(position.count(), ticks + 2);
 }
 
 TEST(MediaService, UnsetTimelineIsIgnored) {
@@ -165,7 +164,7 @@ TEST(MediaService, FollowsPlayAndPause) {
     p.status = 5;
     return p;
   }());
-  QTest::qWait(50);
+  QCoreApplication::processEvents();  // the sink posts to the GUI thread
   EXPECT_FALSE(h.media->playing());
 }
 
