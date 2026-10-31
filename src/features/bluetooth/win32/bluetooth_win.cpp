@@ -268,8 +268,10 @@ QString toQString(const winrt::hstring& text) { return QString::fromWCharArray(t
 // The container id shared by the classic and LE nodes of one physical device. Cached per device id:
 // the WinRT lookup costs a round trip. Empty when Windows reports none.
 QString containerIdFor(const QString& deviceId) {
-  static std::mutex lock;
-  static std::map<QString, QString> cache;
+  // Never destroyed: a retiring worker (one a reload let go without waiting) can still be in here
+  // after main() has returned and the CRT has run the static destructors.
+  static std::mutex& lock = *new std::mutex;
+  static std::map<QString, QString>& cache = *new std::map<QString, QString>;
   {
     std::lock_guard<std::mutex> guard(lock);
     const auto found = cache.find(deviceId);
@@ -565,6 +567,8 @@ void enrichDevices(std::vector<BluetoothDevice>& devices,
         } catch (...) {
         }
       }
+      // The WinRT calls above can take seconds: a worker told to stop meanwhile ends here.
+      if (running && !running->load()) return;
       if (device.containerId.isEmpty() && !device.deviceId.isEmpty())
         device.containerId = containerIdFor(device.deviceId);
       if (device.connected)
@@ -1663,6 +1667,14 @@ class RealBluetoothBackend final : public BluetoothBackend {
     worker_->stopSoon();
     QThread* thread = thread_;
     BluetoothWorker* worker = worker_;
+    // finished() comes from the worker thread; the context object lives on the GUI thread, so the
+    // deletes run there, after the thread has left its event loop (as before). Connected before
+    // the quit is queued: an idle worker can quit and emit finished() before this line runs, and
+    // the worker and the thread would then never be deleted.
+    QObject::connect(thread, &QThread::finished, thread, [thread, worker] {
+      delete worker;
+      thread->deleteLater();
+    });
     QMetaObject::invokeMethod(
         worker,
         [worker] {
@@ -1670,12 +1682,6 @@ class RealBluetoothBackend final : public BluetoothBackend {
           QThread::currentThread()->quit();
         },
         Qt::QueuedConnection);
-    // finished() comes from the worker thread; the context object lives on the GUI thread, so the
-    // deletes run there, after the thread has left its event loop (as before).
-    QObject::connect(thread, &QThread::finished, thread, [thread, worker] {
-      delete worker;
-      thread->deleteLater();
-    });
     static const bool registered = [] {
       qAddPostRoutine(waitForRetiringThreads);
       return true;
