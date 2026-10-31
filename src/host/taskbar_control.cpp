@@ -1,10 +1,9 @@
 #include "host/taskbar_control.h"
 
-#include <QDir>
 #include <QFile>
-#include <QFileInfo>
-#include <QSaveFile>
 #include <QStringList>
+
+#include "kernel/qt/file_write.h"
 
 namespace wabar::host {
 
@@ -68,11 +67,10 @@ class FileMarkerStore : public TaskbarMarkerStore {
     return parseTaskbarMarker(QString::fromUtf8(file.read(4096)));
   }
   void write(const TaskbarMarker& marker) override {
-    QDir().mkpath(QFileInfo(path_).absolutePath());
-    QSaveFile file(path_);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return;
-    file.write(formatTaskbarMarker(marker).toUtf8());
-    file.commit();
+    // CRLF, as the text-mode write before it wrote.
+    QByteArray text = formatTaskbarMarker(marker).toUtf8();
+    text.replace("\n", "\r\n");
+    kernel::writeFileAtomic(path_, text);
   }
   void remove() override { QFile::remove(path_); }
 
