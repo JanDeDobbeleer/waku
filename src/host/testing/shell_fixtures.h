@@ -196,6 +196,18 @@ struct Harness {
   }
 };
 
-void settle() { QTest::qWait(60); }
+// Lets the shell finish what the last change started, without a fixed wait: queued calls
+// (Qt.callLater, deferred slots) run, every exposed Qt Quick window polishes its items (positioners
+// and layouts place their children; grabWindow() polishes before it renders), and the geometry
+// changes that polish caused, which the platform posts, arrive.
+void settle() {
+  QCoreApplication::sendPostedEvents();
+  QCoreApplication::processEvents();
+  for (QWindow* window : QGuiApplication::topLevelWindows()) {
+    auto* quick = qobject_cast<QQuickWindow*>(window);
+    if (quick && quick->isExposed()) quick->grabWindow();
+  }
+  QCoreApplication::processEvents();
+}
 
 }  // namespace
