@@ -160,6 +160,15 @@ Quickshell compatibility modules: `Quickshell`, `Quickshell.Wayland`, `Quickshel
   `TransformWatcher`, `PersistentProperties`, and `ScriptModel` (used only by the `Quickshell.*`
   modules). `Thumbnails` serves both (the wallpaper gallery uses it). `examples/gallery` shows
   `Thumbnails` and `WindowThumbnail`; `tests/integration/test_gallery_example.cpp` loads it.
+- Module `wabar` holds two kinds of type. The engine: `ShellRoot` to `Region` (windows, screens,
+  `Variants`, `LazyLoader`, `GlobalShortcut`, regions, `WlrLayershell` and the enums), plus
+  `PopupAnchor` and `PopupPlacement`, which a ported shell uses too. The built-in look: `Theme`,
+  `ThemeSpec` (`src/host/qml/theme.h`), `Panel`, `PanelLayout`, `Tooltip`, `PopupWindow`'s default
+  chrome and `WindowChrome`. The built-in widgets use the look; a ported shell carries its own and
+  uses none of it. The look sits in `host` only because `ShellHost` loads `theme.qml` and applies it
+  on every reload. It stays there for now. When `src/ui/` gains C++, a later step may move it into
+  a `wabar.ui` module; the styling proposal (`docs/plans/2026-10-29-wabar-styling-proposal.md`,
+  sections 1.1 R3 and 4.1) discusses where the tokens should live.
 - `surfaceFormat.opaque` on `PanelWindow` and `FloatingWindow` is accepted and ignored, so Quickshell
   code that sets it loads. wabar always draws into a swap chain with an alpha channel.
 - `src/modules/qml_modules.cmake` assembles the last two from the contributions. It is included
