@@ -12,6 +12,7 @@
 #include "features/control_center/touch_keyboard.h"
 #include "features/control_center/user_info.h"
 #include "features/notifications/dnd.h"
+#include "kernel/qt/gui_post.h"
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/shell_launch.h"
 
@@ -174,33 +175,28 @@ void ControlCenter::initLater() {
       }
     } catch (...) {
     }
-    if (!qApp) return;
-    QMetaObject::invokeMethod(
-        qApp,
-        [self, state] {
-          if (!self) return;
-          unsigned groups = kUser;
-          self->userName_ = state->userName;
-          self->avatarPath_ = state->avatarPath;
-          if (state->dnd && !self->dndRead_) {
-            self->dnd_ = *state->dnd;
-            groups |= kDnd;
-          }
-          if (state->theme && !self->themeRead_) {
-            self->theme_ = *state->theme;
-            groups |= kTheme;
-          }
-          if (!self->powerRead_) {
-            self->plans_ = state->plans;
-            self->activePlan_ = state->activePlan;
-            self->modeSupported_ = state->modeSupported;
-            self->modes_ = state->modes;
-            self->modeName_ = state->modeName;
-            groups |= kPower;
-          }
-          self->announce(groups);
-        },
-        Qt::QueuedConnection);
+    kernel::postToGui(self, [self, state] {
+      unsigned groups = kUser;
+      self->userName_ = state->userName;
+      self->avatarPath_ = state->avatarPath;
+      if (state->dnd && !self->dndRead_) {
+        self->dnd_ = *state->dnd;
+        groups |= kDnd;
+      }
+      if (state->theme && !self->themeRead_) {
+        self->theme_ = *state->theme;
+        groups |= kTheme;
+      }
+      if (!self->powerRead_) {
+        self->plans_ = state->plans;
+        self->activePlan_ = state->activePlan;
+        self->modeSupported_ = state->modeSupported;
+        self->modes_ = state->modes;
+        self->modeName_ = state->modeName;
+        groups |= kPower;
+      }
+      self->announce(groups);
+    });
   });
 }
 
