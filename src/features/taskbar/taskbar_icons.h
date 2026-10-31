@@ -34,6 +34,10 @@ class TaskbarIcons final : public QObject {
   // safe to call there.
   using Loader = std::function<IconBitmap(int physicalSize)>;
   QPixmap iconFor(WindowHandle key, int size, qreal dpr, const Loader& loader);
+  // The cached image itself (implicitly shared, no pixmap round trip) at size*dpr physical
+  // pixels; null while loading or when there is none.
+  QImage imageFor(WindowHandle key, int size, qreal dpr, const Loader& loader);
+  QImage image(WindowHandle hwnd, int size, qreal dpr);
   // A window that does not answer WM_GETICON in time is asked again after kRetryMs, doubling up
   // to kMaxRetryMs while it stays silent.
   static constexpr int kRetryMs = 2000;

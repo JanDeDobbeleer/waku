@@ -293,6 +293,16 @@ TEST(TaskbarIcons, SynchronousLoadScalesToThePhysicalSize) {
   EXPECT_TRUE(icons.icon(kFirst, 0, 1.0).isNull());
 }
 
+TEST(TaskbarIcons, TheImageIsTheCachedOneNotACopy) {
+  auto system = std::make_shared<FakeSystem>(QStringLiteral("explorer.exe"));
+  system->add(kFirst);
+  TaskbarIcons icons(system, /*async=*/false);
+  const QImage first = icons.image(kFirst, 32, 1.0);
+  ASSERT_FALSE(first.isNull());
+  EXPECT_EQ(first.size(), QSize(32, 32));
+  EXPECT_EQ(icons.image(kFirst, 32, 1.0).constBits(), first.constBits());
+}
+
 TEST(TaskbarIcons, ASilentWindowIsAskedLessAndLessOften) {
   EXPECT_EQ(TaskbarIcons::retryDelayMs(0), 2000);
   EXPECT_EQ(TaskbarIcons::retryDelayMs(1), 4000);

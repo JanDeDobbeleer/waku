@@ -48,6 +48,20 @@ QPixmap TaskbarIcons::pixmapFromBitmap(const IconBitmap& bitmap, int size, qreal
 }
 
 QPixmap TaskbarIcons::iconFor(WindowHandle hwnd, int size, qreal dpr, const Loader& loader) {
+  const QImage image = imageFor(hwnd, size, dpr, loader);
+  if (image.isNull()) return {};
+  QPixmap pixmap = QPixmap::fromImage(image);
+  pixmap.setDevicePixelRatio(dpr);
+  return pixmap;
+}
+
+QImage TaskbarIcons::image(WindowHandle hwnd, int size, qreal dpr) {
+  const std::shared_ptr<WindowSystem> system = system_;
+  return imageFor(hwnd, size, dpr,
+                  [system, hwnd](int physical) { return system->windowIcon(hwnd, physical); });
+}
+
+QImage TaskbarIcons::imageFor(WindowHandle hwnd, int size, qreal dpr, const Loader& loader) {
   if (size <= 0) return {};
   const int physical = std::max(1, static_cast<int>(size * dpr));
   const Key key{hwnd, physical};
@@ -58,10 +72,7 @@ QPixmap TaskbarIcons::iconFor(WindowHandle hwnd, int size, qreal dpr, const Load
     // Async loads arrive later through iconsChanged.
     if (found == cache_.end() || !found->second.loaded) return {};
   }
-  if (found->second.image.isNull()) return {};
-  QPixmap pixmap = QPixmap::fromImage(found->second.image);
-  pixmap.setDevicePixelRatio(dpr);
-  return pixmap;
+  return found->second.image;
 }
 
 void TaskbarIcons::forget(WindowHandle hwnd) {

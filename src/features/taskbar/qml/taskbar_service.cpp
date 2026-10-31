@@ -2,7 +2,6 @@
 
 #include <QDebug>
 #include <QJsonObject>
-#include <QPixmap>
 #include <QPointer>
 #include <QQmlEngine>
 #include <QTimer>
@@ -199,7 +198,8 @@ void TaskbarService::onMinimizeChanged(WindowHandle hwnd, bool minimized) {
 QImage TaskbarService::iconImage(WindowHandle key) {
   IconEntry& entry = iconCache_[key];
   if (!entry.image.isNull()) return entry.image;
-  QPixmap pixmap;
+  // The loader's cached image itself: shared, not copied through a QPixmap and back.
+  QImage image;
   try {
     if (isPseudo(key)) {
       const auto id = uniqueIdByPseudo_.find(key);
@@ -207,18 +207,18 @@ QImage TaskbarService::iconImage(WindowHandle key) {
         const QString uniqueId = id->second;
         const PinMetadata metadata{pinStore_->title(uniqueId), pinStore_->shortcutPath(uniqueId)};
         const std::shared_ptr<PinSupport> pins = pins_;
-        pixmap = icons_->iconFor(key, kIconSize, 1.0, [pins, uniqueId, metadata](int size) {
+        image = icons_->imageFor(key, kIconSize, 1.0, [pins, uniqueId, metadata](int size) {
           return wabar::taskbar::loadPinnedIcon(*pins, uniqueId, metadata, size);
         });
       }
     } else {
-      pixmap = icons_->icon(key, kIconSize, 1.0);
+      image = icons_->image(key, kIconSize, 1.0);
     }
   } catch (const std::exception& error) {
     qDebug().noquote() << "Taskbar: icon of" << key << "failed:" << error.what();
   }
-  if (!pixmap.isNull()) {
-    entry.image = pixmap.toImage();
+  if (!image.isNull()) {
+    entry.image = image;
     ++entry.revision;
     iconStore_->set(key, entry.image);
   }
