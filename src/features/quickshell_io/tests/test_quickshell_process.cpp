@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <tlhelp32.h>
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QProcess>
@@ -18,6 +19,7 @@
 #include "features/quickshell_io/process_job.h"
 #include "features/quickshell_io/qml/data_stream_parsers.h"
 #include "features/quickshell_io/qml/qs_process.h"
+#include "features/quickshell_io/qml/shell_process.h"
 
 using namespace wabar::quickshell_io;
 
@@ -330,6 +332,32 @@ ShellProcess { program: "cmd.exe"; arguments: ["/c", "echo x"] }
   std::unique_ptr<QObject> root(component.create());
   ASSERT_TRUE(root) << component.errorString().toStdString();
   EXPECT_EQ(root->property("program").toString(), QStringLiteral("cmd.exe"));
+}
+
+TEST(ShellProcess, DestroyingKillsTheGrandchildrenToo) {
+  // As for QsProcess: cmd waits a second (so the job has it), starts a hidden ping of its own and
+  // runs another. ShellProcess shares the job object, so destroying it kills all three.
+  const QStringList line =
+      cmd(QStringLiteral("ping -n 2 127.0.0.1 >nul & start /b ping -n 60 127.0.0.1 >nul & "
+                         "ping -n 60 127.0.0.1 >nul"));
+  auto process = std::make_unique<ShellProcess>();
+  process->setProgram(line.first());
+  process->setArguments(line.mid(1));
+  process->setTimeout(60000);
+  process->run();
+  QList<qint64> shells;
+  ASSERT_TRUE(waitFor([&] {
+    shells = childrenOf(QCoreApplication::applicationPid(), L"cmd.exe");
+    return shells.size() == 1;
+  }));
+  QList<qint64> grandchildren;
+  ASSERT_TRUE(waitFor([&] {
+    grandchildren = childrenOf(shells.first(), L"PING.EXE");
+    return grandchildren.size() >= 2;  // the one `start /b` made and the foreground one
+  }));
+  process.reset();
+  EXPECT_TRUE(processGone(shells.first(), 5000));
+  for (qint64 pid : grandchildren) EXPECT_TRUE(processGone(pid, 5000)) << pid;
 }
 
 TEST(QuickshellProcessJob, TerminateKillsTheAdoptedProcess) {

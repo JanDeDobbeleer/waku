@@ -8,13 +8,17 @@
 #include <QQmlParserStatus>
 #include <QStringList>
 #include <QTimer>
+#include <memory>
+
+#include "features/quickshell_io/process_job.h"
 
 namespace wabar::quickshell_io {
 
 // Runs a command without a console window and exposes its output to QML. `run()` starts it once;
 // `interval > 0` also reruns it every interval ms (a run still in progress is not restarted).
-// A run is killed after `timeout` ms. Lives on the GUI thread; QProcess does the I/O
-// asynchronously. Stopped by destroying the object (a running child is killed).
+// A run is killed after `timeout` ms, with its descendants (a ProcessJob per run, as QsProcess
+// does). Lives on the GUI thread; QProcess does the I/O asynchronously. Stopped by destroying the
+// object (a running child and its descendants are killed).
 // Widgets are trusted code: a user widget can run any program with the bar's privileges.
 class ShellProcess : public QObject, public QQmlParserStatus {
   Q_OBJECT
@@ -63,6 +67,8 @@ class ShellProcess : public QObject, public QQmlParserStatus {
   void restartTimer();
   void finish(int exitCode);
   void setRunning(bool running);
+  // Kills the running child and, when the job took it, every descendant.
+  void killTree();
 
   QString program_;
   QStringList arguments_;
@@ -74,6 +80,8 @@ class ShellProcess : public QObject, public QQmlParserStatus {
   QString errorOutput_;
   int exitCode_ = -1;
   QProcess* process_ = nullptr;
+  std::unique_ptr<ProcessJob> job_;
+  bool killed_ = false;  // this run was killed (timeout or destruction)
   QTimer intervalTimer_;
   QTimer timeoutTimer_;
 };

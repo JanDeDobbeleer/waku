@@ -9,17 +9,25 @@ namespace wabar::quickshell_io {
 ShellProcess::ShellProcess(QObject* parent) : QObject(parent) {
   connect(&intervalTimer_, &QTimer::timeout, this, [this] { run(); });
   timeoutTimer_.setSingleShot(true);
-  connect(&timeoutTimer_, &QTimer::timeout, this, [this] {
-    if (process_) process_->kill();
-  });
+  connect(&timeoutTimer_, &QTimer::timeout, this, [this] { killTree(); });
 }
 
 ShellProcess::~ShellProcess() {
   if (process_) {
     process_->disconnect(this);
-    process_->kill();
+    killTree();
     process_->waitForFinished(500);
   }
+  job_.reset();  // closing the job kills any descendant that is left
+}
+
+void ShellProcess::killTree() {
+  if (!process_) return;
+  killed_ = true;
+  if (job_ && job_->adopted())
+    job_->terminate();
+  else
+    process_->kill();
 }
 
 void ShellProcess::setProgram(const QString& program) {
@@ -72,6 +80,12 @@ void ShellProcess::run() {
   if (process_ || program_.isEmpty()) return;
   process_ = new QProcess(this);
   kernel::hideConsole(*process_);
+  killed_ = false;
+  connect(process_, &QProcess::started, this, [this] {
+    if (!process_) return;
+    job_ = std::make_unique<ProcessJob>();
+    job_->adopt(process_->processId());  // fails soft: the child then runs outside the job
+  });
   connect(process_, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
     // finished() is not emitted when the program cannot start.
     if (error == QProcess::FailedToStart) finish(-1);
@@ -89,6 +103,10 @@ void ShellProcess::finish(int exitCode) {
   output_ = QString::fromUtf8(process_->readAllStandardOutput()).trimmed();
   errorOutput_ = QString::fromUtf8(process_->readAllStandardError()).trimmed();
   exitCode_ = exitCode;
+  if (job_) {
+    if (!killed_) job_->release();  // background children of a normal run may live on
+    job_.reset();
+  }
   process_->deleteLater();
   process_ = nullptr;
   setRunning(false);

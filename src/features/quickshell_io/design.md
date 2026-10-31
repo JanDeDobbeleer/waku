@@ -37,8 +37,10 @@ All C++ types are compiled into the QML module `wabar.services` (the feature use
   program starts.
 - `ShellProcess` (`qml/shell_process.*`): runs a command hidden and exposes its output, error
   output and exit code. `run()` starts it once, `interval > 0` reruns it; a run is killed after
-  `timeout`, and a running child is killed when the object is destroyed. The QML name `Process`
-  belongs to Quickshell (`QsProcess`).
+  `timeout`, and a running child is killed when the object is destroyed. Both kills take the
+  child's descendants too: each run gets its own `ProcessJob`, the same kill-tree job object as
+  `Process`, released when the run ends normally. The QML name `Process` belongs to Quickshell
+  (`QsProcess`).
 
 Both use the hidden-launch and shell-open helpers from `kernel/win32/shell_launch.h`. Widgets are
 trusted code: `Shell` starts any program with the bar's privileges. The audio, bluetooth, network
