@@ -4,6 +4,7 @@
 
 #include <QDebug>
 #include <string>
+#include <thread>
 
 #include "features/control_center/touch_keyboard.h"
 
@@ -37,26 +38,38 @@ std::wstring tabTipPath() {
   return std::wstring(folder) + L"\\microsoft shared\\ink\\TabTip.exe";
 }
 
+// Starts TabTip, waits until its message pump runs and toggles it.
+void launchAndToggle() {
+  const bool initialised = SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
+  const std::wstring path = tabTipPath();
+  SHELLEXECUTEINFOW info{};
+  info.cbSize = sizeof(info);
+  info.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
+  info.lpFile = path.c_str();
+  info.nShow = SW_SHOWNORMAL;
+  if (!path.empty() && ShellExecuteExW(&info) && info.hProcess) {
+    WaitForInputIdle(info.hProcess, 5000);
+    CloseHandle(info.hProcess);
+    tryToggleViaCom();
+  } else {
+    qWarning() << "Failed to toggle touch keyboard: TabTip could not be started";
+  }
+  if (initialised) CoUninitialize();
+}
+
 }  // namespace
 
 void toggleTouchKeyboard() {
   const bool initialised = SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
-  if (!tryToggleViaCom()) {
-    const std::wstring path = tabTipPath();
-    SHELLEXECUTEINFOW info{};
-    info.cbSize = sizeof(info);
-    info.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
-    info.lpFile = path.c_str();
-    info.nShow = SW_SHOWNORMAL;
-    if (!path.empty() && ShellExecuteExW(&info) && info.hProcess) {
-      WaitForInputIdle(info.hProcess, 5000);
-      CloseHandle(info.hProcess);
-      tryToggleViaCom();
-    } else {
-      qWarning() << "Failed to toggle touch keyboard: TabTip could not be started";
-    }
-  }
+  const bool toggled = tryToggleViaCom();
   if (initialised) CoUninitialize();
+  if (toggled) return;
+  // TabTip is not running. Starting it and waiting for its message pump (up to 5 s) runs on a
+  // thread of its own, not on the caller's (the GUI thread).
+  //
+  // Threads: one detached thread per launch; it owns nothing of ours, initialises COM for itself
+  // and ends after the toggle or the 5 s wait.
+  std::thread(launchAndToggle).detach();
 }
 
 }  // namespace wabar::control_center
