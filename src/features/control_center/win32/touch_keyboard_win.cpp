@@ -20,6 +20,21 @@ struct __declspec(uuid("37C994E7-432B-4834-A2F7-DCE1F13B834B")) ITipInvocation :
 const CLSID kClsidUIHostNoLaunch = {
     0x4CE576FA, 0x83DC, 0x4F88, {0x95, 0x1C, 0x9D, 0x07, 0x82, 0xB4, 0xE3, 0x76}};
 
+// An STA for the scope of one call; balanced with the CoInitializeEx that succeeded (S_FALSE
+// included). A thread that is already MTA (RPC_E_CHANGED_MODE) stays as it is.
+class ComScope {
+ public:
+  ComScope() : initialised_(SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED))) {}
+  ~ComScope() {
+    if (initialised_) CoUninitialize();
+  }
+  ComScope(const ComScope&) = delete;
+  ComScope& operator=(const ComScope&) = delete;
+
+ private:
+  bool initialised_;
+};
+
 // True when the TabTip server was reachable, even if Toggle itself failed (as in Python).
 bool tryToggleViaCom() {
   ITipInvocation* tip = nullptr;
@@ -40,7 +55,7 @@ std::wstring tabTipPath() {
 
 // Starts TabTip, waits until its message pump runs and toggles it.
 void launchAndToggle() {
-  const bool initialised = SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
+  const ComScope com;
   const std::wstring path = tabTipPath();
   SHELLEXECUTEINFOW info{};
   info.cbSize = sizeof(info);
@@ -54,16 +69,15 @@ void launchAndToggle() {
   } else {
     qWarning() << "Failed to toggle touch keyboard: TabTip could not be started";
   }
-  if (initialised) CoUninitialize();
 }
 
 }  // namespace
 
 void toggleTouchKeyboard() {
-  const bool initialised = SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
-  const bool toggled = tryToggleViaCom();
-  if (initialised) CoUninitialize();
-  if (toggled) return;
+  {
+    const ComScope com;
+    if (tryToggleViaCom()) return;
+  }
   // TabTip is not running. Starting it and waiting for its message pump (up to 5 s) runs on a
   // thread of its own, not on the caller's (the GUI thread).
   //
