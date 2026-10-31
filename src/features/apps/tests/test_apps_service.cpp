@@ -340,10 +340,18 @@ TEST(AppsService, ARescanReplacesTheListOnce) {
 }
 TEST(AppsService, DestroyingDuringAScanIsSafe) {
   Fixture fixture;
+  // The pool task keeps its own copy of the dependencies: `token` is free again when it is done.
+  auto token = std::make_shared<int>(0);
   {
-    AppsService service(fixture.deps(true));
+    AppsService::Deps deps = fixture.deps(true);
+    deps.resolver = [resolver = deps.resolver, token](const QString& path) {
+      return resolver(path);
+    };
+    AppsService service(std::move(deps));
   }
-  QTest::qWait(100);  // the worker finishes against a dead owner
+  // The worker finishes against a dead owner; then deliver whatever it queued.
+  ASSERT_TRUE(QTest::qWaitFor([&] { return token.use_count() == 1; }, 5000));
+  QCoreApplication::sendPostedEvents();
   SUCCEED();
 }
 
