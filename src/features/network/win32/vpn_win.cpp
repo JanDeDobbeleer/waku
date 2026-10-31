@@ -3,11 +3,9 @@
 #include <ras.h>
 #include <raserror.h>
 
-#include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
-#include <QMetaObject>
 #include <QPointer>
 #include <QStringList>
 #include <QThreadPool>
@@ -21,6 +19,7 @@
 
 #include "features/network/vpn.h"
 #include "features/network/win32/network_pool.h"
+#include "kernel/qt/gui_post.h"
 #include "kernel/qt/live_desktop.h"
 
 namespace wabar::network {
@@ -163,7 +162,7 @@ class SystemVpnBackend final : public VpnBackend {
         entries = cache->read();
       } catch (...) {
       }
-      post(guard, [guard, entries = std::move(entries)] {
+      kernel::postToGui(guard, [guard, entries = std::move(entries)] {
         guard->refreshing_ = false;
         emit guard->entriesRead(entries);
       });
@@ -183,20 +182,10 @@ class SystemVpnBackend final : public VpnBackend {
       } catch (...) {
         error = QStringLiteral("The VPN request failed");
       }
-      post(guard,
-           [guard, name, error] { emit guard->operationFinished(name, error.isEmpty(), error); });
+      kernel::postToGui(guard, [guard, name, error] {
+        emit guard->operationFinished(name, error.isEmpty(), error);
+      });
     });
-  }
-
-  template <class Fn>
-  static void post(const QPointer<SystemVpnBackend>& guard, Fn fn) {
-    if (!qApp) return;
-    QMetaObject::invokeMethod(
-        qApp,
-        [guard, fn = std::move(fn)]() mutable {
-          if (guard) fn();
-        },
-        Qt::QueuedConnection);
   }
 
   std::atomic<bool> refreshing_{false};

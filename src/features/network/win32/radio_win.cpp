@@ -2,8 +2,6 @@
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 
-#include <QCoreApplication>
-#include <QMetaObject>
 #include <QPointer>
 #include <QThreadPool>
 #include <atomic>
@@ -13,6 +11,7 @@
 
 #include "features/network/radio.h"
 #include "features/network/win32/network_pool.h"
+#include "kernel/qt/gui_post.h"
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/winrt_apartment.h"
 
@@ -87,7 +86,7 @@ class SystemWifiRadio final : public WifiRadioBackend {
     networkPool()->start([guard, cache = cache_] {
       kernel::ensureWinrtApartment();
       const RadioState state = cache->read();
-      post(guard, [guard, state] {
+      kernel::postToGui(guard, [guard, state] {
         guard->querying_ = false;
         emit guard->stateRead(state.known, state.on);
       });
@@ -119,7 +118,7 @@ class SystemWifiRadio final : public WifiRadioBackend {
       }
       cache->forget();
       const RadioState state = cache->read();
-      post(guard, [guard, error, state] {
+      kernel::postToGui(guard, [guard, error, state] {
         emit guard->switchFinished(error.isEmpty(), error);
         emit guard->stateRead(state.known, state.on);
       });
@@ -127,17 +126,6 @@ class SystemWifiRadio final : public WifiRadioBackend {
   }
 
  private:
-  template <class Fn>
-  static void post(const QPointer<SystemWifiRadio>& guard, Fn fn) {
-    if (!qApp) return;
-    QMetaObject::invokeMethod(
-        qApp,
-        [guard, fn = std::move(fn)]() mutable {
-          if (guard) fn();
-        },
-        Qt::QueuedConnection);
-  }
-
   std::atomic<bool> querying_{false};
   std::shared_ptr<RadioCache> cache_ = std::make_shared<RadioCache>();
 };

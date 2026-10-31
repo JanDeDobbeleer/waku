@@ -21,6 +21,7 @@
 
 #include "features/network/wlan.h"
 #include "kernel/win32/winrt_apartment.h"
+#include "kernel/win32/winrt_strings.h"
 
 namespace wabar::network {
 namespace {
@@ -318,7 +319,7 @@ class WlanWorker : public QObject {
       const WifiConnectStatus status = connectAdapter(network, ssid, password, hidden);
       emit connectFinished(static_cast<int>(status), ssid, network);
     } catch (const winrt::hresult_error& error) {
-      emit connectFailed(QString::fromStdWString(error.message().c_str()));
+      emit connectFailed(kernel::toQString(error.message()));
     } catch (const std::exception& error) {
       emit connectFailed(QString::fromUtf8(error.what()));
     }
@@ -374,10 +375,10 @@ class WlanWorker : public QObject {
                                           : wifi::WiFiReconnectionKind::Manual;
     if (!hidden) {
       for (const auto& available : report.AvailableNetworks()) {
-        if (QString::fromStdWString(available.Ssid().c_str()) != ssid) continue;
+        if (kernel::toQString(available.Ssid()) != ssid) continue;
         if (!password.isEmpty()) {
           winrt::Windows::Security::Credentials::PasswordCredential credential;
-          credential.Password(winrt::hstring(wide(password)));
+          credential.Password(kernel::toHString(password));
           return toStatus(
               adapter.ConnectAsync(available, kind, credential).get().ConnectionStatus());
         }
@@ -388,8 +389,8 @@ class WlanWorker : public QObject {
     for (const auto& available : report.AvailableNetworks()) {
       if (!available.Ssid().empty()) continue;
       winrt::Windows::Security::Credentials::PasswordCredential credential;
-      credential.Password(winrt::hstring(wide(password)));
-      return toStatus(adapter.ConnectAsync(available, kind, credential, winrt::hstring(wide(ssid)))
+      credential.Password(kernel::toHString(password));
+      return toStatus(adapter.ConnectAsync(available, kind, credential, kernel::toHString(ssid))
                           .get()
                           .ConnectionStatus());
     }
