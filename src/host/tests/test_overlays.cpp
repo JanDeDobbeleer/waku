@@ -194,9 +194,9 @@ TEST(Overlays, HideDelayKeepsTheWindowUpWhileTheContentAnimatesOut) {
   window->hide();
   EXPECT_FALSE(window->visible());              // the property says hidden at once ...
   EXPECT_TRUE(window->backingWindowVisible());  // ... the window stays up for the animation
-  QTest::qWait(30);
-  EXPECT_TRUE(window->backingWindowVisible());
+  EXPECT_TRUE(window->hidePending());
   EXPECT_TRUE(QTest::qWaitFor([&] { return !window->backingWindowVisible(); }, 2000));
+  EXPECT_FALSE(window->hidePending());
   EXPECT_EQ(hidden.count(), 1);
 }
 
@@ -209,8 +209,11 @@ TEST(Overlays, ShowingAgainDuringTheHideDelayCancelsTheHide) {
   QSignalSpy hidden(window, &QsWindow::hidden);
   QSignalSpy shown(window, &QsWindow::shown);
   window->hide();
+  EXPECT_TRUE(window->hidePending());
   window->toggle();
-  QTest::qWait(250);
+  // The hide was called off: no timer is left to take the window down later.
+  EXPECT_FALSE(window->hidePending());
+  QCoreApplication::processEvents();
   EXPECT_TRUE(window->visible());
   EXPECT_TRUE(window->backingWindowVisible());
   EXPECT_EQ(hidden.count(), 0);

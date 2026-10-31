@@ -83,6 +83,7 @@ Item {
 
     Timer {
         id: timer
+        objectName: "tooltipDelay"
         interval: root.delay
         onTriggered: root.show()
     }

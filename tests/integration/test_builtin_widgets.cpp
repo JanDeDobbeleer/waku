@@ -180,8 +180,8 @@ TEST(Tooltips, APillShowsItsTooltipOnHover) {
   ASSERT_TRUE(started(h));
   QQuickWindow* tip = findWindow(QStringLiteral("tooltipWindow"));
   ASSERT_NE(tip, nullptr);
+  // Qt drops a move to the same position, so go somewhere else first.
   QTest::mouseMove(h.window(), QPoint(h.window()->width() - 5, h.window()->height() - 3));
-  QTest::qWait(20);
   QTest::mouseMove(h.window(), centerOf(h, QStringLiteral("p")));
   EXPECT_TRUE(QTest::qWaitFor([&] { return tip->isVisible(); }, 3000));
 }

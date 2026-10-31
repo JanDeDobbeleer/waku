@@ -436,9 +436,7 @@ TEST(MaskPollerTest, ARealTimerTickFlipsTheWindow) {
   f.window.show();
   f.poller->refresh();
   f.at(300, 200);
-  QTest::qWait(80);
-  EXPECT_TRUE(f.clickThrough());
+  EXPECT_TRUE(QTest::qWaitFor([&] { return f.clickThrough(); }, 2000));
   f.at(10, 10);
-  QTest::qWait(80);
-  EXPECT_FALSE(f.clickThrough());
+  EXPECT_TRUE(QTest::qWaitFor([&] { return !f.clickThrough(); }, 2000));
 }

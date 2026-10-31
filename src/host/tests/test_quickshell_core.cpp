@@ -123,10 +123,10 @@ Item {
   QQuickWindow window;
   qobject_cast<QQuickItem*>(root.get())->setParentItem(window.contentItem());
   window.show();
-  QTest::qWait(50);
-  EXPECT_EQ(root->property("created").toInt(), 3);
+  EXPECT_TRUE(QTest::qWaitFor([&] { return root->property("created").toInt() == 3; }, 2000));
   root->setProperty("items", QVariantList{"a", "c", "d"});
-  QTest::qWait(50);
+  EXPECT_TRUE(QTest::qWaitFor([&] { return root->property("created").toInt() >= 4; }, 2000));
+  QCoreApplication::processEvents();
   EXPECT_EQ(root->property("created").toInt(), 4);  // only "d" is new
 }
 

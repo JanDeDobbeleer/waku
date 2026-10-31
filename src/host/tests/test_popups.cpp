@@ -65,8 +65,15 @@ QPoint centerOf(QQuickWindow* window, const QString& name) {
 // Qt drops a pointer move that does not change the position, so go somewhere else first.
 void hoverOver(Harness& h, const QString& name) {
   QTest::mouseMove(h.window(), QPoint(h.window()->width() - 5, h.window()->height() - 3));
-  QTest::qWait(20);
   QTest::mouseMove(h.window(), centerOf(h.window(), name));
+}
+
+// The Timer behind a Tooltip's `delay`: running means the tip shows when it fires.
+bool tooltipPending(Harness& h, const QString& name) {
+  QQuickItem* tooltip = findItem(h.window(), name);
+  const QObject* timer =
+      tooltip ? tooltip->findChild<QObject*>(QStringLiteral("tooltipDelay")) : nullptr;
+  return timer && timer->property("running").toBool();
 }
 
 bool started(Harness& h) {
@@ -221,11 +228,14 @@ TEST(PopupWindowTest, OpensBelowTheBarAndSizesToItsContent) {
   invoke(popup, "open");
   EXPECT_TRUE(popup->isVisible());
   EXPECT_EQ(opened.count(), 1);
-  QTest::qWait(50);
-
-  EXPECT_GE(popup->y(), 40);  // below the bar
   QQuickItem* content = findItem(popup, QStringLiteral("content"));
   ASSERT_NE(content, nullptr);
+  // The platform reports the new geometry asynchronously.
+  EXPECT_TRUE(QTest::qWaitFor(
+      [&] { return popup->y() >= 40 && popup->width() == qCeil(content->implicitWidth()) + 20; },
+      2000));
+
+  EXPECT_GE(popup->y(), 40);                                        // below the bar
   EXPECT_EQ(popup->width(), qCeil(content->implicitWidth()) + 20);  // the default padding
   EXPECT_EQ(popup->height(), qCeil(content->implicitHeight()) + 20);
   const QRect screen = QGuiApplication::primaryScreen()->geometry();
@@ -239,8 +249,8 @@ TEST(PopupWindowTest, ABottomBarOpensItAboveTheWidget) {
   ASSERT_TRUE(started(h));
   QQuickWindow* popup = findWindow(QStringLiteral("pop"));
   invoke(popup, "open");
-  QTest::qWait(50);
-  EXPECT_LE(popup->y() + popup->height(), h.window()->y());
+  EXPECT_TRUE(
+      QTest::qWaitFor([&] { return popup->y() + popup->height() <= h.window()->y(); }, 2000));
 }
 
 TEST(PopupWindowTest, AWidgetAtTheScreenEdgeKeepsItOnScreen) {
@@ -249,9 +259,10 @@ TEST(PopupWindowTest, AWidgetAtTheScreenEdgeKeepsItOnScreen) {
   ASSERT_TRUE(started(h));
   QQuickWindow* popup = findWindow(QStringLiteral("pop"));
   invoke(popup, "open");
-  QTest::qWait(50);
   const QRect screen = QGuiApplication::primaryScreen()->geometry();
-  EXPECT_LE(popup->x() + popup->width(), screen.right() - 8 + 1);
+  EXPECT_TRUE(QTest::qWaitFor(
+      [&] { return popup->x() > 0 && popup->x() + popup->width() <= screen.right() - 8 + 1; },
+      2000));
 }
 
 TEST(PopupWindowTest, ContentGrowingAfterOpenStaysOnScreen) {
@@ -260,13 +271,17 @@ TEST(PopupWindowTest, ContentGrowingAfterOpenStaysOnScreen) {
   ASSERT_TRUE(started(h));
   QQuickWindow* popup = findWindow(QStringLiteral("pop"));
   invoke(popup, "open");
-  QTest::qWait(50);
   // Content wider than the room to the right of the anchor, arriving after the window is shown.
   QQuickItem* content = findItem(popup, QStringLiteral("content"));
   ASSERT_NE(content, nullptr);
   content->setProperty("width", 700);
-  QTest::qWait(100);
   const QRect screen = QGuiApplication::primaryScreen()->geometry();
+  EXPECT_TRUE(QTest::qWaitFor(
+      [&] {
+        return popup->width() >= 700 && popup->x() >= screen.x() + 8 &&
+               popup->x() + popup->width() <= screen.right() - 8 + 1;
+      },
+      2000));
   EXPECT_GE(popup->width(), 700);
   EXPECT_GE(popup->x(), screen.x() + 8);
   EXPECT_LE(popup->x() + popup->width(), screen.right() - 8 + 1);
@@ -296,7 +311,8 @@ TEST(PopupWindowTest, ToggleOpensAndClosesButNotInTheSameBreath) {
   // The press that closed a popup must not reopen it through the widget's click handler.
   invoke(popup, "toggle");
   EXPECT_FALSE(popup->isVisible());
-  QTest::qWait(300);
+  // The guard is 250 ms from `closedAt`: move the close back in time instead of waiting it out.
+  popup->setProperty("closedAt", popup->property("closedAt").toDouble() - 300);
   invoke(popup, "toggle");
   EXPECT_TRUE(popup->isVisible());
 }
@@ -349,7 +365,8 @@ TEST(PopupWindowTest, ABarGainingActivationDoesNothingToAClosedPopup) {
   ASSERT_TRUE(started(h));
   QQuickWindow* popup = findWindow(QStringLiteral("pop"));
   h.window()->requestActivate();
-  QTest::qWait(50);
+  // The platform posts the activation as a window system event; one pass delivers it.
+  QCoreApplication::processEvents();
   EXPECT_FALSE(popup->isVisible());
 }
 
@@ -407,7 +424,8 @@ ShellRoot {
   ASSERT_TRUE(started(h));
   QQuickWindow* popup = findWindow(QStringLiteral("flat"));
   invoke(popup, "open");
-  QTest::qWait(50);
+  EXPECT_TRUE(
+      QTest::qWaitFor([&] { return popup->width() == 120 && popup->height() == 50; }, 2000));
   EXPECT_EQ(popup->width(), 120);
   EXPECT_EQ(popup->height(), 50);
 }
@@ -437,7 +455,8 @@ TEST(TooltipTest, AppearsAfterTheDelayOfHoveringAndGoesWhenThePointerLeaves) {
   EXPECT_FALSE(tip->isVisible());
 
   hoverOver(h, QStringLiteral("target"));
-  EXPECT_FALSE(tip->isVisible());  // not yet: the delay
+  EXPECT_FALSE(tip->isVisible());                         // not yet: the delay
+  EXPECT_TRUE(tooltipPending(h, QStringLiteral("tip")));  // the hover registered at once
   ASSERT_TRUE(QTest::qWaitFor([&] { return tip->isVisible(); }, 2000));
 
   QTest::mouseMove(h.window(), QPoint(h.window()->width() - 10, 30));
@@ -451,7 +470,10 @@ TEST(TooltipTest, ShowsBelowTheBarAndSizesToItsText) {
   QQuickWindow* tip = findWindow(QStringLiteral("tooltipWindow"));
   hoverOver(h, QStringLiteral("target"));
   ASSERT_TRUE(QTest::qWaitFor([&] { return tip->isVisible(); }, 2000));
-  QTest::qWait(30);
+  // The platform reports the new geometry asynchronously.
+  EXPECT_TRUE(QTest::qWaitFor(
+      [&] { return tip->y() >= h.window()->y() + h.window()->height() && tip->width() > 0; },
+      2000));
   EXPECT_GE(tip->y(), h.window()->y() + h.window()->height());
   EXPECT_GT(tip->width(), 0);
   EXPECT_GT(tip->height(), 0);
@@ -476,7 +498,9 @@ TEST(TooltipTest, EmptyTextNeverShows) {
   ASSERT_TRUE(started(h));
   QQuickWindow* tip = findWindow(QStringLiteral("tooltipWindow"));
   hoverOver(h, QStringLiteral("target"));
-  QTest::qWait(300);
+  // With text the hover starts the delay at once (AppearsAfterTheDelay...); without, nothing is
+  // waiting to show the tip.
+  EXPECT_FALSE(tooltipPending(h, QStringLiteral("tip")));
   EXPECT_FALSE(tip->isVisible());
 }
 

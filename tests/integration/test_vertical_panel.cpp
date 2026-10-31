@@ -269,7 +269,9 @@ TEST(VerticalPanel, APopupOpensBesideALeftPanelAndALeftOfARightOne) {
     QQuickWindow* popup = findWindow(QStringLiteral("pop"));
     ASSERT_NE(popup, nullptr);
     ASSERT_TRUE(QMetaObject::invokeMethod(popup, "open"));
-    QTest::qWait(50);
+    // The platform reports the new geometry asynchronously.
+    EXPECT_TRUE(
+        QTest::qWaitFor([&] { return popup->x() >= h.window()->x() + h.window()->width(); }, 2000));
     EXPECT_GE(popup->x(), h.window()->x() + h.window()->width());  // beside the panel
     const int boxY = qRound(item(h, QStringLiteral("box"))->mapToGlobal(QPointF(0, 0)).y());
     EXPECT_LE(popup->y(), boxY + 24);
@@ -281,7 +283,8 @@ TEST(VerticalPanel, APopupOpensBesideALeftPanelAndALeftOfARightOne) {
     QQuickWindow* popup = findWindow(QStringLiteral("pop"));
     ASSERT_NE(popup, nullptr);
     ASSERT_TRUE(QMetaObject::invokeMethod(popup, "open"));
-    QTest::qWait(50);
+    EXPECT_TRUE(QTest::qWaitFor(
+        [&] { return popup->x() > 0 && popup->x() + popup->width() <= h.window()->x(); }, 2000));
     EXPECT_LE(popup->x() + popup->width(), h.window()->x());
   }
 }

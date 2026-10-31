@@ -182,6 +182,8 @@ class QsWindow : public QObject, public QQmlParserStatus {
   QString surfaceName() const;
   int hideDelay() const { return hideDelay_; }
   void setHideDelay(int milliseconds);
+  // Whether the window waits out its `hideDelay` before it leaves the screen (tests).
+  bool hidePending() const { return hideTimer_.isActive(); }
   bool dismissOnBlur() const { return dismissOnBlur_; }
   void setDismissOnBlur(bool dismiss);
   bool dismissOnEscape() const { return dismissOnEscape_; }

@@ -30,13 +30,15 @@ ShellRoot {
   QQuickWindow* control = findWindow(QStringLiteral("controlCenterPopup"));
   ASSERT_NE(control, nullptr);
   invoke(control, "open");
-  QTest::qWait(100);
+  // The platform reports the new geometry asynchronously.
+  EXPECT_TRUE(
+      QTest::qWaitFor([&] { return control->width() == 360 && control->height() > 100; }, 2000));
   EXPECT_EQ(control->width(), 360);
   EXPECT_GT(control->height(), 100);
 
   QQuickWindow* media = findWindow(QStringLiteral("mediaPopup"));
   ASSERT_NE(media, nullptr);
   invoke(media, "open");
-  QTest::qWait(100);
+  EXPECT_TRUE(QTest::qWaitFor([&] { return media->width() == 400; }, 2000));
   EXPECT_EQ(media->width(), 400);
 }
