@@ -7,6 +7,7 @@
 
 #include "features/tray/qml/tray_icon_model.h"
 #include "features/tray/qml/tray_image_provider.h"
+#include "features/tray/tray_icon_registry.h"
 
 using namespace wabar::tray;
 
@@ -189,4 +190,19 @@ TEST(TrayImageProvider, ServesImagesFromAnotherThreadWhileRowsChange) {
   EXPECT_GT(served.load(), 0);
   QSize size;
   EXPECT_TRUE(provider.requestImage(QStringLiteral("1/1"), &size, QSize()).isNull());
+}
+
+// The registry and the model each keep a TrayIconData, but the pixels are one implicitly shared
+// buffer: only the bookkeeping is copied.
+TEST(TrayModel, TheRegistryAndTheModelShareThePixels) {
+  TrayIconRegistry registry;
+  TrayIconData incoming = makeIcon(QStringLiteral("a.exe"), 64);
+  incoming.uFlags = kNifIcon;
+  incoming.hIcon = 1;
+  const auto result = registry.modified(incoming);
+  TrayIconModel m;
+  m.apply(result.id, *registry.data(result.id));
+  EXPECT_EQ(m.iconData(result.id)->iconRgba.constData(),
+            registry.data(result.id)->iconRgba.constData());
+  EXPECT_EQ(registry.data(result.id)->iconRgba.constData(), incoming.iconRgba.constData());
 }
