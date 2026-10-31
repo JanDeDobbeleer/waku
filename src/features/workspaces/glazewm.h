@@ -3,27 +3,29 @@
 #include <QByteArray>
 #include <QObject>
 #include <QString>
-#include <atomic>
-#include <mutex>
-#include <thread>
+#include <memory>
 
 namespace wabar::workspaces::glazewm {
 
 // Transport half of GlazeWM's IPC client (Python: glazewm/client.py): a plain `ws://` WebSocket
 // client on the documented WinHTTP WebSocket API. Text frames only; fragmented messages are
-// reassembled; the connection is retried every `reconnectMs` until stop().
+// reassembled; the connection is retried every `reconnectMs` until stop(). A localhost URL is
+// only connected to while something listens on its port, so no connect waits on a closed port
+// when GlazeWM is not running.
 //
-// Threading: open() spawns one std::thread (the worker). The worker owns connecting, the blocking
-// receive loop and the reconnect sleep, and is the only thread that creates or closes WinHTTP
-// handles while it runs (WinHTTP forbids closing a handle under a synchronous call on another
-// thread). The handles are published under `mutex_`. sendText() runs on the caller's thread and
-// holds `mutex_` across WinHttpWebSocketSend, so the worker cannot close the socket under it (a
-// send is safe next to a pending receive). Signals are emitted by queued invocation, so receivers
-// on the GUI thread see `connectedChanged` and `textMessage` in order. stop() (also from the
-// destructor) sets the stop flag and event, ends a blocked receive with WinHttpWebSocketClose
-// (documented to cancel it; waits at most 250 ms for the close handshake) and joins the worker; a
-// connect in progress ends within `connectTimeoutMs`. It is idempotent. A connectedChanged(false)
-// still queued when stop() returns is delivered later unless the object is destroyed.
+// Threading: the socket lives on the GUI thread. open() spawns one std::thread (the worker) that
+// shares a state block with the socket. The worker owns connecting, the blocking receive loop and
+// the reconnect sleep, and is the only thread that creates or closes WinHTTP handles while it runs
+// (WinHTTP forbids closing a handle under a synchronous call on another thread). The handles are
+// published under the state's mutex. sendText() holds that mutex across WinHttpWebSocketSend, so
+// the worker cannot close the socket under it (a send is safe next to a pending receive). Signals
+// are posted to the GUI thread in order (`connectedChanged`, `textMessage`). stop() (also from
+// the destructor) sets the stop flag and event and ends a blocked receive with
+// WinHttpWebSocketClose (documented to cancel it; waits at most 250 ms for the close handshake).
+// It does not join: a connect in progress ends within `connectTimeoutMs` on the worker, which then
+// closes its handles and ends; the state block lives until then. Nothing is emitted after stop().
+// It is idempotent, and open() after stop() starts a new worker. At exit the process waits up to
+// 2 s for workers that have not ended.
 class GlazewmSocket : public QObject {
   Q_OBJECT
  public:
@@ -42,7 +44,7 @@ class GlazewmSocket : public QObject {
   // Sends one UTF-8 text frame. False (message dropped) when not connected or the send failed.
   bool sendText(const QByteArray& utf8);
   void stop();
-  bool isConnected() const { return connected_.load(); }
+  bool isConnected() const;
 
   static constexpr qsizetype kMaxMessageBytes = 64 * 1024 * 1024;
 
@@ -51,32 +53,10 @@ class GlazewmSocket : public QObject {
   void textMessage(const QString& text);
 
  private:
-  struct Handles {
-    void* session = nullptr;
-    void* connect = nullptr;
-    void* request = nullptr;
-    void* webSocket = nullptr;
-  };
-  enum class Slot { Session, Connect, Request, WebSocket };
-
-  void run();
-  bool connectOnce();
-  void receiveLoop(void* webSocket);
-  bool publish(Slot slot, void* handle);
-  void closeSlot(Slot slot);
-  void closeAll();
-  bool sleep(int ms);
-  void emitConnected(bool state);
-  void emitText(QByteArray utf8);
+  struct Worker;  // the state the worker thread shares; defined in win32/glazewm_socket.cpp
 
   Timing timing_;
-  QString url_;
-  std::thread thread_;
-  void* stopEvent_ = nullptr;
-  std::atomic<bool> stopping_{false};
-  std::atomic<bool> connected_{false};
-  std::mutex mutex_;
-  Handles handles_;
+  std::shared_ptr<Worker> worker_;
 };
 
 }  // namespace wabar::workspaces::glazewm

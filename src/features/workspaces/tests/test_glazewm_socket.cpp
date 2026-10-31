@@ -10,6 +10,7 @@
 #include <QTcpSocket>
 #include <QThread>
 #include <functional>
+#include <memory>
 #include <vector>
 
 #include "features/workspaces/glazewm.h"
@@ -286,4 +287,54 @@ TEST(GlazewmSocket, StopWhileConnectedReturnsPromptly) {
   socket.stop();
   EXPECT_LT(timer.elapsed(), 1000);
   EXPECT_FALSE(socket.isConnected());
+}
+
+TEST(GlazewmSocket, StopDoesNotWaitAndNothingArrivesAfterIt) {
+  FakeWsServer server;
+  ASSERT_TRUE(server.listening());
+  auto socket = std::make_unique<GlazewmSocket>(fastTiming(), nullptr);
+  Recorder rec(*socket);
+  socket->open(server.url());
+  ASSERT_TRUE(pumpUntil([&] { return socket->isConnected(); }));
+  server.sendText("before");
+  ASSERT_TRUE(pumpUntil([&] { return !rec.texts.empty(); }));
+  server.sendText("queued");
+  QThread::msleep(100);  // the worker posts the text; the loop has not delivered it yet
+  QElapsedTimer timer;
+  timer.start();
+  socket->stop();
+  EXPECT_LT(timer.elapsed(), 1000);
+  const auto states = rec.states;
+  const auto texts = rec.texts;
+  pumpUntil([] { return false; }, 300);
+  EXPECT_EQ(rec.states, states);
+  EXPECT_EQ(rec.texts, texts);
+  // The socket goes while nothing waited for its worker; a new open starts a new one.
+  socket->open(server.url());
+  ASSERT_TRUE(pumpUntil([&] { return socket->isConnected(); }));
+  socket.reset();
+  pumpUntil([] { return false; }, 200);
+}
+
+TEST(GlazewmSocket, NoConnectWhileNothingListensOnALocalPort) {
+  quint16 deadPort = 0;
+  {
+    QTcpServer probe;
+    ASSERT_TRUE(probe.listen(QHostAddress::LocalHost, 0));
+    deadPort = probe.serverPort();
+  }
+  GlazewmSocket socket(fastTiming(), nullptr);
+  socket.open(QStringLiteral("ws://127.0.0.1:%1").arg(deadPort));
+  QThread::msleep(300);
+  // The worker sleeps between probes instead of waiting in a refused connect: stop is immediate.
+  QElapsedTimer timer;
+  timer.start();
+  socket.stop();
+  EXPECT_LT(timer.elapsed(), 100);
+  // Something starts listening: the next probe connects.
+  FakeWsServer server;
+  ASSERT_TRUE(server.listening());
+  GlazewmSocket later(fastTiming(), nullptr);
+  later.open(server.url());
+  EXPECT_TRUE(pumpUntil([&] { return later.isConnected(); }));
 }

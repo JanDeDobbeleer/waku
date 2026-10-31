@@ -1,11 +1,23 @@
+// clang-format off
+// iphlpapi.h needs the socket address types first (types only; no Winsock call is made).
+#include <winsock2.h>
+#include <ws2ipdef.h>
 #include <windows.h>
+#include <iphlpapi.h>
 #include <winhttp.h>
+// clang-format on
 
+#include <QCoreApplication>
 #include <QDebug>
+#include <QList>
 #include <QMetaObject>
 #include <QUrl>
+#include <atomic>
 #include <exception>
+#include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -17,8 +29,101 @@ namespace {
 constexpr DWORD kChunkBytes = 64 * 1024;
 // How long stop() waits for GlazeWM to answer the close frame.
 constexpr DWORD kCloseHandshakeMs = 250;
+// How long the process waits at exit for each worker that has not ended yet.
+constexpr DWORD kExitWaitMs = 2000;
+
+bool isLoopbackHost(const QString& host) {
+  return host.compare(QStringLiteral("localhost"), Qt::CaseInsensitive) == 0 ||
+         host == QStringLiteral("127.0.0.1") || host == QStringLiteral("::1") ||
+         host == QStringLiteral("[::1]");
+}
+
+// The table's port fields hold the port in network byte order in their low 16 bits.
+unsigned short hostPort(DWORD field) {
+  return static_cast<unsigned short>(((field & 0xFF) << 8) | ((field >> 8) & 0xFF));
+}
+
+// Whether a TCP socket listens on `port` (IPv4 or IPv6), from the documented TCP tables
+// (GetExtendedTcpTable). True when a table cannot be read, so a failure here never stops a
+// connect.
+bool somethingListensOn(unsigned short port) {
+  for (const ULONG family : {static_cast<ULONG>(AF_INET), static_cast<ULONG>(AF_INET6)}) {
+    DWORD bytes = 0;
+    DWORD status =
+        GetExtendedTcpTable(nullptr, &bytes, FALSE, family, TCP_TABLE_OWNER_PID_LISTENER, 0);
+    if (status != ERROR_INSUFFICIENT_BUFFER) return true;
+    // Room for sockets that start listening between the two calls.
+    std::vector<std::byte> buffer(bytes + 1024);
+    bytes = static_cast<DWORD>(buffer.size());
+    status =
+        GetExtendedTcpTable(buffer.data(), &bytes, FALSE, family, TCP_TABLE_OWNER_PID_LISTENER, 0);
+    if (status != NO_ERROR) return true;
+    if (family == AF_INET) {
+      const auto* table = reinterpret_cast<const MIB_TCPTABLE_OWNER_PID*>(buffer.data());
+      for (DWORD i = 0; i < table->dwNumEntries; ++i) {
+        if (hostPort(table->table[i].dwLocalPort) == port) return true;
+      }
+    } else {
+      const auto* table = reinterpret_cast<const MIB_TCP6TABLE_OWNER_PID*>(buffer.data());
+      for (DWORD i = 0; i < table->dwNumEntries; ++i) {
+        if (hostPort(table->table[i].dwLocalPort) == port) return true;
+      }
+    }
+  }
+  return false;
+}
 
 }  // namespace
+
+// Shared by the socket (GUI thread) and its worker thread; the worker holds a reference until it
+// ends, so a stopped socket can go while its worker still finishes a connect.
+struct GlazewmSocket::Worker : std::enable_shared_from_this<Worker> {
+  struct Handles {
+    void* session = nullptr;
+    void* connect = nullptr;
+    void* request = nullptr;
+    void* webSocket = nullptr;
+  };
+  enum class Slot { Session, Connect, Request, WebSocket };
+
+  ~Worker() {
+    if (stopEvent) CloseHandle(stopEvent);
+    if (doneEvent) CloseHandle(doneEvent);
+  }
+
+  void run();
+  bool connectOnce();
+  void receiveLoop(void* webSocket);
+  bool publish(Slot slot, void* handle);
+  void closeSlot(Slot slot);
+  void closeAll();
+  bool sleep(int ms);
+  void emitConnected(bool state);
+  void emitText(QByteArray utf8);
+
+  // Workers whose socket was stopped but which may still be running. GUI thread.
+  static QList<std::weak_ptr<Worker>>& retiring() {
+    static QList<std::weak_ptr<Worker>> workers;
+    return workers;
+  }
+  static void waitAtExit() {
+    for (const std::weak_ptr<Worker>& weak : std::as_const(retiring())) {
+      if (const std::shared_ptr<Worker> worker = weak.lock()) {
+        WaitForSingleObject(worker->doneEvent, kExitWaitMs);
+      }
+    }
+  }
+
+  Timing timing;
+  QString url;
+  GlazewmSocket* owner = nullptr;  // dereferenced on the GUI thread only, and only before stop()
+  HANDLE stopEvent = nullptr;
+  HANDLE doneEvent = nullptr;  // set when run() has returned
+  std::atomic<bool> stopping{false};
+  std::atomic<bool> connected{false};
+  std::mutex mutex;
+  Handles handles;
+};
 
 GlazewmSocket::GlazewmSocket(QObject* parent) : QObject(parent) {}
 
@@ -26,53 +131,69 @@ GlazewmSocket::GlazewmSocket(Timing timing, QObject* parent) : QObject(parent), 
 
 GlazewmSocket::~GlazewmSocket() { stop(); }
 
+bool GlazewmSocket::isConnected() const { return worker_ && worker_->connected.load(); }
+
 void GlazewmSocket::open(const QString& url) {
-  if (thread_.joinable()) return;
-  stopEvent_ = CreateEventW(nullptr, TRUE, FALSE, nullptr);
-  if (!stopEvent_) {
-    qWarning() << "GlazeWM socket could not create its stop event:" << GetLastError();
+  if (worker_) return;
+  auto worker = std::make_shared<Worker>();
+  worker->timing = timing_;
+  worker->url = url;
+  worker->owner = this;
+  worker->stopEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  worker->doneEvent = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  if (!worker->stopEvent || !worker->doneEvent) {
+    qWarning() << "GlazeWM socket could not create its events:" << GetLastError();
     return;
   }
-  url_ = url;
-  stopping_ = false;
   try {
-    thread_ = std::thread([this] { run(); });
+    std::thread([worker] {
+      worker->run();
+      SetEvent(worker->doneEvent);
+    }).detach();
   } catch (const std::exception& e) {
     qWarning() << "GlazeWM socket could not start its thread:" << e.what();
-    CloseHandle(stopEvent_);
-    stopEvent_ = nullptr;
+    return;
   }
+  worker_ = std::move(worker);
 }
 
 void GlazewmSocket::stop() {
-  if (!thread_.joinable()) return;
+  if (!worker_) return;
+  const std::shared_ptr<Worker> worker = std::move(worker_);
   // WinHTTP forbids closing a handle while another thread is inside a synchronous call on it, so
   // the worker closes its own handles. A blocked receive is ended the documented way:
   // WinHttpWebSocketClose makes it return ERROR_WINHTTP_OPERATION_CANCELLED. It waits at most
-  // kCloseHandshakeMs for GlazeWM's answer. Held under mutex_, so no send runs next to it and the
-  // worker cannot close the socket meanwhile. A connect in progress ends within its timeout.
-  stopping_ = true;
-  SetEvent(stopEvent_);
+  // kCloseHandshakeMs for GlazeWM's answer. Held under the mutex, so no send runs next to it and
+  // the worker cannot close the socket meanwhile. A connect in progress is not waited for: the
+  // worker sees the flag when it returns.
+  worker->stopping = true;
+  worker->connected = false;
+  SetEvent(worker->stopEvent);
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (handles_.webSocket) {
-      WinHttpWebSocketClose(handles_.webSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr,
-                            0);
+    std::lock_guard<std::mutex> lock(worker->mutex);
+    if (worker->handles.webSocket) {
+      WinHttpWebSocketClose(worker->handles.webSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS,
+                            nullptr, 0);
     }
   }
-  thread_.join();
-  closeAll();
-  CloseHandle(stopEvent_);
-  stopEvent_ = nullptr;
-  connected_ = false;
+  if (WaitForSingleObject(worker->doneEvent, 0) == WAIT_OBJECT_0) return;
+  static const bool registered = [] {
+    qAddPostRoutine(&Worker::waitAtExit);
+    return true;
+  }();
+  Q_UNUSED(registered);
+  QList<std::weak_ptr<Worker>>& retiring = Worker::retiring();
+  retiring.removeIf([](const std::weak_ptr<Worker>& weak) { return weak.expired(); });
+  retiring.append(worker);
 }
 
 bool GlazewmSocket::sendText(const QByteArray& utf8) {
+  if (!worker_) return false;
   try {
     // Held across the send so the worker cannot close the handle under it (closeSlot takes it).
-    std::lock_guard<std::mutex> lock(mutex_);
-    void* webSocket = handles_.webSocket;
-    if (!webSocket || !connected_) return false;
+    std::lock_guard<std::mutex> lock(worker_->mutex);
+    void* webSocket = worker_->handles.webSocket;
+    if (!webSocket || !worker_->connected) return false;
     const DWORD error =
         WinHttpWebSocketSend(webSocket, WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE,
                              const_cast<char*>(utf8.constData()), static_cast<DWORD>(utf8.size()));
@@ -87,67 +208,78 @@ bool GlazewmSocket::sendText(const QByteArray& utf8) {
   }
 }
 
-bool GlazewmSocket::sleep(int ms) {
-  return WaitForSingleObject(stopEvent_, static_cast<DWORD>(ms < 0 ? 0 : ms)) == WAIT_TIMEOUT;
+bool GlazewmSocket::Worker::sleep(int ms) {
+  return WaitForSingleObject(stopEvent, static_cast<DWORD>(ms < 0 ? 0 : ms)) == WAIT_TIMEOUT;
 }
 
-void GlazewmSocket::emitConnected(bool state) {
+// The stop flag is read again on the GUI thread, where stop() sets it: an emission queued before
+// stop() never reaches a socket that has been stopped or destroyed.
+void GlazewmSocket::Worker::emitConnected(bool state) {
+  if (stopping) return;
   QMetaObject::invokeMethod(
-      this, [this, state] { emit connectedChanged(state); }, Qt::QueuedConnection);
-}
-
-void GlazewmSocket::emitText(QByteArray utf8) {
-  QMetaObject::invokeMethod(
-      this, [this, text = QString::fromUtf8(utf8)] { emit textMessage(text); },
+      QCoreApplication::instance(),
+      [self = shared_from_this(), state] {
+        if (!self->stopping) emit self->owner->connectedChanged(state);
+      },
       Qt::QueuedConnection);
 }
 
-bool GlazewmSocket::publish(Slot slot, void* handle) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  if (stopping_) {
+void GlazewmSocket::Worker::emitText(QByteArray utf8) {
+  if (stopping) return;
+  QMetaObject::invokeMethod(
+      QCoreApplication::instance(),
+      [self = shared_from_this(), text = QString::fromUtf8(utf8)] {
+        if (!self->stopping) emit self->owner->textMessage(text);
+      },
+      Qt::QueuedConnection);
+}
+
+bool GlazewmSocket::Worker::publish(Slot slot, void* handle) {
+  std::lock_guard<std::mutex> lock(mutex);
+  if (stopping) {
     WinHttpCloseHandle(handle);
     return false;
   }
   switch (slot) {
     case Slot::Session:
-      handles_.session = handle;
+      handles.session = handle;
       break;
     case Slot::Connect:
-      handles_.connect = handle;
+      handles.connect = handle;
       break;
     case Slot::Request:
-      handles_.request = handle;
+      handles.request = handle;
       break;
     case Slot::WebSocket:
-      handles_.webSocket = handle;
+      handles.webSocket = handle;
       break;
   }
   return true;
 }
 
-void GlazewmSocket::closeSlot(Slot slot) {
+void GlazewmSocket::Worker::closeSlot(Slot slot) {
   void* handle = nullptr;
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex);
     switch (slot) {
       case Slot::Session:
-        std::swap(handle, handles_.session);
+        std::swap(handle, handles.session);
         break;
       case Slot::Connect:
-        std::swap(handle, handles_.connect);
+        std::swap(handle, handles.connect);
         break;
       case Slot::Request:
-        std::swap(handle, handles_.request);
+        std::swap(handle, handles.request);
         break;
       case Slot::WebSocket:
-        std::swap(handle, handles_.webSocket);
+        std::swap(handle, handles.webSocket);
         break;
     }
   }
   if (handle) WinHttpCloseHandle(handle);
 }
 
-void GlazewmSocket::closeAll() {
+void GlazewmSocket::Worker::closeAll() {
   // Children first; closing a handle aborts any call blocked on it.
   closeSlot(Slot::WebSocket);
   closeSlot(Slot::Request);
@@ -155,61 +287,68 @@ void GlazewmSocket::closeAll() {
   closeSlot(Slot::Session);
 }
 
-void GlazewmSocket::run() {
+void GlazewmSocket::Worker::run() {
   bool warned = false;
-  while (!stopping_) {
+  const QUrl parsed(url);
+  const bool probe = isLoopbackHost(parsed.host());
+  const auto port =
+      static_cast<unsigned short>(parsed.port(parsed.scheme().toLower() == "wss" ? 443 : 80));
+  while (!stopping) {
     try {
-      const bool ok = connectOnce();
+      // Nothing listens on a localhost port while GlazeWM is not running: a connect would only
+      // wait out Windows' retries on the refused port (about 2 s), every reconnect.
+      const bool ok = (!probe || somethingListensOn(port)) && connectOnce();
       if (ok) {
         warned = false;
         void* webSocket = nullptr;
         {
-          std::lock_guard<std::mutex> lock(mutex_);
-          webSocket = handles_.webSocket;
+          std::lock_guard<std::mutex> lock(mutex);
+          webSocket = handles.webSocket;
         }
-        connected_ = true;
+        connected = true;
         emitConnected(true);
         if (webSocket) receiveLoop(webSocket);
-        connected_ = false;
+        connected = false;
         emitConnected(false);
-      } else if (!stopping_ && !warned) {
-        qInfo() << "GlazeWM socket could not connect to" << url_ << "; retrying";
+      } else if (!stopping && !warned) {
+        qInfo() << "GlazeWM socket could not connect to" << url << "; retrying";
         warned = true;
       }
     } catch (const std::exception& e) {
       qWarning() << "GlazeWM socket worker error:" << e.what();
-      if (connected_.exchange(false)) emitConnected(false);
+      if (connected.exchange(false)) emitConnected(false);
     } catch (...) {
       qWarning() << "GlazeWM socket worker unknown error";
-      if (connected_.exchange(false)) emitConnected(false);
+      if (connected.exchange(false)) emitConnected(false);
     }
     closeAll();
-    if (stopping_) break;
-    if (!sleep(timing_.reconnectMs)) break;
+    if (stopping) break;
+    if (!sleep(timing.reconnectMs)) break;
   }
+  closeAll();
 }
 
-bool GlazewmSocket::connectOnce() {
-  const QUrl url(url_);
-  const QString scheme = url.scheme().toLower();
-  if (!url.isValid() || url.host().isEmpty() ||
+bool GlazewmSocket::Worker::connectOnce() {
+  const QUrl parsed(url);
+  const QString scheme = parsed.scheme().toLower();
+  if (!parsed.isValid() || parsed.host().isEmpty() ||
       (scheme != QStringLiteral("ws") && scheme != QStringLiteral("wss"))) {
-    qWarning() << "GlazeWM socket got an invalid URL:" << url_;
+    qWarning() << "GlazeWM socket got an invalid URL:" << url;
     return false;
   }
   const bool secure = scheme == QStringLiteral("wss");
-  const INTERNET_PORT port = static_cast<INTERNET_PORT>(url.port(secure ? 443 : 80));
-  QString target = url.path(QUrl::FullyEncoded);
+  const INTERNET_PORT port = static_cast<INTERNET_PORT>(parsed.port(secure ? 443 : 80));
+  QString target = parsed.path(QUrl::FullyEncoded);
   if (target.isEmpty()) target = QStringLiteral("/");
-  if (url.hasQuery()) target += QLatin1Char('?') + url.query(QUrl::FullyEncoded);
-  const std::wstring host = url.host().toStdWString();
+  if (parsed.hasQuery()) target += QLatin1Char('?') + parsed.query(QUrl::FullyEncoded);
+  const std::wstring host = parsed.host().toStdWString();
   const std::wstring path = target.toStdWString();
 
   HINTERNET session = WinHttpOpen(L"wabar", WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME,
                                   WINHTTP_NO_PROXY_BYPASS, 0);
   if (!session) return false;
   if (!publish(Slot::Session, session)) return false;
-  const int t = timing_.connectTimeoutMs;
+  const int t = timing.connectTimeoutMs;
   WinHttpSetTimeouts(session, t, t, t, t);
 
   HINTERNET connect = WinHttpConnect(session, host.c_str(), port, 0);
@@ -244,18 +383,18 @@ bool GlazewmSocket::connectOnce() {
   return true;
 }
 
-void GlazewmSocket::receiveLoop(void* webSocket) {
+void GlazewmSocket::Worker::receiveLoop(void* webSocket) {
   std::vector<char> chunk(kChunkBytes);
   QByteArray message;
   bool binary = false;
   bool overflow = false;
-  while (!stopping_) {
+  while (!stopping) {
     DWORD read = 0;
     WINHTTP_WEB_SOCKET_BUFFER_TYPE type = WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE;
     const DWORD error = WinHttpWebSocketReceive(webSocket, chunk.data(), kChunkBytes, &read, &type);
     if (error == ERROR_WINHTTP_TIMEOUT) continue;
     if (error != ERROR_SUCCESS) {
-      if (!stopping_) qWarning() << "GlazeWM socket receive failed:" << error;
+      if (!stopping) qWarning() << "GlazeWM socket receive failed:" << error;
       return;
     }
     if (type == WINHTTP_WEB_SOCKET_CLOSE_BUFFER_TYPE) {
