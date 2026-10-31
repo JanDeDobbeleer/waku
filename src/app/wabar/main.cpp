@@ -48,6 +48,12 @@ int main(int argc, char* argv[]) {
 
   // A transparent, blurred window needs an alpha swap chain.
   QQuickWindow::setDefaultAlphaBuffer(true);
+  // Qt Quick draws 2D content as well without a depth buffer: the renderer then draws opaque
+  // batches back to front instead of sorting them by depth. Without it every window and every item
+  // layer saves a depth buffer at physical resolution: 52 MB with the caelestia port at 2880x1920
+  // (docs/reviews/2026-10-31-memory-profile.md). A shell that needs depth (Qt Quick 3D) starts
+  // wabar with QSG_NO_DEPTH_BUFFER=0.
+  if (!qEnvironmentVariableIsSet("QSG_NO_DEPTH_BUFFER")) qputenv("QSG_NO_DEPTH_BUFFER", "1");
   QGuiApplication app(argc, argv);
   wabar::host::traceStep("application built");
 
