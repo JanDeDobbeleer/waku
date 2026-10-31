@@ -34,7 +34,7 @@ TEST(GuiPost, DropsTheCallWhenTheGuardIsGone) {
   bool ran = false;
   postToGui(pointer, [&] { ran = true; });
   delete guard;
+  QCoreApplication::sendPostedEvents();  // delivers the posted call, which finds the guard gone
   QCoreApplication::processEvents();
-  QTest::qWait(20);
   EXPECT_FALSE(ran);
 }

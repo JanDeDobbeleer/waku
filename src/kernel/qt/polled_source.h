@@ -37,6 +37,11 @@ class PolledSource : public QObject {
   int historySize() const { return historySize_; }
   void setHistorySize(int size);
   QVariantList history() const;
+  // Whether the interval timer runs, and whether a sample is on the pool now. With both false no
+  // sample can start until begin(), setActive(true) or setInterval(); tests check that instead
+  // of waiting.
+  bool polling() const { return timer_.isActive(); }
+  bool sampling() const { return inFlight_; }
 
   // Starts polling (once the owner is ready: a QML component is complete, or a singleton is built).
   // Samples at once when `active`.

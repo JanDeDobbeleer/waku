@@ -86,10 +86,17 @@ TEST(LingeringHub, TheObjectGoesWhenNobodyComesBack) {
 TEST(LingeringHub, AnOldGracePeriodDoesNotReleaseANewHolder) {
   int alive = 0;
   LingeringHub<Counted> hub(100);
-  const auto make = [&] { return std::make_shared<Counted>(&alive); };
+  std::weak_ptr<Counted> object;
+  const auto make = [&] {
+    auto made = std::make_shared<Counted>(&alive);
+    object = made;
+    return made;
+  };
   hub.acquire(make).reset();  // the grace period of the first holder starts
   auto b = hub.acquire(make);
-  QTest::qWait(300);  // and ends
+  ASSERT_EQ(object.use_count(), 2);  // the lingering reference and the one behind `b`
+  // The grace period ends when linger() drops its reference.
+  ASSERT_TRUE(QTest::qWaitFor([&] { return object.use_count() == 1; }, 3000));
   EXPECT_EQ(alive, 1);
   b.reset();
   EXPECT_TRUE(QTest::qWaitFor([&] { return alive == 0; }, 3000));

@@ -31,7 +31,9 @@ class CountingSource final : public PolledSource {
 
 TEST(KernelPolledSource, DoesNothingBeforeBegin) {
   CountingSource source;
-  QTest::qWait(150);
+  // No timer and no sample on the pool: nothing can run later either.
+  EXPECT_FALSE(source.polling());
+  EXPECT_FALSE(source.sampling());
   EXPECT_EQ(source.counter->calls, 0);
   EXPECT_FALSE(source.ready());
 }
@@ -55,6 +57,17 @@ TEST(KernelPolledSource, InactiveSourceDoesNotPoll) {
   CountingSource source;
   source.setActive(false);
   source.begin();
-  QTest::qWait(250);
+  EXPECT_FALSE(source.polling());
+  EXPECT_FALSE(source.sampling());
   EXPECT_EQ(source.counter->calls, 0);
+}
+
+TEST(KernelPolledSource, BeginPollsAndDeactivatingStopsTheTimer) {
+  CountingSource source;
+  source.begin();
+  EXPECT_TRUE(source.polling());
+  EXPECT_TRUE(source.sampling());  // the first sample starts at once
+  ASSERT_TRUE(QTest::qWaitFor([&] { return !source.sampling(); }, 5000));
+  source.setActive(false);
+  EXPECT_FALSE(source.polling());
 }
