@@ -223,19 +223,29 @@ QString IpcHandler::invoke(const QString& function, const QStringList& arguments
     if (!convertArgument(arguments.at(i), type, &converted, &error)) {
       return QStringLiteral("error: argument %1: %2").arg(i + 1).arg(error);
     }
-    if (!isUntyped(type)) converted.convert(type);
-    values[static_cast<size_t>(i)] = converted;
-    // A typed argument points at its value; an untyped one (QVariant) at the variant itself.
-    argv[static_cast<size_t>(i) + 1] = isUntyped(type)
-                                           ? static_cast<void*>(&values[static_cast<size_t>(i)])
-                                           : values[static_cast<size_t>(i)].data();
+    // A QVariant parameter gets a pointer to a QVariant; every other one, QJSValue included, a
+    // pointer to a value of exactly its type. Handing a QVariant to a QJSValue parameter would make
+    // the callee treat a QVariant as a QJSValue and destroy it as one.
+    QVariant& slot = values[static_cast<size_t>(i)];
+    const bool variantParameter = !type.isValid() || type == QMetaType::fromType<QVariant>();
+    if (variantParameter) {
+      slot = converted;
+    } else if (type == QMetaType::fromType<QJSValue>()) {
+      slot = QVariant::fromValue(QJSValue(converted.toString()));
+    } else {
+      converted.convert(type);
+      slot = converted;
+    }
+    argv[static_cast<size_t>(i) + 1] = variantParameter ? static_cast<void*>(&slot) : slot.data();
   }
 
+  // The return buffer is a QVariant for `var` and a value of exactly the return type otherwise
+  // (a QJSValue when Qt reports one), never a QVariant standing in for another type.
   const QMetaType returnType = method.returnMetaType();
   QVariant result;
   QVariant typedResult;
   if (returnType.isValid() && returnType.id() != QMetaType::Void) {
-    if (isUntyped(returnType)) {
+    if (returnType == QMetaType::fromType<QVariant>()) {
       argv[0] = &result;
     } else {
       typedResult = QVariant(returnType);
@@ -243,7 +253,11 @@ QString IpcHandler::invoke(const QString& function, const QStringList& arguments
     }
   }
   QMetaObject::metacall(this, QMetaObject::InvokeMetaMethod, method.methodIndex(), argv.data());
-  return formatResult(argv[0] == &result ? result : typedResult);
+  if (argv[0] == &result) return formatResult(result);
+  if (typedResult.metaType() == QMetaType::fromType<QJSValue>()) {
+    return formatResult(typedResult.value<QJSValue>().toVariant());
+  }
+  return formatResult(typedResult);
 }
 
 }  // namespace wabar::host

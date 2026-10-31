@@ -256,6 +256,8 @@ Item {
         function note(text: string): void { last = text }
         function info(): var { return { "a": 1, "list": [1, 2] } }
         function two(a: string, b: string): string { return a + "+" + b }
+        function untyped(x) { return "got " + x }
+        function anyVar(x: var): var { return x }
     }
     IpcHandler { target: "off"; enabled: false; function f(): string { return "no" } }
 }
@@ -277,6 +279,10 @@ TEST(QuickshellIpcHandler, CallsConvertArgumentsAndReturnOneLine) {
   EXPECT_EQ(root->property("last").toString(), "seen");
   EXPECT_EQ(IpcHandler::callByName({"t", "info"}), "{\"a\":1,\"list\":[1,2]}");
   EXPECT_EQ(IpcHandler::callByName({"t", "two", "x", "y"}), "x+y");
+  // var and untyped parameters and returns: whatever metatype Qt reports for them (QVariant or
+  // QJSValue), the buffer must be of that type.
+  EXPECT_EQ(IpcHandler::callByName({"t", "untyped", "w"}), "got w");
+  EXPECT_EQ(IpcHandler::callByName({"t", "anyVar", "w"}), "w");
 }
 
 TEST(QuickshellIpcHandler, ErrorsAreReported) {
