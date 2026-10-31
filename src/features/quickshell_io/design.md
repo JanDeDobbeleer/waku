@@ -1,8 +1,13 @@
 # quickshell_io
 
-QML written for Quickshell (`import Quickshell.Io`, the `Quickshell` singleton) loads on wabar.
-Names, properties, signals and functions follow the Quickshell v0.3.0 documentation and how
-caelestia uses them. Plan: `docs/plans/2026-10-30-caelestia-port-assessment.md` section 5.3.
+Processes, files and launches for QML. Two parts:
+
+- QML written for Quickshell (`import Quickshell.Io`, the `Quickshell` singleton) loads on wabar.
+  Names, properties, signals and functions follow the Quickshell v0.3.0 documentation and how
+  caelestia uses them. Plan: `docs/plans/2026-10-30-caelestia-port-assessment.md` section 5.3.
+- wabar's own `Shell` singleton and `ShellProcess`, which the built-in widgets use (see "wabar's
+  launches" below). They were the feature `shell` until it was folded in here, so that one feature
+  owns every process wabar starts for QML.
 
 ## Types
 
@@ -20,9 +25,25 @@ All C++ types are compiled into the QML module `wabar.services` (the feature use
 | `JsonAdapter`, `JsonObject` | same | QML-declared properties of type int, bool, string, real, var, list<string>, `JsonObject` are the JSON keys |
 | `ElapsedTimer` | same | `elapsed()`, `elapsedMs()`, `elapsedNs()`, `restart()`, `restartMs()`, `restartNs()` (seconds are real numbers) |
 | `QuickshellSingleton` | same | the window-free members of Quickshell's `Quickshell` singleton |
+| `Shell` | `Shell` | wabar's singleton, see below |
+| `ShellProcess` | `ShellProcess` | wabar's interval runner, see below |
 
-The earlier interval-based `Process` of the `shell` feature is now `ShellProcess` (same class, same
-properties); the name `Process` belongs to Quickshell.
+## wabar's launches
+
+- `Shell` (`qml/shell_service.*`, singleton): `start(program, args)`, `command(line)`,
+  `open(target)`, `env(name)`, `homeDir`, `configHome`. A widget calls it on click. Launches are
+  detached and hidden (no console window); `open` runs ShellExecute on a worker thread, so the GUI
+  thread never blocks. The three launches live in `Shell::Launcher`, which tests replace so no real
+  program starts.
+- `ShellProcess` (`qml/shell_process.*`): runs a command hidden and exposes its output, error
+  output and exit code. `run()` starts it once, `interval > 0` reruns it; a run is killed after
+  `timeout`, and a running child is killed when the object is destroyed. The QML name `Process`
+  belongs to Quickshell (`QsProcess`).
+
+Both use the hidden-launch and shell-open helpers from `kernel/win32/shell_launch.h`. Widgets are
+trusted code: `Shell` starts any program with the bar's privileges. The audio, bluetooth, network
+and github features declare `DEPENDS quickshell_io` for their `Shell` clicks ("open settings",
+"open URL").
 
 ## Behaviour that differs from Linux
 
@@ -88,5 +109,5 @@ constructor. Process tests run `cmd.exe`, `findstr.exe` and `ping.exe` in a temp
 ## Threads
 
 GUI thread, plus one `QThreadPool` job per `FileView` read or write (see the threading table in
-`docs/architecture.md`). No new Windows API outside the documented job-object calls
+`docs/architecture.md`). `Shell::open` hands ShellExecute to a worker owned by the kernel helper. No new Windows API outside the documented job-object calls
 (`win32/process_job_win.cpp`).

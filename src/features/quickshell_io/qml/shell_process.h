@@ -9,14 +9,14 @@
 #include <QStringList>
 #include <QTimer>
 
-namespace wabar::shell {
+namespace wabar::quickshell_io {
 
 // Runs a command without a console window and exposes its output to QML. `run()` starts it once;
 // `interval > 0` also reruns it every interval ms (a run still in progress is not restarted).
 // A run is killed after `timeout` ms. Lives on the GUI thread; QProcess does the I/O
 // asynchronously. Stopped by destroying the object (a running child is killed).
 // Widgets are trusted code: a user widget can run any program with the bar's privileges.
-class Process : public QObject, public QQmlParserStatus {
+class ShellProcess : public QObject, public QQmlParserStatus {
   Q_OBJECT
   Q_INTERFACES(QQmlParserStatus)
   QML_NAMED_ELEMENT(ShellProcess)
@@ -30,8 +30,8 @@ class Process : public QObject, public QQmlParserStatus {
   Q_PROPERTY(int exitCode READ exitCode NOTIFY finished FINAL)
 
  public:
-  explicit Process(QObject* parent = nullptr);
-  ~Process() override;
+  explicit ShellProcess(QObject* parent = nullptr);
+  ~ShellProcess() override;
 
   QString program() const { return program_; }
   void setProgram(const QString& program);
@@ -78,4 +78,4 @@ class Process : public QObject, public QQmlParserStatus {
   QTimer timeoutTimer_;
 };
 
-}  // namespace wabar::shell
+}  // namespace wabar::quickshell_io

@@ -6,9 +6,9 @@
 #include <QTest>
 #include <vector>
 
-#include "features/shell/qml/shell_service.h"
+#include "features/quickshell_io/qml/shell_service.h"
 
-using namespace wabar::shell;
+using namespace wabar::quickshell_io;
 
 namespace {
 

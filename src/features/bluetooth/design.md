@@ -74,7 +74,7 @@ or scans real hardware.
 
 ## Depends on
 
-kernel in C++ (`ensureWinrtApartment`); `shell` for the QML `S.Shell.open` clicks.
+kernel in C++ (`ensureWinrtApartment`); `quickshell_io` for the QML `S.Shell.open` clicks.
 
 ## Notes moved from docs/architecture.md
 

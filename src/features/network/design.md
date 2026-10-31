@@ -61,7 +61,7 @@ credentials fail soft. `vpnActive` and `vpnName` still come from the connectivit
 
 ## Dependencies
 
-`DEPENDS shell` (QML only). `StatSource` is `kernel/qml/stat_source.h`. Windows import libraries:
+`DEPENDS quickshell_io` (QML only, for `Shell`). `StatSource` is `kernel/qml/stat_source.h`. Windows import libraries:
 `iphlpapi`, `rasapi32`, `wlanapi`, `ws2_32`, `windowsapp`.
 
 ## Notes moved from docs/architecture.md

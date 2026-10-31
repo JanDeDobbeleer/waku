@@ -7,12 +7,12 @@
 #include <QStringList>
 #include <functional>
 
-namespace wabar::shell {
+namespace wabar::quickshell_io {
 
 // What a widget does on click, as a QML singleton: start a program, run a command line, open a
-// URL, file or folder. Nothing is returned from a launch beyond whether it started; use Process
-// for a command whose output a widget shows. Everything runs without a console window and never
-// blocks the GUI thread (open() runs ShellExecute on a worker thread). GUI thread only.
+// URL, file or folder. Nothing is returned from a launch beyond whether it started; use
+// ShellProcess for a command whose output a widget shows. Everything runs without a console window
+// and never blocks the GUI thread (open() runs ShellExecute on a worker thread). GUI thread only.
 // Widgets are trusted code: this starts any program with the bar's privileges.
 class Shell : public QObject {
   Q_OBJECT
@@ -50,4 +50,4 @@ class Shell : public QObject {
   QString configHome_;
 };
 
-}  // namespace wabar::shell
+}  // namespace wabar::quickshell_io

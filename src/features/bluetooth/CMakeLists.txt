@@ -1,6 +1,6 @@
 # bluetooth: radio, paired devices, battery, connect; the Bluetooth widget.
 wabar_feature(NAME bluetooth
-  DEPENDS shell
+  DEPENDS quickshell_io
   SOURCES
     bluetooth.h
   WIN32_SOURCES

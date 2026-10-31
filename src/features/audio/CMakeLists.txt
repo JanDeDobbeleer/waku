@@ -1,6 +1,6 @@
 # audio: output and input volume, mute, default device; the Volume widget.
 wabar_feature(NAME audio
-  DEPENDS shell
+  DEPENDS quickshell_io
   SOURCES
     audio_endpoints.h
     audio_stream_source.h

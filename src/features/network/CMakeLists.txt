@@ -2,7 +2,7 @@
 # interface throughput, and the Wifi widget. The Wifi widget opens
 # the Windows network settings through Shell (QML only). StatSource comes from kernel/qml.
 wabar_feature(NAME network
-  DEPENDS shell
+  DEPENDS quickshell_io
   SOURCES
     connectivity.h
     radio.h

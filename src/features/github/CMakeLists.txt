@@ -1,8 +1,8 @@
 # GitHub notifications and device-flow sign-in. The root is Qt Core and Qt Network; the QML service
-# and widget use shell for the "open URL" clicks. The widget tests use the bar Harness of
-# host/testing.
+# and widget use Shell (quickshell_io) for the "open URL" clicks. The widget tests use the bar
+# Harness of host/testing.
 wabar_feature(NAME github
-  DEPENDS shell
+  DEPENDS quickshell_io
   SOURCES
     github_api.cpp
     github_api.h

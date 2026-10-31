@@ -45,4 +45,4 @@ calls it.
 
 ## Depends on
 
-kernel only in C++; `shell` for the QML `S.Shell.open` click.
+kernel only in C++; `quickshell_io` for the QML `S.Shell.open` click.

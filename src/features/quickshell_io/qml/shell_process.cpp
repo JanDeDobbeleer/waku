@@ -1,12 +1,12 @@
-#include "features/shell/qml/child_process.h"
+#include "features/quickshell_io/qml/shell_process.h"
 
 #include <algorithm>
 
 #include "kernel/win32/shell_launch.h"
 
-namespace wabar::shell {
+namespace wabar::quickshell_io {
 
-Process::Process(QObject* parent) : QObject(parent) {
+ShellProcess::ShellProcess(QObject* parent) : QObject(parent) {
   connect(&intervalTimer_, &QTimer::timeout, this, [this] { run(); });
   timeoutTimer_.setSingleShot(true);
   connect(&timeoutTimer_, &QTimer::timeout, this, [this] {
@@ -14,7 +14,7 @@ Process::Process(QObject* parent) : QObject(parent) {
   });
 }
 
-Process::~Process() {
+ShellProcess::~ShellProcess() {
   if (process_) {
     process_->disconnect(this);
     process_->kill();
@@ -22,19 +22,19 @@ Process::~Process() {
   }
 }
 
-void Process::setProgram(const QString& program) {
+void ShellProcess::setProgram(const QString& program) {
   if (program == program_) return;
   program_ = program;
   emit programChanged();
 }
 
-void Process::setArguments(const QStringList& arguments) {
+void ShellProcess::setArguments(const QStringList& arguments) {
   if (arguments == arguments_) return;
   arguments_ = arguments;
   emit argumentsChanged();
 }
 
-void Process::setInterval(int ms) {
+void ShellProcess::setInterval(int ms) {
   ms = std::max(ms, 0);
   if (ms == interval_) return;
   interval_ = ms;
@@ -42,33 +42,33 @@ void Process::setInterval(int ms) {
   emit intervalChanged();
 }
 
-void Process::setTimeout(int ms) {
+void ShellProcess::setTimeout(int ms) {
   ms = std::max(ms, 100);
   if (ms == timeout_) return;
   timeout_ = ms;
   emit timeoutChanged();
 }
 
-void Process::componentComplete() {
+void ShellProcess::componentComplete() {
   complete_ = true;
   restartTimer();
   if (interval_ > 0) run();
 }
 
-void Process::restartTimer() {
+void ShellProcess::restartTimer() {
   if (complete_ && interval_ > 0)
     intervalTimer_.start(interval_);
   else
     intervalTimer_.stop();
 }
 
-void Process::setRunning(bool running) {
+void ShellProcess::setRunning(bool running) {
   if (running == running_) return;
   running_ = running;
   emit runningChanged();
 }
 
-void Process::run() {
+void ShellProcess::run() {
   if (process_ || program_.isEmpty()) return;
   process_ = new QProcess(this);
   kernel::hideConsole(*process_);
@@ -83,7 +83,7 @@ void Process::run() {
   process_->start(program_, arguments_);
 }
 
-void Process::finish(int exitCode) {
+void ShellProcess::finish(int exitCode) {
   if (!process_) return;
   timeoutTimer_.stop();
   output_ = QString::fromUtf8(process_->readAllStandardOutput()).trimmed();
@@ -95,4 +95,4 @@ void Process::finish(int exitCode) {
   emit finished();
 }
 
-}  // namespace wabar::shell
+}  // namespace wabar::quickshell_io

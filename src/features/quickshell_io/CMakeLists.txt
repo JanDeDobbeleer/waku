@@ -1,6 +1,7 @@
-# Quickshell.Io and the Quickshell singleton's window-free members, so QML written for Quickshell
-# loads: Process, StdioCollector, SplitParser, FileView, JsonAdapter, JsonObject, FileViewError,
-# ElapsedTimer and QuickshellSingleton. See design.md.
+# Processes, files and launches for QML. Quickshell.Io and the Quickshell singleton's window-free
+# members, so QML written for Quickshell loads: Process, StdioCollector, SplitParser, FileView,
+# JsonAdapter, JsonObject, FileViewError, ElapsedTimer and QuickshellSingleton. wabar's own Shell
+# (start, command, open) and ShellProcess. See design.md.
 wabar_feature(NAME quickshell_io
   SOURCES
     command_spec.h
@@ -23,7 +24,13 @@ wabar_feature(NAME quickshell_io
     qml/qs_process.cpp
     qml/quickshell_singleton.h
     qml/quickshell_singleton.cpp
+    qml/shell_process.h
+    qml/shell_process.cpp
+    qml/shell_service.h
+    qml/shell_service.cpp
   TESTS
     tests/test_quickshell_file_view.cpp
     tests/test_quickshell_process.cpp
-    tests/test_quickshell_singleton.cpp)
+    tests/test_quickshell_singleton.cpp
+    tests/test_shell_process.cpp
+    tests/test_shell_service.cpp)
