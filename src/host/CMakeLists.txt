@@ -78,8 +78,6 @@ qt_add_qml_module(wabar_host
   NO_GENERATE_EXTRA_QMLDIRS
   QML_FILES ${host_qml_files}
   SOURCES
-    qml/bar_theme.h
-    qml/bar_theme.cpp
     qml/control_handler.h
     qml/control_handler.cpp
     qml/global_shortcut.h
@@ -104,10 +102,10 @@ qt_add_qml_module(wabar_host
     qml/shell_window.cpp
     qml/surface_control.h
     qml/surface_control.cpp
-    qml/windows_taskbar_command.h
-    qml/windows_taskbar_command.cpp
     qml/system_clock.h
     qml/system_clock.cpp
+    qml/theme.h
+    qml/theme.cpp
     qml/thumbnails.h
     qml/thumbnails.cpp
     qml/transform_watcher.h
@@ -115,6 +113,8 @@ qt_add_qml_module(wabar_host
     qml/window_enums.h
     qml/window_thumbnail.h
     qml/window_thumbnail.cpp
+    qml/windows_taskbar_command.h
+    qml/windows_taskbar_command.cpp
     win32/shell_host_win32.cpp
 )
 # The generated type registration includes headers by name, hence the private include directory.

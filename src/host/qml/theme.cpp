@@ -1,4 +1,4 @@
-#include "host/qml/bar_theme.h"
+#include "host/qml/theme.h"
 
 #include <QFontDatabase>
 #include <QMetaProperty>

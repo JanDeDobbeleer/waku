@@ -18,8 +18,8 @@
 
 #include "host/app_bar.h"
 #include "host/mask_poller.h"
-#include "host/qml/bar_theme.h"
 #include "host/qml/shell_config.h"
+#include "host/qml/theme.h"
 #include "host/qml/window_enums.h"
 
 class QQmlEngine;
