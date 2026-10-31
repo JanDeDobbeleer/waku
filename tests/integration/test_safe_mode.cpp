@@ -92,9 +92,13 @@ TEST(SafeMode, TheConfigHomeIsNotWatched) {
   h.makeHost();
   ASSERT_TRUE(h.host->reload());
   h.host->watch();
+  // Nothing is watched, so no change event can come and start a reload.
+  EXPECT_TRUE(h.host->watchedPaths().isEmpty());
   QSignalSpy reloaded(h.host.get(), &ShellHost::reloaded);
   write(h.shellFile(), shellConfig(QStringLiteral("changed")));
-  QTest::qWait(500);  // more than the debounce
+  QCoreApplication::processEvents();
+  EXPECT_FALSE(h.host->configReloadPending());
+  EXPECT_EQ(h.host->configChangeCount(), 0);
   EXPECT_EQ(reloaded.count(), 0);
 }
 

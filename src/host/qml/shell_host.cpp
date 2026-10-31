@@ -384,7 +384,7 @@ void ShellHost::watchScreens() {
   screenDebounce_.setSingleShot(true);
   // A dock or undock sends screen, primary and DPI changes for one to three seconds; a shorter
   // wait reloads two or three times in a row while Windows still moves the windows.
-  screenDebounce_.setInterval(1500);
+  screenDebounce_.setInterval(options_.screenSettleMs);
   connect(&screenDebounce_, &QTimer::timeout, this, [this] {
     if (loaded_) reload();
   });
@@ -834,6 +834,7 @@ ShellHost::FileStamps ShellHost::scanQmlFiles(QStringList* paths) const {
 void ShellHost::configHomeChanged() {
   // Any write in a watched folder lands here (a shell saving its state, a cache). Only a change
   // to a QML file or a qmldir, including theme.qml, rebuilds the shell.
+  ++configChanges_;
   if (scanQmlFiles() != snapshot_) debounce_.start();
 }
 

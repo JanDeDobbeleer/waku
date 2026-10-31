@@ -77,6 +77,7 @@ TEST(ShellHostTest, APressOnAShellWindowIsReportedAndOtherWindowsAreNot) {
 
 TEST(ShellHostTest, AScreenChangeReloadsTheShellOnceAfterItSettles) {
   Harness h;
+  h.screenSettleMs = 200;
   h.start(shellConfig());
   ASSERT_TRUE(h.host->reload());
   int reloads = 0;
@@ -85,13 +86,18 @@ TEST(ShellHostTest, AScreenChangeReloadsTheShellOnceAfterItSettles) {
   ASSERT_NE(screen, nullptr);
   emit qGuiApp->screenAdded(screen);
   emit qGuiApp->primaryScreenChanged(screen);
-  EXPECT_TRUE(QTest::qWaitFor([&] { return reloads > 0; }, 3000));
-  QTest::qWait(900);
+  EXPECT_TRUE(h.host->screenReloadPending());
+  EXPECT_EQ(reloads, 0);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return reloads > 0; }, 5000));
+  // The two changes shared one wait, and nothing restarted it: no second reload is coming.
+  EXPECT_FALSE(h.host->screenReloadPending());
   EXPECT_EQ(reloads, 1);
 }
 
 TEST(ShellHostTest, AScreenChangeWaitsForADockToSettle) {
+  EXPECT_EQ(ShellHost::Options().screenSettleMs, 1500);  // a dock sends changes for 1 to 3 s
   Harness h;
+  h.screenSettleMs = 600;
   h.start(shellConfig());
   ASSERT_TRUE(h.host->reload());
   int reloads = 0;
@@ -99,10 +105,15 @@ TEST(ShellHostTest, AScreenChangeWaitsForADockToSettle) {
   QScreen* screen = QGuiApplication::primaryScreen();
   ASSERT_NE(screen, nullptr);
   emit qGuiApp->screenAdded(screen);
-  QTest::qWait(1000);
+  ASSERT_TRUE(h.host->screenReloadPending());
+  // Part of the wait goes by; the margin to the end (500 ms) only has to outlast one pass of the
+  // event loop.
+  ASSERT_TRUE(QTest::qWaitFor([&] { return h.host->screenReloadRemainingMs() < 500; }, 5000));
   EXPECT_EQ(reloads, 0);  // a dock is still sending changes
   emit qGuiApp->primaryScreenChanged(screen);
-  EXPECT_TRUE(QTest::qWaitFor([&] { return reloads > 0; }, 3000));
+  EXPECT_GT(h.host->screenReloadRemainingMs(), 500);  // the next change starts the wait again
+  ASSERT_TRUE(QTest::qWaitFor([&] { return reloads > 0; }, 5000));
+  EXPECT_FALSE(h.host->screenReloadPending());
   EXPECT_EQ(reloads, 1);
 }
 
@@ -338,9 +349,12 @@ TEST(ShellHostTest, ReloadReplacesTheWindowsWithTheNewShell) {
   EXPECT_EQ(reloaded.count(), 1);
   EXPECT_EQ(h.host->windows().size(), 1);
   EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("second"));
-  QTest::qWait(10);
-  QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-  EXPECT_TRUE(old.isNull());
+  EXPECT_TRUE(QTest::qWaitFor(
+      [&] {
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        return old.isNull();
+      },
+      2000));
   EXPECT_EQ(h.native.removed, 1);  // the old window's app bar went with it
 }
 
@@ -658,13 +672,21 @@ TEST(ShellHostTest, WritingANonQmlFileInTheConfigHomeDoesNotReload) {
   h.host->watch();
   QSignalSpy reloaded(h.host.get(), &ShellHost::reloaded);
 
-  // A shell persists its state next to its files: that must not rebuild the shell.
-  write(h.dir.filePath(QStringLiteral("state.json")), QStringLiteral("{\"a\":1}"));
+  // A shell persists its state next to its files: that must not rebuild the shell. Each change
+  // event decides at once whether a reload is due, so after the event nothing is pending.
+  int seen = h.host->configChangeCount();
+  const QString state = h.dir.filePath(QStringLiteral("state.json"));
+  write(state, QStringLiteral("{\"a\":1}"));
   QDir(h.dir.path()).mkdir(QStringLiteral("cache"));
   write(h.dir.filePath(QStringLiteral("cache/entry.bin")), QStringLiteral("x"));
-  QTest::qWait(700);
-  write(h.dir.filePath(QStringLiteral("state.json")), QStringLiteral("{\"a\":2}"));
-  QTest::qWait(700);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return h.host->configChangeCount() > seen; }, 5000));
+  EXPECT_FALSE(h.host->configReloadPending());
+  // A later save (replaced, as editors and state stores do) is just as harmless.
+  seen = h.host->configChangeCount();
+  ASSERT_TRUE(QFile::remove(state));
+  write(state, QStringLiteral("{\"a\":2}"));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return h.host->configChangeCount() > seen; }, 5000));
+  EXPECT_FALSE(h.host->configReloadPending());
   EXPECT_EQ(reloaded.count(), 0);
 
   // A .qml edit still reloads, after those writes.

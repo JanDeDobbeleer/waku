@@ -159,6 +159,7 @@ struct Harness {
   bool allowReserve = false;
   bool safe = false;
   QUrl safeUrl;
+  int screenSettleMs = ShellHost::Options().screenSettleMs;
 
   QString shellFile() const { return dir.filePath(QStringLiteral("shell.qml")); }
 
@@ -174,6 +175,7 @@ struct Harness {
     options.allowReserve = allowReserve;
     options.safe = safe;
     options.safeUrl = safeUrl;
+    options.screenSettleMs = screenSettleMs;
     options.hooks = native.hooks();
     const int count = screenCount;
     options.screens = [count] {

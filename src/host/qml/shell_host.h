@@ -107,6 +107,8 @@ class ShellHost : public QObject {
     bool safe = false;
     // The shell safe mode builds; default: the built-in one (safeShellUrl()).
     QUrl safeUrl;
+    // How long screen changes must stop before the one reload (tests shorten it).
+    int screenSettleMs = 1500;
   };
 
   // The built-in shell of safe mode: Clock, Workspaces, Volume, Battery, Cpu and Memory.
@@ -148,6 +150,16 @@ class ShellHost : public QObject {
   // The windows with a `name` (`name` empty: all of them), in the order they registered. The
   // surfaces `wabarc surface ...` addresses.
   QList<QsWindow*> namedWindows(const QString& name = {}) const;
+
+  // The debounce state, so a test can tell "no reload is coming" without waiting it out: a reload
+  // after a config change or a screen change is pending, the time left until the screen reload,
+  // and how many change events from the config home watcher arrived so far.
+  bool configReloadPending() const { return debounce_.isActive(); }
+  bool screenReloadPending() const { return screenDebounce_.isActive(); }
+  int screenReloadRemainingMs() const { return screenDebounce_.remainingTime(); }
+  int configChangeCount() const { return configChanges_; }
+  // What watch() watches: the config home, its folders, its .qml files and qmldirs.
+  QStringList watchedPaths() const { return watcher_.files() + watcher_.directories(); }
 
   // ---- called by QsWindow ----
   void adopt(QsWindow* window);
@@ -257,6 +269,7 @@ class ShellHost : public QObject {
   // A screen added or removed, a new primary screen or a DPI change: one reload after they settle.
   QTimer screenDebounce_;
   FileStamps snapshot_;
+  int configChanges_ = 0;
   bool watching_ = false;
 };
 
