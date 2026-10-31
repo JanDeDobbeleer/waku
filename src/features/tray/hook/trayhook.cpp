@@ -190,6 +190,9 @@ void InternalWriteToPipe(void* buffer, DWORD totalSize) {
           // Wait for a maximum of 500ms for the write to complete to avoid blocking Explorer UI
           if (WaitForSingleObject(overlapped.hEvent, 500) != WAIT_OBJECT_0) {
             CancelIo(g_hPipe);
+            // Cancellation completes asynchronously: until it has, the I/O still owns this stack
+            // OVERLAPPED and the caller's buffer, which is freed when we return.
+            GetOverlappedResult(g_hPipe, &overlapped, &written, TRUE);
             CloseHandle(g_hPipe);
             g_hPipe = INVALID_HANDLE_VALUE;
           }

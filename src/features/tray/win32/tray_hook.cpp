@@ -139,8 +139,8 @@ SystrayHook::SystrayHook(Options options, QObject* parent)
   }
   pipe_ = CreateNamedPipeW(reinterpret_cast<LPCWSTR>(options_.pipeName.utf16()),
                            PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
-                           PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 1,
-                           kHookPipeBufferSize, kHookPipeBufferSize, 0, nullptr);
+                           PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 1, kHookPipeQuota,
+                           kHookPipeQuota, 0, nullptr);
   if (!pipe_ || pipe_ == INVALID_HANDLE_VALUE) {
     qCritical() << "Tray hook: failed to create the pipe, error" << GetLastError();
     pipe_ = nullptr;

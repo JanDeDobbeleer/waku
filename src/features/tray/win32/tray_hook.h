@@ -27,6 +27,9 @@ namespace wabar::tray {
 #endif
 
 inline constexpr int kHookPipeBufferSize = 32 * 1024;
+// The pipe's own buffer quota: a 256x256 icon message (about 263 KB) fits, so a busy host does not
+// make the hook DLL wait in Explorer.
+inline constexpr int kHookPipeQuota = 512 * 1024;
 inline constexpr std::chrono::milliseconds kNoExplorerDelay{1000};
 inline constexpr std::chrono::milliseconds kInjectionFailedDelay{5000};
 inline constexpr std::chrono::milliseconds kAfterSessionDelay{3000};
