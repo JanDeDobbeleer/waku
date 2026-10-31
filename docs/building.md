@@ -239,6 +239,16 @@ Notes:
 - Warnings are errors (`/WX`) for our targets only; vcpkg and Qt code are unaffected, and headers
   included with angle brackets are treated as external (`/external:anglebrackets /external:W0`).
 - MSVC only: configuring with another compiler stops with an error.
+- `wabar.services` is one QML module built from every feature's `qml/*.{h,cpp}` (one module, so
+  widget and service names cannot clash; see `src/modules/qml_modules.cmake`). Its generated type
+  registration includes every one of those headers, so a change to any service header recompiles
+  `wabar_services_qmltyperegistrations.cpp` (12 s on the ARM64 debug build with two jobs) and
+  `mocs_compilation.cpp` (15 s), against about 3 s for a service `.cpp`. That is acceptable today;
+  if it starts to dominate incremental builds, the services' C++ can move into per-feature static
+  libraries with only the registration kept central.
+- After adding a QML-facing header an incremental build may skip moc for `wabar_services` (AUTOMOC
+  misses the new header). Delete `build\<preset>\src\wabar_services_autogen\timestamp` and build
+  again.
 - A feature whose `win32/` code includes C++/WinRT headers can precompile them with
   `wabar_feature(... WINRT_PCH winrt/base.h winrt/Windows.Foundation.h ...)`. Measured on the
   ARM64 debug build (two jobs, nine WinRT translation units of audio, media, network and
