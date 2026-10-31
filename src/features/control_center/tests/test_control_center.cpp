@@ -19,6 +19,7 @@ const QUuid kBest(QStringLiteral("{ded574b5-45a0-4f42-8737-46345c09c238}"));
 
 struct World {
   QString dnd = QStringLiteral("disabled");
+  int dndReads = 0;
   QString theme = QStringLiteral("light");
   int keyboardToggles = 0;
   QUuid activePlan = kBalanced;
@@ -30,7 +31,10 @@ struct World {
 
 ControlCenter::Backend backendFor(World* w) {
   ControlCenter::Backend b;
-  b.dndStatus = [w] { return w->dnd; };
+  b.dndStatus = [w] {
+    ++w->dndReads;
+    return w->dnd;
+  };
   b.setDndStatus = [w](const QString& mode) {
     w->dnd = mode;
     return true;
@@ -318,4 +322,43 @@ TEST(ControlCenterService, RealServiceIsInertOffscreen) {
   service.toggleDnd();
   service.toggleTheme();
   service.screenshot();
+}
+
+TEST(ControlCenterService, EachGroupAnnouncesOnlyItself) {
+  Fixture f;
+  QSignalSpy dnd(f.service.get(), &ControlCenter::dndChanged);
+  QSignalSpy brightness(f.service.get(), &ControlCenter::brightnessChanged);
+  QSignalSpy sources(f.service.get(), &ControlCenter::brightnessSourcesChanged);
+  QSignalSpy power(f.service.get(), &ControlCenter::powerChanged);
+  QSignalSpy changed(f.service.get(), &ControlCenter::changed);
+  f.service->setBrightness(40);  // a slider tick: the plan, mode and monitor lists stay
+  EXPECT_EQ(brightness.count(), 1);
+  EXPECT_EQ(power.count(), 0);
+  EXPECT_EQ(sources.count(), 0);
+  EXPECT_EQ(dnd.count(), 0);
+  EXPECT_EQ(changed.count(), 1);
+  f.service->toggleDnd();
+  EXPECT_EQ(dnd.count(), 1);
+  EXPECT_EQ(power.count(), 0);
+  f.service->refresh();  // everything
+  EXPECT_EQ(power.count(), 1);
+  EXPECT_EQ(dnd.count(), 2);
+  // Each property notifies with its own group.
+  const QMetaObject* meta = f.service->metaObject();
+  const auto notifyOf = [&](const char* name) {
+    return QString::fromLatin1(meta->property(meta->indexOfProperty(name)).notifySignal().name());
+  };
+  EXPECT_EQ(notifyOf("powerPlans"), QStringLiteral("powerChanged"));
+  EXPECT_EQ(notifyOf("brightnessSources"), QStringLiteral("brightnessSourcesChanged"));
+  EXPECT_EQ(notifyOf("brightness"), QStringLiteral("brightnessChanged"));
+  EXPECT_EQ(notifyOf("userName"), QStringLiteral("userChanged"));
+}
+
+TEST(ControlCenterService, ToggleDndUsesTheMirroredState) {
+  Fixture f;
+  const int reads = f.world.dndReads;
+  f.service->toggleDnd();
+  f.service->cycleDnd();
+  EXPECT_EQ(f.world.dndReads, reads);  // before: one out-of-process read per click
+  EXPECT_EQ(f.service->dnd(), QStringLiteral("alarms"));
 }

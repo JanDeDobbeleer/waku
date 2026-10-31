@@ -1,7 +1,9 @@
 #include "features/control_center/qml/control_center_service.h"
 
 #include <QCoreApplication>
+#include <QPointer>
 #include <QStringList>
+#include <QThreadPool>
 #include <QUrl>
 #include <QVariantMap>
 #include <algorithm>
@@ -69,7 +71,7 @@ ControlCenter::ControlCenter(QObject* parent)
           kernel::liveDesktop() ? systemBackend() : Backend{},
           kernel::liveDesktop() ? systemLauncher() : Launcher{},
           kernel::liveDesktop() ? wabar::brightness::createSystemBrightness(nullptr) : nullptr,
-          parent) {
+          parent, /*readLater=*/kernel::liveDesktop()) {
   available_ = kernel::liveDesktop();
   if (!available_) return;
   // Focus Assist changes made outside the bar (Settings, the action centre).
@@ -81,6 +83,11 @@ ControlCenter::ControlCenter(QObject* parent)
 
 ControlCenter::ControlCenter(Backend backend, Launcher launcher,
                              wabar::brightness::BrightnessControl* brightness, QObject* parent)
+    : ControlCenter(std::move(backend), std::move(launcher), brightness, parent, false) {}
+
+ControlCenter::ControlCenter(Backend backend, Launcher launcher,
+                             wabar::brightness::BrightnessControl* brightness, QObject* parent,
+                             bool readLater)
     : QObject(parent),
       backend_(std::move(backend)),
       launcher_(std::move(launcher)),
@@ -92,16 +99,29 @@ ControlCenter::ControlCenter(Backend backend, Launcher launcher,
     brightnessControl_->setParent(this);
     // A slider write, a power-setting notification or a DDC re-read.
     connect(brightnessControl_, &wabar::brightness::BrightnessControl::brightnessChanged, this,
-            [this](qulonglong, int) {
-              readBrightness();
-              emit changed();
-            });
+            [this](qulonglong, int) { announce(kBrightness | readBrightness()); });
   }
-  init();
+  if (readLater) {
+    readBrightness();
+    initLater();
+  } else {
+    init();
+  }
 }
 
 ControlCenter::~ControlCenter() {
   if (brightnessControl_) brightnessControl_->stop();
+}
+
+void ControlCenter::announce(unsigned groups) {
+  if (groups & kDnd) emit dndChanged();
+  if (groups & kTheme) emit themeChanged();
+  if (groups & kBrightness) emit brightnessChanged();
+  if (groups & kBrightnessSources) emit brightnessSourcesChanged();
+  if (groups & kPower) emit powerChanged();
+  if (groups & kUser) emit userChanged();
+  if (groups & kPending) emit pendingActionChanged();
+  emit changed();
 }
 
 void ControlCenter::init() {
@@ -113,28 +133,108 @@ void ControlCenter::init() {
   readPower();
 }
 
+namespace {
+
+// What initLater() reads off the GUI thread.
+struct InitialState {
+  QString userName;
+  QString avatarPath;
+  std::optional<QString> dnd;
+  std::optional<QString> theme;
+  std::vector<PowerPlan> plans;
+  std::optional<QUuid> activePlan;
+  bool modeSupported = false;
+  std::vector<PowerMode> modes;
+  QString modeName;
+};
+
+}  // namespace
+
+// The user's display name (GetUserNameExW, hundreds of ms cold), the account picture (a registry
+// walk), DND (an out-of-process COM call), the theme and the power plans and modes were read in
+// the constructor, on the GUI thread, inside the first build and every reload. The backend's
+// functions do not touch this object; the result goes back through qApp and is dropped when
+// this object is gone.
+void ControlCenter::initLater() {
+  QPointer<ControlCenter> self(this);
+  QThreadPool::globalInstance()->start([self, backend = backend_] {
+    auto state = std::make_shared<InitialState>();
+    try {
+      if (backend.userName) state->userName = backend.userName();
+      if (backend.avatarPath) state->avatarPath = backend.avatarPath();
+      if (backend.dndStatus) state->dnd = backend.dndStatus();
+      if (backend.themeMode) state->theme = backend.themeMode();
+      if (backend.powerPlans) state->plans = backend.powerPlans(&state->activePlan);
+      state->modeSupported = backend.powerModeSupported && backend.powerModeSupported();
+      if (state->modeSupported) {
+        if (backend.powerModes) state->modes = backend.powerModes();
+        if (backend.activePowerMode) {
+          if (const auto mode = backend.activePowerMode()) state->modeName = mode->name;
+        }
+      }
+    } catch (...) {
+    }
+    if (!qApp) return;
+    QMetaObject::invokeMethod(
+        qApp,
+        [self, state] {
+          if (!self) return;
+          unsigned groups = kUser;
+          self->userName_ = state->userName;
+          self->avatarPath_ = state->avatarPath;
+          if (state->dnd && !self->dndRead_) {
+            self->dnd_ = *state->dnd;
+            groups |= kDnd;
+          }
+          if (state->theme && !self->themeRead_) {
+            self->theme_ = *state->theme;
+            groups |= kTheme;
+          }
+          if (!self->powerRead_) {
+            self->plans_ = state->plans;
+            self->activePlan_ = state->activePlan;
+            self->modeSupported_ = state->modeSupported;
+            self->modes_ = state->modes;
+            self->modeName_ = state->modeName;
+            groups |= kPower;
+          }
+          self->announce(groups);
+        },
+        Qt::QueuedConnection);
+  });
+}
+
 void ControlCenter::refresh() {
   if (backend_.dndStatus) dnd_ = backend_.dndStatus();
   if (backend_.themeMode) theme_ = backend_.themeMode();
+  dndRead_ = themeRead_ = true;
   if (brightnessControl_) brightnessControl_->refreshNow();
   readBrightness();
   readPower();
-  emit changed();
+  announce(kAll);
 }
 
-void ControlCenter::readBrightness() {
+unsigned ControlCenter::readBrightness() {
+  std::vector<qulonglong> ids;
   brightnessMonitor_.reset();
-  if (!brightnessControl_) return;
-  const auto monitors = brightnessControl_->monitors();
-  if (monitors.empty()) return;
-  const auto kept = std::find_if(monitors.begin(), monitors.end(), [this](const auto& m) {
-    return selectedMonitor_ && m.id == *selectedMonitor_;
-  });
-  brightnessMonitor_ = kept != monitors.end() ? kept->id : monitors.front().id;
-  brightness_ = brightnessControl_->brightness(*brightnessMonitor_).value_or(brightness_);
+  if (brightnessControl_) {
+    const auto monitors = brightnessControl_->monitors();
+    for (const auto& monitor : monitors) ids.push_back(monitor.id);
+    if (!monitors.empty()) {
+      const auto kept = std::find_if(monitors.begin(), monitors.end(), [this](const auto& m) {
+        return selectedMonitor_ && m.id == *selectedMonitor_;
+      });
+      brightnessMonitor_ = kept != monitors.end() ? kept->id : monitors.front().id;
+      brightness_ = brightnessControl_->brightness(*brightnessMonitor_).value_or(brightness_);
+    }
+  }
+  if (ids == monitorIds_) return 0;
+  monitorIds_ = std::move(ids);
+  return kBrightnessSources;
 }
 
 void ControlCenter::readPower() {
+  powerRead_ = true;
   plans_.clear();
   activePlan_.reset();
   if (backend_.powerPlans) plans_ = backend_.powerPlans(&activePlan_);
@@ -198,32 +298,41 @@ QString ControlCenter::avatarUrl() const {
 void ControlCenter::onDndStatus(const QString& status) {
   if (dnd_ == status) return;
   dnd_ = status;
-  emit changed();
+  dndRead_ = true;
+  announce(kDnd);
+}
+
+// The DND state is current: the watcher mirrors changes made outside the bar. Only a state that
+// has not been read yet asks the backend (an out-of-process COM call).
+QString ControlCenter::currentDnd() const {
+  return dnd_.isEmpty() && backend_.dndStatus ? backend_.dndStatus() : dnd_;
 }
 
 void ControlCenter::toggleDnd() {
   if (!backend_.dndStatus || !backend_.setDndStatus) return;
-  const QString next = backend_.dndStatus() != QLatin1String("disabled")
-                           ? QStringLiteral("disabled")
-                           : QStringLiteral("priority");
+  const QString next = currentDnd() != QLatin1String("disabled") ? QStringLiteral("disabled")
+                                                                 : QStringLiteral("priority");
   if (backend_.setDndStatus(next)) dnd_ = next;
-  emit changed();
+  dndRead_ = true;
+  announce(kDnd);
 }
 
 void ControlCenter::cycleDnd() {
   if (!backend_.dndStatus || !backend_.setDndStatus) return;
-  const QString current = backend_.dndStatus();
+  const QString current = currentDnd();
   const QString next = current == QLatin1String("disabled")   ? QStringLiteral("priority")
                        : current == QLatin1String("priority") ? QStringLiteral("alarms")
                                                               : QStringLiteral("disabled");
   if (backend_.setDndStatus(next)) dnd_ = next;
-  emit changed();
+  dndRead_ = true;
+  announce(kDnd);
 }
 
 void ControlCenter::toggleTheme() {
   if (!backend_.toggleTheme) return;
   if (const auto mode = backend_.toggleTheme()) theme_ = *mode;
-  emit changed();
+  themeRead_ = true;
+  announce(kTheme);
 }
 
 void ControlCenter::toggleTouchKeyboard() {
@@ -245,7 +354,7 @@ void ControlCenter::setBrightness(int percent) {
   if (!brightnessControl_ || !brightnessMonitor_) return;
   brightness_ = std::clamp(percent, 0, 100);
   brightnessControl_->setBrightness(*brightnessMonitor_, brightness_);
-  emit changed();
+  announce(kBrightness);
 }
 
 void ControlCenter::setBrightnessSource(const QString& id) {
@@ -253,8 +362,7 @@ void ControlCenter::setBrightnessSource(const QString& id) {
   const qulonglong value = id.toULongLong(&ok);
   if (!ok || !brightnessControl_) return;
   selectedMonitor_ = value;
-  readBrightness();
-  emit changed();
+  announce(kBrightness | readBrightness());
 }
 
 bool ControlCenter::setPowerPlan(const QString& id) {
@@ -266,7 +374,7 @@ bool ControlCenter::setPowerPlan(const QString& id) {
   const bool ok = backend_.setPowerPlan(guid) == 0;
   // A plan change can change which modes exist; always re-read.
   readPower();
-  emit changed();
+  announce(kPower);
   return ok;
 }
 
@@ -277,7 +385,7 @@ bool ControlCenter::setPowerMode(const QString& id) {
   if (mode == modes_.end() || !backend_.setPowerMode) return false;
   const bool ok = backend_.setPowerMode(guid);
   readPower();
-  emit changed();
+  announce(kPower);
   return ok;
 }
 
@@ -285,7 +393,7 @@ void ControlCenter::clearPending() {
   pendingTimer_.stop();
   if (pending_.isEmpty()) return;
   pending_.clear();
-  emit changed();
+  announce(kPending);
 }
 
 void ControlCenter::cancelAction() { clearPending(); }
@@ -307,7 +415,7 @@ bool ControlCenter::requestAction(const QString& id) {
     if (entry.confirm && pending_ != id) {
       pending_ = id;
       pendingTimer_.start();
-      emit changed();
+      announce(kPending);
       return false;
     }
     clearPending();

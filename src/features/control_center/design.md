@@ -49,7 +49,7 @@ other singletons do not cover. Two injectable structs:
 - `Backend`: reads and writes of settings (DND, theme, touch keyboard, power, user).
 - `Launcher`: lock, sleep, hibernate, sign out, restart, shut down, and `open(uri)`.
 
-QML-facing API (all `changed`-notified, GUI thread):
+QML-facing API (GUI thread). Each property notifies with its group, and every group change also emits `changed`: `dndChanged` (`dnd`, `dndActive`), `themeChanged` (`darkMode`), `brightnessChanged` (`brightnessAvailable`, `brightness`, `brightnessSource`), `brightnessSourcesChanged` (`brightnessSources`, when the monitor set changes), `powerChanged` (plans and modes), `userChanged` (`userName`, `avatarUrl`), `pendingActionChanged`:
 
 - State: `dnd`, `dndActive`, `darkMode`, `brightnessAvailable`, `brightness`,
   `brightnessSources` (list of `{id, name}`), `brightnessSource`, `powerPlans` and `powerModes`
@@ -81,6 +81,12 @@ list) and `SliderRow`. Options: `glyph`, `sectionsOrder`, `quickActions`, `colum
 - **Real backends never start offscreen.** The default constructor is inert on the offscreen
   platform (no registry, power, DND, brightness or session call), as `Bluetooth` and
   `Notifications` are. Tests use the seam constructor.
+- **The slow first reads run off the GUI thread.** The real object reads the user's name and
+  picture, DND (an out-of-process COM call), the theme and the power plans and modes on a pool
+  thread after it is built, and announces them when they arrive; a read the GUI thread made in the
+  meantime (a refresh, a DND event, a switch) wins. The seam constructor reads them at once.
+- **Toggling DND uses the mirrored state.** The DND watcher keeps `dnd` current, so a click does
+  not ask Focus Assist first; only a state not read yet does.
 - **DND "unknown" counts as on, empty as off.** Matches the Python and Widgets behaviour (only
   `disabled` is off).
 - **Brightness target is the first monitor, switchable by the source selector.** The selector is

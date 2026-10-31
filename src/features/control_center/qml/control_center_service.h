@@ -24,8 +24,13 @@ namespace wabar::control_center {
 // threads (see wabar::brightness::BrightnessControl); the DND watcher is the platform's WNF
 // subscription. The engine destroys the singleton, which stops both.
 //
-// Every state change a widget can see is announced with `changed`; `refresh()` re-reads everything
-// and is meant to run when the popup opens.
+// Every state change a widget can see is announced with the signal of its group (dndChanged,
+// themeChanged, brightnessChanged, brightnessSourcesChanged, powerChanged, userChanged,
+// pendingActionChanged; a property re-reads only with its own group, so a slider tick does not
+// rebuild the plan, mode and monitor lists) and then with `changed`. `refresh()` re-reads
+// everything and is meant to run when the popup opens. The real object reads the slow parts (the
+// user's name and picture, DND, the theme, the power plans and modes) on a pool thread after it
+// is built and announces them when they arrive.
 //
 // Dangerous actions go through requestAction(): "lock", "sleep" and "hibernate" run at once;
 // "signOut", "restart" and "shutdown" need a second call with the same id within kConfirmMs (the
@@ -36,21 +41,22 @@ class ControlCenter : public QObject {
   QML_ELEMENT
   QML_SINGLETON
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
-  Q_PROPERTY(QString dnd READ dnd NOTIFY changed FINAL)
-  Q_PROPERTY(bool dndActive READ dndActive NOTIFY changed FINAL)
-  Q_PROPERTY(bool darkMode READ darkMode NOTIFY changed FINAL)
-  Q_PROPERTY(bool brightnessAvailable READ brightnessAvailable NOTIFY changed FINAL)
-  Q_PROPERTY(int brightness READ brightness NOTIFY changed FINAL)
-  Q_PROPERTY(QVariantList brightnessSources READ brightnessSources NOTIFY changed FINAL)
-  Q_PROPERTY(QString brightnessSource READ brightnessSource NOTIFY changed FINAL)
-  Q_PROPERTY(QVariantList powerPlans READ powerPlans NOTIFY changed FINAL)
-  Q_PROPERTY(QString powerPlanName READ powerPlanName NOTIFY changed FINAL)
-  Q_PROPERTY(bool powerModeAvailable READ powerModeAvailable NOTIFY changed FINAL)
-  Q_PROPERTY(QVariantList powerModes READ powerModes NOTIFY changed FINAL)
-  Q_PROPERTY(QString powerModeName READ powerModeName NOTIFY changed FINAL)
-  Q_PROPERTY(QString userName READ userName NOTIFY changed FINAL)
-  Q_PROPERTY(QString avatarUrl READ avatarUrl NOTIFY changed FINAL)
-  Q_PROPERTY(QString pendingAction READ pendingAction NOTIFY changed FINAL)
+  Q_PROPERTY(QString dnd READ dnd NOTIFY dndChanged FINAL)
+  Q_PROPERTY(bool dndActive READ dndActive NOTIFY dndChanged FINAL)
+  Q_PROPERTY(bool darkMode READ darkMode NOTIFY themeChanged FINAL)
+  Q_PROPERTY(bool brightnessAvailable READ brightnessAvailable NOTIFY brightnessChanged FINAL)
+  Q_PROPERTY(int brightness READ brightness NOTIFY brightnessChanged FINAL)
+  Q_PROPERTY(
+      QVariantList brightnessSources READ brightnessSources NOTIFY brightnessSourcesChanged FINAL)
+  Q_PROPERTY(QString brightnessSource READ brightnessSource NOTIFY brightnessChanged FINAL)
+  Q_PROPERTY(QVariantList powerPlans READ powerPlans NOTIFY powerChanged FINAL)
+  Q_PROPERTY(QString powerPlanName READ powerPlanName NOTIFY powerChanged FINAL)
+  Q_PROPERTY(bool powerModeAvailable READ powerModeAvailable NOTIFY powerChanged FINAL)
+  Q_PROPERTY(QVariantList powerModes READ powerModes NOTIFY powerChanged FINAL)
+  Q_PROPERTY(QString powerModeName READ powerModeName NOTIFY powerChanged FINAL)
+  Q_PROPERTY(QString userName READ userName NOTIFY userChanged FINAL)
+  Q_PROPERTY(QString avatarUrl READ avatarUrl NOTIFY userChanged FINAL)
+  Q_PROPERTY(QString pendingAction READ pendingAction NOTIFY pendingActionChanged FINAL)
 
  public:
   static constexpr int kConfirmMs = 4000;
@@ -131,13 +137,40 @@ class ControlCenter : public QObject {
   void onDndStatus(const QString& status);
 
  signals:
+  // Any of the groups below changed.
   void changed();
+  void dndChanged();
+  void themeChanged();
+  void brightnessChanged();
+  void brightnessSourcesChanged();
+  void powerChanged();
+  void userChanged();
+  void pendingActionChanged();
 
  private:
+  enum Group : unsigned {
+    kDnd = 1,
+    kTheme = 2,
+    kBrightness = 4,
+    kBrightnessSources = 8,
+    kPower = 16,
+    kUser = 32,
+    kPending = 64,
+    kAll = 127,
+  };
+  // Emits the signal of every group in groups, then changed().
+  void announce(unsigned groups);
+  ControlCenter(Backend backend, Launcher launcher,
+                wabar::brightness::BrightnessControl* brightness, QObject* parent, bool readLater);
   void init();
-  void readBrightness();
+  // init() on a pool thread for what the backend reads; applied when it arrives, unless a newer
+  // read of that part came first.
+  void initLater();
+  // Returns the groups that changed.
+  unsigned readBrightness();
   void readPower();
   void clearPending();
+  QString currentDnd() const;
 
   Backend backend_;
   Launcher launcher_;
@@ -158,6 +191,11 @@ class ControlCenter : public QObject {
   QString userName_;
   QString avatarPath_;
   QString pending_;
+  std::vector<qulonglong> monitorIds_;  // the brightness sources as last announced
+  // Reads done on the GUI thread since the pool read started (that read must not undo them).
+  bool dndRead_ = false;
+  bool themeRead_ = false;
+  bool powerRead_ = false;
 };
 
 }  // namespace wabar::control_center
