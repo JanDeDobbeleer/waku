@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <QAbstractItemModel>
+#include <QJSValue>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QSignalSpy>
@@ -198,6 +199,43 @@ PersistentProperties { reloadableId: "lazy"; property int n: 1 }
   first.reset();
   auto second = create(engine, source);
   EXPECT_EQ(second->property("n").toInt(), 9);
+}
+
+TEST(QuickshellPersistentProperties, VarValuesAreStoredAsPlainDataAndOutliveTheEngine) {
+  const QByteArray source = R"(
+import QtQuick
+import Quickshell
+PersistentProperties {
+    reloadableId: "js"
+    property var v: null
+    property var fn: null
+    function fill() { v = { k: [1, 2], s: "x" }; fn = function() { return 1 } }
+}
+)";
+  {
+    QQmlEngine engine;
+    auto first = create(engine, source);
+    ASSERT_NE(first, nullptr);
+    QMetaObject::invokeMethod(first.get(), "fill");
+    first.reset();
+    auto second = create(engine, source);
+    ASSERT_NE(second, nullptr);
+    QVariant v = second->property("v");
+    if (v.metaType() == QMetaType::fromType<QJSValue>()) v = v.value<QJSValue>().toVariant();
+    const QVariantMap map = v.toMap();
+    EXPECT_EQ(map.value(QStringLiteral("s")).toString(), QStringLiteral("x"));
+    EXPECT_EQ(map.value(QStringLiteral("k")).toList().size(), 2);
+    // A function is not plain data and is not kept.
+    QVariant fn = second->property("fn");
+    if (fn.metaType() == QMetaType::fromType<QJSValue>()) {
+      EXPECT_FALSE(fn.value<QJSValue>().isCallable());
+    }
+  }
+  // The engine is gone; its entries went with it and nothing in the store pointed into its heap.
+  QQmlEngine next;
+  auto fresh = create(next, source);
+  ASSERT_NE(fresh, nullptr);
+  EXPECT_FALSE(fresh->property("v").toMap().contains(QStringLiteral("s")));
 }
 
 // ---- IpcHandler ----
