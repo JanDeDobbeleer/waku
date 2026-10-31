@@ -8,4 +8,4 @@ wabar_feature(NAME brightness
     win32/brightness_win.cpp
   TESTS
     tests/test_brightness_policy.cpp
-  SYSTEM_LIBS dxva2 powrprof user32 windowsapp)
+  SYSTEM_LIBS dxva2 powrprof user32 uuid windowsapp)

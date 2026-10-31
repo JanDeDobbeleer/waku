@@ -38,12 +38,10 @@ constexpr BYTE kVcpBrightness = 0x10;
 constexpr BYTE kVcpContrast = 0x12;
 constexpr wchar_t kPolicyWindowClass[] = L"WabarBrightnessPolicyWatcher";
 
-// {7516b95f-f776-4464-8c53-06167f40cc99}
-const GUID kVideoSubgroup = {
-    0x7516b95f, 0xf776, 0x4464, {0x8c, 0x53, 0x06, 0x16, 0x7f, 0x40, 0xcc, 0x99}};
-// {aded5e82-b909-4619-9949-f5d71dac0bcb}
-const GUID kVideoBrightness = {
-    0xaded5e82, 0xb909, 0x4619, {0x99, 0x49, 0xf5, 0xd7, 0x1d, 0xac, 0x0b, 0xcb}};
+// The display subgroup of a power scheme and its brightness setting: the SDK's names (winnt.h,
+// defined in uuid.lib).
+const GUID& kVideoSubgroup = GUID_VIDEO_SUBGROUP;
+const GUID& kVideoBrightness = GUID_DEVICE_POWER_POLICY_VIDEO_BRIGHTNESS;
 
 // --- power scheme brightness (scheme.py) --------------------------------------------------------
 

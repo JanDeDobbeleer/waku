@@ -325,8 +325,8 @@ class Win32WindowSystem final : public WindowSystem {
     if (!target) target = hwnd;
 
     if (force) {
-      // EndTask is what the shell's "End task" uses. It is not in every SDK import library, so
-      // look it up, and fall back to terminating the process.
+      // EndTask is what the shell's "End task" uses. It is documented, loaded by name because the
+      // import library lacks it (no allowlist row); without it, terminate the process.
       using EndTaskFn = BOOL(WINAPI*)(HWND, BOOL, BOOL);
       static const auto endTask =
           reinterpret_cast<EndTaskFn>(GetProcAddress(GetModuleHandleW(L"user32.dll"), "EndTask"));
@@ -349,6 +349,7 @@ class Win32WindowSystem final : public WindowSystem {
     // window needs the fallback, a responsive one would get a second close on top of the prompt.
     if (!IsHungAppWindow(target)) return;
     if (PostMessageW(target, WM_CLOSE, 0, 0)) return;
+    // EndTask: documented, loaded by name as above.
     using EndTaskFn = BOOL(WINAPI*)(HWND, BOOL, BOOL);
     static const auto endTask =
         reinterpret_cast<EndTaskFn>(GetProcAddress(GetModuleHandleW(L"user32.dll"), "EndTask"));

@@ -8,6 +8,7 @@
 #include <exdisp.h>
 #include <appmodel.h>
 #include <propsys.h>
+#include <propkey.h>
 #include <shobjidl.h>
 #include <shellapi.h>
 #include <propvarutil.h>
@@ -27,11 +28,6 @@
 
 namespace wabar::taskbar {
 namespace {
-
-// PKEY_AppUserModel_ID {9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}, 5. Spelled out so the build does
-// not depend on propkey.h's data definitions.
-const PROPERTYKEY kAppUserModelId = {
-    {0x9F4C2855, 0x9F79, 0x4B39, {0xA8, 0xD0, 0xE1, 0xD4, 0x2D, 0xE1, 0xD5, 0xF3}}, 5};
 
 HWND toHwnd(WindowHandle hwnd) { return reinterpret_cast<HWND>(hwnd); }
 
@@ -102,7 +98,7 @@ std::optional<QString> aumidForWindow(WindowHandle hwnd, std::uint32_t pid) {
     PROPVARIANT value;
     PropVariantInit(&value);
     std::optional<QString> result;
-    if (SUCCEEDED(store->GetValue(kAppUserModelId, &value)) && value.vt == VT_LPWSTR &&
+    if (SUCCEEDED(store->GetValue(PKEY_AppUserModel_ID, &value)) && value.vt == VT_LPWSTR &&
         value.pwszVal && *value.pwszVal) {
       result = fromWide(value.pwszVal);
     }

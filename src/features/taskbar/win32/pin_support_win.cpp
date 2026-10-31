@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <objbase.h>
 #include <propsys.h>
+#include <propkey.h>
 #include <propvarutil.h>
 #include <shellapi.h>
 #include <shlobj.h>
@@ -26,9 +27,6 @@
 
 namespace wabar::taskbar {
 namespace {
-
-const PROPERTYKEY kAppUserModelId = {
-    {0x9F4C2855, 0x9F79, 0x4B39, {0xA8, 0xD0, 0xE1, 0xD4, 0x2D, 0xE1, 0xD5, 0xF3}}, 5};
 
 constexpr const char* kRecycleBinClsid = "645FF040-5081-101B-9F08-00AA002F954E";
 constexpr const char* kQuickAccessClsid = "679F85CB-0220-4080-B29B-5540CC05AAB6";
@@ -81,7 +79,7 @@ std::optional<QString> shortcutAumid(const QString& path) {
       if (SUCCEEDED(link->QueryInterface(IID_PPV_ARGS(&store))) && store) {
         PROPVARIANT value;
         PropVariantInit(&value);
-        if (SUCCEEDED(store->GetValue(kAppUserModelId, &value)) && value.vt == VT_LPWSTR &&
+        if (SUCCEEDED(store->GetValue(PKEY_AppUserModel_ID, &value)) && value.vt == VT_LPWSTR &&
             value.pwszVal && *value.pwszVal) {
           result = QString::fromWCharArray(value.pwszVal);
         }
