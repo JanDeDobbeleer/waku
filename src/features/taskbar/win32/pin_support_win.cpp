@@ -22,6 +22,7 @@
 
 #include "features/taskbar/app_identity.h"
 #include "kernel/win32/com_scope.h"
+#include "kernel/win32/environment.h"
 
 namespace wabar::taskbar {
 namespace {
@@ -40,14 +41,7 @@ QString systemRoot() {
   return root.isEmpty() ? QStringLiteral("C:\\Windows") : root;
 }
 
-QString expandEnvironment(const QString& text) {
-  if (!text.contains(QLatin1Char('%'))) return text;
-  const DWORD needed = ExpandEnvironmentStringsW(wide(text), nullptr, 0);
-  if (needed == 0) return text;
-  std::vector<wchar_t> buffer(needed);
-  if (ExpandEnvironmentStringsW(wide(text), buffer.data(), needed) == 0) return text;
-  return QString::fromWCharArray(buffer.data());
-}
+using kernel::expandEnvironment;
 
 // Python's canonical_display_key: lower case, dashes and underscores as spaces, runs of white space
 // collapsed. Empty when nothing is left.
