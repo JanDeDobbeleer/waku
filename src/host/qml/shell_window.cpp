@@ -325,6 +325,12 @@ void QsWindow::setPresentable(bool presentable) {
   updateVisibility();
 }
 
+void QsWindow::retire() {
+  // host_ stays: ~QsWindow still calls release() to drop the entry.
+  if (host_) host_->retire(this);
+  setPresentable(false);
+}
+
 void QsWindow::updateFlags() {
   if (!window_) return;
   Qt::WindowFlags flags = windowFlags();

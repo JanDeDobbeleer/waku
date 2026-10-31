@@ -18,6 +18,7 @@
 #include <QScreen>
 #include <QUrl>
 #include <QWindow>
+#include <algorithm>
 #include <cmath>
 
 #include "host/plugin_guard.h"
@@ -136,8 +137,9 @@ void collectParts(const Scope* scope, QList<QObject*>* parts) {
 }  // namespace
 
 // Qt keeps the compiled form of a QML file for as long as an object made from it lives, and
-// clearComponentCache() does not drop it. Objects of the old shell can outlive it (windows go
-// with deleteLater), so without this the new shell could be made from the old files. A changing
+// clearComponentCache() does not drop it. resetEngine() deletes the windows of the old shell
+// before the clear, but anything else made from the old files that is still alive (a JS value
+// kept by a singleton set from outside) would make the new shell use the old files. A changing
 // query on the URL makes each reload's files new to the engine. The interceptor only touches QML
 // files under the config home.
 class ShellHost::GenerationInterceptor : public QQmlAbstractUrlInterceptor {
@@ -201,8 +203,9 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
 
 ShellHost::~ShellHost() {
   if (QCoreApplication::instance()) QCoreApplication::instance()->removeEventFilter(this);
-  // Windows (and their app bars) go before the root object and component they refer to.
-  loaded_.reset();
+  // Windows (and their app bars) go before the root object and component they refer to, and the
+  // windows deleted later go now, while the engine still exists.
+  dropShell();
   engine_->removeUrlInterceptor(interceptor_.get());
   if (engine_->rootContext()
           ->contextProperty(QString::fromLatin1(kHostProperty))
@@ -225,7 +228,7 @@ bool ShellHost::eventFilter(QObject* watched, QEvent* event) {
   auto* window = qobject_cast<QQuickWindow*>(watched);
   if (!window || !loaded_) return false;
   for (const Entry& entry : loaded_->entries) {
-    if (entry.window && entry.window->backingWindow() == window) {
+    if (entry.live() && entry.window->backingWindow() == window) {
       emit windowPressed();
       break;
     }
@@ -245,7 +248,7 @@ QList<QQuickWindow*> ShellHost::windows() const {
   QList<QQuickWindow*> list;
   if (loaded_) {
     for (const Entry& entry : loaded_->entries) {
-      if (entry.presented && entry.window && entry.window->backingWindowVisible()) {
+      if (entry.presented && entry.live() && entry.window->backingWindowVisible()) {
         list << entry.window->backingWindow();
       }
     }
@@ -339,7 +342,7 @@ QString ShellHost::failures(const Loaded& loaded, int* built) {
   QStringList errors;
   *built = 0;
   for (const Entry& entry : loaded.entries) {
-    if (!entry.window) continue;
+    if (!entry.live()) continue;
     if (entry.window->buildError().isEmpty()) {
       ++*built;
     } else {
@@ -350,6 +353,11 @@ QString ShellHost::failures(const Loaded& loaded, int* built) {
   return errors.size() == 1
              ? errors.first()
              : QStringLiteral("%1 windows failed: %2").arg(errors.size()).arg(errors.first());
+}
+
+bool ShellHost::hasWindows(const Loaded& loaded) {
+  return std::any_of(loaded.entries.begin(), loaded.entries.end(),
+                     [](const Entry& entry) { return entry.live(); });
 }
 
 bool ShellHost::reloadSafe() {
@@ -373,7 +381,9 @@ bool ShellHost::reloadSafe() {
 
 void ShellHost::watchScreens() {
   screenDebounce_.setSingleShot(true);
-  screenDebounce_.setInterval(600);
+  // A dock or undock sends screen, primary and DPI changes for one to three seconds; a shorter
+  // wait reloads two or three times in a row while Windows still moves the windows.
+  screenDebounce_.setInterval(1500);
   connect(&screenDebounce_, &QTimer::timeout, this, [this] {
     if (loaded_) reload();
   });
@@ -390,7 +400,7 @@ void ShellHost::watchScreens() {
 void ShellHost::watchScreen(QScreen* screen) {
   if (!screen) return;
   connect(screen, &QScreen::logicalDotsPerInchChanged, &screenDebounce_,
-          qOverload<>(&QTimer::start));
+          qOverload<>(&QTimer::start), Qt::UniqueConnection);
 }
 
 bool ShellHost::reload() {
@@ -399,7 +409,7 @@ bool ShellHost::reload() {
   std::unique_ptr<Loaded> next;
   // The reset below destroys the old shell: remember whether it had windows, so a new shell
   // that creates none (a Variants delegate that failed) is an error and not an empty screen.
-  const bool hadWindows = loaded_ && !loaded_->entries.empty();
+  const bool hadWindows = loaded_ && hasWindows(*loaded_);
   WarningCapture warnings;
   const QString legacyPath = QDir(options_.configHome).filePath(options_.legacyEntryFile);
   if (!QFileInfo::exists(entryPath())) {
@@ -424,8 +434,9 @@ bool ShellHost::reload() {
   } else if (validate(QUrl::fromLocalFile(entryPath()), ShellRoot::staticMetaObject, false,
                       &error) &&
              validateTheme(&error)) {
-    // The files compile, but creating the shell can still fail. The old shell stays alive and
-    // on screen while the new one is built (hidden); install() swaps them on success.
+    // The files compile, but creating the shell can still fail. resetEngine() destroys the old
+    // shell, all its windows included, before the new one is built: two generations never live
+    // at once. If the build fails, reload() shows the fallback shell.
     interceptor_->nextGeneration();
     resetEngine();
     applyTheme();
@@ -437,7 +448,7 @@ bool ShellHost::reload() {
   if (next) {
     int built = 0;
     const QString failed = failures(*next, &built);
-    if (failed.isEmpty() && next->entries.empty() && hadWindows) {
+    if (failed.isEmpty() && !hasWindows(*next) && hadWindows) {
       // Nothing failed loudly, yet no window exists and the old shell is already gone.
       error = QStringLiteral("the shell created no windows");
       if (!warnings.first().isEmpty()) error += QStringLiteral(": ") + warnings.first();
@@ -463,13 +474,24 @@ bool ShellHost::reload() {
 }
 
 void ShellHost::resetEngine() {
-  // The old shell first: nothing made from the old files or holding a singleton may outlive the
-  // clear. Qt drops the singletons the engine owns (deleting them, so their threads and hooks
-  // stop) and creates them again on first use; singletons set from outside keep their value.
-  loaded_.reset();
+  // The old shell first, all of it: Qt requires that nothing made from the old files or holding a
+  // singleton outlives the clear. Qt drops the singletons the engine owns (deleting them, so their
+  // threads and hooks stop) and creates them again on first use; singletons set from outside keep
+  // their value.
+  dropShell();
   engine_->clearSingletons();
   engine_->clearComponentCache();
   emit singletonsCleared();
+}
+
+void ShellHost::dropShell() {
+  loaded_.reset();
+  // A Variants (QQmlDelegateModel) and a LazyLoader release their windows with deleteLater: those
+  // windows, their items, bindings and QQuickWindows would otherwise live on next to the new shell
+  // and bind against singletons that are about to be deleted. Delete them now. reload() is never
+  // entered from an event of one of these windows (Quickshell.reload() is queued; wabarc and the
+  // file watcher come through their own slots), so none of them is on the stack.
+  QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
 }
 
 std::unique_ptr<ShellHost::Loaded> ShellHost::build(const QUrl& url, QString* error) {
@@ -510,7 +532,19 @@ void ShellHost::install(std::unique_ptr<Loaded> loaded) {
   // The new windows exist but are hidden; drop the old ones first so two shells never overlap.
   loaded_.reset();
   loaded_ = std::move(loaded);
-  for (Entry& entry : loaded_->entries) present(entry);
+  // Showing a window runs QML handlers that can create windows (adopt() shows those) or retire
+  // them: walk a snapshot and find each entry again instead of holding an iterator.
+  QList<QPointer<QsWindow>> windows;
+  for (const Entry& entry : loaded_->entries) windows << entry.window;
+  for (const QPointer<QsWindow>& window : windows) {
+    if (!window || !loaded_) continue;
+    for (Entry& entry : loaded_->entries) {
+      if (entry.window != window) continue;
+      present(entry);
+      break;
+    }
+  }
+  if (!loaded_) return;
   // Objects declared next to the windows start work now that the shell is the live one.
   QList<QObject*> parts;
   if (loaded_->shell) collectParts(loaded_->shell, &parts);
@@ -543,6 +577,21 @@ void ShellHost::adopt(QsWindow* window) {
   }
 }
 
+void ShellHost::retire(QsWindow* window) {
+  // Marks and does not erase: the caller may be inside a loop over the entries or hold one.
+  for (Loaded* loaded : {building_, loaded_.get()}) {
+    if (!loaded) continue;
+    for (Entry& entry : loaded->entries) {
+      if (entry.window != window) continue;
+      entry.retired = true;
+      if (entry.appBar) entry.appBar->remove();
+      entry.appBar.reset();
+      entry.appBarRequest.reset();
+      return;
+    }
+  }
+}
+
 void ShellHost::release(QsWindow* window) {
   for (Loaded* loaded : {building_, loaded_.get()}) {
     if (!loaded) continue;
@@ -560,7 +609,7 @@ QList<QsWindow*> ShellHost::namedWindows(const QString& name) const {
   if (!loaded_) return list;
   for (const Entry& entry : loaded_->entries) {
     QsWindow* window = entry.window;
-    if (!window || !entry.presented || window->surfaceName().isEmpty()) continue;
+    if (!entry.live() || !entry.presented || window->surfaceName().isEmpty()) continue;
     if (name.isEmpty() || window->surfaceName() == name) list << window;
   }
   return list;
@@ -570,6 +619,8 @@ void ShellHost::noteVisibility(const QString& name, bool visible) { visibility_[
 
 void ShellHost::windowShown(QsWindow* window, bool activate) {
   const NativeHooks& hooks = options_.hooks;
+  // A handler of the show (onFirstShown) may have retired and hidden the window again.
+  if (!window->backingWindowVisible()) return;
   QQuickWindow* backing = window->backingWindow();
   const auto hwnd = static_cast<quintptr>(backing->winId());
   try {
@@ -590,7 +641,7 @@ void ShellHost::windowStackingChanged(QsWindow* window) { windowShown(window, fa
 
 void ShellHost::present(Entry& entry) {
   QsWindow* window = entry.window;
-  if (!window || !window->buildError().isEmpty()) return;
+  if (!entry.live() || entry.presented || !window->buildError().isEmpty()) return;
   entry.presented = true;
   // A window the user showed or hid before a reload is in the same state after it. The shell is not
   // live yet, so this neither takes the keyboard focus nor is noted again.
@@ -608,7 +659,9 @@ void ShellHost::present(Entry& entry) {
   connect(raw, &QsWindow::firstShown, this, [this, raw] {
     if (!loaded_) return;
     for (Entry& candidate : loaded_->entries) {
-      if (candidate.window == raw) applyNative(candidate);
+      if (candidate.window != raw) continue;
+      applyNative(candidate);
+      return;
     }
   });
   window->setPresentable(true);
@@ -616,15 +669,16 @@ void ShellHost::present(Entry& entry) {
 
 void ShellHost::applyNative(Entry& entry) {
   QsWindow* window = entry.window;
-  if (!window || entry.appBar) return;
+  if (!entry.live() || entry.appBar) return;
   QQuickWindow* backing = window->backingWindow();
   const auto hwnd = static_cast<quintptr>(backing->winId());
   const NativeHooks& hooks = options_.hooks;
   try {
     if (hooks.applyBackdrop) hooks.applyBackdrop(hwnd, window->backdrop());
+    // A handler of monitorHandleChanged may retire the window (LazyLoader.active = false).
     if (hooks.monitorHandle) window->setMonitorHandle(hooks.monitorHandle(hwnd));
     auto* panel = qobject_cast<PanelWindow*>(window);
-    if (!panel || !hooks.makeAppBar) return;
+    if (!entry.live() || !panel || !hooks.makeAppBar) return;
     if (!entry.layoutConnected) {
       entry.layoutConnected = true;
       // Everything the request is made of: placement, the reserved zone, layer and focus.
@@ -645,7 +699,7 @@ void ShellHost::applyNative(Entry& entry) {
 void ShellHost::panelLayoutChanged(PanelWindow* panel) {
   if (!loaded_) return;
   for (Entry& entry : loaded_->entries) {
-    if (entry.window != panel || !entry.layoutConnected) continue;
+    if (entry.window != panel || !entry.live() || !entry.layoutConnected) continue;
     try {
       syncAppBar(entry);
     } catch (const std::exception& e) {
@@ -659,7 +713,7 @@ void ShellHost::panelLayoutChanged(PanelWindow* panel) {
 void ShellHost::syncAppBar(Entry& entry) {
   auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
   const NativeHooks& hooks = options_.hooks;
-  if (!panel || !hooks.makeAppBar) return;
+  if (!entry.live() || !panel || !hooks.makeAppBar) return;
   const std::optional<AppBarEdge> edge = panel->appBarEdge();
   if (!edge) {
     // Not docked any more (the anchors changed): give the edge back.

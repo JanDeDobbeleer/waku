@@ -26,6 +26,7 @@ namespace wabar::host {
 //   component  what to create (the default property); or `source`, a QML file
 //   loading    true starts an asynchronous build; it turns false and `active` true when done
 //   active     true builds now (finishing a running asynchronous build); false destroys the item
+//              (hidden at once, deleted on the next turn of the event loop)
 //   activeAsync  true starts an asynchronous build, false destroys the item; reads true while a
 //              build runs and once the item exists
 //   item       the created object, or null; owned by the loader
@@ -81,6 +82,8 @@ class LazyLoader : public QObject, public QQmlParserStatus {
   void createNow();
   void adopt(QObject* object);
   void destroyItem();
+  // Takes `item` off the screen now and deletes it later (see lazy_loader.cpp).
+  static void dispose(QObject* item);
   void cancel();
 
   QPointer<QQmlComponent> component_;

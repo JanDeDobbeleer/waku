@@ -69,6 +69,70 @@ TEST(ShellHostTest, AScreenChangeReloadsTheShellOnceAfterItSettles) {
   EXPECT_EQ(reloads, 1);
 }
 
+TEST(ShellHostTest, AScreenChangeWaitsForADockToSettle) {
+  Harness h;
+  h.start(shellConfig());
+  ASSERT_TRUE(h.host->reload());
+  int reloads = 0;
+  QObject::connect(h.host.get(), &ShellHost::reloaded, [&reloads] { ++reloads; });
+  QScreen* screen = QGuiApplication::primaryScreen();
+  ASSERT_NE(screen, nullptr);
+  emit qGuiApp->screenAdded(screen);
+  QTest::qWait(1000);
+  EXPECT_EQ(reloads, 0);  // a dock is still sending changes
+  emit qGuiApp->primaryScreenChanged(screen);
+  EXPECT_TRUE(QTest::qWaitFor([&] { return reloads > 0; }, 3000));
+  EXPECT_EQ(reloads, 1);
+}
+
+TEST(ShellHostTest, AReloadLeavesNoWindowOfTheOldShellAlive) {
+  // Variants and LazyLoader release their windows with deleteLater; the reload deletes them before
+  // it clears the engine's singletons and builds the next shell.
+  Harness h;
+  h.screenCount = 2;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import wabar
+ShellRoot {
+    Variants {
+        model: ScreenList.screens
+        PanelWindow {
+            required property ShellScreen modelData
+            screen: modelData
+            anchors { top: true; left: true; right: true }
+            implicitHeight: 20
+            Text { text: modelData.name }
+        }
+    }
+    LazyLoader {
+        objectName: "loader"
+        active: true
+        FloatingWindow { implicitWidth: 100; implicitHeight: 80; Text { text: "lazy" } }
+    }
+}
+)"));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  ASSERT_EQ(h.host->windows().size(), 3);
+  QList<QPointer<QsWindow>> old;
+  QList<QPointer<QQuickWindow>> oldBacking;
+  for (int i = 0; i < 3; ++i) {
+    old << h.shellWindow(i);
+    oldBacking << h.window(i);
+  }
+  int seen = 0;
+  // The old windows are gone by the time the new shell's singletons exist.
+  QObject::connect(h.host.get(), &ShellHost::singletonsCleared, [&] {
+    for (const QPointer<QsWindow>& window : old) seen += window ? 1 : 0;
+  });
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  EXPECT_EQ(seen, 0);
+  for (int i = 0; i < 3; ++i) {
+    EXPECT_TRUE(old.at(i).isNull()) << i;
+    EXPECT_TRUE(oldBacking.at(i).isNull()) << i;
+  }
+  EXPECT_EQ(h.host->windows().size(), 3);
+}
+
 TEST(ShellHostTest, AllScreensGetAPanel) {
   Harness h;
   h.screenCount = 2;

@@ -2,6 +2,7 @@
 // real ShellHost on the offscreen platform.
 #include <gtest/gtest.h>
 
+#include <QQmlContext>
 #include <QQmlListReference>
 
 #include "host/qml/lazy_loader.h"
@@ -455,6 +456,96 @@ ShellRoot {
   ASSERT_TRUE(QTest::qWaitFor([&] { return loader->active(); }, 3000));
 }
 
+namespace {
+
+// A loader whose window deactivates the loader from one of its own handlers.
+QString selfClosingLoader(const QString& windowProperties) {
+  return QStringLiteral(R"(
+import QtQuick
+import wabar
+ShellRoot {
+    LazyLoader {
+        id: loader
+        objectName: "loader"
+        active: true
+        FloatingWindow {
+            objectName: "lazy"
+            name: "lazy"
+            implicitWidth: 120
+            implicitHeight: 80
+            %1
+        }
+    }
+}
+)")
+      .arg(windowProperties);
+}
+
+// Deactivating the loader from inside the window keeps the window alive until control is back
+// in the event loop, takes it off the screen and out of the host at once, and then deletes it.
+void expectDeferredDeletion(Harness& h, const QPointer<QObject>& item, QQuickWindow* backing) {
+  auto* loader = h.host->shell()->findChild<LazyLoader*>(QStringLiteral("loader"));
+  ASSERT_NE(loader, nullptr);
+  EXPECT_FALSE(loader->active());
+  EXPECT_EQ(loader->item(), nullptr);
+  ASSERT_FALSE(item.isNull());  // still delivering: not deleted yet
+  EXPECT_FALSE(backing->isVisible());
+  EXPECT_TRUE(h.host->windows().isEmpty());
+  EXPECT_TRUE(h.host->namedWindows(QStringLiteral("lazy")).isEmpty());
+  QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+  EXPECT_TRUE(item.isNull());
+}
+
+}  // namespace
+
+TEST(ShellWindowsTest, ALazyLoaderClosedFromItsWindowsVisibilityHandlerDeletesItLater) {
+  Harness h;
+  h.start(
+      selfClosingLoader(QStringLiteral("onVisibleChanged: if (!visible) loader.active = false")));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  QsWindow* window = h.shellWindow();
+  ASSERT_NE(window, nullptr);
+  QPointer<QObject> item(window);
+  QQuickWindow* backing = window->backingWindow();
+  window->hide();  // setVisible(false) emits visibleChanged, then still uses the window
+  expectDeferredDeletion(h, item, backing);
+}
+
+TEST(ShellWindowsTest, ALazyLoaderClosedFromItsWindowsFirstShownHandlerDeletesItLater) {
+  Harness h;
+  h.start(selfClosingLoader(QStringLiteral("visible: false\nonFirstShown: loader.active = false")));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  auto* loader = h.host->shell()->findChild<LazyLoader*>(QStringLiteral("loader"));
+  ASSERT_NE(loader, nullptr);
+  auto* window = qobject_cast<QsWindow*>(loader->item());
+  ASSERT_NE(window, nullptr);
+  QPointer<QObject> item(window);
+  QQuickWindow* backing = window->backingWindow();
+  window->show();  // updateVisibility emits firstShown, then tells the host about the window
+  expectDeferredDeletion(h, item, backing);
+}
+
+TEST(ShellWindowsTest, ALazyLoaderClosedByAClickInItsWindowDeletesItLater) {
+  Harness h;
+  h.start(selfClosingLoader(
+      QStringLiteral("MouseArea { anchors.fill: parent; onClicked: loader.active = false }")));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  QsWindow* window = h.shellWindow();
+  ASSERT_NE(window, nullptr);
+  QPointer<QObject> item(window);
+  QQuickWindow* backing = window->backingWindow();
+  ASSERT_TRUE(QTest::qWaitForWindowExposed(backing));
+  // The click is delivered by the window's QQuickDeliveryAgent, which must outlive the handler.
+  // QTest processes events after the click, which may already run the deferred deletion.
+  QTest::mouseClick(backing, Qt::LeftButton, {}, QPoint(20, 20));
+  auto* loader = h.host->shell()->findChild<LazyLoader*>(QStringLiteral("loader"));
+  ASSERT_NE(loader, nullptr);
+  EXPECT_FALSE(loader->active());
+  EXPECT_TRUE(h.host->windows().isEmpty());
+  QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+  EXPECT_TRUE(item.isNull());
+}
+
 TEST(ShellWindowsTest, AnActiveLazyLoaderBuildsWithTheShell) {
   Harness h;
   h.start(QStringLiteral(R"(
@@ -555,5 +646,7 @@ FloatingWindow {
   EXPECT_EQ(QsWindow::of(backing), window.get());
   probe.setObjectName(QString());
   window.reset();
-  EXPECT_EQ(probe.objectName(), QStringLiteral("w0h0cfalsevfalse"));
+  // The binding ran during the teardown and read either a live or an absent window; the point is
+  // that it ran without touching a deleted one.
+  EXPECT_FALSE(probe.objectName().isEmpty());
 }

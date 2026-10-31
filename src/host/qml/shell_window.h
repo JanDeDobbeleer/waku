@@ -273,6 +273,9 @@ class QsWindow : public QObject, public QQmlParserStatus {
   QString buildError() const { return buildError_; }
   // The host lets the window show (its shell is installed), or takes that back.
   void setPresentable(bool presentable);
+  // The window is deleted later (its owner called deleteLater): it leaves the screen and stops
+  // counting as a window of its shell now.
+  void retire();
   void setMonitorHandle(qlonglong handle);
   // Whether the wabar chrome of this window shows the host's error pill.
   virtual bool showsErrors() const { return false; }

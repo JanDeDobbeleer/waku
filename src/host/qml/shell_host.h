@@ -149,6 +149,9 @@ class ShellHost : public QObject {
 
   // ---- called by QsWindow ----
   void adopt(QsWindow* window);
+  // The window is dying later (deleteLater): it gives back its app bar and stops counting as a
+  // window of the shell now. Its entry goes with release().
+  void retire(QsWindow* window);
   void release(QsWindow* window);
   // A window just appeared on the screen: stack it, set whether it takes clicks as activation and,
   // with `activate`, give it the keyboard focus.
@@ -175,6 +178,9 @@ class ShellHost : public QObject {
     std::optional<wabar::host::AppBarRequest> appBarRequest;
     bool layoutConnected = false;
     bool presented = false;
+    // Set by retire(): the window waits for its deferred deletion and is skipped everywhere.
+    bool retired = false;
+    bool live() const { return window && !retired; }
   };
   // Members are destroyed in reverse order: windows first, then the root, then its component.
   struct Loaded {
@@ -199,6 +205,8 @@ class ShellHost : public QObject {
   void watchScreen(QScreen* screen);
   // Destroys the shell, drops the engine's singletons and compiled files, emits singletonsCleared.
   void resetEngine();
+  // Destroys the shell and every window of it that waits for a deferred deletion.
+  void dropShell();
   std::unique_ptr<Loaded> build(const QUrl& url, QString* error);
   bool buildFallback();
   void install(std::unique_ptr<Loaded> loaded);
@@ -219,9 +227,11 @@ class ShellHost : public QObject {
   QString themePath() const;
   // The windows of `loaded` that failed to build, as "N windows failed: <first error>".
   static QString failures(const Loaded& loaded, int* built);
+  // Whether `loaded` has a window that is not retired.
+  static bool hasWindows(const Loaded& loaded);
 
   // Gives the QML files of the config home a new URL for each reload (see shell_host.cpp), so a
-  // reload built next to the live shell never reuses a file the live shell still holds.
+  // reload never reuses a file that something of the old shell still holds.
   class GenerationInterceptor;
 
   QQmlEngine* engine_;

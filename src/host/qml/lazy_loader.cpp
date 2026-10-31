@@ -1,9 +1,13 @@
 #include "host/qml/lazy_loader.h"
 
+#include <private/qqmlcontextdata_p.h>
+
 #include <QDebug>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlIncubationController>
+
+#include "host/qml/shell_window.h"
 
 namespace wabar::host {
 
@@ -38,7 +42,7 @@ LazyLoader::LazyLoader(QObject* parent) : QObject(parent) {
 
 LazyLoader::~LazyLoader() {
   incubator_.reset();
-  delete item_.data();
+  if (item_) dispose(item_);
 }
 
 void LazyLoader::setComponent(QQmlComponent* component) {
@@ -169,9 +173,24 @@ void LazyLoader::destroyItem() {
   if (!item_) return;
   QObject* item = item_;
   item_ = nullptr;
-  delete item;
+  dispose(item);
   emit itemChanged();
   emit activeChanged();
+}
+
+void LazyLoader::dispose(QObject* item) {
+  // `active = false` usually comes from inside the item: a click in the loaded window, or its
+  // onVisibleChanged, onHidden or onFirstShown. Qt and QsWindow still have that window on the
+  // stack then, so it is deleted only once control is back in the event loop (as QQuickLoader
+  // does). Until then its windows are off the screen and out of the host, and its bindings stop.
+  QList<QsWindow*> windows = item->findChildren<QsWindow*>();
+  if (auto* window = qobject_cast<QsWindow*>(item)) windows.prepend(window);
+  for (QsWindow* window : windows) window->retire();
+  if (QQmlContext* context = qmlContext(item)) {
+    QQmlContextData::get(context)->clearContextRecursively();
+  }
+  item->setParent(nullptr);
+  item->deleteLater();
 }
 
 void LazyLoader::cancel() {
