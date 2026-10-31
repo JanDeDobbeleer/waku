@@ -24,8 +24,8 @@
 
 #include "control/control.h"
 #include "control/wallpaper_control.h"
+#include "host/qml/qs_window.h"
 #include "host/qml/shell_host.h"
-#include "host/qml/shell_window.h"
 
 using namespace wabar::control;
 using namespace wabar::host;

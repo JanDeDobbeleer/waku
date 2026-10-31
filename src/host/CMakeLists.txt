@@ -80,15 +80,21 @@ qt_add_qml_module(wabar_host
   SOURCES
     qml/control_handler.h
     qml/control_handler.cpp
+    qml/floating_window.h
+    qml/floating_window.cpp
     qml/global_shortcut.h
     qml/global_shortcut.cpp
     qml/ipc_handler.h
     qml/ipc_handler.cpp
     qml/lazy_loader.h
     qml/lazy_loader.cpp
+    qml/panel_window.h
+    qml/panel_window.cpp
     qml/persistent_properties.h
     qml/persistent_properties.cpp
     qml/popup_placement_qml.h
+    qml/qs_window.h
+    qml/qs_window.cpp
     qml/region.h
     qml/region.cpp
     qml/scope.h
@@ -98,8 +104,6 @@ qt_add_qml_module(wabar_host
     qml/shell_host.cpp
     qml/shell_screen.h
     qml/shell_screen.cpp
-    qml/shell_window.h
-    qml/shell_window.cpp
     qml/surface_control.h
     qml/surface_control.cpp
     qml/system_clock.h
@@ -115,6 +119,8 @@ qt_add_qml_module(wabar_host
     qml/window_thumbnail.cpp
     qml/windows_taskbar_command.h
     qml/windows_taskbar_command.cpp
+    qml/wlr_layershell.h
+    qml/wlr_layershell.cpp
     win32/shell_host_win32.cpp
 )
 # The generated type registration includes headers by name, hence the private include directory.

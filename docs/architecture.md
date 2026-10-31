@@ -203,7 +203,9 @@ running shell it compiles the new file in a throwaway engine and checks that the
 `ShellRoot`; nothing is created there, so no window, widget or service starts. Then the old shell
 goes (its app bars first), the theme is applied and the new shell is created in the main engine.
 
-Every window type derives from `QsWindow` (`shell_window.*`): a declaration that owns a backing
+Every window type derives from `QsWindow` (`src/host/qml/qs_window.*`; the subclasses and the
+`WlrLayershell` attached type each have their own file beside it: `panel_window.*`,
+`floating_window.*`, `wlr_layershell.*`): a declaration that owns a backing
 `QQuickWindow` and puts its children into that window's content item. On completion a window
 registers with the `ShellHost` of its engine. Windows created while the shell builds are shown when
 it is installed; a window created later (`Variants`, `LazyLoader`) is shown at once. A window whose

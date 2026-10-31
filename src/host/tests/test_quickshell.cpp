@@ -2,6 +2,7 @@
 // as a ported shell uses them.
 #include <gtest/gtest.h>
 
+#include "host/qml/panel_window.h"
 #include "host/testing/shell_fixtures.h"
 
 TEST(QuickshellModule, APortedShellLoads) {

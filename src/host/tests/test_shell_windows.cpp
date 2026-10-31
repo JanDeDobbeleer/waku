@@ -5,7 +5,9 @@
 #include <QQmlContext>
 #include <QQmlListReference>
 
+#include "host/qml/floating_window.h"
 #include "host/qml/lazy_loader.h"
+#include "host/qml/panel_window.h"
 #include "host/testing/shell_fixtures.h"
 
 namespace {

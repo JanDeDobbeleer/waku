@@ -7,15 +7,17 @@
 
 #include <QObject>
 
+#include "host/qml/floating_window.h"
 #include "host/qml/global_shortcut.h"
 #include "host/qml/ipc_handler.h"
 #include "host/qml/lazy_loader.h"
+#include "host/qml/panel_window.h"
 #include "host/qml/persistent_properties.h"
+#include "host/qml/qs_window.h"
 #include "host/qml/region.h"
 #include "host/qml/scope.h"
 #include "host/qml/script_model.h"
 #include "host/qml/shell_screen.h"
-#include "host/qml/shell_window.h"
 #include "host/qml/system_clock.h"
 #include "host/qml/transform_watcher.h"
 #include "host/qml/window_enums.h"

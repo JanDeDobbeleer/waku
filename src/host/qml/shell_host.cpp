@@ -22,8 +22,9 @@
 #include <cmath>
 
 #include "host/plugin_guard.h"
+#include "host/qml/panel_window.h"
+#include "host/qml/qs_window.h"
 #include "host/qml/shell_screen.h"
-#include "host/qml/shell_window.h"
 #include "host/startup_trace.h"
 
 namespace wabar::host {

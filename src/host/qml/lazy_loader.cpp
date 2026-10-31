@@ -7,7 +7,7 @@
 #include <QQmlEngine>
 #include <QQmlIncubationController>
 
-#include "host/qml/shell_window.h"
+#include "host/qml/qs_window.h"
 
 namespace wabar::host {
 

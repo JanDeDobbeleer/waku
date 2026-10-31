@@ -8,8 +8,8 @@
 
 #include <QObject>
 
-#include "host/qml/shell_window.h"
 #include "host/qml/window_enums.h"
+#include "host/qml/wlr_layershell.h"
 
 namespace wabar::quickshell {
 

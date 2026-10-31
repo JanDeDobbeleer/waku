@@ -2,8 +2,8 @@
 
 #include <QMap>
 
+#include "host/qml/qs_window.h"
 #include "host/qml/shell_host.h"
-#include "host/qml/shell_window.h"
 
 namespace wabar::host {
 
