@@ -4,6 +4,7 @@
 #include <QDateTime>
 #include <QVariantMap>
 
+#include "kernel/qt/linger.h"
 #include "kernel/qt/live_desktop.h"
 
 namespace wabar::notifications {
@@ -26,11 +27,9 @@ std::unique_ptr<NotificationSource> systemSource() {
 }  // namespace
 
 std::shared_ptr<NotificationService> acquireNotificationService() {
-  static std::weak_ptr<NotificationService> shared;
-  if (auto existing = shared.lock()) return existing;
-  auto created = std::make_shared<NotificationService>(systemSource());
-  shared = created;
-  return created;
+  // Outlives a reload: the listener thread is neither joined nor started again.
+  static kernel::LingeringHub<NotificationService> hub;
+  return hub.acquire([] { return std::make_shared<NotificationService>(systemSource()); });
 }
 
 Notifications::Notifications(QObject* parent)

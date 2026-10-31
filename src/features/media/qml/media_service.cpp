@@ -1,5 +1,6 @@
 #include "features/media/qml/media_service.h"
 
+#include "kernel/qt/linger.h"
 #include "kernel/qt/live_desktop.h"
 
 namespace wabar::media {
@@ -33,11 +34,9 @@ std::unique_ptr<MediaSessionSource> systemSource() {
 }  // namespace
 
 std::shared_ptr<MediaSessionService> acquireMediaService() {
-  static std::weak_ptr<MediaSessionService> shared;
-  if (auto existing = shared.lock()) return existing;
-  auto created = std::make_shared<MediaSessionService>(systemSource());
-  shared = created;
-  return created;
+  // Outlives a reload: GSMTC and its worker thread are neither stopped nor started again.
+  static kernel::LingeringHub<MediaSessionService> hub;
+  return hub.acquire([] { return std::make_shared<MediaSessionService>(systemSource()); });
 }
 
 Media::Media(QObject* parent) : Media(acquireMediaService(), parent) {}
