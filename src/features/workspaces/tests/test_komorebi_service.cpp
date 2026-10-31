@@ -251,8 +251,12 @@ TEST(KomorebiServiceTest, ListensOnItsOwnPipeReconnectsAndSurvivesMalformedJson)
 TEST(KomorebiServiceTest, OfflineKomorebiKeepsRetryingUntilStopped) {
   EventBus bus;
   std::atomic<int> subscribeAttempts{0};
+  std::atomic<int> runningChecks{0};
   komo::KomorebiBackend backend;
-  backend.isKomorebiRunning = [] { return false; };
+  backend.isKomorebiRunning = [&] {
+    ++runningChecks;
+    return false;
+  };
   backend.runKomorebic = [&](const QStringList& args, int, void*) {
     if (args.value(0) == QStringLiteral("subscribe-pipe")) ++subscribeAttempts;
     return komo::KomorebicResult{};
@@ -262,7 +266,8 @@ TEST(KomorebiServiceTest, OfflineKomorebiKeepsRetryingUntilStopped) {
   komo::KomorebiService service(bus, backend, nullptr, QStringLiteral("wabar-test-offline"),
                                 timing);
   emit bus.event(komo::kSubscribeEvent, {});
-  QTest::qWait(150);
+  // The listener asks for komorebi.exe once per retry: a few rounds have gone by.
+  ASSERT_TRUE(QTest::qWaitFor([&] { return runningChecks.load() >= 3; }, 5000));
   EXPECT_TRUE(service.isListening());
   EXPECT_FALSE(service.isConnected());
   EXPECT_EQ(subscribeAttempts.load(), 0);  // komorebi.exe is not running, so nothing to subscribe

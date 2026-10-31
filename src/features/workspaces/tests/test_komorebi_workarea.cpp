@@ -170,11 +170,15 @@ TEST(KomorebiWorkAreaGuard, OffTheLiveDesktopTheRealGuardHasNoNotifier) {
 TEST(KomorebiWorkAreaGuard, TheQtTimersFireOnTheEventLoop) {
   auto log = std::make_shared<kmb::FakeWorkAreaLog>();
   auto now = std::make_shared<int>(0);
-  kmb::KomorebiWorkAreaGuard guard(std::make_unique<kmb::FakeWorkAreaNotifier>(log, now), nullptr,
-                                   {10, 30});
+  auto timers = kmb::makeQtWorkAreaTimers();
+  const kmb::WorkAreaTimers* qtTimers = timers.get();
+  kmb::KomorebiWorkAreaGuard guard(std::make_unique<kmb::FakeWorkAreaNotifier>(log, now),
+                                   std::move(timers), {10, 30});
   guard.screensChanged();
   guard.screensChanged();
   EXPECT_TRUE(QTest::qWaitFor([&] { return log->calls.size() == 2; }, 3000));
-  QTest::qWait(100);
+  // Both timers have fired and none is armed again: no third call can come.
+  EXPECT_FALSE(qtTimers->active(Slot::Settle));
+  EXPECT_FALSE(qtTimers->active(Slot::Late));
   EXPECT_EQ(log->calls.size(), 2u);
 }
