@@ -107,6 +107,11 @@ class WallpaperTransition : public QObject {
   double progress() const { return progress_; }
   void setProgress(double value);
   bool windowVisible() const;
+  // Whether the reveal still runs, and whether the decoder thread still runs. With both false and
+  // a final state (Finished, Skipped, Cancelled) nothing emits again; tests check that instead of
+  // waiting.
+  bool animating() const;
+  bool decoding() const;
   const std::vector<ScreenArea>& areas() const { return areas_; }
   // The laid-out images; empty again once the window is gone (after the linger, cancel or skip).
   const std::vector<ScaledImage>& scaledNew() const { return scaledNew_; }

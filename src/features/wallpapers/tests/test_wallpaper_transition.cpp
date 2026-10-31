@@ -5,6 +5,7 @@
 
 #include <QDir>
 #include <QImage>
+#include <QPointer>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -164,7 +165,7 @@ TEST(WallpaperTransition, PlaysToTheEndAndFinishesOnce) {
   QSignalSpy finished(t.get(), &WallpaperTransition::finished);
   t->onImagesLoaded(solid(kNew), solid(kOld));
   ASSERT_TRUE(QTest::qWaitFor([&] { return finished.count() > 0; }, 3000));
-  QTest::qWait(60);
+  EXPECT_FALSE(t->animating());  // nothing is left to emit finished() again
   EXPECT_EQ(finished.count(), 1);
   EXPECT_DOUBLE_EQ(t->progress(), 1.0);
   EXPECT_EQ(t->state(), WallpaperTransition::State::Finished);
@@ -193,8 +194,10 @@ TEST(WallpaperTransition, CancelStopsSilently) {
   auto t = make(QStringLiteral("split"), 40);
   QSignalSpy finished(t.get(), &WallpaperTransition::finished);
   t->onImagesLoaded(solid(kNew), solid(kOld));
+  EXPECT_TRUE(t->animating());
   t->cancel();
-  QTest::qWait(120);
+  EXPECT_FALSE(t->animating());  // stopped: finished() can no longer come
+  QCoreApplication::processEvents();
   EXPECT_EQ(finished.count(), 0);
   EXPECT_EQ(t->state(), WallpaperTransition::State::Cancelled);
   EXPECT_FALSE(t->windowVisible());
@@ -226,8 +229,8 @@ TEST(WallpaperTransition, DestroyingWhileDecodingIsSafe) {
   {
     WallpaperTransition t(QStringLiteral("new"), QStringLiteral("split"), platform, 20);
     t.start();
-  }
-  QTest::qWait(120);  // the late result finds no transition
+  }  // the destructor waits for the decoder, which has posted its result by then
+  QCoreApplication::sendPostedEvents();  // the late result finds no transition
 }
 
 // --- the service
@@ -250,8 +253,10 @@ struct ServiceFixture {
     deps.transition = [this, attachOk, readable](const QString& image, const QString& animation) {
       images << image;
       animations << animation;
-      return std::make_unique<WallpaperTransition>(
+      auto transition = std::make_unique<WallpaperTransition>(
           image, animation, fakePlatform(std::make_shared<FakeCalls>(), attachOk, readable), 30);
+      made.emplace_back(transition.get());
+      return transition;
     };
     service = std::make_unique<Wallpapers>(std::move(deps), nullptr);
     service->setImagePath(folder.path());
@@ -269,12 +274,27 @@ struct ServiceFixture {
         QDir(folder.path()).absoluteFilePath(QString::fromLatin1(name)));
   }
 
+  // Every transition made so far has ended or is gone: none of them can set the wallpaper later.
+  bool settled() const {
+    for (const auto& transition : made) {
+      if (!transition) continue;
+      const auto now = transition->state();
+      if (now != WallpaperTransition::State::Finished &&
+          now != WallpaperTransition::State::Skipped &&
+          now != WallpaperTransition::State::Cancelled) {
+        return false;
+      }
+    }
+    return !made.empty();
+  }
+
   QTemporaryDir folder;
   QTemporaryDir cacheFolder;
   std::shared_ptr<DesktopState> state;
   std::unique_ptr<Wallpapers> service;
   QStringList images;
   QStringList animations;
+  std::vector<QPointer<WallpaperTransition>> made;
 };
 
 }  // namespace
@@ -292,7 +312,7 @@ TEST(WallpapersEngine, SetsTheWallpaperExactlyOnceWhenTheAnimationEnds) {
   f.service->setWallpaper(f.file("a.png"));
   EXPECT_TRUE(f.state->sets.isEmpty());  // nothing before the animation is over
   ASSERT_TRUE(QTest::qWaitFor([&] { return !f.state->sets.isEmpty(); }, 3000));
-  QTest::qWait(100);
+  EXPECT_TRUE(f.settled());  // no transition is left that could set it again
   EXPECT_EQ(f.state->sets, QStringList{f.file("a.png")});
   EXPECT_EQ(f.animations, QStringList{QStringLiteral("split")});
 }
@@ -303,7 +323,7 @@ TEST(WallpapersEngine, ANewChangeCancelsTheRunningOne) {
   f.service->setWallpaper(f.file("a.png"));
   f.service->setWallpaper(f.file("b.png"));
   ASSERT_TRUE(QTest::qWaitFor([&] { return !f.state->sets.isEmpty(); }, 3000));
-  QTest::qWait(150);
+  EXPECT_TRUE(f.settled());  // the cancelled one cannot set a.png later
   EXPECT_EQ(f.state->sets, QStringList{f.file("b.png")});
   EXPECT_EQ(f.images.size(), 2);
 }
@@ -322,7 +342,10 @@ TEST(WallpapersEngine, DryRunPlaysTheTransitionButNeverSetsTheWallpaper) {
   ServiceFixture f(true, true, /*dryRun=*/true);
   f.service->configureEngine(true, QStringLiteral("split"));
   f.service->setWallpaper(f.file("a.png"));
-  QTest::qWait(250);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return f.settled(); }, 3000));
+  ASSERT_EQ(f.made.size(), 1u);
+  ASSERT_FALSE(f.made.front().isNull());
+  EXPECT_EQ(f.made.front()->state(), WallpaperTransition::State::Finished);  // it played
   EXPECT_EQ(f.images.size(), 1);
   EXPECT_TRUE(f.state->sets.isEmpty());
 }
@@ -348,7 +371,7 @@ TEST(WallpapersEngine, AChangeFromInsideTheCommitIsSafe) {
   });
   f.service->setWallpaper(f.file("a.png"));
   ASSERT_TRUE(QTest::qWaitFor([&] { return f.state->sets.size() >= 2; }, 5000));
-  QTest::qWait(100);
+  EXPECT_TRUE(f.settled());
   EXPECT_EQ(f.state->sets, (QStringList{f.file("a.png"), f.file("b.png")}));
   EXPECT_EQ(f.images.size(), 2);
 }

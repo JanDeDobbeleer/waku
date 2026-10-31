@@ -44,6 +44,12 @@ void makeFile(const QString& path, const QByteArray& content) {
 // WorkerW, skips at once so finished() follows.
 struct TransitionLog {
   QStringList played;  // "<path>|<animation>"
+  std::vector<QPointer<WallpaperTransition>> made;
+  // The last transition has skipped (its finished() has been emitted) or is gone.
+  bool lastDone() const {
+    return !made.empty() &&
+           (!made.back() || made.back()->state() == WallpaperTransition::State::Skipped);
+  }
 };
 
 std::unique_ptr<WallpaperTransition> fakeTransition(const std::shared_ptr<TransitionLog>& log,
@@ -62,7 +68,9 @@ std::unique_ptr<WallpaperTransition> fakeTransition(const std::shared_ptr<Transi
     return std::make_pair(image, image);
   };
   platform.showWindow = false;
-  return std::make_unique<WallpaperTransition>(path, animation, platform, 10);
+  auto transition = std::make_unique<WallpaperTransition>(path, animation, platform, 10);
+  log->made.emplace_back(transition.get());
+  return transition;
 }
 
 // A wallpaper folder with a.jpg, img2.png, img10.png (Explorer order), notes.txt, fake.png (not
@@ -272,7 +280,8 @@ TEST(WallpaperService, DryRunWithTheEnginePlaysTheAnimationButNeverSetsIt) {
   EXPECT_EQ(f.service->controlSet(QStringLiteral("img2.png"), true), f.ok(path));
   ASSERT_EQ(f.transitions->played.size(), 1);
   EXPECT_TRUE(f.transitions->played.first().endsWith(QStringLiteral("|fade")));
-  QTest::qWait(300);  // the (skipped) transition has finished by now
+  // The transition decodes on a thread, then skips (no WorkerW) and emits finished().
+  ASSERT_TRUE(QTest::qWaitFor([&] { return f.transitions->lastDone(); }, 3000));
   EXPECT_TRUE(f.setsEmpty());
 
   // Without the flag the same flow sets the wallpaper once the animation is done.

@@ -128,6 +128,12 @@ WallpaperTransition::~WallpaperTransition() {
 
 bool WallpaperTransition::windowVisible() const { return window_ && window_->isVisible(); }
 
+bool WallpaperTransition::animating() const {
+  return animationTimer_ && animationTimer_->state() == QAbstractAnimation::Running;
+}
+
+bool WallpaperTransition::decoding() const { return decoder_ && decoder_->isRunning(); }
+
 void WallpaperTransition::start() {
   if (state_ != State::Idle) return;
   state_ = State::Decoding;
