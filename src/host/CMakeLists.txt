@@ -2,7 +2,7 @@
 #
 # wabar_host_base (STATIC, wabar_options): what has no QML in it. screen_match, popup_placement and
 #   panel_geometry (pure functions), plugin_guard (checks user-built QML plugins before the engine
-#   sees them), hotkeys (the global hotkey table), the app bar interface (app_bar.h) and its Win32
+#   sees them), startup_trace (WABAR_TRACE=1 timing lines), hotkeys (the global hotkey table), the app bar interface (app_bar.h) and its Win32
 #   implementation, and the DWM backdrop helpers (win32/).
 # wabar_host (STATIC + QML module `wabar` 2.0): the QML types a shell imports (ShellRoot, Scope,
 #   PanelWindow, FloatingWindow, QsWindow, Variants, LazyLoader, ScreenList, Panel, PanelLayout,
@@ -32,6 +32,8 @@ add_library(wabar_host_base STATIC
   region_math.cpp
   screen_match.h
   screen_match.cpp
+  startup_trace.h
+  startup_trace.cpp
   thumbnail.h
   thumbnail.cpp
   thumbnail_store.h

@@ -24,6 +24,7 @@
 #include "host/plugin_guard.h"
 #include "host/qml/shell_screen.h"
 #include "host/qml/shell_window.h"
+#include "host/startup_trace.h"
 
 namespace wabar::host {
 
@@ -295,6 +296,7 @@ bool ShellHost::validate(const QUrl& url, const QMetaObject& expected, bool crea
       return false;
     }
   }
+  traceStep(create ? "theme checked in the probe engine" : "shell checked in the probe engine");
   return true;
 }
 
@@ -404,6 +406,7 @@ void ShellHost::watchScreen(QScreen* screen) {
 }
 
 bool ShellHost::reload() {
+  traceStep("reload started");
   if (options_.safe) return reloadSafe();
   QString error;
   std::unique_ptr<Loaded> next;
@@ -424,7 +427,12 @@ bool ShellHost::reload() {
     }
     qWarning().noquote() << "wabar:" << error;
   } else if (const QList<PluginFailure> refused =
-                 configPluginFailures(options_.configHome, engine_->importPathList());
+                 [this] {
+                   QList<PluginFailure> found =
+                       configPluginFailures(options_.configHome, engine_->importPathList());
+                   traceStep("config plugins checked");
+                   return found;
+                 }();
              !refused.isEmpty()) {
     // A qmldir outside the guarded import roots (beside shell.qml, under `import "./lib"`) names
     // a plugin that does not fit this process: loading it could crash the bar.
@@ -482,6 +490,7 @@ void ShellHost::resetEngine() {
   engine_->clearSingletons();
   engine_->clearComponentCache();
   emit singletonsCleared();
+  traceStep("engine reset");
 }
 
 void ShellHost::dropShell() {
@@ -506,11 +515,13 @@ std::unique_ptr<ShellHost::Loaded> ShellHost::build(const QUrl& url, QString* er
     *error = lines.value(0);
     return nullptr;
   }
+  traceStep("shell compiled");
   // Windows register while the shell is created (QsWindow::componentComplete); install() shows
   // them once the whole shell exists.
   building_ = loaded.get();
   loaded->root.reset(loaded->component->create());
   building_ = nullptr;
+  traceStep("shell created");
   if (!loaded->root) {
     const QStringList lines = describeAll(loaded->component->errors());
     qWarning().noquote() << "wabar: config errors:\n" << lines.join('\n');
@@ -545,6 +556,16 @@ void ShellHost::install(std::unique_ptr<Loaded> loaded) {
     }
   }
   if (!loaded_) return;
+  traceStep("shell windows presented");
+  if (traceEnabled()) {
+    for (const Entry& entry : loaded_->entries) {
+      if (!entry.live()) continue;
+      // Emitted on the render thread; queued to this (GUI) thread.
+      connect(
+          entry.window->backingWindow(), &QQuickWindow::frameSwapped, this,
+          [] { traceStep("first frame of a shell window"); }, Qt::SingleShotConnection);
+    }
+  }
   // Objects declared next to the windows start work now that the shell is the live one.
   QList<QObject*> parts;
   if (loaded_->shell) collectParts(loaded_->shell, &parts);
@@ -558,6 +579,7 @@ void ShellHost::install(std::unique_ptr<Loaded> loaded) {
       qWarning().noquote() << "wabar: a shell part failed to start";
     }
   }
+  traceStep("shell parts activated");
 }
 
 void ShellHost::adopt(QsWindow* window) {
@@ -764,7 +786,9 @@ void ShellHost::watch() {
   if (options_.safe) return;
   watching_ = true;
   snapshot_ = scanQmlFiles();
+  traceStep("config home scanned");
   refreshWatches();
+  traceStep("config home watched");
 }
 
 ShellHost::FileStamps ShellHost::scanQmlFiles() const {

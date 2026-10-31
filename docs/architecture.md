@@ -366,6 +366,7 @@ No new singleton without a row here and a reason.
 
 | What | Where | Notes |
 |---|---|---|
+| start-up trace clock | `src/host/startup_trace.{h,cpp}` | one `QElapsedTimer` started at the top of `main()` and a flag read once from `WABAR_TRACE`; `traceStep()` logs the milliseconds since start for each start-up and reload step. GUI thread only; does nothing unless `WABAR_TRACE=1` |
 | media source-app name cache, shell-app cache | `src/features/media/win32/media_source_apps.cpp` (names), `src/kernel/win32/app_activation.cpp` (shell-app cache) | AUMID to display name; `QMutex`-guarded, written from the media session thread only |
 | `wabar.services.Systray` | `src/features/tray/qml/systray.{h,cpp}` | the one tray host of a `wabar` run (the hook in Explorer), shared by every Tray widget of the bar; created by the QML engine on first use and destroyed with it, which stops the host. |
 | `wabar.services.WindowControl` | `src/features/taskbar/qml/window_control.{h,cpp}` | `activate(hwnd)`, `foreground()` and `isWindow(hwnd)` for HWNDs that come from elsewhere (komorebi state). Stateless: a thin call into Win32 through a `WindowControlBackend`. GUI thread only; no thread, no timer. Inert (false, 0) without a live desktop |

@@ -16,11 +16,13 @@
 #include "host/plugin_guard.h"
 #include "host/qml/control_handler.h"
 #include "host/qml/shell_host.h"
+#include "host/startup_trace.h"
 #include "host/taskbar_control.h"
 #include "kernel/qt/app_data.h"
 #include "kernel/qt/live_desktop.h"
 
 int main(int argc, char* argv[]) {
+  wabar::host::startTrace();
   // Keeps the process MTA alive for the whole run. Icon and shortcut reads on pool threads do
   // CoInitializeEx(MTA) ... CoUninitialize() per call; without this the last one out tears the MTA
   // down, unloading the in-process shell extensions and codecs it loaded, possibly while another
@@ -47,6 +49,7 @@ int main(int argc, char* argv[]) {
   // A transparent, blurred window needs an alpha swap chain.
   QQuickWindow::setDefaultAlphaBuffer(true);
   QGuiApplication app(argc, argv);
+  wabar::host::traceStep("application built");
 
   QCommandLineParser parser;
   parser.addHelpOption();
@@ -108,6 +111,7 @@ int main(int argc, char* argv[]) {
       engine.addImportPath(root);
     }
   }
+  wabar::host::traceStep("engine built, import roots checked");
   wabar::host::ShellHost::Options options;
   options.configHome = configHome;
   options.allowReserve = parser.isSet(appBarOpt);
@@ -115,6 +119,7 @@ int main(int argc, char* argv[]) {
   options.hooks = wabar::host::ShellHost::NativeHooks::win32();
   wabar::host::ShellHost host(&engine, std::move(options));
   wabar::app::connectQuickshell(&engine, &host, configHome);
+  wabar::host::traceStep("host built");
 
   // The Windows taskbar: inert off the live desktop. A stale marker of a crashed run is undone
   // first; with --hide-taskbar the taskbar is hidden before the first reload, so a bar that
@@ -154,6 +159,8 @@ int main(int argc, char* argv[]) {
 
   if (taskbar) taskbar->start(parser.isSet(hideTaskbarOpt));
   host.reload();
+  wabar::host::traceStep("first reload done");
   host.watch();
+  wabar::host::traceStep("watch done");
   return app.exec();
 }
