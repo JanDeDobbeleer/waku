@@ -89,7 +89,9 @@ TEST(CpuTemperature, DoesNotSampleWhileUnobserved) {
   Cpu cpu(fake, nullptr);
   cpu.setActive(false);
   cpu.componentComplete();
-  QTest::qWait(300);
+  // No timer and no sample on the pool: nothing can run later either.
+  EXPECT_FALSE(cpu.polling());
+  EXPECT_FALSE(cpu.sampling());
   EXPECT_EQ(fake->calls.load(), 0);
   EXPECT_FALSE(cpu.temperatureAvailable());
 }
@@ -119,7 +121,8 @@ TEST(GpuTemperature, DoesNotSampleWhileUnobserved) {
   Gpu gpu(fake, nullptr);
   gpu.setActive(false);
   gpu.componentComplete();
-  QTest::qWait(300);
+  EXPECT_FALSE(gpu.polling());
+  EXPECT_FALSE(gpu.sampling());
   EXPECT_EQ(fake->calls.load(), 0);
 }
 

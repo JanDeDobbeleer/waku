@@ -26,7 +26,9 @@ bool waitFor(const std::function<bool()>& condition, int timeoutMs = 3000) {
 TEST(StatSource, DoesNotSampleBeforeTheComponentIsComplete) {
   auto fake = std::make_shared<FakeMemory>();
   Memory memory(fake, nullptr);
-  QTest::qWait(300);
+  // No timer and no sample on the pool: nothing can run later either.
+  EXPECT_FALSE(memory.polling());
+  EXPECT_FALSE(memory.sampling());
   EXPECT_EQ(fake->calls.load(), 0);
   EXPECT_FALSE(memory.ready());
 }
@@ -68,7 +70,8 @@ TEST(StatSource, InactiveSourceDoesNotPollUntilActivated) {
   Memory memory(fake, nullptr);
   memory.setActive(false);
   memory.componentComplete();
-  QTest::qWait(300);
+  EXPECT_FALSE(memory.polling());
+  EXPECT_FALSE(memory.sampling());
   EXPECT_EQ(fake->calls.load(), 0);
   EXPECT_FALSE(memory.ready());
 
@@ -83,9 +86,13 @@ TEST(StatSource, StopsPollingWhenDeactivated) {
   memory.componentComplete();
   ASSERT_TRUE(waitFor([&] { return memory.ready(); }));
   memory.setActive(false);
-  QTest::qWait(150);  // a sample already in flight may still finish
+  EXPECT_FALSE(memory.polling());
+  // A sample already in flight may still finish; after it nothing starts another.
+  ASSERT_TRUE(waitFor([&] { return !memory.sampling(); }));
   const int calls = fake->calls.load();
-  QTest::qWait(400);
+  QCoreApplication::processEvents();
+  EXPECT_FALSE(memory.polling());
+  EXPECT_FALSE(memory.sampling());
   EXPECT_EQ(fake->calls.load(), calls);
 }
 
@@ -121,7 +128,10 @@ TEST(StatSource, ResultOfADestroyedSourceIsDropped) {
     memory->componentComplete();
     ASSERT_TRUE(waitFor([&] { return fake->calls.load() >= 1; }));
   }  // destroyed while the pool thread is still inside sample()
-  QTest::qWait(500);  // the queued apply must find the object gone
+  // The pool task holds the last other reference to the fake and drops it after it has queued the
+  // apply; deliver that apply now: it must find the object gone.
+  ASSERT_TRUE(waitFor([&] { return fake.use_count() == 1; }));
+  QCoreApplication::sendPostedEvents();
   SUCCEED();
 }
 
