@@ -43,7 +43,7 @@ wabar a notification and `NotificationServer` flags have no effect. `dismiss()` 
 from the Action Center; `activate()` hands it to its app.
 The `Quickshell.Services.Notifications` module registers `Notification`, `NotificationServer`,
 `NotificationUrgency`, `NotificationCloseReason` and `NotificationAction` again under the same names
-(`src/app/wabar/quickshell_types_notifications.h`); `NotificationFeed` stays in `wabar.services`.
+(`src/quickshell/services/notifications/qml/quickshell_types_notifications.h`); `NotificationFeed` stays in `wabar.services`.
 
 ## Threads
 

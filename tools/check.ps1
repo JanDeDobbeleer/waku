@@ -171,7 +171,7 @@ if ($SkipFormat) {
 # 2. structure ------------------------------------------------------------------------------
 # Rules S1-S8 of docs/plans/2026-10-29-wabar-architecture-proposal.md (section 4.2). The DEPENDS
 # graph comes from the wabar_feature( calls in src/features/*/CMakeLists.txt, read with a regex, so
-# no build tree is needed. Units: kernel, control, host, ui, features/<f>, app/<exe>; tests/ (the
+# no build tree is needed. Units: kernel, control, host, ui, features/<f>, quickshell, app/<exe>; tests/ (the
 # top-level folder) holds the test main and the integration tests.
 # Mode: ENFORCING (any violation fails the step).
 # Decisions beyond the proposal: S3 and S4 also allow */tests/** and tests/ (tests build QML
@@ -182,7 +182,7 @@ Write-Step 'structure (S1-S8)'
 $sw = [Diagnostics.Stopwatch]::StartNew()
 $structureRules = [ordered]@{
     S1 = 'every source under src/ belongs to exactly one unit and is declared by it'
-    S2 = 'quoted includes: own unit, kernel/, root headers of control/ and of DEPENDS features (their tests also host/testing/ and the testing/ of DEPENDS); host also control/; app/ and tests/ free'
+    S2 = 'quoted includes: own unit, kernel/, root headers of control/ and of DEPENDS features (their tests also host/testing/ and the testing/ of DEPENDS); host also control/; quickshell also control/, host/qml/ and the root and qml/ headers of any feature; app/ and tests/ free'
     S3 = 'Windows SDK and C++/WinRT headers only in */win32/**, features/tray/hook/, app/, tests'
     S4 = 'QtQml/QtQuick includes and QML_* macros only in */qml/**, */testing/**, app/, tests; QtWidgets nowhere'
     S5 = 'only */tests/**, */testing/** and tests/ include */testing/** (features: own, DEPENDS and host/testing/)'
@@ -270,9 +270,9 @@ function Test-FeatureCycle([string]$F, [string[]]$Path) {
 }
 foreach ($f in $features.Keys) { Test-FeatureCycle $f @() }
 
-# Unit of a path under src/: kernel, control, host, ui, features/<f>, app/<exe>; $null if none.
+# Unit of a path under src/: kernel, control, host, ui, features/<f>, quickshell, app/<exe>; $null if none.
 function Get-Unit([string]$File) {
-    if ($File -match '^src/(kernel|control|host|ui)/') { return $Matches[1] }
+    if ($File -match '^src/(kernel|control|host|ui|quickshell)/') { return $Matches[1] }
     if ($File -match '^src/features/([^/]+)/.+') { return "features/$($Matches[1])" }
     if ($File -match '^src/app/([^/]+)/.+') { return "app/$($Matches[1])" }
     return $null
@@ -329,7 +329,7 @@ foreach ($f in $checkFiles) {
     if ($isSrc) {
         # S1
         if (-not $unit) {
-            Add-StructureViolation 'S1' $f 'belongs to no unit (kernel, control, host, ui, features/<f>, app/<exe>)'
+            Add-StructureViolation 'S1' $f 'belongs to no unit (kernel, control, host, ui, features/<f>, quickshell, app/<exe>)'
         } elseif ($feature -and -not $features.ContainsKey($feature)) {
             Add-StructureViolation 'S1' $f "features/$feature has no CMakeLists.txt with wabar_feature("
         } elseif ($feature -and $f -match '\.(cpp|qml)$') {
@@ -387,6 +387,10 @@ foreach ($f in $checkFiles) {
             }
             if ($inc.StartsWith("$unit/") -or $inc.StartsWith('kernel/')) { continue }
             if ($unit -eq 'host' -and $inc.StartsWith('control/')) { continue }
+            # quickshell sits between the features and app: it registers host and feature types under
+            # Quickshell's names.
+            if ($unit -eq 'quickshell' -and ($inc -match '^(control|host/qml)/[^/]+$' -or
+                    $inc -match '^features/[^/]+/(qml/)?[^/]+$')) { continue }
             # control/ root headers (the pipe protocol) are a stable shared abstraction: a feature
             # may use them without a DEPENDS edge.
             if ($feature -and $inc -match '^control/[^/]+$') { continue }

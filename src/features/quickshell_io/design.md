@@ -96,8 +96,8 @@ block the GUI thread for seconds while another process holds the clipboard (Qt r
 ## Modules
 
 Types live in `wabar.services`. `Quickshell.Io` is a module of its own that registers its types
-again under Quickshell's names (`src/app/wabar/quickshell_types_io.h`, QML_FOREIGN; assembled in
-`src/modules/qml_modules.cmake`). It depends on `wabar.services` but does not re-export it: a qmldir
+again under Quickshell's names (`src/quickshell/io/qml/quickshell_types_io.h`, QML_FOREIGN; the module is
+`src/quickshell/io/`). It depends on `wabar.services` but does not re-export it: a qmldir
 `import` line would show every wabar service name, and a shell's own `Workspaces.qml` or
 `Wallpapers.qml` would lose to wabar's service of the same name. `FileViewError` is declared again
 in that header with the same values.

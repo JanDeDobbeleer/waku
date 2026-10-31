@@ -37,7 +37,7 @@ art, and the transport commands. One QML singleton (`Media`) and one widget (`Me
 - Position interpolation (100 ms timer) runs while the current session plays; other sessions get a
   fresh position on each of their events.
 - The `Quickshell.Services.Mpris` module registers these types again under the same names
-  (`src/app/wabar/quickshell_types_mpris.h`; `Mpris` is the same singleton object).
+  (`src/quickshell/services/mpris/qml/quickshell_types_mpris.h`; `Mpris` is the same singleton object).
 
 ## Threads
 

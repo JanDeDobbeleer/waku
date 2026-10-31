@@ -11,7 +11,7 @@
 # features; src/app/wabar/quickshell_types_core.h registers them here under their Quickshell names.
 # The module depends on wabar.services but does not re-export it: `import Quickshell` shows
 # Quickshell's type names and no others, so a shell's own Wallpapers.qml is never shadowed.
-# `Quickshell.Io` is assembled in src/modules/qml_modules.cmake.
+# `Quickshell.Io` and the Mpris and Notifications modules are in src/quickshell/.
 set(quickshell_qml_files qml/DesktopEntries.qml qml/PopupWindow.qml qml/Variants.qml qml/Quickshell.qml)
 set_source_files_properties(qml/Quickshell.qml qml/DesktopEntries.qml PROPERTIES
   QT_QML_SINGLETON_TYPE TRUE)

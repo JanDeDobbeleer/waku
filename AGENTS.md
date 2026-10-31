@@ -197,7 +197,7 @@ a row (and a reason) in the singleton table there.
 Conventional commits: `type(scope): subject`, imperative, lower case, no trailing period.
 
 - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`, `revert`.
-- Scopes: the unit names `kernel`, `control`, `host`, `ui`, `app`; the feature names `apps`, `audio`,
+- Scopes: the unit names `kernel`, `control`, `host`, `ui`, `quickshell`, `app`; the feature names `apps`, `audio`,
   `bluetooth`, `brightness`, `clock`, `color_scheme`, `control_center`, `desktop_state`, `github`, `media`, `network`,
   `notifications`, `quickshell_io`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces`; and
   `build`, `docs`, `test`, `style`, `chore`. The scope is optional. `tools/hooks/commit-msg` checks it.
