@@ -2,7 +2,8 @@
 #include <tlhelp32.h>
 
 #include <QDebug>
-#include <QProcess>
+#include <algorithm>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -13,6 +14,21 @@ namespace wabar::workspaces::komorebi {
 namespace {
 
 const QString kKomorebic = QStringLiteral("komorebic.exe");
+// How often a running komorebic's output pipes are drained while waiting for it.
+constexpr DWORD kDrainSliceMs = 20;
+
+// Closes a Win32 handle on scope exit.
+struct OwnedHandle {
+  HANDLE handle = nullptr;
+  OwnedHandle() = default;
+  OwnedHandle(const OwnedHandle&) = delete;
+  OwnedHandle& operator=(const OwnedHandle&) = delete;
+  ~OwnedHandle() { reset(); }
+  void reset() {
+    if (handle && handle != INVALID_HANDLE_VALUE) CloseHandle(handle);
+    handle = nullptr;
+  }
+};
 
 bool isProcessRunning(const wchar_t* exeName) {
   HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -28,27 +44,131 @@ bool isProcessRunning(const wchar_t* exeName) {
   return found;
 }
 
-KomorebicResult runKomorebic(const QStringList& args, int timeoutMs) {
+// One argument quoted for CommandLineToArgvW (backslashes double only before a quote).
+std::wstring quoteArgument(const std::wstring& arg) {
+  if (!arg.empty() && arg.find_first_of(L" \t\"") == std::wstring::npos) return arg;
+  std::wstring out = L"\"";
+  std::size_t backslashes = 0;
+  for (const wchar_t c : arg) {
+    if (c == L'\\') {
+      ++backslashes;
+      continue;
+    }
+    out.append(c == L'"' ? backslashes * 2 + 1 : backslashes, L'\\');
+    out += c;
+    backslashes = 0;
+  }
+  out.append(backslashes * 2, L'\\');
+  out += L'"';
+  return out;
+}
+
+// Reads what is in the pipe now without blocking.
+void drain(HANDLE pipe, QByteArray& out) {
+  char buffer[4096];
+  DWORD available = 0;
+  while (PeekNamedPipe(pipe, nullptr, 0, nullptr, &available, nullptr) && available > 0) {
+    DWORD read = 0;
+    const DWORD want = std::min<DWORD>(available, sizeof(buffer));
+    if (!ReadFile(pipe, buffer, want, &read, nullptr) || read == 0) return;
+    out.append(buffer, static_cast<qsizetype>(read));
+  }
+}
+
+// Runs komorebic.exe from PATH without a console. Plain Win32 instead of QProcess, which needs a
+// QThread with an event dispatcher; this runs on the listener's std::thread. Both output pipes are
+// drained while it runs, so a large `state` cannot fill a pipe and stall the child. `cancel` (an
+// event, may be null) kills the child at once, so stop() never waits for a timeout.
+KomorebicResult runKomorebic(const QStringList& args, int timeoutMs, void* cancel) {
   KomorebicResult result;
-  QProcess process;
-  wabar::kernel::hideConsole(process);
-  process.setProgram(kKomorebic);
-  process.setArguments(args);
-  process.start();
-  if (!process.waitForStarted(timeoutMs)) {
-    result.standardError = process.errorString().toUtf8();
+  SECURITY_ATTRIBUTES inheritable{sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE};
+  OwnedHandle outRead, outWrite, errRead, errWrite, input;
+  if (!CreatePipe(&outRead.handle, &outWrite.handle, &inheritable, 0) ||
+      !CreatePipe(&errRead.handle, &errWrite.handle, &inheritable, 0)) {
+    result.standardError = QByteArrayLiteral("could not create the komorebic pipes");
     return result;
   }
+  SetHandleInformation(outRead.handle, HANDLE_FLAG_INHERIT, 0);
+  SetHandleInformation(errRead.handle, HANDLE_FLAG_INHERIT, 0);
+  input.handle = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &inheritable,
+                             OPEN_EXISTING, 0, nullptr);
+  if (input.handle == INVALID_HANDLE_VALUE) input.handle = nullptr;
+
+  // Only these handles reach the child, not whatever else is inheritable at this moment.
+  std::vector<HANDLE> inherit{outWrite.handle, errWrite.handle};
+  if (input.handle) inherit.push_back(input.handle);
+  SIZE_T attributeBytes = 0;
+  InitializeProcThreadAttributeList(nullptr, 1, 0, &attributeBytes);
+  std::vector<char> attributeBuffer(attributeBytes);
+  auto* attributes = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(attributeBuffer.data());
+  if (!InitializeProcThreadAttributeList(attributes, 1, 0, &attributeBytes)) {
+    result.standardError = QByteArrayLiteral("could not prepare the komorebic start");
+    return result;
+  }
+  UpdateProcThreadAttribute(attributes, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST, inherit.data(),
+                            inherit.size() * sizeof(HANDLE), nullptr, nullptr);
+
+  STARTUPINFOEXW startup{};
+  startup.StartupInfo.cb = sizeof(startup);
+  startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+  startup.StartupInfo.hStdInput = input.handle;
+  startup.StartupInfo.hStdOutput = outWrite.handle;
+  startup.StartupInfo.hStdError = errWrite.handle;
+  startup.lpAttributeList = attributes;
+
+  std::wstring commandLine = kKomorebic.toStdWString();
+  for (const QString& arg : args) commandLine += L' ' + quoteArgument(arg.toStdWString());
+  PROCESS_INFORMATION info{};
+  const BOOL created = CreateProcessW(nullptr, commandLine.data(), nullptr, nullptr, TRUE,
+                                      CREATE_NO_WINDOW | EXTENDED_STARTUPINFO_PRESENT, nullptr,
+                                      nullptr, &startup.StartupInfo, &info);
+  const DWORD createError = created ? ERROR_SUCCESS : GetLastError();
+  DeleteProcThreadAttributeList(attributes);
+  if (!created) {
+    result.standardError =
+        QStringLiteral("komorebic.exe could not start (error %1)").arg(createError).toUtf8();
+    return result;
+  }
+  OwnedHandle process, thread;
+  process.handle = info.hProcess;
+  thread.handle = info.hThread;
+  // The child holds its own copies; ours would keep the pipes open after it exits.
+  outWrite.reset();
+  errWrite.reset();
+  input.reset();
   result.started = true;
-  if (!process.waitForFinished(timeoutMs)) {
-    result.timedOut = true;
-    process.kill();
-    process.waitForFinished(1000);
+
+  const ULONGLONG deadline = GetTickCount64() + static_cast<ULONGLONG>(std::max(timeoutMs, 0));
+  HANDLE waits[2] = {process.handle, cancel};
+  const DWORD waitCount = cancel ? 2 : 1;
+  bool exited = false;
+  for (;;) {
+    drain(outRead.handle, result.standardOutput);
+    drain(errRead.handle, result.standardError);
+    const ULONGLONG now = GetTickCount64();
+    if (now >= deadline) break;
+    const DWORD slice = static_cast<DWORD>(std::min<ULONGLONG>(kDrainSliceMs, deadline - now));
+    const DWORD which = WaitForMultipleObjects(waitCount, waits, FALSE, slice);
+    if (which == WAIT_OBJECT_0) {
+      exited = true;
+      break;
+    }
+    if (which == WAIT_OBJECT_0 + 1) {
+      result.cancelled = true;
+      break;
+    }
+    if (which == WAIT_FAILED) break;
+  }
+  if (!exited) {
+    result.timedOut = !result.cancelled;
+    TerminateProcess(process.handle, 1);
+    WaitForSingleObject(process.handle, 1000);
     return result;
   }
-  result.exitCode = process.exitStatus() == QProcess::NormalExit ? process.exitCode() : -1;
-  result.standardOutput = process.readAllStandardOutput();
-  result.standardError = process.readAllStandardError();
+  drain(outRead.handle, result.standardOutput);
+  drain(errRead.handle, result.standardError);
+  DWORD code = 0;
+  result.exitCode = GetExitCodeProcess(process.handle, &code) ? static_cast<int>(code) : -1;
   return result;
 }
 
@@ -60,7 +180,7 @@ QString simplifiedStderr(const QByteArray& stderrBytes) {
 }  // namespace
 
 KomorebiBackend defaultKomorebiBackend() {
-  return {[] { return isProcessRunning(L"komorebi.exe"); }, &runKomorebic};
+  return {[] { return isProcessRunning(L"komorebi.exe"); }, &runKomorebic, &launchKomorebic};
 }
 
 bool launchKomorebic(const QStringList& args) {
@@ -108,9 +228,9 @@ void KomorebiPipeListener::stop() {
   CloseHandle(stopEvent_);
   CloseHandle(ioEvent_);
   stopEvent_ = ioEvent_ = nullptr;
-  if (subscribed_.exchange(false) && backend_.runKomorebic) {
-    backend_.runKomorebic({QStringLiteral("unsubscribe-pipe"), pipeName_},
-                          timing_.unsubscribeTimeoutMs);
+  // Fire and forget: stop() runs on the GUI thread during a reload and must not wait for it.
+  if (subscribed_.exchange(false) && backend_.launchKomorebic) {
+    backend_.launchKomorebic({QStringLiteral("unsubscribe-pipe"), pipeName_});
   }
 }
 
@@ -148,7 +268,7 @@ bool KomorebiPipeListener::waitUntilSubscribed() {
     QString error = QStringLiteral("Komorebi is not running, please start Komorebi.");
     if (backend_.isKomorebiRunning && backend_.isKomorebiRunning()) {
       const KomorebicResult result = backend_.runKomorebic(
-          {QStringLiteral("subscribe-pipe"), pipeName_}, timing_.subscribeTimeoutMs);
+          {QStringLiteral("subscribe-pipe"), pipeName_}, timing_.subscribeTimeoutMs, stopEvent_);
       if (result.started && !result.timedOut && result.exitCode == 0) {
         subscribed_ = true;
         return true;
@@ -198,7 +318,7 @@ bool KomorebiPipeListener::connectPipe() {
 bool KomorebiPipeListener::fetchState() {
   while (!stopping_) {
     const KomorebicResult result =
-        backend_.runKomorebic({QStringLiteral("state")}, timing_.stateTimeoutMs);
+        backend_.runKomorebic({QStringLiteral("state")}, timing_.stateTimeoutMs, stopEvent_);
     if (result.timedOut) {
       qWarning() << "Komorebi state query timed out in" << timing_.stateTimeoutMs << "ms";
     }

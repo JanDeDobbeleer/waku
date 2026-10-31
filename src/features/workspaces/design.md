@@ -23,10 +23,13 @@ directly.
 
 - komorebi pipe thread (`std::thread`, owned by `KomorebiPipeListener`): creates the pipe, runs
   `komorebic subscribe-pipe` and `state`, reads one JSON message at a time, reconnects. Results go
-  to the GUI thread as queued calls. `stop()` sets the stop event, joins and unsubscribes.
+  to the GUI thread as queued calls. `stop()` sets the stop event (which also kills a running
+  komorebic), joins and starts the unsubscribe detached.
 - GlazeWM socket thread (`std::thread`, owned by `GlazewmSocket`): WinHTTP session, connect, blocking
   receive loop, 4 s reconnect sleep. Text frames and connection changes reach the GUI thread as queued
-  signals; sends run on the GUI thread. `stop()` closes the handles and joins.
+  signals; sends run on the GUI thread. `stop()` ends a blocked receive with
+  `WinHttpWebSocketClose` and joins; only the worker closes the handles, since WinHTTP forbids
+  closing a handle under a synchronous call on another thread.
 
 Both rows are in the thread table of `docs/architecture.md`. Everything else runs on the GUI thread.
 
@@ -47,6 +50,6 @@ WinHTTP WebSocket. `winhttp` is linked by this feature alone.
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- GlazeWM WebSocket thread (`std::thread`) (`GlazewmService` (`src/features/workspaces/glazewm_service.h`) via `glazewm::GlazewmSocket` (`src/features/workspaces/glazewm.h`, `win32/glazewm_socket.cpp`), created by the first widget subscription): owns the WinHTTP session, connect, blocking receive loop and the 4 s reconnect sleep; text frames and connection changes reach the GUI thread as queued signals; sends run on the GUI thread; `GlazewmSocket::stop()`: sets the stop event, closes the WinHTTP handles, `join` (idempotent, also from the destructor); the owner calls `GlazewmService::stop()`
+- GlazeWM WebSocket thread (`std::thread`) (`GlazewmService` (`src/features/workspaces/glazewm_service.h`) via `glazewm::GlazewmSocket` (`src/features/workspaces/glazewm.h`, `win32/glazewm_socket.cpp`), created by the first widget subscription): owns the WinHTTP session, connect, blocking receive loop and the 4 s reconnect sleep; text frames and connection changes reach the GUI thread as queued signals; sends run on the GUI thread; `GlazewmSocket::stop()`: sets the stop event, cancels a blocked receive with `WinHttpWebSocketClose` (250 ms close handshake), `join`, then the handles are closed (idempotent, also from the destructor); the owner calls `GlazewmService::stop()`
 
-- komorebi pipe thread (`std::thread`) (`KomorebiService` (`src/features/workspaces/komorebi_service.h`) via `komorebi::KomorebiPipeListener` (`src/features/workspaces/komorebi.h`, `win32/komorebi_pipe.cpp`)): owns the `\\.\pipe\wabar-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls; `stop()`: sets the stop event (cancels waits and overlapped I/O), `join`, then `komorebic unsubscribe-pipe`; started lazily by the first subscription; the owner calls it
+- komorebi pipe thread (`std::thread`) (`KomorebiService` (`src/features/workspaces/komorebi_service.h`) via `komorebi::KomorebiPipeListener` (`src/features/workspaces/komorebi.h`, `win32/komorebi_pipe.cpp`)): owns the `\\.\pipe\wabar-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls; `stop()`: sets the stop event (cancels waits, overlapped I/O and a running komorebic, which `CreateProcessW` started with drained output pipes and which is killed), `join`, then starts `komorebic unsubscribe-pipe` detached; started lazily by the first subscription; the owner calls it

@@ -166,7 +166,7 @@ TEST(KomorebiServiceTest, ListensOnItsOwnPipeReconnectsAndSurvivesMalformedJson)
   std::vector<QStringList> calls;
   komo::KomorebiBackend backend;
   backend.isKomorebiRunning = [] { return true; };
-  backend.runKomorebic = [&](const QStringList& args, int) {
+  backend.runKomorebic = [&](const QStringList& args, int, void*) {
     std::lock_guard guard(lock);
     calls.push_back(args);
     komo::KomorebicResult result;
@@ -174,6 +174,10 @@ TEST(KomorebiServiceTest, ListensOnItsOwnPipeReconnectsAndSurvivesMalformedJson)
     result.exitCode = 0;
     if (args.value(0) == QStringLiteral("state")) result.standardOutput = kStateJson;
     return result;
+  };
+  backend.launchKomorebic = [&](const QStringList& args) {
+    std::lock_guard guard(lock);
+    calls.push_back(args);
   };
   const auto callCount = [&](const QString& first) {
     std::lock_guard guard(lock);
@@ -249,7 +253,7 @@ TEST(KomorebiServiceTest, OfflineKomorebiKeepsRetryingUntilStopped) {
   std::atomic<int> subscribeAttempts{0};
   komo::KomorebiBackend backend;
   backend.isKomorebiRunning = [] { return false; };
-  backend.runKomorebic = [&](const QStringList& args, int) {
+  backend.runKomorebic = [&](const QStringList& args, int, void*) {
     if (args.value(0) == QStringLiteral("subscribe-pipe")) ++subscribeAttempts;
     return komo::KomorebicResult{};
   };
@@ -264,4 +268,35 @@ TEST(KomorebiServiceTest, OfflineKomorebiKeepsRetryingUntilStopped) {
   EXPECT_EQ(subscribeAttempts.load(), 0);  // komorebi.exe is not running, so nothing to subscribe
   service.stop();
   EXPECT_FALSE(service.isListening());
+}
+
+TEST(KomorebiServiceTest, StopCancelsARunningKomorebicAndDoesNotWaitForUnsubscribe) {
+  // subscribe-pipe hangs until the listener's cancel event fires, as a stuck komorebic would.
+  std::atomic<bool> entered{false};
+  std::atomic<bool> cancelled{false};
+  std::atomic<int> launched{0};
+  komo::KomorebiBackend backend;
+  backend.isKomorebiRunning = [] { return true; };
+  backend.runKomorebic = [&](const QStringList&, int, void* cancel) {
+    entered = true;
+    komo::KomorebicResult result;
+    result.started = true;
+    if (cancel && WaitForSingleObject(cancel, 20000) == WAIT_OBJECT_0) {
+      cancelled = true;
+      result.cancelled = true;
+    } else {
+      result.timedOut = true;
+    }
+    return result;
+  };
+  backend.launchKomorebic = [&](const QStringList&) { ++launched; };
+  komo::KomorebiPipeListener listener(backend, {}, QStringLiteral("wabar-test-cancel"), {});
+  listener.start();
+  ASSERT_TRUE(QTest::qWaitFor([&] { return entered.load(); }, 5000));
+  QElapsedTimer timer;
+  timer.start();
+  listener.stop();
+  EXPECT_LT(timer.elapsed(), 2000);
+  EXPECT_TRUE(cancelled);
+  EXPECT_EQ(launched.load(), 0);  // never subscribed, so nothing to unsubscribe
 }

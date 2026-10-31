@@ -15,6 +15,8 @@ namespace wabar::workspaces::glazewm {
 namespace {
 
 constexpr DWORD kChunkBytes = 64 * 1024;
+// How long stop() waits for GlazeWM to answer the close frame.
+constexpr DWORD kCloseHandshakeMs = 250;
 
 }  // namespace
 
@@ -44,9 +46,20 @@ void GlazewmSocket::open(const QString& url) {
 
 void GlazewmSocket::stop() {
   if (!thread_.joinable()) return;
+  // WinHTTP forbids closing a handle while another thread is inside a synchronous call on it, so
+  // the worker closes its own handles. A blocked receive is ended the documented way:
+  // WinHttpWebSocketClose makes it return ERROR_WINHTTP_OPERATION_CANCELLED. It waits at most
+  // kCloseHandshakeMs for GlazeWM's answer. Held under mutex_, so no send runs next to it and the
+  // worker cannot close the socket meanwhile. A connect in progress ends within its timeout.
   stopping_ = true;
   SetEvent(stopEvent_);
-  closeAll();
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (handles_.webSocket) {
+      WinHttpWebSocketClose(handles_.webSocket, WINHTTP_WEB_SOCKET_SUCCESS_CLOSE_STATUS, nullptr,
+                            0);
+    }
+  }
   thread_.join();
   closeAll();
   CloseHandle(stopEvent_);
@@ -56,12 +69,9 @@ void GlazewmSocket::stop() {
 
 bool GlazewmSocket::sendText(const QByteArray& utf8) {
   try {
-    std::lock_guard<std::mutex> sendLock(sendMutex_);
-    void* webSocket = nullptr;
-    {
-      std::lock_guard<std::mutex> lock(mutex_);
-      webSocket = handles_.webSocket;
-    }
+    // Held across the send so the worker cannot close the handle under it (closeSlot takes it).
+    std::lock_guard<std::mutex> lock(mutex_);
+    void* webSocket = handles_.webSocket;
     if (!webSocket || !connected_) return false;
     const DWORD error =
         WinHttpWebSocketSend(webSocket, WINHTTP_WEB_SOCKET_UTF8_MESSAGE_BUFFER_TYPE,
@@ -221,9 +231,16 @@ bool GlazewmSocket::connectOnce() {
   // The upgrade consumed the request handle's role; release it before publishing the socket.
   closeSlot(Slot::Request);
   if (!publish(Slot::WebSocket, webSocket)) return false;
-  // Idle sockets must not time out: GlazeWM only sends on events.
+  // Idle sockets must not time out: GlazeWM only sends on events. The receive blocks until one
+  // arrives or stop() closes the socket.
   DWORD infinite = 0;
   WinHttpSetOption(webSocket, WINHTTP_OPTION_RECEIVE_TIMEOUT, &infinite, sizeof(infinite));
+  // Bounds the close handshake of stop() (default 10 s) against a peer that never answers it.
+  DWORD closeTimeout = kCloseHandshakeMs;
+  if (!WinHttpSetOption(webSocket, WINHTTP_OPTION_WEB_SOCKET_CLOSE_TIMEOUT, &closeTimeout,
+                        sizeof(closeTimeout))) {
+    qDebug() << "GlazeWM socket could not shorten its close timeout:" << GetLastError();
+  }
   return true;
 }
 

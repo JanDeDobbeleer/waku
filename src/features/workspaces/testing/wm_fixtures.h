@@ -113,7 +113,7 @@ struct KomorebiHarness {
   KomorebiHarness() {
     kmb::KomorebiBackend backend;
     backend.isKomorebiRunning = [] { return false; };  // the listener thread stays idle
-    backend.runKomorebic = [](const QStringList&, int) { return kmb::KomorebicResult{}; };
+    backend.runKomorebic = [](const QStringList&, int, void*) { return kmb::KomorebicResult{}; };
     komorebi = std::make_unique<Komorebi>(
         backend, [this](const std::vector<QStringList>& commands) { runs.push_back(commands); },
         QStringLiteral("wabar-services-test"), kmb::KomorebiPipeListener::Timing{}, nullptr);

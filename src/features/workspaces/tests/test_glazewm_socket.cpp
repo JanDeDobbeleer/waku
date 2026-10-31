@@ -259,3 +259,31 @@ TEST(GlazewmSocket, StopWhileConnectingToDeadPortReturnsPromptly) {
   EXPECT_LT(timer.elapsed(), 2000);
   EXPECT_FALSE(socket.isConnected());
 }
+
+TEST(GlazewmSocket, StaysConnectedWhileIdle) {
+  FakeWsServer server;
+  ASSERT_TRUE(server.listening());
+  GlazewmSocket socket(fastTiming(), nullptr);
+  Recorder rec(socket);
+  socket.open(server.url());
+  ASSERT_TRUE(pumpUntil([&] { return socket.isConnected(); }));
+  pumpUntil([] { return false; }, 400);
+  server.sendText("late");
+  ASSERT_TRUE(pumpUntil([&] { return !rec.texts.empty(); }));
+  EXPECT_EQ(rec.texts.front(), QStringLiteral("late"));
+  EXPECT_EQ(server.handshakes(), 1);
+  EXPECT_EQ(rec.states, (std::vector<bool>{true}));
+}
+
+TEST(GlazewmSocket, StopWhileConnectedReturnsPromptly) {
+  FakeWsServer server;
+  ASSERT_TRUE(server.listening());
+  GlazewmSocket socket(fastTiming(), nullptr);
+  socket.open(server.url());
+  ASSERT_TRUE(pumpUntil([&] { return socket.isConnected(); }));
+  QElapsedTimer timer;
+  timer.start();
+  socket.stop();
+  EXPECT_LT(timer.elapsed(), 1000);
+  EXPECT_FALSE(socket.isConnected());
+}

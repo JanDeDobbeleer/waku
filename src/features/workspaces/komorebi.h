@@ -13,6 +13,7 @@ namespace wabar::workspaces::komorebi {
 struct KomorebicResult {
   bool started = false;
   bool timedOut = false;
+  bool cancelled = false;  // the cancel event fired; the child was killed
   int exitCode = -1;
   QByteArray standardOutput;
   QByteArray standardError;
@@ -22,8 +23,11 @@ struct KomorebicResult {
 struct KomorebiBackend {
   // True when a komorebi.exe process exists (Python: is_process_running("komorebi.exe")).
   std::function<bool()> isKomorebiRunning;
-  // Runs `komorebic <args>` hidden and waits up to `timeoutMs` for it to exit.
-  std::function<KomorebicResult(const QStringList& args, int timeoutMs)> runKomorebic;
+  // Runs `komorebic <args>` hidden and waits up to `timeoutMs` for it to exit, or until the
+  // Win32 event `cancel` (may be null) is set; either way the child is killed.
+  std::function<KomorebicResult(const QStringList& args, int timeoutMs, void* cancel)> runKomorebic;
+  // Starts `komorebic <args>` hidden without waiting (stop() uses it for `unsubscribe-pipe`).
+  std::function<void(const QStringList& args)> launchKomorebic;
 };
 
 // `komorebic.exe` from PATH, CREATE_NO_WINDOW.
@@ -39,10 +43,11 @@ std::optional<long long> monitorFromWindow(quintptr hwnd);
 // subscribes komorebi to it with `komorebic subscribe-pipe`, reads one JSON notification per pipe
 // message and reconnects after komorebi goes away.
 //
-// Threading: start() spawns one std::thread that owns the pipe handle and calls every callback;
-// callbacks must not touch widgets (marshal to the GUI thread). stop() (also from the destructor)
-// signals an event that cancels any wait or pending overlapped I/O, joins the thread, then runs
-// `komorebic unsubscribe-pipe` if komorebi was subscribed.
+// Threading: start() spawns one std::thread that owns the pipe handle, runs every komorebic child
+// and calls every callback; callbacks must not touch widgets (marshal to the GUI thread). stop()
+// (also from the destructor) signals an event that cancels any wait, pending overlapped I/O or
+// running komorebic (the child is killed), joins the thread, then starts `komorebic
+// unsubscribe-pipe` detached if komorebi was subscribed. It never waits for a komorebic timeout.
 class KomorebiPipeListener {
  public:
   struct Callbacks {
@@ -60,7 +65,6 @@ class KomorebiPipeListener {
     int reconnectMs = 3000;
     int stateTimeoutMs = 2000;
     int subscribeTimeoutMs = 10000;
-    int unsubscribeTimeoutMs = 2000;
   };
 
   KomorebiPipeListener(KomorebiBackend backend, Callbacks callbacks, QString pipeName,
