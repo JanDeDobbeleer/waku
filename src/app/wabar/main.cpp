@@ -1,3 +1,6 @@
+#include <Windows.h>
+#include <combaseapi.h>
+
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QDir>
@@ -18,6 +21,15 @@
 #include "kernel/qt/live_desktop.h"
 
 int main(int argc, char* argv[]) {
+  // Keeps the process MTA alive for the whole run. Icon and shortcut reads on pool threads do
+  // CoInitializeEx(MTA) ... CoUninitialize() per call; without this the last one out tears the MTA
+  // down, unloading the in-process shell extensions and codecs it loaded, possibly while another
+  // pool thread is inside one. Never released: the process exit ends it.
+  CO_MTA_USAGE_COOKIE mtaUsage = nullptr;
+  if (FAILED(CoIncrementMTAUsage(&mtaUsage))) {
+    qWarning() << "CoIncrementMTAUsage failed; COM may unload shell extensions between icon reads";
+  }
+
   // As app/main.cpp setFontEngine(): Qt's DirectWrite font database maps every installed font
   // (about 1.7k handles and 100 MiB working set). Respect a platform the caller chose.
   // `--font-engine=directwrite` opts back in for a shell that needs variable-font axes, which the
