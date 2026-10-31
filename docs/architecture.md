@@ -107,6 +107,7 @@ Namespace `wabar::kernel`, include `"kernel/<qt|win32>/<file>.h"`.
 | `qt/polled_source.*` | `PolledSource`, the polled-sample base | `Memory`, `Cpu`, `Battery`, `Network` |
 | `qml/stat_source.h` | `StatSource`, the QML face of `PolledSource` (`QML_ANONYMOUS`, `QQmlParserStatus`); compiled into `wabar.services`, not into `wabar_kernel` | `Memory`, `Cpu`, `Battery`, `Network` |
 | `qt/linger.*` | `linger(held, ms)` and `LingeringHub<T>`: a process-wide hub that outlives its last holder by a grace period, so a reload does not stop and restart it | media (`acquireMediaService`), notifications (`acquireNotificationService`), system_stats (the data source factories) |
+| `qt/gui_post.h` | `postToGui(QPointer, fn)`: runs `fn` on the GUI thread through qApp if the guard is still alive there | audio, color_scheme, github, network (radio, VPN), control_center, wallpapers (transition decode), taskbar (icon loads) |
 | `qt/app_data.*` | `appDataDir()`, `migrateLegacyAppData()` | taskbar pins, GitHub token, tray state, host thumbnails (`src/host/qml/thumbnails.cpp`), apps frecency (`apps_service.cpp`), `color_scheme` image stats, `quickshell_io` state, cache and data folders (`quickshell_singleton.cpp`) |
 
 Rules the kernel owns:
