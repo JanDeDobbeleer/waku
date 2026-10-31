@@ -2,7 +2,7 @@
 #   win32/  Windows build number, WinRT apartment, hidden process launch, shell open, app activation,
 #           forced foreground focus, shell icons, COM scope, WinRT strings
 #   qt/     live-desktop gate, polled-source base class, the one app data folder, lingering hubs,
-#           guarded post to the GUI thread
+#           atomic file write, guarded post to the GUI thread
 #   qml/    the QML face of the polled source (compiled into wabar.services, not into this library)
 # Include root is src/ (#include "kernel/qt/app_data.h"). Qt Core and Gui only; the Windows SDK
 # only under win32/ (rule S3). Everything links this library through wabar_feature() or by name.
@@ -13,6 +13,8 @@ add_library(wabar_kernel STATIC
   win32/com_scope.cpp
   qt/app_data.h
   qt/app_data.cpp
+  qt/file_write.h
+  qt/file_write.cpp
   qt/gui_post.h
   qt/linger.h
   qt/linger.cpp
@@ -46,6 +48,7 @@ wabar_contribute(
     tests/test_app_activation.cpp
     tests/test_app_data.cpp
     tests/test_com_scope.cpp
+    tests/test_file_write.cpp
     tests/test_gui_post.cpp
     tests/test_linger.cpp
     tests/test_live_desktop.cpp
