@@ -3,8 +3,9 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QSaveFile>
 #include <atomic>
+
+#include "kernel/qt/file_write.h"
 
 namespace wabar::quickshell_io {
 
@@ -38,12 +39,7 @@ class RealFileAccess : public FileAccess {
     const QFileInfo info(path);
     if (info.isDir()) return FileError::NotAFile;
     if (!QDir().mkpath(info.absolutePath())) return FileError::Unknown;
-    if (atomic) {
-      QSaveFile file(path);
-      if (!file.open(QIODevice::WriteOnly)) return fromDevice(file.error());
-      if (file.write(data) != data.size()) return FileError::Unknown;
-      return file.commit() ? FileError::Success : fromDevice(file.error());
-    }
+    if (atomic) return fromDevice(kernel::writeFileAtomic(path, data).error);
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) return fromDevice(file.error());
     if (file.write(data) != data.size()) return FileError::Unknown;
