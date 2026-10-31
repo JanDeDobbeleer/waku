@@ -8,6 +8,7 @@
 #include <QString>
 #include <QStringList>
 #include <atomic>
+#include <functional>
 #include <map>
 #include <optional>
 #include <utility>
@@ -78,6 +79,8 @@ class FakeSystem final : public WindowSystem {
   }
   bool isOwnerRootActive(WindowHandle base) const override { return foreground == base; }
   std::optional<QString> appUniqueId(const WindowInfo& info) const override {
+    // Tests re-enter the service here, as an STA COM call pumping messages would.
+    if (duringAppUniqueId) duringAppUniqueId(info.hwnd);
     const auto found = rows.find(info.hwnd);
     if (found == rows.end() || found->second.uniqueId.isEmpty()) return std::nullopt;
     return found->second.uniqueId;
@@ -105,6 +108,7 @@ class FakeSystem final : public WindowSystem {
   WindowHandle foreground = 0;
   WindowHandle widgetMonitor = 1;
   QStringList log;
+  std::function<void(WindowHandle)> duringAppUniqueId;
 
  private:
   QString defaultProcess_;

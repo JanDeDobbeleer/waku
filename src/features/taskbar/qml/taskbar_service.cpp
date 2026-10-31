@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QJsonObject>
 #include <QPixmap>
+#include <QPointer>
 #include <QQmlEngine>
 #include <QTimer>
 #include <QWindow>
@@ -56,6 +57,7 @@ TaskbarService::TaskbarService(Deps deps, QObject* parent) : QObject(parent) {
 
 TaskbarService::~TaskbarService() {
   if (tracker_) tracker_->stop();
+  iconStore_->clear();
 }
 
 void TaskbarService::init(Deps deps) {
@@ -141,12 +143,22 @@ TaskbarWindow* TaskbarService::find(WindowHandle hwnd) {
 void TaskbarService::onAdded(WindowHandle hwnd, const WindowInfo& info) {
   if (TaskbarWindow* existing = find(hwnd)) {
     existing->info = info;
-  } else {
+    emit changed();
+    return;
+  }
+  // For Explorer windows appUniqueId makes out-of-process COM calls, and the GUI thread's STA
+  // pumps messages while it waits: a nested onAdded/onUpdated/onRemoved for this very window can
+  // run inside the call. So look again afterwards instead of trusting the find() above.
+  std::optional<QString> uniqueId = system_->appUniqueId(info);
+  const bool minimized = system_->isIconic(hwnd);
+  if (TaskbarWindow* nested = find(hwnd)) {
+    if (!nested->uniqueId) nested->uniqueId = std::move(uniqueId);
+  } else if (system_->isWindow(hwnd)) {  // it may have closed meanwhile
     TaskbarWindow w;
     w.hwnd = hwnd;
     w.info = info;
-    w.uniqueId = system_->appUniqueId(info);
-    w.minimized = system_->isIconic(hwnd);
+    w.uniqueId = std::move(uniqueId);
+    w.minimized = minimized;
     windows_.push_back(std::move(w));
   }
   emit changed();
@@ -158,6 +170,7 @@ void TaskbarService::onRemoved(WindowHandle hwnd) {
   if (it == windows_.end()) return;
   windows_.erase(it);
   iconCache_.erase(hwnd);
+  iconStore_->remove(hwnd);
   icons_->forget(hwnd);  // the handle may be reused
   emit changed();
 }
@@ -207,6 +220,7 @@ QImage TaskbarService::iconImage(WindowHandle key) {
   if (!pixmap.isNull()) {
     entry.image = pixmap.toImage();
     ++entry.revision;
+    iconStore_->set(key, entry.image);
   }
   return entry.image;
 }
@@ -325,16 +339,17 @@ void TaskbarService::unpinApp(const QString& uniqueId) {
 // --- image provider
 
 WindowIconProvider::WindowIconProvider(TaskbarService* service)
-    : QQuickImageProvider(QQuickImageProvider::Image), service_(service) {}
+    : QQuickImageProvider(QQuickImageProvider::Image),
+      store_(service ? service->iconStore() : nullptr) {}
 
 QImage WindowIconProvider::requestImage(const QString& id, QSize* size,
                                         const QSize& /*requestedSize*/) {
   if (size) *size = QSize(0, 0);
-  if (!service_) return {};
+  if (!store_) return {};
   bool ok = false;
   const WindowHandle key = id.section(QLatin1Char('/'), 0, 0).toULongLong(&ok);
   if (!ok) return {};
-  const QImage image = service_->iconImage(key);
+  const QImage image = store_->image(key);
   if (image.isNull()) return {};
   if (size) *size = image.size();
   return image;

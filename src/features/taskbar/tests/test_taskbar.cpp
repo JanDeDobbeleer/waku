@@ -569,3 +569,33 @@ TEST_F(TaskbarWidgetTest, APinnedAppThatIsNotRunningShowsAndLaunches) {
   EXPECT_EQ(pins_->launchedIds, (QStringList{QStringLiteral("x")}));
   EXPECT_TRUE(system_->log.isEmpty());
 }
+
+TEST(TaskbarModel, AWindowAddedAgainWhileItsAppIdIsReadAppearsOnce) {
+  Fixture f;
+  f.start();
+  f.system->add(kFirst, QStringLiteral("One"), QStringLiteral("a"));
+  bool nested = false;
+  f.system->duringAppUniqueId = [&](plat::WindowHandle hwnd) {
+    if (nested || hwnd != kFirst) return;
+    nested = true;
+    emit f.service->tracker()->windowUpdated(hwnd, f.system->query(hwnd));
+  };
+  f.hook(plat::shell::kWindowCreated, kFirst);
+  EXPECT_TRUE(nested);
+  EXPECT_EQ(f.keys(), (QStringList{QStringLiteral("w:101")}));
+  EXPECT_EQ(f.service->windows().size(), 1u);
+}
+
+TEST(TaskbarModel, AWindowThatClosesWhileItsAppIdIsReadLeavesNoGhost) {
+  Fixture f;
+  f.start();
+  f.system->add(kFirst, QStringLiteral("One"), QStringLiteral("a"));
+  f.system->duringAppUniqueId = [&](plat::WindowHandle hwnd) {
+    if (hwnd != kFirst || !f.system->rows.count(hwnd)) return;
+    f.system->rows.erase(hwnd);
+    emit f.service->tracker()->windowRemoved(hwnd, plat::WindowInfo{});
+  };
+  f.hook(plat::shell::kWindowCreated, kFirst);
+  EXPECT_TRUE(f.keys().isEmpty());
+  EXPECT_TRUE(f.service->windows().empty());
+}

@@ -2,15 +2,16 @@
 
 #include <QtQml/qqmlregistration.h>
 
+#include <QHash>
 #include <QImage>
 #include <QObject>
-#include <QPointer>
 #include <QQuickImageProvider>
 #include <QString>
 #include <QStringList>
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <vector>
 
@@ -32,6 +33,34 @@ struct TaskbarWindow {
   WindowInfo info;  // including isActive and isFlashing as of the last tracker signal
   std::optional<QString> uniqueId;  // the app's pin id, read once when the window appears
   bool minimized = false;
+};
+
+// The loaded icon of every key, for WindowIconProvider. TaskbarService writes it on the GUI thread;
+// the provider reads it on whatever thread Qt calls it (the pixmap reader thread when the Image is
+// asynchronous). Shared, so a provider that outlives the service reads an empty store.
+class WindowIconStore {
+ public:
+  void set(WindowHandle key, const QImage& image) {
+    std::lock_guard lock(mutex_);
+    images_.insert(key, image);
+  }
+  void remove(WindowHandle key) {
+    std::lock_guard lock(mutex_);
+    images_.remove(key);
+  }
+  void clear() {
+    std::lock_guard lock(mutex_);
+    images_.clear();
+  }
+  // Null when not loaded. QImage is implicitly shared, so the copy is cheap.
+  QImage image(WindowHandle key) const {
+    std::lock_guard lock(mutex_);
+    return images_.value(key);
+  }
+
+ private:
+  mutable std::mutex mutex_;
+  QHash<WindowHandle, QImage> images_;
 };
 
 // The windows of the desktop and the pinned apps, shared by every Taskbar widget of a `wabar`
@@ -94,8 +123,11 @@ class TaskbarService : public QObject {
   static constexpr int kIconSize = 32;
   // The icon of a window, or of a pinned app that does not run when `key` is a pseudo handle;
   // null while it loads (asynchronous loads bump the revision and emit changed()).
+  // GUI thread only (it starts loads); TaskbarModel calls it for every row.
   QImage iconImage(WindowHandle key);
   int iconRevision(WindowHandle key) const;
+  // What iconImage() has loaded, readable from any thread.
+  std::shared_ptr<const WindowIconStore> iconStore() const { return iconStore_; }
 
   // --- pseudo handles of pinned apps that do not run
   static bool isPseudo(WindowHandle key) { return (key >> 63) != 0; }
@@ -141,19 +173,23 @@ class TaskbarService : public QObject {
   QString reason_;
   std::vector<TaskbarWindow> windows_;  // in the order the windows first appeared
   std::map<WindowHandle, IconEntry> iconCache_;
+  std::shared_ptr<WindowIconStore> iconStore_ = std::make_shared<WindowIconStore>();
   std::map<QString, WindowHandle> pseudoByUniqueId_;
   std::map<WindowHandle, QString> uniqueIdByPseudo_;
 };
 
 // image://windowicon/<key>/<revision>: the 32 px icon of a window (or pinned app) key. The
-// revision only busts QML's image cache. Synchronous on the GUI thread, where the service lives.
+// revision only busts QML's image cache. Qt calls requestImage on the GUI thread for a synchronous
+// Image and on its pixmap reader thread for `asynchronous: true`, so the provider never touches
+// the service and never starts a load: it reads the shared WindowIconStore. The model asks the
+// service for every row's icon first, and a finished load bumps the revision in the url.
 class WindowIconProvider : public QQuickImageProvider {
  public:
   explicit WindowIconProvider(TaskbarService* service);
   QImage requestImage(const QString& id, QSize* size, const QSize& requestedSize) override;
 
  private:
-  QPointer<TaskbarService> service_;
+  std::shared_ptr<const WindowIconStore> store_;
 };
 
 }  // namespace wabar::taskbar

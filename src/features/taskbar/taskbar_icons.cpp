@@ -1,5 +1,6 @@
 #include "features/taskbar/taskbar_icons.h"
 
+#include <QCoreApplication>
 #include <QPainter>
 #include <QPointer>
 #include <QRunnable>
@@ -15,7 +16,11 @@ TaskbarIcons::TaskbarIcons(std::shared_ptr<WindowSystem> system, bool async, QOb
   pool_.setMaxThreadCount(1);
 }
 
-TaskbarIcons::~TaskbarIcons() { pool_.waitForDone(); }
+TaskbarIcons::~TaskbarIcons() {
+  // Drop the queued loads (each can cost a WM_GETICON timeout) and wait only for the running one.
+  pool_.clear();
+  pool_.waitForDone();
+}
 
 QImage TaskbarIcons::toImage(const IconBitmap& bitmap, int physical) {
   if (bitmap.isNull()) return {};
@@ -87,9 +92,10 @@ void TaskbarIcons::request(const Key& key, const Loader& loader) {
     }
     const QImage image = TaskbarIcons::toImage(bitmap, key.second);
     const bool complete = bitmap.complete;
-    if (!self) return;
+    // Posted to the application, not to `self`: testing a QPointer here and then posting to the
+    // raw pointer races with the GUI thread destroying it. `self` is read on the GUI thread only.
     QMetaObject::invokeMethod(
-        self.data(),
+        QCoreApplication::instance(),
         [self, key, image, complete] {
           if (self) self->finish(key, image, complete);
         },
