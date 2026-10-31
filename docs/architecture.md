@@ -345,7 +345,7 @@ bar. `KomorebiWorkAreaGuard` (`src/features/workspaces/komorebi_workarea.{h,cpp}
 the run, like `WabarTaskbar`; it is not a singleton and survives reloads. It listens to Qt's screen
 signals (`availableGeometryChanged` and friends), waits 500 ms after the last one, then sends
 `WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window (`FindWindowW`, class
-`komorebi-hidden`) with `SendNotifyMessageW`, at once and 5 s later. GUI thread, no thread of its
+`komorebi-hidden`) with `SendMessageTimeoutW` (250 ms), at once and 5 s later. GUI thread, no thread of its
 own (so no row in the thread table), two single-shot timers idle between bursts, documented APIs
 only (no allowlist row). `--no-workarea-sync` disables the capability `workarea_sync`; off the live
 desktop the guard has no sender. Details: `src/features/workspaces/design.md`.

@@ -20,7 +20,8 @@ struct WorkAreaNotifyResult {
 
 // Tells komorebi that the work area changed. The real one (win32/komorebi_workarea_win.cpp) finds
 // komorebi's hidden top-level window (class `komorebi-hidden`) and posts
-// WM_SETTINGCHANGE(SPI_SETWORKAREA) to it with SendNotifyMessageW, which never waits. komorebi
+// WM_SETTINGCHANGE(SPI_SETWORKAREA) to it with SendMessageTimeoutW (Windows refuses to queue this
+// message to another process, so the send is synchronous with a 250 ms timeout). komorebi
 // then compares its cached work areas with the OS and retiles only on a difference, so a
 // notification it does not need costs nothing. Tests use testing/fake_workarea.h.
 class WorkAreaNotifier {
@@ -61,7 +62,7 @@ std::unique_ptr<WorkAreaTimers> makeQtWorkAreaTimers();
 // kernel::liveDesktop("workarea_sync") (off with --no-workarea-sync and on the offscreen
 // platform); without a notifier the guard is inert.
 //
-// Thread: GUI thread only. No thread of its own; SendNotifyMessageW does not block.
+// Thread: GUI thread only. No thread of its own; the send waits at most 250 ms (SMTO_ABORTIFHUNG).
 class KomorebiWorkAreaGuard : public QObject {
   Q_OBJECT
  public:

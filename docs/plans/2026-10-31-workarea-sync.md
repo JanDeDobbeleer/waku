@@ -487,6 +487,10 @@ Order: engine commits 1 and 2 ship first and are verified live (section 6); the 
 in the same session so the user never runs both mechanisms at once (two nudges plus the port's two
 refreshes are harmless, but the logs would mislead).
 
+> Implementation note (live run, 2026-10-31): `SendNotifyMessageW` is refused with error 1159
+> (`ERROR_MESSAGE_SYNC_ONLY`) for WM_SETTINGCHANGE, so question 1 resolved to
+> `SendMessageTimeoutW` (250 ms, `SMTO_ABORTIFHUNG`) on the GUI thread.
+
 ## 8. Open questions for the owner
 
 1. `SendNotifyMessageW` (no wait, no result) or `SendMessageTimeoutW` on a pool task (a result,

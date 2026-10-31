@@ -67,8 +67,10 @@ windows then tile under the bar. Analysis: `docs/plans/2026-10-31-workarea-sync.
   example); it sends at once and arms the late one. Neither `ShellHost::reloaded` nor the pipe
   connect triggers it today.
 - **Message.** `FindWindowW(L"komorebi-hidden", nullptr)`, then
-  `SendNotifyMessageW(hwnd, WM_SETTINGCHANGE, SPI_SETWORKAREA, 0)`, which does not wait for a
-  window of another thread. Behind `WorkAreaNotifier`; tests use `testing/fake_workarea.h`.
+  `SendMessageTimeoutW(hwnd, WM_SETTINGCHANGE, SPI_SETWORKAREA, 0, SMTO_ABORTIFHUNG, 250, ...)`.
+  Windows refuses to queue WM_SETTINGCHANGE to another process (`SendNotifyMessageW` fails with
+  `ERROR_MESSAGE_SYNC_ONLY`, 1159, seen live), so only a synchronous send works; the short timeout
+  bounds a stuck komorebi. Behind `WorkAreaNotifier`; tests use `testing/fake_workarea.h`.
 - **The class name** `komorebi-hidden` is a komorebi detail, not a Windows API: komorebi v0.1.41,
   `monitor_reconciliator/mod.rs`, `Hidden::create("komorebi-hidden")`. The guard matches the class
   alone (the title is not confirmed in the source). If komorebi renames or drops the window, nothing
@@ -89,7 +91,7 @@ windows then tile under the bar. Analysis: `docs/plans/2026-10-31-workarea-sync.
 ## Windows APIs
 
 Documented only: named pipes, `CreateToolhelp32Snapshot` for the process check, `MonitorFromWindow`,
-WinHTTP WebSocket, `FindWindowW` and `SendNotifyMessageW` (`WM_SETTINGCHANGE`, `SPI_SETWORKAREA`).
+WinHTTP WebSocket, `FindWindowW` and `SendMessageTimeoutW` (`WM_SETTINGCHANGE`, `SPI_SETWORKAREA`).
 `winhttp` is linked by this feature alone.
 
 ## Notes moved from docs/architecture.md
