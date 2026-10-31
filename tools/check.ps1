@@ -15,8 +15,10 @@
                     tests).
       4. configure  cmake --preset <Preset>       (skipped with -Fast)
       5. build      cmake --build --preset <Preset> (skipped with -Fast)
-      6. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 -j (skipped with -Fast)
-    -Analyze replaces steps 4-6 with an isolated MSVC /analyze build and clang-tidy.
+      6. qmllint    cmake --build --preset <Preset> --target all_qmllint; fails when the warning
+                    count rises above tools\qmllint-baseline.txt (skipped with -Fast)
+      7. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 -j (skipped with -Fast)
+    -Analyze replaces steps 4-7 with an isolated MSVC /analyze build and clang-tidy.
     Configure, build and test each run in their own cmd.exe after the matching vcvars*.bat, with
     VCPKG_ROOT=C:cpkg (override with the VCPKG_ROOT_OVERRIDE environment variable).
     Exits 1 if any step fails. Requires PowerShell 7 (pwsh).
@@ -548,6 +550,7 @@ if ($Analyze) {
 } elseif ($Fast) {
     Add-Result 'configure' 'SKIP' '-Fast' 0
     Add-Result 'build' 'SKIP' '-Fast' 0
+    Add-Result 'qmllint' 'SKIP' '-Fast' 0
     Add-Result 'test' 'SKIP' '-Fast' 0
 } else {
     $vcvars = Get-VcvarsScript $Preset
@@ -576,8 +579,29 @@ if ($Analyze) {
         }
     }
     if (-not $buildOk) {
+        Add-Result 'qmllint' 'SKIP' 'build failed' 0
         Add-Result 'test' 'SKIP' 'build failed' 0
     } else {
+        # qmllint over every QML module (the all_qmllint target qt_add_qml_module creates). A
+        # ratchet: the step fails when the warning count rises above tools\qmllint-baseline.txt and
+        # asks for the file to be lowered when it falls. Most of the baseline is unresolved imports
+        # (the module output folders are not URI-shaped, see src/modules/qml_modules.cmake).
+        Write-Step "qmllint (cmake --build --preset $Preset --target all_qmllint)"
+        $sw = [Diagnostics.Stopwatch]::StartNew()
+        $lintLog = Join-Path $repo "build\$Preset\check-qmllint.log"
+        $code = Invoke-InVsEnv 'qmllint' $vcvars "cmake --build --preset $Preset --target all_qmllint > `"$lintLog`" 2>&1"
+        $baselineFile = Join-Path $PSScriptRoot 'qmllint-baseline.txt'
+        $baseline = [int]((Get-Content $baselineFile | Where-Object { $_ -match '^\d+$' } | Select-Object -First 1))
+        $warnings = @(Select-String -Path $lintLog -Pattern '^Warning:' -ErrorAction SilentlyContinue).Count
+        if ($code -ne 0) {
+            Add-Result 'qmllint' 'FAIL' "exit $code; $lintLog" $sw.Elapsed.TotalSeconds
+        } elseif ($warnings -gt $baseline) {
+            Add-Result 'qmllint' 'FAIL' "$warnings warnings, baseline $baseline; $lintLog" $sw.Elapsed.TotalSeconds
+        } elseif ($warnings -lt $baseline) {
+            Add-Result 'qmllint' 'PASS' "$warnings warnings, below baseline ${baseline}: lower tools\qmllint-baseline.txt" $sw.Elapsed.TotalSeconds
+        } else {
+            Add-Result 'qmllint' 'PASS' "$warnings warnings (baseline)" $sw.Elapsed.TotalSeconds
+        }
         Write-Step "test (ctest --test-dir build\$Preset)"
         $sw = [Diagnostics.Stopwatch]::StartNew()
         # ctest ships with the Visual Studio CMake, so it also runs inside the vcvars environment.

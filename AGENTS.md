@@ -62,11 +62,13 @@ process); a single case runs with `wabar_tests --gtest_filter=Suite.Case`. Prese
 2. `structure`: rules S1-S8 (below).
 3. `json-subscript`: no `const nlohmann::json::operator[]` in product code.
 4. `build`: configure and build the `arm64-debug` preset (own targets use `/W4 /WX`).
-5. `test`: `ctest` over `wabar_tests`.
+5. `qmllint`: the `all_qmllint` target over every QML module; fails when the warning count rises
+   above `tools/qmllint-baseline.txt` (a ratchet: lower the number when it falls, never raise it).
+6. `test`: `ctest` over `wabar_tests`.
 
 Options: `-Fast` runs steps 1-3 only; `-Staged` checks only the staged files (the pre-commit hook
 uses it); `-Analyze` runs steps 1-3 plus MSVC `/analyze` and clang-tidy in an isolated build
-directory instead of steps 4-5 (see `docs/building.md`). `-SkipFormat` and `-Preset <name>` also
+directory instead of steps 4-6 (see `docs/building.md`). `-SkipFormat` and `-Preset <name>` also
 exist.
 
 Git hooks in `tools/hooks` run the fast checks on staged files and validate the commit message.

@@ -168,7 +168,14 @@ on: pass `--config-home`.
 ## Checks
 
 `tools\check.ps1` is the definition of done: clang-format check, structure check
-(rules S1-S8), json-subscript check, `arm64-debug` build and `ctest`. It sets up the MSVC environment itself.
+(rules S1-S8), json-subscript check, `arm64-debug` build, `qmllint` and `ctest`. It sets up the MSVC
+environment itself. The `qmllint` step builds `all_qmllint` and fails when its warning count rises
+above `tools/qmllint-baseline.txt`. Most of today's warnings are unresolved `wabar`,
+`wabar.services` and `Quickshell` imports: the module output folders are not URI-shaped (see
+`src/modules/qml_modules.cmake`), so qmllint cannot see the types and also reports their uses as
+`unqualified` or `missing-property`. Making the folders URI-shaped is a codegen change of its own;
+after it the baseline should drop sharply. The examples (`examples/*/shell.qml`) are not linted
+yet for the same reason.
 
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1          # everything
