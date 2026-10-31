@@ -20,6 +20,9 @@ S1-S8; the table at the top of that step is the exact text). Every own target, t
 | `wabar_host_base` | `src/host/` | `screen_match`, `popup_placement`, `panel_geometry`, `app_bar.h`, `thumbnail.h` and `win32/` (app bar, DWM backdrop, DWM thumbnails) | `wabar_kernel` | `wabar_options`, `dwmapi shell32 user32` |
 | `wabar_host` | `src/host/` | the shell runtime: QML module `wabar` (`qml/`: `ShellHost`, the window types, `win32/shell_host_win32.cpp`) | `wabar_host_base`, `wabar_control`, Qt Quick | `wabar_options`, `Qt6::QmlPrivate` (one use: a compiled shell's root type, `shell_host.cpp`) |
 | `wabar_quickshell`, `wabar_quickshell_wayland` | `src/host/quickshell/` | QML modules `Quickshell` and `Quickshell.Wayland`: the `wabar` shell types registered again under Quickshell's names (`QML_FOREIGN`) and two QML wrappers | `wabar_host`, Qt Quick | `wabar_options` |
+| `wabar_quickshell_{widgets,hyprland,upower,pipewire,systemtray,bluetooth}` | `src/host/quickshell/<name>/` | one QML module each (`Quickshell.Widgets`, `.Hyprland`, `.Services.UPower`, `.Services.Pipewire`, `.Services.SystemTray`, `.Bluetooth`), made by `wabar_quickshell_qml_module()` and linked into `wabar_quickshell` | `wabar_host`, Qt Quick | `wabar_options` |
+| `wabar_quickshell_services` (interface), `wabar_quickshell_{io,mpris,notifications}_module` | `src/modules/qml_modules.cmake` | the QML modules `Quickshell.Io`, `Quickshell.Services.Mpris` and `Quickshell.Services.Notifications`: feature types registered again under Quickshell's names from `src/app/wabar/quickshell_types_*.h`; the interface target carries the three modules and their plugins | the three module targets | `wabar_options` |
+| `wabar_test_module` (shared plugin) | `tests/plugin/` | the QML module `WabarTestModule`, built only for `wabar_tests`: it stands for a plugin a user drops into `<config home>/modules` | Qt Quick | `wabar_options` |
 | `wabar_<f>` | `src/features/<f>/` | one feature (`wabar_feature()`) | `wabar_kernel`, the `DEPENDS` features | `wabar_options`, the feature's system libraries |
 | `wabar_services`, `wabar_widgets` | `src/modules/qml_modules.cmake` | QML modules `wabar.services` and `wabar.widgets`, assembled from contributions (below) | the feature libraries, Qt Quick | `wabar_options` |
 | `wabar` (exe), `wabarc` (exe) | `src/app/wabar/`, `src/app/wabarc/` | `main.cpp` of each; `SafeShell.qml` joins `wabar.widgets` | | `wabar_options`, the modules / `wabar_control` |
@@ -97,11 +100,11 @@ Namespace `wabar::kernel`, include `"kernel/<qt|win32>/<file>.h"`.
 | `win32/winrt_apartment.*` | `ensureWinrtApartment()` | bluetooth, brightness, network (`connectivity_win`, `wlan_win`) |
 | `win32/shell_launch.*` | `shellOpen`, `launchHiddenShell`, `startDetachedHidden`, `hideConsole` | Shell, ControlCenter, toast activation, komorebi, `ShellProcess`, `quickshell_io` (`Process`, `execDetached`) |
 | `win32/shell_icons.*` | `IconBitmap`, `shellItemIcon` (`IShellItemImageFactory`, documented), `iconBitmapFromHicon` | taskbar (window and pinned-app icons), apps (`image://appicon`) |
-| `win32/app_activation.*` | AUMID lookups and `activateAppByAumid` (documented Win32/COM only) | media source names, toast activation |
+| `win32/app_activation.*` | AUMID lookups and `activateAppByAumid` (documented Win32/COM only) | media source names, toast activation, apps (`win32/launch_win.cpp`) |
 | `qt/live_desktop.*` | `liveDesktop([capability])`, `setCapabilityDisabled`, `capabilityDisabled` | the services' real constructors, `host::Hotkeys`, `src/app/wabar/main.cpp` (`--no-tray`, `--no-hotkeys`) |
 | `qt/polled_source.*` | `PolledSource`, the polled-sample base | `Memory`, `Cpu`, `Battery`, `Network` |
 | `qml/stat_source.h` | `StatSource`, the QML face of `PolledSource` (`QML_ANONYMOUS`, `QQmlParserStatus`); compiled into `wabar.services`, not into `wabar_kernel` | `Memory`, `Cpu`, `Battery`, `Network` |
-| `qt/app_data.*` | `appDataDir()`, `migrateLegacyAppData()` | taskbar pins, GitHub token, tray state, wallpaper thumbnails |
+| `qt/app_data.*` | `appDataDir()`, `migrateLegacyAppData()` | taskbar pins, GitHub token, tray state, wallpaper thumbnails, host thumbnails (`src/host/qml/thumbnails.cpp`), apps frecency (`apps_service.cpp`), `color_scheme` image stats, `quickshell_io` state, cache and data folders (`quickshell_singleton.cpp`) |
 
 Rules the kernel owns:
 
@@ -118,9 +121,14 @@ Rules the kernel owns:
 
 ## QML modules and built-in widgets
 
-Five QML modules, plus the Quickshell compatibility modules below. Their URIs are the user-facing API and do not change. `wabar` is 2.0 (the
-Quickshell vocabulary replaced `Config`, `Bar` and `BarLayout`; the mapping is in
-`docs/building.md`); the others are 1.0, and the two `Quickshell` modules 0.1.
+There are 14 QML modules. Their URIs are the user-facing API and do not change. Three are the
+engine's own: `wabar` (2.0: the Quickshell vocabulary replaced `Config`, `Bar` and `BarLayout`; the
+mapping is in `docs/building.md`), `wabar.services` and `wabar.widgets` (1.0). Eleven are
+Quickshell compatibility modules: `Quickshell`, `Quickshell.Wayland`, `Quickshell.Widgets`,
+`Quickshell.Hyprland`, `Quickshell.Services.UPower`, `Quickshell.Services.Pipewire`,
+`Quickshell.Services.SystemTray` and `Quickshell.Bluetooth` (0.1), and `Quickshell.Io`,
+`Quickshell.Services.Mpris` and `Quickshell.Services.Notifications` (1.0). The table lists them.
+`WabarTestModule` (tests only) is not one of the 14.
 
 | URI | Built from | Holds |
 |---|---|---|
