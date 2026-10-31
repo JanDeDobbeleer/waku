@@ -41,6 +41,8 @@ to Waybar, the bar for Wayland. It is written in lower case and plain ASCII in c
   `wabarc taskbar hide|show|status` does the same at run time.
 - `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
   the built-in shell and ignores the config; `--font-engine=directwrite` honours variable-font axes.
+- komorebi's work area follows the OS after every screen or work area change (the engine nudges
+  komorebi's hidden window); `--no-workarea-sync` turns that off.
 
 The architecture is in [docs/architecture.md](../../docs/architecture.md), the build and every flag
 in [docs/building.md](../../docs/building.md), notes for shell authors in

@@ -13,6 +13,7 @@
 #include "app/wabar/quickshell_glue.h"
 #include "control/control.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
+#include "features/workspaces/komorebi_workarea.h"
 #include "host/plugin_guard.h"
 #include "host/qml/control_handler.h"
 #include "host/qml/shell_host.h"
@@ -91,8 +92,13 @@ int main(int argc, char* argv[]) {
       QStringLiteral("hide-taskbar"),
       QStringLiteral("Hide the Windows taskbar while wabar runs (auto-hide on, taskbar windows "
                      "hidden) and restore it on exit. Off by default."));
+  QCommandLineOption noWorkAreaSyncOpt(
+      QStringLiteral("no-workarea-sync"),
+      QStringLiteral(
+          "Never nudge a tiling window manager (komorebi) after the work area changed."));
   parser.addOption(configHomeOpt);
   parser.addOption(importPathOpt);
+  parser.addOption(noWorkAreaSyncOpt);
   parser.addOption(hideTaskbarOpt);
   parser.addOption(noHotkeysOpt);
   parser.addOption(fontEngineOpt);
@@ -103,6 +109,8 @@ int main(int argc, char* argv[]) {
   if (!fontEngine.error.isEmpty()) qWarning().noquote() << "wabar:" << fontEngine.error;
   wabar::kernel::setCapabilityDisabled(QStringLiteral("tray"), parser.isSet(noTrayOpt));
   wabar::kernel::setCapabilityDisabled(QStringLiteral("hotkeys"), parser.isSet(noHotkeysOpt));
+  wabar::kernel::setCapabilityDisabled(QStringLiteral("workarea_sync"),
+                                       parser.isSet(noWorkAreaSyncOpt));
 
   const QString configHome = wabar::control::resolveConfigHome(
       parser.value(configHomeOpt), QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
@@ -164,6 +172,10 @@ int main(int argc, char* argv[]) {
   }
 
   if (taskbar) taskbar->start(parser.isSet(hideTaskbarOpt));
+  // komorebi's work area follows the OS after every screen change, the first registration
+  // included. Lives for the run, so a reload keeps a pending late notification. Inert off the
+  // live desktop and with --no-workarea-sync (features/workspaces/komorebi_workarea.h).
+  const auto workAreaGuard = wabar::workspaces::komorebi::makeKomorebiWorkAreaGuard();
   host.reload();
   wabar::host::traceStep("first reload done");
   host.watch();

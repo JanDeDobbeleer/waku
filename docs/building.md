@@ -55,6 +55,7 @@ build\arm64-debug\wabarc.exe --config-home examples\config status
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
 | `--hide-taskbar` | Hide the Windows taskbar (all monitors) while wabar runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wabarc shortcut`. |
+| `--no-workarea-sync` | Never tell komorebi that the work area changed. By default wabar sends `WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window 0.5 s after a screen or work area change and again 5 s later, so windows do not tile under the bar. See "komorebi's work area" in `docs/architecture.md`. |
 | `--font-engine <engine>` | `gdi` (default, small) or `directwrite` (honours variable-font axes, about 2 MB more memory). A shell that uses variable fonts needs `directwrite`. `QT_QPA_PLATFORM` wins when it is set. |
 | `--help` | Print the options. |
 
