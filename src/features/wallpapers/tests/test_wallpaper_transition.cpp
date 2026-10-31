@@ -170,6 +170,25 @@ TEST(WallpaperTransition, PlaysToTheEndAndFinishesOnce) {
   EXPECT_EQ(t->state(), WallpaperTransition::State::Finished);
 }
 
+TEST(WallpaperTransition, FreesTheLaidOutImagesWithTheWindow) {
+  auto t = make(QStringLiteral("split"), 20);
+  QSignalSpy finished(t.get(), &WallpaperTransition::finished);
+  t->onImagesLoaded(solid(kNew), solid(kOld));
+  EXPECT_EQ(t->scaledNew().size(), 2u);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return finished.count() > 0; }, 3000));
+  // Kept through the linger, so the overlay still covers the desktop while Windows switches.
+  EXPECT_EQ(t->scaledNew().size(), 2u);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return t->scaledNew().empty(); },
+                              WallpaperTransition::kLingerMs + 2000));
+  EXPECT_TRUE(t->scaledOld().empty());
+
+  auto cancelled = make(QStringLiteral("split"), 40);
+  cancelled->onImagesLoaded(solid(kNew), solid(kOld));
+  cancelled->cancel();
+  EXPECT_TRUE(cancelled->scaledNew().empty());
+  EXPECT_TRUE(cancelled->scaledOld().empty());
+}
+
 TEST(WallpaperTransition, CancelStopsSilently) {
   auto t = make(QStringLiteral("split"), 40);
   QSignalSpy finished(t.get(), &WallpaperTransition::finished);

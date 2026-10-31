@@ -108,6 +108,7 @@ class WallpaperTransition : public QObject {
   void setProgress(double value);
   bool windowVisible() const;
   const std::vector<ScreenArea>& areas() const { return areas_; }
+  // The laid-out images; empty again once the window is gone (after the linger, cancel or skip).
   const std::vector<ScaledImage>& scaledNew() const { return scaledNew_; }
   const std::vector<ScaledImage>& scaledOld() const { return scaledOld_; }
   // Renders the frame at the current progress, in logical pixels of the overlay (tests).

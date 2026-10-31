@@ -284,6 +284,10 @@ void WallpaperTransition::destroyWindow() {
     // Deferred: this can run from the animation's finished() emission or a QML handler of it.
     window->deleteLater();  // also deletes the scene item
   }
+  // The laid-out images are two screen-size pixmaps per monitor (44 MB at 2880x1920): free them
+  // with the window instead of holding them until the next change replaces this transition.
+  std::vector<ScaledImage>().swap(scaledNew_);
+  std::vector<ScaledImage>().swap(scaledOld_);
 }
 
 QImage WallpaperTransition::renderFrame() const {
