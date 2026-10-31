@@ -3,10 +3,11 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QSaveFile>
 #include <algorithm>
 #include <cmath>
 #include <vector>
+
+#include "kernel/qt/file_write.h"
 
 namespace wabar::apps {
 
@@ -59,10 +60,8 @@ bool FrecencyStore::save() const {
   QJsonObject root;
   root.insert(QStringLiteral("version"), 1);
   root.insert(QStringLiteral("apps"), apps);
-  QSaveFile file(path_);
-  if (!file.open(QIODevice::WriteOnly)) return false;
-  file.write(QJsonDocument(root).toJson(QJsonDocument::Compact));
-  return file.commit();
+  return static_cast<bool>(
+      kernel::writeFileAtomic(path_, QJsonDocument(root).toJson(QJsonDocument::Compact)));
 }
 
 void FrecencyStore::record(const QString& id, qint64 nowMs) {

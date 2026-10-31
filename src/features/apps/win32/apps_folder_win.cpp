@@ -4,22 +4,10 @@
 #include <shobjidl_core.h>
 
 #include "features/apps/apps_platform.h"
+#include "kernel/win32/com_scope.h"
 
 namespace wabar::apps {
 namespace {
-
-class ComScope {
- public:
-  ComScope() { uninitialize_ = SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)); }
-  ~ComScope() {
-    if (uninitialize_) CoUninitialize();
-  }
-  ComScope(const ComScope&) = delete;
-  ComScope& operator=(const ComScope&) = delete;
-
- private:
-  bool uninitialize_ = false;
-};
 
 QString displayName(IShellItem* item, SIGDN kind) {
   PWSTR text = nullptr;
@@ -34,7 +22,7 @@ QString displayName(IShellItem* item, SIGDN kind) {
 // packaged app is "<PackageFamilyName>!<AppId>", so only names with a "!" are kept.
 std::vector<AppRecord> enumerateAppsFolder() {
   std::vector<AppRecord> apps;
-  ComScope com;
+  const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
   IShellItem* folder = nullptr;
   if (FAILED(SHGetKnownFolderItem(FOLDERID_AppsFolder, KF_FLAG_DEFAULT, nullptr,
                                   IID_PPV_ARGS(&folder))) ||

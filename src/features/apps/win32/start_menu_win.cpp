@@ -8,24 +8,10 @@
 #include <vector>
 
 #include "features/apps/apps_platform.h"
+#include "kernel/win32/com_scope.h"
 
 namespace wabar::apps {
 namespace {
-
-// Joins the calling thread to COM for the lifetime of the object (MTA unless the thread already
-// has an apartment).
-class ComScope {
- public:
-  ComScope() { uninitialize_ = SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)); }
-  ~ComScope() {
-    if (uninitialize_) CoUninitialize();
-  }
-  ComScope(const ComScope&) = delete;
-  ComScope& operator=(const ComScope&) = delete;
-
- private:
-  bool uninitialize_ = false;
-};
 
 QString expandEnvironment(const QString& text) {
   if (!text.contains(QLatin1Char('%'))) return text;
@@ -43,7 +29,7 @@ ShortcutInfo resolveShortcut(const QString& lnkPath) {
   const DWORD attributes =
       GetFileAttributesW(reinterpret_cast<PCWSTR>(QDir::toNativeSeparators(lnkPath).utf16()));
   if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_HIDDEN)) return info;
-  ComScope com;
+  const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
   IShellLinkW* link = nullptr;
   if (FAILED(
           CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&link))) ||
