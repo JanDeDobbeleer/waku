@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <QMouseEvent>
+
 #include "host/testing/shell_fixtures.h"
 
 // ---- ShellRoot ----
@@ -52,6 +54,25 @@ TEST(ShellHostTest, BuildsOneWindowPerPanelAndMatchingScreen) {
   EXPECT_EQ(h.host->windows().size(), 1);
   EXPECT_TRUE(h.host->error().isEmpty());
   ASSERT_NE(h.host->shell(), nullptr);
+}
+
+TEST(ShellHostTest, APressOnAShellWindowIsReportedAndOtherWindowsAreNot) {
+  Harness h;
+  h.start(shellConfig());
+  ASSERT_TRUE(h.host->reload());
+  ASSERT_EQ(h.host->windows().size(), 1);
+  int presses = 0;
+  QObject::connect(h.host.get(), &ShellHost::windowPressed, [&presses] { ++presses; });
+  const auto press = [](QWindow* window) {
+    QMouseEvent event(QEvent::MouseButtonPress, QPointF(1, 1), QPointF(1, 1), Qt::LeftButton,
+                      Qt::LeftButton, Qt::NoModifier);
+    QCoreApplication::sendEvent(window, &event);
+  };
+  press(h.host->windows().first());
+  EXPECT_EQ(presses, 1);
+  QQuickWindow other;
+  press(&other);
+  EXPECT_EQ(presses, 1);
 }
 
 TEST(ShellHostTest, AScreenChangeReloadsTheShellOnceAfterItSettles) {

@@ -199,11 +199,9 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
   watchScreens();
   connect(&watcher_, &QFileSystemWatcher::directoryChanged, this, [this] { configHomeChanged(); });
   connect(&watcher_, &QFileSystemWatcher::fileChanged, this, [this] { configHomeChanged(); });
-  if (QCoreApplication::instance()) QCoreApplication::instance()->installEventFilter(this);
 }
 
 ShellHost::~ShellHost() {
-  if (QCoreApplication::instance()) QCoreApplication::instance()->removeEventFilter(this);
   // Windows (and their app bars) go before the root object and component they refer to, and the
   // windows deleted later go now, while the engine still exists.
   dropShell();
@@ -680,6 +678,9 @@ void ShellHost::present(Entry& entry) {
   QsWindow* window = entry.window;
   if (!entry.live() || entry.presented || !window->buildError().isEmpty()) return;
   entry.presented = true;
+  // Presses on the shell's windows only (eventFilter), not every event of the process. The window
+  // drops the filter when it is destroyed, and Qt drops it when the host is.
+  window->backingWindow()->installEventFilter(this);
   // A window the user showed or hid before a reload is in the same state after it. The shell is not
   // live yet, so this neither takes the keyboard focus nor is noted again.
   if (const auto it = visibility_.constFind(window->surfaceName());
