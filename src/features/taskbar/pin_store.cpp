@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "kernel/qt/app_data.h"
+#include "kernel/qt/file_write.h"
 
 namespace wabar::taskbar {
 
@@ -55,14 +56,13 @@ void PinStore::save() {
   for (const QString& id : order_) order.append(id);
   const QJsonObject root{{QStringLiteral("pinned_apps"), apps},
                          {QStringLiteral("pinned_order"), order}};
-  QDir().mkpath(QFileInfo(filePath_).absolutePath());
-  QFile file(filePath_);
-  if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-    qWarning().noquote() << "Taskbar: error saving pinned apps:" << file.errorString();
+  // Atomic: a crash mid-write must not leave a truncated pin file behind.
+  const kernel::FileWriteResult written =
+      kernel::writeFileAtomic(filePath_, QJsonDocument(root).toJson(QJsonDocument::Indented));
+  if (!written) {
+    qWarning().noquote() << "Taskbar: error saving pinned apps:" << written.message;
     return;
   }
-  file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
-  file.close();
   stamp_ = fileStamp();
 }
 
