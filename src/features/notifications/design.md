@@ -47,7 +47,7 @@ The `Quickshell.Services.Notifications` module registers `Notification`, `Notifi
 
 ## Threads
 
-A worker `std::thread` (MTA) owns the listener and runs reads, removes, clears and toast activation;
+A worker `kernel::TaskThread` (MTA) owns the listener and runs reads, removes, clears and toast activation;
 a WNF callback runs on a system thread. A second WNF callback belongs to `DndWatcher`. Owners and
 stops are listed in the threads table of `docs/architecture.md`.
 

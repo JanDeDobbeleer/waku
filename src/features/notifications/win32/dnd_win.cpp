@@ -7,6 +7,7 @@
 
 #include "features/notifications/dnd.h"
 #include "features/notifications/win32/wnf_win.h"
+#include "kernel/win32/com_scope.h"
 
 namespace wabar::notifications {
 namespace {
@@ -21,14 +22,6 @@ struct __declspec(uuid("6BFF4732-81EC-4FFB-AE67-B6C1BC29631F")) IQuietHoursSetti
 // {F53321FA-34F8-4B7F-B9A3-361877CB94CF}
 const CLSID kClsidQuietHoursSettings = {
     0xF53321FA, 0x34F8, 0x4B7F, {0xB9, 0xA3, 0x36, 0x18, 0x77, 0xCB, 0x94, 0xCF}};
-
-struct ComScope {
-  ComScope() : initialised(SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED))) {}
-  ~ComScope() {
-    if (initialised) CoUninitialize();
-  }
-  bool initialised;
-};
 
 struct Profile {
   const wchar_t* id;
@@ -56,7 +49,7 @@ bool withSettings(const std::function<bool(IQuietHoursSettings*)>& use) {
 }  // namespace
 
 QString dndStatus() {
-  ComScope com;
+  const kernel::ComScope com(kernel::ComApartment::SingleThreaded);
   QString profile;
   withSettings([&](IQuietHoursSettings* settings) {
     LPWSTR raw = nullptr;
@@ -80,7 +73,7 @@ bool setDndStatus(const QString& mode) {
     qWarning().noquote() << "Invalid DND mode" << mode;
     return false;
   }
-  ComScope com;
+  const kernel::ComScope com(kernel::ComApartment::SingleThreaded);
   return withSettings([&](IQuietHoursSettings* settings) {
     return SUCCEEDED(settings->put_UserSelectedProfile(id));
   });

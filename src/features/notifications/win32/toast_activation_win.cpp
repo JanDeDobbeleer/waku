@@ -27,6 +27,7 @@
 
 #include "kernel/win32/app_activation.h"
 #include "kernel/win32/shell_launch.h"
+#include "kernel/win32/winrt_strings.h"
 
 namespace wabar::notifications {
 namespace {
@@ -229,7 +230,7 @@ QString packageInstallFolder(const QString& aumid) {
     return QString::fromStdWString(std::wstring(info.Package().InstalledPath()));
   } catch (const winrt::hresult_error& error) {
     qDebug().noquote() << "No install folder for" << aumid << ":"
-                       << QString::fromWCharArray(error.message().c_str());
+                       << kernel::toQString(error.message());
   } catch (...) {
   }
   return {};

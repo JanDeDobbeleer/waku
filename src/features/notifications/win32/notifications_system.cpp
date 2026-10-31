@@ -2,9 +2,9 @@
 //
 // Threading: the count comes from a WNF state subscription; its callback runs on a system thread
 // and only forwards the value to the sink and arms a list refresh. Everything else (reading the
-// list, remove, clear, activate) runs on one worker thread (MTA) that owns the
+// list, remove, clear, activate) runs on one worker thread (kernel::TaskThread, MTA) that owns the
 // UserNotificationListener; requests enqueue a task (or arm the debounced refresh) and the thread
-// sleeps on a condition variable otherwise. stop() unsubscribes WNF (WnfSubscription returns only
+// sleeps otherwise. stop() unsubscribes WNF (WnfSubscription returns only
 // after a running callback has left; see wnf_win.h), wakes the worker and joins it.
 #include <Windows.h>
 #include <winrt/Windows.ApplicationModel.h>
@@ -19,20 +19,18 @@
 #include <QTimeZone>
 #include <algorithm>
 #include <chrono>
-#include <condition_variable>
 #include <cstring>
-#include <deque>
 #include <functional>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <set>
-#include <thread>
 
 #include "features/notifications/notifications.h"
 #include "features/notifications/toast_activation.h"
 #include "features/notifications/toast_xml.h"
 #include "features/notifications/win32/wnf_win.h"
+#include "kernel/win32/task_thread.h"
+#include "kernel/win32/winrt_strings.h"
 
 namespace wabar::notifications {
 namespace {
@@ -50,9 +48,7 @@ constexpr std::chrono::milliseconds kRefreshDelay{100};
 constexpr wchar_t kWpnidmKey[] =
     L"Software\\Microsoft\\Windows\\CurrentVersion\\PushNotifications\\wpnidm";
 
-QString toQString(const winrt::hstring& text) {
-  return QString::fromWCharArray(text.c_str(), static_cast<qsizetype>(text.size()));
-}
+using kernel::toQString;
 
 std::wstring registryString(HKEY key, const wchar_t* name) {
   DWORD size = 0;
@@ -174,21 +170,16 @@ class SystemNotificationSource final : public NotificationSource {
   ~SystemNotificationSource() override { stop(); }
 
   void start(NotificationSink* sink) override {
-    if (thread_.joinable()) return;
+    if (worker_.running()) return;
     sink_ = sink;
-    thread_ = std::thread([this] { run(); });
+    worker_.start([this] { openListener(); }, [this] { listener_ = nullptr; });
     subscribeWnf();
   }
 
   void stop() override {
-    if (!thread_.joinable()) return;
+    if (!worker_.running()) return;
     unsubscribeWnf();
-    {
-      std::lock_guard lock(mutex_);
-      stopping_ = true;
-    }
-    wake_.notify_all();
-    thread_.join();
+    worker_.stop();
     sink_ = nullptr;
   }
 
@@ -242,12 +233,8 @@ class SystemNotificationSource final : public NotificationSource {
 
   void unsubscribeWnf() { wnf_.unsubscribe(); }
 
-  void run() {
-    try {
-      winrt::init_apartment(winrt::apartment_type::multi_threaded);
-    } catch (const winrt::hresult_error&) {
-      // Already initialised on this thread; carry on.
-    }
+  // Worker thread, first.
+  void openListener() {
     try {
       listener_ = wum::UserNotificationListener::Current();
       const auto status = listener_.RequestAccessAsync().get();
@@ -261,65 +248,14 @@ class SystemNotificationSource final : public NotificationSource {
     } catch (const std::exception& error) {
       qWarning().noquote() << "Notification listener unavailable:" << error.what();
     }
-
-    for (;;) {
-      std::function<void()> task;
-      bool refreshNow = false;
-      {
-        std::unique_lock lock(mutex_);
-        for (;;) {
-          if (stopping_) break;
-          if (!tasks_.empty()) {
-            task = std::move(tasks_.front());
-            tasks_.pop_front();
-            break;
-          }
-          if (refreshPending_ && std::chrono::steady_clock::now() >= refreshAt_) {
-            refreshPending_ = false;
-            refreshNow = true;
-            break;
-          }
-          if (refreshPending_) {
-            wake_.wait_until(lock, refreshAt_);
-          } else {
-            wake_.wait(lock);
-          }
-        }
-        if (stopping_) break;
-      }
-      try {
-        if (refreshNow) {
-          readAndReport();
-        } else {
-          task();
-        }
-      } catch (const winrt::hresult_error& error) {
-        qWarning().noquote() << "Notification task failed:" << toQString(error.message());
-      } catch (const std::exception& error) {
-        qWarning().noquote() << "Notification task failed:" << error.what();
-      }
-    }
-    listener_ = nullptr;
   }
 
-  void enqueue(std::function<void()> task) {
-    {
-      std::lock_guard lock(mutex_);
-      if (stopping_) return;
-      tasks_.push_back(std::move(task));
-    }
-    wake_.notify_one();
-  }
+  void enqueue(std::function<void()> task) { worker_.post(std::move(task)); }
 
-  // Arms the debounced list read (a burst of changes is read once). Any thread.
+  // Arms the debounced list read (a burst of changes is read once); queued tasks go first. Any
+  // thread.
   void scheduleRefresh() {
-    {
-      std::lock_guard lock(mutex_);
-      if (stopping_ || refreshPending_) return;
-      refreshPending_ = true;
-      refreshAt_ = std::chrono::steady_clock::now() + kRefreshDelay;
-    }
-    wake_.notify_one();
+    worker_.postDeferred(kRefreshDelay, [this] { readAndReport(); });
   }
 
   void readAndReport() {
@@ -440,13 +376,7 @@ class SystemNotificationSource final : public NotificationSource {
   }
 
   NotificationSink* sink_ = nullptr;  // set before the subscription, cleared after it is gone
-  std::thread thread_;
-  std::mutex mutex_;
-  std::condition_variable wake_;
-  std::deque<std::function<void()>> tasks_;
-  bool stopping_ = false;
-  bool refreshPending_ = false;
-  std::chrono::steady_clock::time_point refreshAt_;
+  kernel::TaskThread worker_{QStringLiteral("Notification")};
   // Worker thread only: the last list read and the per-notification app info cache.
   std::vector<NotificationItem> items_;
   std::map<std::uint32_t, AppInfoData> appInfo_;
