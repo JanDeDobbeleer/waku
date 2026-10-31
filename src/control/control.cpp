@@ -6,6 +6,7 @@
 #include <QLocalSocket>
 #include <QPointer>
 #include <QTimer>
+#include <memory>
 
 #include "control/win32/instance_mutex.h"
 
@@ -115,11 +116,15 @@ void ControlServer::serve(QLocalSocket* socket) {
     if (guard) guard->disconnectFromServer();
   });
 
-  auto onReadyRead = [this, socket] {
+  // One command per connection: set once it has been answered or refused.
+  auto done = std::make_shared<bool>(false);
+  auto onReadyRead = [this, socket, done] {
+    if (*done) return;
     // Everything read so far stays in the socket's buffer until a full line has arrived.
     if (socket->bytesAvailable() > kMaxCommandBytes + 1) {
+      // Not disconnected here: the client closes after reading the error, as for any reply.
+      *done = true;
       socket->write("error: command too long\n");
-      socket->disconnectFromServer();
       return;
     }
     if (!socket->canReadLine()) return;
