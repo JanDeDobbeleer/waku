@@ -20,11 +20,11 @@ A `vswhere.exe is not recognized` line from `vcvarsall` is harmless.
 $vc = 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat'
 
 # ARM64 debug / release: configure, build, test
-cmd /c "call `"$vc`" arm64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset arm64-debug && cmake --build --preset arm64-debug && ctest --preset arm64-debug"
-cmd /c "call `"$vc`" arm64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset arm64-release && cmake --build --preset arm64-release && ctest --preset arm64-release"
+cmd /c "call `"$vc`" arm64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset arm64-debug && cmake --build --preset arm64-debug && ctest --preset arm64-debug -j"
+cmd /c "call `"$vc`" arm64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset arm64-release && cmake --build --preset arm64-release && ctest --preset arm64-release -j"
 
 # x64 release, cross-built (tests run under emulation)
-cmd /c "call `"$vc`" arm64_amd64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64-release && cmake --build --preset x64-release && ctest --preset x64-release"
+cmd /c "call `"$vc`" arm64_amd64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64-release && cmake --build --preset x64-release && ctest --preset x64-release -j"
 ```
 
 On an x64 host use `vcvarsall.bat x64` and the same presets.
@@ -224,6 +224,11 @@ Notes:
 
 - Tests are copied next to `wabar_tests.exe` with `windeployqt` (including the `offscreen`
   platform plugin) and `ctest` sets `QT_QPA_PLATFORM=offscreen`.
+- `ctest` has one test per gtest suite (about 210, read from the `TEST` lines at configure time),
+  not one per case (about 1300): a suite runs in one process, and `-j` runs suites in parallel
+  (`CTEST_PARALLEL_LEVEL` limits it). `ctest -R Tray` still selects by suite name; run one case
+  with `wabar_tests --gtest_filter=Suite.Case`. Editing a test source re-runs the configure step
+  so a new suite is picked up. `-DWABAR_TEST_PER_CASE=ON` brings back one process per case.
 - Warnings are errors (`/WX`) for our targets only; vcpkg and Qt code are unaffected, and headers
   included with angle brackets are treated as external (`/external:anglebrackets /external:W0`).
 - MSVC only: configuring with another compiler stops with an error.

@@ -52,5 +52,36 @@ add_custom_command(TARGET wabar_tests POST_BUILD
           --dir "$<TARGET_FILE_DIR:wabar_tests>" "$<TARGET_FILE:wabar_tests>"
   VERBATIM)
 
-gtest_discover_tests(wabar_tests DISCOVERY_MODE PRE_TEST
-  PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+# One ctest test per gtest suite (ctest -R Tray runs the Tray* suites, each in one process), read
+# from the TEST/TEST_F/TEST_P lines of the sources at configure time; an edited test source
+# re-runs the configure step. A suite runs all its cases in one process with one QGuiApplication,
+# which is what `wabar_tests --gtest_filter=Tray*` does too. Single cases: --gtest_filter.
+# -DWABAR_TEST_PER_CASE=ON restores one ctest test (and process) per case through gtest discovery.
+option(WABAR_TEST_PER_CASE "Register one ctest test per gtest case instead of per suite" OFF)
+if(WABAR_TEST_PER_CASE)
+  gtest_discover_tests(wabar_tests DISCOVERY_MODE PRE_TEST
+    PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+else()
+  get_target_property(wabar_test_files wabar_tests SOURCES)
+  set(wabar_test_suites "")
+  foreach(file IN LISTS wabar_test_files)
+    cmake_path(ABSOLUTE_PATH file BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" NORMALIZE)
+    if(NOT file MATCHES "\\.cpp$")
+      continue()
+    endif()
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${file}")
+    file(STRINGS "${file}" lines REGEX "^(TEST|TEST_F|TEST_P)\\([A-Za-z0-9_]+,")
+    foreach(line IN LISTS lines)
+      string(REGEX REPLACE "^TEST(_F|_P)?\\(([A-Za-z0-9_]+),.*$" "\\2" suite "${line}")
+      list(APPEND wabar_test_suites "${suite}")
+    endforeach()
+  endforeach()
+  list(REMOVE_DUPLICATES wabar_test_suites)
+  list(SORT wabar_test_suites)
+  foreach(suite IN LISTS wabar_test_suites)
+    # `Suite.*` for plain suites, `*/Suite.*` for the instantiations of a TEST_P suite.
+    add_test(NAME ${suite} COMMAND wabar_tests "--gtest_filter=${suite}.*:*/${suite}.*")
+    # A suite holds many cases: the ctest --timeout (120 s) is per case in spirit, so allow more.
+    set_tests_properties(${suite} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 600)
+  endforeach()
+endif()

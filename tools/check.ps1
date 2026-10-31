@@ -15,7 +15,7 @@
                     tests).
       4. configure  cmake --preset <Preset>       (skipped with -Fast)
       5. build      cmake --build --preset <Preset> (skipped with -Fast)
-      6. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 (skipped with -Fast)
+      6. test       ctest --test-dir build\<Preset> --output-on-failure --timeout 120 -j (skipped with -Fast)
     -Analyze replaces steps 4-6 with an isolated MSVC /analyze build and clang-tidy.
     Configure, build and test each run in their own cmd.exe after the matching vcvars*.bat, with
     VCPKG_ROOT=C:cpkg (override with the VCPKG_ROOT_OVERRIDE environment variable).
@@ -583,7 +583,7 @@ if ($Analyze) {
         # ctest ships with the Visual Studio CMake, so it also runs inside the vcvars environment.
         $ctestLog = Join-Path $repo "build\$Preset\check-ctest.log"
         $ctestCmd = @(
-            "ctest --test-dir `"build\$Preset`" --output-on-failure --timeout 120 > `"$ctestLog`" 2>&1",
+            "ctest --test-dir `"build\$Preset`" --output-on-failure --timeout 120 -j > `"$ctestLog`" 2>&1",
             'set rc=%errorlevel%',
             "type `"$ctestLog`"",
             'exit /b %rc%'

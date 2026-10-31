@@ -38,19 +38,20 @@ not survive between separate `cmd /c` calls. `vcvars*.bat` live in
 $vc = 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build'
 
 # ARM64 debug: configure, build, test (the default preset)
-cmd /c "call `"$vc\vcvarsarm64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset arm64-debug && cmake --build --preset arm64-debug && ctest --test-dir build\arm64-debug --output-on-failure --timeout 120"
+cmd /c "call `"$vc\vcvarsarm64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset arm64-debug && cmake --build --preset arm64-debug && ctest --test-dir build\arm64-debug --output-on-failure --timeout 120 -j"
 
 # ARM64 release
-cmd /c "call `"$vc\vcvarsarm64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset arm64-release && cmake --build --preset arm64-release && ctest --test-dir build\arm64-release --output-on-failure --timeout 120"
+cmd /c "call `"$vc\vcvarsarm64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset arm64-release && cmake --build --preset arm64-release && ctest --test-dir build\arm64-release --output-on-failure --timeout 120 -j"
 
 # x64 release, cross-built from the ARM64 host (tests run under emulation)
-cmd /c "call `"$vc\vcvarsarm64_amd64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64-release && cmake --build --preset x64-release && ctest --test-dir build\x64-release --output-on-failure --timeout 120"
+cmd /c "call `"$vc\vcvarsarm64_amd64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64-release && cmake --build --preset x64-release && ctest --test-dir build\x64-release --output-on-failure --timeout 120 -j"
 ```
 
 Targets: `wabar` (the bar), `wabarc` (its console client), `WabarTrayHook[_arm64]` (the DLL injected
 into Explorer), `wabar_tests` (all tests, defined in `tests/`) and `deploy` (assembles `dist/wabar`;
 see `docs/building.md`). `ctest` needs `QT_QPA_PLATFORM=offscreen`; the CMake test properties set
-it, so `ctest --test-dir` works without the test preset. Presets live in `CMakePresets.json`;
+it, so `ctest --test-dir` works without the test preset. A ctest test is one gtest suite (one
+process); a single case runs with `wabar_tests --gtest_filter=Suite.Case`. Presets live in `CMakePresets.json`;
 `compile_commands.json` is written to `build\<preset>`.
 
 ## Definition of done
