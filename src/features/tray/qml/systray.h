@@ -56,6 +56,8 @@ class Systray : public QObject {
   QString unavailableReason() const { return reason_; }
   TrayIconModel* icons() { return &model_; }
   wabar::tray::TrayIconRegistry& registry() { return registry_; }
+  // Whether the refresh after the hook asked for icons is still to come (tests).
+  bool refreshPending() const { return refreshTimer_.isActive(); }
 
   // Windows' own battery, volume and network icons (hidden by default) and icons of these
   // executables are not admitted. Icons already on screen are not re-filtered.

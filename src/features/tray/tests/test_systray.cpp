@@ -110,7 +110,9 @@ TEST(Systray, StaleSweepRemovesIconsWhoseWindowIsGone) {
   ASSERT_EQ(f.rows(), 2);
   f.api->windows.erase(200);
   f.host->askForIcons();
-  QTest::qWait(400);  // the refresh that sweeps runs 200 ms after the request
+  // The refresh that sweeps runs 200 ms after the request.
+  ASSERT_TRUE(f.systray.refreshPending());
+  ASSERT_TRUE(QTest::qWaitFor([&] { return !f.systray.refreshPending(); }, 5000));
   EXPECT_EQ(f.rows(), 1);
   EXPECT_EQ(f.systray.icons()->iconData(0)->hWnd, 100u);
 }
@@ -170,7 +172,9 @@ TEST(Systray, HookAskingForIconsBroadcastsTaskbarCreatedOnce) {
   Fixture f;
   f.host->askForIcons();
   f.host->askForIcons();
-  QTest::qWait(400);
+  // Both requests share the one 200 ms timer; once it fired nothing else is due.
+  ASSERT_TRUE(QTest::qWaitFor([&] { return f.api->broadcasts > 0; }, 5000));
+  EXPECT_FALSE(f.systray.refreshPending());
   EXPECT_EQ(f.api->broadcasts, 1);
 }
 
