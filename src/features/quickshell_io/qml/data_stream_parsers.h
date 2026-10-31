@@ -5,6 +5,7 @@
 #include <QByteArray>
 #include <QObject>
 #include <QString>
+#include <QStringDecoder>
 
 namespace wabar::quickshell_io {
 
@@ -56,11 +57,14 @@ class StdioCollector : public DataStreamParser {
   void streamFinished();
 
  private:
-  void publish();
+  // Appends `bytes` to what `data` and `text` show. Decodes only the new bytes: a chatty process
+  // with waitForEnd false re-decoded and re-copied its whole output for every chunk.
+  void publish(const QByteArray& bytes);
 
-  QByteArray buffer_;
+  QByteArray pending_;  // received, not shown yet (waitForEnd)
   QByteArray data_;
   QString text_;
+  QStringDecoder decoder_{QStringDecoder::Utf8};
   bool waitForEnd_ = true;
 };
 

@@ -133,6 +133,43 @@ TEST(QuickshellParsers, StdioCollectorStreamsWhenWaitForEndIsOff) {
   EXPECT_TRUE(collector.text().isEmpty());
 }
 
+TEST(QuickshellParsers, AStreamingCollectorKeepsAUtf8SequenceSplitAcrossChunks) {
+  StdioCollector collector;
+  collector.setWaitForEnd(false);
+  QSignalSpy text(&collector, &StdioCollector::textChanged);
+  const QByteArray euro = QStringLiteral("a€b").toUtf8();  // a, three bytes, b
+  collector.feed(euro.left(2));                            // "a" and the first byte
+  EXPECT_EQ(collector.text(), QStringLiteral("a"));
+  collector.feed(euro.mid(2, 2));  // the rest of the euro sign
+  collector.feed(euro.mid(4));     // "b"
+  EXPECT_EQ(collector.text(), QStringLiteral("a€b"));
+  EXPECT_EQ(collector.data(), euro);
+  EXPECT_EQ(text.count(), 3);
+  // A sequence cut off by the end of the stream shows as fromUtf8 shows it.
+  collector.feed(QByteArray("\xE2\x82", 2));
+  collector.streamEnded();
+  EXPECT_EQ(collector.text(), QString::fromUtf8(euro + QByteArray("\xE2\x82", 2)));
+}
+
+TEST(QuickshellParsers, AStreamingCollectorTakesWhatCameWhileItWaited) {
+  StdioCollector collector;
+  collector.feed("one ");  // waitForEnd: held back
+  collector.setWaitForEnd(false);
+  collector.feed("two");
+  EXPECT_EQ(collector.text(), QStringLiteral("one two"));
+  collector.streamEnded();
+  EXPECT_EQ(collector.data(), QByteArray("one two"));
+}
+
+TEST(QuickshellParsers, AStreamingCollectorScalesWithTheOutput) {
+  StdioCollector collector;
+  collector.setWaitForEnd(false);
+  const QByteArray line(100, 'x');
+  for (int i = 0; i < 20000; ++i) collector.feed(line);  // 2 MB in 100-byte chunks
+  EXPECT_EQ(collector.text().size(), 2000000);
+  EXPECT_EQ(collector.data().size(), 2000000);
+}
+
 TEST(QuickshellSingleton, EnvReturnsTheValueOrNull) {
   Fixture f;
   qputenv("WABAR_QS_ENV", "value");

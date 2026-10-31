@@ -11,28 +11,48 @@ void StdioCollector::setWaitForEnd(bool wait) {
 }
 
 void StdioCollector::feed(const QByteArray& chunk) {
-  buffer_.append(chunk);
-  if (!waitForEnd_) publish();
+  if (waitForEnd_) {
+    pending_.append(chunk);
+    return;
+  }
+  // What came while waitForEnd was set, then this chunk.
+  if (!pending_.isEmpty()) publish(std::exchange(pending_, QByteArray()));
+  publish(chunk);
 }
 
 void StdioCollector::streamEnded() {
-  publish();
+  publish(std::exchange(pending_, QByteArray()));
+  // Bytes of an unfinished UTF-8 sequence wait in the decoder; at the end they are shown the way
+  // QString::fromUtf8 shows them.
+  decoder_.resetState();
+  const QString text = QString::fromUtf8(data_);
+  if (text != text_) {
+    text_ = text;
+    emit textChanged();
+  }
   emit streamFinished();
 }
 
 void StdioCollector::reset() {
-  buffer_.clear();
-  publish();
-}
-
-void StdioCollector::publish() {
-  if (buffer_ != data_) {
-    data_ = buffer_;
+  pending_.clear();
+  decoder_.resetState();
+  if (!data_.isEmpty()) {
+    data_.clear();
     emit dataChanged();
   }
-  const QString text = QString::fromUtf8(data_);
-  if (text != text_) {
-    text_ = text;
+  if (!text_.isEmpty()) {
+    text_.clear();
+    emit textChanged();
+  }
+}
+
+void StdioCollector::publish(const QByteArray& bytes) {
+  if (bytes.isEmpty()) return;
+  data_.append(bytes);
+  emit dataChanged();
+  const QString text = decoder_.decode(bytes);
+  if (!text.isEmpty()) {
+    text_.append(text);
     emit textChanged();
   }
 }
