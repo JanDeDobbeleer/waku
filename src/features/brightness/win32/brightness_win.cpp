@@ -655,34 +655,34 @@ class SystemBrightness final : public BrightnessControl {
 
   // --- power-policy watcher (service.py _policy_message_loop / _policy_wnd_proc) -----------------
 
+  // Not waited for: the constructor runs on the GUI thread while the engine builds the shell. A
+  // stop() that comes before the thread has published its window still ends it (policyStop_).
   void startPolicyWatcher() {
-    std::promise<void> ready;
-    auto readyFuture = ready.get_future();
-    policyThread_ = std::thread([this, ready = std::move(ready)]() mutable { policyLoop(ready); });
-    readyFuture.wait();
+    policyThread_ = std::thread([this] { policyLoop(); });
   }
 
   void stopPolicyWatcher() {
+    // Sequentially consistent with the store and load in policyLoop(): either this load sees the
+    // window or the loop sees the flag and closes its own window.
+    policyStop_.store(true);
     if (HWND hwnd = policyWindow_.load()) PostMessageW(hwnd, WM_CLOSE, 0, 0);
     if (policyThread_.joinable()) policyThread_.join();
   }
 
   // Owns the message-only window and the power-setting registration; fails soft (no watcher).
-  void policyLoop(std::promise<void>& ready) {
+  void policyLoop() {
     WNDCLASSW wc{};
     wc.lpfnWndProc = &SystemBrightness::policyProc;
     wc.hInstance = GetModuleHandleW(nullptr);
     wc.lpszClassName = kPolicyWindowClass;
     if (!RegisterClassW(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) {
       qWarning() << "Brightness policy watcher: RegisterClassW failed";
-      ready.set_value();
       return;
     }
     HWND hwnd = CreateWindowExW(0, kPolicyWindowClass, L"wabar brightness policy", 0, 0, 0, 0, 0,
                                 HWND_MESSAGE, nullptr, wc.hInstance, this);
     if (!hwnd) {
       qWarning() << "Brightness policy watcher: CreateWindowExW failed";
-      ready.set_value();
       return;
     }
     HPOWERNOTIFY notify =
@@ -690,12 +690,11 @@ class SystemBrightness final : public BrightnessControl {
     if (!notify) {
       qWarning() << "Brightness policy watcher: RegisterPowerSettingNotification failed";
       DestroyWindow(hwnd);
-      ready.set_value();
       return;
     }
     policyWindow_.store(hwnd);
     policyActive_.store(true);
-    ready.set_value();
+    if (policyStop_.load()) PostMessageW(hwnd, WM_CLOSE, 0, 0);
     MSG msg;
     while (GetMessageW(&msg, nullptr, 0, 0) > 0) {
       TranslateMessage(&msg);
@@ -760,6 +759,7 @@ class SystemBrightness final : public BrightnessControl {
   std::thread policyThread_;
   std::atomic<HWND> policyWindow_{nullptr};
   std::atomic<bool> policyActive_{false};
+  std::atomic<bool> policyStop_{false};
   PolicyIgnoreWindow ignorePolicy_;
 };
 
