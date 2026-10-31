@@ -8,10 +8,9 @@ qt_add_executable(wabar WIN32 main.cpp quickshell_glue.h)
 target_compile_definitions(wabar PRIVATE
   WABAR_SAMPLE_CONFIG_DIR="${PROJECT_SOURCE_DIR}/examples/config")
 # The static QML plugins of the modules are linked so that `import wabar` and `import Quickshell`
-# resolve.
+# (and every Quickshell.* module, through wabar_quickshell_modules) resolve.
 target_link_libraries(wabar PRIVATE
   wabar_options
   wabar_host wabar_hostplugin wabar_widgets wabar_widgetsplugin
-  wabar_services wabar_servicesplugin wabar_quickshell_services
-  wabar_quickshell wabar_quickshellplugin wabar_quickshell_wayland wabar_quickshell_waylandplugin)
+  wabar_services wabar_servicesplugin wabar_quickshell_modules)
 set_target_properties(wabar PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

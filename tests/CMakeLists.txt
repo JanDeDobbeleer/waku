@@ -33,8 +33,7 @@ target_compile_definitions(wabar_tests PRIVATE WABAR_EXAMPLES_DIR="${PROJECT_SOU
 target_link_libraries(wabar_tests PRIVATE
   wabar_options
   wabar_host wabar_hostplugin wabar_widgets wabar_widgetsplugin
-  wabar_services wabar_servicesplugin wabar_quickshell_services
-  wabar_quickshell wabar_quickshellplugin wabar_quickshell_wayland wabar_quickshell_waylandplugin
+  wabar_services wabar_servicesplugin wabar_quickshell_modules
   ${test_libs}
   GTest::gtest Qt6::Test)
 set_target_properties(wabar_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

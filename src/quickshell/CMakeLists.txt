@@ -9,9 +9,13 @@
 #
 # core/ builds wabar_quickshell (module `Quickshell`), and every module made with
 # wabar_quickshell_qml_module() links into it. wabar_quickshell_services (interface) carries the
-# modules built by wabar_quickshell_service_module() and their static plugins; the executables and
-# the tests link it.
+# modules built by wabar_quickshell_service_module() and their static plugins.
+# wabar_quickshell_modules (interface) carries all of them: the executables and the tests link it
+# and nothing else of this unit.
 add_library(wabar_quickshell_services INTERFACE)
+add_library(wabar_quickshell_modules INTERFACE)
+target_link_libraries(wabar_quickshell_modules INTERFACE
+  wabar_quickshell wabar_quickshellplugin wabar_quickshell_services)
 
 # wabar_quickshell_service_module(<target> <uri> <header>)
 # A module made of one header of QML_FOREIGN registrations (in qml/ of the calling folder) of
@@ -45,7 +49,8 @@ endfunction()
 # wabar_quickshell (core/) so the executables and the tests get it without naming it. Call it
 # from the module's own folder, after core/. SINGLETONS are `pragma Singleton` files, INTERNAL
 # ones are not exported.
-# The QML imports wabar and wabar.services at run time; DEPENDENCIES only declares that.
+# The QML imports wabar and wabar.services at run time; DEPENDENCIES only declares that. A module
+# of C++ registrations only (Quickshell.Wayland) passes SOURCES alone.
 function(wabar_quickshell_qml_module target uri)
   cmake_parse_arguments(PARSE_ARGV 2 arg "" "" "QML_FILES;SINGLETONS;INTERNAL;SOURCES;DEPENDENCIES")
   set(all ${arg_QML_FILES} ${arg_SINGLETONS} ${arg_INTERNAL})
