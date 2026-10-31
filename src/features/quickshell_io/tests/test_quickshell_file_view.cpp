@@ -269,7 +269,7 @@ TEST(QuickshellFileView, DestroyingWhileAJobRunsIsSafe) {
   // The job runs on a pool thread and ends after the view is gone: the write lands, nothing is
   // delivered to the dead object.
   QThreadPool::globalInstance()->waitForDone(5000);
-  QTest::qWait(100);
+  QCoreApplication::sendPostedEvents();  // the job's queued result, for nobody
   {
     QMutexLocker lock(&scope.disk.mutex);
     EXPECT_EQ(scope.disk.files[QStringLiteral("C:/fake/a.txt")], QByteArray("y"));

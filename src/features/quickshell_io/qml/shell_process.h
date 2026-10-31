@@ -49,6 +49,8 @@ class ShellProcess : public QObject, public QQmlParserStatus {
   QString output() const { return output_; }
   QString errorOutput() const { return errorOutput_; }
   int exitCode() const { return exitCode_; }
+  // Whether the `interval` timer will run the command again (tests).
+  bool rerunScheduled() const { return intervalTimer_.isActive(); }
 
   Q_INVOKABLE void run();
 

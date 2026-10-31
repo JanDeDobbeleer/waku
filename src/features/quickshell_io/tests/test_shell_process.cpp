@@ -66,8 +66,10 @@ TEST(ShellProcess, EmptyProgramDoesNothing) {
   ShellProcess process;
   QSignalSpy finished(&process, &ShellProcess::finished);
   process.run();
+  // No child and no timer: no finished() can come later.
   EXPECT_FALSE(process.running());
-  QTest::qWait(100);
+  EXPECT_FALSE(process.rerunScheduled());
+  QCoreApplication::processEvents();
   EXPECT_EQ(finished.count(), 0);
 }
 
@@ -77,7 +79,10 @@ TEST(ShellProcess, RunWhileRunningIsIgnored) {
   process->run();
   process->run();
   ASSERT_TRUE(waitFor([&] { return finished.count() >= 1; }));
-  QTest::qWait(200);
+  // The second run() started no child of its own: nothing is left to finish.
+  EXPECT_FALSE(process->running());
+  EXPECT_FALSE(process->rerunScheduled());
+  QCoreApplication::processEvents();
   EXPECT_EQ(finished.count(), 1);
 }
 
@@ -94,9 +99,12 @@ TEST(ShellProcess, IntervalRerunsAfterTheComponentIsComplete) {
   std::unique_ptr<ShellProcess> process(shell(QStringLiteral("echo tick")));
   process->setInterval(200);
   QSignalSpy finished(process.get(), &ShellProcess::finished);
-  QTest::qWait(300);
-  EXPECT_EQ(finished.count(), 0);  // nothing runs before componentComplete()
+  // Nothing runs before componentComplete(): no child, no timer.
+  EXPECT_FALSE(process->running());
+  EXPECT_FALSE(process->rerunScheduled());
+  EXPECT_EQ(finished.count(), 0);
   process->componentComplete();
+  EXPECT_TRUE(process->rerunScheduled());
   ASSERT_TRUE(waitFor([&] { return finished.count() >= 3; }));
   EXPECT_EQ(process->output(), QStringLiteral("tick"));
 }
@@ -105,7 +113,9 @@ TEST(ShellProcess, NoIntervalMeansOnlyExplicitRuns) {
   std::unique_ptr<ShellProcess> process(shell(QStringLiteral("echo once")));
   QSignalSpy finished(process.get(), &ShellProcess::finished);
   process->componentComplete();
-  QTest::qWait(400);
+  EXPECT_FALSE(process->running());
+  EXPECT_FALSE(process->rerunScheduled());
+  QCoreApplication::processEvents();
   EXPECT_EQ(finished.count(), 0);
 }
 
@@ -114,6 +124,8 @@ TEST(ShellProcess, DestroyingWhileRunningKillsTheChild) {
   process->run();
   ASSERT_TRUE(process->running());
   process.reset();  // must not crash or leave a signal pointing at the dead object
-  QTest::qWait(200);
+  // Deliver whatever the kill queued (the QProcess's own finish notifications).
+  QCoreApplication::sendPostedEvents();
+  QCoreApplication::processEvents();
   SUCCEED();
 }

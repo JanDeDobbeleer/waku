@@ -206,7 +206,9 @@ TEST(QuickshellProcess, RunningSetBeforeTheCommandStartsWhenTheCommandArrives) {
   EXPECT_FALSE(run.process.running());
   // The wish is spent: changing the command again starts nothing.
   run.process.setCommand(cmd(QStringLiteral("echo again")));
-  QTest::qWait(200);
+  // A start would have created the child inside setCommand(); without one no exit can come.
+  EXPECT_FALSE(run.process.running());
+  QCoreApplication::processEvents();
   EXPECT_EQ(run.exited.count(), 1);
 }
 
@@ -234,8 +236,8 @@ TEST(QuickshellProcess, SignalKillsOnlyForTerminatingNumbers) {
   QSignalSpy started(&run.process, &QsProcess::started);
   run.process.setRunning(true);
   ASSERT_TRUE(waitFor([&] { return started.count() == 1; }));
-  run.process.signal(1);  // SIGHUP: ignored on Windows
-  QTest::qWait(300);
+  run.process.signal(1);  // SIGHUP: ignored on Windows; the decision is made inside the call
+  QCoreApplication::processEvents();
   EXPECT_TRUE(run.process.running());
   run.process.signal(15);
   ASSERT_TRUE(run.finish());
@@ -250,7 +252,7 @@ TEST(QuickshellProcess, ProgramThatCannotStartLeavesItNotRunning) {
   QSignalSpy exited(&process, &QsProcess::exited);
   process.setRunning(true);
   ASSERT_TRUE(waitFor([&] { return !process.running(); }));
-  QTest::qWait(100);
+  QCoreApplication::processEvents();  // anything the failed start still queued
   EXPECT_FALSE(process.running());
   EXPECT_EQ(states, (QList<bool>{true, false}));  // on, then off; nothing after
   EXPECT_EQ(started.count(), 0);
