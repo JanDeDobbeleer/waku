@@ -1,6 +1,8 @@
 #include "host/region_math.h"
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace wabar::host {
 
@@ -17,7 +19,36 @@ bool shapeContains(const RegionNode& node, const QPointF& p) {
   return dx * dx + dy * dy <= 1.0;
 }
 
+// The distance from `p` to the edge of `r`: to the nearest side from inside, to the rectangle from
+// outside.
+qreal rectEdgeDistance(const QRectF& r, const QPointF& p) {
+  const qreal dx = std::max({r.left() - p.x(), 0.0, p.x() - r.right()});
+  const qreal dy = std::max({r.top() - p.y(), 0.0, p.y() - r.bottom()});
+  if (dx > 0 || dy > 0) return std::hypot(dx, dy);
+  return std::min({p.x() - r.left(), r.right() - p.x(), p.y() - r.top(), r.bottom() - p.y()});
+}
+
+void collectEdgeDistance(const RegionNode& node, const QPointF& p, qreal& best) {
+  const QRectF& r = node.rect;
+  if (r.width() > 0 && r.height() > 0) {
+    const qreal d = rectEdgeDistance(r, p);
+    // Inside the bounds of an ellipse the curve can be nearer than any side.
+    const bool insideEllipseBounds = node.shape == RegionShapeKind::Ellipse && r.contains(p);
+    best = std::min(best, insideEllipseBounds ? 0.0 : d);
+  }
+  for (const RegionNode& child : node.children) collectEdgeDistance(child, p, best);
+}
+
 }  // namespace
+
+qreal regionEdgeDistance(const RegionNode& root, const QPointF& point, const QSizeF& window) {
+  qreal best = std::numeric_limits<qreal>::infinity();
+  collectEdgeDistance(root, point, best);
+  if (root.op != RegionOp::Combine && window.width() > 0 && window.height() > 0) {
+    best = std::min(best, rectEdgeDistance(QRectF(QPointF(0, 0), window), point));
+  }
+  return best;
+}
 
 bool regionContains(const RegionNode& root, const QPointF& point) {
   bool inside = shapeContains(root, point);

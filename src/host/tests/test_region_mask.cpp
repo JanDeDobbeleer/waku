@@ -198,12 +198,11 @@ TEST(RegionMaskTest, ARealPollTickFlipsTheWindow) {
                     QStringLiteral("mask: Region { x: 0; y: 0; width: 50; height: 50 }")));
   ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
   settle();
+  // The fake cursor jumps (it starts far off screen), so the next tick may be a slow one.
   cursorAt(h, 400, 400);
-  QTest::qWait(60);  // several 8 ms ticks
-  EXPECT_TRUE(clickThrough(h));
+  EXPECT_TRUE(QTest::qWaitFor([&] { return clickThrough(h); }, 1000));
   cursorAt(h, 10, 10);
-  QTest::qWait(60);
-  EXPECT_FALSE(clickThrough(h));
+  EXPECT_TRUE(QTest::qWaitFor([&] { return !clickThrough(h); }, 1000));
 }
 
 TEST(RegionMaskTest, AChangedRegionIsTestedAgainUnderARestingCursor) {

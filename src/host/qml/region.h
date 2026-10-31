@@ -78,7 +78,7 @@ class Region : public QObject {
 
  signals:
   // One notify signal per property, so a binding can read one while writing another. (Moving the
-  // item or changing a child does not emit; the poller reads the region each time.)
+  // item does not emit; the window's next frame tells the poller to read the region again.)
   void xChanged();
   void yChanged();
   void widthChanged();
@@ -89,7 +89,7 @@ class Region : public QObject {
   void regionsChanged();
   // This region or any region below it changed (any property, item, intersection or the child
   // list). The mask poller listens to the root; an item that moves does not emit, the window's
-  // frame does.
+  // frame request (afterAnimating) does.
   void treeChanged();
 
  private:

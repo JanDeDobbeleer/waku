@@ -46,6 +46,14 @@ bool regionContainsPadded(const RegionNode& root, const QPointF& point, qreal pa
 bool maskAcceptsInput(const std::optional<RegionNode>& mask, const QPointF& point, qreal pad,
                       const QSizeF& window = QSizeF());
 
+// A lower bound of how far `point` is from the nearest edge of any shape in the tree, and of the
+// window rectangle when the root `op` uses it (see regionContainsInWindow), in the same units: the
+// containment answers above cannot change while the point moves less than that. Shapes with no
+// area are skipped. A point inside the bounds of an ellipse gets 0. With no edge at all the result
+// is infinity.
+qreal regionEdgeDistance(const RegionNode& root, const QPointF& point,
+                         const QSizeF& window = QSizeF());
+
 // A cursor position in physical (native) pixels as a point in a window's logical coordinates. The
 // window's screen starts at `screenOrigin` (native pixels, which Qt also uses as the logical
 // origin) and has device pixel ratio `dpr`; the window is at `windowTopLeft` (logical).

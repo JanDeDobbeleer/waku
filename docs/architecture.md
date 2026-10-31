@@ -253,13 +253,20 @@ alone does not click through, but `WS_EX_LAYERED | WS_EX_TRANSPARENT` does, and
   (`cursorInWindow`: screen origin, device pixel ratio, window position) and tests it against the
   mask grown by 6 px (`regionContainsPadded`: the point and eight points 6 px away). The flag is
   set only when the answer changes.
-- The rate is 8 ms (120 Hz) while the cursor moved within the last 300 ms, 33 ms (30 Hz) otherwise.
-  A tick where the cursor did not move skips a window unless it is dirty: its region changed
-  (`Region::treeChanged`), the window repainted (`QQuickWindow::frameSwapped`, which every moving
-  item causes) or the window moved or resized. Every window is tested at least once a second
-  anyway. So a resting cursor over an idle bar costs a cursor read at 30 Hz and nothing else, and
-  the mask (a region tree built from QML) is rebuilt only when something can have changed, not
-  once per window per tick. The timer stops when no window is masked and visible.
+- The rate is 8 ms (120 Hz) while the cursor moved within the last 300 ms, 33 ms (30 Hz) otherwise,
+  as long as the cursor is near an edge of a padded mask. Farther away the next tick waits as long
+  as a cursor at 20,000 physical px/s needs to reach the nearest edge (`regionEdgeDistance`), up
+  to 250 ms (4 Hz): no answer can change sooner, so the flip latency stays that of the two rates
+  for any cursor up to that speed. A cursor that jumps (touch, a program moving it) can meet a
+  slow tick.
+- A tick where the cursor did not move skips a window unless it is dirty: its region changed
+  (`Region::treeChanged`), the window asked for a frame (`QQuickWindow::afterAnimating`, on the GUI
+  thread, which every moving item causes) or the window moved or resized. A dirty window also
+  brings the next tick forward to the rate above. Every window is tested at least once a second
+  anyway. The mask (a region tree built from QML) is built again only for a dirty or moved window
+  and on that once-a-second check; a moving cursor is tested against the last one. So a resting
+  cursor over an idle bar costs a cursor read at up to 30 Hz and nothing else. The timer stops
+  when no window is masked and visible.
 - The poll stops when the window hides or the mask goes, and the flag is cleared then. A cursor
   outside the window is simply outside the region.
 - Region math is a pure function over `RegionNode` (`src/host/region_math.*`): the shape (a

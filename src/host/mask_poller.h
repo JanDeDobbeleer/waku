@@ -26,15 +26,20 @@ class MaskPoller;
 // each registered MaskPoller, which tests it against its window's mask grown by kPadPx.
 //
 // Rate: kFastIntervalMs (120 Hz) while the cursor moved within kActiveWindowMs, kIdleIntervalMs
-// (30 Hz) otherwise. A tick where the cursor did not move evaluates only the pollers whose window
-// moved, repainted or whose region changed since their last evaluation (MaskPoller::markDirty),
-// plus every poller once per kRecheckMs as a safety net. With no registered poller the timer is
-// stopped.
+// (30 Hz) otherwise, both only as long as the cursor is near an edge of some window's padded mask.
+// Farther away the next tick waits as long as a cursor at kMaxCursorSpeed needs to reach the
+// nearest edge, up to kSlowIntervalMs: no answer can change before then, so hover latency stays
+// what the two rates give (MaskPoller::safeDistance). A tick where the cursor did not move
+// evaluates only the pollers whose window moved, rendered a frame or whose region changed since
+// their last evaluation (MaskPoller::markDirty, which also brings the next tick forward to the rate
+// above), plus every poller once per kRecheckMs as a safety net. With no registered poller the
+// timer is stopped.
 //
 // The known race: a click in the gap between the cursor entering a region and the next tick (up to
 // kIdleIntervalMs after a still cursor starts moving, then at most kFastIntervalMs) goes to the
 // window below. The padding makes the flip happen before the cursor reaches the region, which
-// covers a normal approach.
+// covers a normal approach. A cursor faster than kMaxCursorSpeed, or one that jumps (touch, a
+// program moving it), can meet a slow tick instead.
 //
 // Threading: GUI thread only. The hub owns its timer; it does not own the pollers or windows.
 class MaskPollerHub : public QObject {
@@ -47,6 +52,11 @@ class MaskPollerHub : public QObject {
   static constexpr int kIdleIntervalMs = 33;
   // How long after the last cursor movement the fast rate stays.
   static constexpr int kActiveWindowMs = 300;
+  // The longest wait while the cursor is far from every mask edge (4 Hz).
+  static constexpr int kSlowIntervalMs = 250;
+  // Physical pixels per millisecond (20,000 px/s: a full-speed flick across a 4K screen takes
+  // about 200 ms) that a far cursor is assumed to move at most.
+  static constexpr qreal kMaxCursorSpeed = 20;
   // Every poller is evaluated at least this often even when nothing is known to have changed.
   static constexpr int kRecheckMs = 1000;
 
@@ -74,6 +84,9 @@ class MaskPollerHub : public QObject {
   void remove(MaskPoller* poller);
   std::optional<QPoint> readCursor();
   void ensureTimer();
+  bool cursorActive(qint64 now) const { return now - lastMoveMs_ < kActiveWindowMs; }
+  // A poller became dirty: the next tick comes no later than the rate for a near cursor.
+  void noteDirty();
 
   CursorSource cursor_;
   Clock clock_;
@@ -116,32 +129,42 @@ class MaskPoller : public QObject {
 
  public slots:
   // Tells the poller that the mask, the window or what the window shows may have changed, so the
-  // next tick evaluates it even if the cursor rests.
-  void markDirty() { dirty_ = true; }
+  // next tick builds the mask again and evaluates it even if the cursor rests.
+  void markDirty();
 
  public:
   bool running() const { return registered_; }
   bool passThrough() const { return passThrough_; }
-  // How many times the window flag was changed.
+  // How many times the window flag was changed, and the mask built.
   int flips() const { return flips_; }
+  int maskBuilds() const { return maskBuilds_; }
+  // How far (physical pixels) the cursor of the last evaluation can move before the answer can
+  // change: its distance to the nearest edge of the padded mask. 0 before the first evaluation.
+  qreal safeDistance() const { return safeDistance_; }
 
  private:
   friend class MaskPollerHub;
-  // The hub's per-tick call: evaluates when `force`, when dirty or when the window moved. It does
-  // not build the mask unless it evaluates.
-  void tick(const std::optional<QPoint>& cursor, bool force);
-  void evaluate(const std::optional<QPoint>& cursor);
+  // The hub's per-tick call: evaluates when `force`, when dirty or when the window moved, and
+  // builds the mask again only when `rebuild`, dirty or the window moved (the cursor alone moving
+  // reuses the last one).
+  void tick(const std::optional<QPoint>& cursor, bool force, bool rebuild);
+  void evaluate(const std::optional<QPoint>& cursor, bool rebuild);
   void leave();
   void setPassThrough(bool passThrough);
 
   QPointer<QWindow> window_;
   QPointer<MaskPollerHub> hub_;
   MaskSource mask_;
+  // The mask of the last build; valid while `built_`.
+  std::optional<RegionNode> node_;
+  bool built_ = false;
   bool registered_ = false;
   bool dirty_ = true;
   QRect lastGeometry_;
   bool passThrough_ = false;
   int flips_ = 0;
+  int maskBuilds_ = 0;
+  qreal safeDistance_ = 0;
 };
 
 }  // namespace wabar::host

@@ -178,9 +178,11 @@ void QsWindow::updateMaskPoller() {
     if (!mask_ || !host_ || !host_->maskHub()) return;
     poller_ = std::make_unique<MaskPoller>(window_.get(), host_->maskHub(),
                                            [this] { return maskNode(); });
-    // A frame means something on the window moved or changed; the poller then tests the cursor
-    // against the mask again even if the cursor rests.
-    connect(window_.get(), &QQuickWindow::frameSwapped, poller_.get(), &MaskPoller::markDirty);
+    // A frame means something on the window moved or changed; the poller then builds the mask
+    // and tests the cursor against it again even if the cursor rests. afterAnimating comes on the
+    // GUI thread once per frame request, before the scene is synced, also for an item move that
+    // renders nothing (frameSwapped comes from the render thread, a queued event per frame).
+    connect(window_.get(), &QQuickWindow::afterAnimating, poller_.get(), &MaskPoller::markDirty);
     connectMask();
   }
   poller_->refresh();
