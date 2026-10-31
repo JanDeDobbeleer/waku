@@ -433,6 +433,13 @@ bool btDebug() {
   return on;
 }
 
+// "hresult 0x80070005 Access is denied." for logs and error texts.
+QString hresultText(const winrt::hresult_error& error) {
+  return QStringLiteral("hresult 0x%1 %2")
+      .arg(static_cast<quint32>(error.code().value), 8, 16, QLatin1Char('0'))
+      .arg(toQString(error.message()));
+}
+
 thread_local QString lastRadioError;
 
 // radio_is_on: true = on, false = adapter present but off, nullopt = no adapter / query failed.
@@ -447,9 +454,7 @@ std::optional<bool> radioIsOn() {
     if (found) return false;
     return std::nullopt;
   } catch (const winrt::hresult_error& error) {
-    lastRadioError = QStringLiteral("hresult 0x%1 %2")
-                         .arg(static_cast<quint32>(error.code().value), 8, 16, QLatin1Char('0'))
-                         .arg(toQString(error.message()));
+    lastRadioError = hresultText(error);
     return std::nullopt;
   } catch (...) {
     lastRadioError = QStringLiteral("unknown exception");
@@ -1027,6 +1032,12 @@ class BluetoothWorker : public QObject {
         }
         publish();
       }
+    } catch (const winrt::hresult_error& error) {
+      // Not a std::exception: without this clause the HRESULT was lost in the catch-all.
+      const QString text = hresultText(error);
+      qWarning().noquote() << "Bluetooth: refresh failed:" << text;
+      publish();
+      emit refreshFailed(QStringLiteral("Bluetooth refresh failed: ") + text);
     } catch (const std::exception& error) {
       publish();
       emit refreshFailed(QString::fromUtf8(error.what()));
@@ -1074,7 +1085,14 @@ class BluetoothWorker : public QObject {
       const std::vector<BluetoothDevice> merged = mergeSameDevices(devices);
       emit scanCompleted(static_cast<int>(BtScanStatus::Success),
                          QVector<BluetoothDevice>(merged.begin(), merged.end()));
+    } catch (const winrt::hresult_error& error) {
+      qWarning().noquote() << "Bluetooth: scan failed:" << hresultText(error);
+      emit scanCompleted(static_cast<int>(BtScanStatus::Error), {});
+    } catch (const std::exception& error) {
+      qWarning().noquote() << "Bluetooth: scan failed:" << error.what();
+      emit scanCompleted(static_cast<int>(BtScanStatus::Error), {});
     } catch (...) {
+      qWarning() << "Bluetooth: scan failed";
       emit scanCompleted(static_cast<int>(BtScanStatus::Error), {});
     }
   }
