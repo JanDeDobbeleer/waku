@@ -12,7 +12,6 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QPointer>
-#include <QSaveFile>
 #include <QThreadPool>
 #include <QUrl>
 #include <QtDebug>
@@ -20,6 +19,8 @@
 #include <set>
 
 #include "kernel/qt/app_data.h"
+#include "kernel/qt/file_write.h"
+#include "kernel/qt/gui_post.h"
 
 namespace wabar::github {
 namespace {
@@ -115,16 +116,11 @@ void runAsync(QObject* context, std::function<std::function<void()>()> work) {
   QPointer<QObject> guard(context);
   QThreadPool::globalInstance()->start([guard, hasContext, work = std::move(work)] {
     std::function<void()> then = work();
-    // qApp outlives the pool: ~QCoreApplication waits for the global pool.
-    QCoreApplication* app = QCoreApplication::instance();
-    if (!app || !then) return;
-    QMetaObject::invokeMethod(
-        app,
-        [guard, hasContext, then = std::move(then)] {
-          if (hasContext && !guard) return;
-          then();
-        },
-        Qt::QueuedConnection);
+    if (!then) return;
+    // qApp outlives the pool: ~QCoreApplication waits for the global pool. Without a context the
+    // continuation runs as long as qApp does.
+    kernel::postToGui(hasContext ? guard : QPointer<QObject>(QCoreApplication::instance()),
+                      std::move(then));
   });
 }
 
@@ -436,10 +432,9 @@ QString readGithubTokenFile(const QString& path) {
 }
 
 bool saveGithubTokenFile(const QString& path, const QString& token) {
-  QDir().mkpath(QFileInfo(path).absolutePath());
-  QSaveFile file(path);
-  if (!file.open(QIODevice::WriteOnly) || file.write(token.toUtf8()) < 0 || !file.commit()) {
-    qCritical().noquote() << "GitHubAuth failed to save token:" << file.errorString();
+  const kernel::FileWriteResult written = kernel::writeFileAtomic(path, token.toUtf8());
+  if (!written) {
+    qCritical().noquote() << "GitHubAuth failed to save token:" << written.message;
     return false;
   }
   qInfo().noquote() << "GitHubAuth token saved successfully.";
