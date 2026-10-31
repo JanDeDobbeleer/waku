@@ -141,7 +141,7 @@ std::vector<ToastXml> readToastXml(const QString& aumid, int count) {
   std::vector<ToastXml> toasts;
   try {
     const auto history =
-        wun::ToastNotificationManager::History().GetHistory(winrt::hstring(aumid.toStdWString()));
+        wun::ToastNotificationManager::History().GetHistory(kernel::toHString(aumid));
     for (const auto& toast : history) {
       if (static_cast<int>(toasts.size()) >= count) break;
       try {
@@ -358,7 +358,7 @@ class SystemNotificationSource final : public NotificationSource {
     apps.erase(QString());
     for (const QString& app : apps) {
       try {
-        wun::ToastNotificationManager::History().Clear(winrt::hstring(app.toStdWString()));
+        wun::ToastNotificationManager::History().Clear(kernel::toHString(app));
       } catch (const winrt::hresult_error& error) {
         qDebug().noquote() << "Failed to clear the notifications of" << app << ":"
                            << toQString(error.message());
