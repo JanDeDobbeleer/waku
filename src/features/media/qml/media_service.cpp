@@ -1,5 +1,7 @@
 #include "features/media/qml/media_service.h"
 
+#include "kernel/qt/live_desktop.h"
+
 namespace wabar::media {
 
 QString imageMimeType(const QByteArray& bytes) {
@@ -19,10 +21,21 @@ QString imageDataUrl(const QByteArray& bytes) {
       .arg(imageMimeType(bytes), QString::fromLatin1(bytes.toBase64()));
 }
 
+namespace {
+
+// GSMTC, its worker thread and the source-app resolver read the real desktop; a desktop that is
+// not live (tests, the offscreen platform) never starts them, and `Media.available` stays false.
+std::unique_ptr<MediaSessionSource> systemSource() {
+  if (!kernel::liveDesktop(QStringLiteral("media"))) return nullptr;
+  return createSystemMediaSource();
+}
+
+}  // namespace
+
 std::shared_ptr<MediaSessionService> acquireMediaService() {
   static std::weak_ptr<MediaSessionService> shared;
   if (auto existing = shared.lock()) return existing;
-  auto created = std::make_shared<MediaSessionService>(createSystemMediaSource());
+  auto created = std::make_shared<MediaSessionService>(systemSource());
   shared = created;
   return created;
 }
