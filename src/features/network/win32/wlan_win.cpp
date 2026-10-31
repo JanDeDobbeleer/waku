@@ -475,6 +475,14 @@ class WlanBackend final : public WifiBackend {
     }
     QThread* thread = thread_;
     WlanWorker* worker = worker_;
+    // finished() comes from the worker thread; the context object lives on the GUI thread, so the
+    // deletes run there, after the thread has left its event loop. Connected before the quit is
+    // queued: an idle worker can quit and emit finished() before this line runs, and the worker
+    // and the thread would then never be deleted.
+    QObject::connect(thread, &QThread::finished, thread, [thread, worker] {
+      delete worker;
+      thread->deleteLater();
+    });
     QMetaObject::invokeMethod(
         worker,
         [worker] {
@@ -482,12 +490,6 @@ class WlanBackend final : public WifiBackend {
           QThread::currentThread()->quit();
         },
         Qt::QueuedConnection);
-    // finished() comes from the worker thread; the context object lives on the GUI thread, so the
-    // deletes run there, after the thread has left its event loop.
-    QObject::connect(thread, &QThread::finished, thread, [thread, worker] {
-      delete worker;
-      thread->deleteLater();
-    });
     static const bool registered = [] {
       qAddPostRoutine(waitForRetiringThreads);
       return true;
