@@ -25,9 +25,9 @@ namespace wabar::color_scheme {
 // content, rainbow, fruitsalad; case and "_" "-" ignored). `contrast` is -1 .. 1.
 //
 // Threads: GUI thread owns the object. fromImage() decodes and quantizes on a QThreadPool thread;
-// that task touches no QObject, and posts the result back through a QPointer to this object. No
-// thread of its own, nothing to stop at exit (a task that outlives the object finds the QPointer
-// null and drops its result).
+// that task touches no QObject and posts the result to qApp, where a QPointer to this object is
+// tested on the GUI thread. No thread of its own, nothing to stop at exit (a task that outlives
+// the object drops its result there).
 class ColorSchemeService : public QObject {
   Q_OBJECT
   QML_NAMED_ELEMENT(ColorScheme)

@@ -8,6 +8,8 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QThread>
+#include <QThreadPool>
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -763,6 +765,32 @@ TEST(ColorSchemeService, FromImageReportsMissingFilesAndBadVariants) {
   EXPECT_FALSE(failed.at(0).at(1).toString().isEmpty());
   service.fromImage(QStringLiteral("x.png"), QStringLiteral("nope"));
   EXPECT_EQ(failed.count(), 2);  // a bad variant fails at once
+}
+
+// C4: the pool task used to test its QPointer and then post to the service, racing with the GUI
+// thread deleting it (a reload). The result now goes to qApp and is dropped there. The service is
+// destroyed at varying points of the task's run, from before it starts to after it posted.
+TEST(ColorSchemeService, DestroyedWhileFromImageRunsDropsTheResult) {
+  QTemporaryDir dir;
+  ASSERT_TRUE(dir.isValid());
+  const QString path = dir.filePath(QStringLiteral("wall.png"));
+  ASSERT_TRUE(solidImage(800, 600, qRgb(0x1e, 0x64, 0xc8)).save(path));
+  auto stats = std::make_shared<ImageStatsCache>();  // memory only
+  int delivered = 0;
+  for (int round = 0; round < 40; ++round) {
+    // A fresh stats cache each eighth round makes the task decode the file again.
+    if (round % 8 == 0) stats = std::make_shared<ImageStatsCache>();
+    auto service = std::make_unique<ColorSchemeService>(stats);
+    QObject::connect(service.get(), &ColorSchemeService::fromImageFinished,
+                     [&delivered] { ++delivered; });
+    service->fromImage(path);
+    QThread::usleep(static_cast<unsigned long>((round % 5) * 500));
+    service.reset();
+    ASSERT_TRUE(QThreadPool::globalInstance()->waitForDone(10000));
+    QCoreApplication::sendPostedEvents();
+    QCoreApplication::processEvents();
+  }
+  EXPECT_EQ(delivered, 0);
 }
 
 TEST(ColorSchemeService, GenerateTakesAColourOrAnImageFile) {

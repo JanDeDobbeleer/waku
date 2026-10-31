@@ -1,5 +1,6 @@
 #include "features/color_scheme/qml/color_scheme_service.h"
 
+#include <QCoreApplication>
 #include <QFileInfo>
 #include <QPointer>
 #include <QThreadPool>
@@ -159,9 +160,13 @@ void ColorSchemeService::fromImage(const QString& path, const QString& variant, 
   const std::shared_ptr<ImageStatsCache> stats = stats_;
   QThreadPool::globalInstance()->start([self, stats, path, local, chosen, dark, contrast] {
     ImageResult result = schemeFromImageFile(stats.get(), local, chosen, dark, contrast);
-    if (self.isNull()) return;
+    // Posted to qApp, never to `self`: testing the QPointer here and then posting to it races with
+    // the GUI thread deleting the service (a reload). `self` is read on the GUI thread only. qApp
+    // outlives the task (~QCoreApplication waits for the global pool).
+    QCoreApplication* app = QCoreApplication::instance();
+    if (!app) return;
     QMetaObject::invokeMethod(
-        self.data(),
+        app,
         [self, path, result = std::move(result)] {
           if (self.isNull()) return;
           if (result.error.isEmpty()) {
