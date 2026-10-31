@@ -7,10 +7,8 @@
 #include <winrt/base.h>
 // clang-format on
 
-#include <QCoreApplication>
 #include <QDebug>
 #include <QFileInfo>
-#include <QMetaObject>
 #include <QPointer>
 #include <QTimer>
 #include <algorithm>
@@ -18,6 +16,9 @@
 #include <functional>
 #include <iterator>
 #include <utility>
+
+#include "kernel/qt/gui_post.h"
+#include "kernel/win32/com_scope.h"
 
 namespace wabar::audio {
 namespace {
@@ -208,21 +209,10 @@ class SystemStreams final : public AudioStreamSource {
 
   // The callback COM threads call: it only re-posts to the GUI thread. Core Audio may still call
   // it after an Unregister call failed (AUDCLNT_E_DEVICE_INVALIDATED, exactly when sessions
-  // change). The post goes to qApp, never to this object: testing the QPointer here and then
-  // posting to it races with the GUI thread deleting the source (a reload), and postEvent would
-  // then write into a freed QObject. `self` is read on the GUI thread only.
+  // change), while a reload deletes the source; kernel::postToGui reads `self` on the GUI thread.
   Notify post() {
     QPointer<SystemStreams> self(this);
-    return [self, this](int kind) {
-      QCoreApplication* app = QCoreApplication::instance();
-      if (!app) return;
-      QMetaObject::invokeMethod(
-          app,
-          [self, this, kind] {
-            if (self) onEvent(kind);
-          },
-          Qt::QueuedConnection);
-    };
+    return [self, this](int kind) { kernel::postToGui(self, [this, kind] { onEvent(kind); }); };
   }
 
   void onEvent(int kind) {
@@ -385,6 +375,8 @@ class SystemStreams final : public AudioStreamSource {
     entries_ = std::move(next);
   }
 
+  // First, so the apartment outlives every COM object below; balanced when the object goes.
+  const kernel::ComScope com_{kernel::ComApartment::SingleThreaded};
   winrt::com_ptr<IMMDeviceEnumerator> enumerator_;
   winrt::com_ptr<IAudioSessionManager2> manager_;
   DefaultDeviceEvents* deviceEvents_ = nullptr;
@@ -399,9 +391,6 @@ class SystemStreams final : public AudioStreamSource {
 
 }  // namespace
 
-AudioStreamSource* createSystemAudioStreams(QObject* parent) {
-  CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);  // already initialised is fine
-  return new SystemStreams(parent);
-}
+AudioStreamSource* createSystemAudioStreams(QObject* parent) { return new SystemStreams(parent); }
 
 }  // namespace wabar::audio

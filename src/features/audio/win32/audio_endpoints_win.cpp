@@ -9,9 +9,7 @@
 #include <winrt/base.h>
 // clang-format on
 
-#include <QCoreApplication>
 #include <QDebug>
-#include <QMetaObject>
 #include <QPointer>
 #include <atomic>
 #include <cmath>
@@ -19,6 +17,9 @@
 #include <map>
 #include <optional>
 #include <utility>
+
+#include "kernel/qt/gui_post.h"
+#include "kernel/win32/com_scope.h"
 
 namespace wabar::audio {
 namespace {
@@ -119,22 +120,10 @@ class DeviceCallback final : public IMMNotificationClient {
   Notify notify_;
 };
 
-// Runs `fn` on the GUI thread if `self` is still alive then. Called on Core Audio callback threads,
-// which may still run after an Unregister call failed (AUDCLNT_E_DEVICE_INVALIDATED, exactly when
-// device events fire). The post goes to qApp, never to `self`: testing the QPointer here and then
-// posting to it races with the GUI thread deleting the object (a reload), and postEvent would then
-// write into a freed QObject. `self` is read on the GUI thread only.
-template <typename Object, typename Fn>
-void postToGui(const QPointer<Object>& self, Fn fn) {
-  QCoreApplication* app = QCoreApplication::instance();
-  if (!app) return;
-  QMetaObject::invokeMethod(
-      app,
-      [self, fn = std::move(fn)] {
-        if (self) fn();
-      },
-      Qt::QueuedConnection);
-}
+// Core Audio callback threads post through kernel::postToGui: they may still run after an
+// Unregister call failed (AUDCLNT_E_DEVICE_INVALIDATED, exactly when device events fire), while a
+// reload deletes the object.
+using kernel::postToGui;
 
 QString takeCoString(LPWSTR text) {
   const QString result = text ? QString::fromWCharArray(text) : QString();
@@ -361,6 +350,8 @@ class SystemAudio final : public AudioEndpoints {
     emit deviceChanged();
   }
 
+  // First, so the apartment outlives every COM object below; balanced when the object goes.
+  const kernel::ComScope com_{kernel::ComApartment::SingleThreaded};
   EDataFlow flow_;
   winrt::com_ptr<IMMDeviceEnumerator> enumerator_;
   winrt::com_ptr<IAudioEndpointVolume> volume_;
@@ -376,7 +367,6 @@ class SystemAudio final : public AudioEndpoints {
 }  // namespace
 
 AudioEndpoints* createSystemAudio(AudioFlow flow, QObject* parent) {
-  CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);  // already initialised is fine
   return new SystemAudio(flow, parent);
 }
 
