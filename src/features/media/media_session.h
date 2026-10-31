@@ -167,6 +167,8 @@ class MediaSessionService final : public QObject {
   void mediaPropertiesChanged();
   void timelineInfoChanged();
   void playbackInfoChanged();
+  // The 100 ms tick while a session plays: only `currentPos` moved.
+  void positionTicked();
 
  private:
   class Sink;
@@ -174,6 +176,7 @@ class MediaSessionService final : public QObject {
   bool applyTimelineSnapshot(MediaSessionState& state, const MediaTimeline& timeline);
   void applyPlaybackSnapshot(MediaSessionState& state, const MediaPlayback& playback);
   bool applyCurrentSelection(const QString& systemId, bool followSystem);
+  void interpolate();
   void interpolateAndEmit();
   void updateTimer();
   void send(MediaCommand command, double value = 0);

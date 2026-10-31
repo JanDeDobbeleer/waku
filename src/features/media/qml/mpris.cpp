@@ -169,7 +169,7 @@ Mpris::Mpris(std::shared_ptr<MediaSessionService> service, QObject* parent)
   for (auto signal :
        {&MediaSessionService::mediaDataChanged, &MediaSessionService::currentSessionChanged,
         &MediaSessionService::mediaPropertiesChanged, &MediaSessionService::timelineInfoChanged,
-        &MediaSessionService::playbackInfoChanged}) {
+        &MediaSessionService::playbackInfoChanged, &MediaSessionService::positionTicked}) {
     connect(service_.get(), signal, this, &Mpris::sync);
   }
   service_->start();

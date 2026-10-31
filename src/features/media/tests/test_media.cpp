@@ -2,6 +2,7 @@
 
 #include <QBuffer>
 #include <QColor>
+#include <QCoreApplication>
 #include <QImage>
 #include <QSignalSpy>
 #include <QTest>
@@ -121,6 +122,30 @@ TEST(MediaService, ExposesTheCurrentSession) {
   EXPECT_EQ(h.media->duration(), 200);
   EXPECT_FALSE(h.media->canPrevious());
   EXPECT_TRUE(h.media->canNext());
+}
+
+TEST(MediaService, ASessionListIsOneRoundOfSignalsAndTicksMoveOnlyThePosition) {
+  Harness h;
+  QSignalSpy changed(h.media.get(), &Media::changed);
+  QSignalSpy position(h.media.get(), &Media::positionChanged);
+  std::vector<MediaSessionData> sessions;
+  for (const char* id : {"A.App", "B.App", "C.App"}) {
+    MediaSessionData data = session(QString::fromLatin1(id));
+    data.appId = QString::fromLatin1(id);
+    sessions.push_back(data);
+  }
+  h.source->sink_->sessionsChanged(sessions, sessions.front().appId, true);
+  QCoreApplication::processEvents();
+  // Each kind of change once for the list, not once per session (about 16 before).
+  EXPECT_LE(changed.count(), 7);
+  ASSERT_TRUE(h.media->playing());
+
+  // The 100 ms tick while playing moves the position only.
+  const int before = changed.count();
+  const int ticks = position.count();
+  QTest::qWait(350);
+  EXPECT_EQ(changed.count(), before);
+  EXPECT_GE(position.count(), ticks + 2);
 }
 
 TEST(MediaService, UnsetTimelineIsIgnored) {

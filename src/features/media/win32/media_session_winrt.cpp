@@ -128,7 +128,7 @@ class SystemMediaSource final : public MediaSessionSource {
           [queue, this](auto&&, auto&&) { queue->post([this] { refresh(false); }); });
       currentToken_ = manager_.CurrentSessionChanged(
           [queue, this](auto&&, auto&&) { queue->post([this] { refresh(true); }); });
-      refresh(false);
+      // One full read; refresh(false) first would read every session and its thumbnail twice.
       refresh(true);
     } catch (const winrt::hresult_error& error) {
       qWarning().noquote() << "Media session manager unavailable:" << toQString(error.message());

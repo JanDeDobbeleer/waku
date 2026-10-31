@@ -53,6 +53,7 @@ Media::Media(std::shared_ptr<MediaSessionService> service, QObject* parent)
         &MediaSessionService::playbackInfoChanged}) {
     connect(service_.get(), signal, this, &Media::onServiceChanged);
   }
+  connect(service_.get(), &MediaSessionService::positionTicked, this, &Media::positionChanged);
   service_->start();
 }
 
@@ -66,6 +67,7 @@ void Media::onServiceChanged() {
     thumbnailUrl_ = imageDataUrl(bytes);
   }
   emit changed();
+  emit positionChanged();
 }
 
 QString Media::title() const { return current() ? current()->title : QString(); }

@@ -63,7 +63,10 @@ MediaSessionService::MediaSessionService(std::unique_ptr<MediaSessionSource> sou
       clock_(clock ? std::move(clock)
                    : Clock([] { return QDateTime::currentMSecsSinceEpoch() / 1000.0; })) {
   timer_.setInterval(kRefreshIntervalMs);
-  connect(&timer_, &QTimer::timeout, this, [this] { interpolateAndEmit(); });
+  connect(&timer_, &QTimer::timeout, this, [this] {
+    interpolate();
+    emit positionTicked();
+  });
 }
 
 MediaSessionService::~MediaSessionService() { stop(); }
@@ -96,6 +99,9 @@ MediaSessionState* MediaSessionService::find(const QString& appId) {
 
 void MediaSessionService::applySessions(const std::vector<MediaSessionData>& sessions,
                                         const QString& systemCurrentId, bool followSystem) {
+  bool propertiesChanged = false;
+  bool timelineChanged = false;
+  bool playbackChanged = false;
   std::erase_if(sessions_, [&](const MediaSessionState& state) {
     return std::none_of(sessions.begin(), sessions.end(),
                         [&](const MediaSessionData& data) { return data.appId == state.appId; });
@@ -109,28 +115,32 @@ void MediaSessionService::applySessions(const std::vector<MediaSessionData>& ses
       state.sourceName = data.sourceName;
       sessions_.push_back(std::move(state));
     }
-    emit mediaDataChanged();
     if (data.properties) {
       if (MediaSessionState* state = find(data.appId)) {
         state->title = data.properties->title;
         state->artist = data.properties->artist;
         state->albumTitle = data.properties->albumTitle;
         state->thumbnail = data.properties->thumbnail;
-        emit mediaPropertiesChanged();
+        propertiesChanged = true;
       }
     }
     if (data.timeline) {
       if (MediaSessionState* state = find(data.appId)) {
-        if (applyTimelineSnapshot(*state, *data.timeline)) emit timelineInfoChanged();
+        if (applyTimelineSnapshot(*state, *data.timeline)) timelineChanged = true;
       }
     }
     if (data.playback) {
       if (MediaSessionState* state = find(data.appId)) {
         applyPlaybackSnapshot(*state, *data.playback);
-        emit playbackInfoChanged();
+        playbackChanged = true;
       }
     }
   }
+  // Each kind once for the whole list, not once per session: every emission re-syncs every
+  // MprisPlayer and re-evaluates every Media binding.
+  if (propertiesChanged) emit mediaPropertiesChanged();
+  if (timelineChanged) emit timelineInfoChanged();
+  if (playbackChanged) emit playbackInfoChanged();
   const bool selectionChanged = applyCurrentSelection(systemCurrentId, followSystem);
   emit mediaDataChanged();
   if (followSystem) {
@@ -220,6 +230,11 @@ bool MediaSessionService::applyCurrentSelection(const QString& systemId, bool fo
 }
 
 void MediaSessionService::interpolateAndEmit() {
+  interpolate();
+  emit mediaDataChanged();
+}
+
+void MediaSessionService::interpolate() {
   const double now = clock_();
   for (auto& state : sessions_) {
     double pos = state.lastSnapshotPos;
@@ -227,7 +242,6 @@ void MediaSessionService::interpolateAndEmit() {
       pos += (now - state.lastUpdateTime) * state.playbackRate;
     state.currentPos = pos;
   }
-  emit mediaDataChanged();
 }
 
 void MediaSessionService::updateTimer() {

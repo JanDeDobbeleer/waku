@@ -39,7 +39,8 @@ class Media : public QObject {
   Q_PROPERTY(QString sourceName READ sourceName NOTIFY changed FINAL)
   Q_PROPERTY(QString thumbnailUrl READ thumbnailUrl NOTIFY changed FINAL)
   Q_PROPERTY(bool playing READ playing NOTIFY changed FINAL)
-  Q_PROPERTY(double position READ position NOTIFY changed FINAL)
+  // Its own signal: the 100 ms tick while playing must not re-evaluate every other binding.
+  Q_PROPERTY(double position READ position NOTIFY positionChanged FINAL)
   Q_PROPERTY(double duration READ duration NOTIFY changed FINAL)
   Q_PROPERTY(bool canPrevious READ canPrevious NOTIFY changed FINAL)
   Q_PROPERTY(bool canPlayPause READ canPlayPause NOTIFY changed FINAL)
@@ -72,6 +73,7 @@ class Media : public QObject {
 
  signals:
   void changed();
+  void positionChanged();
 
  private:
   const MediaSessionState* current() const { return service_->currentSession(); }
