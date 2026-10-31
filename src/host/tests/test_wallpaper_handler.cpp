@@ -140,8 +140,11 @@ TEST(WallpaperHandler, ThePipeCarriesTheQuotedLineFromWabarc) {
   auto run = [&](const QStringList& args, int* exitCode, QString* out, QString* err) {
     QProcess process;
     process.start(wabarcPath(), QStringList{QStringLiteral("--config-home"), home.path()} + args);
-    ASSERT_TRUE(process.waitForStarted(5000));
-    ASSERT_TRUE(QTest::qWaitFor([&] { return process.state() == QProcess::NotRunning; }, 10000));
+    // Upper bounds only: a debug wabarc.exe that loads its Qt DLLs on a busy machine can take
+    // seconds to start; the wait ends when the process does.
+    ASSERT_TRUE(process.waitForStarted(30000));
+    ASSERT_TRUE(QTest::qWaitFor([&] { return process.state() == QProcess::NotRunning; }, 30000))
+        << qPrintable(QString::fromLocal8Bit(process.readAllStandardError()));
     *exitCode = process.exitCode();
     *out = QString::fromLocal8Bit(process.readAllStandardOutput()).trimmed();
     *err = QString::fromLocal8Bit(process.readAllStandardError()).trimmed();
