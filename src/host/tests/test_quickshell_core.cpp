@@ -72,6 +72,33 @@ TEST(QuickshellScriptModel, ObjectPropMatchesObjectsAndReplacesTheValue) {
   EXPECT_EQ(model.data(model.index(0, 0), Qt::UserRole).toMap().value("n").toString(), "uno");
 }
 
+TEST(QuickshellScriptModel, ALongListIsMatchedByKey) {
+  ScriptModel model;
+  QVariantList all;
+  for (int i = 0; i < 2000; ++i) all << QStringLiteral("app %1").arg(i);
+  model.setValues(all);
+  QVariantList evens;
+  for (int i = 0; i < 2000; i += 2) evens << QStringLiteral("app %1").arg(i);
+  QSignalSpy removed(&model, &QAbstractItemModel::rowsRemoved);
+  QSignalSpy inserted(&model, &QAbstractItemModel::rowsInserted);
+  model.setValues(evens);
+  EXPECT_EQ(removed.count(), 1000);
+  EXPECT_EQ(inserted.count(), 0);
+  ASSERT_EQ(model.rowCount(), 1000);
+  EXPECT_EQ(model.data(model.index(1), Qt::UserRole).toString(), QStringLiteral("app 2"));
+}
+
+TEST(QuickshellScriptModel, NumbersOfDifferentTypesAreTheSameRow) {
+  ScriptModel model;
+  model.setValues({1, 2, 3});
+  QSignalSpy removed(&model, &QAbstractItemModel::rowsRemoved);
+  QSignalSpy inserted(&model, &QAbstractItemModel::rowsInserted);
+  model.setValues({1.0, 2.0, qlonglong(3)});
+  EXPECT_EQ(removed.count(), 0);
+  EXPECT_EQ(inserted.count(), 0);
+  EXPECT_EQ(model.rowCount(), 3);
+}
+
 TEST(QuickshellScriptModel, QmlListViewKeepsDelegates) {
   QQmlEngine engine;
   auto root = create(engine, R"(

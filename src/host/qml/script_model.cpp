@@ -1,5 +1,6 @@
 #include "host/qml/script_model.h"
 
+#include <QHash>
 #include <QMetaType>
 #include <QObject>
 #include <QVariantMap>
@@ -15,6 +16,33 @@ QObject* asObject(const QVariant& value) {
     return value.value<QObject*>();
   }
   return nullptr;
+}
+
+// A hash that agrees with QVariant::operator== for the keys a model usually has: strings, numbers
+// (compared across their types, so hashed as a double) and object identities. Every other key
+// lands in one bucket and is compared one by one, as before.
+size_t keyHash(const QVariant& key) {
+  switch (key.metaType().id()) {
+    case QMetaType::QString:
+      return qHash(*static_cast<const QString*>(key.constData()));
+    case QMetaType::Bool:
+    case QMetaType::Int:
+    case QMetaType::UInt:
+    case QMetaType::LongLong:
+    case QMetaType::ULongLong:
+    case QMetaType::Double:
+    case QMetaType::Float:
+    case QMetaType::Short:
+    case QMetaType::UShort:
+    case QMetaType::Long:
+    case QMetaType::ULong:
+    case QMetaType::Char:
+    case QMetaType::SChar:
+    case QMetaType::UChar:
+      return qHash(key.toDouble());
+    default:
+      return 0;
+  }
 }
 
 }  // namespace
@@ -64,13 +92,41 @@ void ScriptModel::setValues(const QVariantList& values) {
   wantedKeys.reserve(values.size());
   for (const QVariant& value : values) wantedKeys.append(keyOf(value));
 
+  // Which keys are still wanted, by hash: a list of N rows took N x M comparisons here.
+  QMultiHash<size_t, qsizetype> wantedByHash;
+  wantedByHash.reserve(wantedKeys.size());
+  for (qsizetype i = 0; i < wantedKeys.size(); ++i)
+    wantedByHash.insert(keyHash(wantedKeys.at(i)), i);
+  const auto wanted = [&](const QVariant& key) {
+    const auto [first, last] = wantedByHash.equal_range(keyHash(key));
+    for (auto it = first; it != last; ++it) {
+      if (wantedKeys.at(*it) == key) return true;
+    }
+    return false;
+  };
   for (qsizetype i = currentKeys.size() - 1; i >= 0; --i) {
-    if (wantedKeys.contains(currentKeys.at(i))) continue;
+    if (wanted(currentKeys.at(i))) continue;
     beginRemoveRows({}, static_cast<int>(i), static_cast<int>(i));
     values_.removeAt(i);
     currentKeys.removeAt(i);
     endRemoveRows();
   }
+
+  // The kept rows not yet placed, by hash: a wanted key that is not among them is inserted without
+  // scanning the rest of the rows for it.
+  QMultiHash<size_t, QVariant> unplaced;
+  unplaced.reserve(currentKeys.size());
+  for (const QVariant& key : std::as_const(currentKeys)) unplaced.insert(keyHash(key), key);
+  const auto take = [&](const QVariant& key) {
+    auto [it, last] = unplaced.equal_range(keyHash(key));
+    for (; it != last; ++it) {
+      if (*it == key) {
+        unplaced.erase(it);
+        return true;
+      }
+    }
+    return false;
+  };
 
   const auto refresh = [&](qsizetype row, const QVariant& value) {
     if (values_.at(row) == value) return;
@@ -82,10 +138,11 @@ void ScriptModel::setValues(const QVariantList& values) {
   for (qsizetype i = 0; i < values.size(); ++i) {
     const QVariant& key = wantedKeys.at(i);
     if (i < currentKeys.size() && currentKeys.at(i) == key) {
+      take(key);
       refresh(i, values.at(i));
       continue;
     }
-    const qsizetype from = currentKeys.indexOf(key, i + 1);
+    const qsizetype from = take(key) ? currentKeys.indexOf(key, i + 1) : -1;
     if (from > i) {
       beginMoveRows({}, static_cast<int>(from), static_cast<int>(from), {}, static_cast<int>(i));
       values_.move(from, i);
