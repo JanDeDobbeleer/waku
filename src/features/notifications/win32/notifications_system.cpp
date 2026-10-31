@@ -4,8 +4,8 @@
 // and only forwards the value to the sink and arms a list refresh. Everything else (reading the
 // list, remove, clear, activate) runs on one worker thread (MTA) that owns the
 // UserNotificationListener; requests enqueue a task (or arm the debounced refresh) and the thread
-// sleeps on a condition variable otherwise. stop() unsubscribes WNF (which waits for a running
-// callback), wakes the worker and joins it.
+// sleeps on a condition variable otherwise. stop() unsubscribes WNF (WnfSubscription returns only
+// after a running callback has left; see wnf_win.h), wakes the worker and joins it.
 #include <Windows.h>
 #include <winrt/Windows.ApplicationModel.h>
 #include <winrt/Windows.Data.Xml.Dom.h>
@@ -32,6 +32,7 @@
 #include "features/notifications/notifications.h"
 #include "features/notifications/toast_activation.h"
 #include "features/notifications/toast_xml.h"
+#include "features/notifications/win32/wnf_win.h"
 
 namespace wabar::notifications {
 namespace {
@@ -42,13 +43,6 @@ namespace wum = winrt::Windows::UI::Notifications::Management;
 // Undocumented WNF state names (docs/architecture.md allowlist).
 constexpr ULONGLONG kWnfShellNotificationTotal = 0x0D83063EA3B8D035ull;  // Windows 11 toast total
 constexpr ULONGLONG kWnfShellNotifications = 0x0D83063EA3BC1035ull;      // Windows 10 unread badge
-
-using WnfCallback = LONG(NTAPI*)(ULONGLONG stateName, ULONG changeStamp, void* typeId,
-                                 void* context, const void* buffer, ULONG bufferSize);
-using RtlSubscribeFn = LONG(NTAPI*)(void** subscription, ULONGLONG stateName, ULONG changeStamp,
-                                    WnfCallback callback, void* context, void* typeId,
-                                    ULONG serializationGroup, ULONG unknown);
-using RtlUnsubscribeFn = LONG(NTAPI*)(void* subscription);
 
 // Time to wait after a change, so a burst of changes is read once.
 constexpr std::chrono::milliseconds kRefreshDelay{100};
@@ -210,26 +204,21 @@ class SystemNotificationSource final : public NotificationSource {
   }
 
  private:
-  static LONG NTAPI onWnf(ULONGLONG, ULONG, void*, void* context, const void* buffer,
-                          ULONG bufferSize) {
-    auto* self = static_cast<SystemNotificationSource*>(context);
-    if (!self) return 0;
-    self->scheduleRefresh();
+  // WNF system thread. WnfSubscription keeps `this` alive for the call: stop() waits for it.
+  void onWnf(const void* buffer, unsigned long bufferSize) {
+    scheduleRefresh();
     // The buffer is a u32 count. The sink only posts to the GUI thread and does not throw.
-    if (self->sink_ && buffer && bufferSize >= sizeof(std::uint32_t)) {
+    if (sink_ && buffer && bufferSize >= sizeof(std::uint32_t)) {
       std::uint32_t count = 0;
       std::memcpy(&count, buffer, sizeof(count));
-      self->sink_->countChanged(count);
+      sink_->countChanged(count);
     }
-    return 0;
   }
 
   bool trySubscribe(ULONGLONG state, const char* name) {
-    void* subscription = nullptr;
-    const LONG status =
-        subscribe_(&subscription, state, 0, &SystemNotificationSource::onWnf, this, nullptr, 0, 0);
+    const long status = wnf_.subscribe(
+        state, [this](const void* buffer, unsigned long size) { onWnf(buffer, size); });
     if (status == 0) {
-      subscription_ = subscription;
       qInfo().noquote() << "Notification service started (" << name << ")";
       return true;
     }
@@ -239,14 +228,7 @@ class SystemNotificationSource final : public NotificationSource {
 
   // Windows 11 total first, then the Windows 10 badge count; both missing leaves the count at 0.
   void subscribeWnf() {
-    HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
-    if (ntdll) {
-      subscribe_ = reinterpret_cast<RtlSubscribeFn>(
-          GetProcAddress(ntdll, "RtlSubscribeWnfStateChangeNotification"));
-      unsubscribe_ = reinterpret_cast<RtlUnsubscribeFn>(
-          GetProcAddress(ntdll, "RtlUnsubscribeWnfStateChangeNotification"));
-    }
-    if (!subscribe_ || !unsubscribe_) {
+    if (!wnf_.available()) {
       qWarning() << "WNF is not available, the notification count stays at 0";
       return;
     }
@@ -255,11 +237,7 @@ class SystemNotificationSource final : public NotificationSource {
     qWarning() << "Notification service failed to subscribe to WNF, the count stays at 0";
   }
 
-  void unsubscribeWnf() {
-    if (!subscription_ || !unsubscribe_) return;
-    unsubscribe_(subscription_);
-    subscription_ = nullptr;
-  }
+  void unsubscribeWnf() { wnf_.unsubscribe(); }
 
   void run() {
     try {
@@ -442,9 +420,6 @@ class SystemNotificationSource final : public NotificationSource {
   }
 
   NotificationSink* sink_ = nullptr;  // set before the subscription, cleared after it is gone
-  RtlSubscribeFn subscribe_ = nullptr;
-  RtlUnsubscribeFn unsubscribe_ = nullptr;
-  void* subscription_ = nullptr;
   std::thread thread_;
   std::mutex mutex_;
   std::condition_variable wake_;
@@ -456,6 +431,8 @@ class SystemNotificationSource final : public NotificationSource {
   std::vector<NotificationItem> items_;
   std::map<std::uint32_t, AppInfoData> appInfo_;
   wum::UserNotificationListener listener_{nullptr};
+  // Last, so it is gone before anything its callback touches.
+  WnfSubscription wnf_;
 };
 
 }  // namespace

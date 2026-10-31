@@ -6,6 +6,7 @@
 #include <functional>
 
 #include "features/notifications/dnd.h"
+#include "features/notifications/win32/wnf_win.h"
 
 namespace wabar::notifications {
 namespace {
@@ -90,28 +91,6 @@ namespace {
 // Undocumented WNF state name (docs/architecture.md allowlist).
 constexpr ULONGLONG kWnfQuietHoursActiveProfileChanged = 0x0D83063EA3BF1C75ull;
 
-using WnfCallback = LONG(NTAPI*)(ULONGLONG stateName, ULONG changeStamp, void* typeId,
-                                 void* context, const void* buffer, ULONG bufferSize);
-using RtlSubscribeFn = LONG(NTAPI*)(void** subscription, ULONGLONG stateName, ULONG changeStamp,
-                                    WnfCallback callback, void* context, void* typeId,
-                                    ULONG serializationGroup, ULONG unknown);
-using RtlUnsubscribeFn = LONG(NTAPI*)(void* subscription);
-
-RtlUnsubscribeFn g_unsubscribe = nullptr;
-
-LONG NTAPI onQuietHoursChanged(ULONGLONG, ULONG, void*, void* context, const void*, ULONG) {
-  auto* watcher = static_cast<DndWatcher*>(context);
-  if (!watcher) return 0;
-  try {
-    const QString status = dndStatus();
-    QMetaObject::invokeMethod(
-        watcher, [watcher, status] { watcher->deliver(status); }, Qt::QueuedConnection);
-  } catch (...) {
-    // Never let an exception cross into the system thread.
-  }
-  return 0;
-}
-
 }  // namespace
 
 DndWatcher::DndWatcher(QObject* parent) : QObject(parent) {}
@@ -119,37 +98,31 @@ DndWatcher::DndWatcher(QObject* parent) : QObject(parent) {}
 DndWatcher::~DndWatcher() { stop(); }
 
 bool DndWatcher::start() {
-  if (active_) return true;
-  HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
-  if (!ntdll) return false;
-  const auto subscribe = reinterpret_cast<RtlSubscribeFn>(
-      GetProcAddress(ntdll, "RtlSubscribeWnfStateChangeNotification"));
-  g_unsubscribe = reinterpret_cast<RtlUnsubscribeFn>(
-      GetProcAddress(ntdll, "RtlUnsubscribeWnfStateChangeNotification"));
-  if (!subscribe || !g_unsubscribe) {
+  if (wnf_ && wnf_->active()) return true;
+  wnf_ = std::make_unique<WnfSubscription>();
+  if (!wnf_->available()) {
     qWarning() << "WNF is not available, the Do Not Disturb button updates only on its own clicks";
+    wnf_.reset();
     return false;
   }
-  void* subscription = nullptr;
-  const LONG status = subscribe(&subscription, kWnfQuietHoursActiveProfileChanged, 0,
-                                &onQuietHoursChanged, this, nullptr, 0, 0);
+  // WNF system thread. The subscription runs this under its lock and stop() waits for it, so
+  // `this` is alive for the whole call; the post is dropped if the watcher dies before delivery.
+  const long status =
+      wnf_->subscribe(kWnfQuietHoursActiveProfileChanged, [this](const void*, unsigned long) {
+        const QString status = dndStatus();
+        QMetaObject::invokeMethod(this, [this, status] { deliver(status); }, Qt::QueuedConnection);
+      });
   if (status != 0) {
     qWarning().noquote() << "DndService failed with status" << Qt::hex
                          << static_cast<ULONG>(status);
+    wnf_.reset();
     return false;
   }
-  subscription_ = subscription;
-  active_ = true;
   qInfo() << "DndService initialized";
   return true;
 }
 
-void DndWatcher::stop() {
-  if (!active_ || !subscription_ || !g_unsubscribe) return;
-  g_unsubscribe(subscription_);
-  subscription_ = nullptr;
-  active_ = false;
-}
+void DndWatcher::stop() { wnf_.reset(); }
 
 void DndWatcher::deliver(const QString& status) { emit statusChanged(status); }
 

@@ -12,6 +12,8 @@ wabar_feature(NAME notifications
     win32/dnd_win.cpp
     win32/notifications_system.cpp
     win32/toast_activation_win.cpp
+    win32/wnf_win.h
+    win32/wnf_win.cpp
   QML_SOURCES
     qml/notification_feed.h
     qml/notification_feed.cpp
@@ -23,4 +25,5 @@ wabar_feature(NAME notifications
     tests/test_notification_feed.cpp
     tests/test_notifications.cpp
     tests/test_toast.cpp
+    tests/test_wnf.cpp
   SYSTEM_LIBS ole32 uuid propsys shell32 advapi32 user32 windowsapp)
