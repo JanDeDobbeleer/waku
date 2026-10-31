@@ -1,21 +1,21 @@
-// `wabarc wallpaper ...` through the bar's control handler: the handler that parses the command
-// line (on a fake WallpaperControl) and the wabarc client.
+// `wabarc wallpaper ...`: the parser of the `wallpaper` verb (on a fake WallpaperControl), the
+// control pipe that carries its quoted line and the wabarc client.
 #include <gtest/gtest.h>
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QProcess>
 #include <QTemporaryDir>
-#include <QUuid>
+#include <QTest>
 
 #include "control/control.h"
-#include "control/wallpaper_control.h"
-#include "host/qml/control_handler.h"
-#include "host/testing/shell_fixtures.h"
+#include "features/wallpapers/wallpaper_command.h"
+
+using wabar::wallpapers::answerWallpaperCommand;
+using wabar::wallpapers::WallpaperControl;
 
 namespace {
-
-// ---- fakes ----
 
 class FakeControl final : public WallpaperControl {
  public:
@@ -43,8 +43,16 @@ class FakeControl final : public WallpaperControl {
   QString answer = QStringLiteral("ok: fake");
 };
 
-QString uniqueName() {
-  return QStringLiteral("wabar-test-") + QUuid::createUuid().toString(QUuid::Id128).left(12);
+// The bar's dispatch of one line, as host::makeControlHandler does it for an added verb: split
+// the line, drop the verb, hand the rest to the command.
+QString dispatch(const QString& line, WallpaperControl* wallpapers) {
+  QStringList words;
+  if (!wabar::control::splitCommand(line, &words))
+    return QStringLiteral("error: unterminated quote");
+  if (words.isEmpty() || words.first() != QLatin1String("wallpaper"))
+    return QStringLiteral("error: not a wallpaper command");
+  words.removeFirst();
+  return answerWallpaperCommand(words, wallpapers);
 }
 
 QString wabarcPath() {
@@ -53,88 +61,70 @@ QString wabarcPath() {
 
 }  // namespace
 
-// ---- the handler on a fake service ----
+// ---- the parser on a fake service ----
 
-namespace {
-
-struct HandlerFixture {
-  HandlerFixture() {
-    h.start(shellConfig());
-    EXPECT_TRUE(h.host->reload());
-  }
-  ControlHandler handler(bool withService = true) {
-    return makeControlHandler(*h.host, false, {}, [this, withService]() -> WallpaperControl* {
-      return withService ? &fake : nullptr;
-    });
-  }
-  Harness h;
+TEST(WallpaperCommand, SetPassesTheTargetAndTheDryRunFlagThroughQuotes) {
   FakeControl fake;
-};
-
-}  // namespace
-
-TEST(WallpaperHandler, SetPassesTheTargetAndTheDryRunFlagThroughQuotes) {
-  HandlerFixture f;
-  const ControlHandler handler = f.handler();
-  EXPECT_EQ(handler(QStringLiteral("wallpaper set sunset")), QStringLiteral("ok: fake"));
-  EXPECT_EQ(handler(QStringLiteral("wallpaper set \"C:\\My Pictures\\a b.png\"")),
+  EXPECT_EQ(dispatch(QStringLiteral("wallpaper set sunset"), &fake), QStringLiteral("ok: fake"));
+  EXPECT_EQ(dispatch(QStringLiteral("wallpaper set \"C:\\My Pictures\\a b.png\""), &fake),
             QStringLiteral("ok: fake"));
-  EXPECT_EQ(handler(QStringLiteral("wallpaper set --dry-run \"a \"\"q\"\" b.png\"")),
+  EXPECT_EQ(dispatch(QStringLiteral("wallpaper set --dry-run \"a \"\"q\"\" b.png\""), &fake),
             QStringLiteral("ok: fake"));
-  EXPECT_EQ(handler(QStringLiteral("wallpaper set x.png --dry-run")), QStringLiteral("ok: fake"));
+  EXPECT_EQ(dispatch(QStringLiteral("wallpaper set x.png --dry-run"), &fake),
+            QStringLiteral("ok: fake"));
   EXPECT_EQ(
-      f.fake.calls,
+      fake.calls,
       (QStringList{QStringLiteral("set|sunset|0"), QStringLiteral("set|C:\\My Pictures\\a b.png|0"),
                    QStringLiteral("set|a \"q\" b.png|1"), QStringLiteral("set|x.png|1")}));
 }
 
-TEST(WallpaperHandler, TheOtherVerbsCallTheirFunction) {
-  HandlerFixture f;
-  const ControlHandler handler = f.handler();
-  handler(QStringLiteral("wallpaper random"));
-  handler(QStringLiteral("wallpaper next --dry-run"));
-  handler(QStringLiteral("wallpaper previous"));
-  handler(QStringLiteral("wallpaper gallery"));
-  EXPECT_EQ(f.fake.calls, (QStringList{QStringLiteral("random|0"), QStringLiteral("next|1"),
-                                       QStringLiteral("previous|0"), QStringLiteral("gallery")}));
+TEST(WallpaperCommand, TheOtherVerbsCallTheirFunction) {
+  FakeControl fake;
+  dispatch(QStringLiteral("wallpaper random"), &fake);
+  dispatch(QStringLiteral("wallpaper next --dry-run"), &fake);
+  dispatch(QStringLiteral("wallpaper previous"), &fake);
+  dispatch(QStringLiteral("wallpaper gallery"), &fake);
+  EXPECT_EQ(fake.calls, (QStringList{QStringLiteral("random|0"), QStringLiteral("next|1"),
+                                     QStringLiteral("previous|0"), QStringLiteral("gallery")}));
 }
 
-TEST(WallpaperHandler, TheAnswerOfTheServiceIsPassedOn) {
-  HandlerFixture f;
-  f.fake.answer = QStringLiteral("error: no such file");
-  EXPECT_EQ(f.handler()(QStringLiteral("wallpaper set x")), QStringLiteral("error: no such file"));
+TEST(WallpaperCommand, TheAnswerOfTheServiceIsPassedOn) {
+  FakeControl fake;
+  fake.answer = QStringLiteral("error: no such file");
+  EXPECT_EQ(dispatch(QStringLiteral("wallpaper set x"), &fake),
+            QStringLiteral("error: no such file"));
 }
 
-TEST(WallpaperHandler, BadUsageIsAnErrorAndCallsNothing) {
-  HandlerFixture f;
-  const ControlHandler handler = f.handler();
+TEST(WallpaperCommand, BadUsageIsAnErrorAndCallsNothing) {
+  FakeControl fake;
   for (const char* line :
        {"wallpaper", "wallpaper set", "wallpaper set a b", "wallpaper random extra",
         "wallpaper gallery --dry-run", "wallpaper gallery now", "wallpaper bogus",
         "wallpaper set \"unterminated"}) {
-    const QString answer = handler(QString::fromLatin1(line));
+    const QString answer = dispatch(QString::fromLatin1(line), &fake);
     EXPECT_TRUE(answer.startsWith(QStringLiteral("error: ")))
         << line << " -> " << qPrintable(answer);
   }
-  EXPECT_TRUE(f.fake.calls.isEmpty());
+  EXPECT_TRUE(fake.calls.isEmpty());
 }
 
-TEST(WallpaperHandler, WithoutAServiceTheAnswerIsAnError) {
-  HandlerFixture f;
-  EXPECT_TRUE(f.handler(false)(QStringLiteral("wallpaper next"))
+TEST(WallpaperCommand, WithoutAServiceTheAnswerIsAnError) {
+  EXPECT_TRUE(answerWallpaperCommand({QStringLiteral("next")}, nullptr)
                   .startsWith(QStringLiteral("error: the wallpaper service is not available")));
-  const ControlHandler none = makeControlHandler(*f.h.host, false);
-  EXPECT_TRUE(none(QStringLiteral("wallpaper next")).startsWith(QStringLiteral("error: ")));
-  // The old commands are untouched.
-  EXPECT_EQ(none(QStringLiteral("status")).left(7), QStringLiteral("running"));
+  // Bad usage is reported before the service is needed.
+  EXPECT_TRUE(answerWallpaperCommand({QStringLiteral("bogus")}, nullptr)
+                  .startsWith(QStringLiteral("error: unknown wallpaper command 'bogus'")));
 }
 
-TEST(WallpaperHandler, ThePipeCarriesTheQuotedLineFromWabarc) {
+TEST(WallpaperCommand, ThePipeCarriesTheQuotedLineFromWabarc) {
   if (!QFile::exists(wabarcPath())) GTEST_SKIP() << "wabarc.exe is not built";
-  HandlerFixture f;
+  FakeControl fake;
   QTemporaryDir home;
   ASSERT_TRUE(home.isValid());
-  ControlServer server(controlPipeName(home.path()), f.handler());
+  wabar::control::ControlServer server(wabar::control::controlPipeName(home.path()),
+                                       wabar::control::ControlHandler([&fake](const QString& line) {
+                                         return dispatch(line, &fake);
+                                       }));
   ASSERT_TRUE(server.listen());
 
   auto run = [&](const QStringList& args, int* exitCode, QString* out, QString* err) {
@@ -157,10 +147,10 @@ TEST(WallpaperHandler, ThePipeCarriesTheQuotedLineFromWabarc) {
       &code, &out, &err);
   EXPECT_EQ(code, 0) << qPrintable(err);
   EXPECT_EQ(out, QStringLiteral("ok: fake"));
-  ASSERT_EQ(f.fake.calls.size(), 1);
-  EXPECT_EQ(f.fake.calls.first(), QStringLiteral("set|C:\\My Pictures\\x \"y\".png|1"));
+  ASSERT_EQ(fake.calls.size(), 1);
+  EXPECT_EQ(fake.calls.first(), QStringLiteral("set|C:\\My Pictures\\x \"y\".png|1"));
 
-  f.fake.answer = QStringLiteral("error: nope");
+  fake.answer = QStringLiteral("error: nope");
   run({QStringLiteral("wallpaper"), QStringLiteral("next")}, &code, &out, &err);
   EXPECT_EQ(code, 1);
   EXPECT_EQ(err, QStringLiteral("error: nope"));

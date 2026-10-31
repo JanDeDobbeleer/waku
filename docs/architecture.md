@@ -52,8 +52,11 @@ their `win32/` or `qml/` C++ headers, and `testing/` only from tests. The graph 
 | `apps`, `brightness`, `clock`, `color_scheme`, `desktop_state`, `media`, `notifications`, `quickshell_io`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces` | no other feature |
 | `app`, `tests/` | everything |
 
-A feature also includes the root headers of `control/` (such as `WallpaperControl`): they are a
-stable shared interface, not a feature edge. `host` includes `control/` too.
+A feature may also include the root headers of `control/` (the pipe protocol in `control.h`):
+they are a stable shared interface, not a feature edge. `host` includes `control/` too. Neither
+`control` nor `host` knows a feature's command: a feature exports its verb as a function (the
+`wallpaper` verb is `features/wallpapers/wallpaper_command.h`), and `src/app/wabar/main.cpp` adds it
+to the bar's control handler (`host::ControlCommands` in `src/host/qml/control_handler.h`).
 
 ### Feature layout
 

@@ -13,38 +13,6 @@
 
 namespace wabar::host {
 
-QString answerWallpaperCommand(const QStringList& words, control::WallpaperControl* wallpapers) {
-  static const QString usage = QStringLiteral(
-      "error: usage: wallpaper set [--dry-run] <file-or-path> | random [--dry-run] | next "
-      "[--dry-run] | previous [--dry-run] | gallery");
-  if (words.isEmpty()) return usage;
-  const QString verb = words.first();
-  bool dryRun = false;
-  QStringList arguments;
-  for (qsizetype i = 1; i < words.size(); ++i) {
-    if (words.at(i) == QLatin1String("--dry-run")) {
-      dryRun = true;
-    } else {
-      arguments << words.at(i);
-    }
-  }
-  const bool known = verb == QLatin1String("set") || verb == QLatin1String("random") ||
-                     verb == QLatin1String("next") || verb == QLatin1String("previous") ||
-                     verb == QLatin1String("gallery");
-  if (!known) {
-    return QStringLiteral("error: unknown wallpaper command '%1'").arg(verb.left(40)) +
-           QStringLiteral(" (try: set, random, next, previous, gallery)");
-  }
-  if (verb == QLatin1String("set") ? arguments.size() != 1 : !arguments.isEmpty()) return usage;
-  if (verb == QLatin1String("gallery") && dryRun) return usage;
-  if (!wallpapers) return QStringLiteral("error: the wallpaper service is not available");
-  if (verb == QLatin1String("set")) return wallpapers->controlSet(arguments.first(), dryRun);
-  if (verb == QLatin1String("random")) return wallpapers->controlRandom(dryRun);
-  if (verb == QLatin1String("next")) return wallpapers->controlNext(dryRun);
-  if (verb == QLatin1String("previous")) return wallpapers->controlPrevious(dryRun);
-  return wallpapers->controlGallery();
-}
-
 QString answerShortcutCommand(const QStringList& words) {
   static const QString usage = QStringLiteral("error: usage: shortcut <name> | shortcut list");
   if (words.size() != 1) return usage;
@@ -59,11 +27,10 @@ QString answerShortcutCommand(const QStringList& words) {
 }
 
 control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::function<void()> quit,
-                                           control::WallpaperControlProvider wallpapers,
-                                           WindowsTaskbar* taskbar) {
+                                           ControlCommands commands, WindowsTaskbar* taskbar) {
   if (!quit) quit = [] { QCoreApplication::quit(); };
   QPointer<ShellHost> guard(&host);
-  return [guard, safe, quit = std::move(quit), wallpapers = std::move(wallpapers),
+  return [guard, safe, quit = std::move(quit), commands = std::move(commands),
           taskbar](const QString& command) -> QString {
     if (!guard) return QStringLiteral("error: the shell is shutting down");
     if (command == QLatin1String("reload")) {
@@ -83,13 +50,6 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
       // After the answer has been written.
       QTimer::singleShot(100, [quit] { quit(); });
       return QStringLiteral("ok");
-    }
-    if (command == QLatin1String("wallpaper") || command.startsWith(QLatin1String("wallpaper "))) {
-      QStringList words;
-      if (!control::splitCommand(command, &words))
-        return QStringLiteral("error: unterminated quote");
-      words.removeFirst();
-      return answerWallpaperCommand(words, wallpapers ? wallpapers() : nullptr);
     }
     if (command == QLatin1String("shortcut") || command.startsWith(QLatin1String("shortcut "))) {
       QStringList words;
@@ -119,10 +79,24 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
       words.removeFirst();
       return answerWindowsTaskbarCommand(words, taskbar);
     }
-    return QStringLiteral(
-               "error: unknown command '%1' (try: reload, status, quit, wallpaper, shortcut, "
-               "surface, taskbar, call)")
-        .arg(command.left(40));
+    // A command added by the composition root: the first word names it.
+    const QString verb = command.section(QLatin1Char(' '), 0, 0);
+    if (const auto added = commands.find(verb); added != commands.end() && added->second) {
+      QStringList words;
+      if (!control::splitCommand(command, &words))
+        return QStringLiteral("error: unterminated quote");
+      words.removeFirst();
+      return added->second(words);
+    }
+    QStringList verbs{QStringLiteral("reload"),  QStringLiteral("status"),
+                      QStringLiteral("quit"),    QStringLiteral("shortcut"),
+                      QStringLiteral("surface"), QStringLiteral("taskbar"),
+                      QStringLiteral("call")};
+    for (const auto& entry : commands) {
+      if (!verbs.contains(entry.first)) verbs << entry.first;
+    }
+    return QStringLiteral("error: unknown command '%1' (try: %2)")
+        .arg(command.left(40), verbs.join(QStringLiteral(", ")));
   };
 }
 

@@ -13,6 +13,7 @@
 #include "app/wabar/quickshell_glue.h"
 #include "control/control.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
+#include "features/wallpapers/wallpaper_command.h"
 #include "features/workspaces/komorebi_workarea.h"
 #include "host/plugin_guard.h"
 #include "host/qml/control_handler.h"
@@ -159,11 +160,13 @@ int main(int argc, char* argv[]) {
       wabar::control::controlPipeName(configHome),
       wabar::host::makeAsyncControlHandler(wabar::host::makeControlHandler(
           host, parser.isSet(safeOpt), {},
-          // Built on the first wallpaper command if no config did.
-          [&engine]() -> wabar::control::WallpaperControl* {
-            return engine.singletonInstance<wabar::wallpapers::Wallpapers*>(
-                QStringLiteral("wabar.services"), QStringLiteral("Wallpapers"));
-          },
+          {{QStringLiteral("wallpaper"),
+            [&engine](const QStringList& words) {
+              // Built on the first wallpaper command if no config did.
+              return wabar::wallpapers::answerWallpaperCommand(
+                  words, engine.singletonInstance<wabar::wallpapers::Wallpapers*>(
+                             QStringLiteral("wabar.services"), QStringLiteral("Wallpapers")));
+            }}},
           taskbar.get())));
   if (!control.listen()) {
     qCritical().noquote() << "wabar is already running for" << configHome

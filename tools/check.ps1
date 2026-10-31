@@ -387,8 +387,8 @@ foreach ($f in $checkFiles) {
             }
             if ($inc.StartsWith("$unit/") -or $inc.StartsWith('kernel/')) { continue }
             if ($unit -eq 'host' -and $inc.StartsWith('control/')) { continue }
-            # control/ root headers (the interfaces the bar's handler calls, such as WallpaperControl) are a
-            # stable shared abstraction: a feature may implement them without a DEPENDS edge.
+            # control/ root headers (the pipe protocol) are a stable shared abstraction: a feature
+            # may use them without a DEPENDS edge.
             if ($feature -and $inc -match '^control/[^/]+$') { continue }
             # Tests of any feature may include the bar Harness and the widget helpers (host/testing/);
             # the testing/ of their DEPENDS features is allowed below.

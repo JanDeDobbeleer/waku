@@ -157,6 +157,5 @@ wabar_contribute(
     tests/test_theme.cpp
     tests/test_thumbnails.cpp
     tests/test_window_thumbnail.cpp
-    tests/test_wallpaper_handler.cpp
   TEST_LIBS wabar_host_base
 )

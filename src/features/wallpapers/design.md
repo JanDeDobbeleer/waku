@@ -157,10 +157,11 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
   line; arguments with spaces are quoted by doubling (`"a ""b"" c"`, no backslash escapes, so a
   Windows path is left alone: `joinCommand`/`splitCommand` in `control/control.h`). A relative
   path with a folder part is made absolute by the client; a bare name is looked up in the folder.
-  The handler parses `wallpaper <verb> [--dry-run] [arg]` and calls the `wabar::control::WallpaperControl`
-  interface (`control/wallpaper_control.h`), which `Wallpapers` implements and tests fake. The
-  service is looked up when a command arrives, so a bar without wallpaper settings builds it only
-  on the first command.
+  `answerWallpaperCommand` (`wallpaper_command.h`) parses `wallpaper <verb> [--dry-run] [arg]` and
+  calls the `WallpaperControl` interface of the same header, which `Wallpapers` implements and
+  tests fake. Neither `control` nor `host` knows the verb: `src/app/wabar/main.cpp` adds it to the
+  bar's control handler as a `host::ControlCommands` entry. The service is looked up when a
+  command arrives, so a bar without wallpaper settings builds it only on the first command.
 - **Answers.** `ok: <full path>` once the change has started (the animation may still run), `ok:
   gallery opened|closed`, or `error: <why>` with nothing changed. `set` checks that the target
   exists, is a regular file, has a supported extension (`supportedImageTypes`) and a header Qt can

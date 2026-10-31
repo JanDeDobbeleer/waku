@@ -13,12 +13,9 @@
 #include "features/wallpapers/desktop_wallpaper.h"
 #include "features/wallpapers/lock_screen.h"
 #include "features/wallpapers/qml/wallpaper_transition.h"
+#include "features/wallpapers/wallpaper_command.h"
 #include "features/wallpapers/wallpaper_hotkey.h"
 #include "features/wallpapers/wallpaper_manager.h"
-
-// The control interface headers are a stable shared abstraction: a feature may include
-// control/ (rule S2) to implement the interface the bar's handler calls.
-#include "control/wallpaper_control.h"
 
 class QJSEngine;
 class QQmlEngine;
@@ -63,7 +60,7 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& f
 // Windows lock screen (and sign-in screen) picture through LockScreenSetter, which runs on its own
 // worker thread (win32/lock_screen_win.cpp). A dry run only logs `lock screen (dry run): <path>`;
 // videos, animated images and missing files are skipped. Off the live desktop there is no setter.
-class Wallpapers : public QObject, public wabar::control::WallpaperControl {
+class Wallpapers : public QObject, public WallpaperControl {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON

@@ -1,8 +1,8 @@
 # wallpapers: the wallpaper folder, set and cycle wallpapers, the picker gallery and its hotkey, and
 # the animated change (a Qt Quick overlay on WorkerW) and the lock screen picture that follows a
 # change. No dependencies on other features.
-# The service implements wabar::control::WallpaperControl (control/wallpaper_control.h), the interface the
-# bar's control handler calls.
+# wallpaper_command.h is the `wallpaper` verb of the control pipe and the WallpaperControl
+# interface the service implements; wabar.exe adds the verb to the bar's control handler.
 wabar_feature(
   NAME wallpapers
   SOURCES
@@ -14,6 +14,8 @@ wabar_feature(
     wallpaper_hotkey.h
     wallpaper_hotkey.cpp
     wallpaper_layout.h
+    wallpaper_command.h
+    wallpaper_command.cpp
     wallpaper_layout.cpp
     wallpaper_manager.h
     wallpaper_manager.cpp
@@ -37,6 +39,7 @@ wabar_feature(
     qml/WallpaperGallery.qml
     qml/Wallpapers.qml
   TESTS
+    tests/test_wallpaper_command.cpp
     tests/test_wallpaper_lock_screen.cpp
     tests/test_wallpaper_manager.cpp
     tests/test_wallpaper_service.cpp
@@ -54,6 +57,3 @@ wabar_feature(
 
 # wallpaper_files.h names nlohmann::json in its API.
 target_link_libraries(wabar_wallpapers PUBLIC nlohmann_json::nlohmann_json)
-
-# qml/wallpapers_service.h includes control/wallpaper_control.h.
-target_link_libraries(wabar_wallpapers PUBLIC wabar_control)

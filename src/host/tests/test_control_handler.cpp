@@ -116,6 +116,32 @@ TEST(ControlHandlerTest, AnUnknownCommandIsAnError) {
       << qPrintable(answer);
 }
 
+TEST(ControlHandlerTest, AnAddedCommandGetsTheWordsAfterItsVerb) {
+  Harness h;
+  h.start(shellConfig());
+  QList<QStringList> seen;
+  ControlCommands commands;
+  commands[QStringLiteral("paint")] = [&seen](const QStringList& words) {
+    seen << words;
+    return QStringLiteral("ok: painted");
+  };
+  // A built-in verb is never taken over.
+  commands[QStringLiteral("status")] = [](const QStringList&) { return QStringLiteral("ok: no"); };
+  const ControlHandler handler = makeControlHandler(*h.host, false, {}, std::move(commands));
+
+  EXPECT_EQ(handler(QStringLiteral("paint")), QStringLiteral("ok: painted"));
+  EXPECT_EQ(handler(QStringLiteral("paint wall \"C:\\a b.png\"")), QStringLiteral("ok: painted"));
+  EXPECT_EQ(handler(QStringLiteral("paint \"open")), QStringLiteral("error: unterminated quote"));
+  EXPECT_EQ(seen,
+            (QList<QStringList>{{}, {QStringLiteral("wall"), QStringLiteral("C:\\a b.png")}}));
+  EXPECT_EQ(handler(QStringLiteral("status")).left(7), QStringLiteral("running"));
+  // `painter` is not `paint`, and the error lists the added verb.
+  const QString unknown = handler(QStringLiteral("painter"));
+  EXPECT_TRUE(unknown.startsWith(QStringLiteral("error: unknown command 'painter'")))
+      << qPrintable(unknown);
+  EXPECT_TRUE(unknown.contains(QStringLiteral("call, paint)"))) << qPrintable(unknown);
+}
+
 TEST(ControlHandlerTest, TheWholePathFromAClientToAReload) {
   Harness h;
   h.start(shellConfig(QStringLiteral("before")));
