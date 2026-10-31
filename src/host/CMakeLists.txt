@@ -91,9 +91,9 @@ qt_add_qml_module(wabar_host
     qml/popup_placement_qml.h
     qml/region.h
     qml/region.cpp
+    qml/scope.h
     qml/script_model.h
     qml/script_model.cpp
-    qml/shell_config.h
     qml/shell_host.h
     qml/shell_host.cpp
     qml/shell_screen.h

@@ -21,7 +21,7 @@ class Wallpapers;
 //     }
 //
 // Not an item: the host calls activate() once the shell is installed (see Scope in
-// shell_config.h), which creates the Wallpapers singleton, hands it these values and creates the
+// host/qml/scope.h), which creates the Wallpapers singleton, hands it these values and creates the
 // gallery window (the strip the hotkey and `wabarc wallpaper gallery` open), so the hotkey and
 // the command-line client work with no widget. The properties mean what they mean on the
 // Wallpapers widget; a change after activation is applied at once. Destroying the object (a
