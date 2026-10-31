@@ -1,6 +1,6 @@
 // The Wallpapers service on a fake IDesktopWallpaper and a temporary folder of tiny images. The
 // real wallpaper setter and the real hotkey never run: the service gets a fake backend and a
-// fake hotkey host, and thumbnails go to a temporary cache folder.
+// fake hotkey host.
 #include <gtest/gtest.h>
 
 #include <QDir>
@@ -26,7 +26,6 @@ using wabar::wallpapers::HotkeyCombo;
 using wabar::wallpapers::HotkeyHost;
 using wabar::wallpapers::parseHotkey;
 using wabar::wallpapers::Wallpapers;
-using wabar::wallpapers::WallpaperThumbnailProvider;
 
 // The wallpaper "on the desktop": shared by every backend the service creates.
 void makeImage(const QString& path, const QColor& color, QSize size = QSize(40, 20)) {
@@ -51,7 +50,6 @@ struct Fixture {
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [this](int count) { return picks[next++ % picks.size()] % count; };
-    deps.cache = std::make_shared<wabar::wallpapers::ThumbnailCache>(cacheFolder.path());
     deps.hotkeys = std::move(owned);
     deps.realBackend = false;
     service = std::make_unique<Wallpapers>(std::move(deps), nullptr);
@@ -87,9 +85,7 @@ TEST(WallpapersService, ListsImagesInExplorerOrder) {
   EXPECT_EQ(f.names(), (QStringList{QStringLiteral("a.jpg"), QStringLiteral("img2.png"),
                                     QStringLiteral("img10.png")}));
   const QVariantMap first = f.service->files().first().toMap();
-  EXPECT_TRUE(first.value(QStringLiteral("thumbnail"))
-                  .toString()
-                  .startsWith(QStringLiteral("image://wallpaper/")));
+  EXPECT_FALSE(first.contains(QStringLiteral("thumbnail")));
   EXPECT_FALSE(first.value(QStringLiteral("current")).toBool());
 }
 
@@ -191,25 +187,6 @@ TEST(WallpapersService, ParsesHotkeys) {
   EXPECT_FALSE(parseHotkey(QStringLiteral("a+b")));
   EXPECT_FALSE(parseHotkey(QStringLiteral("f99")));
   EXPECT_FALSE(parseHotkey(QString()));
-}
-
-TEST(WallpapersService, TheProviderReturnsAScaledThumbnailAndCachesIt) {
-  Fixture f;
-  WallpaperThumbnailProvider provider(f.service->cache());
-  QSize size;
-  const QString id =
-      QDir::fromNativeSeparators(f.file(QStringLiteral("a.jpg"))) + QStringLiteral("?123");
-  const QImage image = provider.requestImage(id, &size, QSize(20, 20));
-  ASSERT_FALSE(image.isNull());
-  EXPECT_LE(image.width(), 20);
-  EXPECT_LE(image.height(), 20);
-  EXPECT_EQ(size, image.size());
-  EXPECT_FALSE(QDir(f.cacheFolder.path()).entryList(QDir::Files).isEmpty());
-  // The second request is served from the cache with the same pixels.
-  const QImage again = provider.requestImage(id, &size, QSize(20, 20));
-  EXPECT_EQ(again.size(), image.size());
-  EXPECT_TRUE(provider.requestImage(QStringLiteral("C:/does/not/exist.png"), &size, QSize(20, 20))
-                  .isNull());
 }
 
 TEST(WallpapersWidget, TheHotkeyOpensAGalleryWindowWithOneThumbnailPerFile) {

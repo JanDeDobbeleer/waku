@@ -2,7 +2,6 @@
 
 #include <QCoreApplication>
 #include <QCursor>
-#include <QDateTime>
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
@@ -11,7 +10,7 @@
 #include <QQmlEngine>
 #include <QRandomGenerator>
 #include <QScreen>
-#include <QUrl>
+#include <QThreadPool>
 #include <QVariantMap>
 #include <QWindow>
 #include <exception>
@@ -43,9 +42,14 @@ void guarded(const char* what, F&& body) {
   }
 }
 
-std::shared_ptr<ThumbnailCache> defaultCache() {
-  return std::make_shared<ThumbnailCache>(
-      QDir(kernel::appDataDir()).filePath(QStringLiteral("wallpaper_thumbnails")));
+// The PNG thumbnails of the old image://wallpaper provider; the gallery uses image://thumb now.
+// Nothing pruned that folder, so it is removed once, off the GUI thread.
+void removeRetiredThumbnailFolder() {
+  if (!kernel::liveDesktop(QStringLiteral("wallpapers"))) return;
+  const QString folder =
+      QDir(kernel::appDataDir()).filePath(QStringLiteral("wallpaper_thumbnails"));
+  if (!QFileInfo::exists(folder)) return;
+  QThreadPool::globalInstance()->start([folder] { QDir(folder).removeRecursively(); });
 }
 
 bool hasFolderPart(const QString& target) {
@@ -121,7 +125,7 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& rawTarget, const QString
 Wallpapers::Wallpapers(QObject* parent) : Wallpapers(Deps{}, parent) {}
 
 Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std::move(deps)) {
-  cache_ = deps_.cache ? deps_.cache : defaultCache();
+  removeRetiredThumbnailFolder();
   if (!deps_.backend && deps_.realBackend && kernel::liveDesktop(QStringLiteral("wallpapers"))) {
     deps_.backend = [] { return makeDesktopWallpaperBackend(); };
   }
@@ -146,15 +150,11 @@ Wallpapers::~Wallpapers() {
   if (manager_) manager_->stop();
 }
 
-Wallpapers* Wallpapers::create(QQmlEngine* engine, QJSEngine*) {
-  // The engine owns the returned singleton and deletes its providers first.
+Wallpapers* Wallpapers::create(QQmlEngine*, QJSEngine*) {
+  // The engine owns the returned singleton.
   Wallpapers* service = nullptr;
   if (testFactory()) service = testFactory()().release();
   if (!service) service = new Wallpapers(nullptr);
-  if (engine) {
-    engine->addImageProvider(QStringLiteral("wallpaper"),
-                             new WallpaperThumbnailProvider(service->cache()));
-  }
   return service;
 }
 
@@ -210,15 +210,9 @@ void Wallpapers::refresh() {
     const QString currentKey = normalizedPathKey(current_);
     if (!imagePath_.isEmpty()) {
       for (const QString& file : collectImageFiles({imagePath_})) {
-        const QFileInfo info(file);
-        const QString url =
-            QStringLiteral("image://wallpaper/") +
-            QString::fromLatin1(QUrl::toPercentEncoding(QDir::fromNativeSeparators(file), "/:")) +
-            QLatin1Char('?') + QString::number(info.lastModified().toSecsSinceEpoch());
         list.append(QVariantMap{
             {QStringLiteral("path"), file},
-            {QStringLiteral("name"), info.fileName()},
-            {QStringLiteral("thumbnail"), url},
+            {QStringLiteral("name"), QFileInfo(file).fileName()},
             {QStringLiteral("current"),
              !current_.isEmpty() && normalizedPathKey(file) == currentKey},
         });
@@ -447,46 +441,6 @@ void Wallpapers::focusWindow(QWindow* window) {
   if (!window || !wabar::kernel::liveDesktop(QStringLiteral("wallpapers"))) return;
   window->requestActivate();
   wabar::kernel::forceForegroundFocus(static_cast<std::uintptr_t>(window->winId()));
-}
-
-// --- image provider
-
-WallpaperThumbnailProvider::WallpaperThumbnailProvider(
-    std::shared_ptr<wabar::wallpapers::ThumbnailCache> cache)
-    : QQuickImageProvider(QQuickImageProvider::Image,
-                          QQuickImageProvider::ForceAsynchronousImageLoading),
-      cache_(std::move(cache)) {}
-
-QImage WallpaperThumbnailProvider::requestImage(const QString& id, QSize* size,
-                                                const QSize& requestedSize) {
-  if (size) *size = QSize(0, 0);
-  try {
-    QString path = id.left(id.indexOf(QLatin1Char('?')));
-    if (!QFileInfo::exists(path)) path = QUrl::fromPercentEncoding(path.toUtf8());
-    if (!cache_ || !QFileInfo(path).isFile()) return {};
-    const QSize box =
-        requestedSize.isValid() && !requestedSize.isEmpty() ? requestedSize : QSize(480, 270);
-    const QString name = cache_->key(path, box.width(), box.height());
-    if (!name.isEmpty()) {
-      if (auto cached = cache_->load(name)) {
-        if (size) *size = cached->size();
-        return *cached;
-      }
-    }
-    QImageReader reader(path);
-    reader.setAutoTransform(true);
-    const QSize original = reader.size();
-    if (original.isValid()) reader.setScaledSize(original.scaled(box, Qt::KeepAspectRatio));
-    QImage image = reader.read();
-    if (image.isNull()) return {};
-    if (!original.isValid())
-      image = image.scaled(box, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    if (!name.isEmpty()) cache_->save(name, image);
-    if (size) *size = image.size();
-    return image;
-  } catch (...) {
-    return {};
-  }
 }
 
 }  // namespace wabar::wallpapers

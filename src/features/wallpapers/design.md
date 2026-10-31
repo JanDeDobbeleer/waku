@@ -20,8 +20,10 @@ No wallpaper logic is re-implemented. The `Wallpapers` singleton wraps the UI-fr
 - `wabar::wallpapers::WallpaperManager`: set a wallpaper (`changeBackground(path)`), the random pick
   (never the same twice), the auto-change timer, post-change commands.
 - `collectImageFiles` / `imagePathsFrom` (`wallpaper_files`): the folder scan in Explorer name order.
-- `ThumbnailCache`: PNG thumbnails, keyed by file identity and size, under
-  `%LOCALAPPDATA%\wabar\wallpaper_thumbnails`.
+- Thumbnails: the host's `image://thumb/` provider (`wabar.Thumbnails`, one memory LRU and one
+  WebP disk cache for the run). The gallery builds its URLs with `Thumbnails.url(path, width)`.
+  The feature's own PNG cache and `image://wallpaper` provider are gone; the first start removes
+  their folder `%LOCALAPPDATA%\wabar\wallpaper_thumbnails`, which nothing pruned.
 - `wallpapers::DesktopWallpaperBackend` (`desktop_wallpaper.h`, `IDesktopWallpaper`): reads the current wallpaper and, through
   the manager, sets it. Tests give both a fake.
 - `wallpapers::foregroundMonitorRect()` (`win32/window_focus.h`) for the `active` screen mode.
@@ -31,14 +33,13 @@ No wallpaper logic is re-implemented. The `Wallpapers` singleton wraps the UI-fr
 | Member | Meaning |
 |---|---|
 | `imagePath` (string, read/write) | folder or file the gallery lists; setting it rescans |
-| `files` | list of maps `{path, name, thumbnail, current}` in name order |
+| `files` | list of maps `{path, name, current}` in name order |
 | `current` | path of the wallpaper Windows shows (first monitor), empty if unknown |
 | `available` | false when `IDesktopWallpaper` cannot be created (offscreen platform) |
 | `galleryOpen`, `galleryScreen` | gallery state and the name of the screen it opens on |
 | `setWallpaper(path)`, `random()` | change the wallpaper on every monitor |
 | `toggleGallery()`, `closeGallery()` | open (on the screen the mode picks) or close |
 | `configure(imagePath, hotkey, hotkeyScreen, autoChangeSeconds)` | what `Wallpapers.qml` passes in |
-| `image://wallpaper/<path>?<stamp>` | thumbnail; `sourceSize` sets the size |
 
 `Wallpapers.qml` takes `label`, `imagePath`, `hotkey`, `hotkeyScreen`, `autoChange` and the gallery
 look (`imageWidth`, `orientation`, `cornerRadius`, `accentColor`). `WallpaperGallery.qml` is the
@@ -59,9 +60,9 @@ Qt Quick window.
    documented, so no allowlist row. If the combination is taken the service logs a warning and the
    gallery stays reachable through the bar button. Never registered offscreen, in tests, or when
    `kernel::liveDesktop("wallpapers")` is false.
-4. **Thumbnails load asynchronously.** The provider has `ForceAsynchronousImageLoading`, so Qt
-   decodes on its image-reader thread. The provider holds only the immutable cache object and reads
-   files; it touches no service state.
+4. **Thumbnails come from the host.** `image://thumb/` decodes on its own pool with a scaled
+   read and shares one memory and disk cache with every other gallery of the run. The service
+   touches no image.
 5. **`current` comes from `IDesktopWallpaper`**, not from the last request, so a failed set shows.
 6. **Auto-change** is the manager's timer (`autoChange` seconds, 0 off), cheap to expose. `random()`
    uses the manager's picker.
@@ -148,4 +149,4 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `wabar.services.Wallpapers` (`src/features/wallpapers/qml/wallpapers_service.{h,cpp}`): the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `wabar` run, shared by every Wallpapers widget; created by the QML engine on first use (`create()` registers `image://wallpaper`) and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles`, `ThumbnailCache` and `DesktopWallpaperBackend` (animated `engine` off). No thread of its own: the hotkey is `RegisterHotKey` (documented) on the GUI thread through a native event filter, unregistered in the destructor; thumbnails are decoded on Qt's image-reader thread by a provider that holds only the `ThumbnailCache`. Inert, no hotkey, when `kernel::liveDesktop("wallpapers")` is false.
+- `wabar.services.Wallpapers` (`src/features/wallpapers/qml/wallpapers_service.{h,cpp}`): the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `wabar` run, shared by every Wallpapers widget; created by the QML engine on first use and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles` and `DesktopWallpaperBackend` (animated `engine` off); thumbnails are the host's `image://thumb/`. No thread of its own: the hotkey is `RegisterHotKey` (documented) on the GUI thread through a native event filter, unregistered in the destructor. Inert, no hotkey, when `kernel::liveDesktop("wallpapers")` is false.

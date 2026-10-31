@@ -244,7 +244,6 @@ struct ServiceFixture {
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [](int) { return 0; };
-    deps.cache = std::make_shared<wabar::wallpapers::ThumbnailCache>(cacheFolder.path());
     deps.hotkeys = std::make_unique<NoHotkeys>();
     deps.realBackend = false;
     deps.dryRun = dryRun;

@@ -6,8 +6,6 @@ wabar_feature(
   NAME wallpapers
   SOURCES
     desktop_wallpaper.h
-    thumbnail_cache.h
-    thumbnail_cache.cpp
     wallpaper_files.h
     wallpaper_files.cpp
     wallpaper_hotkey.h

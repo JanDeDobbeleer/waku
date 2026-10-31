@@ -4,7 +4,6 @@
 
 #include <QImage>
 #include <QObject>
-#include <QQuickImageProvider>
 #include <QString>
 #include <QVariantList>
 #include <functional>
@@ -13,7 +12,6 @@
 
 #include "features/wallpapers/desktop_wallpaper.h"
 #include "features/wallpapers/qml/wallpaper_transition.h"
-#include "features/wallpapers/thumbnail_cache.h"
 #include "features/wallpapers/wallpaper_hotkey.h"
 #include "features/wallpapers/wallpaper_manager.h"
 
@@ -43,21 +41,19 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& f
 // `wabar` run, as a QML singleton. Wraps the UI-free classes of the Widgets build:
 // wabar::wallpapers::WallpaperManager (set, random, auto-change timer; the animated change is the
 // Qt Quick WallpaperTransition, see docs/plans/2026-10-29-wabar-wallpapers-design.md),
-// collectImageFiles, ThumbnailCache and DesktopWallpaperBackend. Registers
-// image://wallpaper/<path>?<stamp>.
+// collectImageFiles and DesktopWallpaperBackend. The gallery's thumbnails come from the host's
+// image://thumb/ provider (wabar.Thumbnails), which keeps one memory and disk cache for the run.
 //
 // Threads: GUI thread, no thread of its own (the transition's decoder thread is described there).
-// The thumbnail provider runs on Qt's image-reader thread (ForceAsynchronousImageLoading); it owns
-// a shared ThumbnailCache and reads image files, nothing else. The hotkey arrives on the GUI
-// thread.
+// The hotkey arrives on the GUI thread.
 //
 // Several `Wallpapers` widgets and a `WallpaperSettings` share this one service; the last one
 // to call configure()/configureEngine() wins.
 //
-// `files` is a list of maps: path, name, thumbnail (image URL) and current (bool), in Explorer
-// name order. `available` is false (nothing is ever set) when IDesktopWallpaper cannot be
-// created: not a live desktop (kernel::liveDesktop("wallpapers")). The hotkey is never registered
-// then.
+// `files` is a list of maps: path, name and current (bool), in Explorer name order. A shell builds
+// thumbnail URLs with `Thumbnails.url(path, width)`. `available` is false (nothing is ever
+// set) when IDesktopWallpaper cannot be created: not a live desktop
+// (kernel::liveDesktop("wallpapers")). The hotkey is never registered then.
 class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   Q_OBJECT
   QML_ELEMENT
@@ -70,12 +66,11 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   Q_PROPERTY(QString galleryScreen READ galleryScreen NOTIFY galleryOpenChanged FINAL)
 
  public:
-  // Everything a test replaces. Null members are the real ones (cache: the shared folder under
-  // %LOCALAPPDATA%\wabar); `realBackend=false` with a null `backend` means unavailable.
+  // Everything a test replaces. Null members are the real ones; `realBackend=false` with a null
+  // `backend` means unavailable.
   struct Deps {
     wabar::wallpapers::WallpaperManager::BackendFactory backend;
     wabar::wallpapers::WallpaperManager::Picker picker;
-    std::shared_ptr<wabar::wallpapers::ThumbnailCache> cache;
     std::unique_ptr<HotkeyHost> hotkeys;
     // Builds the transition for (image, animation); null means the real WallpaperTransition.
     std::function<std::unique_ptr<WallpaperTransition>(const QString&, const QString&)> transition;
@@ -86,7 +81,7 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   };
 
   // Deliberately not default-constructible: Qt uses a singleton's default constructor in
-  // preference to create(), and create() must run to register the image provider.
+  // preference to create(), and create() must run for the test factory.
   explicit Wallpapers(QObject* parent);
   explicit Wallpapers(Deps deps, QObject* parent = nullptr);
   ~Wallpapers() override;
@@ -102,7 +97,6 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   QString current() const { return current_; }
   bool galleryOpen() const { return galleryOpen_; }
   QString galleryScreen() const { return galleryScreen_; }
-  const std::shared_ptr<wabar::wallpapers::ThumbnailCache>& cache() const { return cache_; }
 
   // What Wallpapers.qml passes in: the folder, the toggle hotkey ("" for none), the screen mode
   // for it (cursor, primary, active; anything else is primary) and the auto-change interval in
@@ -150,7 +144,6 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
 
   Deps deps_;
   bool available_ = false;
-  std::shared_ptr<wabar::wallpapers::ThumbnailCache> cache_;
   std::unique_ptr<DesktopWallpaperBackend> backend_;
   std::unique_ptr<wabar::wallpapers::WallpaperManager> manager_;
   QString imagePath_;
@@ -165,18 +158,6 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   QString animation_ = QStringLiteral("split");
   std::unique_ptr<WallpaperTransition> transition_;
   bool skipLogged_ = false;
-};
-
-// image://wallpaper/<path>?<stamp>: the thumbnail of one file, scaled to fit `requestedSize`
-// (the QML sourceSize) and kept in the shared ThumbnailCache. Holds only the cache.
-class WallpaperThumbnailProvider : public QQuickImageProvider {
- public:
-  explicit WallpaperThumbnailProvider(std::shared_ptr<wabar::wallpapers::ThumbnailCache> cache);
-
-  QImage requestImage(const QString& id, QSize* size, const QSize& requestedSize) override;
-
- private:
-  std::shared_ptr<wabar::wallpapers::ThumbnailCache> cache_;
 };
 
 }  // namespace wabar::wallpapers

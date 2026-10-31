@@ -188,7 +188,7 @@ Window {
                     asynchronous: true
                     fillMode: Image.PreserveAspectCrop
                     sourceSize: Qt.size(root.imageWidth * 2, root.cardHeight * 2)
-                    source: card.modelData.thumbnail
+                    source: Thumbnails.url(card.modelData.path, root.imageWidth * 2)
                 }
             }
 

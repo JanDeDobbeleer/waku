@@ -1,4 +1,4 @@
-// WallpaperManager, the file scan and the thumbnail cache against a fake desktop: no widget, no
+// WallpaperManager and the file scan against a fake desktop: no widget, no
 // engine (the animated change is wabar's WallpaperTransition), nothing touches the real wallpaper.
 #include <gtest/gtest.h>
 
@@ -15,7 +15,6 @@
 #include <vector>
 
 #include "features/wallpapers/desktop_wallpaper.h"
-#include "features/wallpapers/thumbnail_cache.h"
 #include "features/wallpapers/wallpaper_files.h"
 #include "features/wallpapers/wallpaper_manager.h"
 
@@ -113,8 +112,6 @@ class WallpaperManagerTest : public testing::Test {
  protected:
   ManagerRig rig_;
   QTemporaryDir temp_;
-  std::shared_ptr<ThumbnailCache> cache_ =
-      std::make_shared<ThumbnailCache>(QDir(temp_.path()).filePath(QStringLiteral("thumbs")));
 
   QStringList makeImages(int count) {
     QStringList files;
@@ -126,7 +123,7 @@ class WallpaperManagerTest : public testing::Test {
   }
 };
 
-// --- files and cache --------------------------------------------------------------------------
+// --- files --------------------------------------------------------------------------------
 
 TEST_F(WallpaperManagerTest, ImagePathAcceptsStringOrList) {
   EXPECT_EQ(imagePathsFrom(json("C:/a")), QStringList{QStringLiteral("C:/a")});
@@ -149,40 +146,6 @@ TEST_F(WallpaperManagerTest, MissingFolderYieldsNoFiles) {
   EXPECT_TRUE(collectImageFiles({QDir(temp_.path()).filePath(QStringLiteral("nope"))},
                                 {QStringLiteral("png")})
                   .isEmpty());
-}
-
-TEST_F(WallpaperManagerTest, ThumbnailCacheRoundTripsAndKeysFollowSizeAndFile) {
-  const QString image = writePng(QDir(temp_.path()).filePath(QStringLiteral("a.png")), Qt::red);
-  const QString key = cache_->key(image, 100, 50);
-  ASSERT_FALSE(key.isEmpty());
-  EXPECT_EQ(key, cache_->key(image, 100, 50));
-  EXPECT_NE(key, cache_->key(image, 101, 50));
-  EXPECT_TRUE(cache_->key(QDir(temp_.path()).filePath(QStringLiteral("gone.png")), 1, 1).isEmpty());
-  EXPECT_FALSE(cache_->load(key).has_value());
-
-  QImage thumb(8, 4, QImage::Format_ARGB32);
-  thumb.fill(Qt::blue);
-  cache_->save(key, thumb);
-  const auto loaded = cache_->load(key);
-  ASSERT_TRUE(loaded.has_value());
-  EXPECT_EQ(loaded->size(), QSize(8, 4));
-}
-
-TEST_F(WallpaperManagerTest, ThumbnailCachePrunesExpiredFiles) {
-  QImage thumb(2, 2, QImage::Format_ARGB32);
-  thumb.fill(Qt::green);
-  cache_->save(QStringLiteral("old.png"), thumb);
-  cache_->save(QStringLiteral("new.png"), thumb);
-  QFile old(QDir(cache_->folder()).filePath(QStringLiteral("old.png")));
-  ASSERT_TRUE(old.open(QIODevice::ReadWrite));
-  const QDateTime ancient =
-      QDateTime::currentDateTime().addSecs(-ThumbnailCache::kMaxAgeSeconds - 3600);
-  ASSERT_TRUE(old.setFileTime(ancient, QFileDevice::FileModificationTime));
-  old.close();
-
-  cache_->prune();
-  EXPECT_FALSE(cache_->load(QStringLiteral("old.png")).has_value());
-  EXPECT_TRUE(cache_->load(QStringLiteral("new.png")).has_value());
 }
 
 // --- manager ----------------------------------------------------------------------------------

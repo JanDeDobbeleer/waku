@@ -96,7 +96,6 @@ struct Fixture {
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [this](int count) { return picks[next++ % picks.size()] % count; };
-    deps.cache = std::make_shared<wabar::wallpapers::ThumbnailCache>(cacheFolder.path());
     deps.hotkeys = std::move(owned);
     deps.transition = [log = transitions](const QString& path, const QString& animation) {
       return fakeTransition(log, path, animation);
@@ -139,7 +138,6 @@ struct SmallFolder {
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [this](int count) { return pick % count; };
-    deps.cache = std::make_shared<wabar::wallpapers::ThumbnailCache>(cacheFolder.path());
     deps.hotkeys = std::make_unique<FakeHotkeys>();
     deps.realBackend = false;
     service = std::make_unique<Wallpapers>(std::move(deps), nullptr);
