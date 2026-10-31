@@ -12,6 +12,7 @@
 #include <QRegularExpression>
 #include <QStringDecoder>
 #include <QThread>
+#include <QTimer>
 #include <algorithm>
 #include <memory>
 #include <mutex>
@@ -281,6 +282,12 @@ class WlanWorker : public QObject {
         return;
       }
     }
+    // ACM answers with scan_complete or scan_fail; when neither comes (a driver that drops the
+    // request) scanning_ would stay set and every later scan() return at once.
+    const int generation = ++scanGeneration_;
+    QTimer::singleShot(kScanTimeoutMs, this, [this, generation] {
+      if (scanning_ && generation == scanGeneration_) scanFinished(false);
+    });
   }
 
   void scanFinished(bool success) {
@@ -290,6 +297,10 @@ class WlanWorker : public QObject {
         for (const GUID& guid : session_.interfaces()) session_.appendAvailable(guid, networks);
       }
       emit scanCompleted(static_cast<int>(WifiScanStatus::Success), networks);
+    } else if (!success && scanning_) {
+      // Our scan failed or timed out: as for a scan that fails at once, so the service's scanning
+      // flag clears. (A completion of a scan Windows ran itself still updates the list above.)
+      emit scanCompleted(static_cast<int>(WifiScanStatus::Error), {});
     }
     scanning_ = false;
   }
@@ -412,9 +423,12 @@ class WlanWorker : public QObject {
     }
   }
 
+  static constexpr int kScanTimeoutMs = 10000;
+
   Session session_;
   bool updates_ = false;
   bool scanning_ = false;
+  int scanGeneration_ = 0;
 };
 
 // Worker threads whose backend is gone but which have not finished yet. The process waits for
