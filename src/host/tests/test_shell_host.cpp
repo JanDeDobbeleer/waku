@@ -439,6 +439,23 @@ TEST(ShellHostTest, ABrokenFirstLoadShowsAFallbackShellWithTheError) {
   EXPECT_TRUE(pill->isVisible());
 }
 
+TEST(ShellHostTest, AFirstLoadWhoseRootIsNotAShellRootCreatesNothingAndShowsTheFallback) {
+  Harness h;
+  // The first load skips the probe engine: build() itself refuses the root before creating it.
+  h.start(QStringLiteral(R"(
+import QtQuick
+import wabar
+Item { PanelWindow { objectName: "never" } }
+)"));
+  const auto before = QGuiApplication::allWindows().size();
+  EXPECT_FALSE(h.host->reload());
+  EXPECT_TRUE(h.host->error().contains(QStringLiteral("shell.qml must declare a ShellRoot")))
+      << qPrintable(h.host->error());
+  ASSERT_EQ(h.host->windows().size(), 1);  // the fallback shell
+  // Only the fallback's window was made: the PanelWindow inside the Item never was.
+  EXPECT_EQ(QGuiApplication::allWindows().size(), before + 1);
+}
+
 TEST(ShellHostTest, AMissingShellFileIsAnErrorWithAFallbackShell) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());

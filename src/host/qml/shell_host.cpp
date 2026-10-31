@@ -439,9 +439,12 @@ bool ShellHost::reload() {
     error = QStringLiteral("plugin %1 refused: %2")
                 .arg(QDir::toNativeSeparators(refused.first().file), refused.first().reason);
     qWarning().noquote() << "wabar:" << error;
-  } else if (validate(QUrl::fromLocalFile(entryPath()), ShellRoot::staticMetaObject, false,
-                      &error) &&
+  } else if ((!loaded_ || validate(QUrl::fromLocalFile(entryPath()), ShellRoot::staticMetaObject,
+                                   false, &error)) &&
              validateTheme(&error)) {
+    // The check in a throwaway engine protects the shell on the screen. With none (the first
+    // start) there is nothing to protect: a shell that does not compile fails in build() with the
+    // same message and the fallback shows it, so the probe would only compile the shell twice.
     // The files compile, but creating the shell can still fail. resetEngine() destroys the old
     // shell, all its windows included, before the new one is built: two generations never live
     // at once. If the build fails, reload() shows the fallback shell.
@@ -518,6 +521,19 @@ std::unique_ptr<ShellHost::Loaded> ShellHost::build(const QUrl& url, QString* er
     return nullptr;
   }
   traceStep("shell compiled");
+  const auto notAShell = [&url, error] {
+    *error = QStringLiteral("%1 must declare a ShellRoot at its root")
+                 .arg(QFileInfo(url.toLocalFile().isEmpty() ? url.fileName() : url.toLocalFile())
+                          .fileName());
+    qWarning().noquote() << "wabar:" << *error;
+  };
+  // Checked before anything is created, as validate() does: a root that is no ShellRoot starts
+  // nothing.
+  if (const QMetaObject* type = rootType(*loaded->component);
+      !type || !type->inherits(&ShellRoot::staticMetaObject)) {
+    notAShell();
+    return nullptr;
+  }
   // Windows register while the shell is created (QsWindow::componentComplete); install() shows
   // them once the whole shell exists.
   building_ = loaded.get();
@@ -532,10 +548,7 @@ std::unique_ptr<ShellHost::Loaded> ShellHost::build(const QUrl& url, QString* er
   }
   loaded->shell = qobject_cast<ShellRoot*>(loaded->root.get());
   if (!loaded->shell) {
-    *error = QStringLiteral("%1 must declare a ShellRoot at its root")
-                 .arg(QFileInfo(url.toLocalFile().isEmpty() ? url.fileName() : url.toLocalFile())
-                          .fileName());
-    qWarning().noquote() << "wabar:" << *error;
+    notAShell();
     return nullptr;
   }
   return loaded;

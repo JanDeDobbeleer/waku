@@ -33,11 +33,13 @@ class QsWindow;
 
 // Builds the shell declared in <config home>\shell.qml and keeps it up to date.
 //
-// reload() first checks shell.qml and theme.qml in a throwaway engine: they compile, their types
-// exist and their roots are a ShellRoot and a ThemeSpec. Nothing is created there, so no widget is
-// built and no service starts. Only then is the Theme singleton filled and the new shell built in
-// the live engine. A file that fails the check leaves the previous shell in place: `error` holds
-// the first message (each PanelWindow shows it as a pill) and the full list goes to the log.
+// While a shell is on the screen, reload() first checks shell.qml and theme.qml in a throwaway
+// engine: they compile, their types exist and their roots are a ShellRoot and a ThemeSpec. Nothing
+// is created there, so no widget is built and no service starts. Only then is the Theme singleton
+// filled and the new shell built in the live engine. A file that fails the check leaves the
+// previous shell in place: `error` holds the first message (each PanelWindow shows it as a pill)
+// and the full list goes to the log. The first load has no shell to protect and skips the shell
+// check; build() refuses a root that is no ShellRoot before it creates anything.
 //
 // A check that passes starts a clean engine, as Quickshell does: the old shell is destroyed, then
 // the engine drops its QML singletons (QQmlEngine::clearSingletons) and compiled files, then
