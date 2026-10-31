@@ -107,28 +107,40 @@ std::unique_ptr<HttpTransport> createNetworkTransport(int timeoutMs) {
   return std::make_unique<NetworkTransport>(timeoutMs);
 }
 
-void sendHttpAsync(HttpRequest request, QObject* context,
-                   std::function<void(const HttpResponse&)> done) {
+void runAsync(QObject* context, std::function<std::function<void()>()> work) {
   const bool hasContext = context != nullptr;
   QPointer<QObject> guard(context);
-  QThreadPool::globalInstance()->start(
-      [request = std::move(request), guard, hasContext, done = std::move(done)] {
-        HttpResponse response;
-        try {
-          response = createNetworkTransport()->send(request);
-        } catch (const std::exception& error) {
-          response.error = QString::fromUtf8(error.what());
-        }
-        QCoreApplication* app = QCoreApplication::instance();
-        if (!app || !done) return;
-        QMetaObject::invokeMethod(
-            app,
-            [guard, hasContext, done, response] {
-              if (hasContext && !guard) return;
-              done(response);
-            },
-            Qt::QueuedConnection);
-      });
+  QThreadPool::globalInstance()->start([guard, hasContext, work = std::move(work)] {
+    std::function<void()> then = work();
+    // qApp outlives the pool: ~QCoreApplication waits for the global pool.
+    QCoreApplication* app = QCoreApplication::instance();
+    if (!app || !then) return;
+    QMetaObject::invokeMethod(
+        app,
+        [guard, hasContext, then = std::move(then)] {
+          if (hasContext && !guard) return;
+          then();
+        },
+        Qt::QueuedConnection);
+  });
+}
+
+void sendHttpAsync(HttpRequest request, QObject* context,
+                   std::function<void(const HttpResponse&)> done, HttpTransportFactory transport) {
+  runAsync(context,
+           [request = std::move(request), done = std::move(done),
+            transport = std::move(transport)]() -> std::function<void()> {
+             HttpResponse response;
+             try {
+               response = (transport ? transport() : createNetworkTransport())->send(request);
+             } catch (const std::exception& error) {
+               response.error = QString::fromUtf8(error.what());
+             } catch (...) {
+               response.error = QStringLiteral("an unexpected error occurred");
+             }
+             if (!done) return {};
+             return [done, response] { done(response); };
+           });
 }
 
 QString githubNotificationsUrl(bool onlyUnread, int maxNotification) {

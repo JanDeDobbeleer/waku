@@ -2,7 +2,6 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
-#include <QThreadPool>
 #include <QVariantMap>
 #include <QtDebug>
 #include <algorithm>
@@ -39,6 +38,8 @@ QVariantMap itemMap(const GithubNotification& n, const QDateTime& now) {
 
 class SystemGithubClient final : public GithubClient {
  public:
+  explicit SystemGithubClient(HttpTransportFactory transport) : transport_(std::move(transport)) {}
+
   QString loadToken() override {
     return resolveGithubToken(QStringLiteral("env"), qEnvironmentVariable("WABAR_GITHUB_TOKEN"),
                               githubTokenFilePath());
@@ -48,34 +49,39 @@ class SystemGithubClient final : public GithubClient {
   }
   void fetch(const GithubFetchOptions& options,
              std::function<void(const GithubFetchResult&)> done) override {
-    QThreadPool::globalInstance()->start(
-        [options, done = std::move(done), guard = QPointer<QObject>(&guard_)] {
-          GithubFetchResult result;
-          try {
-            result = fetchGithubNotifications(*createNetworkTransport(), options);
-          } catch (const std::exception& error) {
-            result = {};
-            result.error =
-                QStringLiteral("an unexpected error occurred: ") + QString::fromUtf8(error.what());
-          }
-          if (!guard) return;
-          QMetaObject::invokeMethod(
-              guard.data(), [result, done] { done(result); }, Qt::QueuedConnection);
-        });
+    runAsync(&guard_,
+             [options, done = std::move(done), transport = transport_]() -> std::function<void()> {
+               GithubFetchResult result;
+               try {
+                 // One transport for every request of the fetch.
+                 const auto http = transport ? transport() : createNetworkTransport();
+                 result = fetchGithubNotifications(*http, options);
+               } catch (const std::exception& error) {
+                 result = {};
+                 result.error = QStringLiteral("an unexpected error occurred: ") +
+                                QString::fromUtf8(error.what());
+               } catch (...) {
+                 result = {};
+                 result.error = QStringLiteral("an unexpected error occurred");
+               }
+               return [result, done] { done(result); };
+             });
   }
   void send(const HttpRequest& request, std::function<void(const HttpResponse&)> done) override {
-    sendHttpAsync(request, &guard_, std::move(done));
+    sendHttpAsync(request, &guard_, std::move(done), transport_);
   }
 
  private:
-  // Context of every posted result; destroyed with the client, which drops late results.
+  HttpTransportFactory transport_;
+  // Context of every posted result, tested on the GUI thread only (see runAsync); destroyed with
+  // the client, which drops late results.
   QObject guard_;
 };
 
 }  // namespace
 
-std::unique_ptr<GithubClient> createSystemGithubClient() {
-  return std::make_unique<SystemGithubClient>();
+std::unique_ptr<GithubClient> createSystemGithubClient(HttpTransportFactory transport) {
+  return std::make_unique<SystemGithubClient>(std::move(transport));
 }
 
 GitHub::GitHub(QObject* parent)

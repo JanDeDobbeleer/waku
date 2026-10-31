@@ -33,10 +33,11 @@ class GithubClient {
 
 // The real client: fetches on one-shot `QThreadPool` threads (each owns its own network
 // transport and ends with the fetch; nothing is joined), requests go through
-// sendHttpAsync. Results are posted to the GUI thread through a guard object owned by
-// the client, so a response that arrives after the client is destroyed is dropped. The token is
-// handed to the fetch and never logged.
-std::unique_ptr<GithubClient> createSystemGithubClient();
+// sendHttpAsync. Results are posted to qApp and run on the GUI thread only while a guard object
+// owned by the client is alive, so a response that arrives after the client is destroyed is
+// dropped (see runAsync). The token is handed to the fetch and never logged. `transport` is a test
+// seam; empty means createNetworkTransport.
+std::unique_ptr<GithubClient> createSystemGithubClient(HttpTransportFactory transport = {});
 
 // GitHub notifications as a QML singleton, shared by every GitHub widget. Lives on the GUI thread
 // and polls every `interval` ms through a GithubClient. `available` is false (and no client is

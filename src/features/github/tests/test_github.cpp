@@ -5,7 +5,12 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSignalSpy>
+#include <QThread>
+#include <QThreadPool>
+#include <chrono>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include "features/github/qml/github_service.h"
@@ -412,6 +417,103 @@ TEST(GithubService, TruncateMatchesPython) {
   ServiceHarness h;
   EXPECT_EQ(h.github->truncate(QStringLiteral("short"), 10), QStringLiteral("short"));
   EXPECT_EQ(h.github->truncate(QStringLiteral("0123456789"), 8), QStringLiteral("01234..."));
+}
+
+namespace {
+
+// A transport that blocks in send() until the test opens the gate, so the real client can be
+// destroyed while its worker is mid-request. No network is touched.
+struct Gate {
+  std::mutex mutex;
+  std::condition_variable cv;
+  int entered = 0;
+  bool open = false;
+
+  bool waitEntered(int count) {
+    std::unique_lock lock(mutex);
+    return cv.wait_for(lock, std::chrono::seconds(5), [&] { return entered >= count; });
+  }
+  void release() {
+    {
+      std::lock_guard lock(mutex);
+      open = true;
+    }
+    cv.notify_all();
+  }
+};
+
+class GateTransport final : public HttpTransport {
+ public:
+  explicit GateTransport(std::shared_ptr<Gate> gate) : gate_(std::move(gate)) {}
+  HttpResponse send(const HttpRequest&) override {
+    std::unique_lock lock(gate_->mutex);
+    ++gate_->entered;
+    gate_->cv.notify_all();
+    gate_->cv.wait(lock, [&] { return gate_->open; });
+    return {200, QStringLiteral("OK"), QByteArrayLiteral("[]")};
+  }
+
+ private:
+  std::shared_ptr<Gate> gate_;
+};
+
+HttpTransportFactory gateFactory(const std::shared_ptr<Gate>& gate) {
+  return [gate] { return std::make_unique<GateTransport>(gate); };
+}
+
+void drainWorkers() {
+  ASSERT_TRUE(QThreadPool::globalInstance()->waitForDone(10000));
+  QCoreApplication::sendPostedEvents();
+  QCoreApplication::processEvents();
+}
+
+}  // namespace
+
+TEST(GithubSystemClient, DeliversAFetchAndARequestOnTheGuiThread) {
+  auto gate = std::make_shared<Gate>();
+  gate->release();
+  auto client = createSystemGithubClient(gateFactory(gate));
+  QThread* gui = QThread::currentThread();
+  bool fetched = false;
+  bool sent = false;
+  GithubFetchOptions options;
+  options.token = QStringLiteral("test-token");
+  client->fetch(options, [&](const GithubFetchResult&) {
+    EXPECT_EQ(QThread::currentThread(), gui);
+    fetched = true;
+  });
+  client->send(githubDeviceCodeRequest(), [&](const HttpResponse& response) {
+    EXPECT_EQ(QThread::currentThread(), gui);
+    EXPECT_EQ(response.status, 200);
+    sent = true;
+  });
+  drainWorkers();
+  EXPECT_TRUE(fetched);
+  EXPECT_TRUE(sent);
+}
+
+// C4: the worker used to test the client's guard and then post to it, racing with the GUI thread
+// deleting the client. Results now go to qApp and are dropped there once the client is gone.
+TEST(GithubSystemClient, DropsResultsOfWorkersThatOutliveTheClient) {
+  for (int round = 0; round < 20; ++round) {
+    auto gate = std::make_shared<Gate>();
+    auto client = createSystemGithubClient(gateFactory(gate));
+    bool delivered = false;
+    GithubFetchOptions options;
+    options.token = QStringLiteral("test-token");
+    client->fetch(options, [&](const GithubFetchResult&) { delivered = true; });
+    client->send(githubDeviceCodeRequest(), [&](const HttpResponse&) { delivered = true; });
+    ASSERT_TRUE(gate->waitEntered(2));
+    if (round % 2 == 0) {
+      client.reset();
+      gate->release();
+    } else {
+      gate->release();  // the workers race with the destruction
+      client.reset();
+    }
+    drainWorkers();
+    EXPECT_FALSE(delivered);
+  }
 }
 
 // The widget itself, on the offscreen platform: the real service has no client there, so the pill

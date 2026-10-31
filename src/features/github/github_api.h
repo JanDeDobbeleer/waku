@@ -64,10 +64,22 @@ class HttpTransport {
 // thread only.
 std::unique_ptr<HttpTransport> createNetworkTransport(int timeoutMs = 15000);
 
-// Runs `request` on a QThreadPool thread with a fresh network transport and delivers the response
-// on the GUI thread (posted to qApp). `done` is skipped when `context` was destroyed meanwhile.
+// Makes the transport of one async request or fetch; called on the worker thread.
+using HttpTransportFactory = std::function<std::unique_ptr<HttpTransport>()>;
+
+// Runs `work` on a QThreadPool thread, then runs the continuation it returns on the GUI thread.
+// The continuation is posted to qApp, never to `context`, and `context` (which lives on the GUI
+// thread) is tested only there: a worker that tests a QPointer and then posts to it races with the
+// GUI thread deleting it. The continuation is skipped when `context` was destroyed meanwhile.
+// Workers are not joined; one that outlives `context` only drops its result. `work` must not
+// throw.
+void runAsync(QObject* context, std::function<std::function<void()>()> work);
+
+// Runs `request` on a QThreadPool thread with a fresh network transport (from `transport`, else
+// createNetworkTransport) and delivers the response on the GUI thread as runAsync does.
 void sendHttpAsync(HttpRequest request, QObject* context,
-                   std::function<void(const HttpResponse&)> done);
+                   std::function<void(const HttpResponse&)> done,
+                   HttpTransportFactory transport = {});
 
 struct GithubFetchOptions {
   QString token;
