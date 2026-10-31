@@ -22,8 +22,9 @@ widget (`Wifi.qml`).
 The status sample runs on the global `QThreadPool` (one at a time) and is applied on the GUI thread.
 The Wi-Fi backend (`WlanBackend`, a `QThread` created by `createWlanBackend`) starts on the first
 refresh or connect and is stopped and joined in the `Network` destructor. The radio and VPN
-backends run each call as a one-shot task on the global `QThreadPool` (RAS dial and hang-up may
-block a pool thread for seconds) and post results to the GUI thread; they have nothing to join. The
+backends run each call as a one-shot task on their own two-thread pool (`win32/network_pool.h`;
+RAS dial and hang-up block a thread for seconds, which on the global pool would starve its other
+users) and post results to the GUI thread; they have nothing to join. The
 throughput sampler is a GUI-thread timer. No source and no backend on the offscreen platform.
 
 ## Throughput

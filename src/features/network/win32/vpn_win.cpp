@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "features/network/vpn.h"
+#include "features/network/win32/network_pool.h"
 #include "kernel/qt/live_desktop.h"
 
 namespace wabar::network {
@@ -148,15 +149,15 @@ QString hangUp(const QString& name) {
   return QStringLiteral("The VPN is not connected");
 }
 
-// RAS, every call on a QThreadPool thread (RasDial blocks until the dial ends). Results return as
-// queued signals through qApp and are dropped when this object is gone. Nothing to join: a task
+// RAS, every call on a thread of networkPool() (RasDial blocks until the dial ends). Results return
+// as queued signals through qApp and are dropped when this object is gone. Nothing to join: a task
 // ends with its call.
 class SystemVpnBackend final : public VpnBackend {
  public:
   void refresh() override {
     if (refreshing_.exchange(true)) return;
     QPointer<SystemVpnBackend> guard(this);
-    QThreadPool::globalInstance()->start([guard, cache = cache_] {
+    networkPool()->start([guard, cache = cache_] {
       QVector<VpnEntry> entries;
       try {
         entries = cache->read();
@@ -175,7 +176,7 @@ class SystemVpnBackend final : public VpnBackend {
  private:
   void run(const QString& name, bool dialUp) {
     QPointer<SystemVpnBackend> guard(this);
-    QThreadPool::globalInstance()->start([guard, name, dialUp] {
+    networkPool()->start([guard, name, dialUp] {
       QString error;
       try {
         error = dialUp ? dial(name) : hangUp(name);

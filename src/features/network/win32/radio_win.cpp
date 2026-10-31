@@ -12,6 +12,7 @@
 #include <optional>
 
 #include "features/network/radio.h"
+#include "features/network/win32/network_pool.h"
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/winrt_apartment.h"
 
@@ -74,15 +75,16 @@ QString accessText(radios::RadioAccessStatus status) {
   }
 }
 
-// Windows.Devices.Radios, every call on a QThreadPool thread. A query is dropped while another one
-// runs; switches are serialised by the Network service. Results return as queued signals through
-// qApp, and are dropped when this object is gone. Nothing to join: a task ends with its call.
+// Windows.Devices.Radios, every call on a thread of networkPool(). A query is dropped while another
+// one runs; switches are serialised by the Network service. Results return as queued signals
+// through qApp, and are dropped when this object is gone. Nothing to join: a task ends with its
+// call.
 class SystemWifiRadio final : public WifiRadioBackend {
  public:
   void query() override {
     if (querying_.exchange(true)) return;
     QPointer<SystemWifiRadio> guard(this);
-    QThreadPool::globalInstance()->start([guard, cache = cache_] {
+    networkPool()->start([guard, cache = cache_] {
       kernel::ensureWinrtApartment();
       const RadioState state = cache->read();
       post(guard, [guard, state] {
@@ -94,7 +96,7 @@ class SystemWifiRadio final : public WifiRadioBackend {
 
   void setEnabled(bool enabled) override {
     QPointer<SystemWifiRadio> guard(this);
-    QThreadPool::globalInstance()->start([guard, enabled, cache = cache_] {
+    networkPool()->start([guard, enabled, cache = cache_] {
       kernel::ensureWinrtApartment();
       QString error;
       try {

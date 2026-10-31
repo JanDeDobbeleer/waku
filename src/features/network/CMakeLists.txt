@@ -12,6 +12,8 @@ wabar_feature(NAME network
     wlan.h
   WIN32_SOURCES
     win32/connectivity_win.cpp
+    win32/network_pool.cpp
+    win32/network_pool.h
     win32/radio_win.cpp
     win32/throughput_win.cpp
     win32/vpn_win.cpp
