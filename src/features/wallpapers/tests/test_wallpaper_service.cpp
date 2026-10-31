@@ -280,6 +280,24 @@ TEST(WallpaperService, DryRunWithTheEnginePlaysTheAnimationButNeverSetsIt) {
   EXPECT_TRUE(QTest::qWaitFor([&] { return f.state->sets.size() == 1; }, 3000));
 }
 
+// Off the live desktop (and with --no-hotkeys) liveDesktop("hotkeys") is false: no hotkey host is
+// built, so a configured hotkey registers nothing and the service still works.
+TEST(WallpaperService, WithoutLiveHotkeysTheHotkeyIsInert) {
+  SmallFolder f;
+  auto state = std::make_shared<DesktopState>();
+  Wallpapers::Deps deps;
+  deps.backend = [state] { return std::make_unique<FakeBackend>(state); };
+  deps.picker = [](int) { return 0; };
+  deps.realBackend = false;  // no hotkeys: the service would build the real host on a live desktop
+  Wallpapers service(std::move(deps), nullptr);
+  ASSERT_TRUE(service.available());
+  service.configure(QDir::fromNativeSeparators(f.folder.path()), QStringLiteral("alt+e"), QString(),
+                    0);
+  service.configure(QDir::fromNativeSeparators(f.folder.path()), QStringLiteral("ctrl+f5"),
+                    QString(), 0);
+  EXPECT_EQ(service.controlNext(false), f.ok(QStringLiteral("a.jpg")));
+}
+
 TEST(WallpaperService, DryRunRandomWithoutTheEngineSetsNothing) {
   SmallFolder f;
   auto state = std::make_shared<DesktopState>();

@@ -145,7 +145,9 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
   // A timed change takes the path of a manual random(): lock screen, dry run and animation.
   managerDeps.timedChange = [this] { random(); };
   manager_ = std::make_unique<WallpaperManager>(std::move(managerDeps));
-  if (!deps_.hotkeys) deps_.hotkeys = makeWin32HotkeyHost();
+  // `--no-hotkeys` switches this hotkey off with the others (host::Hotkeys asks the same name).
+  if (!deps_.hotkeys && kernel::liveDesktop(QStringLiteral("hotkeys")))
+    deps_.hotkeys = makeWin32HotkeyHost();
   readCurrent();
 }
 
@@ -185,6 +187,7 @@ void Wallpapers::configure(const QString& imagePath, const QString& hotkey,
     if (!available_) return;
     if (hotkey == hotkey_) return;
     hotkey_ = hotkey;
+    if (!deps_.hotkeys) return;
     deps_.hotkeys->unregisterKey();
     if (hotkey.trimmed().isEmpty()) return;
     const auto combo = parseHotkey(hotkey);

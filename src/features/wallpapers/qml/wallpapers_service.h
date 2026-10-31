@@ -56,7 +56,8 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& f
 // thumbnail URLs with `Thumbnails.url(path, width)`. filesChanged() fires only when the list
 // changes, so a gallery keeps its delegates when nothing did. `available` is false (nothing is ever
 // set) when IDesktopWallpaper cannot be created: not a live desktop
-// (kernel::liveDesktop("wallpapers")). The hotkey is never registered then.
+// (kernel::liveDesktop("wallpapers")). The hotkey is never registered then, nor without
+// kernel::liveDesktop("hotkeys") (`--no-hotkeys`), which switches every global hotkey off.
 //
 // `setLockScreen` (default true): after a change has set the wallpaper, the same image becomes the
 // Windows lock screen (and sign-in screen) picture through LockScreenSetter, which runs on its own
