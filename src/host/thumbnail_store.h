@@ -31,7 +31,9 @@ class ThumbnailStore {
   static constexpr int kMaxWidth = 4096;
   static constexpr qint64 kMaxDiskBytes = 200LL * 1024 * 1024;
   static constexpr int kMaxDiskFiles = 2000;
-  static constexpr qint64 kMemoryBytes = 64LL * 1024 * 1024;
+  // One store serves the whole process (qml/thumbnails.cpp); the WebP disk cache is cheap to
+  // read back, so memory holds about a screenful of gallery thumbnails.
+  static constexpr qint64 kMemoryBytes = 24LL * 1024 * 1024;
 
   explicit ThumbnailStore(QString root);
 

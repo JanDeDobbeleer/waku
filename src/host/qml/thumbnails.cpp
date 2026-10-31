@@ -91,12 +91,20 @@ class PruneTask : public QRunnable {
   std::shared_ptr<ThumbnailStore> store_;
 };
 
+// One store for the process while anything holds it: the singleton and the provider of every
+// engine generation. A reload builds the new pair while the old provider still lives, so a store
+// per create() kept two memory caches; now the new pair finds the old store warm. GUI thread only
+// (create() runs there).
 std::shared_ptr<ThumbnailStore> defaultStore() {
+  static std::weak_ptr<ThumbnailStore> shared;
+  if (auto existing = shared.lock()) return existing;
   // No disk cache without a live desktop: tests and offscreen runs keep to memory.
-  if (!wabar::kernel::liveDesktop(QStringLiteral("thumbnails"))) {
-    return std::make_shared<ThumbnailStore>(QString());
-  }
-  return std::make_shared<ThumbnailStore>(wabar::kernel::appDataDir() + QStringLiteral("/thumbs"));
+  auto created = wabar::kernel::liveDesktop(QStringLiteral("thumbnails"))
+                     ? std::make_shared<ThumbnailStore>(wabar::kernel::appDataDir() +
+                                                        QStringLiteral("/thumbs"))
+                     : std::make_shared<ThumbnailStore>(QString());
+  shared = created;
+  return created;
 }
 
 }  // namespace
