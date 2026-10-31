@@ -138,6 +138,8 @@ class Network : public kernel::StatSource {
 
   // Test seam: the period of the throughput sampler (default 1000 ms).
   void setThroughputInterval(int ms);
+  // Whether the throughput sampler runs; false means no counter read can come (tests).
+  bool throughputSampling() const { return throughputTimer_.isActive(); }
 
   // Starts a scan; `networks` follows.
   Q_INVOKABLE void refresh();

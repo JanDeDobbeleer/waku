@@ -107,7 +107,9 @@ TEST(Network, StartsPollingAtComponentComplete) {
   auto fake = std::make_shared<FakeSource>();
   fake->set(wifiStatus());
   Network network(fake, nullptr);
-  QTest::qWait(200);
+  // No timer and no sample on the pool: nothing can run later either.
+  EXPECT_FALSE(network.polling());
+  EXPECT_FALSE(network.sampling());
   EXPECT_EQ(fake->calls.load(), 0);
 
   network.componentComplete();
@@ -258,7 +260,7 @@ TEST(NetworkThroughput, ReadsNothingWhileUnobserved) {
   Network network(fake, nullptr);
   network.setThroughputInterval(20);
   network.componentComplete();
-  QTest::qWait(300);
+  EXPECT_FALSE(network.throughputSampling());  // nobody connected: no read can come
   EXPECT_EQ(fake->throughput.reads.load(), 0);
   EXPECT_EQ(network.rxBytesPerSecond(), 0);
   EXPECT_TRUE(network.adapters().isEmpty());
@@ -285,9 +287,11 @@ TEST(NetworkThroughput, SamplesWhileSomethingIsConnectedAndStopsAfter) {
   EXPECT_TRUE(network.adapters()[0].toMap().value("isUp").toBool());
 
   QObject::disconnect(connection);
-  QTest::qWait(100);
+  EXPECT_TRUE(network.throughputSampling());  // the check is queued, see disconnectNotify
+  ASSERT_TRUE(waitFor([&] { return !network.throughputSampling(); }));
   const int reads = fake->throughput.reads.load();
-  QTest::qWait(200);
+  QCoreApplication::processEvents();
+  EXPECT_FALSE(network.throughputSampling());
   EXPECT_EQ(fake->throughput.reads.load(), reads);
   EXPECT_EQ(network.rxBytesPerSecond(), 0);
   EXPECT_DOUBLE_EQ(network.rxBytesTotal(), 50000);  // the total survives the pause
@@ -315,7 +319,8 @@ TEST(NetworkThroughput, WithoutAReaderOrASourceItStaysZero) {
   QObject::connect(&network, &Network::throughputChanged, &context, [] {});
   Network bare(nullptr, nullptr);
   QObject::connect(&bare, &Network::throughputChanged, &context, [] {});
-  QTest::qWait(100);
+  EXPECT_FALSE(network.throughputSampling());  // no counter reader: the sampler never starts
+  EXPECT_FALSE(bare.throughputSampling());     // no source at all
   EXPECT_EQ(network.rxBytesPerSecond(), 0);
   EXPECT_EQ(bare.rxBytesPerSecond(), 0);
 }
