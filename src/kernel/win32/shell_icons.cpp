@@ -8,23 +8,10 @@
 #include <algorithm>
 #include <vector>
 
+#include "kernel/win32/com_scope.h"
+
 namespace wabar::kernel {
 namespace {
-
-// Joins the calling thread to COM for the lifetime of the object (multi-threaded apartment unless
-// the thread already has one).
-class ComScope {
- public:
-  ComScope() { uninitialize_ = SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED)); }
-  ~ComScope() {
-    if (uninitialize_) CoUninitialize();
-  }
-  ComScope(const ComScope&) = delete;
-  ComScope& operator=(const ComScope&) = delete;
-
- private:
-  bool uninitialize_ = false;
-};
 
 // A GetDIBits read of an icon bitmap as top-down 32-bit BGRA.
 bool readBitmap(HBITMAP bitmap, int width, int height, std::vector<unsigned char>& pixels) {
@@ -129,7 +116,7 @@ IconBitmap shellIcon(const QString& parsingName, int size) {
 IconBitmap shellItemIcon(const QString& parsingName, int size) {
   // An empty name would resolve to the desktop folder.
   if (parsingName.isEmpty()) return {};
-  ComScope com;
+  const ComScope com(ComApartment::MultiThreaded);
   return shellIcon(parsingName, size);
 }
 

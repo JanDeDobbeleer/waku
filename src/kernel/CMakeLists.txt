@@ -1,6 +1,6 @@
 # wabar_kernel: helpers with no domain knowledge that two or more units use (proposal, section 6).
 #   win32/  Windows build number, WinRT apartment, hidden process launch, shell open, app activation,
-#           forced foreground focus, shell icons
+#           forced foreground focus, shell icons, COM scope
 #   qt/     live-desktop gate, polled-source base class, the one app data folder, lingering hubs
 #   qml/    the QML face of the polled source (compiled into wabar.services, not into this library)
 # Include root is src/ (#include "kernel/qt/app_data.h"). Qt Core and Gui only; the Windows SDK
@@ -8,6 +8,8 @@
 add_library(wabar_kernel STATIC
   win32/app_activation.h
   win32/app_activation.cpp
+  win32/com_scope.h
+  win32/com_scope.cpp
   qt/app_data.h
   qt/app_data.cpp
   qt/linger.h
@@ -40,6 +42,7 @@ wabar_contribute(
   TESTS
     tests/test_app_activation.cpp
     tests/test_app_data.cpp
+    tests/test_com_scope.cpp
     tests/test_linger.cpp
     tests/test_live_desktop.cpp
     tests/test_polled_source.cpp
