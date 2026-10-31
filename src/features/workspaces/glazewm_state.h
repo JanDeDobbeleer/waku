@@ -6,20 +6,11 @@
 #include <vector>
 
 // Non-throwing parsers for GlazeWM IPC replies (port of GlazewmClient._process_workspaces,
-// _process_binding_modes and _read_windows in glazewm/client.py).
+// _process_binding_modes in glazewm/client.py). The windows of a workspace are only counted:
+// nothing reads them, so the parse does not copy them.
 namespace wabar::workspaces::glazewm {
 
 using Json = nlohmann::json;
-
-struct Window {
-  QString id;
-  QString title;
-  long long handle = 0;
-  QString className;
-  QString processName;
-  QString displayState;
-  bool isFloating = false;
-};
 
 struct Workspace {
   QString name;
@@ -27,7 +18,6 @@ struct Workspace {
   bool focus = false;  // global focus: only one workspace has it
   bool isDisplayed = false;
   int numWindows = 0;  // every child of the workspace, windows or not (Python len(children))
-  std::vector<Window> windows;
 };
 
 struct Monitor {

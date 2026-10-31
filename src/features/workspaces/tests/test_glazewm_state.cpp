@@ -53,7 +53,7 @@ json sampleMonitors() {
 
 }  // namespace
 
-TEST(GlazewmState, ParsesMonitorsWorkspacesAndNestedWindows) {
+TEST(GlazewmState, ParsesMonitorsAndWorkspaces) {
   const auto monitors = gw::parseMonitors(sampleMonitors());
   ASSERT_TRUE(monitors);
   ASSERT_EQ(monitors->size(), 1u);
@@ -67,23 +67,10 @@ TEST(GlazewmState, ParsesMonitorsWorkspacesAndNestedWindows) {
   EXPECT_TRUE(ws1.focus);
   EXPECT_TRUE(ws1.isDisplayed);
   EXPECT_EQ(ws1.numWindows, 3);  // direct children, a split counts as one
-  ASSERT_EQ(ws1.windows.size(), 4u);
-  EXPECT_EQ(ws1.windows[0].title, "top");
-  EXPECT_EQ(ws1.windows[1].title, "inner");
-  EXPECT_EQ(ws1.windows[2].title, "deep");
-  EXPECT_EQ(ws1.windows[3].title, "float");
-  EXPECT_FALSE(ws1.windows[0].isFloating);
-  EXPECT_TRUE(ws1.windows[3].isFloating);
-  EXPECT_EQ(ws1.windows[0].id, "w1");
-  EXPECT_EQ(ws1.windows[0].handle, 4242);
-  EXPECT_EQ(ws1.windows[0].className, "Chrome_WidgetWin_1");
-  EXPECT_EQ(ws1.windows[0].processName, "chrome");
-  EXPECT_EQ(ws1.windows[0].displayState, "shown");
   const gw::Workspace& ws2 = mon.workspaces[1];
   EXPECT_FALSE(ws2.focus);
   EXPECT_FALSE(ws2.isDisplayed);
   EXPECT_EQ(ws2.numWindows, 0);
-  EXPECT_TRUE(ws2.windows.empty());
 }
 
 TEST(GlazewmState, MonitorEdgeCases) {
@@ -122,9 +109,6 @@ TEST(GlazewmState, ToleratesMissingWindowFields) {
   const gw::Workspace& w = monitors->front().workspaces.front();
   EXPECT_EQ(w.name, "");
   EXPECT_EQ(w.numWindows, 2);
-  ASSERT_EQ(w.windows.size(), 2u);
-  EXPECT_EQ(w.windows[1].title, "");
-  EXPECT_FALSE(w.windows[1].isFloating);
 }
 
 TEST(GlazewmState, BindingModes) {

@@ -38,27 +38,6 @@ const Json* childArray(const Json& node) {
   return children && children->is_array() ? children : nullptr;
 }
 
-void readWindows(const Json& parent, std::vector<Window>& out) {
-  const Json* children = childArray(parent);
-  if (!children) return;
-  for (const Json& child : *children) {
-    if (isType(child, "window")) {
-      Window window;
-      window.id = text(child, "id");
-      window.title = text(child, "title");
-      window.handle = integerOr0(child, "handle");
-      window.className = text(child, "className");
-      window.processName = text(child, "processName");
-      window.displayState = text(child, "displayState");
-      const Json* state = member(child, "state");
-      window.isFloating = state && isType(*state, "floating");
-      out.push_back(std::move(window));
-    } else if (isType(child, "split")) {
-      readWindows(child, out);
-    }
-  }
-}
-
 Workspace readWorkspace(const Json& node) {
   Workspace workspace;
   workspace.name = text(node, "name");
@@ -67,7 +46,6 @@ Workspace readWorkspace(const Json& node) {
   workspace.focus = flag(node, "hasFocus");
   const Json* children = childArray(node);
   workspace.numWindows = children ? static_cast<int>(children->size()) : 0;
-  readWindows(node, workspace.windows);
   return workspace;
 }
 
