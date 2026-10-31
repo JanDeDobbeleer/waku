@@ -126,4 +126,25 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
   };
 }
 
+control::AsyncControlHandler makeAsyncControlHandler(control::ControlHandler handler) {
+  return
+      [handler = std::move(handler)](const QString& command, const control::ControlReplyFn& reply) {
+        if (command != QLatin1String("reload")) {
+          reply(handler(command));
+          return;
+        }
+        // qApp, not the host, as the context: the reply is sent even when the host is gone first
+        // (the handler then answers that the shell is shutting down).
+        QTimer::singleShot(0, QCoreApplication::instance(), [handler, reply, command] {
+          try {
+            reply(handler(command));
+          } catch (const std::exception& e) {
+            reply(QStringLiteral("error: ") + QString::fromUtf8(e.what()));
+          } catch (...) {
+            reply(QStringLiteral("error: the command failed"));
+          }
+        });
+      };
+}
+
 }  // namespace wabar::host

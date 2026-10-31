@@ -149,14 +149,14 @@ int main(int argc, char* argv[]) {
   // a second shell over the first.
   wabar::control::ControlServer control(
       wabar::control::controlPipeName(configHome),
-      wabar::host::makeControlHandler(
+      wabar::host::makeAsyncControlHandler(wabar::host::makeControlHandler(
           host, parser.isSet(safeOpt), {},
           // Built on the first wallpaper command if no config did.
           [&engine]() -> wabar::control::WallpaperControl* {
             return engine.singletonInstance<wabar::wallpapers::Wallpapers*>(
                 QStringLiteral("wabar.services"), QStringLiteral("Wallpapers"));
           },
-          taskbar.get()));
+          taskbar.get())));
   if (!control.listen()) {
     qCritical().noquote() << "wabar is already running for" << configHome
                           << "(wabarc quit stops it)";

@@ -39,6 +39,11 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe,
                                            control::WallpaperControlProvider wallpapers = {},
                                            TaskbarControl* taskbar = nullptr);
 
+// The same answers through the control server's deferred replies: `reload` runs from a queued
+// call on the GUI thread, after the socket's read notification has returned, and answers when the
+// reload is done; every other command answers at once.
+control::AsyncControlHandler makeAsyncControlHandler(control::ControlHandler handler);
+
 // The `wallpaper` commands on their own (the words after "wallpaper"): the parsing the handler
 // uses, public for tests.
 QString answerWallpaperCommand(const QStringList& words, control::WallpaperControl* wallpapers);

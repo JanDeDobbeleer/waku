@@ -72,6 +72,11 @@ constexpr int kBarError = 1;
 constexpr int kNotRunning = 2;
 constexpr int kUsage = 3;
 
+// How long a command may go without an answer. The bar answers on its GUI thread, which a reload
+// keeps busy for seconds (a command sent then is answered after it); a reload itself gets longer.
+constexpr int kTimeoutMs = 15000;
+constexpr int kReloadTimeoutMs = 60000;
+
 void print(FILE* stream, const QString& text) {
   std::fputs(text.toLocal8Bit().constData(), stream);
   std::fputc('\n', stream);
@@ -163,7 +168,10 @@ int main(int argc, char* argv[]) {
                                               positional.value(1) == QLatin1String("toggle"))) {
     allowBarToTakeFocus(pipeName);
   }
-  const wabar::control::ControlReply reply = wabar::control::sendControlCommand(pipeName, line);
+  // A reload answers when the new shell is up, which takes seconds with a large shell.
+  const int timeoutMs = command == QLatin1String("reload") ? kReloadTimeoutMs : kTimeoutMs;
+  const wabar::control::ControlReply reply =
+      wabar::control::sendControlCommand(pipeName, line, timeoutMs);
 
   switch (reply.status) {
     case wabar::control::ControlReply::NotRunning:

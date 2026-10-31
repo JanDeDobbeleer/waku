@@ -3,6 +3,7 @@
 #include <QCryptographicHash>
 #include <QDebug>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QLocalSocket>
 #include <QPointer>
 #include <QTimer>
@@ -78,6 +79,15 @@ QString resolveConfigHome(const QString& optionValue, const QString& fallback) {
 
 ControlServer::ControlServer(QString name, ControlHandler handler, QObject* parent,
                              int idleTimeoutMs)
+    : ControlServer(
+          std::move(name),
+          [handler = std::move(handler)](const QString& command, const ControlReplyFn& reply) {
+            reply(handler(command));
+          },
+          parent, idleTimeoutMs) {}
+
+ControlServer::ControlServer(QString name, AsyncControlHandler handler, QObject* parent,
+                             int idleTimeoutMs)
     : QObject(parent),
       name_(std::move(name)),
       handler_(std::move(handler)),
@@ -110,15 +120,19 @@ void ControlServer::onConnection() {
 void ControlServer::serve(QLocalSocket* socket) {
   socket->setParent(this);
   connect(socket, &QLocalSocket::disconnected, socket, &QObject::deleteLater);
-  // A client that never finishes its line must not hold a connection forever.
   QPointer<QLocalSocket> guard(socket);
-  QTimer::singleShot(idleTimeoutMs_, socket, [guard] {
-    if (guard) guard->disconnectFromServer();
-  });
+  // A client that never finishes its line must not hold a connection forever. The timer only
+  // guards the line: once it has been read, the client waits for its answer (a reload takes
+  // seconds), and after the answer the timer runs again as the backstop for a client that never
+  // closes.
+  auto* idle = new QTimer(socket);
+  idle->setSingleShot(true);
+  idle->setInterval(idleTimeoutMs_);
 
-  // One command per connection: set once it has been answered or refused.
+  // One command per connection: set once it has been read or refused.
   auto done = std::make_shared<bool>(false);
-  auto onReadyRead = [this, socket, done] {
+  auto armed = std::make_shared<QElapsedTimer>();
+  auto onReadyRead = [this, socket, guard, idle, armed, done] {
     if (*done) return;
     // Everything read so far stays in the socket's buffer until a full line has arrived.
     if (socket->bytesAvailable() > kMaxCommandBytes + 1) {
@@ -128,20 +142,46 @@ void ControlServer::serve(QLocalSocket* socket) {
       return;
     }
     if (!socket->canReadLine()) return;
+    *done = true;
+    idle->stop();
     const QString command = QString::fromUtf8(socket->readLine(kMaxCommandBytes + 1)).trimmed();
-    QString reply;
+    // The client closes once it has read the line. Disconnecting here would let Windows discard
+    // the reply before the client reads it (DisconnectNamedPipe drops unread data).
+    auto replied = std::make_shared<bool>(false);
+    const ControlReplyFn reply = [guard, idle, armed, replied](const QString& line) {
+      if (*replied || !guard) return;
+      *replied = true;
+      guard->write(line.toUtf8() + '\n');
+      armed->start();
+      idle->start();
+    };
     try {
-      reply = handler_(command);
+      handler_(command, reply);
     } catch (const std::exception& e) {
-      reply = QStringLiteral("error: ") + QString::fromUtf8(e.what());
+      reply(QStringLiteral("error: ") + QString::fromUtf8(e.what()));
     } catch (...) {
-      reply = QStringLiteral("error: the command failed");
+      reply(QStringLiteral("error: the command failed"));
     }
-    // The client closes once it has read the line. Disconnecting here would let Windows
-    // discard the reply before the client reads it (DisconnectNamedPipe drops unread data).
-    // The idle timer above is the backstop for a client that never closes.
-    socket->write(reply.toUtf8() + '\n');
   };
+  // The thread may have been busy (a reload) when the line arrived: the timer then fires late,
+  // before the read notification, which is still queued. A complete line is answered; a timer that
+  // fired late gives the client one more interval, so the queued read is taken in first. Only a
+  // client that stays silent for a whole interval while the thread is free is dropped.
+  armed->start();
+  connect(idle, &QTimer::timeout, socket, [this, socket, idle, armed, done, onReadyRead] {
+    if (!*done) {
+      if (socket->canReadLine()) onReadyRead();
+      // Read now: answered (the timer runs again) or waiting for its answer (the timer stopped).
+      if (*done) return;
+      if (armed->elapsed() > idleTimeoutMs_ + kLateTimerMs) {
+        armed->start();
+        idle->start();
+        return;
+      }
+    }
+    socket->disconnectFromServer();
+  });
+  idle->start();
   connect(socket, &QLocalSocket::readyRead, socket, onReadyRead);
   // The client may have written before this slot was connected; no further readyRead comes then.
   if (socket->bytesAvailable() > 0) QTimer::singleShot(0, socket, onReadyRead);
@@ -158,10 +198,14 @@ ControlReply sendControlCommand(const QString& name, const QString& command, int
   socket.write(command.toUtf8() + '\n');
   if (!socket.waitForBytesWritten(timeoutMs)) return {ControlReply::Failed, socket.errorString()};
 
-  QByteArray received;
+  // The answer can already be in the socket's buffer: waitForBytesWritten() also takes in what
+  // the pipe has received. waitForReadyRead() only waits for more, so it would wait until the
+  // server closes the pipe. Read what is there before each wait and after a wait that fails.
+  QByteArray received = socket.readAll();
   while (!received.contains('\n')) {
     if (!socket.waitForReadyRead(timeoutMs)) {
-      if (socket.state() == QLocalSocket::UnconnectedState && received.contains('\n')) break;
+      received += socket.readAll();
+      if (received.contains('\n')) break;
       if (!received.isEmpty()) break;  // the server closed after a partial line
       return {ControlReply::Failed, QStringLiteral("no answer: ") + socket.errorString()};
     }

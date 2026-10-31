@@ -32,6 +32,11 @@ bool splitCommand(const QString& line, QStringList* words);
 
 // Answers one command with one line.
 using ControlHandler = std::function<QString(const QString& command)>;
+// Answers one command with one line, now or later: the handler calls `reply` once, on the
+// server's thread. A command that takes long (a reload) answers from a queued call, so it does not
+// run inside the socket's read notification.
+using ControlReplyFn = std::function<void(const QString& line)>;
+using AsyncControlHandler = std::function<void(const QString& command, ControlReplyFn reply)>;
 
 class ControlServer : public QObject {
   Q_OBJECT
@@ -39,9 +44,15 @@ class ControlServer : public QObject {
  public:
   static constexpr int kMaxCommandBytes = 1024;
   static constexpr int kDefaultIdleTimeoutMs = 3000;
+  // An idle timer that fires this much later than due fired after the thread was busy.
+  static constexpr int kLateTimerMs = 250;
 
-  // A client that has not finished its line after `idleTimeoutMs` is dropped.
+  // A client that has not finished its line after `idleTimeoutMs` is dropped; one whose line was
+  // read waits for its answer however long the command takes. A line that arrived while the
+  // thread was busy is answered, not dropped, when the timer fires late.
   ControlServer(QString name, ControlHandler handler, QObject* parent = nullptr,
+                int idleTimeoutMs = kDefaultIdleTimeoutMs);
+  ControlServer(QString name, AsyncControlHandler handler, QObject* parent = nullptr,
                 int idleTimeoutMs = kDefaultIdleTimeoutMs);
   ~ControlServer() override;
 
@@ -54,7 +65,7 @@ class ControlServer : public QObject {
   void serve(QLocalSocket* socket);
 
   QString name_;
-  ControlHandler handler_;
+  AsyncControlHandler handler_;
   int idleTimeoutMs_;
   QLocalServer server_;
   // The single-instance guard: a named mutex held while the server lives. Two QLocalServers can

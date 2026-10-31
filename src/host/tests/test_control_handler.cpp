@@ -130,3 +130,45 @@ TEST(ControlHandlerTest, TheWholePathFromAClientToAReload) {
   EXPECT_EQ(reply.text, QStringLiteral("ok"));
   EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("after"));
 }
+
+TEST(ControlHandlerTest, TheAsyncHandlerReloadsFromAQueuedCallAndAnswersAfterIt) {
+  Harness h;
+  h.start(shellConfig(QStringLiteral("before")));
+  ASSERT_TRUE(h.host->reload());
+  const AsyncControlHandler handler = makeAsyncControlHandler(makeControlHandler(*h.host, false));
+
+  write(h.shellFile(), shellConfig(QStringLiteral("after")));
+  QString answer;
+  handler(QStringLiteral("reload"), [&answer](const QString& line) { answer = line; });
+  // Not inside the call: the reload waits for the event loop.
+  EXPECT_TRUE(answer.isEmpty());
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("before"));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return !answer.isEmpty(); }, 5000));
+  EXPECT_EQ(answer, QStringLiteral("ok"));
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("after"));
+
+  // Any other command answers at once.
+  handler(QStringLiteral("status"), [&answer](const QString& line) { answer = line; });
+  EXPECT_TRUE(answer.startsWith(QStringLiteral("running;"))) << qPrintable(answer);
+}
+
+TEST(ControlHandlerTest, StatusDuringAnAsyncReloadIsAnswered) {
+  Harness h;
+  h.start(shellConfig(QStringLiteral("before")));
+  ASSERT_TRUE(h.host->reload());
+  const QString name = uniqueName();
+  ControlServer server(name, makeAsyncControlHandler(makeControlHandler(*h.host, false)), nullptr,
+                       200);
+  ASSERT_TRUE(server.listen());
+
+  write(h.shellFile(), shellConfig(QStringLiteral("after")));
+  auto reload = ask(name, QStringLiteral("reload"), 5000);
+  auto status = ask(name, QStringLiteral("status"), 5000);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return reload->done.load() && status->done.load(); }, 8000));
+  reload->thread.join();
+  status->thread.join();
+  EXPECT_EQ(reload->reply.text, QStringLiteral("ok"));
+  EXPECT_TRUE(status->reply.text.startsWith(QStringLiteral("running;")))
+      << qPrintable(status->reply.text);
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("after"));
+}
