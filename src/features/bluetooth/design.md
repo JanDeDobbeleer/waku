@@ -17,8 +17,11 @@ disconnect for classic audio devices (Python `BluetoothManager`), plus the Bluet
 
 `RealBluetoothBackend` is a `QThread` owned by the `Bluetooth` singleton. It runs the enumeration,
 battery reads, radio power, device watchers and audio connect; results return as queued signals.
-The destructor cancels a running connect and joins (see the threads table in
-`docs/architecture.md`).
+The destructor cancels a running connect and does not join: it queues `shutdown()` and the
+thread's quit and lets the GUI event loop delete the thread and the worker when the thread has
+finished. A WinRT call in progress can take 30 s, and the destructor runs on the GUI thread during
+a reload; joining froze the bar for that long (seen as a 35 s `clearSingletons()`). The process
+waits up to 2 s per such thread at exit (see the threads table in `docs/architecture.md`).
 
 ## Start-up refresh
 
@@ -77,4 +80,4 @@ kernel in C++ (`ensureWinrtApartment`); `shell` for the QML `S.Shell.open` click
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `wabar.services.Bluetooth` (`src/features/bluetooth/qml/bluetooth_service.{h,cpp}`): the one Bluetooth backend of a `wabar` run (radio, paired devices, battery, connect/disconnect, scan, nearby devices, pair and forget on the `RealBluetoothBackend` thread), shared by every Bluetooth widget; created by the QML engine on first use and owned by it, destroyed with it, which joins the backend thread. Never creates a backend when `kernel::liveDesktop("bluetooth")` is false or without an adapter (`bluetooth::hasBluetoothAdapter`). Two GUI-thread `QTimer`s: a single-shot retry (1, 3, 8, 20 s) while the backend reports an unknown radio, and a 60 s safety-net refresh that runs only while a binding or connection observes `changed` (`connectNotify`/`disconnectNotify`).
+- `wabar.services.Bluetooth` (`src/features/bluetooth/qml/bluetooth_service.{h,cpp}`): the one Bluetooth backend of a `wabar` run (radio, paired devices, battery, connect/disconnect, scan, nearby devices, pair and forget on the `RealBluetoothBackend` thread), shared by every Bluetooth widget; created by the QML engine on first use and owned by it, destroyed with it, which stops the backend thread without waiting for it. Never creates a backend when `kernel::liveDesktop("bluetooth")` is false or without an adapter (`bluetooth::hasBluetoothAdapter`). Two GUI-thread `QTimer`s: a single-shot retry (1, 3, 8, 20 s) while the backend reports an unknown radio, and a 60 s safety-net refresh that runs only while a binding or connection observes `changed` (`connectNotify`/`disconnectNotify`).

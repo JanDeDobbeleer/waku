@@ -16,9 +16,12 @@
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QElapsedTimer>
+#include <QList>
 #include <QMetaObject>
+#include <QPointer>
 #include <QThread>
 #include <QUuid>
 #include <algorithm>
@@ -915,12 +918,20 @@ class WorkerRelay {
   QObject* worker_;
 };
 
+// A connect, pair or radio change in progress; shared by the backend and its worker.
+struct BusyFlags {
+  std::atomic<bool> connect{false};
+  std::atomic<bool> radio{false};
+};
+
 class BluetoothWorker : public QObject {
   Q_OBJECT
  public:
-  BluetoothWorker(std::atomic<bool>* connectRunning, std::atomic<bool>* radioRunning)
-      : connectRunning_(connectRunning),
-        radioRunning_(radioRunning),
+  // The flags are shared with the backend, which may be gone while this worker still finishes.
+  explicit BluetoothWorker(std::shared_ptr<BusyFlags> flags)
+      : flags_(std::move(flags)),
+        connectRunning_(&flags_->connect),
+        radioRunning_(&flags_->radio),
         relay_(std::make_shared<WorkerRelay>(this)) {}
   // Runs on the GUI thread after the worker thread was joined (or never started).
   ~BluetoothWorker() override { relay_->close(); }
@@ -1574,6 +1585,7 @@ class BluetoothWorker : public QObject {
     watches_.clear();
   }
 
+  std::shared_ptr<BusyFlags> flags_;
   std::atomic<bool>* connectRunning_;
   std::atomic<bool>* radioRunning_;
   std::atomic<bool> cancel_{false};
@@ -1602,12 +1614,33 @@ class BluetoothWorker : public QObject {
   std::shared_ptr<WorkerRelay> relay_;
 };
 
+// Worker threads whose backend is gone but whose WinRT call has not returned yet. The process
+// waits for them at exit (bounded), so none outlives QCoreApplication by accident. GUI thread.
+QList<QPointer<QThread>>& retiringThreads() {
+  static QList<QPointer<QThread>> threads;
+  return threads;
+}
+
+void waitForRetiringThreads() {
+  for (const QPointer<QThread>& thread : std::as_const(retiringThreads())) {
+    if (thread) thread->wait(2000);
+  }
+}
+
 // GUI-thread facade: owns the worker thread and forwards calls to it.
+//
+// The destructor does not wait for the worker. A WinRT call in progress (an enumeration or a
+// connect) can take 30 s, and the destructor runs on the GUI thread while the engine clears its
+// singletons on a reload: waiting froze the bar for that long. It asks the worker to stop, queues
+// shutdown() and the thread's quit, and hands the thread and the worker to the GUI event loop,
+// which deletes them when the thread has finished. The next backend may start meanwhile; the old
+// worker does nothing after its call returns (stopSoon()).
 class RealBluetoothBackend final : public BluetoothBackend {
  public:
   RealBluetoothBackend() {
-    worker_ = new BluetoothWorker(&connectRunning_, &radioRunning_);
-    worker_->moveToThread(&thread_);
+    thread_ = new QThread;
+    worker_ = new BluetoothWorker(flags_);
+    worker_->moveToThread(thread_);
     connect(worker_, &BluetoothWorker::statusReady, this,
             [this](const BluetoothStatus& status) { publishStatus(status); });
     connect(worker_, &BluetoothWorker::refreshFailed, this, &BluetoothBackend::refreshFailed);
@@ -1616,19 +1649,40 @@ class RealBluetoothBackend final : public BluetoothBackend {
     connect(worker_, &BluetoothWorker::connectionFinished, this,
             &BluetoothBackend::connectionFinished);
     connect(worker_, &BluetoothWorker::pairingFinished, this, &BluetoothBackend::pairingFinished);
-    thread_.setObjectName(QStringLiteral("BluetoothBackend"));
-    thread_.start();
+    thread_->setObjectName(QStringLiteral("BluetoothBackend"));
+    thread_->start();
   }
 
   ~RealBluetoothBackend() override {
-    if (thread_.isRunning()) {
-      // Ends a running pair, connect or refresh first: the blocking call below waits for it.
-      worker_->stopSoon();
-      QMetaObject::invokeMethod(worker_, &BluetoothWorker::shutdown, Qt::BlockingQueuedConnection);
-      thread_.quit();
-      thread_.wait();
+    if (!thread_->isRunning()) {
+      delete worker_;
+      delete thread_;
+      return;
     }
-    delete worker_;
+    // Ends a running pair, connect or refresh after the WinRT call in progress.
+    worker_->stopSoon();
+    QThread* thread = thread_;
+    BluetoothWorker* worker = worker_;
+    QMetaObject::invokeMethod(
+        worker,
+        [worker] {
+          worker->shutdown();
+          QThread::currentThread()->quit();
+        },
+        Qt::QueuedConnection);
+    // finished() comes from the worker thread; the context object lives on the GUI thread, so the
+    // deletes run there, after the thread has left its event loop (as before).
+    QObject::connect(thread, &QThread::finished, thread, [thread, worker] {
+      delete worker;
+      thread->deleteLater();
+    });
+    static const bool registered = [] {
+      qAddPostRoutine(waitForRetiringThreads);
+      return true;
+    }();
+    Q_UNUSED(registered);
+    retiringThreads().removeAll(nullptr);
+    retiringThreads().append(thread);
   }
 
   void start() override {
@@ -1677,10 +1731,11 @@ class RealBluetoothBackend final : public BluetoothBackend {
         Qt::QueuedConnection);
   }
 
-  QThread thread_;
+  std::shared_ptr<BusyFlags> flags_ = std::make_shared<BusyFlags>();
+  QThread* thread_ = nullptr;
   BluetoothWorker* worker_ = nullptr;
-  std::atomic<bool> connectRunning_{false};
-  std::atomic<bool> radioRunning_{false};
+  std::atomic<bool>& connectRunning_ = flags_->connect;
+  std::atomic<bool>& radioRunning_ = flags_->radio;
   bool started_ = false;
 };
 
