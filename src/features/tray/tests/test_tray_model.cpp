@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <QSignalSpy>
+#include <atomic>
 #include <memory>
+#include <thread>
 
 #include "features/tray/qml/tray_icon_model.h"
 #include "features/tray/qml/tray_image_provider.h"
@@ -158,4 +160,33 @@ TEST(TrayModel, HiddenRoleFollowsNisHidden) {
   m.apply(1, d);
   EXPECT_FALSE(role(m, 0, TrayIconModel::HiddenRole).toBool());
   EXPECT_TRUE(m.roleNames().values().contains("hidden"));
+}
+
+// Qt calls the provider on its pixmap reader thread for `asynchronous: true` Images while the GUI
+// thread adds and removes rows. The provider must only read the shared store.
+TEST(TrayImageProvider, ServesImagesFromAnotherThreadWhileRowsChange) {
+  auto model = std::make_unique<TrayIconModel>();
+  TrayImageProvider provider(model.get());
+  std::atomic<bool> done = false;
+  std::atomic<int> served = 0;
+  std::thread reader([&] {
+    while (!done) {
+      QSize size;
+      for (int id = 0; id < 8; ++id) {
+        if (!provider.requestImage(QStringLiteral("%1/1").arg(id), &size, QSize()).isNull())
+          ++served;
+      }
+    }
+  });
+  for (int round = 0; round < 300; ++round) {
+    for (int id = 0; id < 8; ++id)
+      model->apply(id, makeIcon(QStringLiteral("a.exe"), 16, char(round)));
+    for (int id = 0; id < 8; id += 2) model->remove(id);
+  }
+  model.reset();
+  done = true;
+  reader.join();
+  EXPECT_GT(served.load(), 0);
+  QSize size;
+  EXPECT_TRUE(provider.requestImage(QStringLiteral("1/1"), &size, QSize()).isNull());
 }

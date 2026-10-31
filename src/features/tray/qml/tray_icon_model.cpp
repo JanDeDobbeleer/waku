@@ -27,6 +27,8 @@ QImage buildImage(const TrayIconData& data) {
 
 TrayIconModel::TrayIconModel(QObject* parent) : QAbstractListModel(parent) {}
 
+TrayIconModel::~TrayIconModel() { store_->clear(); }
+
 int TrayIconModel::rowCount(const QModelIndex& parent) const {
   return parent.isValid() ? 0 : static_cast<int>(rows_.size());
 }
@@ -75,6 +77,7 @@ void TrayIconModel::apply(int id, const TrayIconData& data) {
     row.data = data;
     row.image = buildImage(data);
     row.revision = row.image.isNull() ? 0 : 1;
+    store_->set(id, row.image);
     const int pos = static_cast<int>(rows_.size());
     beginInsertRows({}, pos, pos);
     rows_.push_back(std::move(row));
@@ -90,6 +93,7 @@ void TrayIconModel::apply(int id, const TrayIconData& data) {
   if (pixelsChanged) {
     row.image = buildImage(data);
     ++row.revision;
+    store_->set(id, row.image);
   }
   const QModelIndex idx = index(at);
   emit dataChanged(idx, idx);
@@ -100,6 +104,7 @@ bool TrayIconModel::remove(int id) {
   if (at < 0) return false;
   beginRemoveRows({}, at, at);
   rows_.erase(rows_.begin() + at);
+  store_->remove(id);
   endRemoveRows();
   emit countChanged();
   return true;
