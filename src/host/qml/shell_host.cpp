@@ -487,7 +487,9 @@ void ShellHost::resetEngine() {
   // threads and hooks stop) and creates them again on first use; singletons set from outside keep
   // their value.
   dropShell();
+  traceStep("old shell destroyed");
   engine_->clearSingletons();
+  traceStep("singletons cleared");
   engine_->clearComponentCache();
   emit singletonsCleared();
   traceStep("engine reset");
