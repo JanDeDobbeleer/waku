@@ -83,7 +83,9 @@ void AudioStreamModel::remove(AudioStream* stream) {
 }
 
 AudioStreams::AudioStreams(QObject* parent)
-    : AudioStreams(kernel::liveDesktop() ? createSystemAudioStreams() : nullptr, parent) {}
+    : AudioStreams(
+          kernel::liveDesktop(QStringLiteral("audio")) ? createSystemAudioStreams() : nullptr,
+          parent) {}
 
 AudioStreams::AudioStreams(AudioStreamSource* source, QObject* parent)
     : QObject(parent), source_(source), streams_(this) {

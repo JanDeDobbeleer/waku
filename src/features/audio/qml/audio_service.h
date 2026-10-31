@@ -13,7 +13,12 @@ namespace wabar::audio {
 // Default audio endpoint of one direction as a QML singleton (AudioOutput, AudioInput). Created
 // by the engine on first use and shared by every widget. GUI thread only: AudioEndpoints
 // re-posts its Core Audio callbacks to the GUI thread, and `changed` is emitted from there.
-// The endpoint is stopped (callbacks released) when the engine destroys the singleton.
+// The endpoint is stopped (callbacks released) when the engine destroys the singleton. Off the
+// live desktop (kernel::liveDesktop("audio"): tests, the offscreen platform) there is no endpoint:
+// nothing is available, reads are zero or empty and writes do nothing.
+// The Core Audio endpoint on a live desktop (kernel::liveDesktop("audio")), else null.
+AudioEndpoints* systemAudioIfLive(AudioFlow flow);
+
 class AudioBase : public QObject {
   Q_OBJECT
   QML_ANONYMOUS
@@ -40,7 +45,7 @@ class AudioBase : public QObject {
   void changed();
 
  protected:
-  // Takes ownership of `endpoints` (also the test seam: pass a fake).
+  // Takes ownership of `endpoints` (also the test seam: pass a fake); null is the inert service.
   AudioBase(AudioEndpoints* endpoints, QObject* parent);
 
  private:
@@ -54,7 +59,7 @@ class AudioOutput : public AudioBase {
 
  public:
   explicit AudioOutput(QObject* parent = nullptr)
-      : AudioBase(createSystemAudio(AudioFlow::Render), parent) {}
+      : AudioBase(systemAudioIfLive(AudioFlow::Render), parent) {}
 };
 
 class AudioInput : public AudioBase {
@@ -64,7 +69,7 @@ class AudioInput : public AudioBase {
 
  public:
   explicit AudioInput(QObject* parent = nullptr)
-      : AudioBase(createSystemAudio(AudioFlow::Capture), parent) {}
+      : AudioBase(systemAudioIfLive(AudioFlow::Capture), parent) {}
 };
 
 }  // namespace wabar::audio

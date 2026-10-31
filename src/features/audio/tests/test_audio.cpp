@@ -94,3 +94,22 @@ TEST(AudioService, DestructionStopsTheEndpointCallbacksOnce) {
   audio.reset();  // the base class stops the endpoint, then deletes it as a child
   EXPECT_EQ(stops, 1);
 }
+
+// The QML singletons off the live desktop (the offscreen platform of the tests) never reach Core
+// Audio: no endpoint, nothing available, writes ignored.
+TEST(AudioService, TheSingletonsAreInertOffTheLiveDesktop) {
+  for (AudioBase* audio :
+       {static_cast<AudioBase*>(new AudioOutput), static_cast<AudioBase*>(new AudioInput)}) {
+    QSignalSpy changed(audio, &AudioBase::changed);
+    EXPECT_FALSE(audio->available());
+    EXPECT_EQ(audio->volume(), 0);
+    EXPECT_FALSE(audio->muted());
+    EXPECT_TRUE(audio->devices().isEmpty());
+    EXPECT_TRUE(audio->defaultDevice().isEmpty());
+    audio->setVolume(50);
+    audio->setMuted(true);
+    EXPECT_FALSE(audio->setDefaultDevice(QStringLiteral("id-1")));
+    EXPECT_EQ(changed.count(), 0);
+    delete audio;
+  }
+}
