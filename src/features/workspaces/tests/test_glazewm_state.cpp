@@ -344,3 +344,15 @@ TEST(GlazewmService, StopIsIdempotentAndSilencesService) {
   h.service->handleConnected(true);
   EXPECT_TRUE(h.sent.empty());
 }
+
+// The default service off the live desktop (the offscreen platform of the tests): a subscription
+// opens no socket and a command goes nowhere, even when GlazeWM runs on this machine.
+TEST(GlazewmService, TheDefaultServiceIsInertOffTheLiveDesktop) {
+  EventBus bus;
+  gw::GlazewmService service(bus);
+  gw::subscribe(bus, gw::kTopicWorkspaces, QStringLiteral("ws://localhost:6123"));
+  emit bus.event(gw::kCommandEvent, {{QStringLiteral("command"), QStringLiteral("command focus")}});
+  QCoreApplication::processEvents();
+  EXPECT_FALSE(service.isOpen());
+  EXPECT_FALSE(service.isConnected());
+}

@@ -8,6 +8,7 @@
 
 #include "features/workspaces/event_bus.h"
 #include "features/workspaces/glazewm.h"
+#include "kernel/qt/live_desktop.h"
 
 namespace wabar::workspaces::glazewm {
 namespace {
@@ -96,13 +97,15 @@ void focusPrevWorkspaceGlobal(EventBus& bus) {
 
 GlazewmService::GlazewmService(EventBus& bus) : bus_(bus) {
   sender_ = [this](const QByteArray& utf8) { return socket_ && socket_->sendText(utf8); };
-  opener_ = [this](const QString& uri) {
-    socket_ = std::make_unique<GlazewmSocket>();
-    connect(socket_.get(), &GlazewmSocket::connectedChanged, this,
-            &GlazewmService::handleConnected);
-    connect(socket_.get(), &GlazewmSocket::textMessage, this, &GlazewmService::handleMessage);
-    socket_->open(uri);
-  };
+  if (kernel::liveDesktop(QStringLiteral("glazewm"))) {
+    opener_ = [this](const QString& uri) {
+      socket_ = std::make_unique<GlazewmSocket>();
+      connect(socket_.get(), &GlazewmSocket::connectedChanged, this,
+              &GlazewmService::handleConnected);
+      connect(socket_.get(), &GlazewmSocket::textMessage, this, &GlazewmService::handleMessage);
+      socket_->open(uri);
+    };
+  }
   connect(&bus_, &EventBus::event, this, &GlazewmService::onBusEvent);
 }
 

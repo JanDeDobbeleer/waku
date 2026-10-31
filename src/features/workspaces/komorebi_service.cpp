@@ -9,6 +9,7 @@
 #include "features/workspaces/command_line.h"
 #include "features/workspaces/event_bus.h"
 #include "features/workspaces/komorebi_state.h"
+#include "kernel/qt/live_desktop.h"
 #include "kernel/win32/shell_launch.h"
 
 namespace wabar::workspaces::komorebi {
@@ -45,7 +46,12 @@ void sendCommandChain(EventBus& bus, const std::vector<QStringList>& commands) {
 }
 
 KomorebiService::KomorebiService(EventBus& bus)
-    : KomorebiService(bus, defaultKomorebiBackend(), &runCommands, uniquePipeName(), {}) {}
+    : KomorebiService(bus, defaultKomorebiBackend(), &runCommands, uniquePipeName(), {}) {
+  if (!kernel::liveDesktop(QStringLiteral("komorebi"))) {
+    live_ = false;
+    runner_ = nullptr;
+  }
+}
 
 KomorebiService::KomorebiService(EventBus& bus, KomorebiBackend backend, CommandRunner runner,
                                  QString pipeName, KomorebiPipeListener::Timing timing)
@@ -100,7 +106,7 @@ void KomorebiService::onBusEvent(const QString& name, const QVariantMap& payload
 }
 
 void KomorebiService::ensureStarted() {
-  if (listener_ || stopped_) return;
+  if (listener_ || stopped_ || !live_) return;
   KomorebiPipeListener::Callbacks callbacks;
   // These run on the listener thread; queued calls to `this` are dropped once it is destroyed.
   callbacks.connected = [this](const QByteArray& bytes) {

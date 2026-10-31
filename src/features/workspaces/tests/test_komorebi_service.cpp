@@ -300,3 +300,15 @@ TEST(KomorebiServiceTest, StopCancelsARunningKomorebicAndDoesNotWaitForUnsubscri
   EXPECT_TRUE(cancelled);
   EXPECT_EQ(launched.load(), 0);  // never subscribed, so nothing to unsubscribe
 }
+
+// The default service off the live desktop (the offscreen platform of the tests): a subscription
+// starts no pipe listener and a command runs no komorebic, even when komorebi runs here.
+TEST(KomorebiServiceTest, TheDefaultServiceIsInertOffTheLiveDesktop) {
+  EventBus bus;
+  komo::KomorebiService service(bus);
+  emit bus.event(komo::kSubscribeEvent, {});
+  komo::sendCommand(bus, {QStringLiteral("toggle-pause")});
+  QCoreApplication::processEvents();
+  EXPECT_FALSE(service.isListening());
+  EXPECT_FALSE(service.isConnected());
+}

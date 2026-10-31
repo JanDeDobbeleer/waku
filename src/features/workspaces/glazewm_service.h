@@ -89,6 +89,8 @@ class GlazewmService : public QObject {
   using Sender = std::function<bool(const QByteArray& utf8)>;
   using Opener = std::function<void(const QString& uri)>;
 
+  // Default: the real WebSocket. Inert unless kernel::liveDesktop("glazewm"): it never opens the
+  // socket, so a test or the offscreen platform does not talk to a GlazeWM running on the machine.
   explicit GlazewmService(EventBus& bus);
   // Test seam: `sender` replaces the socket's sendText, `opener` is called once with the first
   // uri. Feed the socket's signals through handleConnected and handleMessage.
@@ -98,6 +100,8 @@ class GlazewmService : public QObject {
   // Stops the socket; safe to call more than once. Later subscriptions are ignored.
   void stop();
   bool isConnected() const { return connected_; }
+  // True once the real socket exists (the default service, a subscription later).
+  bool isOpen() const { return socket_ != nullptr; }
 
   // What the socket's connectedChanged and textMessage signals call.
   void handleConnected(bool connected);

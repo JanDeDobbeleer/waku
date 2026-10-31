@@ -45,7 +45,9 @@ class KomorebiService : public QObject {
  public:
   using CommandRunner = std::function<void(const std::vector<QStringList>& commands)>;
 
-  // Default: real komorebic backend, unique `wabar-<uuid>` pipe, detached hidden commands.
+  // Default: real komorebic backend, unique `wabar-<uuid>` pipe, detached hidden commands. Inert
+  // unless kernel::liveDesktop("komorebi"): it never listens and runs no command, so a test or the
+  // offscreen platform does not talk to a komorebi that happens to run on the machine.
   explicit KomorebiService(EventBus& bus);
   KomorebiService(EventBus& bus, KomorebiBackend backend, CommandRunner runner, QString pipeName,
                   KomorebiPipeListener::Timing timing);
@@ -77,6 +79,7 @@ class KomorebiService : public QObject {
   JsonPtr lastState_;
   bool connected_ = false;
   bool stopped_ = false;
+  bool live_ = true;  // false: the default service off the live desktop
 };
 
 }  // namespace komorebi
