@@ -12,6 +12,8 @@ wabar_feature(NAME workspaces
     glazewm_state.h
     glazewm_state.cpp
     komorebi.h
+    komorebi_workarea.h
+    komorebi_workarea.cpp
     komorebi_service.h
     komorebi_service.cpp
     komorebi_state.h
@@ -19,6 +21,7 @@ wabar_feature(NAME workspaces
   WIN32_SOURCES
     win32/glazewm_socket.cpp
     win32/komorebi_pipe.cpp
+    win32/komorebi_workarea_win.cpp
   QML_SOURCES
     qml/glazewm_client.h
     qml/glazewm_client.cpp
@@ -36,6 +39,7 @@ wabar_feature(NAME workspaces
     tests/test_glazewm_socket.cpp
     tests/test_glazewm_state.cpp
     tests/test_komorebi_service.cpp
+    tests/test_komorebi_workarea.cpp
     tests/test_wm_clients.cpp
     tests/test_workspace_dot.cpp
     tests/test_workspaces.cpp

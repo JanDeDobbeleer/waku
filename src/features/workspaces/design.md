@@ -17,7 +17,9 @@ directly.
 | `command_line.*` | `quoteCmdLine`: Windows `list2cmdline` quoting for the `komorebic` command chain. |
 | `qml/komorebi_client.*`, `qml/glazewm_client.*` | The `Komorebi` and `GlazeWM` QML singletons: a private `EventBus` plus the service, state exposed as properties. |
 | `qml/workspaces_service.*` | The `Workspaces` singleton: one `monitors` model of either manager; `prefer` decides when both run. |
+| `komorebi_workarea.*`, `win32/komorebi_workarea_win.cpp` | `KomorebiWorkAreaGuard`: tells komorebi that the work area changed (see "komorebi's work area"). |
 | `testing/wm_fixtures.h` | Sample window-manager state and harnesses on the services' test seams. |
+| `testing/fake_workarea.h` | A recording `WorkAreaNotifier` and a fake clock for the guard. |
 
 ## Threads
 
@@ -31,7 +33,8 @@ directly.
   `WinHttpWebSocketClose` and joins; only the worker closes the handles, since WinHTTP forbids
   closing a handle under a synchronous call on another thread.
 
-Both rows are in the thread table of `docs/architecture.md`. Everything else runs on the GUI thread.
+Both rows are in the thread table of `docs/architecture.md`. Everything else runs on the GUI thread,
+the work area guard included (no thread of its own).
 
 ## Behaviour
 
@@ -41,10 +44,53 @@ Both rows are in the thread table of `docs/architecture.md`. Everything else run
 - Commands (`focus`, layout toggles) are fire-and-forget hidden processes (`kernel::launchHiddenShell`
   for komorebic chains) so a slow `komorebic` never blocks the GUI thread.
 
+## komorebi's work area
+
+komorebi caches each monitor's work area and refreshes it only from three window messages to its
+hidden window. A dock or scaling change bursts `WM_DEVICECHANGE`, `WM_DISPLAYCHANGE` and
+`WM_SETTINGCHANGE` into its bounded channel (20 slots) while its consumer sleeps 3 s to verify a
+monitor removal, so the `WM_SETTINGCHANGE` that wabar's own app bar registration causes is dropped;
+windows then tile under the bar. Analysis: `docs/plans/2026-10-31-workarea-sync.md`.
+
+- **Guard.** `KomorebiWorkAreaGuard` (`komorebi_workarea.h`), created and owned by
+  `src/app/wabar/main.cpp` before the first reload and kept for the run, so a reload neither loses a
+  pending notification nor depends on the `Komorebi` singleton.
+- **Trigger.** Qt's screen signals: `QGuiApplication::screenAdded`, `screenRemoved`,
+  `primaryScreenChanged` and, per screen, `QScreen::availableGeometryChanged`, `geometryChanged`,
+  `logicalDotsPerInchChanged`. Qt emits `availableGeometryChanged` from the `WM_SETTINGCHANGE` that
+  Explorer broadcasts once it has applied a work area, whoever changed it. No polling, no
+  `komorebic state` read, no compare: komorebi compares its cache with `GetMonitorInfoW` itself and
+  retiles only on a difference, so an unneeded notification is free.
+- **Timing.** 500 ms after the last signal (a reload's remove and add coalesce), one notification at
+  once and one 5 s later (after komorebi's 3 s verification). A new burst re-arms the pair. Idle, no
+  timer runs. `nudge()` is the public entry for another trigger later (a komorebi pipe connect, for
+  example); it sends at once and arms the late one. Neither `ShellHost::reloaded` nor the pipe
+  connect triggers it today.
+- **Message.** `FindWindowW(L"komorebi-hidden", nullptr)`, then
+  `SendNotifyMessageW(hwnd, WM_SETTINGCHANGE, SPI_SETWORKAREA, 0)`, which does not wait for a
+  window of another thread. Behind `WorkAreaNotifier`; tests use `testing/fake_workarea.h`.
+- **The class name** `komorebi-hidden` is a komorebi detail, not a Windows API: komorebi v0.1.41,
+  `monitor_reconciliator/mod.rs`, `Hidden::create("komorebi-hidden")`. The guard matches the class
+  alone (the title is not confirmed in the source). If komorebi renames or drops the window, nothing
+  is found and nothing is sent.
+- **Switch.** `--no-workarea-sync` disables the capability `workarea_sync`; the real notifier exists
+  only when `kernel::liveDesktop("workarea_sync")`, so tests and the offscreen platform never send.
+  `--safe` keeps the guard: it is about the desktop, not the config.
+- **Logs.** `qInfo` per send (`komorebi work area nudge sent to 0x...`), `qDebug` once each time
+  komorebi's window goes missing, `qWarning` once per run when the send is refused
+  (`ERROR_ACCESS_DENIED`: komorebi runs elevated and wabar does not).
+- **Limits.** After a dock the `HMONITOR` of a display can change; komorebi's work area handler
+  then finds no monitor and does nothing. Only komorebi's own display reconciliation fixes that; the
+  late notification lands after it. GlazeWM re-reads the work area on every event and is not
+  targeted.
+- **Verified on.** Windows 10.0.26300, komorebi 0.1.41: to be filled in by the live check (plan
+  section 6).
+
 ## Windows APIs
 
 Documented only: named pipes, `CreateToolhelp32Snapshot` for the process check, `MonitorFromWindow`,
-WinHTTP WebSocket. `winhttp` is linked by this feature alone.
+WinHTTP WebSocket, `FindWindowW` and `SendNotifyMessageW` (`WM_SETTINGCHANGE`, `SPI_SETWORKAREA`).
+`winhttp` is linked by this feature alone.
 
 ## Notes moved from docs/architecture.md
 

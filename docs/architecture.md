@@ -336,6 +336,20 @@ on), `visible`. Taskbar windows Explorer creates later (a monitor plugged in whi
 visible until the next `TaskbarCreated` or `hide`. Source: `src/host/taskbar_control.{h,cpp}`,
 `win32/taskbar_control.cpp`, `qml/taskbar_command.{h,cpp}`, fakes in `testing/taskbar_fakes.h`.
 
+### komorebi's work area
+
+komorebi caches each monitor's work area and can miss the `WM_SETTINGCHANGE` that follows an app
+bar change (its channel drops messages during a dock or scaling storm), so windows tile under the
+bar. `KomorebiWorkAreaGuard` (`src/features/workspaces/komorebi_workarea.{h,cpp}`, sender in
+`win32/komorebi_workarea_win.cpp`) is one object created and owned by `src/app/wabar/main.cpp` for
+the run, like `WabarTaskbar`; it is not a singleton and survives reloads. It listens to Qt's screen
+signals (`availableGeometryChanged` and friends), waits 500 ms after the last one, then sends
+`WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window (`FindWindowW`, class
+`komorebi-hidden`) with `SendNotifyMessageW`, at once and 5 s later. GUI thread, no thread of its
+own (so no row in the thread table), two single-shot timers idle between bursts, documented APIs
+only (no allowlist row). `--no-workarea-sync` disables the capability `workarea_sync`; off the live
+desktop the guard has no sender. Details: `src/features/workspaces/design.md`.
+
 ## Threading
 
 Everything that touches Qt Quick objects runs on the GUI thread. Worker threads never touch them; they
