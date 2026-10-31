@@ -118,18 +118,28 @@ ShellRoot {
       qWarning() << "bar error:" << h.host->error();
       return false;
     }
-    return h.window() && QTest::qWaitForWindowExposed(h.window());
+    window_ = h.window();
+    return window_ && QTest::qWaitForWindowExposed(window_);
+  }
+  // Tray.qml counts the shown icons in a Qt.callLater (the widget stays invisible, and takes no
+  // click, until then) and the panel places them in its next polish. A fixed wait raced both: on a
+  // loaded machine the click landed before the layout and the menu never opened. Run them now.
+  void settleLayout() {
+    QCoreApplication::sendPostedEvents();
+    QCoreApplication::processEvents();
+    ASSERT_NE(window_, nullptr);
+    window_->grabWindow();  // polishes every item before it renders the frame
   }
   void add(std::initializer_list<plat::TrayIconData> icons) {
     ASSERT_NE(host_, nullptr);
     for (const auto& icon : icons) host_->sendModified(icon);
-    QCoreApplication::processEvents();
-    QTest::qWait(80);
+    settleLayout();
   }
 
   QTemporaryDir state_;
   std::shared_ptr<Log> log_ = std::make_shared<Log>();
   FakeHost* host_ = nullptr;
+  QQuickWindow* window_ = nullptr;
   QString unavailable_;
 };
 
@@ -272,7 +282,7 @@ TEST_F(TrayWidgetTest, DoubleClickSendsTheDoubleClickMessage) {
 
   // The next single click is a real one again.
   log_->events.clear();
-  QTest::qWait(600);
+  // No wait for the double-click interval: QTest moves its event clock past it after each click.
   QTest::mouseClick(h.window(), Qt::LeftButton, Qt::NoModifier,
                     centerIn(h.window(), QStringLiteral("trayIcon-0")));
   EXPECT_EQ(log_->events,
@@ -288,7 +298,7 @@ TEST_F(TrayWidgetTest, ControlClickPinsAndSendsNothing) {
 
   QTest::mouseClick(h.window(), Qt::LeftButton, Qt::ControlModifier,
                     centerIn(h.window(), QStringLiteral("trayIcon-1")));
-  QTest::qWait(100);
+  settleLayout();
   EXPECT_TRUE(log_->events.empty());
   // Pinned icons come first, so b moved in front of a.
   EXPECT_LT(positionIn(h.window(), QStringLiteral("trayIcon-1")).x(), before);
@@ -308,16 +318,18 @@ TEST_F(TrayWidgetTest, TheMenuMovesAnIconLeftAndSavesTheOrder) {
 
   QTest::mouseClick(h.window(), Qt::RightButton, Qt::ControlModifier,
                     centerIn(h.window(), QStringLiteral("trayIcon-1")));
-  ASSERT_TRUE(QTest::qWaitFor([&] { return visibleWindow(QStringLiteral("trayMenu")); }, 2000));
+  // The tap opens the menu inside the click.
   QQuickWindow* menu = visibleWindow(QStringLiteral("trayMenu"));
+  ASSERT_NE(menu, nullptr);
   ASSERT_TRUE(QTest::qWaitForWindowExposed(menu));
   EXPECT_TRUE(log_->events.empty());  // the menu click does not reach the program
   EXPECT_EQ(findItem(menu, QStringLiteral("trayMenuPin"))->property("text").toString(),
             QStringLiteral("Unpin"));
 
+  menu->grabWindow();  // the menu's column is placed in its polish
   QTest::mouseClick(menu, Qt::LeftButton, Qt::NoModifier,
                     centerIn(menu, QStringLiteral("trayMenuLeft")));
-  QTest::qWait(100);
+  settleLayout();
   EXPECT_LT(positionIn(h.window(), QStringLiteral("trayIcon-1")).x(),
             positionIn(h.window(), QStringLiteral("trayIcon-0")).x());
   EXPECT_FALSE(menu->isVisible());
@@ -339,9 +351,10 @@ TEST_F(TrayWidgetTest, TheMenuRefreshAsksExplorerForTheIcons) {
   add({makeIcon("a")});
   QTest::mouseClick(h.window(), Qt::RightButton, Qt::ControlModifier,
                     centerIn(h.window(), QStringLiteral("trayIcon-0")));
-  ASSERT_TRUE(QTest::qWaitFor([&] { return visibleWindow(QStringLiteral("trayMenu")); }, 2000));
   QQuickWindow* menu = visibleWindow(QStringLiteral("trayMenu"));
+  ASSERT_NE(menu, nullptr);
   ASSERT_TRUE(QTest::qWaitForWindowExposed(menu));
+  menu->grabWindow();  // the menu's column is placed in its polish
   QTest::mouseClick(menu, Qt::LeftButton, Qt::NoModifier,
                     centerIn(menu, QStringLiteral("trayMenuRefresh")));
   EXPECT_EQ(log_->broadcasts, 1);
