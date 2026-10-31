@@ -1,7 +1,7 @@
 #include "features/apps/catalog.h"
 
 #include <QDir>
-#include <QDirIterator>
+#include <QDirListing>
 #include <QFileInfo>
 #include <QProcess>
 #include <QRegularExpression>
@@ -25,6 +25,29 @@ QString trailingFolders(const QString& relativePath) {
   return slash < 0 ? QString() : relativePath.left(slash);
 }
 
+bool isShortcutName(const QString& name) {
+  return name.endsWith(QLatin1String(".lnk"), Qt::CaseInsensitive);
+}
+
+// Walks `folder` and its sub-folders without asking Qt anything about a .lnk file. Qt treats a
+// shortcut as a link: QDirIterator's QDir::Files and QDir::Dirs filters, QDirListing's hidden
+// filter and its recursion all read the link's metadata, which loads the shortcut through COM
+// (IShellLink) once per file and logs "Failed to initialize COM library" on a pool thread that is
+// already in the MTA (about 250 lines per scan here). Here a shortcut is known by its name, and
+// only folders are asked whether they are hidden (hidden folders are skipped, as before) or links
+// (not entered). Hidden shortcuts are listed; the real resolver rejects them.
+void walkStartMenu(const QString& folder, QStringList* shortcuts, QStringList* folders) {
+  for (const auto& entry : QDirListing(folder, QDirListing::IteratorFlag::IncludeHidden)) {
+    if (isShortcutName(entry.fileName())) {
+      if (shortcuts) shortcuts->append(entry.filePath());
+      continue;
+    }
+    if (!entry.isDir() || entry.isHidden() || entry.isSymLink()) continue;
+    if (folders) folders->append(entry.filePath());
+    walkStartMenu(entry.filePath(), shortcuts, folders);
+  }
+}
+
 }  // namespace
 
 std::vector<AppRecord> scanShortcuts(const QStringList& folders, const ShortcutResolver& resolver) {
@@ -35,14 +58,7 @@ std::vector<AppRecord> scanShortcuts(const QStringList& folders, const ShortcutR
     const QDir root(folder);
     if (!root.exists()) continue;
     QStringList files;
-    // QDir::System: Qt lists a Windows .lnk file as a link, and only with this flag. It then does
-    // not apply its hidden filter to them; the real resolver rejects hidden shortcuts.
-    QDirIterator it(root.absolutePath(), QDir::Files | QDir::System | QDir::NoDotAndDotDot,
-                    QDirIterator::Subdirectories);
-    while (it.hasNext()) {
-      const QString file = it.next();
-      if (file.endsWith(QLatin1String(".lnk"), Qt::CaseInsensitive)) files.append(file);
-    }
+    walkStartMenu(root.absolutePath(), &files, nullptr);
     files.sort(Qt::CaseInsensitive);
     for (const QString& file : files) {
       QString id = root.relativeFilePath(file);
@@ -109,9 +125,7 @@ QStringList watchedDirectories(const QStringList& folders) {
     const QDir root(folder);
     if (!root.exists()) continue;
     result.append(root.absolutePath());
-    QDirIterator it(root.absolutePath(), QDir::Dirs | QDir::NoDotAndDotDot,
-                    QDirIterator::Subdirectories);
-    while (it.hasNext()) result.append(it.next());
+    walkStartMenu(root.absolutePath(), nullptr, &result);
   }
   result.removeDuplicates();
   return result;
