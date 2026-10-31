@@ -17,6 +17,7 @@ add_executable(wabar_tests main.cpp
   integration/test_plugin_import.cpp
   integration/test_qt_imports.cpp
   integration/test_font_engine.cpp
+  integration/test_gallery_example.cpp
   integration/test_quickshell_glue.cpp
   integration/test_safe_mode.cpp
   integration/test_vertical_panel.cpp

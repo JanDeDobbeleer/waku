@@ -154,6 +154,10 @@ Quickshell compatibility modules: `Quickshell`, `Quickshell.Wayland`, `Quickshel
 | `wabar.widgets` | every feature's `qml/*.qml`, `src/ui/*.qml`, `src/app/wabar/SafeShell.qml` | the built-in widgets and the shared look |
 | `wabar.services` | every feature's `qml/*.{h,cpp}`, `src/kernel/qml/` | the C++ data sources and actions |
 
+- Some engine types exist for ported shells, not for the built-in widgets: `WindowThumbnail`,
+  `TransformWatcher`, `PersistentProperties`, and `ScriptModel` (used only by the `Quickshell.*`
+  modules). `Thumbnails` serves both (the wallpaper gallery uses it). `examples/gallery` shows
+  `Thumbnails` and `WindowThumbnail`; `tests/integration/test_gallery_example.cpp` loads it.
 - `surfaceFormat.opaque` on `PanelWindow` and `FloatingWindow` is accepted and ignored, so Quickshell
   code that sets it loads. wabar always draws into a swap chain with an alpha channel.
 - `src/modules/qml_modules.cmake` assembles the last two from the contributions. It is included
