@@ -14,12 +14,15 @@
 #include <QDebug>
 #include <QString>
 #include <algorithm>
+#include <chrono>
 #include <mutex>
+#include <optional>
 #include <vector>
 
 #include "features/system_stats/gpu_engines.h"
 #include "features/system_stats/system_stats.h"
 #include "features/system_stats/temperature.h"
+#include "kernel/qt/linger.h"
 #include "kernel/qt/live_desktop.h"
 
 namespace wabar::system_stats {
@@ -30,6 +33,8 @@ namespace {
 // (d3dkmthk.h, Windows SDK) for the adapter temperature.
 
 constexpr int kRenewEvery = 20;  // samples between two rebuilds of the engine query
+// Below this, a second sample returns the previous one (the widgets sample every 2 s or slower).
+constexpr std::chrono::milliseconds kMinInterval(1000);
 
 struct Query {
   PDH_HQUERY query = nullptr;
@@ -82,10 +87,25 @@ class PdhGpuDataSource final : public GpuDataSource {
   ~PdhGpuDataSource() override {
     active_.close();
     pending_.close();
+    for (const D3DKMT_HANDLE adapter : adapters_) {
+      D3DKMT_CLOSEADAPTER close{};
+      close.hAdapter = adapter;
+      D3DKMTCloseAdapter(&close);
+    }
   }
 
   GpuSample sample() override {
     std::lock_guard lock(mutex_);
+    // Every widget shares this source: two collects close together would rate a few milliseconds.
+    const auto now = std::chrono::steady_clock::now();
+    if (last_ && now - lastAt_ < kMinInterval) return *last_;
+    last_ = collect();
+    lastAt_ = now;
+    return *last_;
+  }
+
+ private:
+  GpuSample collect() {
     readAdapters();
     GpuSample result;
     result.name = name_;
@@ -122,7 +142,6 @@ class PdhGpuDataSource final : public GpuDataSource {
     return result;
   }
 
- private:
   // The hardware adapters' names and dedicated memory, read once.
   void readAdapters() {
     if (adaptersRead_) return;
@@ -146,17 +165,23 @@ class PdhGpuDataSource final : public GpuDataSource {
 
   // The hottest temperature the drivers of the hardware adapters report (deci-Celsius in
   // D3DKMT_ADAPTER_PERFDATA), or nothing. A driver that reports 0 (the Qualcomm Adreno driver does)
-  // or fails the query gives no value. Never throws.
-  std::optional<double> readTemperature() const {
+  // or fails the query gives no value. Never throws. The adapters are opened on the first read and
+  // kept until the source goes.
+  std::optional<double> readTemperature() {
     if (!kernel::liveDesktop(QStringLiteral("system_stats"))) return std::nullopt;
+    if (!adaptersOpened_) {
+      adaptersOpened_ = true;
+      for (const LUID& luid : luids_) {
+        D3DKMT_OPENADAPTERFROMLUID open{};
+        open.AdapterLuid = luid;
+        if (D3DKMTOpenAdapterFromLuid(&open) == STATUS_SUCCESS) adapters_.push_back(open.hAdapter);
+      }
+    }
     std::optional<double> best;
-    for (const LUID& luid : luids_) {
-      D3DKMT_OPENADAPTERFROMLUID open{};
-      open.AdapterLuid = luid;
-      if (D3DKMTOpenAdapterFromLuid(&open) != STATUS_SUCCESS) continue;
+    for (const D3DKMT_HANDLE adapter : adapters_) {
       D3DKMT_ADAPTER_PERFDATA perf{};
       D3DKMT_QUERYADAPTERINFO query{};
-      query.hAdapter = open.hAdapter;
+      query.hAdapter = adapter;
       query.Type = KMTQAITYPE_ADAPTERPERFDATA;
       query.pPrivateDriverData = &perf;
       query.PrivateDriverDataSize = sizeof(perf);
@@ -164,9 +189,6 @@ class PdhGpuDataSource final : public GpuDataSource {
         const std::optional<double> celsius = celsiusFromDeciCelsius(perf.Temperature);
         if (celsius && (!best || *celsius > *best)) best = celsius;
       }
-      D3DKMT_CLOSEADAPTER close{};
-      close.hAdapter = open.hAdapter;
-      D3DKMTCloseAdapter(&close);
     }
     return best;
   }
@@ -180,12 +202,18 @@ class PdhGpuDataSource final : public GpuDataSource {
   std::string name_;
   std::uint64_t memoryTotal_ = 0;
   std::vector<LUID> luids_;
+  bool adaptersOpened_ = false;
+  std::vector<D3DKMT_HANDLE> adapters_;
+  std::optional<GpuSample> last_;
+  std::chrono::steady_clock::time_point lastAt_;
 };
 
 }  // namespace
 
+// One source for every widget of every engine, kept through a reload (kernel::LingeringHub).
 std::shared_ptr<GpuDataSource> createGpuDataSource() {
-  return std::make_shared<PdhGpuDataSource>();
+  static kernel::LingeringHub<GpuDataSource> hub;
+  return hub.acquire([] { return std::make_shared<PdhGpuDataSource>(); });
 }
 
 }  // namespace wabar::system_stats

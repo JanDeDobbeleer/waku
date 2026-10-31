@@ -5,15 +5,20 @@
 
 #include <QDebug>
 #include <algorithm>
+#include <chrono>
 #include <mutex>
+#include <optional>
 
 #include "features/system_stats/win32/thermal.h"
+#include "kernel/qt/linger.h"
 #include "kernel/win32/windows_build.h"
 
 namespace wabar::system_stats {
 namespace {
 
 constexpr DWORD kWin1124H2Build = 26100;
+// Below this, a second sample returns the previous one (the widgets sample every 2 s or slower).
+constexpr std::chrono::milliseconds kMinInterval(1000);
 
 int logicalCores() {
   SYSTEM_INFO info{};
@@ -67,6 +72,9 @@ struct PdhCpuDataSource::Impl {
   bool logged = false;
   PdhThermalReader thermal;
   std::mutex mutex;
+  // The last sample, handed to callers that come within kMinIntervalMs of it.
+  std::optional<CpuSample> last;
+  std::chrono::steady_clock::time_point lastAt;
 
   ~Impl() {
     if (query) PdhCloseQuery(query);
@@ -143,6 +151,16 @@ PdhCpuDataSource::~PdhCpuDataSource() = default;
 
 CpuSample PdhCpuDataSource::sample() {
   std::lock_guard lock(impl_->mutex);
+  // Every widget shares this source: two collects close together would rate a few milliseconds.
+  const auto now = std::chrono::steady_clock::now();
+  if (impl_->last && now - impl_->lastAt < kMinInterval) return *impl_->last;
+  CpuSample result = collect();
+  impl_->last = result;
+  impl_->lastAt = now;
+  return result;
+}
+
+CpuSample PdhCpuDataSource::collect() {
   CpuSample result;
   result.coresLogical = impl_->logical;
   result.coresPhysical = impl_->physical;
@@ -162,8 +180,10 @@ CpuSample PdhCpuDataSource::sample() {
   return result;
 }
 
+// One source for every widget of every engine, kept through a reload (kernel::LingeringHub).
 std::shared_ptr<CpuDataSource> createCpuDataSource() {
-  return std::make_shared<PdhCpuDataSource>();
+  static kernel::LingeringHub<CpuDataSource> hub;
+  return hub.acquire([] { return std::make_shared<PdhCpuDataSource>(); });
 }
 
 }  // namespace wabar::system_stats

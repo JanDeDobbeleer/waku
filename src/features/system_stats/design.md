@@ -21,6 +21,15 @@ on the services of the same names (`wabar.services`, `qml/stat_sources.h`) and t
 | `qml/stat_sources.*` | `Memory`, `Cpu`, `Battery`: one QML element each, exposing the last sample as properties. |
 | `testing/fake_stat_sources.h` | Fake data sources with call counters, used by `tests/`. |
 
+## One source per kind
+
+The factories (`create*DataSource()`) hand out one process-wide source per kind through a
+`kernel::LingeringHub`: every widget of every engine shares it, and it outlives its last holder by
+30 s, so a reload neither closes nor opens a PDH query or a GPU adapter. A source holds no QML
+object. The rate sources (CPU, GPU) return the previous sample to a caller that comes less than
+1 s after it, so two widgets polling the shared query never rate a few milliseconds. The GPU source
+opens its adapters for the temperature once and keeps them until it goes.
+
 ## Gpu and Disks
 
 `Gpu` and `Disks` are polled like the others (`StatSource`).

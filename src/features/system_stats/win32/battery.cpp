@@ -2,6 +2,8 @@
 
 #include <windows.h>
 
+#include "kernel/qt/linger.h"
+
 // These SDK headers depend on the Windows declarations above.
 #include <batclass.h>
 #include <devguid.h>
@@ -137,8 +139,10 @@ std::optional<BatterySample> WindowsBatteryDataSource::sample() {
   return out;
 }
 
+// One source for every widget of every engine, kept through a reload (kernel::LingeringHub).
 std::shared_ptr<BatteryDataSource> createBatteryDataSource() {
-  return std::make_shared<WindowsBatteryDataSource>();
+  static kernel::LingeringHub<BatteryDataSource> hub;
+  return hub.acquire([] { return std::make_shared<WindowsBatteryDataSource>(); });
 }
 
 }  // namespace wabar::system_stats

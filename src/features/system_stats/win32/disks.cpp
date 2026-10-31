@@ -5,6 +5,7 @@
 #include <cwctype>
 
 #include "features/system_stats/system_stats.h"
+#include "kernel/qt/linger.h"
 
 namespace wabar::system_stats {
 namespace {
@@ -63,8 +64,10 @@ class WindowsDiskDataSource final : public DiskDataSource {
 
 }  // namespace
 
+// One source for every widget of every engine, kept through a reload (kernel::LingeringHub).
 std::shared_ptr<DiskDataSource> createDiskDataSource() {
-  return std::make_shared<WindowsDiskDataSource>();
+  static kernel::LingeringHub<DiskDataSource> hub;
+  return hub.acquire([] { return std::make_shared<WindowsDiskDataSource>(); });
 }
 
 }  // namespace wabar::system_stats

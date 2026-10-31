@@ -13,6 +13,8 @@ class PdhCpuDataSource final : public CpuDataSource {
   CpuSample sample() override;
 
  private:
+  CpuSample collect();  // under impl_->mutex
+
   struct Impl;
   std::unique_ptr<Impl> impl_;
 };

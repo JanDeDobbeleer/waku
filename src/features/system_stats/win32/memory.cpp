@@ -8,6 +8,8 @@
 #include <cmath>
 #include <mutex>
 
+#include "kernel/qt/linger.h"
+
 namespace wabar::system_stats {
 namespace {
 
@@ -115,8 +117,10 @@ MemorySample WindowsMemoryDataSource::sample() {
   return out;
 }
 
+// One source for every widget of every engine, kept through a reload (kernel::LingeringHub).
 std::shared_ptr<MemoryDataSource> createMemoryDataSource() {
-  return std::make_shared<WindowsMemoryDataSource>();
+  static kernel::LingeringHub<MemoryDataSource> hub;
+  return hub.acquire([] { return std::make_shared<WindowsMemoryDataSource>(); });
 }
 
 }  // namespace wabar::system_stats
