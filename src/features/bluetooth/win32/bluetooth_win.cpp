@@ -33,6 +33,7 @@
 #include <thread>
 
 #include "kernel/win32/winrt_apartment.h"
+#include "kernel/win32/winrt_strings.h"
 
 namespace wabar::bluetooth {
 
@@ -263,7 +264,7 @@ const GUID kBtAudioPropertySet = {
 constexpr ULONG kOneshotReconnect = 0;
 constexpr ULONG kOneshotDisconnect = 1;
 
-QString toQString(const winrt::hstring& text) { return QString::fromWCharArray(text.c_str()); }
+using kernel::toQString;
 
 // The container id shared by the classic and LE nodes of one physical device. Cached per device id:
 // the WinRT lookup costs a round trip. Empty when Windows reports none.
@@ -282,9 +283,8 @@ QString containerIdFor(const QString& deviceId) {
     const auto keys = winrt::single_threaded_vector<winrt::hstring>(
         {winrt::hstring(L"System.Devices.Aep.ContainerId"),
          winrt::hstring(L"System.Devices.ContainerId")});
-    const auto info = enumeration::DeviceInformation::CreateFromIdAsync(
-                          winrt::hstring(deviceId.toStdWString()), keys)
-                          .get();
+    const auto info =
+        enumeration::DeviceInformation::CreateFromIdAsync(kernel::toHString(deviceId), keys).get();
     for (const winrt::hstring& key : keys) {
       const auto value = info.Properties().TryLookup(key);
       if (!value) continue;
@@ -1548,8 +1548,7 @@ class BluetoothWorker : public QObject {
         return watch;
       }
       if (!device.deviceId.isEmpty() && !device.deviceId.contains(QLatin1String("BluetoothLE"))) {
-        watch.classic =
-            bt::BluetoothDevice::FromIdAsync(winrt::hstring(device.deviceId.toStdWString())).get();
+        watch.classic = bt::BluetoothDevice::FromIdAsync(kernel::toHString(device.deviceId)).get();
       }
       if (!watch.classic)
         watch.classic = bt::BluetoothDevice::FromBluetoothAddressAsync(device.addressInt).get();
