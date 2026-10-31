@@ -23,7 +23,9 @@ struct IfTableDeleter {
 };
 
 // GetIfTable2 with the 64-bit octet counters (InOctets / OutOctets), so a 32-bit wrap cannot
-// happen. Loopback and filtered-out interface rows are skipped.
+// happen. Loopback rows and the rows of filter drivers are skipped: a filter (WFP, QoS, Native
+// WiFi, vSwitch extensions) bound to an adapter is an interface of its own that is up and repeats
+// the adapter's counters, so the Wi-Fi traffic of this laptop was counted five times.
 class IpHelperThroughputSource final : public ThroughputSource {
  public:
   std::vector<InterfaceCounters> read() override {
@@ -34,7 +36,8 @@ class IpHelperThroughputSource final : public ThroughputSource {
     counters.reserve(table->NumEntries);
     for (ULONG i = 0; i < table->NumEntries; ++i) {
       const MIB_IF_ROW2& row = table->Table[i];
-      if (row.Type == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+      if (row.Type == IF_TYPE_SOFTWARE_LOOPBACK || row.InterfaceAndOperStatusFlags.FilterInterface)
+        continue;
       InterfaceCounters entry;
       entry.id = row.InterfaceLuid.Value;
       entry.name = QString::fromWCharArray(row.Alias);

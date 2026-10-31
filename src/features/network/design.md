@@ -32,7 +32,7 @@ throughput sampler is a GUI-thread timer. No source and no backend on the offscr
 through `throughputChanged`. The sampler is a 1 s `QTimer` that runs only while something is
 connected to that signal (`connectNotify` and `disconnectNotify` start and stop it), so a bar that
 shows no rate reads nothing. The reader is `GetIfTable2` with the 64-bit `InOctets` and `OutOctets`
-(no 32-bit wrap), loopback rows skipped; the aggregate sums the interfaces that are up. A counter
+(no 32-bit wrap), loopback rows and filter-driver rows (which repeat their adapter's counters) skipped; the aggregate sums the interfaces that are up. A counter
 that goes backwards counts what it shows (adapter reset); a new interface starts at a baseline; a
 vanished interface drops out and its bytes stay in the totals. A pause (nobody observing) resets the
 baseline and the rates, not the totals. The read is one fast IP helper call on the GUI thread.
