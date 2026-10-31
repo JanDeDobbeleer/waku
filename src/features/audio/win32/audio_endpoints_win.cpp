@@ -17,6 +17,7 @@
 #include <cmath>
 #include <functional>
 #include <map>
+#include <optional>
 #include <utility>
 
 namespace wabar::audio {
@@ -74,7 +75,8 @@ class VolumeCallback final : public IAudioEndpointVolumeCallback {
 
 class DeviceCallback final : public IMMNotificationClient {
  public:
-  // kind: 0 default changed (id = new default), 1 state changed (state = new state).
+  // kind: 0 default changed (id = new default), 1 state changed (state = new state), 2 a device's
+  // friendly name changed.
   using Notify = std::function<void(int kind, EDataFlow flow, ERole role, QString id, DWORD state)>;
   explicit DeviceCallback(Notify notify) : notify_(std::move(notify)) {}
   ULONG STDMETHODCALLTYPE AddRef() override { return ++refs_; }
@@ -104,7 +106,11 @@ class DeviceCallback final : public IMMNotificationClient {
     if (notify_) notify_(0, flow, role, id ? QString::fromWCharArray(id) : QString(), 0);
     return S_OK;
   }
-  HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR, const PROPERTYKEY) override {
+  HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR id, const PROPERTYKEY key) override {
+    if (notify_ && key.fmtid == PKEY_Device_FriendlyName.fmtid &&
+        key.pid == PKEY_Device_FriendlyName.pid) {
+      notify_(2, eRender, eConsole, id ? QString::fromWCharArray(id) : QString(), 0);
+    }
     return S_OK;
   }
 
@@ -201,7 +207,19 @@ class SystemAudio final : public AudioEndpoints {
     return volume && SUCCEEDED(volume->SetMute(mute ? TRUE : FALSE, nullptr));
   }
 
+  // Cached until a device event: the shell binds the list and the default id, so every volume
+  // change re-read them (an endpoint enumeration and a property store per device).
   std::vector<AudioDevice> devices() override {
+    if (!devices_) devices_ = readDevices();
+    return *devices_;
+  }
+
+  QString defaultDeviceId() override {
+    if (!defaultId_) defaultId_ = readDefaultDeviceId();
+    return *defaultId_;
+  }
+
+  std::vector<AudioDevice> readDevices() {
     std::vector<AudioDevice> result;
     if (!enumerator_) return result;
     winrt::com_ptr<IMMDeviceCollection> collection;
@@ -231,7 +249,7 @@ class SystemAudio final : public AudioEndpoints {
     return result;
   }
 
-  QString defaultDeviceId() override {
+  QString readDefaultDeviceId() {
     if (!enumerator_) return {};
     winrt::com_ptr<IMMDevice> device;
     if (FAILED(enumerator_->GetDefaultAudioEndpoint(flow_, eConsole, device.put()))) return {};
@@ -267,8 +285,9 @@ class SystemAudio final : public AudioEndpoints {
     volume_ = nullptr;
   }
 
+  // Without a default endpoint every read would ask Core Audio again; the next device event does.
   IAudioEndpointVolume* ensureVolume() {
-    if (!volume_ && enumerator_) resolveEndpoint();
+    if (!volume_ && enumerator_ && !endpointMissing_) resolveEndpoint();
     return volume_.get();
   }
 
@@ -276,6 +295,7 @@ class SystemAudio final : public AudioEndpoints {
   // stays referenced for as long as the callback is registered (as in the Python service).
   void resolveEndpoint() {
     releaseVolume();
+    endpointMissing_ = true;
     if (!enumerator_) return;
     winrt::com_ptr<IMMDevice> device;
     if (FAILED(enumerator_->GetDefaultAudioEndpoint(flow_, eConsole, device.put()))) return;
@@ -294,9 +314,33 @@ class SystemAudio final : public AudioEndpoints {
       volumeCallback_ = callback;
     }
     volume_ = volume;
+    endpointMissing_ = false;
+  }
+
+  // The data flow of device id; nullopt when it cannot be read.
+  std::optional<EDataFlow> flowOf(const QString& id) const {
+    if (!enumerator_ || id.isEmpty()) return std::nullopt;
+    winrt::com_ptr<IMMDevice> device;
+    if (FAILED(enumerator_->GetDevice(reinterpret_cast<LPCWSTR>(id.utf16()), device.put())))
+      return std::nullopt;
+    const auto endpoint = device.try_as<IMMEndpoint>();
+    EDataFlow flow = eAll;
+    if (!endpoint || FAILED(endpoint->GetDataFlow(&flow))) return std::nullopt;
+    return flow;
   }
 
   void onDeviceEvent(int kind, EDataFlow flow, ERole role, const QString& id, DWORD state) {
+    // The notification client sees the devices of both directions; the other one's state and
+    // names change neither this endpoint nor this list.
+    if (kind != 0) {
+      const std::optional<EDataFlow> deviceFlow = flowOf(id);
+      if (deviceFlow && *deviceFlow != flow_) return;
+    }
+    if (kind == 2) {
+      devices_.reset();
+      emit deviceChanged();
+      return;
+    }
     if (kind == 0) {
       if (flow != flow_ || role != eConsole) return;
       if (id == lastDefault_) return;
@@ -311,6 +355,8 @@ class SystemAudio final : public AudioEndpoints {
       lastState_[id] = state;
     }
     // The old interface is bound to the previous device; resolve the new default.
+    devices_.reset();
+    defaultId_.reset();
     resolveEndpoint();
     emit deviceChanged();
   }
@@ -322,6 +368,9 @@ class SystemAudio final : public AudioEndpoints {
   DeviceCallback* deviceCallback_ = nullptr;
   QString lastDefault_;
   std::map<QString, DWORD> lastState_;
+  std::optional<std::vector<AudioDevice>> devices_;
+  std::optional<QString> defaultId_;
+  bool endpointMissing_ = false;
 };
 
 }  // namespace
