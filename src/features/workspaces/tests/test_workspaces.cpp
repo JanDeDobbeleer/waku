@@ -229,3 +229,27 @@ TEST(WorkspacesModel, WorksWithoutBackends) {
   none.focusNext(1);
   SUCCEED();
 }
+
+// clearSingletons() deletes the Komorebi and GlazeWM singletons in its own order on a reload. The
+// model must stop using the one that went first: a raw pointer read the freed Komorebi here and
+// copied its monitor list (a reference count written into freed memory).
+TEST(WorkspacesModel, ABackendDeletedFirstIsNotTouchedAgain) {
+  Harness h;
+  h.komorebiConnect();
+  ASSERT_EQ(h.workspaces->provider(), QStringLiteral("komorebi"));
+  h.komorebi.reset();
+  h.glazeConnect();  // GlazeWM changes after Komorebi is gone
+  EXPECT_EQ(h.workspaces->provider(), QStringLiteral("glazewm"));
+  EXPECT_FALSE(h.workspaces->monitors().isEmpty());
+  h.workspaces->focus(65537, QStringLiteral("2"));
+  h.workspaces->focusNext(65537);
+}
+
+TEST(WorkspacesModel, FocusAfterTheProviderIsGoneIsIgnored) {
+  Harness h;
+  h.komorebiConnect();
+  h.komorebi.reset();  // provider is still "komorebi" until the next change
+  h.workspaces->focus(65537, QStringLiteral("1"));
+  h.workspaces->focusNext(65537);
+  EXPECT_TRUE(h.runs.empty());
+}

@@ -3,6 +3,7 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include <QVariantList>
 
@@ -38,7 +39,9 @@ class Workspaces : public QObject {
   Q_PROPERTY(QString prefer READ prefer WRITE setPrefer NOTIFY changed FINAL)
 
  public:
-  // Both backends are borrowed and must outlive this object; either may be null.
+  // Both backends are borrowed; either may be null. They are sibling singletons, and
+  // QQmlEngine::clearSingletons() deletes them in its own order on a reload, so either may go
+  // first: they are held as QPointer and a gone one counts as disconnected.
   Workspaces(Komorebi* komorebi, GlazeWM* glazewm, QObject* parent = nullptr);
   // The engine's own Komorebi and GlazeWM singletons.
   static Workspaces* create(QQmlEngine* engine, QJSEngine* scriptEngine);
@@ -62,8 +65,8 @@ class Workspaces : public QObject {
   void rebuild();
   void step(qlonglong monitorHandle, int direction);
 
-  Komorebi* komorebi_;
-  GlazeWM* glazewm_;
+  QPointer<Komorebi> komorebi_;
+  QPointer<GlazeWM> glazewm_;
   QString prefer_ = QStringLiteral("komorebi");
   QString provider_;
   QVariantList monitors_;

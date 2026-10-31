@@ -68,8 +68,8 @@ QVariantList fromGlazeWM(const QVariantList& monitors) {
 
 Workspaces::Workspaces(Komorebi* komorebi, GlazeWM* glazewm, QObject* parent)
     : QObject(parent), komorebi_(komorebi), glazewm_(glazewm) {
-  if (komorebi_) connect(komorebi_, &Komorebi::changed, this, &Workspaces::rebuild);
-  if (glazewm_) connect(glazewm_, &GlazeWM::changed, this, &Workspaces::rebuild);
+  if (komorebi) connect(komorebi, &Komorebi::changed, this, &Workspaces::rebuild);
+  if (glazewm) connect(glazewm, &GlazeWM::changed, this, &Workspaces::rebuild);
   rebuild();
 }
 
@@ -111,6 +111,7 @@ void Workspaces::rebuild() {
 
 void Workspaces::focus(qlonglong monitorHandle, const QString& id) {
   if (provider_ == QStringLiteral("komorebi")) {
+    if (!komorebi_) return;
     for (const QVariant& m : komorebi_->monitors()) {
       const QVariantMap map = m.toMap();
       if (map.value(QStringLiteral("id")).toLongLong() != monitorHandle) continue;
@@ -120,6 +121,7 @@ void Workspaces::focus(qlonglong monitorHandle, const QString& id) {
       return;
     }
   } else if (provider_ == QStringLiteral("glazewm")) {
+    if (!glazewm_) return;
     for (const QVariant& m : monitors_) {
       if (m.toMap().value(QStringLiteral("handle")).toLongLong() == monitorHandle) {
         glazewm_->activateWorkspace(id);
