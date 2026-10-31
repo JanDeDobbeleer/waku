@@ -11,6 +11,7 @@
 #include <optional>
 
 #include "features/wallpapers/desktop_wallpaper.h"
+#include "features/wallpapers/lock_screen.h"
 #include "features/wallpapers/qml/wallpaper_transition.h"
 #include "features/wallpapers/wallpaper_hotkey.h"
 #include "features/wallpapers/wallpaper_manager.h"
@@ -44,7 +45,8 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& f
 // collectImageFiles and DesktopWallpaperBackend. The gallery's thumbnails come from the host's
 // image://thumb/ provider (wabar.Thumbnails), which keeps one memory and disk cache for the run.
 //
-// Threads: GUI thread, no thread of its own (the transition's decoder thread is described there).
+// Threads: GUI thread. The transition's decoder thread is described there, the lock screen worker
+// in win32/lock_screen_win.cpp.
 // The hotkey arrives on the GUI thread.
 //
 // Several `Wallpapers` widgets and a `WallpaperSettings` share this one service; the last one
@@ -55,6 +57,11 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& f
 // changes, so a gallery keeps its delegates when nothing did. `available` is false (nothing is ever
 // set) when IDesktopWallpaper cannot be created: not a live desktop
 // (kernel::liveDesktop("wallpapers")). The hotkey is never registered then.
+//
+// `setLockScreen` (default true): after a change has set the wallpaper, the same image becomes the
+// Windows lock screen (and sign-in screen) picture through LockScreenSetter, which runs on its own
+// worker thread (win32/lock_screen_win.cpp). A dry run only logs `lock screen (dry run): <path>`;
+// videos, animated images and missing files are skipped. Off the live desktop there is no setter.
 class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   Q_OBJECT
   QML_ELEMENT
@@ -65,6 +72,8 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   Q_PROPERTY(QString current READ current NOTIFY currentChanged FINAL)
   Q_PROPERTY(bool galleryOpen READ galleryOpen NOTIFY galleryOpenChanged FINAL)
   Q_PROPERTY(QString galleryScreen READ galleryScreen NOTIFY galleryOpenChanged FINAL)
+  Q_PROPERTY(bool setLockScreen READ setLockScreen WRITE setSetLockScreen NOTIFY
+                 setLockScreenChanged FINAL)
 
  public:
   // Everything a test replaces. Null members are the real ones; `realBackend=false` with a null
@@ -75,6 +84,8 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
     std::unique_ptr<HotkeyHost> hotkeys;
     // Builds the transition for (image, animation); null means the real WallpaperTransition.
     std::function<std::unique_ptr<WallpaperTransition>(const QString&, const QString&)> transition;
+    // Sets the lock screen picture; null means the real one on a live desktop, none otherwise.
+    std::unique_ptr<LockScreenSetter> lockScreen;
     bool realBackend = true;
     // Play the transition but never call SetWallpaper (WABAR_WALLPAPER_DRYRUN=1 sets it). A
     // `wabarc ... --dry-run` does the same for one call.
@@ -98,6 +109,8 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   QString current() const { return current_; }
   bool galleryOpen() const { return galleryOpen_; }
   QString galleryScreen() const { return galleryScreen_; }
+  bool setLockScreen() const { return setLockScreen_; }
+  void setSetLockScreen(bool enabled);
 
   // What Wallpapers.qml passes in: the folder, the toggle hotkey ("" for none), the screen mode
   // for it (cursor, primary, active; anything else is primary) and the auto-change interval in
@@ -132,6 +145,7 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   void filesChanged();
   void currentChanged();
   void galleryOpenChanged();
+  void setLockScreenChanged();
 
  private:
   QString screenNameFor(const QString& mode) const;
@@ -142,6 +156,9 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   void commitWallpaper(const QString& path, bool dryRun);
   void playTransition(const QString& path, bool dryRun);
   void setWallpaperImpl(const QString& path, bool dryRun);
+  // The lock screen follows `path`, which has just become the wallpaper (or would have in a dry
+  // run).
+  void updateLockScreen(const QString& path, bool dryRun);
   QString controlStep(int step, bool dryRun);
   QString controlStart(const QString& path, bool dryRun);
 
@@ -161,6 +178,7 @@ class Wallpapers : public QObject, public wabar::control::WallpaperControl {
   QString animation_ = QStringLiteral("split");
   std::unique_ptr<WallpaperTransition> transition_;
   bool skipLogged_ = false;
+  bool setLockScreen_ = true;
 };
 
 }  // namespace wabar::wallpapers

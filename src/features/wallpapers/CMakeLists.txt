@@ -1,11 +1,14 @@
 # wallpapers: the wallpaper folder, set and cycle wallpapers, the picker gallery and its hotkey, and
-# the animated change (a Qt Quick overlay on WorkerW). No dependencies on other features.
+# the animated change (a Qt Quick overlay on WorkerW) and the lock screen picture that follows a
+# change. No dependencies on other features.
 # The service implements wabar::control::WallpaperControl (control/wallpaper_control.h), the interface the
 # bar's control handler calls.
 wabar_feature(
   NAME wallpapers
   SOURCES
     desktop_wallpaper.h
+    lock_screen.h
+    lock_screen.cpp
     wallpaper_files.h
     wallpaper_files.cpp
     wallpaper_hotkey.h
@@ -16,6 +19,7 @@ wabar_feature(
     wallpaper_manager.cpp
   WIN32_SOURCES
     win32/desktop_wallpaper_win.cpp
+    win32/lock_screen_win.cpp
     win32/wallpaper_hotkey_win.h
     win32/wallpaper_hotkey_win.cpp
     win32/window_focus.h
@@ -33,6 +37,7 @@ wabar_feature(
     qml/WallpaperGallery.qml
     qml/Wallpapers.qml
   TESTS
+    tests/test_wallpaper_lock_screen.cpp
     tests/test_wallpaper_manager.cpp
     tests/test_wallpaper_service.cpp
     tests/test_wallpaper_transition.cpp
@@ -44,6 +49,7 @@ wabar_feature(
     shlwapi
     user32
     uuid
+    windowsapp
 )
 
 # wallpaper_files.h names nlohmann::json in its API.

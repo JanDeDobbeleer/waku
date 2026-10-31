@@ -130,6 +130,9 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
     deps_.backend = [] { return makeDesktopWallpaperBackend(); };
   }
   if (!deps_.dryRun) deps_.dryRun = qEnvironmentVariableIntValue("WABAR_WALLPAPER_DRYRUN") != 0;
+  if (!deps_.lockScreen && deps_.realBackend && kernel::liveDesktop(QStringLiteral("wallpapers"))) {
+    guarded("lock screen", [&] { deps_.lockScreen = makeLockScreenSetter(kernel::appDataDir()); });
+  }
   if (deps_.backend) {
     guarded("backend", [&] { backend_ = deps_.backend(); });
   }
@@ -195,6 +198,12 @@ void Wallpapers::configure(const QString& imagePath, const QString& hotkey,
 void Wallpapers::configureEngine(bool enabled, const QString& animation) {
   engineEnabled_ = enabled;
   animation_ = animation.isEmpty() ? QStringLiteral("split") : animation;
+}
+
+void Wallpapers::setSetLockScreen(bool enabled) {
+  if (enabled == setLockScreen_) return;
+  setLockScreen_ = enabled;
+  emit setLockScreenChanged();
 }
 
 void Wallpapers::applyToManager() {
@@ -304,11 +313,32 @@ void Wallpapers::playTransition(const QString& path, bool dryRun) {
 void Wallpapers::commitWallpaper(const QString& path, bool dryRun) {
   if (deps_.dryRun || dryRun) {
     qInfo().noquote() << "Wallpapers: dry run, not setting" << path;
+    updateLockScreen(path, true);
     return;
   }
   manager_->changeBackground(path);
   // The manager has just listed the folder; only the current mark moves.
   readCurrent();
+  // `current` comes from Windows, so a failed set leaves the lock screen alone.
+  if (!current_.isEmpty() && normalizedPathKey(current_) == normalizedPathKey(path)) {
+    updateLockScreen(path, false);
+  }
+}
+
+void Wallpapers::updateLockScreen(const QString& path, bool dryRun) {
+  if (!setLockScreen_) return;
+  guarded("lock screen", [&] {
+    if (const auto reason = lockScreenSkipReason(path)) {
+      qInfo().noquote() << "Wallpapers: lock screen left alone," << *reason << ":"
+                        << nativePath(path);
+      return;
+    }
+    if (dryRun) {
+      qInfo().noquote() << "Wallpapers: lock screen (dry run):" << nativePath(path);
+      return;
+    }
+    if (deps_.lockScreen) deps_.lockScreen->set(nativePath(path));
+  });
 }
 
 void Wallpapers::random() {
@@ -316,8 +346,12 @@ void Wallpapers::random() {
   guarded("random wallpaper", [&] {
     // The manager sets what it picks, so a dry run picks here too.
     if (!engineEnabled_ && !deps_.dryRun) {
+      const QString before = normalizedPathKey(current_);
       manager_->changeBackground();
       refresh();
+      if (!current_.isEmpty() && normalizedPathKey(current_) != before) {
+        updateLockScreen(current_, false);
+      }
       return;
     }
     // Pick here (never the one shown now) so the change can animate like a gallery click.

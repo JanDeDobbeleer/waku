@@ -40,6 +40,7 @@ No wallpaper logic is re-implemented. The `Wallpapers` singleton wraps the UI-fr
 | `setWallpaper(path)`, `random()` | change the wallpaper on every monitor |
 | `toggleGallery()`, `closeGallery()` | open (on the screen the mode picks) or close |
 | `configure(imagePath, hotkey, hotkeyScreen, autoChangeSeconds)` | what `Wallpapers.qml` passes in |
+| `setLockScreen` (bool, read/write, default true) | a change also sets the Windows lock screen (and sign-in screen) picture; see "Lock screen" |
 
 `Wallpapers.qml` takes `label`, `imagePath`, `hotkey`, `hotkeyScreen`, `autoChange` and the gallery
 look (`imageWidth`, `orientation`, `cornerRadius`, `accentColor`). `WallpaperGallery.qml` is the
@@ -68,6 +69,31 @@ Qt Quick window.
    uses the manager's picker.
 7. **Non-default constructor.** Qt prefers a singleton's default constructor over `create()`, and
    `create()` registers the image provider (as for Taskbar).
+
+## Lock screen
+
+A wallpaper change also sets the same image as the Windows lock screen picture, which the sign-in
+screen shows too. `setLockScreen` is on by default; a shell turns it off with
+`Wallpapers.setLockScreen = false`.
+
+- **API.** WinRT `LockScreen.SetImageFileAsync(StorageFile)` (`Windows.System.UserProfile`),
+  documented, so no allowlist row. Windows copies the file.
+- **Behind an interface.** `LockScreenSetter` (`lock_screen.h`); the real one is
+  `win32/lock_screen_win.cpp`, tests use `testing/fake_lock_screen.h`. Off the live desktop the
+  service has no setter, so tests and offscreen runs never touch the lock screen.
+- **When.** After the wallpaper was set: `current` (read back from `IDesktopWallpaper`) must equal
+  the new path, so a failed set leaves the lock screen alone. Gallery clicks, `random()`, `wabarc
+  wallpaper ...` and the animated change all qualify. The manager's auto-change timer does not
+  (it bypasses the service; open point).
+- **Dry run.** `WABAR_WALLPAPER_DRYRUN=1` or `--dry-run` never calls the API; the service logs
+  `Wallpapers: lock screen (dry run): <path>`.
+- **Skipped files.** Missing files, videos (by extension) and animated GIF or WebP files: one info
+  line, no call.
+- **Formats.** jpg, jpeg, png and bmp go as they are. Anything else (webp, tif, still gif) is
+  decoded on the worker and written to `%LOCALAPPDATA%\wabar\lock_screen.png` first.
+- **Thread.** One worker thread, started by the first call, MTA; only the latest path is set. The
+  GUI thread never waits on WinRT. A failure is one warning line. Group policy or an unpackaged
+  process can make the call fail; it then fails soft.
 
 ## Transition engine (Qt Quick)
 
