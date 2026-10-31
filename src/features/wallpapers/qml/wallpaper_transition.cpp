@@ -13,6 +13,7 @@
 #include <QTimer>
 #include <algorithm>
 #include <exception>
+#include <utility>
 
 namespace wabar::wallpapers {
 
@@ -96,6 +97,7 @@ WallpaperTransition::Platform WallpaperTransition::systemPlatform() {
   platform.attach = [](std::uintptr_t hwnd, QString* failure) {
     return wabar::wallpapers::attachToWorkerW(hwnd, failure);
   };
+  platform.detach = [](std::uintptr_t hwnd) { wabar::wallpapers::detachFromWorkerW(hwnd); };
   platform.decode = [](const QString& newPath, const QString& oldPath) {
     QImageReader reader(newPath);
     reader.setAutoTransform(true);
@@ -116,7 +118,12 @@ WallpaperTransition::WallpaperTransition(QString imagePath, QString animation, P
   if (platform_.readSettings) settings_ = platform_.readSettings();
 }
 
-WallpaperTransition::~WallpaperTransition() { destroyWindow(); }
+WallpaperTransition::~WallpaperTransition() {
+  destroyWindow();
+  // Its result goes nowhere (the QPointer it posts through is null by then), but a decoder still
+  // running at exit would outlive QCoreApplication.
+  if (decoder_ && decoder_->isRunning()) decoder_->wait();
+}
 
 bool WallpaperTransition::windowVisible() const { return window_ && window_->isVisible(); }
 
@@ -142,6 +149,7 @@ void WallpaperTransition::start() {
         Qt::QueuedConnection);
   });
   connect(thread, &QThread::finished, thread, &QObject::deleteLater);
+  decoder_ = thread;
   thread->start();
 }
 
@@ -176,6 +184,7 @@ void WallpaperTransition::onImagesLoaded(const QImage& newImage, const QImage& o
       skip(failure.isEmpty() ? QStringLiteral("Could not attach to WorkerW") : failure);
       return;
     }
+    attached_ = true;
 
     const double dpr = window_->devicePixelRatio() > 0 ? window_->devicePixelRatio() : 1.0;
     const QRect worker = attachment->workerRect;
@@ -266,9 +275,14 @@ void WallpaperTransition::destroyWindow() {
   if (lingerTimer_) lingerTimer_->stop();
   if (window_) {
     window_->hide();
-    delete window_;  // also deletes the scene item
-    window_ = nullptr;
+    // Back to a top-level window first: the handle is a child of Explorer's WorkerW, and an
+    // Explorer restart meanwhile may already have destroyed it (detach checks IsWindow).
+    if (attached_ && platform_.detach) platform_.detach(window_->winId());
+    attached_ = false;
+    QQuickWindow* window = std::exchange(window_, nullptr);
     scene_ = nullptr;
+    // Deferred: this can run from the animation's finished() emission or a QML handler of it.
+    window->deleteLater();  // also deletes the scene item
   }
 }
 

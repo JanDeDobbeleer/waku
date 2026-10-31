@@ -186,4 +186,17 @@ std::optional<WorkerWAttachment> attachToWorkerW(std::uintptr_t handle, QString*
   return attachment;
 }
 
+void detachFromWorkerW(std::uintptr_t handle) {
+  HWND hwnd = reinterpret_cast<HWND>(handle);
+  // Gone with WorkerW when Explorer restarted; nothing to undo then.
+  if (!hwnd || !IsWindow(hwnd)) return;
+  const LONG_PTR exStyle = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+  SetWindowLongPtrW(hwnd, GWL_EXSTYLE, exStyle & ~static_cast<LONG_PTR>(WS_EX_LAYERED));
+  const LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_STYLE);
+  SetWindowLongPtrW(hwnd, GWL_STYLE,
+                    (style & ~static_cast<LONG_PTR>(WS_CHILD)) | static_cast<LONG_PTR>(WS_POPUP));
+  SetParent(hwnd, nullptr);
+  SetWindowLongPtrW(hwnd, GWL_EXSTYLE, exStyle);
+}
+
 }  // namespace wabar::wallpapers

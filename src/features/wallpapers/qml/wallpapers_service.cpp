@@ -247,8 +247,12 @@ void Wallpapers::setWallpaperImpl(const QString& path, bool dryRun) {
   if (!available_ || !QFileInfo(path).isFile()) return;
   guarded("set wallpaper", [&] {
     if (transition_) {
-      transition_->cancel();  // a change during the animation supersedes it
-      transition_.reset();
+      // A change during the animation supersedes it. This can run inside the old transition's
+      // own signal emission (a handler of currentChanged re-enters here), so the old one is
+      // deleted later, never under its own stack frame.
+      transition_->cancel();
+      transition_->disconnect(this);
+      transition_.release()->deleteLater();
     }
     if (engineEnabled_) {
       playTransition(path, dryRun);
@@ -270,10 +274,17 @@ void Wallpapers::playTransition(const QString& path, bool dryRun) {
     if (std::exchange(skipLogged_, true)) return;
     qWarning().noquote() << "Wallpaper animation skipped:" << reason;
   });
-  // finished() follows skipped(), so a skipped animation sets the wallpaper at once.
-  connect(transition_.get(), &WallpaperTransition::finished, this, [this, path, dryRun] {
-    guarded("set wallpaper", [&] { commitWallpaper(path, dryRun); });
-  });
+  // finished() follows skipped(), so a skipped animation sets the wallpaper at once. Queued, so
+  // the commit (and every QML handler of currentChanged it triggers) runs after the transition
+  // has left its own emission; a transition superseded meanwhile commits nothing.
+  const QPointer<WallpaperTransition> played(transition_.get());
+  connect(
+      transition_.get(), &WallpaperTransition::finished, this,
+      [this, played, path, dryRun] {
+        if (!played || played != transition_.get()) return;
+        guarded("set wallpaper", [&] { commitWallpaper(path, dryRun); });
+      },
+      Qt::QueuedConnection);
   transition_->start();
 }
 

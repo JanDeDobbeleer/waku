@@ -8,7 +8,10 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QThread>
+#include <atomic>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "features/wallpapers/qml/wallpaper_transition.h"
@@ -313,4 +316,37 @@ TEST(WallpapersEngine, RandomAnimatesWhenTheEngineIsOn) {
   ASSERT_TRUE(QTest::qWaitFor([&] { return !f.state->sets.isEmpty(); }, 3000));
   EXPECT_EQ(f.images.size(), 1);
   EXPECT_EQ(f.animations, QStringList{QStringLiteral("diamond")});
+}
+
+// A handler of currentChanged (a second widget, a QML onCurrentChanged) changes the wallpaper
+// again while the first commit runs inside the transition's finished() emission.
+TEST(WallpapersEngine, AChangeFromInsideTheCommitIsSafe) {
+  ServiceFixture f;
+  f.service->configureEngine(true, QStringLiteral("split"));
+  bool again = false;
+  QObject::connect(f.service.get(), &Wallpapers::currentChanged, f.service.get(), [&] {
+    if (std::exchange(again, true)) return;
+    f.service->setWallpaper(f.file("b.png"));
+  });
+  f.service->setWallpaper(f.file("a.png"));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return f.state->sets.size() >= 2; }, 5000));
+  QTest::qWait(100);
+  EXPECT_EQ(f.state->sets, (QStringList{f.file("a.png"), f.file("b.png")}));
+  EXPECT_EQ(f.images.size(), 2);
+}
+
+TEST(WallpaperTransition, DestroyingWhileDecodingWaitsForTheDecoder) {
+  auto platform = fakePlatform(std::make_shared<FakeCalls>());
+  auto done = std::make_shared<std::atomic<bool>>(false);
+  platform.decode = [done](const QString&, const QString&) {
+    QThread::msleep(80);
+    *done = true;
+    return std::make_pair(solid(kNew), solid(kOld));
+  };
+  {
+    WallpaperTransition t(QStringLiteral("new"), QStringLiteral("split"), platform, 20);
+    t.start();
+    QThread::msleep(10);
+  }
+  EXPECT_TRUE(done->load());  // the destructor waited; no decoder outlives its transition
 }

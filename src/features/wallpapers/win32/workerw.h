@@ -32,5 +32,8 @@ struct WorkerWAttachment {
 // as a child and sizes it to cover WorkerW. Returns nullopt with `failure` set when Progman or
 // WorkerW cannot be found.
 std::optional<WorkerWAttachment> attachToWorkerW(std::uintptr_t hwnd, QString* failure);
+// Makes `hwnd` a top-level popup again before it is destroyed; nothing when the handle is already
+// gone (an Explorer restart destroys WorkerW and its children).
+void detachFromWorkerW(std::uintptr_t hwnd);
 
 }  // namespace wabar::wallpapers

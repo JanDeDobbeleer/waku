@@ -19,6 +19,7 @@
 
 class QPainter;
 class QQuickWindow;
+class QThread;
 class QTimer;
 
 namespace wabar::wallpapers {
@@ -63,8 +64,8 @@ class WallpaperScene : public QQuickPaintedItem {
 //
 // Threads: GUI thread. start() runs one short-lived QThread that only decodes the two images
 // (Platform::decode); it touches no Qt Quick object and posts its result to the GUI thread through
-// a QPointer that is checked there. The thread deletes itself when it ends; a cancelled or
-// destroyed transition never waits for it.
+// a QPointer that is checked there. The thread deletes itself when it ends. cancel() never waits
+// for it; the destructor does (at most one decode), so no decoder outlives the application.
 //
 // When an image cannot be read or WorkerW cannot be found the window never shows: skipped()
 // carries the reason, then finished() follows at once.
@@ -76,6 +77,8 @@ class WallpaperTransition : public QObject {
     std::function<DesktopSettings()> readSettings;
     std::function<QString()> oldImagePath;
     std::function<std::optional<WorkerWAttachment>(std::uintptr_t, QString*)> attach;
+    // Undoes attach before the window is deleted (null in tests).
+    std::function<void(std::uintptr_t)> detach;
     // Runs on the worker thread: the new image, then the old one. Null images mean unreadable.
     std::function<std::pair<QImage, QImage>(const QString&, const QString&)> decode;
     // False in tests: the window is built and filled but never shown.
@@ -131,7 +134,9 @@ class WallpaperTransition : public QObject {
   std::vector<ScaledImage> scaledNew_;
   std::vector<ScaledImage> scaledOld_;
   QQuickWindow* window_ = nullptr;
+  bool attached_ = false;  // window_ is a child of WorkerW
   WallpaperScene* scene_ = nullptr;
+  QPointer<QThread> decoder_;
   QVariantAnimation* animationTimer_ = nullptr;
   QTimer* lingerTimer_ = nullptr;
 };
