@@ -4,7 +4,9 @@
 // on thread-pool threads and only enqueue a task (an app id and what to re-read) on the worker's
 // queue; the worker reads plain snapshots and hands them to the sink. command() enqueues too, so
 // the GUI thread never touches WinRT. The thread sleeps on a condition variable between events;
-// there is no polling. stop() revokes the handlers, wakes the worker and joins it.
+// there is no polling. stop() revokes the handlers, wakes the worker and joins it; a refresh in
+// progress stops at the next session, so the join waits for one WinRT read at most. start() after
+// stop() starts a fresh worker.
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Media.Control.h>
@@ -65,6 +67,13 @@ struct Queue {
     }
     wake.notify_one();
   }
+
+  // Checked by the worker between WinRT reads, so stop() does not wait for every session of a
+  // refresh (each read can block on a frozen player).
+  bool stopRequested() {
+    std::lock_guard lock(mutex);
+    return stopping;
+  }
 };
 
 class SystemMediaSource final : public MediaSessionSource {
@@ -73,6 +82,12 @@ class SystemMediaSource final : public MediaSessionSource {
 
   void start(MediaSessionSink* sink) override {
     if (thread_.joinable()) return;
+    {
+      // A start() after stop() runs again instead of spawning a thread that exits at once.
+      std::lock_guard lock(queue_->mutex);
+      queue_->stopping = false;
+      queue_->tasks.clear();
+    }
     sink_ = sink;
     thread_ = std::thread([this] { run(); });
   }
@@ -168,11 +183,16 @@ class SystemMediaSource final : public MediaSessionSource {
         });
   }
 
-  static void unbind(Tracked& tracked) {
+  // Never throws: revoking on a session whose app has gone can fail, and that must not abort the
+  // refresh that drops it.
+  static void unbind(Tracked& tracked) noexcept {
     if (!tracked.session) return;
-    tracked.session.MediaPropertiesChanged(tracked.propertiesToken);
-    tracked.session.TimelinePropertiesChanged(tracked.timelineToken);
-    tracked.session.PlaybackInfoChanged(tracked.playbackToken);
+    try {
+      tracked.session.MediaPropertiesChanged(tracked.propertiesToken);
+      tracked.session.TimelinePropertiesChanged(tracked.timelineToken);
+      tracked.session.PlaybackInfoChanged(tracked.playbackToken);
+    } catch (...) {
+    }
   }
 
   static std::optional<MediaProperties> readProperties(
@@ -281,6 +301,7 @@ class SystemMediaSource final : public MediaSessionSource {
       }
     }
     for (const QString& appId : order) {
+      if (queue_->stopRequested()) return;
       if (tracked_.count(appId) == 0) {
         Tracked tracked;
         tracked.session = live.at(appId);

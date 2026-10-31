@@ -43,7 +43,8 @@ art, and the transport commands. One QML singleton (`Media`) and one widget (`Me
 
 One `std::thread` (MTA) in `SystemMediaSource` owns the WinRT objects. WinRT handlers only enqueue a
 task; the thread sleeps on a condition variable (no polling) and posts plain snapshots to the GUI
-thread. `stop()` revokes the handlers, wakes the queue and joins. The thread starts only on a
+thread. `stop()` revokes the handlers, wakes the queue and joins; a refresh in progress checks the
+stop flag between sessions, so the join waits for one WinRT read at most. The thread starts only on a
 live desktop (`kernel::liveDesktop("media")`): tests and the offscreen platform get a service
 without a source and `Media.available` false. The source-app name cache in
 `media_source_apps.cpp` is `QMutex`-guarded and written from that thread only.
