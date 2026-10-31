@@ -219,6 +219,47 @@ TEST(WallpaperLockScreen, WithTheEngineItFollowsTheCommit) {
   EXPECT_EQ(f.lock->sets.first(), f.file(QStringLiteral("b.png")));
 }
 
+// The auto-change timer (one second, the shortest interval) takes the path of random().
+void startAutoChange(LockFixture& f) {
+  f.service->configure(QDir::fromNativeSeparators(f.folder.path()), QString(), QString(), 1);
+}
+void stopAutoChange(LockFixture& f) {
+  f.service->configure(QDir::fromNativeSeparators(f.folder.path()), QString(), QString(), 0);
+}
+
+TEST(WallpaperLockScreen, ATimedChangeFollowsOnce) {
+  LockFixture f;
+  startAutoChange(f);
+  EXPECT_TRUE(QTest::qWaitFor([&] { return !f.lock->sets.isEmpty(); }, 5000));
+  stopAutoChange(f);
+  ASSERT_EQ(f.desktop->sets.size(), 1);
+  ASSERT_EQ(f.lock->sets.size(), 1);
+  // The fixture's picker takes the first file of the folder.
+  EXPECT_EQ(f.lock->sets.first(), f.file(QStringLiteral("a.jpg")));
+  EXPECT_EQ(QDir::toNativeSeparators(f.desktop->sets.first()), f.file(QStringLiteral("a.jpg")));
+}
+
+TEST(WallpaperLockScreen, ATimedChangeLeavesItAloneWhenSwitchedOff) {
+  LockFixture f;
+  f.service->setSetLockScreen(false);
+  startAutoChange(f);
+  EXPECT_TRUE(QTest::qWaitFor([&] { return !f.desktop->sets.isEmpty(); }, 5000));
+  stopAutoChange(f);
+  EXPECT_TRUE(f.lock->sets.isEmpty());
+}
+
+TEST(WallpaperLockScreen, ATimedChangeInADryRunOnlyLogs) {
+  LockScreenMessageCapture capture;
+  LockFixture f(true);
+  startAutoChange(f);
+  EXPECT_TRUE(
+      QTest::qWaitFor([&] { return capture.any(QStringLiteral("lock screen (dry run): ")); }, 5000))
+      << qPrintable(lockScreenMessages().join(QLatin1Char('\n')));
+  stopAutoChange(f);
+  EXPECT_TRUE(f.desktop->sets.isEmpty());
+  EXPECT_TRUE(f.lock->sets.isEmpty());
+}
+
 TEST(WallpaperLockScreen, WhichFilesQualifyAndWhichNeedACopy) {
   QTemporaryDir folder;
   ASSERT_TRUE(folder.isValid());

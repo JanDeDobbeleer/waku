@@ -142,6 +142,8 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
   WallpaperManager::Dependencies managerDeps;
   managerDeps.backend = deps_.backend;
   managerDeps.picker = deps_.picker;
+  // A timed change takes the path of a manual random(): lock screen, dry run and animation.
+  managerDeps.timedChange = [this] { random(); };
   manager_ = std::make_unique<WallpaperManager>(std::move(managerDeps));
   if (!deps_.hotkeys) deps_.hotkeys = makeWin32HotkeyHost();
   readCurrent();

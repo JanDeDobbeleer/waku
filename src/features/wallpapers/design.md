@@ -66,7 +66,9 @@ Qt Quick window.
    touches no image.
 5. **`current` comes from `IDesktopWallpaper`**, not from the last request, so a failed set shows.
 6. **Auto-change** is the manager's timer (`autoChange` seconds, 0 off), cheap to expose. `random()`
-   uses the manager's picker.
+   uses the manager's picker. The timer calls the service's `random()`
+   (`WallpaperManager::Dependencies::timedChange`), so a timed change is a manual one: the lock
+   screen follows, a dry run only logs and the animation plays when `engine` is on.
 7. **Non-default constructor.** Qt prefers a singleton's default constructor over `create()`, and
    `create()` registers the image provider (as for Taskbar).
 
@@ -83,8 +85,8 @@ screen shows too. `setLockScreen` is on by default; a shell turns it off with
   service has no setter, so tests and offscreen runs never touch the lock screen.
 - **When.** After the wallpaper was set: `current` (read back from `IDesktopWallpaper`) must equal
   the new path, so a failed set leaves the lock screen alone. Gallery clicks, `random()`, `wabarc
-  wallpaper ...` and the animated change all qualify. The manager's auto-change timer does not
-  (it bypasses the service; open point).
+  wallpaper ...`, the animated change and the auto-change timer (which calls `random()`) all
+  qualify.
 - **Dry run.** `WABAR_WALLPAPER_DRYRUN=1` or `--dry-run` never calls the API; the service logs
   `Wallpapers: lock screen (dry run): <path>`.
 - **Skipped files.** Missing files, videos (by extension) and animated GIF or WebP files: one info
@@ -121,8 +123,8 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
   logged once and the wallpaper is set at once. Unknown animation names fall back to a cross-fade.
 - **Dropped.** The 50 ms window fade-in before the reveal (the window sits at opacity 0.999 instead:
   a child of WorkerW is only composed on this Windows build when it is layered, and Qt layers a
-  window once its opacity is not 1), and animation of the auto-change timer (the manager still changes it at once; the
-  gallery and the right-click random animate). Seams for tests: `WallpaperTransition::Platform`
+  window once its opacity is not 1). The auto-change timer animates like the gallery and the
+  right-click random, since it calls `random()`. Seams for tests: `WallpaperTransition::Platform`
   (settings, old image path, attach, decode, show) and `Wallpapers::Deps::transition`.
 - **Dry run.** `WABAR_WALLPAPER_DRYRUN=1` plays the transition and logs instead of calling
   `IDesktopWallpaper`, so it can be watched without changing the real wallpaper.
@@ -168,8 +170,7 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
 - **Dry run.** `--dry-run` is a per-call argument of the service (`Wallpapers::Deps::dryRun` and
   `WABAR_WALLPAPER_DRYRUN` still work): the animation plays and the setter is skipped. Because the
   wallpaper does not change, repeated `next --dry-run` shows the same file.
-- **Left out.** The hotkey and CLI do not animate the auto-change timer (as before); a
-  `WallpaperSettings` removed from `shell.qml` is switched off by the reload that drops it.
+- **Left out.** A `WallpaperSettings` removed from `shell.qml` is switched off by the reload that drops it.
 
 ## Notes moved from docs/architecture.md
 

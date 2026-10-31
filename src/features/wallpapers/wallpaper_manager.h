@@ -32,6 +32,9 @@ class WallpaperManager : public QObject {
     BackendFactory backend;
     CommandRunner runner;
     Picker picker;
+    // What the auto-change timer runs; null means changeBackground(). The Wallpapers service
+    // passes its own random(), so a timed change is a manual one (lock screen, dry run, animation).
+    std::function<void()> timedChange;
   };
 
   explicit WallpaperManager(Dependencies deps = {}, QObject* parent = nullptr);

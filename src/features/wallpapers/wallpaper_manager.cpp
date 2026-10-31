@@ -49,7 +49,13 @@ WallpaperManager::WallpaperManager(Dependencies deps, QObject* parent)
       return std::uniform_int_distribution<int>(0, count - 1)(*generator);
     };
   }
-  connect(&timer_, &QTimer::timeout, this, [this] { changeBackground(); });
+  connect(&timer_, &QTimer::timeout, this, [this] {
+    if (deps_.timedChange) {
+      deps_.timedChange();
+    } else {
+      changeBackground();
+    }
+  });
 }
 
 WallpaperManager::~WallpaperManager() { stop(); }
