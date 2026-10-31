@@ -54,10 +54,11 @@ TEST(ClockWidget, AClickOpensTheCalendarAndASecondClickClosesIt) {
   QTest::mouseClick(h.window(), Qt::LeftButton, Qt::NoModifier, at);
   ASSERT_TRUE(QTest::qWaitFor([&] { return popup->isVisible(); }, 2000));
 
-  QTest::qWait(300);  // past the debounce of the press that closes it
+  // The press closes it (the host reports presses in the bar) and the release's click handler
+  // calls toggle(), which the 250 ms guard after a close turns away, all inside the click.
   QTest::mouseClick(h.window(), Qt::LeftButton, Qt::NoModifier, at);
-  EXPECT_TRUE(QTest::qWaitFor([&] { return !popup->isVisible(); }, 2000));
-  QTest::qWait(400);
+  EXPECT_FALSE(popup->isVisible());
+  QCoreApplication::processEvents();
   EXPECT_FALSE(popup->isVisible());  // the click that closed it did not reopen it
 }
 
@@ -77,8 +78,7 @@ TEST(ClockWidget, TheCalendarOpensOnTheCurrentMonthAndStepsAndResets) {
   EXPECT_EQ(calendar->property("month").toInt(), today.addMonths(1).month() - 1);
 
   ASSERT_TRUE(QMetaObject::invokeMethod(popup, "close"));
-  QTest::qWait(300);
-  ASSERT_TRUE(QMetaObject::invokeMethod(popup, "open"));
+  ASSERT_TRUE(QMetaObject::invokeMethod(popup, "open"));  // open() has no guard after a close
   EXPECT_EQ(calendar->property("month").toInt(), today.month() - 1);  // reopened: back to now
 }
 
