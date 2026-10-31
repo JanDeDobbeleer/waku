@@ -485,8 +485,11 @@ bool isPairedDeviceId(const QString& id) {
 }
 
 // Fills name/type/connected/battery of classic or LE devices. WinRT lookups start in a batch.
-void enrichDevices(std::vector<BluetoothDevice>& devices) {
+// Stops early, leaving the rest as they are, once `running` (when given) turns false.
+void enrichDevices(std::vector<BluetoothDevice>& devices,
+                   const std::atomic<bool>* running = nullptr) {
   for (size_t begin = 0; begin < devices.size(); begin += kEnrichBatch) {
+    if (running && !running->load()) return;
     const size_t end = std::min(devices.size(), begin + kEnrichBatch);
     std::vector<winrt::Windows::Foundation::IAsyncOperation<bt::BluetoothDevice>> classicOps(
         end - begin, nullptr);
@@ -505,6 +508,7 @@ void enrichDevices(std::vector<BluetoothDevice>& devices) {
       }
     }
     for (size_t i = begin; i < end; ++i) {
+      if (running && !running->load()) return;
       BluetoothDevice& device = devices[i];
       if (!device.addressInt) continue;
       if (device.isLe) {
@@ -566,8 +570,9 @@ void enrichDevices(std::vector<BluetoothDevice>& devices) {
 // list_le_devices: paired BLE devices known to Windows. nullopt = enumeration failed.
 // The paired-LE selector returns one object per device. The unfiltered FindAllAsync() Python uses
 // also returns every GATT service interface (about 1900 objects, 10 s) and opening each one took
-// 95 s on a Surface Pro 11, which held the first Bluetooth snapshot back.
-std::optional<std::vector<BluetoothDevice>> listLeDevices() {
+// 95 s on a Surface Pro 11, which held the first Bluetooth snapshot back. Gives nullopt once
+// `running` turns false.
+std::optional<std::vector<BluetoothDevice>> listLeDevices(const std::atomic<bool>& running) {
   try {
     std::map<QString, BluetoothDevice> found;
     QElapsedTimer timer;
@@ -586,6 +591,7 @@ std::optional<std::vector<BluetoothDevice>> listLeDevices() {
       qWarning() << "BTDBG LE list" << all.Size() << "filtered" << filtered << timer.elapsed()
                  << "ms";
     for (const auto& info : all) {
+      if (!running.load()) return std::nullopt;
       const QString id = toQString(info.Id());
       if (!filtered && !id.contains(QLatin1String("BTHLEDEVICE#"), Qt::CaseInsensitive) &&
           !id.contains(QLatin1String("BTHLE#DEV_"), Qt::CaseInsensitive))
@@ -917,7 +923,13 @@ class BluetoothWorker : public QObject {
  public slots:
   void start() {
     wabar::kernel::ensureWinrtApartment();
+    // stopSoon() may run on the GUI thread at any point; it sets stopping_ before it clears
+    // started_, so either this sees stopping_ or stopSoon's clear comes after this store.
     started_ = true;
+    if (stopping_) {
+      started_ = false;
+      return;
+    }
     startAdapterWatch();
     refreshLePending_ = true;
     refresh();
@@ -936,6 +948,15 @@ class BluetoothWorker : public QObject {
   void cancelConnect() { cancel_ = true; }
   // Not a slot: the GUI thread calls it while pairDevice() blocks this thread.
   void cancelPairing() { pairCancel_ = true; }
+  // Not a slot: the GUI thread calls it before it waits for shutdown(), so whatever runs on this
+  // thread (a pair, a refresh, the first refresh of start()) ends after the WinRT call in progress
+  // instead of running to the end.
+  void stopSoon() {
+    stopping_ = true;
+    started_ = false;
+    cancel_ = true;
+    pairCancel_ = true;
+  }
 
   void scheduleRefresh() {
     if (refreshQueued_ || !started_) return;
@@ -987,7 +1008,7 @@ class BluetoothWorker : public QObject {
       publish();
       // Phase 2: the LE listing can be slow; it must not hold phase 1 back.
       if (refreshLe) {
-        if (auto refreshed = listLeDevices()) {
+        if (auto refreshed = listLeDevices(started_)) {
           if (!started_) return;
           leCache_.clear();
           for (BluetoothDevice& device : *refreshed) leCache_[device.address] = device;
@@ -1030,7 +1051,7 @@ class BluetoothWorker : public QObject {
         emit scanCompleted(static_cast<int>(BtScanStatus::RadioOff), {});
         return;
       }
-      if (auto refreshed = listLeDevices()) {
+      if (auto refreshed = listLeDevices(started_)) {
         leCache_.clear();
         for (BluetoothDevice& device : *refreshed) leCache_[device.address] = device;
       }
@@ -1209,7 +1230,7 @@ class BluetoothWorker : public QObject {
     // Idle audio with WinRT still reporting Connected is not a real disconnect.
     if (error.isEmpty() && !connect && audioBefore != std::optional<bool>(true)) {
       std::vector<BluetoothDevice> one{device};
-      enrichDevices(one);
+      enrichDevices(one, &started_);
       device = one.front();
       devices_[address] = device;
       if (device.connected) error = QStringLiteral("timeout");
@@ -1355,7 +1376,7 @@ class BluetoothWorker : public QObject {
     }
     std::vector<BluetoothDevice> result;
     for (auto& entry : byAddress) result.push_back(entry.second);
-    enrichDevices(result);
+    enrichDevices(result, &started_);
     return result;
   }
 
@@ -1540,7 +1561,9 @@ class BluetoothWorker : public QObject {
   std::atomic<bool> cancel_{false};
   std::atomic<bool> pairCancel_{false};
   std::map<QString, BluetoothDevice> nearby_;  // unpaired devices of the last scan
-  bool started_ = false;
+  // Written by this thread (start, shutdown) and by the GUI thread (stopSoon); read by both.
+  std::atomic<bool> started_{false};
+  std::atomic<bool> stopping_{false};  // set once, by stopSoon
   bool refreshQueued_ = false;
   bool refreshLePending_ = false;
   bool radioOn_ = false;
@@ -1581,7 +1604,8 @@ class RealBluetoothBackend final : public BluetoothBackend {
 
   ~RealBluetoothBackend() override {
     if (thread_.isRunning()) {
-      worker_->cancelConnect();
+      // Ends a running pair, connect or refresh first: the blocking call below waits for it.
+      worker_->stopSoon();
       QMetaObject::invokeMethod(worker_, &BluetoothWorker::shutdown, Qt::BlockingQueuedConnection);
       thread_.quit();
       thread_.wait();
