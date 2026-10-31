@@ -14,6 +14,7 @@
 #include <QThread>
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <vector>
 
@@ -189,6 +190,26 @@ class Session {
         info.autoConnect = isAutoConnect(guid, info.ssid);
         return info;
       }
+    }
+    return std::nullopt;
+  }
+
+  // The signal quality of the access point the first connected interface is associated with,
+  // straight from the connection attributes: no network list, no profile read.
+  std::optional<int> connectedQuality() const {
+    for (const GUID& guid : interfaces()) {
+      DWORD size = 0;
+      PVOID data = nullptr;
+      WLAN_OPCODE_VALUE_TYPE type = wlan_opcode_value_type_invalid;
+      if (WlanQueryInterface(handle_, &guid, wlan_intf_opcode_current_connection, nullptr, &size,
+                             &data, &type) != ERROR_SUCCESS) {
+        return std::nullopt;
+      }
+      WlanMemory dataOwner(data);
+      if (!data || size < sizeof(WLAN_CONNECTION_ATTRIBUTES)) return std::nullopt;
+      const auto* attributes = static_cast<const WLAN_CONNECTION_ATTRIBUTES*>(data);
+      if (attributes->isState != wlan_interface_state_connected) continue;
+      return static_cast<int>(attributes->wlanAssociationAttributes.wlanSignalQuality);
     }
     return std::nullopt;
   }
@@ -504,11 +525,16 @@ class WlanBackend final : public WifiBackend {
 std::unique_ptr<WifiBackend> createWlanBackend() { return std::make_unique<WlanBackend>(); }
 
 std::optional<int> currentSignalQuality() {
-  Session session;
+  // Kept open between polls (WlanOpenHandle is most of the cost of a read) and closed after a read
+  // without a quality, so a WLAN service restart or a disconnect opens a fresh one. The polls run
+  // on pool threads, one at a time per Network, hence the lock.
+  static std::mutex mutex;
+  static Session session;
+  std::lock_guard lock(mutex);
   if (!session.open()) return std::nullopt;
-  const auto network = session.connected();
-  if (!network) return std::nullopt;
-  return network->quality;
+  const std::optional<int> quality = session.connectedQuality();
+  if (!quality) session.close();
+  return quality;
 }
 
 }  // namespace wabar::network

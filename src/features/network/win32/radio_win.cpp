@@ -7,6 +7,8 @@
 #include <QPointer>
 #include <QThreadPool>
 #include <atomic>
+#include <memory>
+#include <mutex>
 #include <optional>
 
 #include "features/network/radio.h"
@@ -32,13 +34,34 @@ std::optional<radios::Radio> findWifiRadio() {
   return std::nullopt;
 }
 
-RadioState readState() {
-  try {
-    if (const auto radio = findWifiRadio()) return {true, radio->State() == radios::RadioState::On};
-  } catch (...) {
+// The Wi-Fi radio found by the last enumeration. GetRadiosAsync is a device enumeration (about
+// 10 ms here), the state read of a found radio next to nothing, so a query reads the kept radio and
+// enumerates again only every kRefindQueries queries, after a switch, or when the read fails
+// (the adapter went away). Shared with the pool tasks, which may outlive the backend.
+struct RadioCache {
+  static constexpr int kRefindQueries = 30;
+  std::mutex mutex;
+  std::optional<radios::Radio> radio;
+  int queries = 0;
+
+  RadioState read() {
+    std::lock_guard lock(mutex);
+    try {
+      if (!radio || ++queries >= kRefindQueries) {
+        radio = findWifiRadio();
+        queries = 0;
+      }
+      if (radio) return {true, radio->State() == radios::RadioState::On};
+    } catch (...) {
+      radio.reset();
+    }
+    return {};
   }
-  return {};
-}
+  void forget() {
+    std::lock_guard lock(mutex);
+    radio.reset();
+  }
+};
 
 QString accessText(radios::RadioAccessStatus status) {
   switch (status) {
@@ -59,9 +82,9 @@ class SystemWifiRadio final : public WifiRadioBackend {
   void query() override {
     if (querying_.exchange(true)) return;
     QPointer<SystemWifiRadio> guard(this);
-    QThreadPool::globalInstance()->start([guard] {
+    QThreadPool::globalInstance()->start([guard, cache = cache_] {
       kernel::ensureWinrtApartment();
-      const RadioState state = readState();
+      const RadioState state = cache->read();
       post(guard, [guard, state] {
         guard->querying_ = false;
         emit guard->stateRead(state.known, state.on);
@@ -71,7 +94,7 @@ class SystemWifiRadio final : public WifiRadioBackend {
 
   void setEnabled(bool enabled) override {
     QPointer<SystemWifiRadio> guard(this);
-    QThreadPool::globalInstance()->start([guard, enabled] {
+    QThreadPool::globalInstance()->start([guard, enabled, cache = cache_] {
       kernel::ensureWinrtApartment();
       QString error;
       try {
@@ -92,7 +115,8 @@ class SystemWifiRadio final : public WifiRadioBackend {
       } catch (...) {
         error = QStringLiteral("The Wi-Fi radio could not be switched");
       }
-      const RadioState state = readState();
+      cache->forget();
+      const RadioState state = cache->read();
       post(guard, [guard, error, state] {
         emit guard->switchFinished(error.isEmpty(), error);
         emit guard->stateRead(state.known, state.on);
@@ -113,6 +137,7 @@ class SystemWifiRadio final : public WifiRadioBackend {
   }
 
   std::atomic<bool> querying_{false};
+  std::shared_ptr<RadioCache> cache_ = std::make_shared<RadioCache>();
 };
 
 }  // namespace

@@ -4,10 +4,18 @@
 #include <raserror.h>
 
 #include <QCoreApplication>
+#include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
 #include <QMetaObject>
 #include <QPointer>
+#include <QStringList>
 #include <QThreadPool>
+#include <QTimeZone>
 #include <atomic>
+#include <memory>
+#include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -40,28 +48,71 @@ std::vector<RASCONNW> activeConnections() {
   return list;
 }
 
-QVector<VpnEntry> readEntries() {
-  QVector<VpnEntry> entries;
+// The entry names of every phone book RasEnumEntries reads with a null phone book: the .pbk files
+// of the user's and the all-users profile.
+QStringList entryNames() {
+  QStringList names;
   DWORD bytes = 0;
   DWORD count = 0;
   const DWORD probe = RasEnumEntriesW(nullptr, nullptr, nullptr, &bytes, &count);
-  if (probe != ERROR_BUFFER_TOO_SMALL || bytes == 0) return entries;
+  if (probe != ERROR_BUFFER_TOO_SMALL || bytes == 0) return names;
   std::vector<RASENTRYNAMEW> list(bytes / sizeof(RASENTRYNAMEW) + 1);
   list[0].dwSize = sizeof(RASENTRYNAMEW);
   bytes = static_cast<DWORD>(list.size() * sizeof(RASENTRYNAMEW));
-  if (RasEnumEntriesW(nullptr, nullptr, list.data(), &bytes, &count) != ERROR_SUCCESS)
-    return entries;
-  const std::vector<RASCONNW> active = activeConnections();
-  for (DWORD i = 0; i < count; ++i) {
-    VpnEntry entry;
-    entry.name = QString::fromWCharArray(list[i].szEntryName);
-    for (const RASCONNW& connection : active) {
-      if (entry.name == QString::fromWCharArray(connection.szEntryName)) entry.connected = true;
-    }
-    entries.push_back(std::move(entry));
-  }
-  return entries;
+  if (RasEnumEntriesW(nullptr, nullptr, list.data(), &bytes, &count) != ERROR_SUCCESS) return names;
+  for (DWORD i = 0; i < count; ++i) names << QString::fromWCharArray(list[i].szEntryName);
+  return names;
 }
+
+// Name, size and time of every phone book file: the entries change only with them.
+QString phoneBookStamp() {
+  QString stamp;
+  for (const QString& root :
+       {qEnvironmentVariable("APPDATA"), qEnvironmentVariable("ProgramData")}) {
+    if (root.isEmpty()) continue;
+    const QDir dir(root + QStringLiteral("/Microsoft/Network/Connections/Pbk"));
+    for (const QFileInfo& file : dir.entryInfoList({QStringLiteral("*.pbk")}, QDir::Files)) {
+      stamp += file.absoluteFilePath() + QLatin1Char('|') + QString::number(file.size()) +
+               QLatin1Char('|') +
+               QString::number(file.lastModified(QTimeZone::UTC).toMSecsSinceEpoch()) +
+               QLatin1Char('\n');
+    }
+  }
+  return stamp;
+}
+
+// RasEnumEntries parses every phone book file; the poll lists the entries again only when a file
+// changed, and reads the active connections (RasEnumConnections, cheap) every time. Shared with
+// the pool tasks, which may outlive the backend.
+struct EntryCache {
+  std::mutex mutex;
+  std::optional<QString> stamp;
+  QStringList names;
+
+  QVector<VpnEntry> read() {
+    QStringList current;
+    {
+      std::lock_guard lock(mutex);
+      const QString now = phoneBookStamp();
+      if (!stamp || *stamp != now) {
+        names = entryNames();
+        stamp = now;
+      }
+      current = names;
+    }
+    QVector<VpnEntry> entries;
+    const std::vector<RASCONNW> active = activeConnections();
+    for (const QString& name : current) {
+      VpnEntry entry;
+      entry.name = name;
+      for (const RASCONNW& connection : active) {
+        if (entry.name == QString::fromWCharArray(connection.szEntryName)) entry.connected = true;
+      }
+      entries.push_back(std::move(entry));
+    }
+    return entries;
+  }
+};
 
 // Blocks until Windows has dialled (or failed); pool threads only. Returns an empty string on
 // success.
@@ -105,10 +156,10 @@ class SystemVpnBackend final : public VpnBackend {
   void refresh() override {
     if (refreshing_.exchange(true)) return;
     QPointer<SystemVpnBackend> guard(this);
-    QThreadPool::globalInstance()->start([guard] {
+    QThreadPool::globalInstance()->start([guard, cache = cache_] {
       QVector<VpnEntry> entries;
       try {
-        entries = readEntries();
+        entries = cache->read();
       } catch (...) {
       }
       post(guard, [guard, entries = std::move(entries)] {
@@ -148,6 +199,7 @@ class SystemVpnBackend final : public VpnBackend {
   }
 
   std::atomic<bool> refreshing_{false};
+  std::shared_ptr<EntryCache> cache_ = std::make_shared<EntryCache>();
 };
 
 }  // namespace

@@ -74,8 +74,13 @@ std::optional<WifiInfo> queryConnectionInfo() {
 }
 
 std::optional<std::string> localIpAddress() {
-  WSADATA data{};
-  if (WSAStartup(MAKEWORD(2, 2), &data) != 0) return std::nullopt;
+  // Winsock is started once for the process and left running (it is reference counted, and Qt
+  // Network starts it too), not started and cleaned up around every poll.
+  static const bool winsock = [] {
+    WSADATA data{};
+    return WSAStartup(MAKEWORD(2, 2), &data) == 0;
+  }();
+  if (!winsock) return std::nullopt;
   std::optional<std::string> result;
   char host[256] = {};
   if (gethostname(host, sizeof(host)) == 0) {
@@ -89,7 +94,6 @@ std::optional<std::string> localIpAddress() {
       freeaddrinfo(found);
     }
   }
-  WSACleanup();
   return result;
 }
 
