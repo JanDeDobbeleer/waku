@@ -50,6 +50,9 @@ struct TrayIconData {
   int iconWidth = 0;
   int iconHeight = 0;
   QByteArray iconRgba;
+  // iconRgba already scaled to the 32x32 tray size (scaleTrayIcon, RGBA8888), when the host did it
+  // on its own thread; empty otherwise (a 32x32 icon needs no scaling). Travels with iconRgba.
+  QByteArray scaledRgba;
   // Set by the host for one message when NIF_ICON came without readable pixels: why the handle
   // could not be read. Diagnostics only; never stored with the icon.
   QString iconError;

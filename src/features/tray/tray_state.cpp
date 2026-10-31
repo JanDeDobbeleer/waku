@@ -103,6 +103,7 @@ void updateIconData(TrayIconData& old, const TrayIconData& incoming) {
       old.iconWidth = incoming.iconWidth;
       old.iconHeight = incoming.iconHeight;
       old.iconRgba = incoming.iconRgba;
+      old.scaledRgba = incoming.scaledRgba;
     }
   }
   old.exe = incoming.exe;

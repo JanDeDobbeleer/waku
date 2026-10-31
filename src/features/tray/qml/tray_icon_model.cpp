@@ -1,29 +1,11 @@
 #include "features/tray/qml/tray_icon_model.h"
 
 #include <algorithm>
-#include <cstring>
 
 #include "features/tray/icon_scale.h"
 #include "features/tray/tray_state.h"
 
 namespace wabar::tray {
-
-namespace {
-
-QImage buildImage(const TrayIconData& data) {
-  if (data.iconWidth <= 0 || data.iconHeight <= 0 || data.iconRgba.isEmpty()) return {};
-  const qsizetype rowBytes = qsizetype{4} * data.iconWidth;
-  if (data.iconRgba.size() < rowBytes * data.iconHeight) return {};
-  QImage source(data.iconWidth, data.iconHeight, QImage::Format_RGBA8888);
-  if (source.isNull()) return {};
-  for (int y = 0; y < data.iconHeight; ++y) {
-    std::memcpy(source.scanLine(y), data.iconRgba.constData() + y * rowBytes,
-                static_cast<size_t>(rowBytes));
-  }
-  return wabar::tray::scaleTrayIcon(source);
-}
-
-}  // namespace
 
 TrayIconModel::TrayIconModel(QObject* parent) : QAbstractListModel(parent) {}
 
@@ -75,7 +57,7 @@ void TrayIconModel::apply(int id, const TrayIconData& data) {
     Row row;
     row.id = id;
     row.data = data;
-    row.image = buildImage(data);
+    row.image = wabar::tray::trayIconImage(data);
     row.revision = row.image.isNull() ? 0 : 1;
     store_->set(id, row.image);
     const int pos = static_cast<int>(rows_.size());
@@ -91,7 +73,7 @@ void TrayIconModel::apply(int id, const TrayIconData& data) {
                              row.data.iconRgba != data.iconRgba;
   row.data = data;
   if (pixelsChanged) {
-    row.image = buildImage(data);
+    row.image = wabar::tray::trayIconImage(data);
     ++row.revision;
     store_->set(id, row.image);
   }

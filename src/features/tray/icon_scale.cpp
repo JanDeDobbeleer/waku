@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <vector>
 
 namespace wabar::tray {
@@ -169,6 +170,55 @@ QImage sharpen(const QImage& source) {
 QImage scaleTrayIcon(const QImage& source, int size) {
   if (source.width() == size && source.height() == size) return source;
   return sharpen(lanczosScaleIcon(source, size, size));
+}
+
+namespace {
+
+// The raw RGBA of `data` as an image, null when it carries no usable pixels.
+QImage sourceImage(const TrayIconData& data) {
+  if (data.iconWidth <= 0 || data.iconHeight <= 0 || data.iconRgba.isEmpty()) return {};
+  const qsizetype rowBytes = qsizetype{4} * data.iconWidth;
+  if (data.iconRgba.size() < rowBytes * data.iconHeight) return {};
+  QImage source(data.iconWidth, data.iconHeight, QImage::Format_RGBA8888);
+  if (source.isNull()) return {};
+  for (int y = 0; y < data.iconHeight; ++y) {
+    std::memcpy(source.scanLine(y), data.iconRgba.constData() + y * rowBytes,
+                static_cast<size_t>(rowBytes));
+  }
+  return source;
+}
+
+constexpr qsizetype kScaledBytes = qsizetype{4} * kTrayIconSize * kTrayIconSize;
+
+}  // namespace
+
+QImage trayIconImage(const TrayIconData& data) {
+  if (data.scaledRgba.size() == kScaledBytes && !data.iconRgba.isEmpty()) {
+    QImage image(kTrayIconSize, kTrayIconSize, QImage::Format_RGBA8888);
+    if (image.isNull()) return {};
+    for (int y = 0; y < kTrayIconSize; ++y) {
+      std::memcpy(image.scanLine(y), data.scaledRgba.constData() + y * kTrayIconSize * 4,
+                  static_cast<size_t>(kTrayIconSize) * 4);
+    }
+    return image;
+  }
+  const QImage source = sourceImage(data);
+  return source.isNull() ? QImage() : scaleTrayIcon(source, kTrayIconSize);
+}
+
+QByteArray scaledTrayIconRgba(const TrayIconData& data) {
+  if (data.iconWidth == kTrayIconSize && data.iconHeight == kTrayIconSize) return {};
+  const QImage source = sourceImage(data);
+  if (source.isNull()) return {};
+  const QImage scaled =
+      scaleTrayIcon(source, kTrayIconSize).convertToFormat(QImage::Format_RGBA8888);
+  if (scaled.size() != QSize(kTrayIconSize, kTrayIconSize)) return {};
+  QByteArray bytes(kScaledBytes, Qt::Uninitialized);
+  for (int y = 0; y < kTrayIconSize; ++y) {
+    std::memcpy(bytes.data() + y * kTrayIconSize * 4, scaled.constScanLine(y),
+                static_cast<size_t>(kTrayIconSize) * 4);
+  }
+  return bytes;
 }
 
 }  // namespace wabar::tray

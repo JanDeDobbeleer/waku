@@ -182,6 +182,29 @@ TEST(TrayIconData, NifIconWithoutAHandleClearsThePixels) {
   EXPECT_EQ(old.iconWidth, 0);
 }
 
+TEST(TrayIconData, TheHostsScaledPixelsTravelWithThePixels) {
+  TrayIconData old = makeIcon(0x10, 1, "App");
+  old.scaledRgba = QByteArray(32 * 32 * 4, '\x11');
+  TrayIconData tip;  // no NIF_ICON: both stay
+  tip.messageType = kNimModify;
+  tip.uFlags = kNifTip;
+  tip.szTip = QStringLiteral("busy");
+  updateIconData(old, tip);
+  EXPECT_EQ(old.scaledRgba, QByteArray(32 * 32 * 4, '\x11'));
+  TrayIconData unreadable;  // NIF_ICON without readable pixels: both stay
+  unreadable.uFlags = kNifIcon;
+  unreadable.hIcon = 0x5678;
+  updateIconData(old, unreadable);
+  EXPECT_EQ(old.scaledRgba, QByteArray(32 * 32 * 4, '\x11'));
+  TrayIconData fresh;  // new pixels: their own scaled bytes (none for a 32 px icon)
+  fresh.uFlags = kNifIcon;
+  fresh.hIcon = 0x5679;
+  fresh.iconWidth = fresh.iconHeight = 32;
+  fresh.iconRgba = QByteArray(32 * 32 * 4, '\x22');
+  updateIconData(old, fresh);
+  EXPECT_TRUE(old.scaledRgba.isEmpty());
+}
+
 // --- host selection (the hook or no host: there is no legacy window) ----------------------------
 
 namespace {

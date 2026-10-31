@@ -10,6 +10,7 @@
 #include <cwchar>
 #include <vector>
 
+#include "features/tray/icon_scale.h"
 #include "features/tray/tray_pipe.h"
 #include "features/tray/win32/tray_win.h"
 
@@ -400,6 +401,9 @@ bool SystrayHook::handleMessage(const QByteArray& message) {
       // The DLL could not read the icon (stale or unusual handle): try from this side.
       if ((parsed.data.uFlags & kNifIcon) && parsed.data.iconRgba.isEmpty())
         extractIconRgba(parsed.data);
+      // Scaled here, not on the GUI thread: an animated icon modifies several times a second,
+      // and a large one costs milliseconds of Lanczos and sharpen.
+      if (parsed.data.uFlags & kNifIcon) parsed.data.scaledRgba = scaledTrayIconRgba(parsed.data);
       emit iconModified(parsed.data);
       break;
     case ParsedTrayMessage::Kind::IconDeleted:
