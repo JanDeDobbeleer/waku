@@ -2,6 +2,7 @@
 
 #include <QtQml/qqmlregistration.h>
 
+#include <QHash>
 #include <QObject>
 #include <QSet>
 #include <QString>
@@ -74,6 +75,9 @@ class Systray : public QObject {
  private:
   void onIconModified(const TrayIconData& data);
   void onIconDeleted(const TrayIconData& data);
+  // Logs `wabar: tray icon <exe>#<id>: <reason>` when the icon cannot show (unreadable handle, no
+  // pixels, fully transparent), once per icon and reason.
+  void diagnoseIcon(int id, const TrayIconData& incoming, const TrayIconData& stored);
   void sweep();
   void connectHost();
 
@@ -85,6 +89,8 @@ class Systray : public QObject {
   // Ids whose next left-button release is swallowed: set by doubleClick (the release of the
   // double-click gesture must not act as a second click), cleared by the next left click.
   QSet<int> swallowRelease_;
+  // The icon problems already logged, per id; dropped with the icon.
+  QHash<int, QSet<QString>> loggedIconProblems_;
   QTimer refreshTimer_;  // 200 ms single shot after the hook asks for icons: TaskbarCreated
   QTimer sweepTimer_;    // 5 s, as the Widgets build: drops icons whose owner window is gone
 };

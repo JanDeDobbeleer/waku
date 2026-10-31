@@ -5,6 +5,7 @@
 #include <QQmlEngine>
 #include <utility>
 
+#include "features/tray/icon_bits.h"
 #include "features/tray/qml/tray_image_provider.h"
 #include "features/tray/tray_click.h"
 #include "features/tray/tray_service.h"
@@ -144,10 +145,32 @@ void Systray::onIconModified(const TrayIconData& data) {
     if (result.change == wabar::tray::TrayIconRegistry::Change::Ignored) return;
     if (const TrayIconData* stored = registry_.data(result.id)) {
       model_.apply(result.id, *stored);
+      diagnoseIcon(result.id, data, *stored);
     }
   } catch (const std::exception& error) {
     qWarning().noquote() << "Tray icon update failed:" << error.what();
   }
+}
+
+void Systray::diagnoseIcon(int id, const TrayIconData& incoming, const TrayIconData& stored) {
+  QString reason;
+  if ((incoming.uFlags & kNifIcon) && incoming.iconRgba.isEmpty()) {
+    reason = incoming.iconError.isEmpty() ? QStringLiteral("the icon could not be read")
+                                          : incoming.iconError;
+    if (!stored.iconRgba.isEmpty()) reason += QStringLiteral(", keeping the previous image");
+  } else if (stored.iconRgba.isEmpty()) {
+    reason = QStringLiteral("no icon received yet");
+  } else if (const auto problem = wabar::tray::trayIconPixelsProblem(stored)) {
+    reason = *problem;
+  }
+  if (reason.isEmpty()) return;
+  QSet<QString>& logged = loggedIconProblems_[id];
+  if (logged.contains(reason)) return;
+  logged.insert(reason);
+  // Only the program's file name and the run-local id: no tooltip, path or window handle.
+  const QString name =
+      stored.exe.isEmpty() ? QString::number(id) : QStringLiteral("%1#%2").arg(stored.exe).arg(id);
+  qWarning().noquote() << QStringLiteral("wabar: tray icon %1: %2").arg(name, reason);
 }
 
 void Systray::onIconDeleted(const TrayIconData& data) {
@@ -155,6 +178,7 @@ void Systray::onIconDeleted(const TrayIconData& data) {
     if (const auto id = registry_.deleted(data)) {
       model_.remove(*id);
       swallowRelease_.remove(*id);
+      loggedIconProblems_.remove(*id);
     }
   } catch (const std::exception& error) {
     qWarning().noquote() << "Tray icon removal failed:" << error.what();
@@ -167,6 +191,7 @@ void Systray::sweep() {
     for (const int id : registry_.sweepStale(*api_)) {
       model_.remove(id);
       swallowRelease_.remove(id);
+      loggedIconProblems_.remove(id);
     }
   } catch (const std::exception& error) {
     qWarning().noquote() << "Tray sweep failed:" << error.what();

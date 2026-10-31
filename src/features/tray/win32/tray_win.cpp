@@ -7,6 +7,7 @@
 #include <QThread>
 #include <vector>
 
+#include "features/tray/icon_bits.h"
 #include "features/tray/tray_host.h"
 #include "features/tray/tray_pipe.h"
 
@@ -151,69 +152,88 @@ bool anyMouseButtonDown() {
          (GetAsyncKeyState(VK_MBUTTON) & 0x8000);
 }
 
+namespace {
+
+constexpr int kMaxIconSide = 256;
+
+// `rows` rows of `bitmap` as a top-down 32 bpp DIB; empty when GetDIBits fails.
+QByteArray readBits(HDC dc, HBITMAP bitmap, int width, int rows) {
+  BITMAPINFOHEADER header{};
+  header.biSize = sizeof(header);
+  header.biWidth = width;
+  header.biHeight = -rows;
+  header.biPlanes = 1;
+  header.biBitCount = 32;
+  header.biCompression = BI_RGB;
+  QByteArray bits(qsizetype{4} * width * rows, '\0');
+  if (GetDIBits(dc, bitmap, 0, static_cast<UINT>(rows), bits.data(),
+                reinterpret_cast<BITMAPINFO*>(&header), DIB_RGB_COLORS) != rows) {
+    return {};
+  }
+  return bits;
+}
+
+// Converts the bitmaps of `info` into data's RGBA; sets data.iconError when it cannot.
+bool convertIconInfo(const ICONINFO& info, TrayIconData& data) {
+  BITMAP bitmap{};
+  HBITMAP sized = info.hbmColor ? info.hbmColor : info.hbmMask;
+  if (!sized || !GetObjectW(sized, sizeof(bitmap), &bitmap)) {
+    data.iconError = QStringLiteral("the icon has no readable bitmap");
+    return false;
+  }
+  const int width = bitmap.bmWidth;
+  // A monochrome icon stacks the AND and XOR masks in one bitmap of twice the height.
+  const int height = info.hbmColor ? bitmap.bmHeight : bitmap.bmHeight / 2;
+  if (width <= 0 || height <= 0 || width > kMaxIconSide || height > kMaxIconSide) {
+    data.iconError = QStringLiteral("unsupported icon size %1x%2").arg(width).arg(height);
+    return false;
+  }
+  HDC dc = CreateCompatibleDC(nullptr);
+  if (!dc) {
+    data.iconError = QStringLiteral("CreateCompatibleDC failed");
+    return false;
+  }
+  QByteArray rgba;
+  if (info.hbmColor) {
+    const QByteArray color = readBits(dc, info.hbmColor, width, height);
+    const QByteArray mask = info.hbmMask ? readBits(dc, info.hbmMask, width, height) : QByteArray();
+    if (!color.isEmpty()) rgba = colorIconToRgba(color, mask, width, height);
+  } else {
+    rgba = monochromeIconToRgba(readBits(dc, info.hbmMask, width, height * 2), width, height);
+  }
+  DeleteDC(dc);
+  if (rgba.isEmpty()) {
+    data.iconError = info.hbmColor ? QStringLiteral("GetDIBits failed on the colour bitmap")
+                                   : QStringLiteral("GetDIBits failed on the monochrome mask");
+    return false;
+  }
+  data.iconRgba = rgba;
+  data.iconWidth = width;
+  data.iconHeight = height;
+  data.iconError.clear();
+  return true;
+}
+
+}  // namespace
+
 bool extractIconRgba(TrayIconData& data) {
-  if (data.hIcon == 0) return false;
+  if (data.hIcon == 0) {
+    data.iconError = QStringLiteral("NIF_ICON without an icon handle");
+    return false;
+  }
   HICON copy = CopyIcon(reinterpret_cast<HICON>(static_cast<ULONG_PTR>(data.hIcon)));
-  if (!copy) return false;
+  if (!copy) {
+    data.iconError = QStringLiteral("the icon handle is no longer valid (CopyIcon failed)");
+    return false;
+  }
   ICONINFO info{};
   const bool haveInfo = GetIconInfo(copy, &info) != FALSE;
   DestroyIcon(copy);
-  if (!haveInfo) return false;
-
-  bool ok = false;
-  BITMAP bitmap{};
-  if (info.hbmColor && GetObjectW(info.hbmColor, sizeof(bitmap), &bitmap)) {
-    const int width = bitmap.bmWidth;
-    const int height = bitmap.bmHeight;
-    if (width > 0 && height > 0 && width <= 256 && height <= 256) {
-      BITMAPINFOHEADER header{};
-      header.biSize = sizeof(header);
-      header.biWidth = width;
-      header.biHeight = -height;
-      header.biPlanes = 1;
-      header.biBitCount = 32;
-      header.biCompression = BI_RGB;
-      const size_t pixels = static_cast<size_t>(width) * static_cast<size_t>(height);
-      std::vector<BYTE> color(pixels * 4);
-      std::vector<BYTE> mask(pixels * 4);
-      HDC dc = CreateCompatibleDC(nullptr);
-      const bool haveColor =
-          GetDIBits(dc, info.hbmColor, 0, height, color.data(),
-                    reinterpret_cast<BITMAPINFO*>(&header), DIB_RGB_COLORS) == height;
-      // Icons without an alpha channel keep their transparency in the AND mask.
-      bool maskBased = true;
-      for (size_t i = 0; i < pixels; ++i) {
-        if (color[i * 4 + 3] != 0) {
-          maskBased = false;
-          break;
-        }
-      }
-      bool haveMask = false;
-      if (haveColor && maskBased && info.hbmMask) {
-        haveMask = GetDIBits(dc, info.hbmMask, 0, height, mask.data(),
-                             reinterpret_cast<BITMAPINFO*>(&header), DIB_RGB_COLORS) == height;
-      }
-      DeleteDC(dc);
-      if (haveColor) {
-        QByteArray rgba(static_cast<qsizetype>(pixels * 4), Qt::Uninitialized);
-        for (size_t i = 0; i < pixels; ++i) {
-          const BYTE b = color[i * 4 + 0];
-          const BYTE g = color[i * 4 + 1];
-          const BYTE r = color[i * 4 + 2];
-          BYTE a = color[i * 4 + 3];
-          if (maskBased) a = (haveMask && mask[i * 4] == 255) ? 0 : 255;
-          rgba[static_cast<qsizetype>(i * 4 + 0)] = static_cast<char>(r);
-          rgba[static_cast<qsizetype>(i * 4 + 1)] = static_cast<char>(g);
-          rgba[static_cast<qsizetype>(i * 4 + 2)] = static_cast<char>(b);
-          rgba[static_cast<qsizetype>(i * 4 + 3)] = static_cast<char>(a);
-        }
-        data.iconRgba = rgba;
-        data.iconWidth = width;
-        data.iconHeight = height;
-        ok = true;
-      }
-    }
+  if (!haveInfo) {
+    data.iconError = QStringLiteral("GetIconInfo failed");
+    return false;
   }
+  const bool ok = convertIconInfo(info, data);
   if (info.hbmMask) DeleteObject(info.hbmMask);
   if (info.hbmColor) DeleteObject(info.hbmColor);
   return ok;

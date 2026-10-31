@@ -3,6 +3,8 @@
 wabar_feature(
   NAME tray
   SOURCES
+    icon_bits.h
+    icon_bits.cpp
     icon_scale.h
     icon_scale.cpp
     tray_click.h
@@ -40,6 +42,7 @@ wabar_feature(
     tests/test_systray_icon_scale.cpp
     tests/test_systray_pipe.cpp
     tests/test_systray_state.cpp
+    tests/test_tray_icon_bits.cpp
     tests/test_tray_icon_registry.cpp
     tests/test_tray_model.cpp
     tests/test_tray_pins.cpp

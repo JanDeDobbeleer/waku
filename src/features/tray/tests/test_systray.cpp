@@ -233,3 +233,118 @@ TEST(Systray, EmptyFactoryRestoresTheRealPath) {
   EXPECT_FALSE(systray->available());  // offscreen
   EXPECT_EQ(systray->unavailableReason(), QStringLiteral("tray unavailable: offscreen platform"));
 }
+
+// --- icons that would show blank
+// ------------------------------------------------------------------
+
+namespace {
+
+QStringList& trayWarnings() {
+  static QStringList lines;
+  return lines;
+}
+QtMessageHandler g_previousTrayHandler = nullptr;
+
+void collectTrayWarnings(QtMsgType type, const QMessageLogContext& context, const QString& text) {
+  if (text.startsWith(QStringLiteral("wabar: tray icon "))) {
+    trayWarnings().append(text);
+    return;
+  }
+  if (g_previousTrayHandler) g_previousTrayHandler(type, context, text);
+}
+
+// Collects the `wabar: tray icon` lines while it lives.
+struct TrayWarningCapture {
+  TrayWarningCapture() {
+    trayWarnings().clear();
+    g_previousTrayHandler = qInstallMessageHandler(collectTrayWarnings);
+  }
+  ~TrayWarningCapture() { qInstallMessageHandler(g_previousTrayHandler); }
+};
+
+plat::TrayIconData withIcon(plat::TrayIconData data, char fill = '\x40') {
+  data.uFlags |= plat::kNifIcon;
+  data.hIcon = 0x4242;
+  data.iconWidth = 16;
+  data.iconHeight = 16;
+  data.iconRgba = QByteArray(16 * 16 * 4, fill);
+  return data;
+}
+
+QString iconUrlOf(Systray& systray, int row) {
+  return systray.icons()->data(systray.icons()->index(row), TrayIconModel::IconUrlRole).toString();
+}
+
+}  // namespace
+
+TEST(TrayIconBlank, IconThatArrivesLaterGetsAUrl) {
+  TrayWarningCapture capture;
+  Fixture f;
+  f.host->sendModified(icon(100, 1));  // NIM_ADD without NIF_ICON
+  ASSERT_EQ(f.rows(), 1);
+  EXPECT_TRUE(iconUrlOf(f.systray, 0).isEmpty());
+  QSignalSpy changed(f.systray.icons(), &QAbstractItemModel::dataChanged);
+  f.host->sendModified(withIcon(icon(100, 1)));
+  EXPECT_EQ(changed.count(), 1);
+  EXPECT_EQ(iconUrlOf(f.systray, 0), QStringLiteral("image://tray/0/1"));
+  EXPECT_FALSE(f.systray.icons()->image(0).isNull());
+  EXPECT_EQ(trayWarnings(),
+            QStringList{QStringLiteral("wabar: tray icon app.exe#0: no icon received yet")});
+}
+
+TEST(TrayIconBlank, TooltipAndSetVersionUpdatesKeepTheIcon) {
+  TrayWarningCapture capture;
+  Fixture f;
+  f.host->sendModified(withIcon(icon(100, 1)));
+  const QString url = iconUrlOf(f.systray, 0);
+  ASSERT_FALSE(url.isEmpty());
+
+  auto tip = icon(100, 1);  // NIM_MODIFY with NIF_TIP only, as Teams and WhatsApp send
+  tip.uFlags = plat::kNifTip;
+  tip.szTip = QStringLiteral("3 unread");
+  f.host->sendModified(tip);
+  auto setVersion = icon(100, 1);
+  setVersion.messageType = plat::kNimSetVersion;
+  setVersion.uFlags = 0;
+  setVersion.uVersion = 4;
+  f.host->sendModified(setVersion);
+
+  EXPECT_EQ(iconUrlOf(f.systray, 0), url);
+  EXPECT_FALSE(f.systray.icons()->image(0).isNull());
+  EXPECT_TRUE(trayWarnings().isEmpty());
+}
+
+TEST(TrayIconBlank, UnreadableIconKeepsThePreviousImageAndLogsOnce) {
+  TrayWarningCapture capture;
+  Fixture f;
+  f.host->sendModified(withIcon(icon(100, 1)));
+  const QString url = iconUrlOf(f.systray, 0);
+  auto broken = icon(100, 1);
+  broken.uFlags = plat::kNifIcon;
+  broken.hIcon = 0x9999;
+  broken.iconError = QStringLiteral("GetIconInfo failed");
+  f.host->sendModified(broken);
+  f.host->sendModified(broken);
+  EXPECT_EQ(iconUrlOf(f.systray, 0), url);
+  EXPECT_EQ(trayWarnings(),
+            QStringList{QStringLiteral(
+                "wabar: tray icon app.exe#0: GetIconInfo failed, keeping the previous image")});
+}
+
+TEST(TrayIconBlank, FullyTransparentIconIsLoggedOncePerIcon) {
+  TrayWarningCapture capture;
+  Fixture f;
+  f.host->sendModified(withIcon(icon(100, 1), '\0'));
+  f.host->sendModified(withIcon(icon(100, 1), '\0'));
+  f.host->sendModified(withIcon(icon(200, 1), '\0'));
+  EXPECT_EQ(
+      trayWarnings(),
+      (QStringList{
+          QStringLiteral("wabar: tray icon app.exe#0: all 16x16 pixels are fully transparent"),
+          QStringLiteral("wabar: tray icon app.exe#1: all 16x16 pixels are fully transparent"),
+      }));
+  // A new icon after the old one was removed is logged again (ids are never reused).
+  f.host->sendDeleted(icon(100, 1));
+  f.host->sendModified(withIcon(icon(100, 1), '\0'));
+  EXPECT_EQ(trayWarnings().size(), 3);
+}

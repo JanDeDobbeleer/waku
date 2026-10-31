@@ -33,8 +33,8 @@ bool isModuleLoaded(std::uint32_t pid, const QString& moduleName);
 bool anyMouseButtonDown();
 
 // Fills data.iconRgba/iconWidth/iconHeight from the HICON in data.hIcon (CopyIcon + GetDIBits,
-// the same conversion hook/trayhook.cpp does inside Explorer). Returns false if the handle is
-// stale, monochrome or larger than 256 px.
+// converted by colorIconToRgba, or monochromeIconToRgba when there is no colour bitmap). Returns
+// false and sets data.iconError when the handle is stale, unreadable or larger than 256 px.
 bool extractIconRgba(TrayIconData& data);
 
 }  // namespace wabar::tray
