@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "features/wallpapers/desktop_wallpaper.h"
+#include "features/wallpapers/testing/fake_wallpaper_backend.h"
 #include "features/wallpapers/wallpaper_files.h"
 #include "features/wallpapers/wallpaper_manager.h"
 
@@ -44,40 +45,10 @@ QString nativeAbsolute(const QString& path) {
   return QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath());
 }
 
-// The fake desktop: records every set and answers the monitor questions.
-struct FakeDesktop {
-  struct Set {
-    QString monitor;
-    QString path;
-  };
-  std::vector<Set> sets;
-  std::vector<WallpaperMonitor> monitors{{QStringLiteral("MON1"), QRect(0, 0, 800, 600)}};
-  QHash<QString, QString> current;
-  bool failSet = false;
-  int backendsCreated = 0;
-};
-
-class FakeBackend final : public DesktopWallpaperBackend {
- public:
-  explicit FakeBackend(std::shared_ptr<FakeDesktop> desktop) : desktop_(std::move(desktop)) {}
-  bool setWallpaper(const QString& monitorId, const QString& path, QString* error) override {
-    if (desktop_->failSet) {
-      if (error) *error = QStringLiteral("fake failure");
-      return false;
-    }
-    desktop_->sets.push_back({monitorId, path});
-    return true;
-  }
-  std::vector<WallpaperMonitor> monitors() override { return desktop_->monitors; }
-  QString wallpaperOf(const QString& id) override { return desktop_->current.value(id); }
-
- private:
-  std::shared_ptr<FakeDesktop> desktop_;
-};
-
 // A manager wired to the fake desktop: it never reaches the real wallpaper or the shell.
 struct ManagerRig {
-  std::shared_ptr<FakeDesktop> desktop = std::make_shared<FakeDesktop>();
+  std::shared_ptr<DesktopState> desktop = std::make_shared<DesktopState>();
+  int backendsCreated = 0;
   std::vector<QString> commands;
   std::vector<std::function<void(const QString&)>> pendingCommands;
   bool deferCommands = false;
@@ -85,9 +56,10 @@ struct ManagerRig {
   std::unique_ptr<WallpaperManager> manager;
 
   ManagerRig() {
+    desktop->monitors = {{QStringLiteral("MON1"), QRect(0, 0, 800, 600)}};
     WallpaperManager::Dependencies deps;
     deps.backend = [this] {
-      ++desktop->backendsCreated;
+      ++backendsCreated;
       return std::make_unique<FakeBackend>(desktop);
     };
     deps.runner = [this](const QString& command, std::function<void(const QString&)> done) {
@@ -157,22 +129,22 @@ TEST_F(WallpaperManagerTest, ChangeBackgroundNeverRepeatsAndSetsEveryMonitor) {
 
   rig_.picks = {0};
   manager.changeBackground();
-  ASSERT_EQ(rig_.desktop->sets.size(), 1u);
-  EXPECT_TRUE(rig_.desktop->sets[0].monitor.isEmpty());  // all monitors
-  EXPECT_EQ(rig_.desktop->sets[0].path, nativeAbsolute(files[0]));
+  ASSERT_EQ(rig_.desktop->calls.size(), 1u);
+  EXPECT_TRUE(rig_.desktop->calls[0].monitor.isEmpty());  // all monitors
+  EXPECT_EQ(rig_.desktop->calls[0].path, nativeAbsolute(files[0]));
 
   // The picker keeps answering 0 first; the manager must re-pick until the image differs.
   rig_.picks = {0, 0, 2};
   manager.changeBackground();
-  ASSERT_EQ(rig_.desktop->sets.size(), 2u);
-  EXPECT_EQ(rig_.desktop->sets[1].path, nativeAbsolute(files[2]));
+  ASSERT_EQ(rig_.desktop->calls.size(), 2u);
+  EXPECT_EQ(rig_.desktop->calls[1].path, nativeAbsolute(files[2]));
 }
 
 TEST_F(WallpaperManagerTest, ChangeBackgroundWithoutImagesTouchesNothing) {
   rig_.manager->configure({QDir(temp_.path()).filePath(QStringLiteral("empty"))}, 60, false, {});
   rig_.manager->changeBackground();
-  EXPECT_TRUE(rig_.desktop->sets.empty());
-  EXPECT_EQ(rig_.desktop->backendsCreated, 0);
+  EXPECT_TRUE(rig_.desktop->calls.empty());
+  EXPECT_EQ(rig_.backendsCreated, 0);
   EXPECT_FALSE(rig_.manager->isRunning());
 }
 
@@ -190,7 +162,7 @@ TEST_F(WallpaperManagerTest, RunAfterReplacesImageAndBlocksOverlappingChanges) {
   EXPECT_EQ(rig_.manager->lastImage(), nativeAbsolute(files[1]));
 
   rig_.manager->changeBackground();  // ignored: a change is still running
-  EXPECT_EQ(rig_.desktop->sets.size(), 1u);
+  EXPECT_EQ(rig_.desktop->calls.size(), 1u);
 
   rig_.pendingCommands.front()(QString());
   ASSERT_EQ(rig_.commands.size(), 2u);
@@ -226,7 +198,7 @@ TEST_F(WallpaperManagerTest, SettingOneMonitorTargetsThatMonitor) {
   const QString image = makeImages(1).front();
   rig_.manager->configure({temp_.path()}, 60, false, {});
   rig_.manager->setWallpaper(image, QStringLiteral("MON1"));
-  ASSERT_EQ(rig_.desktop->sets.size(), 1u);
-  EXPECT_EQ(rig_.desktop->sets[0].monitor, QStringLiteral("MON1"));
-  EXPECT_EQ(rig_.desktop->sets[0].path, nativeAbsolute(image));
+  ASSERT_EQ(rig_.desktop->calls.size(), 1u);
+  EXPECT_EQ(rig_.desktop->calls[0].monitor, QStringLiteral("MON1"));
+  EXPECT_EQ(rig_.desktop->calls[0].path, nativeAbsolute(image));
 }

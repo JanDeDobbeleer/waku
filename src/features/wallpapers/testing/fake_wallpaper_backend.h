@@ -16,22 +16,33 @@
 
 namespace wabar::wallpapers {
 
+// What the fake desktop was told, and how it answers. Shared by the backends a test creates.
 struct DesktopState {
-  QString wallpaper;
-  QStringList sets;
+  struct Call {
+    QString monitor;  // empty: every monitor
+    QString path;
+  };
+  QString wallpaper;        // the last path set
+  QStringList sets;         // every path set, in order
+  std::vector<Call> calls;  // every set with its monitor id, in order
+  std::vector<WallpaperMonitor> monitors{{QStringLiteral("mon-1"), QRect(0, 0, 100, 100)}};
+  bool failSet = false;  // setWallpaper fails and changes nothing
 };
 
 class FakeBackend final : public DesktopWallpaperBackend {
  public:
   explicit FakeBackend(std::shared_ptr<DesktopState> state) : state_(std::move(state)) {}
-  bool setWallpaper(const QString&, const QString& path, QString*) override {
+  bool setWallpaper(const QString& monitorId, const QString& path, QString* error) override {
+    if (state_->failSet) {
+      if (error) *error = QStringLiteral("fake failure");
+      return false;
+    }
     state_->wallpaper = path;
     state_->sets << path;
+    state_->calls.push_back({monitorId, path});
     return true;
   }
-  std::vector<WallpaperMonitor> monitors() override {
-    return {{QStringLiteral("mon-1"), QRect(0, 0, 100, 100)}};
-  }
+  std::vector<WallpaperMonitor> monitors() override { return state_->monitors; }
   QString wallpaperOf(const QString&) override { return state_->wallpaper; }
 
  private:
