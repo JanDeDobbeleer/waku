@@ -7,8 +7,11 @@ disconnect for classic audio devices (Python `BluetoothManager`), plus the Bluet
 
 - `bluetooth.h`: value types (`BluetoothDevice`, `BluetoothStatus`), the pure classification helpers,
   `BluetoothBackend` (the seam a fake implements) and the factories.
-- `win32/bluetooth_win.cpp`: BluetoothAPIs, WinRT enumeration, PnP battery property and the
-  `IKsControl` audio connect. The undocumented calls are allowlisted in `docs/architecture.md`.
+- `win32/bluetooth_win.cpp`: BluetoothAPIs, WinRT enumeration, the PnP battery property, the
+  worker and the backend thread. `win32/bluetooth_audio_win.{h,cpp}`: the `IKsControl` audio
+  connect (Core Audio and kernel streaming, no WinRT projection). `win32/bluetooth_types_win.cpp`:
+  the classification helpers of `bluetooth.h` (they read WinRT constants). The undocumented calls
+  are allowlisted in `docs/architecture.md`.
 - `qml/bluetooth_service.*`: the `Bluetooth` QML singleton mirroring the backend snapshots.
 - `qml/Bluetooth.qml`: the widget.
 - `testing/fake_bluetooth_backend.h`: `FakeBackend` for the tests.

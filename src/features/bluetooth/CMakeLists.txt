@@ -4,6 +4,9 @@ wabar_feature(NAME bluetooth
   SOURCES
     bluetooth.h
   WIN32_SOURCES
+    win32/bluetooth_audio_win.h
+    win32/bluetooth_audio_win.cpp
+    win32/bluetooth_types_win.cpp
     win32/bluetooth_win.cpp
   QML_SOURCES
     qml/bluetooth_service.h
