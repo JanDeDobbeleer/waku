@@ -599,3 +599,19 @@ TEST(TaskbarModel, AWindowThatClosesWhileItsAppIdIsReadLeavesNoGhost) {
   EXPECT_TRUE(f.keys().isEmpty());
   EXPECT_TRUE(f.service->windows().empty());
 }
+
+TEST(TaskbarModel, RowsCarryTheExeClassHandleAndMonitorOfTheirWindow) {
+  Fixture f;
+  f.system->add(kFirst, QStringLiteral("First"), QStringLiteral("a"),
+                QStringLiteral("notepad.exe"));
+  f.start();
+  ASSERT_EQ(f.rows(), 1);
+  EXPECT_EQ(f.at(0, TaskbarModel::ExeRole).toString(), QStringLiteral("notepad.exe"));
+  EXPECT_EQ(f.at(0, TaskbarModel::ClassNameRole).toString(), QStringLiteral("TestClass"));
+  EXPECT_EQ(f.at(0, TaskbarModel::HwndRole).toLongLong(), static_cast<qlonglong>(kFirst));
+  EXPECT_EQ(f.at(0, TaskbarModel::MonitorHandleRole).toLongLong(),
+            static_cast<qlonglong>(f.system->widgetMonitor));
+  const QHash<int, QByteArray> names = f.model.roleNames();
+  EXPECT_EQ(names.value(TaskbarModel::ExeRole), QByteArray("exe"));
+  EXPECT_EQ(names.value(TaskbarModel::MonitorHandleRole), QByteArray("monitorHandle"));
+}

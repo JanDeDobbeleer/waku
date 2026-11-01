@@ -55,6 +55,10 @@ class TaskbarModel : public QAbstractListModel {
     MinimizedRole,
     FlashingRole,
     UniqueIdRole,
+    ExeRole,            // process name of the (first) window, "foo.exe"
+    ClassNameRole,      // window class of it
+    HwndRole,           // its handle, as a number
+    MonitorHandleRole,  // the HMONITOR it is on, 0 when unknown (matches Workspaces monitors)
   };
 
   explicit TaskbarModel(QObject* parent = nullptr);
@@ -117,6 +121,10 @@ class TaskbarModel : public QAbstractListModel {
     bool active = false;
     bool minimized = false;
     bool flashing = false;
+    QString exe;
+    QString className;
+    WindowHandle hwnd = 0;
+    WindowHandle monitor = 0;
 
     bool operator==(const Row&) const = default;
   };

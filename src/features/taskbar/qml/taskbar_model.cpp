@@ -16,10 +16,21 @@ int TaskbarModel::rowCount(const QModelIndex& parent) const {
 
 QHash<int, QByteArray> TaskbarModel::roleNames() const {
   return {
-      {KeyRole, "key"},           {TitleRole, "title"},       {TooltipRole, "tooltip"},
-      {IconUrlRole, "iconUrl"},   {CountRole, "windowCount"}, {PinnedRole, "pinned"},
-      {RunningRole, "running"},   {ActiveRole, "active"},     {MinimizedRole, "minimized"},
-      {FlashingRole, "flashing"}, {UniqueIdRole, "uniqueId"},
+      {KeyRole, "key"},
+      {TitleRole, "title"},
+      {TooltipRole, "tooltip"},
+      {IconUrlRole, "iconUrl"},
+      {CountRole, "windowCount"},
+      {PinnedRole, "pinned"},
+      {RunningRole, "running"},
+      {ActiveRole, "active"},
+      {MinimizedRole, "minimized"},
+      {FlashingRole, "flashing"},
+      {UniqueIdRole, "uniqueId"},
+      {ExeRole, "exe"},
+      {ClassNameRole, "className"},
+      {HwndRole, "hwnd"},
+      {MonitorHandleRole, "monitorHandle"},
   };
 }
 
@@ -50,6 +61,14 @@ QVariant TaskbarModel::data(const QModelIndex& index, int role) const {
       return row.flashing;
     case UniqueIdRole:
       return row.uniqueId;
+    case ExeRole:
+      return row.exe;
+    case ClassNameRole:
+      return row.className;
+    case HwndRole:
+      return static_cast<qlonglong>(row.hwnd);
+    case MonitorHandleRole:
+      return static_cast<qlonglong>(row.monitor);
     default:
       return {};
   }
@@ -207,6 +226,10 @@ std::vector<TaskbarModel::Row> TaskbarModel::compute() {
     row.count = static_cast<int>(row.members.size());
     row.iconKey = rep ? rep->hwnd : row.members.front();
     row.title = rep ? rep->info.title : QString();
+    row.exe = rep && rep->info.processName ? *rep->info.processName : QString();
+    row.className = rep ? rep->info.className : QString();
+    row.hwnd = rep ? rep->hwnd : 0;
+    row.monitor = rep ? rep->info.monitor : 0;
     row.tooltip =
         row.count > 1 ? QStringLiteral("%1 (%2 windows)").arg(row.title).arg(row.count) : row.title;
     row.pinned = !row.uniqueId.isEmpty() && pins.contains(row.uniqueId);
