@@ -19,6 +19,8 @@ wabar_feature(
     wallpaper_layout.cpp
     wallpaper_manager.h
     wallpaper_manager.cpp
+    wallpaper_reveal.h
+    wallpaper_reveal.cpp
   WIN32_SOURCES
     win32/desktop_wallpaper_win.cpp
     win32/lock_screen_win.cpp
@@ -41,6 +43,7 @@ wabar_feature(
     tests/test_wallpaper_decode.cpp
     tests/test_wallpaper_lock_screen.cpp
     tests/test_wallpaper_manager.cpp
+    tests/test_wallpaper_reveal.cpp
     tests/test_wallpaper_service.cpp
     tests/test_wallpaper_transition.cpp
     tests/test_wallpapers.cpp
