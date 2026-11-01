@@ -4,7 +4,6 @@
 #include <QImage>
 #include <QObject>
 #include <QPointer>
-#include <QQuickPaintedItem>
 #include <QString>
 #include <QVariantAnimation>
 #include <cstdint>
@@ -14,6 +13,7 @@
 #include <utility>
 #include <vector>
 
+#include "features/wallpapers/qml/wallpaper_scene.h"
 #include "features/wallpapers/wallpaper_decode.h"
 #include "features/wallpapers/wallpaper_layout.h"
 #include "features/wallpapers/win32/workerw.h"
@@ -33,29 +33,6 @@ void paintWallpaperFrame(QPainter& painter, const std::vector<ScreenArea>& areas
                          const std::vector<ScaledImage>& oldImages,
                          const std::vector<ScaledImage>& newImages, double dpr,
                          const QColor& background, const QString& animation, double t);
-
-// The one Qt Quick item of the overlay scene. GUI thread (scene graph painting runs on it for the
-// Image render target).
-class WallpaperScene : public QQuickPaintedItem {
-  Q_OBJECT
- public:
-  explicit WallpaperScene(QQuickItem* parent = nullptr);
-  void setContent(std::vector<ScreenArea> areas, std::vector<ScaledImage> oldImages,
-                  std::vector<ScaledImage> newImages, double dpr, QColor background,
-                  QString animation);
-  void setProgress(double value);
-  double progress() const { return progress_; }
-  void paint(QPainter* painter) override;
-
- private:
-  std::vector<ScreenArea> areas_;
-  std::vector<ScaledImage> old_;
-  std::vector<ScaledImage> new_;
-  double dpr_ = 1.0;
-  QColor background_ = Qt::black;
-  QString animation_;
-  double progress_ = 0.0;
-};
 
 // Plays the reveal of a new wallpaper over the old one on a frameless QQuickWindow that is
 // re-parented to WorkerW (above the wallpaper, below the desktop icons), then emits finished() so

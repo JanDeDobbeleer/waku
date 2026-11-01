@@ -54,40 +54,6 @@ void paintWallpaperFrame(QPainter& painter, const std::vector<ScreenArea>& areas
   }
 }
 
-// --- WallpaperScene
-
-WallpaperScene::WallpaperScene(QQuickItem* parent) : QQuickPaintedItem(parent) {
-  setAntialiasing(true);
-  setOpaquePainting(true);
-}
-
-void WallpaperScene::setContent(std::vector<ScreenArea> areas, std::vector<ScaledImage> oldImages,
-                                std::vector<ScaledImage> newImages, double dpr, QColor background,
-                                QString animation) {
-  areas_ = std::move(areas);
-  old_ = std::move(oldImages);
-  new_ = std::move(newImages);
-  dpr_ = dpr;
-  background_ = background;
-  animation_ = std::move(animation);
-  update();
-}
-
-void WallpaperScene::setProgress(double value) {
-  progress_ = value;
-  update();
-}
-
-void WallpaperScene::paint(QPainter* painter) {
-  try {
-    paintWallpaperFrame(*painter, areas_, old_, new_, dpr_, background_, animation_, progress_);
-  } catch (const std::exception& error) {
-    qWarning().noquote() << "Wallpaper overlay paint failed:" << error.what();
-  } catch (...) {
-    qWarning() << "Wallpaper overlay paint failed";
-  }
-}
-
 // --- WallpaperTransition
 
 WallpaperTransition::Platform WallpaperTransition::systemPlatform() {

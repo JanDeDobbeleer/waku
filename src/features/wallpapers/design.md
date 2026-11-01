@@ -108,14 +108,39 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
 (git tag `widgets-main-final`).
 
 - **Approach.** `qml/wallpaper_transition.*`: `WallpaperTransition` owns a frameless,
-  input-transparent `QQuickWindow` and one `WallpaperScene` (a `QQuickPaintedItem`, built in C++: no QML file, the
-  reveal shapes come from `revealPath`) that draws, for
-  every monitor area, the old image and then the new image clipped by the reveal shape at
-  `progress` (0..1). A `QVariantAnimation` (1200 ms, OutQuad) drives `progress`. The window is
+  input-transparent `QQuickWindow` and one `WallpaperScene` (`qml/wallpaper_scene.*`, a plain
+  `QQuickItem` with scene graph nodes, built in C++: no QML file) that shows, for every monitor
+  area, the old image and then the new image revealed by the animation's shape at `progress`
+  (0..1). A `QVariantAnimation` (1200 ms, OutQuad) drives `progress`. The window is
   re-parented to WorkerW (above the wallpaper, below the icons) and ends when the animation does.
   When it ends the service sets the wallpaper (one `IDesktopWallpaper` call, the existing path); the
   overlay lingers a moment so the desktop never shows the old picture, then goes. A new change
   during the animation cancels it (no commit for the cancelled one) and starts the next.
+- **Scene graph, not a painted item.** The first version was a full-screen `QQuickPaintedItem`:
+  every frame it rasterized both images into a CPU frame buffer (screen size, 4 bytes a pixel)
+  that was then uploaded again. `WallpaperScene` uploads each laid-out image once
+  (`createTextureFromImage`, one texture per distinct image, so a span layout shares) and a frame
+  only rewrites vertices. Per monitor: an opaque textured quad for the old image (hidden once the
+  reveal is complete); a flat-colour fill of the reveal shape (the desktop background, as the
+  reference fills the clip); the new image as triangles of the reveal shape with texture
+  coordinates, under a `QSGOpacityNode` that holds `t` for a fade and 1 for the shapes. Qt Quick has no
+  path clip, so the shapes are convex polygons (`wallpaper_reveal.*`, UI-free: `revealPieces`,
+  `computeAreaFrame`): the circle and the slide are a polygon whose edge stays within 0.2 px of
+  the circle (16 to 512 segments), the diamond a quad, the split two rectangles, each clipped to
+  the monitor and, for the new image, to the image's own rectangle (a "fit" layout leaves the
+  background around it). No shader, no `.qsb`.
+- **Reference.** `paintWallpaperFrame` stays: `renderFrame()` and the tests render through it.
+  `test_wallpaper_reveal.cpp` checks that the polygons cover the same area and the same pixels as
+  `revealPath` for every shape at several progress values and monitor sizes;
+  `test_wallpaper_scene.cpp` checks the node tree (textures per distinct image, one rebuild,
+  geometry per frame) on the software scene graph, which builds the tree but draws no triangles.
+- **Threads of the scene.** The GUI thread passes the images (they share the pixels of the
+  transition's pixmaps) and the progress. `updatePaintNode` runs on the render thread with the GUI
+  thread blocked; the textures and nodes live there and go with the node. It catches every
+  exception and logs. A lost scene graph rebuilds from the same images.
+- **Edge quality.** The reveal edge is antialiased only if the window's surface is multisampled;
+  the overlay window asks for no multisampling (a 4x swap chain costs 4x its memory), so the
+  circle, diamond and slide edge are one hard pixel step, the split edges are pixel aligned.
 - **Reused.** `wallpaper_layout` (`layoutForScreens`, `revealPath`, `readDesktopSettings`): the same
   per-monitor areas, fit modes (fill, fit, stretch, tile, center, span) and reveal shapes as the old
   engine. `attachToWorkerW` and `transcodedWallpaperPath` (`win32/workerw.h`) for the Win32 side: no Win32 is

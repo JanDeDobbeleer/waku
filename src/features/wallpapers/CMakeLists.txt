@@ -29,6 +29,8 @@ wabar_feature(
     win32/workerw.h
     win32/workerw.cpp
   QML_SOURCES
+    qml/wallpaper_scene.h
+    qml/wallpaper_scene.cpp
     qml/wallpaper_settings.h
     qml/wallpaper_settings.cpp
     qml/wallpaper_transition.h
@@ -44,6 +46,7 @@ wabar_feature(
     tests/test_wallpaper_lock_screen.cpp
     tests/test_wallpaper_manager.cpp
     tests/test_wallpaper_reveal.cpp
+    tests/test_wallpaper_scene.cpp
     tests/test_wallpaper_service.cpp
     tests/test_wallpaper_transition.cpp
     tests/test_wallpapers.cpp
