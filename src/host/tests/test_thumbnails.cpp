@@ -196,6 +196,50 @@ TEST(Thumbnails, MemoryOnlyStoreWorksWithoutAFolder) {
   EXPECT_TRUE(memory.cacheFile(source, 200).isEmpty());
 }
 
+TEST(Thumbnails, MemoryCacheEvictsByImageSizeAbove8Mb) {
+  // No cache folder: a repeat call shares the pixel buffer only on a memory hit, so equal buffers
+  // show a hit and a fresh buffer shows an eviction.
+  QTemporaryDir dir;
+  ThumbnailStore store{QString()};
+  const QDir sources(dir.path());
+  // 1000 x 1000 RGB32 is 4 MB. Two fit in 8 MB; the third pushes the oldest out.
+  const QString a = writePng(sources, QStringLiteral("a.png"), 1000, 1000);
+  const QString b = writePng(sources, QStringLiteral("b.png"), 1000, 1000);
+  const QString c = writePng(sources, QStringLiteral("c.png"), 1000, 1000);
+
+  const QImage first = store.get(a, 1000);
+  const QImage second = store.get(b, 1000);
+  ASSERT_FALSE(first.isNull());
+  ASSERT_FALSE(second.isNull());
+  EXPECT_EQ(store.get(a, 1000).constBits(), first.constBits());
+  EXPECT_EQ(store.get(b, 1000).constBits(), second.constBits());
+
+  const QImage third = store.get(c, 1000);
+  ASSERT_FALSE(third.isNull());
+  EXPECT_EQ(store.get(c, 1000).constBits(), third.constBits());
+  EXPECT_EQ(store.get(b, 1000).constBits(), second.constBits());
+  // `a` was evicted: a new call decodes again into a new buffer.
+  EXPECT_NE(store.get(a, 1000).constBits(), first.constBits());
+}
+
+TEST(Thumbnails, EvictedImageStaysValidWhileReferenced) {
+  QTemporaryDir dir;
+  ThumbnailStore store{QString()};
+  const QDir sources(dir.path());
+  const QString a = writePng(sources, QStringLiteral("a.png"), 1000, 1000);
+  const QImage held = store.get(a, 1000);
+  ASSERT_FALSE(held.isNull());
+  const QRgb corner = held.pixel(999, 999);
+  // Fill the cache past 8 MB with other images so `a` is evicted.
+  for (int i = 0; i < 4; ++i) {
+    const QString other = writePng(sources, QStringLiteral("o%1.png").arg(i), 1000, 1000);
+    ASSERT_FALSE(store.get(other, 1000).isNull());
+  }
+  EXPECT_NE(store.get(a, 1000).constBits(), held.constBits());
+  EXPECT_EQ(held.size(), QSize(1000, 1000));
+  EXPECT_EQ(held.pixel(999, 999), corner);
+}
+
 TEST(Thumbnails, PruneKeepsTheNewestFiles) {
   Fixture f;
   const QDateTime now = QDateTime::currentDateTime();
