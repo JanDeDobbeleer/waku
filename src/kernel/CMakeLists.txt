@@ -1,10 +1,11 @@
 # wabar_kernel: helpers with no domain knowledge that two or more units use (proposal, section 6).
 #   win32/  Windows build number, WinRT apartment, hidden process launch, shell open, app activation,
 #           forced foreground focus, shell icons, COM scope, task thread, WinRT strings,
-#           environment expansion
+#           environment expansion, the RegisterHotKey backend of the hotkey table
 #   qt/     live-desktop gate, polled-source base class, the one app data folder, lingering hubs,
-#           atomic file write, guarded post to the GUI thread
+#           atomic file write, guarded post to the GUI thread, the global hotkey table (Hotkeys)
 #   qml/    the QML face of the polled source (compiled into wabar.services, not into this library)
+#   testing/ header-only fakes for tests (the fake hotkey backend)
 # Include root is src/ (#include "kernel/qt/app_data.h"). Qt Core and Gui only; the Windows SDK
 # only under win32/ (rule S3). Everything links this library through wabar_feature() or by name.
 add_library(wabar_kernel STATIC
@@ -14,11 +15,14 @@ add_library(wabar_kernel STATIC
   win32/com_scope.cpp
   win32/environment.h
   win32/environment.cpp
+  win32/hotkeys_win.cpp
   qt/app_data.h
   qt/app_data.cpp
   qt/file_write.h
   qt/file_write.cpp
   qt/gui_post.h
+  qt/hotkeys.h
+  qt/hotkeys.cpp
   qt/linger.h
   qt/linger.cpp
   qt/live_desktop.h
@@ -56,6 +60,7 @@ wabar_contribute(
     tests/test_environment.cpp
     tests/test_file_write.cpp
     tests/test_gui_post.cpp
+    tests/test_hotkeys.cpp
     tests/test_linger.cpp
     tests/test_live_desktop.cpp
     tests/test_polled_source.cpp

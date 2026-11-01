@@ -7,9 +7,9 @@
 #include <memory>
 #include <set>
 
-#include "host/hotkeys.h"
+#include "kernel/qt/hotkeys.h"
 
-namespace wabar::host {
+namespace wabar::kernel {
 
 class FakeHotkeyBackend final : public HotkeyBackend {
  public:
@@ -56,4 +56,4 @@ class ScopedFakeHotkeys {
   FakeHotkeyBackend* backend = nullptr;
 };
 
-}  // namespace wabar::host
+}  // namespace wabar::kernel

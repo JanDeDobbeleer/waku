@@ -5,9 +5,9 @@
 #include <QDebug>
 #include <set>
 
-#include "host/hotkeys.h"
+#include "kernel/qt/hotkeys.h"
 
-namespace wabar::host {
+namespace wabar::kernel {
 namespace {
 
 // RegisterHotKey (documented) with a null window: WM_HOTKEY is posted to the registering thread's
@@ -67,4 +67,4 @@ std::unique_ptr<HotkeyBackend> makeWin32HotkeyBackend() {
   return std::make_unique<Win32HotkeyBackend>();
 }
 
-}  // namespace wabar::host
+}  // namespace wabar::kernel

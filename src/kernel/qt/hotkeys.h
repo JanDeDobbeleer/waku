@@ -8,7 +8,7 @@
 #include <set>
 #include <vector>
 
-namespace wabar::host {
+namespace wabar::kernel {
 
 // A global hotkey as RegisterHotKey wants it: MOD_ALT 1, MOD_CONTROL 2, MOD_SHIFT 4, MOD_WIN 8.
 struct HotkeyCombo {
@@ -28,7 +28,7 @@ std::optional<HotkeyCombo> parseHotkey(const QString& keys);
 
 // Where the keys live. The real one calls RegisterHotKey on the GUI thread and receives WM_HOTKEY
 // through a native event filter in Qt's own message loop; tests replace it with a fake
-// (host/testing/hotkeys_fixtures.h). Many ids, one per distinct combination.
+// (kernel/testing/hotkeys_fixtures.h). Many ids, one per distinct combination.
 class HotkeyBackend {
  public:
   virtual ~HotkeyBackend() = default;
@@ -47,13 +47,14 @@ class HotkeyBackend {
   std::function<void(int)> pressed_;
 };
 
-// The real backend (win32/hotkeys_win.cpp).
+// The real backend (kernel/win32/hotkeys_win.cpp).
 std::unique_ptr<HotkeyBackend> makeWin32HotkeyBackend();
 
-// The hotkeys of a run: shortcuts add a combination with a callback and remove it by the handle.
-// Two shortcuts on one combination share one registration and both fire. The backend is built on
-// the first add: the real one when kernel::liveDesktop("hotkeys") is true, otherwise none, and
-// then every add fails quietly (`active()` is false).
+// The hotkeys of a run: every user (host GlobalShortcut, the wallpaper gallery) adds a combination
+// with a callback and removes it by the handle. Two users on one combination share one
+// registration and both fire. The backend is built on the first add: the real one when
+// liveDesktop("hotkeys") is true, otherwise none, and then every add fails quietly (`active()` is
+// false).
 //
 // Threading: GUI thread only. Process-wide state, so one instance (see docs/architecture.md).
 class Hotkeys {
@@ -94,4 +95,4 @@ class Hotkeys {
   std::set<HotkeyCombo> reported_;
 };
 
-}  // namespace wabar::host
+}  // namespace wabar::kernel

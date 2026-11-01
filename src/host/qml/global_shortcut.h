@@ -7,7 +7,7 @@
 #include <QString>
 #include <QStringList>
 
-#include "host/hotkeys.h"
+#include "kernel/qt/hotkeys.h"
 
 namespace wabar::host {
 
@@ -21,8 +21,9 @@ namespace wabar::host {
 //     }
 //
 //   name, appid, description  identify the shortcut; `name` is what `wabarc shortcut <name>` fires
-//   keys       "alt+e", "ctrl+shift+f5", "win+space" (see parseHotkey); empty: no key, the shortcut
-//              fires only through `wabarc shortcut <name>` (bind the key in whkd or AutoHotkey)
+//   keys       "alt+e", "ctrl+shift+f5", "win+space" (kernel::parseHotkey); empty: no key, the
+//              shortcut fires only through `wabarc shortcut <name>` (bind the key in whkd or
+//              AutoHotkey)
 //   pressed    true while the shortcut fires. Windows reports no key release for a registered
 //              hotkey, so a key press is `pressed` then `released` at once
 //   registered false when `keys` is empty, invalid, taken by another program, or the desktop is
@@ -88,7 +89,7 @@ class GlobalShortcut : public QObject, public QQmlParserStatus {
   QString keys_;
   bool pressed_ = false;
   bool complete_ = false;
-  Hotkeys::Handle handle_ = 0;
+  kernel::Hotkeys::Handle handle_ = 0;
 };
 
 }  // namespace wabar::host

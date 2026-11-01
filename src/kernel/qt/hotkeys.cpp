@@ -1,4 +1,4 @@
-#include "host/hotkeys.h"
+#include "kernel/qt/hotkeys.h"
 
 #include <QDebug>
 #include <QStringList>
@@ -6,7 +6,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::host {
+namespace wabar::kernel {
 
 std::optional<HotkeyCombo> parseHotkey(const QString& keys) {
   HotkeyCombo combo;
@@ -53,7 +53,7 @@ Hotkeys::~Hotkeys() { clear(); }
 void Hotkeys::resolveBackend() {
   if (resolved_) return;
   resolved_ = true;
-  if (!kernel::liveDesktop(QStringLiteral("hotkeys"))) return;
+  if (!liveDesktop(QStringLiteral("hotkeys"))) return;
   backend_ = makeWin32HotkeyBackend();
   if (backend_) backend_->setPressedHandler([this](int id) { dispatch(id); });
 }
@@ -143,4 +143,4 @@ void Hotkeys::resetForTests() {
   resolved_ = false;
 }
 
-}  // namespace wabar::host
+}  // namespace wabar::kernel

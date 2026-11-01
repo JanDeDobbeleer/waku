@@ -56,7 +56,7 @@ void GlobalShortcut::componentComplete() {
 
 void GlobalShortcut::release() {
   if (handle_ == 0) return;
-  Hotkeys::instance().remove(handle_);
+  kernel::Hotkeys::instance().remove(handle_);
   handle_ = 0;
 }
 
@@ -64,12 +64,12 @@ void GlobalShortcut::applyKeys() {
   const bool was = isRegistered();
   release();
   if (!keys_.trimmed().isEmpty()) {
-    const std::optional<HotkeyCombo> combo = parseHotkey(keys_);
+    const std::optional<kernel::HotkeyCombo> combo = kernel::parseHotkey(keys_);
     if (!combo) {
       qWarning().noquote() << "GlobalShortcut" << name_ << ": cannot read keys" << keys_;
     } else {
       // The callback never outlives this object: the destructor removes the handle.
-      handle_ = Hotkeys::instance().add(*combo, [this] { fire(); });
+      handle_ = kernel::Hotkeys::instance().add(*combo, [this] { fire(); });
     }
   }
   if (was != isRegistered()) emit registeredChanged();
