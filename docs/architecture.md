@@ -189,6 +189,10 @@ Quickshell compatibility modules: `Quickshell`, `Quickshell.Wayland`, `Quickshel
 - Widgets and services share some names (`Cpu`, `Memory`, `Battery`, `Media`, `Workspaces`). A widget
   imports the services as `import wabar.services as S`, and so does a user config that needs them.
   This clash is why there is one module per kind and not one per feature.
+- A built-in `.qml` file whose delegates or inline components use ids of the enclosing file starts
+  with `pragma ComponentBehavior: Bound`, so qmllint and qmlcachegen know those ids. A delegate in
+  such a file gets no context properties from its view: it takes `model`, `modelData` or `index`
+  through `required property` declarations only.
 
 ### How built-in widgets ship, and how to override one
 

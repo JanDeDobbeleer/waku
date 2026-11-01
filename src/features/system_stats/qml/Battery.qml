@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import wabar
 import wabar.services as S

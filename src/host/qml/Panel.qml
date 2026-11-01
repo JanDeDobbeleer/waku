@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 // A panel docked to a screen edge, one PanelWindow per matching screen: the short form for a

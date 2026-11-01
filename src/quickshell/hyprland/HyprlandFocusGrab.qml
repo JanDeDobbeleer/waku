@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 // Quickshell.Hyprland's HyprlandFocusGrab without the compositor protocol: while `active`, the
