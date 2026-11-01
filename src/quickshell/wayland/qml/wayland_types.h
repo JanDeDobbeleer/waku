@@ -8,6 +8,7 @@
 
 #include <QObject>
 
+#include "features/desktop_state/qml/idle_inhibitor.h"
 #include "host/qml/window_enums.h"
 #include "host/qml/wlr_layershell.h"
 
@@ -18,6 +19,12 @@ struct QsWlrLayershell {
   QML_FOREIGN(wabar::host::WlrLayershell)
   QML_NAMED_ELEMENT(WlrLayershell)
   QML_UNCREATABLE("WlrLayershell is an attached property of PanelWindow")
+};
+
+struct QsIdleInhibitor {
+  Q_GADGET
+  QML_FOREIGN(wabar::desktop_state::IdleInhibitor)
+  QML_NAMED_ELEMENT(IdleInhibitor)
 };
 
 namespace QsWlrLayer {

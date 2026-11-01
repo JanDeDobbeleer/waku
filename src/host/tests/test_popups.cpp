@@ -514,3 +514,37 @@ TEST(TooltipTest, ItGetsTheBackdropOfItsBar) {
   ASSERT_TRUE(QTest::qWaitFor([&] { return tip->isVisible(); }, 2000));
   EXPECT_GT(h.native.backdrops.size(), before);
 }
+
+TEST(PopupWindowTest, ImplicitWidthAndHeightSizeTheWindowAsInQuickshell) {
+  Harness h;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import wabar
+ShellRoot {
+    Panel {
+        content: PanelLayout {
+            start: [
+                Item {
+                    id: anchorBox
+                    width: 60
+                    height: 24
+                    PopupWindow {
+                        objectName: "pop"
+                        anchor.item: anchorBox
+                        implicitWidth: 150
+                        implicitHeight: 90
+                        Text { text: "hello"; color: "white" }
+                    }
+                }
+            ]
+        }
+    }
+}
+)"));
+  ASSERT_TRUE(started(h));
+  QQuickWindow* popup = findWindow(QStringLiteral("pop"));
+  ASSERT_NE(popup, nullptr);
+  invoke(popup, "open");
+  EXPECT_TRUE(
+      QTest::qWaitFor([&] { return popup->width() == 150 && popup->height() == 90; }, 2000));
+}

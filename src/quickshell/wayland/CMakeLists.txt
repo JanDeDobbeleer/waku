@@ -1,5 +1,9 @@
 # The QML module `Quickshell.Wayland`: the layer-shell vocabulary ported shells use on a
 # PanelWindow (`WlrLayershell.layer`, `.keyboardFocus`, `.namespace`, `.exclusionMode`) and its
-# enums, mapped onto the PanelWindow's own state. Registrations only (qml/wayland_types.h).
+# enums, mapped onto the PanelWindow's own state (qml/wayland_types.h), IdleInhibitor from the
+# desktop_state feature, and IdleMonitor over the idle time (IdleMonitor.qml).
 wabar_quickshell_qml_module(wabar_quickshell_wayland Quickshell.Wayland
-  SOURCES qml/wayland_types.h)
+  QML_FILES
+    IdleMonitor.qml
+  SOURCES qml/wayland_types.h
+  DEPENDENCIES wabar wabar.services)

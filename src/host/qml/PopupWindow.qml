@@ -33,6 +33,9 @@ Window {
     property real margin: 8
     property int padding: Theme.padding
     property real spacing: 6
+    // Quickshell's size properties: when set (0 or more) they size the window; unset (-1), the content does.
+    property real implicitWidth: -1
+    property real implicitHeight: -1
 
     default property alias content: column.data
 
@@ -107,8 +110,8 @@ Window {
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
     color: "transparent"
     screen: anchor.item && bar ? screenOf(anchor.item) : null
-    width: surface.implicitWidth
-    height: surface.implicitHeight
+    width: implicitWidth >= 0 ? implicitWidth : surface.implicitWidth
+    height: implicitHeight >= 0 ? implicitHeight : surface.implicitHeight
     visible: false
 
     // Closing without a click inside: a press in the panel (the host reports it), or the popup

@@ -25,6 +25,7 @@ distinct QML types.
 | `widgets/` | `Quickshell.Widgets` | `wabar_quickshell_qml_module()` |
 | `hyprland/` | `Quickshell.Hyprland` | `wabar_quickshell_qml_module()` |
 | `bluetooth/` | `Quickshell.Bluetooth` | `wabar_quickshell_qml_module()` |
+| `networking/` | `Quickshell.Networking` | `wabar_quickshell_qml_module()` |
 | `services/upower/` | `Quickshell.Services.UPower` | `wabar_quickshell_qml_module()` |
 | `services/pipewire/` | `Quickshell.Services.Pipewire` | `wabar_quickshell_qml_module()` |
 | `services/systemtray/` | `Quickshell.Services.SystemTray` | `wabar_quickshell_qml_module()` |
@@ -61,6 +62,9 @@ and limits per type: the QML module table in `docs/architecture.md`.
 | `DesktopEntry`, `DesktopAction` | `Quickshell` | `src/features/apps/qml/desktop_entry.*` | `core/qml/quickshell_types_core.h` |
 | `ElapsedTimer` | `Quickshell` | `src/features/quickshell_io/qml/quickshell_singleton.*` | `core/qml/quickshell_types_core.h` |
 | `WlrLayershell`, `WlrLayer`, `WlrKeyboardFocus` | `Quickshell.Wayland` | `src/host/qml/wlr_layershell.*`, `src/host/qml/window_enums.h` | `wayland/qml/wayland_types.h` |
+| `IdleInhibitor` | `Quickshell.Wayland` | `src/features/desktop_state/qml/idle_inhibitor.*` | `wayland/qml/wayland_types.h` |
+| `IdleMonitor` | `Quickshell.Wayland` | `wabar.services` `DesktopState` (`idleSeconds`) | `wayland/IdleMonitor.qml` |
+| `QsMenuOpener`, `QsMenuHandle` | `Quickshell` | plain QML (no entries: a tray item's `menu` is null) | `core/qml/QsMenuOpener.qml`, `core/qml/QsMenuHandle.qml` |
 | `Process` | `Quickshell.Io` | `src/features/quickshell_io/qml/qs_process.*` | `io/qml/quickshell_types_io.h` |
 | `DataStreamParser`, `StdioCollector`, `SplitParser` | `Quickshell.Io` | `src/features/quickshell_io/qml/data_stream_parsers.*` | `io/qml/quickshell_types_io.h` |
 | `FileView`, `FileViewAdapter`, `FileViewError` | `Quickshell.Io` | `src/features/quickshell_io/qml/file_view.*` | `io/qml/quickshell_types_io.h` |
@@ -73,6 +77,7 @@ and limits per type: the QML module table in `docs/architecture.md`.
 | `Pipewire`, `PwNode`, `PwNodeAudio`, `PwLink`, `PwLinkGroup`, `PwObjectTracker`, `PwNodeLinkTracker` | `Quickshell.Services.Pipewire` | `wabar.services` `AudioOutput`, `AudioInput`, `AudioStreams` | `services/pipewire/*.qml` |
 | `SystemTray`, `SystemTrayItem`, `Status` | `Quickshell.Services.SystemTray` | `wabar.services` `Systray` | `services/systemtray/SystemTray.qml`, `services/systemtray/qml/system_tray_item.*` |
 | `Bluetooth`, `BluetoothAdapter`, `BluetoothDevice` and their state enums | `Quickshell.Bluetooth` | `wabar.services` `Bluetooth` | `bluetooth/*.qml` |
+| `Networking` (`wifiEnabled`, `wifiHardwareEnabled`) | `Quickshell.Networking` (a noctalia-qs addition) | `wabar.services` `Network` | `networking/Networking.qml` |
 
 `src/app/wabar/quickshell_glue.h` joins the `Quickshell` singleton to the shell host (`shellDir`,
 `reload()`). It stays in `app/`: it is composition-root wiring, not a registration.

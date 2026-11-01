@@ -635,3 +635,76 @@ Item {
   EXPECT_EQ(l.get("adapters").toInt(), 0);
   EXPECT_EQ(l.get("stateName").toString(), "Connected");
 }
+
+// ---- Quickshell.Wayland idle types, QsMenuOpener, Quickshell.Networking ----
+
+TEST(QuickshellWayland, IdleInhibitorAndIdleMonitorLoad) {
+  Loaded l(R"(
+import QtQuick
+import Quickshell.Wayland
+Item {
+    IdleInhibitor { id: inhibitor; objectName: "inhibitor"; enabled: false }
+    IdleMonitor { id: monitor; objectName: "monitor"; timeout: 0 }
+    IdleMonitor { id: waiting; objectName: "waiting"; timeout: 1000000 }
+    property bool inhibitorEnabled: inhibitor.enabled
+    property bool monitorIdle: monitor.isIdle
+    property bool waitingIdle: waiting.isIdle
+}
+)");
+  ASSERT_NE(l.root, nullptr);
+  EXPECT_FALSE(l.get("inhibitorEnabled").toBool());
+  // A zero timeout never idles, and a timeout far beyond the idle time has not elapsed.
+  EXPECT_FALSE(l.get("monitorIdle").toBool());
+  EXPECT_FALSE(l.get("waitingIdle").toBool());
+}
+
+TEST(QuickshellCore, QsMenuOpenerHasNoEntriesWithoutAMenu) {
+  Loaded l(R"(
+import QtQuick
+import Quickshell
+Item {
+    QsMenuOpener { id: opener; menu: null }
+    property int count: opener.children.values.length
+    property var handle: opener.menu
+}
+)");
+  ASSERT_NE(l.root, nullptr);
+  EXPECT_EQ(l.get("count").toInt(), 0);
+  EXPECT_TRUE(l.get("handle").isNull());
+}
+
+TEST(QuickshellNetworking, WifiEnabledFollowsTheServiceAndSwitchesIt) {
+  Loaded l(R"(
+import QtQuick
+import Quickshell.Networking
+Item {
+    QtObject {
+        id: fake; objectName: "fake"
+        property bool wifiEnabled: true
+        property var calls: []
+        signal wifiChanged
+        function setWifiEnabled(on) { calls = calls.concat(["radio:" + on]); wifiEnabled = on; wifiChanged(); return true }
+    }
+    Component.onCompleted: Networking.service = fake
+    property bool enabled: Networking.wifiEnabled
+    property bool hardware: Networking.wifiHardwareEnabled
+    function assign(on) { Networking.wifiEnabled = on }
+}
+)");
+  ASSERT_NE(l.root, nullptr);
+  QObject* fake = l.child("fake");
+  ASSERT_NE(fake, nullptr);
+  EXPECT_TRUE(l.get("enabled").toBool());
+  EXPECT_TRUE(l.get("hardware").toBool());
+  // The service changes: the singleton follows and does not switch the radio back.
+  fake->setProperty("wifiEnabled", false);
+  QMetaObject::invokeMethod(fake, "wifiChanged");
+  EXPECT_FALSE(l.get("enabled").toBool());
+  EXPECT_TRUE(fake->property("calls").toList().isEmpty());
+  // Assigning switches the radio through the service.
+  QVariant ignored;
+  ASSERT_TRUE(QMetaObject::invokeMethod(l.root.get(), "assign", Q_RETURN_ARG(QVariant, ignored),
+                                        Q_ARG(QVariant, true)));
+  EXPECT_EQ(fake->property("calls").toStringList(), QStringList{QStringLiteral("radio:true")});
+  EXPECT_TRUE(l.get("enabled").toBool());
+}

@@ -13,7 +13,7 @@
 # qml/quickshell_types_core.h. The module depends on wabar.services but does not re-export it:
 # `import Quickshell` shows Quickshell's type names and no others, so a shell's own Wallpapers.qml
 # is never shadowed.
-set(quickshell_qml_files qml/DesktopEntries.qml qml/PopupWindow.qml qml/Variants.qml qml/Quickshell.qml)
+set(quickshell_qml_files qml/DesktopEntries.qml qml/PopupWindow.qml qml/QsMenuHandle.qml qml/QsMenuOpener.qml qml/Variants.qml qml/Quickshell.qml)
 set_source_files_properties(qml/Quickshell.qml qml/DesktopEntries.qml PROPERTIES
   QT_QML_SINGLETON_TYPE TRUE)
 foreach(file IN LISTS quickshell_qml_files)

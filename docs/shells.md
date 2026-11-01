@@ -117,3 +117,21 @@ WindowThumbnail { hwnd: 12345; width: 320; height: 180 }
   it (a title bar or a close button must sit beside it, not on it), a parent's `clip` does not clip
   it, and `grabToImage()` does not capture it.
 - It does nothing on the offscreen platform.
+
+### Redeclaring a property of the engine's types
+
+A Quickshell shell may declare its own property with the name of one the engine already has, and it
+loads: the declaration shadows the engine's. This works for `name`, `data`, `screen`,
+`contentItem` and `hideDelay` on windows and Scopes, and `data` on a `Singleton` (its default
+property is `shellChildren`, so a declared `data` does not take its children). Mind what shadows:
+a window that declares `screen` receives `screen: modelData` in its own property and the engine
+keeps placing the window on the primary screen. Pass the screen through a differently named property
+when the window must follow it.
+
+### Types for ported shells that do little on Windows
+
+`Quickshell.Wayland` has `IdleInhibitor` (holds the machine awake, ignores `window`) and
+`IdleMonitor` (`isIdle` after `timeout` seconds without input). `QsMenuOpener` and
+`QsMenuHandle` load but never hold entries, because a tray item's `menu` is null.
+`Quickshell.Networking` has `wifiEnabled` (assign it to switch the radio). A `PopupWindow`
+takes `implicitWidth` and `implicitHeight`.
