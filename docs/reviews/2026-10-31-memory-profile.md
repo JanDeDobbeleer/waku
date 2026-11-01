@@ -240,3 +240,55 @@ probe-engine check on purpose.
 - Fonts: `--font-engine=directwrite`, which the port needs for its variable fonts, maps every
   installed font (about 100 MB of working set and 1,700 handles per `app/wabar/font_engine.h`).
   Not measured separately here, since the port does not render with the GDI engine.
+
+## Atlas copies (2026-11-01)
+
+After the port's own fixes (the frame shadow layer only while a panel shows, the cover art rotation
+from 0, the panels unloaded when closed) the shell still kept about 400 MB of GPU memory once the
+launcher had been opened, and that block did not move when the panels closed. Its cause is the
+texture atlas of the scene graph.
+
+Method: the deployed engine (`4a19cc6`), the port's `main` (`80fc100`), the private set-up above;
+phases as before, 5 s per open panel. Committed `MEM_PRIVATE` regions from `!address` (`cdb -pv`)
+before and after one launcher open and close, diffed by size.
+
+| Run | New private regions after the launcher |
+|---|---|
+| default | 11 regions of 32.0 MB (352 MB) plus 22, 17, 16 and 14 MB ones; 438 MB in all |
+| `QSG_ATLAS_WIDTH=1024`, `QSG_ATLAS_HEIGHT=1024` | 59 regions of 4.0 MB (236 MB), two of 32 MB; 410 MB in all |
+| `QSG_ATLAS_SIZE_LIMIT=1` (no atlas) | one of 32 MB, two of 21-22 MB, two of 16-17 MB; 145 MB in all |
+
+The block follows the atlas size: Qt gives the main window one atlas texture of 4096x2048 BGRA
+(32 MB; `rhi texture atlas dimensions: 4096x2048` in `QSG_INFO`) and the four small windows
+512x512. The atlas does not grow and Qt keeps one per window, so the 9-11 extra atlas-sized
+regions are the D3D11 driver's: it holds copies of the atlas after a burst of uploads into it (the
+launcher's app icons at 100x100, each one an upload into the atlas) and keeps them. Neither the
+shell icon extraction (no GPU memory in a test process that reads all 212 icons of
+`shell:AppsFolder`), the distance-field glyph caches (`QML_DISABLE_DISTANCEFIELD=1`: no change)
+nor the frame shadow layer (`layer.enabled: false`: 30 MB less) is it.
+
+GPU shared MB, deployed engine, one run each:
+
+| Phase | default | no atlas |
+|---|---|---|
+| idle | 50 | 49 |
+| launcher open (5 s) | 125 | 158 |
+| launcher closed | 445 | 158 |
+| dashboard opened and closed | 445 | 158 |
+| all closed, 13 s later | 445 | 192 |
+| dashboard first: idle, dashboard opened and closed | 50 | 49 |
+| then launcher opened and closed, 13 s later | 514 | 228 |
+
+The jump comes within a second of the launcher's first frames with its icons, on the open or on
+the close depending on when the icons arrive; it does not grow on later opens. The dashboard alone
+adds nothing on this machine. Private bytes follow the GPU numbers (894 -> 608 MB with both panels
+opened, dashboard first).
+
+Change: `wabar.exe` sets `QSG_ATLAS_SIZE_LIMIT=1` unless the caller set it, so every image gets its
+own texture. A debug build of the change, without the variable set by the caller, holds 158 MB
+after the launcher opened and closed (default: 446 MB). Rendering is the same; the cost is one batch per image instead of one per atlas, which
+the shells' few dozen visible images do not feel.
+
+What is left after the change (about 110-180 MB over idle with both panels opened): two full-window
+layers (21-22 MB each: the frame shadow layer and its `MultiEffect`), one 32 MB and two 16-17 MB
+regions not identified yet, and the icon textures themselves.

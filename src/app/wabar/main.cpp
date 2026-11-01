@@ -56,6 +56,13 @@ int main(int argc, char* argv[]) {
   // (docs/reviews/2026-10-31-memory-profile.md). A shell that needs depth (Qt Quick 3D) starts
   // wabar with QSG_NO_DEPTH_BUFFER=0.
   if (!qEnvironmentVariableIsSet("QSG_NO_DEPTH_BUFFER")) qputenv("QSG_NO_DEPTH_BUFFER", "1");
+  // No texture atlas: every image gets its own texture. Qt packs small images into one atlas
+  // texture per window (4096x2048, 32 MB, at 2880x1920) and uploads each new image into it. After
+  // a burst of such uploads (the caelestia launcher's app icons) the D3D11 driver on the Adreno X1
+  // holds 9-11 more atlas-sized allocations, about 290 MB of GPU memory, for the life of the
+  // process (docs/reviews/2026-10-31-memory-profile.md, "Atlas copies"). A caller that wants the
+  // atlas sets QSG_ATLAS_SIZE_LIMIT itself.
+  if (!qEnvironmentVariableIsSet("QSG_ATLAS_SIZE_LIMIT")) qputenv("QSG_ATLAS_SIZE_LIMIT", "1");
   QGuiApplication app(argc, argv);
   wabar::host::traceStep("application built");
 
