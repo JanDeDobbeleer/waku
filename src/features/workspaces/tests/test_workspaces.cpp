@@ -253,3 +253,15 @@ TEST(WorkspacesModel, FocusAfterTheProviderIsGoneIsIgnored) {
   h.workspaces->focusNext(65537);
   EXPECT_TRUE(h.runs.empty());
 }
+TEST(WorkspacesModel, KomorebiWorkspacesListTheirWindowHandles) {
+  Harness h;
+  h.komorebiConnect(1, 0);
+  // The sample state gives workspace II two windows (handles 100 and 101), the others none or one.
+  EXPECT_TRUE(list(workspaceAt(*h.workspaces, 0, 0).value(QStringLiteral("windows"))).isEmpty());
+  const QVariantList second =
+      list(workspaceAt(*h.workspaces, 0, 1).value(QStringLiteral("windows")));
+  ASSERT_EQ(second.size(), 2);
+  EXPECT_EQ(second.at(0).toLongLong(), 100);
+  EXPECT_EQ(second.at(1).toLongLong(), 101);
+  EXPECT_EQ(list(workspaceAt(*h.workspaces, 0, 2).value(QStringLiteral("windows"))).size(), 1);
+}

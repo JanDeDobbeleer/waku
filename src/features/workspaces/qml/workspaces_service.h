@@ -19,7 +19,8 @@ namespace wabar::workspaces {
 // never mentions komorebi or GlazeWM. Built on the Komorebi and GlazeWM singletons (shared with
 // any widget that uses them directly) and rebuilt whenever either changes. GUI thread only.
 //
-// monitors: [{handle, name, workspaces: [{id, label, focused, active, hasWindows, windowCount}]}]
+// monitors: [{handle, name, workspaces: [{id, label, focused, active, hasWindows, windowCount,
+//                                         windows}]}]
 //   handle  monitor handle (HMONITOR); match it with Window.window.monitorHandle
 //   id      opaque to widgets: pass it back to focus(). komorebi: the workspace index; GlazeWM:
 //           the workspace name
@@ -27,6 +28,8 @@ namespace wabar::workspaces {
 //           index
 //   active  shown on its monitor
 //   focused active on the focused monitor (GlazeWM: its global focus)
+//   windows handles (HWND, numbers) of the workspace's windows, in the window manager's order;
+//           komorebi only, empty with GlazeWM. Join them with the taskbar rows (their hwnd role)
 // provider: "komorebi", "glazewm" or "" when neither is connected. When both are connected,
 // `prefer` decides (default "komorebi"; any other value means the default).
 class Workspaces : public QObject {

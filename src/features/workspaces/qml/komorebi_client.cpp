@@ -17,6 +17,14 @@ QString stringOf(const kmb::Json* node, std::string_view key) {
                                      : QString();
 }
 
+// The handles of the windows of a workspace (komorebi's own order), as numbers.
+QVariantList windowList(const kmb::Json* workspace) {
+  QVariantList list;
+  for (const long long hwnd : kmb::windowHwnds(workspace, false))
+    list << static_cast<qlonglong>(hwnd);
+  return list;
+}
+
 // komorebi's layout name -> snake_case layout key (the `layout_icons` names of Python YASB).
 QString layoutKey(const QString& name) {
   static const QHash<QString, QString> keys = {
@@ -55,12 +63,12 @@ QVariantList toVariant(const kmb::Json& state) {
     const kmb::Json* shown = focused ? kmb::workspaceAt(&screen, *focused) : nullptr;
     for (int i = 0; i < kmb::workspaceCount(&screen); ++i) {
       const kmb::Json* workspace = kmb::workspaceAt(&screen, i);
-      workspaces << QVariantMap{
-          {QStringLiteral("index"), i},
-          {QStringLiteral("name"), stringOf(workspace, "name")},
-          {QStringLiteral("focused"), focused == i},
-          {QStringLiteral("hasWindows"), kmb::hasWindows(workspace)},
-          {QStringLiteral("windowCount"), kmb::windowCount(workspace, false)}};
+      workspaces << QVariantMap{{QStringLiteral("index"), i},
+                                {QStringLiteral("name"), stringOf(workspace, "name")},
+                                {QStringLiteral("focused"), focused == i},
+                                {QStringLiteral("hasWindows"), kmb::hasWindows(workspace)},
+                                {QStringLiteral("windowCount"), kmb::windowCount(workspace, false)},
+                                {QStringLiteral("windows"), windowList(workspace)}};
     }
     list << QVariantMap{
         {QStringLiteral("index"), monitorIndex},

@@ -7,13 +7,14 @@ namespace wabar::workspaces {
 namespace {
 
 QVariantMap workspace(const QString& id, const QString& label, bool focused, bool active,
-                      bool hasWindows, int windowCount) {
+                      bool hasWindows, int windowCount, const QVariantList& windows) {
   return {{QStringLiteral("id"), id},
           {QStringLiteral("label"), label},
           {QStringLiteral("focused"), focused},
           {QStringLiteral("active"), active},
           {QStringLiteral("hasWindows"), hasWindows},
-          {QStringLiteral("windowCount"), windowCount}};
+          {QStringLiteral("windowCount"), windowCount},
+          {QStringLiteral("windows"), windows}};
 }
 
 QVariantMap monitor(qlonglong handle, const QString& name, const QVariantList& workspaces) {
@@ -36,7 +37,8 @@ QVariantList fromKomorebi(const QVariantList& monitors) {
       workspaces << workspace(
           QString::number(index), name.isEmpty() ? QString::number(index + 1) : name,
           active && monitorFocused, active, ws.value(QStringLiteral("hasWindows")).toBool(),
-          ws.value(QStringLiteral("windowCount")).toInt());
+          ws.value(QStringLiteral("windowCount")).toInt(),
+          ws.value(QStringLiteral("windows")).toList());
     }
     out << monitor(map.value(QStringLiteral("id")).toLongLong(),
                    map.value(QStringLiteral("name")).toString(), workspaces);
@@ -56,7 +58,7 @@ QVariantList fromGlazeWM(const QVariantList& monitors) {
                               ws.value(QStringLiteral("focused")).toBool(),
                               ws.value(QStringLiteral("displayed")).toBool(),
                               ws.value(QStringLiteral("hasWindows")).toBool(),
-                              ws.value(QStringLiteral("windowCount")).toInt());
+                              ws.value(QStringLiteral("windowCount")).toInt(), QVariantList());
     }
     out << monitor(map.value(QStringLiteral("hwnd")).toLongLong(),
                    map.value(QStringLiteral("name")).toString(), workspaces);
