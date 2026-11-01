@@ -46,6 +46,7 @@ set(WABAR_TRAY_MUTEX_NAME "WabarTrayHookAlive")
 
 add_subdirectory(src)
 include(wabar_deploy)    # the deploy target (needs the targets of src/)
+include(wabar_examples_lint)  # qmllint over examples/, part of all_qmllint
 
 include(CTest)
 if(BUILD_TESTING)

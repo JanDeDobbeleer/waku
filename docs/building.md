@@ -179,7 +179,9 @@ on: pass `--config-home`.
 (rules S1-S8), json-subscript check, `arm64-debug` build, `qmllint` and `ctest`. It sets up the MSVC
 environment itself. The `qmllint` step builds `all_qmllint` and fails when its warning count rises
 above `tools/qmllint-baseline.txt` (lower the file when the count falls; never raise it). The
-modules resolve each other through `build\<preset>\qml_modules` (see Build).
+modules resolve each other through `build\<preset>\qml_modules` (see Build). `all_qmllint` also
+runs `wabar_examples_qmllint` (`cmake/wabar_examples_lint.cmake`), which lints every `.qml` under
+`examples/` against the same folder, as a config home would be linted.
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1          # everything
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast    # format + structure + json-subscript
