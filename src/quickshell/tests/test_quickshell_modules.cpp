@@ -708,3 +708,40 @@ Item {
   EXPECT_EQ(fake->property("calls").toStringList(), QStringList{QStringLiteral("radio:true")});
   EXPECT_TRUE(l.get("enabled").toBool());
 }
+
+TEST(QuickshellWayland, ToplevelManagerListsNothingWithoutADesktop) {
+  // The taskbar service is not available offscreen: the list is empty and nothing is active.
+  Loaded l(R"(
+import QtQuick
+import Quickshell.Wayland
+Item {
+    property int count: ToplevelManager.toplevels.values.length
+    property var active: ToplevelManager.activeToplevel
+}
+)");
+  ASSERT_NE(l.root, nullptr);
+  EXPECT_EQ(l.get("count").toInt(), 0);
+  EXPECT_TRUE(l.get("active").isNull());
+}
+
+TEST(QuickshellWayland, AToplevelHasTheQuickshellProperties) {
+  Loaded l(R"(
+import QtQuick
+import Quickshell.Wayland
+Item {
+    Toplevel {
+        id: t; objectName: "t"
+        appId: "notepad"; title: "Untitled"; activated: true; hwnd: 4242
+    }
+    property string appId: t.appId
+    property bool activated: t.activated
+    property bool fullscreen: t.fullscreen
+    property int screenCount: t.screens.length
+}
+)");
+  ASSERT_NE(l.root, nullptr);
+  EXPECT_EQ(l.get("appId").toString(), QStringLiteral("notepad"));
+  EXPECT_TRUE(l.get("activated").toBool());
+  EXPECT_FALSE(l.get("fullscreen").toBool());
+  EXPECT_EQ(l.get("screenCount").toInt(), 0);
+}

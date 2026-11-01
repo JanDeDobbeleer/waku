@@ -1,0 +1,110 @@
+pragma Singleton
+import QtQuick
+import QtQuick.Window
+import wabar as W
+import wabar.services as S
+
+// Quickshell.Wayland's `ToplevelManager` over the taskbar service.
+//
+//   toplevels        a model (with `values`) of Toplevel, one per window the taskbar lists, in
+//                    arrival order; a Toplevel keeps its identity while its properties change
+//   activeToplevel   the window with focus, null when it is not one of them
+//
+// The taskbar service tracks windows only for a model that has a window of ours, so the singleton
+// keeps a 1 x 1 transparent tool window for that. It is created with the singleton, which is created
+// on first use. Without a live desktop (offscreen) the taskbar service is not available and the
+// list stays empty. `service` is the object the rows come from (S.TaskbarService); tests replace it.
+QtObject {
+    id: root
+
+    property QtObject service: S.TaskbarService
+
+    readonly property W.ScriptModel toplevels: W.ScriptModel {
+        values: root.list
+    }
+    property Toplevel activeToplevel: null
+
+    property var list: []
+    property var cache: ({})
+
+    readonly property Window anchor: Window {
+        visible: true
+        width: 1
+        height: 1
+        color: "transparent"
+        opacity: 0
+        title: "wabar-toplevel-anchor"
+        flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus
+    }
+
+    readonly property S.TaskbarModel taskbar: S.TaskbarModel {
+        service: root.service
+        grouping: false
+        showOnlyVisible: false
+        window: root.anchor
+    }
+
+    readonly property Component toplevelComponent: Component {
+        Toplevel {}
+    }
+
+    readonly property Instantiator rows: Instantiator {
+        model: root.taskbar
+        delegate: QtObject {
+            required property var model
+            readonly property string key: model.key ?? ""
+            readonly property string title: model.title ?? ""
+            readonly property string exe: model.exe ?? ""
+            readonly property string className: model.className ?? ""
+            readonly property real hwnd: model.hwnd ?? 0
+            readonly property real monitorHandle: model.monitorHandle ?? 0
+            readonly property string iconUrl: model.iconUrl ?? ""
+            readonly property bool active: model.active ?? false
+            readonly property bool minimized: model.minimized ?? false
+            readonly property string signature: [key, title, exe, className, hwnd, monitorHandle, iconUrl, active, minimized].join("|")
+            onSignatureChanged: Qt.callLater(root.rebuild)
+        }
+        onObjectAdded: Qt.callLater(root.rebuild)
+        onObjectRemoved: Qt.callLater(root.rebuild)
+    }
+
+    function rebuild() {
+        const seen = {};
+        const out = [];
+        let active = null;
+        for (let i = 0; i < rows.count; i++) {
+            const r = rows.objectAt(i);
+            if (!r || !r.key.startsWith("w:"))
+                continue;
+            const id = String(r.hwnd);
+            let t = cache[id];
+            if (!t) {
+                t = toplevelComponent.createObject(root, {
+                    "taskbar": taskbar
+                });
+                cache[id] = t;
+            }
+            t.row = i;
+            t.hwnd = r.hwnd;
+            t.monitorHandle = r.monitorHandle;
+            t.title = r.title;
+            t.className = r.className;
+            t.appId = r.exe.replace(/\.exe$/i, "").toLowerCase();
+            t.iconUrl = r.iconUrl;
+            t.minimized = r.minimized;
+            t.activated = r.active;
+            if (t.activated)
+                active = t;
+            seen[id] = true;
+            out.push(t);
+        }
+        for (const id of Object.keys(cache)) {
+            if (!seen[id]) {
+                cache[id].destroy();
+                delete cache[id];
+            }
+        }
+        list = out;
+        activeToplevel = active;
+    }
+}
