@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 
+#include "features/wallpapers/wallpaper_decode.h"
 #include "features/wallpapers/wallpaper_layout.h"
 #include "features/wallpapers/win32/workerw.h"
 
@@ -79,8 +80,12 @@ class WallpaperTransition : public QObject {
     std::function<std::optional<WorkerWAttachment>(std::uintptr_t, QString*)> attach;
     // Undoes attach before the window is deleted (null in tests).
     std::function<void(std::uintptr_t)> detach;
-    // Runs on the worker thread: the new image, then the old one. Null images mean unreadable.
-    std::function<std::pair<QImage, QImage>(const QString&, const QString&)> decode;
+    // The virtual desktop in device pixels, read on the GUI thread; null means no size limit.
+    std::function<QSize()> desktopSize;
+    // Runs on the worker thread: the new image, then the old one, each decoded no larger than the
+    // budget needs. Null images mean unreadable.
+    std::function<std::pair<QImage, QImage>(const QString&, const QString&, const DecodeBudget&)>
+        decode;
     // False in tests: the window is built and filled but never shown.
     bool showWindow = true;
   };

@@ -3,7 +3,6 @@
 #include <QDebug>
 #include <QEasingCurve>
 #include <QGuiApplication>
-#include <QImageReader>
 #include <QPainter>
 #include <QPixmap>
 #include <QQuickWindow>
@@ -99,11 +98,19 @@ WallpaperTransition::Platform WallpaperTransition::systemPlatform() {
     return wabar::wallpapers::attachToWorkerW(hwnd, failure);
   };
   platform.detach = [](std::uintptr_t hwnd) { wabar::wallpapers::detachFromWorkerW(hwnd); };
-  platform.decode = [](const QString& newPath, const QString& oldPath) {
-    QImageReader reader(newPath);
-    reader.setAutoTransform(true);
-    const QImage fresh = reader.read();
-    const QImage old(oldPath);
+  platform.desktopSize = [] {
+    QRect desktop;
+    for (const QScreen* screen : QGuiApplication::screens()) {
+      const QRect g = screen->geometry();
+      const qreal dpr = screen->devicePixelRatio();
+      desktop = desktop.united(QRect(QPoint(qRound(g.x() * dpr), qRound(g.y() * dpr)),
+                                     QSize(qRound(g.width() * dpr), qRound(g.height() * dpr))));
+    }
+    return desktop.size();
+  };
+  platform.decode = [](const QString& newPath, const QString& oldPath, const DecodeBudget& budget) {
+    const QImage fresh = decodeWallpaper(newPath, budget, true);
+    const QImage old = decodeWallpaper(oldPath, budget, false);
     return std::make_pair(fresh, old);
   };
   return platform;
@@ -140,11 +147,15 @@ void WallpaperTransition::start() {
   const QString newPath = imagePath_;
   const QString oldPath = platform_.oldImagePath ? platform_.oldImagePath() : QString();
   auto decode = platform_.decode;
+  DecodeBudget budget;
+  budget.fit = settings_.fit;
+  budget.transcodeLimits = settings_.transcodeLimits;
+  if (platform_.desktopSize) budget.target = platform_.desktopSize();
   QPointer<WallpaperTransition> self(this);
-  QThread* thread = QThread::create([self, newPath, oldPath, decode] {
+  QThread* thread = QThread::create([self, newPath, oldPath, decode, budget] {
     std::pair<QImage, QImage> images;
     try {
-      if (decode) images = decode(newPath, oldPath);
+      if (decode) images = decode(newPath, oldPath, budget);
     } catch (...) {
     }
     // The QPointer is only dereferenced on the GUI thread, where it cannot dangle.

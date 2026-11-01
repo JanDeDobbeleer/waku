@@ -9,6 +9,8 @@ wabar_feature(
     desktop_wallpaper.h
     lock_screen.h
     lock_screen.cpp
+    wallpaper_decode.h
+    wallpaper_decode.cpp
     wallpaper_files.h
     wallpaper_files.cpp
     wallpaper_layout.h
@@ -36,6 +38,7 @@ wabar_feature(
     qml/Wallpapers.qml
   TESTS
     tests/test_wallpaper_command.cpp
+    tests/test_wallpaper_decode.cpp
     tests/test_wallpaper_lock_screen.cpp
     tests/test_wallpaper_manager.cpp
     tests/test_wallpaper_service.cpp

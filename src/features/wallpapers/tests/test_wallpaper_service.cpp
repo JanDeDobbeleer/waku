@@ -65,7 +65,7 @@ std::unique_ptr<WallpaperTransition> fakeTransition(const std::shared_ptr<Transi
     if (failure) *failure = QStringLiteral("no WorkerW");
     return std::nullopt;
   };
-  platform.decode = [](const QString&, const QString&) {
+  platform.decode = [](const QString&, const QString&, const wabar::wallpapers::DecodeBudget&) {
     QImage image(QSize(8, 8), QImage::Format_RGB32);
     image.fill(Qt::blue);
     return std::make_pair(image, image);

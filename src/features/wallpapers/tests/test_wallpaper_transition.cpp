@@ -18,6 +18,7 @@
 #include "features/wallpapers/qml/wallpaper_transition.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/testing/fake_wallpaper_backend.h"
+#include "features/wallpapers/wallpaper_decode.h"
 
 namespace {
 
@@ -59,7 +60,7 @@ WallpaperTransition::Platform fakePlatform(std::shared_ptr<FakeCalls> calls, boo
     attachment.monitors = {QRect(0, 0, 100, 100), QRect(100, 0, 100, 100)};
     return attachment;
   };
-  platform.decode = [calls, readable](const QString&, const QString&) {
+  platform.decode = [calls, readable](const QString&, const QString&, const plat::DecodeBudget&) {
     ++calls->decodes;
     return readable ? std::make_pair(solid(kNew), solid(kOld))
                     : std::make_pair(QImage(), solid(kOld));
@@ -203,12 +204,40 @@ TEST(WallpaperTransition, CancelStopsSilently) {
   EXPECT_FALSE(t->windowVisible());
 }
 
+TEST(WallpaperTransition, ALargeImageIsNotKeptAtFullSize) {
+  QTemporaryDir dir;
+  ASSERT_TRUE(dir.isValid());
+  const QString bigPath = dir.filePath(QStringLiteral("big.png"));
+  ASSERT_TRUE(solid(kNew, QSize(1600, 1200)).save(bigPath));
+
+  auto platform = fakePlatform(std::make_shared<FakeCalls>());
+  platform.desktopSize = [] { return QSize(200, 100); };
+  auto budget = std::make_shared<plat::DecodeBudget>();
+  auto handed = std::make_shared<QSize>();
+  platform.decode = [budget, handed](const QString& path, const QString&,
+                                     const plat::DecodeBudget& b) {
+    *budget = b;
+    const QImage fresh = plat::decodeWallpaper(path, b, true);
+    *handed = fresh.size();  // what the layout is given
+    return std::make_pair(fresh, solid(kOld));
+  };
+  WallpaperTransition t(bigPath, QStringLiteral("split"), platform, 20);
+  QSignalSpy finished(&t, &WallpaperTransition::finished);
+  t.start();
+  ASSERT_TRUE(QTest::qWaitFor([&] { return finished.count() > 0; }, 3000));
+  EXPECT_EQ(budget->target, QSize(200, 100));
+  EXPECT_EQ(budget->fit, plat::WallpaperFit::Fill);
+  // Cover of the 200x100 desktop, not the 1600x1200 file.
+  EXPECT_EQ(*handed, QSize(200, 150));
+  EXPECT_EQ(t.state(), WallpaperTransition::State::Finished);
+}
+
 TEST(WallpaperTransition, StartDecodesOffTheGuiThreadAndPlays) {
   auto calls = std::make_shared<FakeCalls>();
   auto platform = fakePlatform(calls);
   const auto guiThread = QThread::currentThread();
   auto decodeThread = std::make_shared<QThread*>(nullptr);
-  platform.decode = [decodeThread](const QString&, const QString&) {
+  platform.decode = [decodeThread](const QString&, const QString&, const plat::DecodeBudget&) {
     *decodeThread = QThread::currentThread();
     return std::make_pair(solid(kNew), solid(kOld));
   };
@@ -222,7 +251,7 @@ TEST(WallpaperTransition, StartDecodesOffTheGuiThreadAndPlays) {
 
 TEST(WallpaperTransition, DestroyingWhileDecodingIsSafe) {
   auto platform = fakePlatform(std::make_shared<FakeCalls>());
-  platform.decode = [](const QString&, const QString&) {
+  platform.decode = [](const QString&, const QString&, const wabar::wallpapers::DecodeBudget&) {
     QThread::msleep(40);
     return std::make_pair(solid(kNew), solid(kOld));
   };
@@ -371,7 +400,7 @@ TEST(WallpapersEngine, AChangeFromInsideTheCommitIsSafe) {
 TEST(WallpaperTransition, DestroyingWhileDecodingWaitsForTheDecoder) {
   auto platform = fakePlatform(std::make_shared<FakeCalls>());
   auto done = std::make_shared<std::atomic<bool>>(false);
-  platform.decode = [done](const QString&, const QString&) {
+  platform.decode = [done](const QString&, const QString&, const plat::DecodeBudget&) {
     QThread::msleep(80);
     *done = true;
     return std::make_pair(solid(kNew), solid(kOld));
