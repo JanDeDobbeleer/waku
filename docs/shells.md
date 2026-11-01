@@ -133,5 +133,24 @@ when the window must follow it.
 `Quickshell.Wayland` has `IdleInhibitor` (holds the machine awake, ignores `window`) and
 `IdleMonitor` (`isIdle` after `timeout` seconds without input). `QsMenuOpener` and
 `QsMenuHandle` load but never hold entries, because a tray item's `menu` is null.
-`Quickshell.Networking` has `wifiEnabled` (assign it to switch the radio). A `PopupWindow`
-takes `implicitWidth` and `implicitHeight`.
+`Quickshell.Networking` has `wifiEnabled` (assign it to switch the radio).
+
+### ToplevelManager
+
+`ToplevelManager.toplevels.values` lists the windows the taskbar lists, each a `Toplevel` with `appId` (the
+executable name without `.exe`, lower case), `title`, `activated`, `minimized`, `activate()` and `close()`,
+plus `className`, `hwnd` and `monitorHandle`. `maximized` and `fullscreen` are false and `screens` is
+empty. The singleton keeps a 1 x 1 transparent tool window, because the taskbar service tracks windows only
+for a model that has one of ours.
+
+### PopupWindow
+
+`wabar.PopupWindow` is a themed popup: a surface and a column that sizes the window. `Quickshell.PopupWindow` is
+bare, as in Quickshell: no surface, no layout, its children fill it, and its colour is transparent until set.
+Both take `implicitWidth` and `implicitHeight`; unset, the content sizes the window.
+
+### Windows of a workspace
+
+With komorebi each `Workspaces` workspace has `windows`, the handles (`hwnd`) of its windows. Join them with
+the taskbar rows, whose `hwnd`, `exe`, `className` and `monitorHandle` roles carry the window data.
+With GlazeWM `windows` is empty.

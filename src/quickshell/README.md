@@ -15,8 +15,9 @@ names only, so a shell's own `Wallpapers.qml` is never shadowed by a wabar servi
 
 Two names are the exception to "the same type as in `wabar`": `PopupWindow` and `Variants` of
 module `Quickshell` are QML wrappers (`core/qml/PopupWindow.qml`, `core/qml/Variants.qml`) of the
-`wabar` types. They behave the same, but `Quickshell.PopupWindow` and `wabar.PopupWindow` are two
-distinct QML types.
+`wabar` types. `Variants` behaves the same. `Quickshell.PopupWindow` is not the themed `wabar.PopupWindow`: it is
+the bare `PopupWindowBase` (anchor, placement, open/close, no surface and no column), as in Quickshell, so
+a child with `anchors.fill: parent` fills it. Both are sized by `implicitWidth` and `implicitHeight`.
 
 | Folder | Module | Built by |
 |---|---|---|
@@ -63,6 +64,7 @@ and limits per type: the QML module table in `docs/architecture.md`.
 | `ElapsedTimer` | `Quickshell` | `src/features/quickshell_io/qml/quickshell_singleton.*` | `core/qml/quickshell_types_core.h` |
 | `WlrLayershell`, `WlrLayer`, `WlrKeyboardFocus` | `Quickshell.Wayland` | `src/host/qml/wlr_layershell.*`, `src/host/qml/window_enums.h` | `wayland/qml/wayland_types.h` |
 | `IdleInhibitor` | `Quickshell.Wayland` | `src/features/desktop_state/qml/idle_inhibitor.*` | `wayland/qml/wayland_types.h` |
+| `ToplevelManager`, `Toplevel` | `Quickshell.Wayland` | `wabar.services` `TaskbarService`, `TaskbarModel` | `wayland/ToplevelManager.qml`, `wayland/Toplevel.qml` |
 | `IdleMonitor` | `Quickshell.Wayland` | `wabar.services` `DesktopState` (`idleSeconds`) | `wayland/IdleMonitor.qml` |
 | `QsMenuOpener`, `QsMenuHandle` | `Quickshell` | plain QML (no entries: a tray item's `menu` is null) | `core/qml/QsMenuOpener.qml`, `core/qml/QsMenuHandle.qml` |
 | `Process` | `Quickshell.Io` | `src/features/quickshell_io/qml/qs_process.*` | `io/qml/quickshell_types_io.h` |
