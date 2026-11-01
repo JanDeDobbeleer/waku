@@ -84,3 +84,34 @@ TEST(WallpaperDecode, AnUnreadableFileGivesANullImage) {
       decodeWallpaper(dir.filePath(QStringLiteral("missing.png")), budget(QSize(100, 100)), true)
           .isNull());
 }
+
+// EXIF orientation 6: stored 1600x900, shown 900x1600. Qt may apply a scaled size before or after
+// the rotation; the decoded picture must come out portrait and unstretched either way.
+TEST(WallpaperDecode, ARotatedJpegIsScaledInItsDisplayedOrientation) {
+  QTemporaryDir dir;
+  ASSERT_TRUE(dir.isValid());
+  const QString path = dir.filePath(QStringLiteral("rotated.jpg"));
+  QImage stored(1600, 900, QImage::Format_RGB32);
+  stored.fill(Qt::darkGreen);
+  QImageWriter writer(path);
+  ASSERT_TRUE(writer.supportsOption(QImageIOHandler::ImageTransformation));
+  writer.setTransformation(QImageIOHandler::TransformationRotate90);
+  ASSERT_TRUE(writer.write(stored)) << writer.errorString().toStdString();
+
+  const QImage full = decodeWallpaper(path, budget(QSize()), true);
+  ASSERT_FALSE(full.isNull());
+  ASSERT_LT(full.width(), full.height());  // the orientation was written and honoured
+  EXPECT_EQ(full.size(), QSize(900, 1600));
+
+  const DecodeBudget small = budget(QSize(300, 300));
+  const QImage scaled = decodeWallpaper(path, small, true);
+  ASSERT_FALSE(scaled.isNull());
+  EXPECT_LT(scaled.width(), scaled.height());
+  const QSize cover = decodeSize(full.size(), small);
+  EXPECT_LE(scaled.width(), cover.width() + 1);
+  EXPECT_LE(scaled.height(), cover.height() + 1);
+  EXPECT_LT(scaled.sizeInBytes(), full.sizeInBytes());
+  const double fullAspect = static_cast<double>(full.width()) / full.height();
+  const double scaledAspect = static_cast<double>(scaled.width()) / scaled.height();
+  EXPECT_NEAR(scaledAspect / fullAspect, 1.0, 0.01);
+}
