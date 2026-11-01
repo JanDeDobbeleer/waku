@@ -1,7 +1,7 @@
 # Wabar ControlCenter widget: design
 
 Date: 2026-10-29. Reference: Python YASB `control_center` (the Qt Widgets port that preceded it is
-at the git tag `yasb-native-final`).
+at the git tag `widgets-main-final`).
 
 Layout (feature `control_center`, namespace `wabar::control_center`): `power.h`, `app_theme.h`,
 `touch_keyboard.h` and `user_info.h` at the root with their Windows code in `win32/`; the

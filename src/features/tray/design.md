@@ -2,7 +2,7 @@
 
 Status: built and run live (phase 5 below). Background: `docs/plans/2026-10-28-qt-quick-bar-config-design.md`
 (the `wabar` modules, `Pill`, `PopupWindow`, `Tooltip`, `Theme`). The systray of the retired Widgets
-build (git tag `yasb-native-final`) is where the code came from; see "History".
+build (git tag `widgets-main-final`) is where the code came from; see "History".
 
 ## What the widget does
 
@@ -177,7 +177,7 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 
 ## History
 
-The tray came from the Widgets build (`yasb-native`, git tag `yasb-native-final`), which owned the
+The tray came from the Widgets build (`yasb-native`, git tag `widgets-main-final`), which owned the
 hook DLL, the pipe and mutex names and the pin-state file format. Wabar took them over: the DLL and
 its names are now `WabarTrayHook[_arm64].dll`, `wabar_systray_monitor` and `WabarTrayHookAlive`
 (`WABAR_TRAY_PIPE_NAME` and `WABAR_TRAY_MUTEX_NAME` in the root `CMakeLists.txt`), pin state is in

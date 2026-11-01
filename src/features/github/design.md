@@ -2,7 +2,7 @@
 
 Status: built. Reference: Python YASB `yasb/github*` (branch `local/build`); the data layer
 (`github_api.*`) and the Qt Widgets widget that preceded wabar are at the git tag
-`yasb-native-final`.
+`widgets-main-final`.
 
 ## What the widget does
 
@@ -33,7 +33,7 @@ is seconds), `maxNotification`, `onlyUnread`, `showComments` (Python `show_comme
 | mark thread / all as read requests | `githubMarkThreadReadRequest`, `githubMarkAllReadRequest` | as is, sent with `sendHttpAsync` |
 | token file, device flow requests and parsers | `githubTokenFilePath`, `readGithubTokenFile`, `saveGithubTokenFile`, `githubDeviceCodeRequest`, `parseGithubDeviceCode`, `githubAccessTokenRequest`, `parseGithubAccessToken` | as is |
 | relative time, category titles, field truncation, category order, state classes | `features/github/github_format.*` (no UI) | as is |
-| `GithubWidget`, `GithubDataStore`, `GithubAuthDialog` | the Widgets build (tag `yasb-native-final`) | not used: QWidgets. Their logic (unread count, mark read, ordering, poll skip while a fetch runs, device-flow loop) is ported to the service |
+| `GithubWidget`, `GithubDataStore`, `GithubAuthDialog` | the Widgets build (tag `widgets-main-final`) | not used: QWidgets. Their logic (unread count, mark read, ordering, poll skip while a fetch runs, device-flow loop) is ported to the service |
 | `wabar.services.GitHub` | `features/github/qml/github_service.*` | new: the singleton below |
 | `GitHub.qml` | `features/github/qml/` | new |
 

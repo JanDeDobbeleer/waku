@@ -2,7 +2,7 @@
 
 Status: built. Sits next to the Tray widget (`src/features/tray/design.md`). Reference: Python YASB
 `yasb/taskbar*` (branch `local/build`); the Qt Widgets taskbar that preceded wabar is at the git tag
-`yasb-native-final`.
+`widgets-main-final`.
 
 ## What the widget does
 

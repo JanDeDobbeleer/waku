@@ -546,7 +546,8 @@ SDK headers instead of spelling them out.
 ## History
 
 wabar began as a C++ port of Python YASB. That port, built on Qt Widgets with YAML and CSS config,
-was retired at the git tag `yasb-native-final`; its records are in `docs/archive/`. wabar replaced it
+was retired at the git tag `widgets-main-final` (`e2b602f`, the second parent of the merge `ba442f5`
+that replaced it on `main`); its records are in `docs/archive/`. wabar replaced it
 with a Qt Quick bar configured in QML, and in October 2026 the code was reorganised by capability
 into the units above (`docs/plans/2026-10-29-wabar-architecture-proposal.md`). Python YASB remains a
 reference for how Windows behaves, not for how wabar must behave.

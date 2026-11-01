@@ -1,7 +1,7 @@
 # wabar Wallpapers widget: design note
 
 Date: 2026-10-29. Reference: Python YASB `wallpapers` widget (the Qt Widgets port that preceded
-wabar is at the git tag `yasb-native-final`).
+wabar is at the git tag `widgets-main-final`).
 
 ## What it does
 
@@ -101,7 +101,7 @@ screen shows too. `setLockScreen` is on by default; a shell turns it off with
 
 The animated change (`engine`, `animation`) is ported from the `QWidget` `WallpaperEngine` to Qt Quick,
 so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the Widgets build
-(git tag `yasb-native-final`).
+(git tag `widgets-main-final`).
 
 - **Approach.** `qml/wallpaper_transition.*`: `WallpaperTransition` owns a frameless,
   input-transparent `QQuickWindow` and one `WallpaperScene` (a `QQuickPaintedItem`, built in C++: no QML file, the

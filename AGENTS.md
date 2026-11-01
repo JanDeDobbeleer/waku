@@ -6,8 +6,10 @@ single source of truth for how to work in this repository. Background: `docs/arc
 
 wabar is a C++20/Qt 6.10 Qt Quick bar for Windows, configured in QML. Python YASB is a reference for
 how Windows behaves (undocumented APIs, edge cases), not a behavioural spec: nothing in this
-repository has to match it. The retired Qt Widgets build is at the git tag `yasb-native-final` and in
-`docs/archive/`.
+repository has to match it. The retired Qt Widgets build is the git tag `widgets-main-final`
+(`e2b602f`, the second parent of the merge `ba442f5` that replaced it on `main`); its records are in
+`docs/archive/`. The older tag `yasb-native-final` (`58fd9ac`) is a point on the Qt Quick line
+before the restructure, not the last Widgets build.
 
 ## Build and test
 
