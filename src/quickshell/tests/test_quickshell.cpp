@@ -225,3 +225,47 @@ QtObject {
   EXPECT_EQ(root->property("playing").toInt(), 1);
   EXPECT_EQ(root->property("urgency").toInt(), 2);
 }
+
+TEST(QuickshellModule, APopupWindowIsBareAndSizedByImplicitWidthAndHeight) {
+  // Quickshell's PopupWindow draws nothing and lays nothing out: a child with `anchors.fill:
+  // parent` fills the window, which is as big as implicitWidth and implicitHeight say.
+  Harness h;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import Quickshell
+
+ShellRoot {
+    PanelWindow {
+        anchors { top: true; left: true; right: true }
+        implicitHeight: 28
+        Item {
+            id: anchorItem
+            x: 200
+            width: 40
+            height: 20
+            PopupWindow {
+                objectName: "qsPopup"
+                anchor.item: anchorItem
+                implicitWidth: 140
+                implicitHeight: 70
+                visible: true
+                Rectangle { objectName: "fill"; anchors.fill: parent; color: "red" }
+            }
+        }
+    }
+}
+)"));
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  QQuickWindow* popup = findWindow(QStringLiteral("qsPopup"));
+  ASSERT_NE(popup, nullptr);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return popup->isVisible(); }, 3000));
+  settle();
+  EXPECT_EQ(popup->width(), 140);
+  EXPECT_EQ(popup->height(), 70);
+  QQuickItem* fill = findItem(popup->contentItem(), QStringLiteral("fill"));
+  ASSERT_NE(fill, nullptr);
+  EXPECT_EQ(fill->width(), 140);
+  EXPECT_EQ(fill->height(), 70);
+  // No themed surface behind it.
+  EXPECT_EQ(findItem(popup->contentItem(), QStringLiteral("popupSurface")), nullptr);
+}

@@ -53,6 +53,7 @@ set(host_qml_files
   qml/Panel.qml
   qml/PanelLayout.qml
   qml/PopupWindow.qml
+  qml/PopupWindowBase.qml
   qml/Tooltip.qml
   qml/Variants.qml
   qml/WindowChrome.qml)
