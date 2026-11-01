@@ -588,8 +588,8 @@ if ($Analyze) {
     } else {
         # qmllint over every QML module (the all_qmllint target qt_add_qml_module creates). A
         # ratchet: the step fails when the warning count rises above tools\qmllint-baseline.txt and
-        # asks for the file to be lowered when it falls. Most of the baseline is unresolved imports
-        # (the module output folders are not URI-shaped, see src/modules/qml_modules.cmake).
+        # asks for the file to be lowered when it falls. The modules resolve each other through the
+        # URI-shaped build copy in build\<preset>\qml_modules (src/CMakeLists.txt).
         Write-Step "qmllint (cmake --build --preset $Preset --target all_qmllint)"
         $sw = [Diagnostics.Stopwatch]::StartNew()
         $lintLog = Join-Path $repo "build\$Preset\check-qmllint.log"

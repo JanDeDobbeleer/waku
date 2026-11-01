@@ -17,14 +17,9 @@
 # alias flattens the file into the module root, so .qml basenames must be unique per module (S7):
 # a duplicate is a configure error below. NO_GENERATE_EXTRA_QMLDIRS because the extra qmldirs
 # (QTP0004) ignore aliases. The build-directory copy of each module (qmldir, .qmltypes, the .qml
-# files under their alias) lands in <build>/src/modules/{services,widgets}.
-#
-# The output folders are deliberately not URI-shaped (not .../wabar/services), as before the move into src/:
-# a URI-shaped folder puts <build>/src/modules on the qmlcachegen and qmllint import path, the
-# compiler then resolves `import wabar.services as S` and compiles about 160 more bindings of the
-# built-in widgets to C++ (aotstats: 708 instead of 550 compiled functions). That is a codegen
-# change, so it is left to its own commit; this file only moves where the modules are declared.
-set(wabar_modules_dir ${PROJECT_BINARY_DIR}/src/modules)
+# files under their alias) lands in <build>/qml_modules/wabar/{services,widgets}: the folder
+# follows the URI (QT_QML_OUTPUT_DIRECTORY, set in src/CMakeLists.txt), so qmlcachegen and qmllint
+# resolve `import wabar.services as S` and the other modules.
 get_property(services_sources GLOBAL PROPERTY WABAR_SERVICES_SOURCES)
 get_property(services_include_dirs GLOBAL PROPERTY WABAR_SERVICES_INCLUDE_DIRS)
 get_property(services_libs GLOBAL PROPERTY WABAR_SERVICES_LIBS)
@@ -60,7 +55,6 @@ qt_add_library(wabar_services STATIC)
 qt_add_qml_module(wabar_services
   URI wabar.services
   VERSION 1.0
-  OUTPUT_DIRECTORY ${wabar_modules_dir}/services
   NO_GENERATE_EXTRA_QMLDIRS
   SOURCES ${services_sources}
 )
@@ -78,7 +72,6 @@ qt_add_library(wabar_widgets STATIC)
 qt_add_qml_module(wabar_widgets
   URI wabar.widgets
   VERSION 1.0
-  OUTPUT_DIRECTORY ${wabar_modules_dir}/widgets
   NO_GENERATE_EXTRA_QMLDIRS
   QML_FILES ${widgets_qml_files}
 )

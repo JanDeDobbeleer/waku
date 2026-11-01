@@ -29,7 +29,6 @@ function(wabar_quickshell_service_module target uri header)
   qt_add_qml_module(${target}
     URI ${uri}
     VERSION 1.0
-    OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     NO_GENERATE_EXTRA_QMLDIRS
     DEPENDENCIES wabar.services
     SOURCES qml/${header}

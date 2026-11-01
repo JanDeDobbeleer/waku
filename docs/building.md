@@ -34,6 +34,14 @@ Everything lands in `build\<preset>`: `wabar.exe`, `wabarc.exe`, the tray hook D
 to it. The targets are `wabar`, `wabarc`, `WabarTrayHook` (`WabarTrayHook_arm64` on ARM64),
 `wabar_tests` and `deploy`; select one with `cmake --build --preset <preset> --target <name>`.
 
+`build\<preset>\qml_modules` holds the build copy of every QML module of `src/` (qmldir, `.qmltypes`,
+the `.qml` files), one folder per URI: `qml_modules\wabar`, `qml_modules\wabar\services`,
+`qml_modules\wabar\widgets`, `qml_modules\Quickshell\Io` and so on (`QT_QML_OUTPUT_DIRECTORY`, set in
+`src/CMakeLists.txt`). qmlcachegen and qmllint get `qml_modules` as import path and so resolve
+imports across modules; for an editor, pass it to qmlls or `qmllint -I`. `wabar.exe` never reads the
+folder: it loads its modules from the static plugins and the resources (`qrc:/qt/qml/<URI>`).
+`build\<preset>\qml` is a different folder: Qt's own modules, copied there by `windeployqt`.
+
 ## Run
 
 Run `wabar` from the build folder. It needs a config home: a folder with `shell.qml` (and optionally
@@ -170,13 +178,8 @@ on: pass `--config-home`.
 `tools\check.ps1` is the definition of done: clang-format check, structure check
 (rules S1-S8), json-subscript check, `arm64-debug` build, `qmllint` and `ctest`. It sets up the MSVC
 environment itself. The `qmllint` step builds `all_qmllint` and fails when its warning count rises
-above `tools/qmllint-baseline.txt`. Most of today's warnings are unresolved `wabar`,
-`wabar.services` and `Quickshell` imports: the module output folders are not URI-shaped (see
-`src/modules/qml_modules.cmake`), so qmllint cannot see the types and also reports their uses as
-`unqualified` or `missing-property`. Making the folders URI-shaped is a codegen change of its own;
-after it the baseline should drop sharply. The examples (`examples/*/shell.qml`) are not linted
-yet for the same reason.
-
+above `tools/qmllint-baseline.txt` (lower the file when the count falls; never raise it). The
+modules resolve each other through `build\<preset>\qml_modules` (see Build).
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1          # everything
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1 -Fast    # format + structure + json-subscript
@@ -255,3 +258,7 @@ Notes:
   notifications): recompiling the nine went from 33 s to 15 s of compile time (24 s to 15 s wall),
   and building the four libraries from scratch from 44 s to 31 s including the four PCHs.
 - Debug builds use `/Z7` because `/ZI` conflicts with `/guard:cf`.
+- Because qmlcachegen resolves the imports between wabar's modules (`build\<preset>\qml_modules`),
+  it compiles more bindings and functions of the built-in QML to C++: 1313 instead of 848 in the
+  generated `*_qml.cpp` when the folders became URI-shaped. A binding that qmlcachegen cannot type
+  still runs in the interpreter, as before.
