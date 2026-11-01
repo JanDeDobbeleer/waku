@@ -535,3 +535,28 @@ TEST(OverlayExample, TheLauncherLoadsHiddenAndTogglesThroughTheHostAndTheHandler
   QTest::keyClick(window->backingWindow(), Qt::Key_Escape);
   EXPECT_FALSE(window->visible());
 }
+
+TEST(OverlayControl, AWindowComponentMayRedeclareScreenContentItemAndHideDelay) {
+  // Noctalia's popup windows declare their own `screen`, `contentItem` and `hideDelay`; the engine
+  // lets them shadow its properties instead of refusing to load the file.
+  Harness h;
+  write(h.dir.filePath(QStringLiteral("MenuWindow.qml")), QStringLiteral(R"(
+import wabar
+PanelWindow {
+    property var screen: null
+    property var contentItem: null
+    readonly property int hideDelay: 123
+    implicitWidth: 200
+    implicitHeight: 100
+    visible: false
+}
+)"));
+  ASSERT_TRUE(started(h, QStringLiteral(R"(
+import wabar
+ShellRoot {
+    MenuWindow { objectName: "menu" }
+}
+)")));
+  const ControlHandler handler = makeControlHandler(*h.host, false);
+  EXPECT_EQ(handler(QStringLiteral("surface list")), QStringLiteral("ok: menu=hidden"));
+}

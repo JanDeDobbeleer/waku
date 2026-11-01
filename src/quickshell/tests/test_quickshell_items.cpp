@@ -228,3 +228,37 @@ TEST(QuickshellTransformWatcher, ChangingTheItemsFiresAndRewatches) {
   t.item("itemA")->setProperty("x", 6);
   EXPECT_EQ(t.count(), before + 1);
 }
+
+TEST(QuickshellSingleton, ASingletonMayDeclareItsOwnDataAndReloadableId) {
+  // Noctalia's Settings and ShellState declare `readonly property alias data`, and
+  // BrightnessService sets `reloadableId`; both must load on the engine's Singleton.
+  QTemporaryDir dir;
+  ASSERT_TRUE(dir.isValid());
+  writeFile(dir.filePath(QStringLiteral("qmldir")), "singleton Store 1.0 Store.qml\n");
+  writeFile(dir.filePath(QStringLiteral("Store.qml")), R"(
+pragma Singleton
+import QtQml
+import Quickshell
+
+Singleton {
+    id: root
+    reloadableId: "store"
+    readonly property alias data: inner
+    QtObject { id: inner; property int v: 7 }
+}
+)");
+  QQmlEngine engine;
+  auto root = create(&engine, R"(
+import QtQml
+import "."
+
+QtObject {
+    property int v: Store.data.v
+    property string id: Store.reloadableId
+}
+)",
+                     QUrl::fromLocalFile(dir.filePath(QStringLiteral("main.qml"))));
+  ASSERT_NE(root, nullptr);
+  EXPECT_EQ(root->property("v").toInt(), 7);
+  EXPECT_EQ(root->property("id").toString(), QStringLiteral("store"));
+}

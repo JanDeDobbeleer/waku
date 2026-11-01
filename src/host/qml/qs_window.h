@@ -85,10 +85,9 @@ class QsWindow : public QObject, public QQmlParserStatus {
   QML_ATTACHED(wabar::host::QsWindowAttached)
   Q_CLASSINFO("DefaultProperty", "data")
   Q_PROPERTY(QQmlListProperty<QObject> data READ data FINAL)
-  Q_PROPERTY(QQuickItem* contentItem READ contentItem CONSTANT FINAL)
+  Q_PROPERTY(QQuickItem* contentItem READ contentItem CONSTANT)
   // Null: the primary screen.
-  Q_PROPERTY(
-      wabar::host::ShellScreen* screen READ screen WRITE setScreen NOTIFY screenChanged FINAL)
+  Q_PROPERTY(wabar::host::ShellScreen* screen READ screen WRITE setScreen NOTIFY screenChanged)
   // Unset: the wabar surface colour (`background`, else Theme.surface; transparent with islands).
   Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged FINAL)
   // On or off the screen. A window with `visible: false` has no native window until it is first
@@ -127,7 +126,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
   // Milliseconds between `visible` turning false and the window leaving the screen, so the content
   // can animate out. Showing the window again during the delay cancels the hide.
-  Q_PROPERTY(int hideDelay READ hideDelay WRITE setHideDelay NOTIFY hideDelayChanged FINAL)
+  Q_PROPERTY(int hideDelay READ hideDelay WRITE setHideDelay NOTIFY hideDelayChanged)
   // Hide the window when it was active and lost the activation / when Escape is pressed and no
   // item took the key. Meant for windows with keyboard focus (PanelWindow `keyboardFocus`
   // OnDemand); a window that cannot be active is never dismissed by blur.

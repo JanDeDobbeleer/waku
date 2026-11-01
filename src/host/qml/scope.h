@@ -5,6 +5,7 @@
 #include <QList>
 #include <QObject>
 #include <QQmlListProperty>
+#include <QString>
 
 namespace wabar::host {
 
@@ -18,8 +19,14 @@ namespace wabar::host {
 class Scope : public QObject {
   Q_OBJECT
   QML_ELEMENT
-  Q_CLASSINFO("DefaultProperty", "data")
-  Q_PROPERTY(QQmlListProperty<QObject> data READ data FINAL)
+  // The default property is not `data`: a shell that declares its own `data` on a Singleton
+  // (Noctalia's Settings) would otherwise have its children assigned to that read-only alias.
+  Q_CLASSINFO("DefaultProperty", "shellChildren")
+  Q_PROPERTY(QQmlListProperty<QObject> shellChildren READ data FINAL)
+  // Not FINAL: a ported shell that declares its own `data` property (Noctalia's Settings) loads.
+  Q_PROPERTY(QQmlListProperty<QObject> data READ data)
+  // Quickshell's Reloadable id. Accepted so a shell can set it; wabar keeps no state by it.
+  Q_PROPERTY(QString reloadableId MEMBER reloadableId_ NOTIFY reloadableIdChanged)
 
  public:
   explicit Scope(QObject* parent = nullptr) : QObject(parent) {}
@@ -30,6 +37,9 @@ class Scope : public QObject {
   }
   // What was declared in it, in order.
   const QList<QObject*>& children() const { return data_; }
+
+ signals:
+  void reloadableIdChanged();
 
  private:
   static void appendData(QQmlListProperty<QObject>* list, QObject* object) {
@@ -49,6 +59,7 @@ class Scope : public QObject {
   }
 
   QList<QObject*> data_;
+  QString reloadableId_;
 };
 
 // The root of shell.qml (Quickshell `ShellRoot`): a Scope the host builds and replaces as a whole.
