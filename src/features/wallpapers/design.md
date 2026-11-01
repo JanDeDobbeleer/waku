@@ -54,13 +54,17 @@ Qt Quick window.
    makes "click outside closes" a plain mouse area. Escape, Enter, arrows, losing focus close or move.
 2. **Open on the cursor screen.** `hotkeyScreen` follows Python: `cursor`, `primary`, `active`
    (foreground window's monitor); anything else means primary.
-3. **Hotkey: `RegisterHotKey` on the GUI thread.** The Widgets build's `HotkeyService` lived in
-   `app/` (it needed the event bus and a thread), which a feature must not include. The service
-   registers one hotkey with a null window handle and a `QAbstractNativeEventFilter` receives
-   `WM_HOTKEY` in Qt's own message loop. No new thread and no hidden window. `RegisterHotKey` is
-   documented, so no allowlist row. If the combination is taken the service logs a warning and the
-   gallery stays reachable through the bar button. Never registered offscreen, in tests, or when
-   `kernel::liveDesktop("wallpapers")` is false.
+3. **Hotkey: a handle in `kernel::Hotkeys`.** The service adds its combination to the process-wide
+   hotkey table that `GlobalShortcut` uses too (`src/kernel/qt/hotkeys.h`): `RegisterHotKey` with a
+   null window on the GUI thread and one native event filter for `WM_HOTKEY`. No thread and no
+   hidden window of its own. The feature had its own copy of the parser and the registration while
+   the table lived in `host/`, which a feature must not include; it moved to the kernel so both
+   share one id range, one filter and `--no-hotkeys`. A `GlobalShortcut` on the same combination
+   shares the registration, and both fire. If another program owns the combination the table logs
+   it as taken, the service logs a warning and the gallery stays reachable through the bar button
+   and `wabarc wallpaper gallery`. Never registered offscreen, in tests (they install the kernel's
+   fake backend), when `kernel::liveDesktop("hotkeys")` is false (`--no-hotkeys`), or when the
+   service is unavailable (`kernel::liveDesktop("wallpapers")` false).
 4. **Thumbnails come from the host.** `image://thumb/` decodes on its own pool with a scaled
    read and shares one memory and disk cache with every other gallery of the run. The service
    touches no image.
@@ -177,4 +181,4 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `wabar.services.Wallpapers` (`src/features/wallpapers/qml/wallpapers_service.{h,cpp}`): the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `wabar` run, shared by every Wallpapers widget; created by the QML engine on first use and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles` and `DesktopWallpaperBackend` (animated `engine` off); thumbnails are the host's `image://thumb/`. No thread of its own: the hotkey is `RegisterHotKey` (documented) on the GUI thread through a native event filter, unregistered in the destructor. Inert, no hotkey, when `kernel::liveDesktop("wallpapers")` is false.
+- `wabar.services.Wallpapers` (`src/features/wallpapers/qml/wallpapers_service.{h,cpp}`): the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `wabar` run, shared by every Wallpapers widget; created by the QML engine on first use and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles` and `DesktopWallpaperBackend` (animated `engine` off); thumbnails are the host's `image://thumb/`. No thread of its own: the hotkey is a handle in `kernel::Hotkeys` (GUI thread), removed in the destructor. Inert, no hotkey, when `kernel::liveDesktop("wallpapers")` is false; no hotkey either when `kernel::liveDesktop("hotkeys")` is false (`--no-hotkeys`).
