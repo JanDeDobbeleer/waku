@@ -14,8 +14,8 @@
 #include "features/wallpapers/lock_screen.h"
 #include "features/wallpapers/qml/wallpaper_transition.h"
 #include "features/wallpapers/wallpaper_command.h"
-#include "features/wallpapers/wallpaper_hotkey.h"
 #include "features/wallpapers/wallpaper_manager.h"
+#include "kernel/qt/hotkeys.h"
 
 class QJSEngine;
 class QQmlEngine;
@@ -44,7 +44,8 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& f
 //
 // Threads: GUI thread. The transition's decoder thread is described there, the lock screen worker
 // in win32/lock_screen_win.cpp.
-// The hotkey arrives on the GUI thread.
+// The hotkey is a handle in kernel::Hotkeys, the table GlobalShortcut uses too; it fires on the
+// GUI thread.
 //
 // Several `Wallpapers` widgets and a `WallpaperSettings` share this one service; the last one
 // to call configure()/configureEngine() wins.
@@ -75,11 +76,11 @@ class Wallpapers : public QObject, public WallpaperControl {
 
  public:
   // Everything a test replaces. Null members are the real ones; `realBackend=false` with a null
-  // `backend` means unavailable.
+  // `backend` means unavailable. The hotkey goes to kernel::Hotkeys, whose backend a test
+  // replaces with kernel/testing/hotkeys_fixtures.h.
   struct Deps {
     wabar::wallpapers::WallpaperManager::BackendFactory backend;
     wabar::wallpapers::WallpaperManager::Picker picker;
-    std::unique_ptr<HotkeyHost> hotkeys;
     // Builds the transition for (image, animation); null means the real WallpaperTransition.
     std::function<std::unique_ptr<WallpaperTransition>(const QString&, const QString&)> transition;
     // Sets the lock screen picture; null means the real one on a live desktop, none otherwise.
@@ -151,6 +152,8 @@ class Wallpapers : public QObject, public WallpaperControl {
   // Sets `current` in files_ from current_ without listing the folder again.
   void markCurrent();
   void applyToManager();
+  // Gives the hotkey's handle back to kernel::Hotkeys (no-op without one).
+  void releaseHotkey();
   void commitWallpaper(const QString& path, bool dryRun);
   void playTransition(const QString& path, bool dryRun);
   void setWallpaperImpl(const QString& path, bool dryRun);
@@ -166,6 +169,7 @@ class Wallpapers : public QObject, public WallpaperControl {
   std::unique_ptr<wabar::wallpapers::WallpaperManager> manager_;
   QString imagePath_;
   QString hotkey_;
+  kernel::Hotkeys::Handle hotkeyHandle_ = 0;
   int autoChangeSeconds_ = 0;
   QString hotkeyScreen_ = QStringLiteral("cursor");
   QVariantList files_;

@@ -9,8 +9,9 @@ get_property(test_sources GLOBAL PROPERTY WABAR_TEST_SOURCES)
 get_property(test_libs GLOBAL PROPERTY WABAR_TEST_LIBS)
 list(REMOVE_DUPLICATES test_libs)
 
-# tests/integration: tests that load built-in widgets of several features together (they may
-# include anything); every unit's own tests come through the TESTS contributions.
+# tests/integration: tests that load built-in widgets of several features together, or check that
+# two units share one kernel object (test_hotkeys_shared.cpp); they may include anything. Every
+# unit's own tests come through the TESTS contributions.
 add_executable(wabar_tests main.cpp
   integration/test_all_widgets_load.cpp
   integration/test_builtin_widgets.cpp
@@ -18,6 +19,7 @@ add_executable(wabar_tests main.cpp
   integration/test_qt_imports.cpp
   integration/test_font_engine.cpp
   integration/test_gallery_example.cpp
+  integration/test_hotkeys_shared.cpp
   integration/test_quickshell_glue.cpp
   integration/test_safe_mode.cpp
   integration/test_vertical_panel.cpp

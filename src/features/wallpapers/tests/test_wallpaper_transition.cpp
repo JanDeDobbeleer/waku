@@ -247,7 +247,6 @@ struct ServiceFixture {
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [](int) { return 0; };
-    deps.hotkeys = std::make_unique<NoHotkeys>();
     deps.realBackend = false;
     deps.dryRun = dryRun;
     deps.transition = [this, attachOk, readable](const QString& image, const QString& animation) {
@@ -261,13 +260,6 @@ struct ServiceFixture {
     service = std::make_unique<Wallpapers>(std::move(deps), nullptr);
     service->setImagePath(folder.path());
   }
-
-  struct NoHotkeys final : wabar::wallpapers::HotkeyHost {
-    bool registerKey(const wabar::wallpapers::HotkeyCombo&, std::function<void()>) override {
-      return true;
-    }
-    void unregisterKey() override {}
-  };
 
   QString file(const char* name) const {
     return QDir::toNativeSeparators(

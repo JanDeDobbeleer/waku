@@ -1,6 +1,6 @@
 # wallpapers: the wallpaper folder, set and cycle wallpapers, the picker gallery and its hotkey, and
 # the animated change (a Qt Quick overlay on WorkerW) and the lock screen picture that follows a
-# change. No dependencies on other features.
+# change. No dependencies on other features; the hotkey is a handle in kernel::Hotkeys.
 # wallpaper_command.h is the `wallpaper` verb of the control pipe and the WallpaperControl
 # interface the service implements; wabar.exe adds the verb to the bar's control handler.
 wabar_feature(
@@ -11,8 +11,6 @@ wabar_feature(
     lock_screen.cpp
     wallpaper_files.h
     wallpaper_files.cpp
-    wallpaper_hotkey.h
-    wallpaper_hotkey.cpp
     wallpaper_layout.h
     wallpaper_command.h
     wallpaper_command.cpp
@@ -22,8 +20,6 @@ wabar_feature(
   WIN32_SOURCES
     win32/desktop_wallpaper_win.cpp
     win32/lock_screen_win.cpp
-    win32/wallpaper_hotkey_win.h
-    win32/wallpaper_hotkey_win.cpp
     win32/window_focus.h
     win32/window_focus.cpp
     win32/workerw.h

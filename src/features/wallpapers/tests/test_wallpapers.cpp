@@ -1,6 +1,6 @@
 // The Wallpapers service on a fake IDesktopWallpaper and a temporary folder of tiny images. The
-// real wallpaper setter and the real hotkey never run: the service gets a fake backend and a
-// fake hotkey host.
+// real wallpaper setter and the real hotkey never run: the service gets a fake backend and
+// kernel::Hotkeys a fake hotkey backend.
 #include <gtest/gtest.h>
 
 #include <QDir>
@@ -15,17 +15,20 @@
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/testing/fake_wallpaper_backend.h"
 #include "host/testing/shell_fixtures.h"
+#include "kernel/qt/hotkeys.h"
+#include "kernel/testing/hotkeys_fixtures.h"
 
 namespace {
 
 namespace plat = wabar::wallpapers;
+using wabar::kernel::HotkeyCombo;
+using wabar::kernel::parseHotkey;
+using wabar::kernel::ScopedFakeHotkeys;
 using wabar::wallpapers::DesktopState;
 using wabar::wallpapers::FakeBackend;
-using wabar::wallpapers::FakeHotkeys;
-using wabar::wallpapers::HotkeyCombo;
-using wabar::wallpapers::HotkeyHost;
-using wabar::wallpapers::parseHotkey;
 using wabar::wallpapers::Wallpapers;
+
+HotkeyCombo combo(const char* keys) { return parseHotkey(QString::fromLatin1(keys)).value(); }
 
 // The wallpaper "on the desktop": shared by every backend the service creates.
 void makeImage(const QString& path, const QColor& color, QSize size = QSize(40, 20)) {
@@ -45,12 +48,9 @@ struct Fixture {
     EXPECT_TRUE(notes.open(QIODevice::WriteOnly));
 
     state = std::make_shared<DesktopState>();
-    auto owned = std::make_unique<FakeHotkeys>();
-    hotkeys = owned.get();
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [this](int count) { return picks[next++ % picks.size()] % count; };
-    deps.hotkeys = std::move(owned);
     deps.realBackend = false;
     service = std::make_unique<Wallpapers>(std::move(deps), nullptr);
   }
@@ -65,10 +65,10 @@ struct Fixture {
     return result;
   }
 
+  ScopedFakeHotkeys hotkeys;  // first, so the service goes before it
   QTemporaryDir folder;
   QTemporaryDir cacheFolder;
   std::shared_ptr<DesktopState> state;
-  FakeHotkeys* hotkeys = nullptr;
   std::unique_ptr<Wallpapers> service;
   std::vector<int> picks{0};
   size_t next = 0;
@@ -156,46 +156,36 @@ TEST(WallpapersService, TheHotkeyIsRegisteredOnceAndTogglesTheGallery) {
   Fixture f;
   f.service->configure(f.folder.path(), QStringLiteral("alt+e"), QStringLiteral("cursor"), 0);
   f.service->configure(f.folder.path(), QStringLiteral("alt+e"), QStringLiteral("cursor"), 0);
-  ASSERT_EQ(f.hotkeys->attempts.size(), 1u);
-  EXPECT_EQ(f.hotkeys->attempts[0].modifiers, 1u);
-  EXPECT_EQ(f.hotkeys->attempts[0].virtualKey, static_cast<unsigned>('E'));
-  ASSERT_TRUE(f.hotkeys->callback);
-  f.hotkeys->callback();
+  ASSERT_EQ(f.hotkeys.backend->registerCalls, 1);
+  ASSERT_EQ(f.hotkeys.backend->registered.size(), 1u);
+  EXPECT_EQ(f.hotkeys.backend->registered.begin()->second, combo("alt+e"));
+  ASSERT_TRUE(f.hotkeys.backend->press(combo("alt+e")));
   EXPECT_TRUE(f.service->galleryOpen());
-  f.hotkeys->callback();
+  ASSERT_TRUE(f.hotkeys.backend->press(combo("alt+e")));
   EXPECT_FALSE(f.service->galleryOpen());
+  // A new hotkey replaces the old one; an empty one removes it.
+  f.service->configure(f.folder.path(), QStringLiteral("ctrl+shift+f5"), QString(), 0);
+  ASSERT_EQ(f.hotkeys.backend->registered.size(), 1u);
+  EXPECT_EQ(f.hotkeys.backend->registered.begin()->second, combo("ctrl+shift+f5"));
+  f.service->configure(f.folder.path(), QString(), QString(), 0);
+  EXPECT_TRUE(f.hotkeys.backend->registered.empty());
 }
 
 TEST(WallpapersService, ATakenHotkeyOrABadOneDoesNotBreakTheService) {
   Fixture f;
-  f.hotkeys->succeed = false;
+  f.hotkeys.backend->taken.insert(combo("alt+e"));
   f.service->configure(f.folder.path(), QStringLiteral("alt+e"), QString(), 0);
-  EXPECT_EQ(f.hotkeys->attempts.size(), 1u);
+  EXPECT_TRUE(f.hotkeys.backend->registered.empty());
   f.service->configure(f.folder.path(), QStringLiteral("alt+nonsense"), QString(), 0);
-  EXPECT_EQ(f.hotkeys->attempts.size(), 1u);
+  EXPECT_TRUE(f.hotkeys.backend->registered.empty());
+  EXPECT_EQ(f.hotkeys.backend->registerCalls, 0);
   EXPECT_EQ(f.service->files().size(), 3);
-}
-
-TEST(WallpapersService, ParsesHotkeys) {
-  const auto altE = parseHotkey(QStringLiteral(" Alt + E "));
-  ASSERT_TRUE(altE);
-  EXPECT_EQ(altE->modifiers, 1u);
-  EXPECT_EQ(altE->virtualKey, static_cast<unsigned>('E'));
-  const auto f5 = parseHotkey(QStringLiteral("ctrl+shift+f5"));
-  ASSERT_TRUE(f5);
-  EXPECT_EQ(f5->modifiers, 6u);
-  EXPECT_EQ(f5->virtualKey, 0x70u + 4);
-  EXPECT_EQ(parseHotkey(QStringLiteral("win+space"))->modifiers, 8u);
-  EXPECT_FALSE(parseHotkey(QStringLiteral("alt")));
-  EXPECT_FALSE(parseHotkey(QStringLiteral("a+b")));
-  EXPECT_FALSE(parseHotkey(QStringLiteral("f99")));
-  EXPECT_FALSE(parseHotkey(QString()));
 }
 
 TEST(WallpapersWidget, TheHotkeyOpensAGalleryWindowWithOneThumbnailPerFile) {
   Fixture f;
   Fixture* fixture = &f;
-  FakeHotkeys* hotkeys = f.hotkeys;
+  wabar::kernel::FakeHotkeyBackend* hotkeys = f.hotkeys.backend;
   Wallpapers::setFactoryForTests([fixture]() { return std::move(fixture->service); });
   Harness h;
   h.start(QStringLiteral(R"(
@@ -217,8 +207,7 @@ ShellRoot {
   ASSERT_TRUE(h.window());
   // No label: the button is hidden, the widget is loaded and owns the hotkey.
   EXPECT_FALSE(findItem(h.window(), QStringLiteral("wallpapers"))->isVisible());
-  ASSERT_TRUE(hotkeys->callback);
-  hotkeys->callback();
+  ASSERT_TRUE(hotkeys->press(combo("alt+e")));  // the widget's default hotkey
   QQuickItem* gallery = nullptr;
   ASSERT_TRUE(QTest::qWaitFor(
       [&] {
@@ -233,5 +222,5 @@ ShellRoot {
       },
       3000));
   EXPECT_EQ(gallery->property("count").toInt(), 3);
-  hotkeys->callback();
+  EXPECT_TRUE(hotkeys->press(combo("alt+e")));
 }

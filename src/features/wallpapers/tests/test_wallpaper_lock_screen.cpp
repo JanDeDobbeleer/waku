@@ -113,7 +113,6 @@ struct LockFixture {
     Wallpapers::Deps deps;
     deps.backend = [state = desktop] { return std::make_unique<wp::FakeBackend>(state); };
     deps.picker = [n = 0](int count) mutable { return n++ % count; };
-    deps.hotkeys = std::make_unique<wp::FakeHotkeys>();
     deps.transition = skippingTransition;
     deps.lockScreen = std::make_unique<wp::FakeLockScreen>(lock);
     deps.realBackend = false;

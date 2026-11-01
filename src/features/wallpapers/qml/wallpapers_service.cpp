@@ -17,7 +17,6 @@
 #include <utility>
 
 #include "features/wallpapers/wallpaper_files.h"
-#include "features/wallpapers/win32/wallpaper_hotkey_win.h"
 #include "features/wallpapers/win32/window_focus.h"
 #include "kernel/qt/app_data.h"
 #include "kernel/qt/live_desktop.h"
@@ -145,16 +144,19 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
   // A timed change takes the path of a manual random(): lock screen, dry run and animation.
   managerDeps.timedChange = [this] { random(); };
   manager_ = std::make_unique<WallpaperManager>(std::move(managerDeps));
-  // `--no-hotkeys` switches this hotkey off with the others (host::Hotkeys asks the same name).
-  if (!deps_.hotkeys && kernel::liveDesktop(QStringLiteral("hotkeys")))
-    deps_.hotkeys = makeWin32HotkeyHost();
   readCurrent();
 }
 
 Wallpapers::~Wallpapers() {
   if (transition_) transition_->cancel();
-  if (deps_.hotkeys) deps_.hotkeys->unregisterKey();
+  releaseHotkey();
   if (manager_) manager_->stop();
+}
+
+void Wallpapers::releaseHotkey() {
+  if (hotkeyHandle_ == 0) return;
+  kernel::Hotkeys::instance().remove(hotkeyHandle_);
+  hotkeyHandle_ = 0;
 }
 
 Wallpapers* Wallpapers::create(QQmlEngine*, QJSEngine*) {
@@ -187,13 +189,20 @@ void Wallpapers::configure(const QString& imagePath, const QString& hotkey,
     if (!available_) return;
     if (hotkey == hotkey_) return;
     hotkey_ = hotkey;
-    if (!deps_.hotkeys) return;
-    deps_.hotkeys->unregisterKey();
+    releaseHotkey();
+    // Not a live desktop or `--no-hotkeys`: kernel::Hotkeys has no backend, and the hotkey is
+    // quietly off, as every GlobalShortcut is.
+    kernel::Hotkeys& hotkeys = kernel::Hotkeys::instance();
+    if (!hotkeys.active()) return;
     if (hotkey.trimmed().isEmpty()) return;
-    const auto combo = parseHotkey(hotkey);
+    const auto combo = kernel::parseHotkey(hotkey);
     if (!combo) {
       qWarning().noquote() << "Wallpapers: cannot parse hotkey" << hotkey;
-    } else if (!deps_.hotkeys->registerKey(*combo, [this] { onHotkey(); })) {
+      return;
+    }
+    // The callback never outlives this object: the destructor removes the handle.
+    hotkeyHandle_ = hotkeys.add(*combo, [this] { onHotkey(); });
+    if (hotkeyHandle_ == 0) {
       qWarning().noquote() << "Wallpapers: could not register hotkey" << hotkey
                            << "(already taken?)";
     }

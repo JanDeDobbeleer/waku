@@ -15,15 +15,18 @@
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/testing/fake_wallpaper_backend.h"
 #include "host/testing/shell_fixtures.h"
+#include "kernel/qt/hotkeys.h"
+#include "kernel/testing/hotkeys_fixtures.h"
 
 namespace {
 
 namespace plat = wabar::wallpapers;
+using wabar::kernel::HotkeyCombo;
+using wabar::kernel::Hotkeys;
+using wabar::kernel::parseHotkey;
+using wabar::kernel::ScopedFakeHotkeys;
 using wabar::wallpapers::DesktopState;
 using wabar::wallpapers::FakeBackend;
-using wabar::wallpapers::FakeHotkeys;
-using wabar::wallpapers::HotkeyCombo;
-using wabar::wallpapers::HotkeyHost;
 using wabar::wallpapers::resolveWallpaperTarget;
 using wabar::wallpapers::Wallpapers;
 using wabar::wallpapers::WallpaperTransition;
@@ -96,15 +99,12 @@ struct Fixture {
     service = make();
   }
 
-  // A new service on the same fake desktop with its own fake hotkeys (`hotkeys` points at the
-  // latest). A reload destroys the singleton, so a reload test builds one per generation.
+  // A new service on the same fake desktop; every generation shares the fake hotkey backend of
+  // kernel::Hotkeys. A reload destroys the singleton, so a reload test builds one per generation.
   std::unique_ptr<Wallpapers> make() {
-    auto owned = std::make_unique<FakeHotkeys>();
-    hotkeys = owned.get();
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [this](int count) { return picks[next++ % picks.size()] % count; };
-    deps.hotkeys = std::move(owned);
     deps.transition = [log = transitions](const QString& path, const QString& animation) {
       return fakeTransition(log, path, animation);
     };
@@ -123,12 +123,12 @@ struct Fixture {
   QString ok(const QString& path) const { return QStringLiteral("ok: ") + native(path); }
   bool setsEmpty() const { return state->sets.isEmpty(); }
 
+  ScopedFakeHotkeys hotkeys;  // first, so the services go before it
   QTemporaryDir folder;
   QTemporaryDir cacheFolder;
   QTemporaryDir elsewhere;
   std::shared_ptr<DesktopState> state;
   std::shared_ptr<TransitionLog> transitions;
-  FakeHotkeys* hotkeys = nullptr;
   std::unique_ptr<Wallpapers> service;
   std::vector<int> picks{0};
   size_t next = 0;
@@ -146,7 +146,6 @@ struct SmallFolder {
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [this](int count) { return pick % count; };
-    deps.hotkeys = std::make_unique<FakeHotkeys>();
     deps.realBackend = false;
     service = std::make_unique<Wallpapers>(std::move(deps), nullptr);
     service->configure(QDir::fromNativeSeparators(folder.path()), QString(), QString(), 0);
@@ -289,17 +288,19 @@ TEST(WallpaperService, DryRunWithTheEnginePlaysTheAnimationButNeverSetsIt) {
   EXPECT_TRUE(QTest::qWaitFor([&] { return f.state->sets.size() == 1; }, 3000));
 }
 
-// Off the live desktop (and with --no-hotkeys) liveDesktop("hotkeys") is false: no hotkey host is
-// built, so a configured hotkey registers nothing and the service still works.
+// Off the live desktop (and with --no-hotkeys) liveDesktop("hotkeys") is false: kernel::Hotkeys
+// builds no backend, so a configured hotkey registers nothing and the service still works.
 TEST(WallpaperService, WithoutLiveHotkeysTheHotkeyIsInert) {
   SmallFolder f;
+  Hotkeys::instance().resetForTests();  // the default backend: none on the offscreen platform
   auto state = std::make_shared<DesktopState>();
   Wallpapers::Deps deps;
   deps.backend = [state] { return std::make_unique<FakeBackend>(state); };
   deps.picker = [](int) { return 0; };
-  deps.realBackend = false;  // no hotkeys: the service would build the real host on a live desktop
+  deps.realBackend = false;
   Wallpapers service(std::move(deps), nullptr);
   ASSERT_TRUE(service.available());
+  EXPECT_FALSE(Hotkeys::instance().active());
   service.configure(QDir::fromNativeSeparators(f.folder.path()), QStringLiteral("alt+e"), QString(),
                     0);
   service.configure(QDir::fromNativeSeparators(f.folder.path()), QStringLiteral("ctrl+f5"),
@@ -313,7 +314,6 @@ TEST(WallpaperService, DryRunRandomWithoutTheEngineSetsNothing) {
   Wallpapers::Deps deps;
   deps.backend = [state] { return std::make_unique<FakeBackend>(state); };
   deps.picker = [](int) { return 0; };
-  deps.hotkeys = std::make_unique<FakeHotkeys>();
   deps.realBackend = false;
   deps.dryRun = true;
   Wallpapers service(std::move(deps), nullptr);
@@ -400,7 +400,8 @@ ShellRoot {
 TEST(WallpaperSettingsTest, ConfiguresAndCreatesTheServiceWithoutAWidget) {
   Fixture f;
   Fixture* fixture = &f;
-  FakeHotkeys* hotkeys = f.hotkeys;
+  wabar::kernel::FakeHotkeyBackend* hotkeys = f.hotkeys.backend;
+  const HotkeyCombo ctrlShiftF5 = parseHotkey(QStringLiteral("ctrl+shift+f5")).value();
   int created = 0;
   Wallpapers::setFactoryForTests([fixture, &created]() {
     ++created;
@@ -422,10 +423,10 @@ TEST(WallpaperSettingsTest, ConfiguresAndCreatesTheServiceWithoutAWidget) {
   EXPECT_EQ(created, 1);
   EXPECT_EQ(QDir::toNativeSeparators(service->imagePath()),
             f.native(QDir::fromNativeSeparators(f.folder.path())));
-  ASSERT_EQ(hotkeys->attempts.size(), 1u);
-  EXPECT_EQ(hotkeys->attempts.front().modifiers, 2u | 4u);
-  EXPECT_EQ(hotkeys->attempts.front().virtualKey, 0x74u);  // VK_F5
-  ASSERT_TRUE(hotkeys->callback);
+  ASSERT_EQ(hotkeys->registerCalls, 1);
+  ASSERT_EQ(hotkeys->registered.size(), 1u);
+  EXPECT_EQ(hotkeys->registered.begin()->second.modifiers, 2u | 4u);
+  EXPECT_EQ(hotkeys->registered.begin()->second.virtualKey, 0x74u);  // VK_F5
 
   // The animation and engine reached the service: a dry-run set plays "fade".
   EXPECT_EQ(service->controlSet(QStringLiteral("img2"), true).left(4), QStringLiteral("ok: "));
@@ -433,7 +434,7 @@ TEST(WallpaperSettingsTest, ConfiguresAndCreatesTheServiceWithoutAWidget) {
   EXPECT_TRUE(f.transitions->played.first().endsWith(QStringLiteral("|fade")));
 
   // The hotkey opens the gallery, a window of the settings object.
-  hotkeys->callback();
+  ASSERT_TRUE(hotkeys->press(ctrlShiftF5));
   QQuickItem* gallery = nullptr;
   ASSERT_TRUE(QTest::qWaitFor(
       [&] {
@@ -484,7 +485,7 @@ TEST(WallpaperSettingsTest, AReloadReplacesTheServiceAndConfiguresTheNewOne) {
   QPointer<Wallpapers> first = current();
   ASSERT_TRUE(first);
   EXPECT_FALSE(first->imagePath().isEmpty());
-  EXPECT_EQ(f.hotkeys->attempts.size(), 1u);
+  EXPECT_EQ(f.hotkeys.backend->registered.size(), 1u);
 
   write(h.shellFile(), settingsConfig(f.elsewhere.path()));
   ASSERT_TRUE(h.host->reload());
@@ -493,8 +494,10 @@ TEST(WallpaperSettingsTest, AReloadReplacesTheServiceAndConfiguresTheNewOne) {
   EXPECT_FALSE(first);  // the old service (and its hotkey) went with the singleton
   EXPECT_EQ(QDir::toNativeSeparators(second->imagePath()),
             f.native(QDir::fromNativeSeparators(f.elsewhere.path())));
-  EXPECT_EQ(f.hotkeys->attempts.size(), 1u);  // the new service registered its own
-  EXPECT_TRUE(f.hotkeys->callback);
+  // The old service gave its hotkey back and the new one registered it again.
+  EXPECT_EQ(f.hotkeys.backend->registered.size(), 1u);
+  EXPECT_GE(f.hotkeys.backend->unregisterCalls, 1);
+  EXPECT_GE(f.hotkeys.backend->registerCalls, 2);
 
   write(h.shellFile(), shellConfig());  // no settings any more
   ASSERT_TRUE(h.host->reload());
@@ -503,7 +506,7 @@ TEST(WallpaperSettingsTest, AReloadReplacesTheServiceAndConfiguresTheNewOne) {
   ASSERT_TRUE(third);
   EXPECT_FALSE(second);
   EXPECT_TRUE(third->imagePath().isEmpty());
-  EXPECT_FALSE(f.hotkeys->callback);
+  EXPECT_TRUE(f.hotkeys.backend->registered.empty());
 }
 
 TEST(WallpaperSettingsTest, AShellWithoutWindowsLoadsToo) {

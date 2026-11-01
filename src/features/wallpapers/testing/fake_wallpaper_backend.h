@@ -1,6 +1,6 @@
-// Fakes of the wallpaper service's two OS-facing interfaces: a desktop that remembers what it was
-// told to show, and a hotkey host the test fires by hand. Nothing touches the real wallpaper or
-// registers a real hotkey.
+// A fake of the wallpaper service's desktop: it remembers what it was told to show. Nothing
+// touches the real wallpaper. The hotkey's fake is the kernel's
+// (kernel/testing/hotkeys_fixtures.h).
 #pragma once
 
 #include <QRect>
@@ -12,7 +12,6 @@
 #include <vector>
 
 #include "features/wallpapers/desktop_wallpaper.h"
-#include "features/wallpapers/wallpaper_hotkey.h"
 
 namespace wabar::wallpapers {
 
@@ -47,24 +46,6 @@ class FakeBackend final : public DesktopWallpaperBackend {
 
  private:
   std::shared_ptr<DesktopState> state_;
-};
-
-class FakeHotkeys final : public HotkeyHost {
- public:
-  bool registerKey(const HotkeyCombo& combo, std::function<void()> pressed) override {
-    attempts.push_back(combo);
-    if (!succeed) return false;
-    callback = std::move(pressed);
-    return true;
-  }
-  void unregisterKey() override {
-    ++unregisters;
-    callback = nullptr;
-  }
-  bool succeed = true;
-  std::vector<HotkeyCombo> attempts;
-  int unregisters = 0;
-  std::function<void()> callback;
 };
 
 }  // namespace wabar::wallpapers
