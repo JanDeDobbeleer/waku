@@ -37,10 +37,10 @@ Window {
         return PopupPlacement.edgeForDock(shellWindow ? shellWindow.dockEdge : DockEdge.None);
     }
 
-    // The screen the anchor item is on, as a Window takes it (Qt.application.screens).
+    // The screen the anchor item is on, as a Window takes it (Application.screens).
     function screenOf(item) {
         const name = item.Screen.name;
-        const list = Qt.application.screens;
+        const list = Application.screens;
         for (let i = 0; i < list.length; ++i) {
             if (list[i].name === name)
                 return list[i];

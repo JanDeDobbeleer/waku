@@ -26,7 +26,7 @@ QtObject {
     property var screens: []
 
     // The taskbar model and the row of this window in it, set by ToplevelManager.
-    property QtObject taskbar: null
+    property var taskbar: null
     property int row: -1
 
     function activate() {

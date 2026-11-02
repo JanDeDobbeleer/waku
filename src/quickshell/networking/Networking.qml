@@ -12,7 +12,7 @@ import waku.services as S
 QtObject {
     id: root
 
-    property QtObject service: S.Network
+    property var service: S.Network
 
     property bool wifiEnabled: false
     readonly property bool wifiHardwareEnabled: true

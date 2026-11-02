@@ -17,7 +17,7 @@ import waku.services as S
 QtObject {
     id: root
 
-    property QtObject service: S.TaskbarService
+    property var service: S.TaskbarService
 
     readonly property W.ScriptModel toplevels: W.ScriptModel {
         values: root.list
@@ -62,7 +62,10 @@ QtObject {
             readonly property bool active: model.active ?? false
             readonly property bool minimized: model.minimized ?? false
             readonly property string signature: [key, title, exe, className, hwnd, monitorHandle, iconUrl, active, minimized].join("|")
+            // The delegate is its own component; `root` is the singleton's id.
+            // qmllint disable unqualified
             onSignatureChanged: Qt.callLater(root.rebuild)
+            // qmllint enable unqualified
         }
         onObjectAdded: Qt.callLater(root.rebuild)
         onObjectRemoved: Qt.callLater(root.rebuild)
@@ -73,6 +76,8 @@ QtObject {
         const out = [];
         let active = null;
         for (let i = 0; i < rows.count; i++) {
+            // The Instantiator hands back a QObject; the delegate's properties are not typed for it.
+            // qmllint disable missing-property
             const r = rows.objectAt(i);
             if (!r || !r.key.startsWith("w:"))
                 continue;
@@ -93,6 +98,7 @@ QtObject {
             t.iconUrl = r.iconUrl;
             t.minimized = r.minimized;
             t.activated = r.active;
+            // qmllint enable missing-property
             if (t.activated)
                 active = t;
             seen[id] = true;
