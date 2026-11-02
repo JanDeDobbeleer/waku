@@ -9,6 +9,9 @@ ShellRoot {
         screens: ["primary"]          // "primary", "all", or a screen name such as "DISPLAY2"
         edge: Panel.Top               // Panel.Top | Panel.Bottom
         thickness: 40
+        // Blur is the DWM acrylic blur of what is behind the bar. The compositor draws it, so its
+        // cost lands on dwm.exe and the GPU, not on waku; None and Mica skip it. Measured on one
+        // machine: waku's own CPU use was the same for all three, and dwm's share was not visible.
         backdrop: Backdrop.Blur       // Backdrop.None | Backdrop.Blur | Backdrop.Mica
 
         content: PanelLayout {        // built once per matching screen
