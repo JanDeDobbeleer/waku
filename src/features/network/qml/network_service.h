@@ -10,6 +10,7 @@
 #include <optional>
 #include <vector>
 
+#include "features/network/change_watcher.h"
 #include "features/network/connectivity.h"
 #include "features/network/radio.h"
 #include "features/network/throughput.h"
@@ -50,6 +51,9 @@ class NetworkSource {
   virtual std::unique_ptr<WifiRadioBackend> createWifiRadio() { return nullptr; }
   // The VPN (RAS) backend, called on the GUI thread at the first sample; null when there is none.
   virtual std::unique_ptr<VpnBackend> createVpnBackend() { return nullptr; }
+  // The change notifications, called on the GUI thread when polling begins; null when there are
+  // none (the default), then the service relies on its timer alone.
+  virtual std::unique_ptr<NetworkChangeWatcher> createChangeWatcher() { return nullptr; }
 };
 
 // Maps one connectivity sample and the exact signal quality onto the status. Ethernet wins over
@@ -60,9 +64,12 @@ NetworkStatus statusFromSample(const ConnectivitySample& sample,
 // The real source; null on the offscreen platform.
 std::shared_ptr<NetworkSource> createSystemNetworkSource();
 
-// Wi-Fi, Ethernet and VPN state as a QML singleton, shared by every Wifi widget. Polls the source
-// every `interval` ms (inherited from StatSource, which runs the blocking sample on a thread-pool
-// thread and applies it here on the GUI thread). `available` is false when there is no source
+// Wi-Fi, Ethernet and VPN state as a QML singleton, shared by every Wifi widget. Samples the source
+// when Windows reports a change (connection, address or signal quality; see NetworkChangeWatcher,
+// debounced) and every `interval` ms as a safety net (inherited from StatSource, which runs the
+// blocking sample on a thread-pool thread and applies it here on the GUI thread; the default is
+// 60 s, or 5 s when no change notification could be registered). `available` is false when there
+// is no source
 // (offscreen); `ready` turns true after the first sample. `networks` lists the nearby networks of
 // the last scan as maps (ssid, signal, secured, connected, known), connected first, then by
 // signal; it is filled by `refresh()` and stays empty until then. The Wi-Fi backend (and its
@@ -75,7 +82,10 @@ std::shared_ptr<NetworkSource> createSystemNetworkSource();
 // only while something is connected to `throughputChanged` (a QML binding to one of them is
 // enough). Unobserved, nothing is read and the rates are zero. They are zero too without a source.
 //
-// Wi-Fi radio: `wifiEnabled` is the state Windows reports (read at each poll, never assumed).
+// Wi-Fi radio: `wifiEnabled` is the state Windows reports (read at each poll, never assumed). The
+// radio is read only while something is connected to `wifiChanged` (a QML binding or Connections
+// is enough), as the VPN list is only while something is connected to `vpnChanged`; otherwise
+// those reads are skipped.
 // `setWifiEnabled(bool)` asks Windows to switch it; a refusal (no permission, no radio) shows in
 // `wifiSwitchError` and leaves `wifiEnabled` alone. `wifiAvailable` is false when no Wi-Fi radio
 // could be read.
@@ -114,6 +124,8 @@ class Network : public kernel::StatSource {
   Network(std::shared_ptr<NetworkSource> source, QObject* parent);
   ~Network() override;
 
+  void componentComplete() override;
+
   bool available() const { return source_ != nullptr; }
   QString kind() const { return status_.kind; }
   QString ssid() const { return status_.ssid; }
@@ -140,6 +152,11 @@ class Network : public kernel::StatSource {
   void setThroughputInterval(int ms);
   // Whether the throughput sampler runs; false means no counter read can come (tests).
   bool throughputSampling() const { return throughputTimer_.isActive(); }
+  // Test seam: the quiet time after a change notification before the sample (default 300 ms).
+  void setChangeDebounce(int ms) { changeTimer_.setInterval(ms); }
+  // Whether the next sample would read the radio and the VPN list.
+  bool radioObserved() const;
+  bool vpnObserved() const;
 
   // Starts a scan; `networks` follows.
   Q_INVOKABLE void refresh();
@@ -170,6 +187,10 @@ class Network : public kernel::StatSource {
   VpnBackend* vpn();
   bool throughputObserved() const;
   void updateThroughputSampling();
+  void startWatching();
+  void onSystemChange();
+  void readRadio();
+  void readVpn();
   void sampleThroughput();
   bool startVpnOperation(const QString& name, bool dial);
   void onScanCompleted(int status, const QVector<WifiNetwork>& networks);
@@ -181,6 +202,10 @@ class Network : public kernel::StatSource {
   QVariantList networks_;
   bool scanning_ = false;
   bool connecting_ = false;
+
+  std::unique_ptr<NetworkChangeWatcher> watcher_;
+  QTimer changeTimer_;
+  bool resample_ = false;
 
   std::unique_ptr<ThroughputSource> throughputSource_;
   ThroughputTracker tracker_;

@@ -4,6 +4,7 @@
 waku_feature(NAME network
   DEPENDS quickshell_io
   SOURCES
+    change_watcher.h
     connectivity.h
     radio.h
     throughput.cpp
@@ -11,6 +12,7 @@ waku_feature(NAME network
     vpn.h
     wlan.h
   WIN32_SOURCES
+    win32/change_watcher_win.cpp
     win32/connectivity_win.cpp
     win32/network_pool.cpp
     win32/network_pool.h

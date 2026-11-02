@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <QQmlComponent>
+#include <QQmlContext>
+#include <QQmlEngine>
 #include <QSignalSpy>
 #include <QTest>
 #include <atomic>
@@ -49,6 +52,16 @@ ConnectivitySample sample(const char* name, int bars, bool ethernet, const char*
 bool waitFor(const std::function<bool()>& condition, int timeoutMs = 3000) {
   return QTest::qWaitFor(condition, timeoutMs);
 }
+
+// Something connected to `wifiChanged` and `vpnChanged`, which is what makes the service read the
+// radio and the VPN list.
+struct Observer {
+  explicit Observer(Network& network) {
+    QObject::connect(&network, &Network::wifiChanged, &context, [] {});
+    QObject::connect(&network, &Network::vpnChanged, &context, [] {});
+  }
+  QObject context;
+};
 
 }  // namespace
 
@@ -325,9 +338,144 @@ TEST(NetworkThroughput, WithoutAReaderOrASourceItStaysZero) {
   EXPECT_EQ(bare.rxBytesPerSecond(), 0);
 }
 
+TEST(NetworkObservers, UnobservedRadioAndVpnAreNeverRead) {
+  auto fake = std::make_shared<FakeSource>();
+  fake->set(wifiStatus());
+  Network network(fake, nullptr);
+  network.setInterval(100);
+  network.componentComplete();
+  ASSERT_TRUE(waitFor([&] { return fake->calls.load() >= 4; }));
+  EXPECT_EQ(fake->radio, nullptr);  // not even created
+  EXPECT_EQ(fake->vpn, nullptr);
+  EXPECT_FALSE(network.radioObserved());
+  EXPECT_FALSE(network.vpnObserved());
+}
+
+TEST(NetworkObservers, ObservedRadioAndVpnAreReadAtEveryPoll) {
+  auto fake = std::make_shared<FakeSource>();
+  Network network(fake, nullptr);
+  Observer observer(network);
+  network.setInterval(100);
+  network.componentComplete();
+  ASSERT_TRUE(waitFor([&] { return fake->radio && fake->vpn; }));
+  ASSERT_TRUE(waitFor([&] { return fake->radio->queries >= 3 && fake->vpn->refreshes >= 3; }));
+}
+
+TEST(NetworkObservers, TheFirstObserverReadsAtOnceNotAtTheNextPoll) {
+  auto fake = std::make_shared<FakeSource>();
+  Network network(fake, nullptr);
+  network.componentComplete();  // polls every 60 s: nothing else is coming soon
+  ASSERT_TRUE(waitFor([&] { return network.ready(); }));
+  ASSERT_EQ(fake->radio, nullptr);
+  ASSERT_EQ(fake->vpn, nullptr);
+
+  QObject context;
+  QObject::connect(&network, &Network::wifiChanged, &context, [] {});
+  ASSERT_TRUE(waitFor([&] { return fake->radio && fake->radio->queries >= 1; }));
+  EXPECT_EQ(fake->vpn, nullptr);  // only what is observed
+  QObject::connect(&network, &Network::vpnChanged, &context, [] {});
+  ASSERT_TRUE(waitFor([&] { return fake->vpn && fake->vpn->refreshes >= 1; }));
+}
+
+// A QML binding and a Connections object count as observers (QML does not use QObject::connect;
+// Qt tells the object through connectNotify and the signal mask).
+TEST(NetworkObservers, QmlBindingsAndConnectionsObserve) {
+  auto fake = std::make_shared<FakeSource>();
+  Network network(fake, nullptr);
+  network.componentComplete();
+  ASSERT_TRUE(waitFor([&] { return network.ready(); }));
+  ASSERT_FALSE(network.radioObserved());
+  ASSERT_FALSE(network.vpnObserved());
+
+  QQmlEngine engine;
+  engine.rootContext()->setContextProperty(QStringLiteral("net"), &network);
+  QQmlComponent component(&engine);
+  component.setData(R"(
+    import QtQml
+    QtObject {
+      property bool on: net.wifiEnabled
+      property Connections follow: Connections {
+        target: net
+        function onVpnChanged() {}
+      }
+    }
+  )",
+                    QUrl());
+  std::unique_ptr<QObject> object(component.create());
+  ASSERT_NE(object, nullptr) << component.errorString().toStdString();
+  EXPECT_TRUE(network.radioObserved());
+  EXPECT_TRUE(network.vpnObserved());
+  ASSERT_TRUE(waitFor([&] { return fake->radio && fake->radio->queries >= 1; }));
+  ASSERT_TRUE(waitFor([&] { return fake->vpn && fake->vpn->refreshes >= 1; }));
+}
+
+TEST(NetworkChanges, ANotificationSamplesOnceAfterTheDebounce) {
+  auto fake = std::make_shared<FakeSource>();
+  fake->set(wifiStatus(80));
+  Network network(fake, nullptr);
+  network.setChangeDebounce(50);
+  network.componentComplete();
+  ASSERT_TRUE(waitFor([&] { return network.ready(); }));
+  ASSERT_NE(fake->watcher, nullptr);
+  EXPECT_EQ(network.interval(), 60000);  // the timer is only the safety net
+  EXPECT_EQ(fake->calls.load(), 1);
+
+  fake->set(wifiStatus(35));
+  for (int i = 0; i < 5; ++i) fake->watcher->notify();  // a burst
+  ASSERT_TRUE(waitFor([&] { return network.signalPercent() == 35; }));
+  QTest::qWait(200);
+  EXPECT_EQ(fake->calls.load(), 2);
+}
+
+TEST(NetworkChanges, ANotificationDuringASampleSamplesAgainAfterIt) {
+  auto fake = std::make_shared<FakeSource>();
+  fake->set(wifiStatus(80));
+  Network network(fake, nullptr);
+  network.setChangeDebounce(20);
+  network.componentComplete();
+  ASSERT_TRUE(waitFor([&] { return network.ready(); }));
+
+  fake->block = true;
+  fake->watcher->notify();
+  ASSERT_TRUE(waitFor([&] { return fake->snapshots.load() >= 2; }));  // held, state read
+  fake->set(wifiStatus(35));  // the change the held sample missed
+  fake->watcher->notify();
+  QTest::qWait(100);  // the debounce ended while the sample ran
+  fake->block = false;
+  ASSERT_TRUE(waitFor([&] { return network.signalPercent() == 35; }));
+  EXPECT_EQ(fake->calls.load(), 3);  // the one that ran, and the one queued behind it
+}
+
+TEST(NetworkChanges, WithoutAWatcherThePollFallsBackToFiveSeconds) {
+  auto fake = std::make_shared<FakeSource>();
+  fake->withWatcher = false;
+  Network network(fake, nullptr);
+  network.componentComplete();
+  EXPECT_EQ(network.interval(), 5000);
+
+  auto watched = std::make_shared<FakeSource>();
+  Network other(watched, nullptr);
+  other.componentComplete();
+  EXPECT_EQ(other.interval(), 60000);
+}
+
+TEST(NetworkChanges, APausedServiceIgnoresNotifications) {
+  auto fake = std::make_shared<FakeSource>();
+  Network network(fake, nullptr);
+  network.setChangeDebounce(20);
+  network.componentComplete();
+  ASSERT_TRUE(waitFor([&] { return network.ready(); }));
+  network.setActive(false);
+  const int calls = fake->calls.load();
+  fake->watcher->notify();
+  QTest::qWait(150);
+  EXPECT_EQ(fake->calls.load(), calls);
+}
+
 TEST(NetworkWifiRadio, FollowsTheStateWindowsReports) {
   auto fake = std::make_shared<FakeSource>();
   Network network(fake, nullptr);
+  Observer observer(network);
   network.componentComplete();
   ASSERT_NE(fake->radio, nullptr);
   EXPECT_GE(fake->radio->queries, 1);
@@ -345,6 +493,7 @@ TEST(NetworkWifiRadio, FollowsTheStateWindowsReports) {
 TEST(NetworkWifiRadio, ASwitchFailureLeavesTheRealStateAndReportsTheError) {
   auto fake = std::make_shared<FakeSource>();
   Network network(fake, nullptr);
+  Observer observer(network);
   network.componentComplete();
   emit fake->radio->stateRead(true, true);
   QSignalSpy changed(&network, &Network::wifiChanged);
@@ -374,6 +523,7 @@ TEST(NetworkWifiRadio, WithoutARadioBackendTheSwitchFailsSoft) {
   auto fake = std::make_shared<FakeSource>();
   fake->withRadio = false;
   Network network(fake, nullptr);
+  Observer observer(network);
   EXPECT_FALSE(network.setWifiEnabled(true));
   EXPECT_FALSE(network.wifiSwitchError().isEmpty());
   EXPECT_FALSE(network.wifiSwitching());
@@ -385,6 +535,7 @@ TEST(NetworkWifiRadio, WithoutARadioBackendTheSwitchFailsSoft) {
 TEST(NetworkVpn, ListsTheConfiguredEntriesAndTheirState) {
   auto fake = std::make_shared<FakeSource>();
   Network network(fake, nullptr);
+  Observer observer(network);
   network.componentComplete();
   ASSERT_NE(fake->vpn, nullptr);
   EXPECT_GE(fake->vpn->refreshes, 1);
@@ -404,6 +555,7 @@ TEST(NetworkVpn, ListsTheConfiguredEntriesAndTheirState) {
 TEST(NetworkVpn, DialsAndHangsUpKnownEntriesOneAtATime) {
   auto fake = std::make_shared<FakeSource>();
   Network network(fake, nullptr);
+  Observer observer(network);
   network.componentComplete();
   emit fake->vpn->entriesRead({{QStringLiteral("Work"), false}, {QStringLiteral("Home"), true}});
 
@@ -431,6 +583,7 @@ TEST(NetworkVpn, DialsAndHangsUpKnownEntriesOneAtATime) {
 TEST(NetworkVpn, RefusesUnknownEntriesAndRedundantRequests) {
   auto fake = std::make_shared<FakeSource>();
   Network network(fake, nullptr);
+  Observer observer(network);
   network.componentComplete();
   emit fake->vpn->entriesRead({{QStringLiteral("Work"), false}, {QStringLiteral("Home"), true}});
 
@@ -447,6 +600,7 @@ TEST(NetworkVpn, WithoutABackendItFailsSoft) {
   auto fake = std::make_shared<FakeSource>();
   fake->withVpn = false;
   Network network(fake, nullptr);
+  Observer observer(network);
   network.componentComplete();
   EXPECT_FALSE(network.connectVpn(QStringLiteral("Work")));
   EXPECT_FALSE(network.vpnError().isEmpty());

@@ -10,18 +10,20 @@ import waku.services as S
 // (the network name, or the IP address on Ethernet, and the VPN name). Hovering shows the name,
 // signal and IP address. Hidden when there is no network source.
 //
-//     Wifi { interval: 5000; altFormat: "{wifi_icon} {wifi_name} {vpn_name}"; popup: false }
+//     Wifi { altFormat: "{wifi_icon} {wifi_name} {vpn_name}"; popup: false }
 //
 // Formats may use {wifi_icon}, {wifi_name}, {signal}, {ip_addr}, {vpn_icon} and {vpn_name}; empty
 // parts and the spaces around them are dropped. `format` and `altFormat` apply on Wi-Fi and when
 // disconnected, `ethernetFormat` and `ethernetAltFormat` on Ethernet. `icons` holds the glyphs
 // for disconnected and for 1 to 4 bars (below 20 %, 20, 40, 60 and 80 % and up). With
-// `popup: false` a click toggles the alternative label instead. `interval` is the poll interval
-// in ms for the shared Network service.
+// `popup: false` a click toggles the alternative label instead. The shared Network
+// service reads the state when Windows reports a change and polls as a safety net: every 60 s, or
+// every 5 s when no change notification could be registered. `interval` (ms; 0, the default,
+// keeps that) sets the poll interval.
 Pill {
     id: root
 
-    property int interval: 5000
+    property int interval: 0
     property string format: "{wifi_icon} {vpn_icon}"
     property string altFormat: "{wifi_icon} {wifi_name} {vpn_name}"
     property string ethernetFormat: "{wifi_icon} {vpn_icon}"
@@ -98,6 +100,7 @@ Pill {
         target: S.Network
         property: "interval"
         value: root.interval
+        when: root.interval > 0
     }
 
     // The VPN glyph: Python's `.vpn` span, accent coloured with 4 px before it.

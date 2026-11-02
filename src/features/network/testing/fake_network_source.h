@@ -1,8 +1,10 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <mutex>
+#include <thread>
 #include <vector>
 
 #include "features/network/qml/network_service.h"
@@ -83,12 +85,24 @@ class FakeVpn final : public VpnBackend {
   std::vector<QString> hangUps;
 };
 
+// The test emits `changed` through notify().
+class FakeChangeWatcher final : public NetworkChangeWatcher {
+ public:
+  void notify() { emit changed(); }
+};
+
 class FakeSource final : public NetworkSource {
  public:
   NetworkStatus sample() override {
     ++calls;
-    std::lock_guard lock(mutex);
-    return status;
+    NetworkStatus read;
+    {
+      std::lock_guard lock(mutex);
+      read = status;  // what the state was when the sample started
+    }
+    ++snapshots;
+    while (block) std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    return read;
   }
   std::unique_ptr<WifiBackend> createWifiBackend() override {
     auto created = std::make_unique<FakeWifiBackend>();
@@ -112,17 +126,29 @@ class FakeSource final : public NetworkSource {
     vpn = created.get();
     return created;
   }
+  std::unique_ptr<NetworkChangeWatcher> createChangeWatcher() override {
+    if (!withWatcher) return nullptr;
+    auto created = std::make_unique<FakeChangeWatcher>();
+    watcher = created.get();
+    return created;
+  }
   void set(NetworkStatus next) {
     std::lock_guard lock(mutex);
     status = std::move(next);
   }
 
   std::atomic<int> calls{0};
+  // While true, sample() waits: a test holds a sample in flight.
+  std::atomic<bool> block{false};
+  // Counts the samples that have read the state (they may still be held by `block`).
+  std::atomic<int> snapshots{0};
   FakeWifiBackend* backend = nullptr;
   // Shared with the reader the service owns, so a test can change the counters and count reads.
   FakeThroughputSource throughput;
   FakeWifiRadio* radio = nullptr;
   FakeVpn* vpn = nullptr;
+  FakeChangeWatcher* watcher = nullptr;
+  bool withWatcher = true;
   bool withThroughput = true;
   bool withRadio = true;
   bool withVpn = true;

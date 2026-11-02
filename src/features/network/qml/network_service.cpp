@@ -27,6 +27,11 @@ NetworkStatus statusFromSample(const ConnectivitySample& sample,
 
 namespace {
 
+// With change notifications the timer is only a safety net; without them it is the only trigger.
+constexpr int kSafetyPollMs = 60000;
+constexpr int kPollWithoutEventsMs = 5000;
+constexpr int kChangeDebounceMs = 300;
+
 class SystemNetworkSource final : public NetworkSource {
  public:
   NetworkStatus sample() override {
@@ -39,6 +44,9 @@ class SystemNetworkSource final : public NetworkSource {
   }
   std::unique_ptr<WifiRadioBackend> createWifiRadio() override { return createSystemWifiRadio(); }
   std::unique_ptr<VpnBackend> createVpnBackend() override { return createSystemVpnBackend(); }
+  std::unique_ptr<NetworkChangeWatcher> createChangeWatcher() override {
+    return createSystemChangeWatcher();
+  }
 };
 
 QVariantMap networkMap(const WifiNetwork& network) {
@@ -64,15 +72,68 @@ Network::Network(std::shared_ptr<NetworkSource> source, QObject* parent)
     : kernel::StatSource(parent), source_(std::move(source)) {
   throughputTimer_.setInterval(1000);
   connect(&throughputTimer_, &QTimer::timeout, this, &Network::sampleThroughput);
+  changeTimer_.setSingleShot(true);
+  changeTimer_.setInterval(kChangeDebounceMs);
+  connect(&changeTimer_, &QTimer::timeout, this, &Network::onSystemChange);
+  if (source_) setInterval(kSafetyPollMs);
+}
+
+void Network::componentComplete() {
+  startWatching();
+  StatSource::componentComplete();
+}
+
+// Notifications are wanted from the first sample on, so the watcher exists before polling begins.
+void Network::startWatching() {
+  if (!source_ || watcher_) return;
+  watcher_ = source_->createChangeWatcher();
+  if (watcher_) {
+    connect(watcher_.get(), &NetworkChangeWatcher::changed, this, [this] { changeTimer_.start(); });
+  } else if (interval() == kSafetyPollMs) {
+    setInterval(kPollWithoutEventsMs);  // nothing else tells the service about a change
+  }
+}
+
+// The debounce ended. A sample already running may have read the state before the change, so one
+// more follows it.
+void Network::onSystemChange() {
+  if (!source_ || !active()) return;
+  if (sampling()) {
+    resample_ = true;
+    return;
+  }
+  sample();
 }
 
 Network::~Network() = default;
 
 void Network::sample() {
   if (!source_) return;
-  sampleAsync(source_, [this](NetworkStatus status) { status_ = std::move(status); });
+  sampleAsync(source_, [this](NetworkStatus status) {
+    status_ = std::move(status);
+    if (resample_) {
+      resample_ = false;
+      QMetaObject::invokeMethod(this, &Network::onSystemChange, Qt::QueuedConnection);
+    }
+  });
+  if (radioObserved()) readRadio();
+  if (vpnObserved()) readVpn();
+}
+
+void Network::readRadio() {
   if (WifiRadioBackend* switchBackend = radio()) switchBackend->query();
+}
+
+void Network::readVpn() {
   if (VpnBackend* vpnBackend = vpn()) vpnBackend->refresh();
+}
+
+bool Network::radioObserved() const {
+  return source_ && isSignalConnected(QMetaMethod::fromSignal(&Network::wifiChanged));
+}
+
+bool Network::vpnObserved() const {
+  return source_ && isSignalConnected(QMetaMethod::fromSignal(&Network::vpnChanged));
 }
 
 QVariantList Network::adapters() const {
@@ -94,6 +155,23 @@ bool Network::throughputObserved() const {
 
 void Network::connectNotify(const QMetaMethod& signal) {
   if (signal == QMetaMethod::fromSignal(&Network::throughputChanged)) updateThroughputSampling();
+  // The first observer needs the current value now, not at the next poll. Queued: Qt calls this in
+  // the middle of a connect.
+  if (signal == QMetaMethod::fromSignal(&Network::wifiChanged)) {
+    QMetaObject::invokeMethod(
+        this,
+        [this] {
+          if (radioObserved()) readRadio();
+        },
+        Qt::QueuedConnection);
+  } else if (signal == QMetaMethod::fromSignal(&Network::vpnChanged)) {
+    QMetaObject::invokeMethod(
+        this,
+        [this] {
+          if (vpnObserved()) readVpn();
+        },
+        Qt::QueuedConnection);
+  }
 }
 
 void Network::disconnectNotify(const QMetaMethod& signal) {
