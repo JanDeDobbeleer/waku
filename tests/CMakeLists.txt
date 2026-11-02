@@ -41,6 +41,7 @@ target_sources(yasb_tests PRIVATE
   widgets/test_popup.cpp
   widgets/test_stat_popup.cpp
   widgets/test_system_widgets.cpp
+  widgets/test_github.cpp
   widgets/test_komorebi.cpp)
 
 # --- U7: app services and CLI protocol ---

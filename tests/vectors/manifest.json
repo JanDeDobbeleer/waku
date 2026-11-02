@@ -6,6 +6,7 @@
     "label_scenarios": {
       "battery": 9,
       "cpu": 6,
+      "github": 7,
       "komorebi_active_layout": 8,
       "komorebi_workspaces": 14,
       "memory": 5

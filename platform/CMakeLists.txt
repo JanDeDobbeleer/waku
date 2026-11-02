@@ -2,6 +2,8 @@
 add_library(yasb_platform STATIC
   battery.h
   battery.cpp
+  github_api.h
+  github_api.cpp
   komorebi.h
   komorebi.cpp
   memory.h
