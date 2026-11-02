@@ -53,6 +53,16 @@ std::string toText(const nlohmann::json& v) {
   return reprValue(v);
 }
 
+// Python raises ValueError for widths/indices too large for a C ssize_t; stoi would throw
+// std::out_of_range, which callers that only catch FormatError would let escape into Qt.
+int parseCount(const std::string& digits) {
+  int value = 0;
+  const auto [end, ec] = std::from_chars(digits.data(), digits.data() + digits.size(), value);
+  if (ec != std::errc() || end != digits.data() + digits.size())
+    throw FormatError("Too many decimal digits in format string");
+  return value;
+}
+
 struct FormatSpec {
   char fill = ' ';
   char align = 0;  // '<', '>', '^', or 0 for the type's default
