@@ -12,31 +12,31 @@
 #include "host/qml/window_enums.h"
 #include "host/qml/wlr_layershell.h"
 
-namespace wabar::quickshell {
+namespace waku::quickshell {
 
 struct QsWlrLayershell {
   Q_GADGET
-  QML_FOREIGN(wabar::host::WlrLayershell)
+  QML_FOREIGN(waku::host::WlrLayershell)
   QML_NAMED_ELEMENT(WlrLayershell)
   QML_UNCREATABLE("WlrLayershell is an attached property of PanelWindow")
 };
 
 struct QsIdleInhibitor {
   Q_GADGET
-  QML_FOREIGN(wabar::desktop_state::IdleInhibitor)
+  QML_FOREIGN(waku::desktop_state::IdleInhibitor)
   QML_NAMED_ELEMENT(IdleInhibitor)
 };
 
 namespace QsWlrLayer {
 Q_NAMESPACE
-QML_FOREIGN_NAMESPACE(wabar::host::WlrLayer)
+QML_FOREIGN_NAMESPACE(waku::host::WlrLayer)
 QML_NAMED_ELEMENT(WlrLayer)
 }  // namespace QsWlrLayer
 
 namespace QsWlrKeyboardFocus {
 Q_NAMESPACE
-QML_FOREIGN_NAMESPACE(wabar::host::WlrKeyboardFocus)
+QML_FOREIGN_NAMESPACE(waku::host::WlrKeyboardFocus)
 QML_NAMED_ELEMENT(WlrKeyboardFocus)
 }  // namespace QsWlrKeyboardFocus
 
-}  // namespace wabar::quickshell
+}  // namespace waku::quickshell

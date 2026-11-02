@@ -16,7 +16,7 @@
 
 // Port of yasb:src/core/widgets/services/github/{api,auth}.py. Never log or persist the token
 // anywhere except the token file the Python build also uses.
-namespace wabar::github {
+namespace waku::github {
 
 struct GithubNotification {
   QString id;
@@ -124,9 +124,9 @@ GithubFetchResult fetchGithubNotifications(HttpTransport& transport,
 HttpRequest githubMarkThreadReadRequest(const QString& token, const QString& notificationId);
 HttpRequest githubMarkAllReadRequest(const QString& token, const QDateTime& nowUtc);
 
-// %LOCALAPPDATA%\wabar\github_token (the wabar data folder; copied once from YASB).
+// %LOCALAPPDATA%\waku\github_token (the waku data folder; copied once from YASB).
 QString githubTokenFilePath();
-// GithubWidget token order: "env" -> WABAR_GITHUB_TOKEN, else the option; empty -> token file.
+// GithubWidget token order: "env" -> WAKU_GITHUB_TOKEN, else the option; empty -> token file.
 QString resolveGithubToken(const QString& configToken, const QString& envToken,
                            const QString& tokenFilePath);
 QString readGithubTokenFile(const QString& path);
@@ -154,6 +154,6 @@ GithubDeviceCode parseGithubDeviceCode(const HttpResponse& response);
 HttpRequest githubAccessTokenRequest(const QString& deviceCode);
 GithubTokenPoll parseGithubAccessToken(const HttpResponse& response);
 
-}  // namespace wabar::github
+}  // namespace waku::github
 
-Q_DECLARE_METATYPE(wabar::github::GithubFetchResult)
+Q_DECLARE_METATYPE(waku::github::GithubFetchResult)

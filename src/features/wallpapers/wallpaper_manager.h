@@ -9,7 +9,7 @@
 
 #include "features/wallpapers/desktop_wallpaper.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // Port of services/wallpapers/manager.py (WallpaperManager). One per runtime, shared by every
 // wallpapers widget through the polling-worker registry's service map (key "wallpapers"): the
@@ -78,4 +78,4 @@ class WallpaperManager : public QObject {
 // The default command runner: `cmd.exe /c "<command>"` as a child QProcess.
 WallpaperManager::CommandRunner systemCommandRunner(QObject* owner);
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

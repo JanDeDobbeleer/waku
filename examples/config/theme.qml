@@ -1,6 +1,6 @@
 // The look of the bars and widgets. Every property is optional; the values below are the
 // defaults. Edit and save: the shell reloads.
-import wabar
+import waku
 
 ThemeSpec {
     // Colours (translucent by default: the bars blur what is behind them)

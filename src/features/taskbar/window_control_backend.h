@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // What `WindowControl` needs from the OS, for a window known only by its HWND. The Win32
 // implementation is stateless; tests substitute a fake so no real window is ever touched.
@@ -25,4 +25,4 @@ class WindowControlBackend {
 
 std::shared_ptr<WindowControlBackend> makeWin32WindowControlBackend();
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

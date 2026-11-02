@@ -1,7 +1,7 @@
-# wabar GitHub: design note
+# waku GitHub: design note
 
 Status: built. Reference: Python YASB `yasb/github*` (branch `local/build`); the data layer
-(`github_api.*`) and the Qt Widgets widget that preceded wabar are at the git tag
+(`github_api.*`) and the Qt Widgets widget that preceded waku are at the git tag
 `widgets-main-final`.
 
 ## What the widget does
@@ -34,12 +34,12 @@ is seconds), `maxNotification`, `onlyUnread`, `showComments` (Python `show_comme
 | token file, device flow requests and parsers | `githubTokenFilePath`, `readGithubTokenFile`, `saveGithubTokenFile`, `githubDeviceCodeRequest`, `parseGithubDeviceCode`, `githubAccessTokenRequest`, `parseGithubAccessToken` | as is |
 | relative time, category titles, field truncation, category order, state classes | `features/github/github_format.*` (no UI) | as is |
 | `GithubWidget`, `GithubDataStore`, `GithubAuthDialog` | the Widgets build (tag `widgets-main-final`) | not used: QWidgets. Their logic (unread count, mark read, ordering, poll skip while a fetch runs, device-flow loop) is ported to the service |
-| `wabar.services.GitHub` | `features/github/qml/github_service.*` | new: the singleton below |
+| `waku.services.GitHub` | `features/github/qml/github_service.*` | new: the singleton below |
 | `GitHub.qml` | `features/github/qml/` | new |
 
 ## QML-facing API
 
-`S.GitHub` (singleton, one per `wabar` run, shared by every GitHub widget):
+`S.GitHub` (singleton, one per `waku` run, shared by every GitHub widget):
 
 - State: `available` (constant: false on the offscreen platform), `signedIn`, `unreadCount`, `items`
   (maps: `id`, `title`, `repo`, `type`, `category`, `categoryTitle`, `url`, `unread`, `comments`
@@ -59,8 +59,8 @@ is seconds), `maxNotification`, `onlyUnread`, `showComments` (Python `show_comme
 
 The token is never in the config, in QML or in logs; `signedIn` is all QML sees.
 
-1. At start-up the service reads `WABAR_GITHUB_TOKEN`, else the token file `github_token` in
-   `%LOCALAPPDATA%\wabar`. The first start copies it from `%LOCALAPPDATA%\YASB` when the Python build
+1. At start-up the service reads `WAKU_GITHUB_TOKEN`, else the token file `github_token` in
+   `%LOCALAPPDATA%\waku`. The first start copies it from `%LOCALAPPDATA%\YASB` when the Python build
    or the Widgets build wrote one there (`docs/architecture.md`, the kernel), so a user who signed in
    with either is signed in here.
 2. Without a token no request is sent (as Python's skipped poll), `signedIn` is false and the
@@ -74,20 +74,20 @@ The token is never in the config, in QML or in logs; `signedIn` is all QML sees.
 ## Decisions
 
 - One service, not a store per widget: Python shares one data manager among widgets with the same
-  settings; the wabar bar has one set of options per run, so the last widget to set an option wins.
+  settings; the waku bar has one set of options per run, so the last widget to set an option wins.
 - Failure behaviour matches Python: a failed fetch logs, sets `error` and clears the list. A poll
   while another fetch runs is skipped; an option change during a fetch re-runs once afterwards.
 - `open(id)` returns the URL instead of opening it, so the service has no desktop side effect
   and QML uses the one `Shell` path for every link.
 - State icons come from the schema defaults (`GithubIconsConfig`), filled in the service; they
-  are not an option in wabar yet.
+  are not an option in waku yet.
 - The real client (`GithubClient`) is only created off the offscreen platform; tests inject a fake
   and never touch the network or a real token.
 
 ## Left out
 
 - Per-widget stores and per-widget polling settings.
-- Keybindings, tooltip toggle, popup blur / corner / alignment options (wabar popups share one
+- Keybindings, tooltip toggle, popup blur / corner / alignment options (waku popups share one
   style).
 - A token in the config (`token: env`); the environment variable and the token file replace it.
 - Signing out (Python has none either; delete the token file).
@@ -97,4 +97,4 @@ The token is never in the config, in QML or in logs; `signedIn` is all QML sees.
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `wabar.services.GitHub` (`src/features/github/qml/github_service.{h,cpp}`): the GitHub notifications of a `wabar` run for every GitHub widget, created by the QML engine as a singleton on the GUI thread. Polls on a `QTimer`; each fetch is a one-shot task on the global `QThreadPool` (own network transport, ends with the request, nothing to join) and `github::sendHttpAsync` carries mark-as-read and the device-flow requests; results are posted to qApp and run only while a guard `QObject` owned by the client is alive, so a response after the service is destroyed is dropped. Reads `WABAR_GITHUB_TOKEN` or the token file the Python build uses, holds the token in memory only. No client on the offscreen platform
+- `waku.services.GitHub` (`src/features/github/qml/github_service.{h,cpp}`): the GitHub notifications of a `waku` run for every GitHub widget, created by the QML engine as a singleton on the GUI thread. Polls on a `QTimer`; each fetch is a one-shot task on the global `QThreadPool` (own network transport, ends with the request, nothing to join) and `github::sendHttpAsync` carries mark-as-read and the device-flow requests; results are posted to qApp and run only while a guard `QObject` owned by the client is alive, so a response after the service is destroyed is dropped. Reads `WAKU_GITHUB_TOKEN` or the token file the Python build uses, holds the token in memory only. No client on the offscreen platform

@@ -49,11 +49,11 @@ the work area guard included (no thread of its own).
 komorebi caches each monitor's work area and refreshes it only from three window messages to its
 hidden window. A dock or scaling change bursts `WM_DEVICECHANGE`, `WM_DISPLAYCHANGE` and
 `WM_SETTINGCHANGE` into its bounded channel (20 slots) while its consumer sleeps 3 s to verify a
-monitor removal, so the `WM_SETTINGCHANGE` that wabar's own app bar registration causes is dropped;
+monitor removal, so the `WM_SETTINGCHANGE` that waku's own app bar registration causes is dropped;
 windows then tile under the bar. Analysis: `docs/plans/2026-10-31-workarea-sync.md`.
 
 - **Guard.** `KomorebiWorkAreaGuard` (`komorebi_workarea.h`), created and owned by
-  `src/app/wabar/main.cpp` before the first reload and kept for the run, so a reload neither loses a
+  `src/app/waku/main.cpp` before the first reload and kept for the run, so a reload neither loses a
   pending notification nor depends on the `Komorebi` singleton.
 - **Trigger.** Qt's screen signals: `QGuiApplication::screenAdded`, `screenRemoved`,
   `primaryScreenChanged` and, per screen, `QScreen::availableGeometryChanged`, `geometryChanged`,
@@ -80,7 +80,7 @@ windows then tile under the bar. Analysis: `docs/plans/2026-10-31-workarea-sync.
   `--safe` keeps the guard: it is about the desktop, not the config.
 - **Logs.** `qInfo` per send (`komorebi work area nudge sent to 0x...`), `qDebug` once each time
   komorebi's window goes missing, `qWarning` once per run when the send is refused
-  (`ERROR_ACCESS_DENIED`: komorebi runs elevated and wabar does not).
+  (`ERROR_ACCESS_DENIED`: komorebi runs elevated and waku does not).
 - **Limits.** After a dock the `HMONITOR` of a display can change; komorebi's work area handler
   then finds no monitor and does nothing. Only komorebi's own display reconciliation fixes that; the
   late notification lands after it. GlazeWM re-reads the work area on every event and is not
@@ -100,4 +100,4 @@ The thread and singleton tables there keep one line per cell. This is the longer
 
 - GlazeWM WebSocket thread (`std::thread`) (`GlazewmService` (`src/features/workspaces/glazewm_service.h`) via `glazewm::GlazewmSocket` (`src/features/workspaces/glazewm.h`, `win32/glazewm_socket.cpp`), created by the first widget subscription): owns the WinHTTP session, connect, blocking receive loop and the 4 s reconnect sleep; text frames and connection changes reach the GUI thread as queued signals; sends run on the GUI thread; `GlazewmSocket::stop()`: sets the stop event, cancels a blocked receive with `WinHttpWebSocketClose` (250 ms close handshake), `join`, then the handles are closed (idempotent, also from the destructor); the owner calls `GlazewmService::stop()`
 
-- komorebi pipe thread (`std::thread`) (`KomorebiService` (`src/features/workspaces/komorebi_service.h`) via `komorebi::KomorebiPipeListener` (`src/features/workspaces/komorebi.h`, `win32/komorebi_pipe.cpp`)): owns the `\\.\pipe\wabar-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls; `stop()`: sets the stop event (cancels waits, overlapped I/O and a running komorebic, which `CreateProcessW` started with drained output pipes and which is killed), `join`, then starts `komorebic unsubscribe-pipe` detached; started lazily by the first subscription; the owner calls it
+- komorebi pipe thread (`std::thread`) (`KomorebiService` (`src/features/workspaces/komorebi_service.h`) via `komorebi::KomorebiPipeListener` (`src/features/workspaces/komorebi.h`, `win32/komorebi_pipe.cpp`)): owns the `\\.\pipe\waku-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls; `stop()`: sets the stop event (cancels waits, overlapped I/O and a running komorebic, which `CreateProcessW` started with drained output pipes and which is killed), `join`, then starts `komorebic unsubscribe-pipe` detached; started lazily by the first subscription; the owner calls it

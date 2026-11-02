@@ -5,7 +5,7 @@
 
 #include "host/thumbnail.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -60,4 +60,4 @@ std::unique_ptr<ThumbnailBackend> makeWin32ThumbnailBackend() {
   return std::make_unique<Win32ThumbnailBackend>();
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

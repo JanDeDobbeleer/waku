@@ -7,7 +7,7 @@
 #include <functional>
 #include <string>
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 namespace {
 
@@ -674,4 +674,4 @@ double roleTone(Role role, const DynamicScheme& scheme) {
   return resolveTone(role, scheme);
 }
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

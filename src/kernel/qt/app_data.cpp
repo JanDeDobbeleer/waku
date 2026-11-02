@@ -7,11 +7,11 @@
 #include <QMutexLocker>
 #include <QSet>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 namespace {
 
-const QString kProductFolder = QStringLiteral("wabar");
+const QString kProductFolder = QStringLiteral("waku");
 const QString kLegacyFolder = QStringLiteral("YASB");
 const QString kMarkerFile = QStringLiteral("migrated_from_yasb");
 
@@ -50,13 +50,13 @@ AppDataMigration migrateLegacyAppData(const QString& base) {
     if (QFile::copy(legacy.filePath(name), target.filePath(name)))
       result.copied << name;
     else
-      qWarning().noquote() << "wabar: could not copy" << legacy.filePath(name) << "to"
+      qWarning().noquote() << "waku: could not copy" << legacy.filePath(name) << "to"
                            << target.filePath(name);
   }
   QFile marker(target.filePath(kMarkerFile));
   if (marker.open(QIODevice::WriteOnly)) marker.write("copied once from the YASB folder\n");
   if (!result.copied.isEmpty())
-    qInfo().noquote() << "wabar: copied" << result.copied.join(QStringLiteral(", ")) << "from"
+    qInfo().noquote() << "waku: copied" << result.copied.join(QStringLiteral(", ")) << "from"
                       << QDir::toNativeSeparators(legacy.path()) << "to"
                       << QDir::toNativeSeparators(target.path());
   return result;
@@ -76,4 +76,4 @@ QString appDataDir() {
   return dir;
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

@@ -1,6 +1,6 @@
 #include "features/workspaces/command_line.h"
 
-namespace wabar::workspaces {
+namespace waku::workspaces {
 
 QString quoteCmdLine(const QStringList& argv) {
   QStringList parts;
@@ -31,4 +31,4 @@ QString quoteCmdLine(const QStringList& argv) {
   return parts.join(QLatin1Char(' '));
 }
 
-}  // namespace wabar::workspaces
+}  // namespace waku::workspaces

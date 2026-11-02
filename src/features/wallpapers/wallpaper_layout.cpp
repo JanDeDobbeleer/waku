@@ -6,7 +6,7 @@
 #include <cmath>
 #include <set>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 namespace {
 
 QPixmap scaledTo(const QPixmap& px, int w, int h) {
@@ -233,4 +233,4 @@ QPainterPath revealPath(const QString& animation, int dx, int dy, int dw, int dh
   return rectPath(dx, dy, dw, dh);
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

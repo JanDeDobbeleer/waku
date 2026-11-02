@@ -9,11 +9,11 @@
 
 #include "host/qml/shell_host.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
-constexpr auto kChromeUrl = "qrc:/qt/qml/wabar/WindowChrome.qml";
+constexpr auto kChromeUrl = "qrc:/qt/qml/waku/WindowChrome.qml";
 
 QString describe(const QList<QQmlError>& errors, const QString& fallback) {
   if (errors.isEmpty()) return fallback;
@@ -390,7 +390,7 @@ void QsWindow::componentComplete() {
   applyGeometry();
   buildChrome();
   if (!buildContent()) {
-    qWarning().noquote() << "wabar: a window could not be built:" << buildError_;
+    qWarning().noquote() << "waku: a window could not be built:" << buildError_;
   }
   host_ = ShellHost::of(qmlEngine(this));
   emit hostChanged();
@@ -410,7 +410,7 @@ void QsWindow::buildChrome() {
   auto* chrome = qobject_cast<QQuickItem*>(object);
   if (!chrome) {
     delete object;
-    qWarning().noquote() << "wabar: the window chrome is broken:"
+    qWarning().noquote() << "waku: the window chrome is broken:"
                          << describe(component.errors(), QStringLiteral("not an item"));
     return;
   }
@@ -487,4 +487,4 @@ QPointF QsWindowAttached::mapFromItem(QQuickItem* item, qreal x, qreal y) const 
   return window_ ? window_->mapFromItem(item, x, y) : QPointF();
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

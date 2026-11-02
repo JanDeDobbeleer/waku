@@ -8,7 +8,7 @@
 
 #include "kernel/qt/gui_post.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 TaskbarIcons::TaskbarIcons(std::shared_ptr<WindowSystem> system, bool async, QObject* parent)
     : QObject(parent), system_(std::move(system)), async_(async) {
@@ -187,4 +187,4 @@ IconBitmap loadPinnedIcon(const PinSupport& pins, const QString& uniqueId,
   return pins.defaultIcon();
 }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

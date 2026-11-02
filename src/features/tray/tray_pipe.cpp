@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cstring>
 
-namespace wabar::tray {
+namespace waku::tray {
 namespace {
 
 // Offsets inside SHELLTRAYDATA (packed): the layout hook/trayhook.cpp and Python YASB's
@@ -192,4 +192,4 @@ ParsedTrayMessage parseTrayPipeMessage(const QByteArray& message, const ExePathR
                             static_cast<int>(iconHeight), exePath);
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

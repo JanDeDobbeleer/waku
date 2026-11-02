@@ -2,7 +2,7 @@
 
 #include <QFileInfo>
 
-namespace wabar::quickshell {
+namespace waku::quickshell {
 
 QString SystemTrayItem::idFromExe(const QString& exe) {
   return QFileInfo(QString(exe).replace(QLatin1Char('\\'), QLatin1Char('/')))
@@ -38,4 +38,4 @@ void SystemTrayItem::display(QObject* parentWindow, qreal relativeX, qreal relat
   emit displayRequested();
 }
 
-}  // namespace wabar::quickshell
+}  // namespace waku::quickshell

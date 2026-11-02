@@ -2,7 +2,7 @@
 
 #include "features/color_scheme/color_math.h"
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 // CAM16 viewing conditions. Only the default (D65, 200/pi * Y(L*50)/100 cd/m2, background L* 50,
 // average surround) is used; the struct holds the derived terms CAM16 needs.
@@ -70,4 +70,4 @@ class Hct {
   Argb argb_ = 0;
 };
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

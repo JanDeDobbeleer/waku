@@ -17,7 +17,7 @@
 
 namespace {
 
-namespace kmb = wabar::workspaces::komorebi;
+namespace kmb = waku::workspaces::komorebi;
 using Slot = kmb::WorkAreaTimers::Slot;
 
 QStringList& guardMessages() {
@@ -159,12 +159,12 @@ TEST(KomorebiWorkAreaGuard, WithoutANotifierItIsInert) {
 
 TEST(KomorebiWorkAreaGuard, OffTheLiveDesktopTheRealGuardHasNoNotifier) {
   // Tests run on the offscreen platform; the flag switches it off on a live desktop too.
-  EXPECT_FALSE(wabar::kernel::liveDesktop(QStringLiteral("workarea_sync")));
+  EXPECT_FALSE(waku::kernel::liveDesktop(QStringLiteral("workarea_sync")));
   EXPECT_FALSE(kmb::makeKomorebiWorkAreaGuard()->active());
-  wabar::kernel::setCapabilityDisabled(QStringLiteral("workarea_sync"), true);
-  EXPECT_FALSE(wabar::kernel::liveDesktop(QStringLiteral("workarea_sync")));
+  waku::kernel::setCapabilityDisabled(QStringLiteral("workarea_sync"), true);
+  EXPECT_FALSE(waku::kernel::liveDesktop(QStringLiteral("workarea_sync")));
   EXPECT_FALSE(kmb::makeKomorebiWorkAreaGuard()->active());
-  wabar::kernel::setCapabilityDisabled(QStringLiteral("workarea_sync"), false);
+  waku::kernel::setCapabilityDisabled(QStringLiteral("workarea_sync"), false);
 }
 
 TEST(KomorebiWorkAreaGuard, TheQtTimersFireOnTheEventLoop) {

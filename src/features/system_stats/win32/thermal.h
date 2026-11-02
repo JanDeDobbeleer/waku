@@ -6,7 +6,7 @@
 
 #include "features/system_stats/temperature.h"
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 
 // Reads the PDH set "Thermal Zone Information" (documented, no admin). Not thread safe; the owner
 // serialises calls. Opens its query on the first call and gives up for good when the set is
@@ -29,4 +29,4 @@ class PdhThermalReader {
   std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

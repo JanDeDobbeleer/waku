@@ -5,7 +5,7 @@
 #include <QString>
 #include <optional>
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 // What the colour engine learns from an image file (its seed colour and its mean luminance), kept
 // across runs so a start-up does not decode the wallpaper again. The key is the file's identity:
@@ -44,4 +44,4 @@ class ImageStatsCache {
   QHash<QString, Entry> entries_;
 };
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

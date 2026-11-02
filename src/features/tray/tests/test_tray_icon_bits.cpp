@@ -6,7 +6,7 @@
 #include "features/tray/icon_bits.h"
 #include "features/tray/icon_scale.h"
 
-using namespace wabar::tray;
+using namespace waku::tray;
 
 namespace {
 

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <map>
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 
 std::string gpuEngineKey(const std::string& instance) {
   const size_t luid = instance.find("luid_");
@@ -27,4 +27,4 @@ double gpuUsage(const std::vector<GpuEngineValue>& values) {
   return std::clamp(busiest, 0.0, 100.0);
 }
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

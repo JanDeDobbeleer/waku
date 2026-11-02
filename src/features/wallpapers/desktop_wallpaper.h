@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // One monitor as IDesktopWallpaper knows it: the device interface path and its rectangle in
 // physical desktop pixels.
@@ -43,4 +43,4 @@ WindowsBuild windowsBuildAndUbr();
 // shlwapi StrCmpLogicalW: "img2" sorts before "img10" the way Explorer orders names.
 int compareLogical(const QString& a, const QString& b);
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

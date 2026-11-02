@@ -19,7 +19,7 @@
 #include "host/qml/thumbnails.h"
 #include "host/thumbnail_store.h"
 
-using namespace wabar::host;
+using namespace waku::host;
 
 namespace {
 

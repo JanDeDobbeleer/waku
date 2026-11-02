@@ -12,13 +12,13 @@
 #include "features/quickshell_io/qml/quickshell_singleton.h"
 #include "host/qml/shell_host.h"
 
-namespace wabar::app {
+namespace waku::app {
 
 inline void connectQuickshell(QQmlEngine* engine, host::ShellHost* host,
                               const QString& configHome) {
   const auto singleton = [engine] {
     return engine->singletonInstance<quickshell_io::QuickshellSingleton*>(
-        QStringLiteral("wabar.services"), QStringLiteral("QuickshellSingleton"));
+        QStringLiteral("waku.services"), QStringLiteral("QuickshellSingleton"));
   };
   // A reload makes the engine drop its singletons, this one among them: nothing keeps the pointer,
   // and the wiring is done again for the new instance (host->singletonsCleared).
@@ -44,4 +44,4 @@ inline void connectQuickshell(QQmlEngine* engine, host::ShellHost* host,
   });
 }
 
-}  // namespace wabar::app
+}  // namespace waku::app

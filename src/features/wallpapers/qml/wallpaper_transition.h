@@ -23,7 +23,7 @@ class QQuickWindow;
 class QThread;
 class QTimer;
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // Draws one frame of the reveal for every monitor area: the old image, then the new image clipped
 // by the animation's shape at progress `t` (0..1). circle, slide_top, diamond and split use
@@ -129,4 +129,4 @@ class WallpaperTransition : public QObject {
   QTimer* lingerTimer_ = nullptr;
 };
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

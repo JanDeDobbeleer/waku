@@ -4,7 +4,7 @@
 #include <cmath>
 #include <limits>
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -116,4 +116,4 @@ QPointF cursorInWindow(const QPoint& physical, const QPoint& screenOrigin, qreal
   return logical - windowTopLeft;
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

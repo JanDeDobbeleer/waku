@@ -2,7 +2,7 @@
 
 #include "features/system_stats/system_stats.h"
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 
 class WindowsBatteryDataSource final : public BatteryDataSource {
  public:
@@ -12,4 +12,4 @@ class WindowsBatteryDataSource final : public BatteryDataSource {
   std::wstring devicePath_;
 };
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

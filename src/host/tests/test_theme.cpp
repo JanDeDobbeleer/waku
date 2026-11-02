@@ -9,8 +9,8 @@ namespace {
 QString pillConfig(const QString& panelProperties = QString()) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.widgets
+import waku
+import waku.widgets
 ShellRoot {
     Panel {
         %1
@@ -25,7 +25,7 @@ ShellRoot {
 }
 
 QString themeText(const QString& properties) {
-  return QStringLiteral("import wabar\nThemeSpec { %1 }\n").arg(properties);
+  return QStringLiteral("import waku\nThemeSpec { %1 }\n").arg(properties);
 }
 
 QColor colorOf(Harness& h, const QString& name, const char* property) {
@@ -34,7 +34,7 @@ QColor colorOf(Harness& h, const QString& name, const char* property) {
 }
 
 Theme* themeOf(Harness& h) {
-  return h.engine.singletonInstance<Theme*>(QStringLiteral("wabar"), QStringLiteral("Theme"));
+  return h.engine.singletonInstance<Theme*>(QStringLiteral("waku"), QStringLiteral("Theme"));
 }
 
 void writeTheme(Harness& h, const QString& text) {
@@ -251,7 +251,7 @@ TEST(ThemeHost, ABrokenThemeKeepsThePreviousShellAndTheme) {
   ASSERT_TRUE(h.host->reload());
   QQuickWindow* before = h.window();
 
-  writeTheme(h, QStringLiteral("import wabar\nThemeSpec { fill: "));
+  writeTheme(h, QStringLiteral("import waku\nThemeSpec { fill: "));
   EXPECT_FALSE(h.host->reload());
   EXPECT_TRUE(h.host->error().startsWith(QStringLiteral("theme.qml:")))
       << qPrintable(h.host->error());
@@ -315,7 +315,7 @@ namespace {
 QString islandConfig() {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel {
         content: PanelLayout {
@@ -379,7 +379,7 @@ namespace {
 QString gradientConfig(const QString& layoutProperties) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel {
         content: PanelLayout {

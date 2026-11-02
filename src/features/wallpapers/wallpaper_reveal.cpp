@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstdlib>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 namespace {
 
 constexpr double kPi = 3.14159265358979323846;
@@ -152,4 +152,4 @@ int fanTriangleCount(const QPolygonF& polygon) {
   return std::max(0, static_cast<int>(polygon.size()) - 2);
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

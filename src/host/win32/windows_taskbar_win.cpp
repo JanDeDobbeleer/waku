@@ -6,7 +6,7 @@
 
 #include "host/windows_taskbar.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -14,7 +14,7 @@ namespace {
 // documented class names, ShowWindow, RegisterWindowMessage("TaskbarCreated").
 constexpr wchar_t kPrimaryClass[] = L"Shell_TrayWnd";
 constexpr wchar_t kSecondaryClass[] = L"Shell_SecondaryTrayWnd";
-constexpr wchar_t kWatcherClass[] = L"WabarTaskbarWatcher";
+constexpr wchar_t kWatcherClass[] = L"WakuTaskbarWatcher";
 constexpr UINT_PTR kRecheckTimer = 1;
 
 std::vector<HWND> taskbarWindows() {
@@ -70,12 +70,12 @@ class Win32TaskbarSystem final : public TaskbarSystem {
     DWORD code = 0;
     bool alive = GetExitCodeProcess(process, &code) && code == STILL_ACTIVE;
     if (alive) {
-      // A reused pid is not a wabar: compare the image name.
+      // A reused pid is not a waku: compare the image name.
       wchar_t path[MAX_PATH] = {};
       DWORD size = MAX_PATH;
       if (QueryFullProcessImageNameW(process, 0, path, &size)) {
         alive = QString::fromWCharArray(path, static_cast<qsizetype>(size))
-                    .endsWith(QStringLiteral("wabar.exe"), Qt::CaseInsensitive);
+                    .endsWith(QStringLiteral("waku.exe"), Qt::CaseInsensitive);
       }
     }
     CloseHandle(process);
@@ -156,4 +156,4 @@ std::unique_ptr<TaskbarSystem> makeWin32TaskbarSystem() {
   return std::make_unique<Win32TaskbarSystem>();
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

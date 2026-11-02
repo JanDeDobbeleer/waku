@@ -8,7 +8,7 @@
 #include <QSet>
 #include <algorithm>
 
-namespace wabar::apps {
+namespace waku::apps {
 
 bool isNoiseName(const QString& name) {
   const QString lower = name.toLower();
@@ -153,4 +153,4 @@ QString startupClassFor(const AppRecord& record) {
   return QFileInfo(record.target).completeBaseName();
 }
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

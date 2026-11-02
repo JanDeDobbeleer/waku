@@ -12,7 +12,7 @@
 #include "features/apps/apps_platform.h"
 #include "features/apps/catalog.h"
 
-using namespace wabar::apps;
+using namespace waku::apps;
 
 namespace {
 
@@ -95,7 +95,7 @@ TEST(AppsCatalog, ScansShortcutsRecursivelyAndSkipsNoise) {
 }
 
 TEST(AppsCatalog, ScanIgnoresMissingFoldersAndANullResolver) {
-  EXPECT_TRUE(scanShortcuts({s("C:\\wabar-no-such-folder")}, fakeResolver()).empty());
+  EXPECT_TRUE(scanShortcuts({s("C:\\waku-no-such-folder")}, fakeResolver()).empty());
   QTemporaryDir dir;
   touch(dir.filePath(s("A.lnk")));
   EXPECT_TRUE(scanShortcuts({dir.path()}, ShortcutResolver()).empty());
@@ -124,7 +124,7 @@ TEST(AppsCatalog, WatchedDirectoriesListsTheTree) {
   QTemporaryDir dir;
   touch(dir.filePath(s("a/b/c.lnk")));
   touch(dir.filePath(s("d.lnk")));
-  const QStringList watched = watchedDirectories({dir.path(), s("C:\\wabar-no-such-folder")});
+  const QStringList watched = watchedDirectories({dir.path(), s("C:\\waku-no-such-folder")});
   EXPECT_EQ(watched.size(), 3);  // root, a, a/b
 }
 

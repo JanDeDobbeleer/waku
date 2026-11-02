@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 namespace {
 
@@ -168,4 +168,4 @@ double darkerUnsafe(double tone, double ratio) {
   return safe < 0.0 ? 0.0 : safe;
 }
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

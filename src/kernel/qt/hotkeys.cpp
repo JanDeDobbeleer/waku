@@ -6,7 +6,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 std::optional<HotkeyCombo> parseHotkey(const QString& keys) {
   HotkeyCombo combo;
@@ -143,4 +143,4 @@ void Hotkeys::resetForTests() {
   resolved_ = false;
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

@@ -2,16 +2,16 @@
 
 Processes, files and launches for QML. Two parts:
 
-- QML written for Quickshell (`import Quickshell.Io`, the `Quickshell` singleton) loads on wabar.
+- QML written for Quickshell (`import Quickshell.Io`, the `Quickshell` singleton) loads on waku.
   Names, properties, signals and functions follow the Quickshell v0.3.0 documentation and how
   caelestia uses them. Plan: `docs/plans/2026-10-30-caelestia-port-assessment.md` section 5.3.
-- wabar's own `Shell` singleton and `ShellProcess`, which the built-in widgets use (see "wabar's
+- waku's own `Shell` singleton and `ShellProcess`, which the built-in widgets use (see "waku's
   launches" below). They were the feature `shell` until it was folded in here, so that one feature
-  owns every process wabar starts for QML.
+  owns every process waku starts for QML.
 
 ## Types
 
-All C++ types are compiled into the QML module `wabar.services` (the feature uses `QML_SOURCES`).
+All C++ types are compiled into the QML module `waku.services` (the feature uses `QML_SOURCES`).
 `Quickshell.Io` is a forwarding module over it (see "Modules").
 
 | QML name | Class | Notes |
@@ -25,10 +25,10 @@ All C++ types are compiled into the QML module `wabar.services` (the feature use
 | `JsonAdapter`, `JsonObject` | same | QML-declared properties of type int, bool, string, real, var, list<string>, `JsonObject` are the JSON keys |
 | `ElapsedTimer` | same | `elapsed()`, `elapsedMs()`, `elapsedNs()`, `restart()`, `restartMs()`, `restartNs()` (seconds are real numbers) |
 | `QuickshellSingleton` | same | the window-free members of Quickshell's `Quickshell` singleton |
-| `Shell` | `Shell` | wabar's singleton, see below |
-| `ShellProcess` | `ShellProcess` | wabar's interval runner, see below |
+| `Shell` | `Shell` | waku's singleton, see below |
+| `ShellProcess` | `ShellProcess` | waku's interval runner, see below |
 
-## wabar's launches
+## waku's launches
 
 - `Shell` (`qml/shell_service.*`, singleton): `start(program, args)`, `command(line)`,
   `open(target)`, `env(name)`, `homeDir`, `configHome`. A widget calls it on click. Launches are
@@ -61,7 +61,7 @@ and github features declare `DEPENDS quickshell_io` for their `Shell` clicks ("o
   (a temporary file, then rename). `watchChanges` watches the file and its folder, debounces 50 ms,
   re-reads on a thread-pool thread and emits `fileChanged()` only when the content differs from
   what the view holds, so a view's own writes are silent.
-- `Quickshell.stateDir`, `cacheDir`, `dataDir` are `%LOCALAPPDATA%\wabar\{state,cache,data}`;
+- `Quickshell.stateDir`, `cacheDir`, `dataDir` are `%LOCALAPPDATA%\waku\{state,cache,data}`;
   `shellDir` is the config home. Nothing is created until a `FileView` writes there.
 
 ## Quickshell singleton: members and the wrapper
@@ -80,7 +80,7 @@ icons.
 Not here: `screens` (the host's ScreenList).
 
 `reload(hard)` emits `reloadRequested(hard)`. The composition root joins it to the shell host
-(`src/app/wabar/quickshell_glue.h`): it calls `setShellDir()` with the config home, queues a
+(`src/app/waku/quickshell_glue.h`): it calls `setShellDir()` with the config home, queues a
 `ShellHost::reload()` for each request and emits `reloadCompleted()` or `reloadFailed()` after
 each reload.
 
@@ -95,11 +95,11 @@ block the GUI thread for seconds while another process holds the clipboard (Qt r
 
 ## Modules
 
-Types live in `wabar.services`. `Quickshell.Io` is a module of its own that registers its types
+Types live in `waku.services`. `Quickshell.Io` is a module of its own that registers its types
 again under Quickshell's names (`src/quickshell/io/qml/quickshell_types_io.h`, QML_FOREIGN; the module is
-`src/quickshell/io/`). It depends on `wabar.services` but does not re-export it: a qmldir
-`import` line would show every wabar service name, and a shell's own `Workspaces.qml` or
-`Wallpapers.qml` would lose to wabar's service of the same name. `FileViewError` is declared again
+`src/quickshell/io/`). It depends on `waku.services` but does not re-export it: a qmldir
+`import` line would show every waku service name, and a shell's own `Workspaces.qml` or
+`Wallpapers.qml` would lose to waku's service of the same name. `FileViewError` is declared again
 in that header with the same values.
 
 ## Tests and fakes

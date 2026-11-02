@@ -9,7 +9,7 @@
 #include "features/workspaces/event_bus.h"
 #include "features/workspaces/glazewm_service.h"
 
-namespace wabar::workspaces {
+namespace waku::workspaces {
 
 // GlazeWM as a QML singleton, shared by every widget. Wraps glazewm::GlazewmService
 // (the WebSocket client and its protocol) behind a private EventBus; the singleton subscribes to
@@ -65,4 +65,4 @@ class GlazeWM : public QObject {
   QString bindingMode_;
 };
 
-}  // namespace wabar::workspaces
+}  // namespace waku::workspaces

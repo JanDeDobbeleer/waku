@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <nlohmann/json.hpp>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 namespace {
 
 // os.walk order: the files of a directory first, then each sub-directory in turn. Symlinked
@@ -94,4 +94,4 @@ QHash<QString, int> findWallpapers(const QStringList& files,
   return found;
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

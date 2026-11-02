@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 
 Memory::Memory(QObject* parent) : Memory(createMemoryDataSource(), parent) {}
 
@@ -100,4 +100,4 @@ void Disks::sample() {
   });
 }
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

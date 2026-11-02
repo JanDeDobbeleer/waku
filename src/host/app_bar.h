@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-namespace wabar::host {
+namespace waku::host {
 
 // The values are the ABE_* constants of SHAppBarMessage.
 enum class AppBarEdge { Left = 0, Top = 1, Right = 2, Bottom = 3 };
@@ -118,4 +118,4 @@ class FakeAppBar : public IAppBar {
 // registers the window as an app bar (ABM_NEW) only when the request reserves space.
 std::unique_ptr<IAppBar> makeWin32AppBar();
 
-}  // namespace wabar::host
+}  // namespace waku::host

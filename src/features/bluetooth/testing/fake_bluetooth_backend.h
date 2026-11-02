@@ -6,7 +6,7 @@
 
 #include "features/bluetooth/bluetooth.h"
 
-namespace wabar::bluetooth {
+namespace waku::bluetooth {
 
 // Test double of BluetoothBackend: records commands, publishes statuses on demand.
 class FakeBackend final : public BluetoothBackend {
@@ -49,4 +49,4 @@ class FakeBackend final : public BluetoothBackend {
   QStringList unpairs;
 };
 
-}  // namespace wabar::bluetooth
+}  // namespace waku::bluetooth

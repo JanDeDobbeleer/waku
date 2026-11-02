@@ -8,7 +8,7 @@
 #include "features/notifications/toast_activation.h"
 #include "features/notifications/toast_xml.h"
 
-using namespace wabar::notifications;
+using namespace waku::notifications;
 
 namespace {
 

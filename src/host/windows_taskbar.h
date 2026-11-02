@@ -5,9 +5,9 @@
 #include <memory>
 #include <optional>
 
-namespace wabar::host {
+namespace waku::host {
 
-// Hiding the Windows taskbar while wabar runs (`wabar --hide-taskbar`, `wabarc taskbar ...`).
+// Hiding the Windows taskbar while waku runs (`waku --hide-taskbar`, `wakuc taskbar ...`).
 //
 // What is seen from outside. `AutoHide` is the answer "autohide-was-on": the taskbar window is
 // not hidden but Windows auto-hides it.
@@ -21,9 +21,9 @@ class WindowsTaskbar {
  public:
   virtual ~WindowsTaskbar() = default;
   // Turns auto-hide on (releases the reserved work area) and hides the taskbar windows. Does
-  // nothing when wabar already hides the taskbar.
+  // nothing when waku already hides the taskbar.
   virtual void hide() = 0;
-  // Undoes exactly what hide() changed. Does nothing when wabar does not hide the taskbar.
+  // Undoes exactly what hide() changed. Does nothing when waku does not hide the taskbar.
   virtual void restore() = 0;
   // What is seen now, whoever caused it.
   virtual TaskbarState state() const = 0;
@@ -42,7 +42,7 @@ class TaskbarSystem {
   virtual bool windowsVisible() const = 0;
   // SW_HIDE or SW_SHOWNA on every taskbar window.
   virtual void setWindowsHidden(bool hidden) = 0;
-  // True when `pid` is a running wabar process.
+  // True when `pid` is a running waku process.
   virtual bool processAlive(qint64 pid) const = 0;
   // `callback` runs when Explorer has recreated the taskbar (the TaskbarCreated message).
   virtual void onExplorerRestart(std::function<void()> callback) = 0;
@@ -52,11 +52,11 @@ class TaskbarSystem {
 // TaskbarCreated broadcast, so it needs the GUI thread's message loop.
 std::unique_ptr<TaskbarSystem> makeWin32TaskbarSystem();
 
-// What wabar changed, written to disk before the first change so a crashed run can be undone.
+// What waku changed, written to disk before the first change so a crashed run can be undone.
 struct TaskbarMarker {
   qint64 pid = 0;
-  bool changedAutoHide = false;  // wabar turned auto-hide on (it was off)
-  bool changedWindows = false;   // wabar hid the windows (they were visible)
+  bool changedAutoHide = false;  // waku turned auto-hide on (it was off)
+  bool changedWindows = false;   // waku hid the windows (they were visible)
   bool operator==(const TaskbarMarker&) const = default;
 };
 
@@ -71,7 +71,7 @@ class TaskbarMarkerStore {
 // The marker as a file (one small text file, `taskbar_hidden.marker` in appDataDir()).
 std::unique_ptr<TaskbarMarkerStore> makeFileMarkerStore(const QString& path);
 // The text of a marker and its parse (an empty optional for text that is not a marker). The
-// file holds "previous_autohide=0|1" (0: wabar turned it on) and "windows_were_visible=0|1".
+// file holds "previous_autohide=0|1" (0: waku turned it on) and "windows_were_visible=0|1".
 // Public for tests.
 QString formatTaskbarMarker(const TaskbarMarker& marker);
 std::optional<TaskbarMarker> parseTaskbarMarker(const QString& text);
@@ -89,7 +89,7 @@ class WindowsTaskbarHider : public WindowsTaskbar {
   // With `hideNow` false the taskbar is not touched, except to recover.
   void start(bool hideNow);
   // A marker left by a run that is not alive any more: undoes its changes and deletes it. A
-  // marker whose pid is another live wabar is left alone. Returns true when it undid something.
+  // marker whose pid is another live waku is left alone. Returns true when it undid something.
   bool recoverStale();
 
   void hide() override;
@@ -109,4 +109,4 @@ class WindowsTaskbarHider : public WindowsTaskbar {
   bool changedWindows_ = false;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

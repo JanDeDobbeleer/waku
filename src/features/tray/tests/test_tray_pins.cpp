@@ -12,7 +12,7 @@
 #include "features/tray/qml/tray_pins.h"
 #include "features/tray/tray_state.h"
 
-using namespace wabar::tray;
+using namespace waku::tray;
 
 namespace {
 
@@ -70,7 +70,7 @@ class TrayPinsTest : public testing::Test {
   void SetUp() override { ASSERT_TRUE(dir_.isValid()); }
 
   QString stateFile(const QString& screen = QStringLiteral("None")) const {
-    return wabar::tray::SystrayStateStore(dir_.path(), screen).path();
+    return waku::tray::SystrayStateStore(dir_.path(), screen).path();
   }
   void writeRaw(const QByteArray& text, const QString& screen = QStringLiteral("None")) {
     QFile f(stateFile(screen));
@@ -82,8 +82,8 @@ class TrayPinsTest : public testing::Test {
            "\": {\"is_pinned\": " + (pinned ? "true" : "false") +
            ", \"index\": " + QByteArray::number(index) + "}";
   }
-  wabar::tray::IconStateMap loadState(const QString& screen = QStringLiteral("None")) const {
-    return wabar::tray::SystrayStateStore(dir_.path(), screen).load();
+  waku::tray::IconStateMap loadState(const QString& screen = QStringLiteral("None")) const {
+    return waku::tray::SystrayStateStore(dir_.path(), screen).load();
   }
 
   // A fresh model and pins on the temp dir, filled with `names` (ids 1..n in that order).
@@ -327,7 +327,7 @@ TEST_F(TrayPinsTest, ScreenDerivesTheScreenIdAndReloads) {
   QScreen* screen = QGuiApplication::primaryScreen();
   ASSERT_NE(screen, nullptr);
   const QString id =
-      wabar::tray::cleanScreenId(screen->manufacturer(), screen->name(), screen->serialNumber());
+      waku::tray::cleanScreenId(screen->manufacturer(), screen->name(), screen->serialNumber());
   // The offscreen screen may clean to an empty id, which is the "None" file.
   writeRaw("{" + entry("a", true, 0) + "}", id.isEmpty() ? QStringLiteral("None") : id);
   TrayIconModel model;

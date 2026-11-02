@@ -10,7 +10,7 @@
 #include "kernel/qt/app_data.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::host {
+namespace waku::host {
 namespace {
 
 // Loads one thumbnail on a pool thread and hands the image to the response.
@@ -106,10 +106,10 @@ std::shared_ptr<ThumbnailStore> defaultStore() {
   static std::weak_ptr<ThumbnailStore> shared;
   if (auto existing = shared.lock()) return existing;
   // No disk cache without a live desktop: tests and offscreen runs keep to memory.
-  auto created = wabar::kernel::liveDesktop(QStringLiteral("thumbnails"))
-                     ? std::make_shared<ThumbnailStore>(wabar::kernel::appDataDir() +
-                                                        QStringLiteral("/thumbs"))
-                     : std::make_shared<ThumbnailStore>(QString());
+  auto created =
+      waku::kernel::liveDesktop(QStringLiteral("thumbnails"))
+          ? std::make_shared<ThumbnailStore>(waku::kernel::appDataDir() + QStringLiteral("/thumbs"))
+          : std::make_shared<ThumbnailStore>(QString());
   shared = created;
   return created;
 }
@@ -198,6 +198,6 @@ void Thumbnails::cancelPrewarm() { pool_.clear(); }
 
 bool Thumbnails::waitForPrewarm(int msecs) { return pool_.waitForDone(msecs); }
 
-}  // namespace wabar::host
+}  // namespace waku::host
 
 #include "thumbnails.moc"

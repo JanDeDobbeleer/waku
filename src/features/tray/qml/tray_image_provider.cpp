@@ -1,6 +1,6 @@
 #include "features/tray/qml/tray_image_provider.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 TrayImageProvider::TrayImageProvider(TrayIconModel* model)
     : QQuickImageProvider(QQuickImageProvider::Image),
@@ -19,4 +19,4 @@ QImage TrayImageProvider::requestImage(const QString& id, QSize* size,
   return image;
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

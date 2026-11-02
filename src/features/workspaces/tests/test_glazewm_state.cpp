@@ -13,8 +13,8 @@
 #include "features/workspaces/glazewm_state.h"
 
 using nlohmann::json;
-using namespace wabar::workspaces;
-namespace gw = wabar::workspaces::glazewm;
+using namespace waku::workspaces;
+namespace gw = waku::workspaces::glazewm;
 
 namespace {
 

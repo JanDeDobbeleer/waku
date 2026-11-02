@@ -11,7 +11,7 @@
 
 #include "features/wallpapers/wallpaper_files.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 WallpaperManager::CommandRunner systemCommandRunner(QObject* owner) {
   QPointer<QObject> parent(owner);
@@ -166,4 +166,4 @@ void WallpaperManager::runNextCommand(const QString& imagePath, qsizetype index)
   });
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

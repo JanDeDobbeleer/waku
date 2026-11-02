@@ -22,11 +22,11 @@
 
 namespace {
 
-namespace plat = wabar::wallpapers;
-using wabar::wallpapers::DesktopState;
-using wabar::wallpapers::FakeBackend;
-using wabar::wallpapers::Wallpapers;
-using wabar::wallpapers::WallpaperTransition;
+namespace plat = waku::wallpapers;
+using waku::wallpapers::DesktopState;
+using waku::wallpapers::FakeBackend;
+using waku::wallpapers::Wallpapers;
+using waku::wallpapers::WallpaperTransition;
 
 constexpr QRgb kOld = 0xFFFF0000;  // red
 constexpr QRgb kNew = 0xFF0000FF;  // blue
@@ -46,7 +46,7 @@ struct FakeCalls {
 WallpaperTransition::Platform fakePlatform(std::shared_ptr<FakeCalls> calls, bool attachOk = true,
                                            bool readable = true) {
   WallpaperTransition::Platform platform;
-  platform.readSettings = [] { return wabar::wallpapers::DesktopSettings{}; };
+  platform.readSettings = [] { return waku::wallpapers::DesktopSettings{}; };
   platform.oldImagePath = [] { return QStringLiteral("old"); };
   platform.attach = [calls, attachOk](std::uintptr_t,
                                       QString* failure) -> std::optional<plat::WorkerWAttachment> {
@@ -251,7 +251,7 @@ TEST(WallpaperTransition, StartDecodesOffTheGuiThreadAndPlays) {
 
 TEST(WallpaperTransition, DestroyingWhileDecodingIsSafe) {
   auto platform = fakePlatform(std::make_shared<FakeCalls>());
-  platform.decode = [](const QString&, const QString&, const wabar::wallpapers::DecodeBudget&) {
+  platform.decode = [](const QString&, const QString&, const waku::wallpapers::DecodeBudget&) {
     QThread::msleep(40);
     return std::make_pair(solid(kNew), solid(kOld));
   };

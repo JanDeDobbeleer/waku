@@ -5,7 +5,7 @@
 
 #include "features/bluetooth/bluetooth.h"
 
-using namespace wabar::bluetooth;
+using namespace waku::bluetooth;
 
 TEST(BluetoothTypes, ClassOfDeviceMapping) {
   EXPECT_EQ(formatBtAddress(0xAABBCC001122ULL), "AA:BB:CC:00:11:22");

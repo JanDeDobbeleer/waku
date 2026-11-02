@@ -2,29 +2,29 @@
 
 ## Threat model
 
-wabar runs as the interactive user and loads that user's own QML config (`shell.qml`, `theme.qml`,
-custom widgets) from `%USERPROFILE%\.config\wabar`. The config is code: it can run processes and read
+waku runs as the interactive user and loads that user's own QML config (`shell.qml`, `theme.qml`,
+custom widgets) from `%USERPROFILE%\.config\waku`. The config is code: it can run processes and read
 files by design. Changes must neither sandbox the config nor widen the IPC surface beyond the local
-user: the control pipe between `wabarc` and a running bar, and the tray hook pipe, are meant for the
+user: the control pipe between `wakuc` and a running bar, and the tray hook pipe, are meant for the
 local user only.
 
 ## User-built QML plugins
 
 The config already runs code as the user, and a plugin does the same with fewer limits: a Qt QML
-plugin is a native DLL that runs inside `wabar.exe` as soon as a shell imports its module. wabar
+plugin is a native DLL that runs inside `waku.exe` as soon as a shell imports its module. waku
 adds these places to the QML import path:
 
 - `<config home>\modules`, when the folder exists;
-- every folder given as `wabar.exe --import-path <dir>` (repeatable).
+- every folder given as `waku.exe --import-path <dir>` (repeatable).
 
 `--safe` adds neither, so recovery does not depend on a plugin.
 
 What the guard does and does not do (`src/host/plugin_guard.*`):
 
-- Before a folder reaches the engine, wabar reads each plugin named by a `qmldir` file under it. It
+- Before a folder reaches the engine, waku reads each plugin named by a `qmldir` file under it. It
   refuses the whole folder, with one log line per plugin, when the plugin is not a Windows library
   for this processor, was built with another Qt major or minor version, or is a debug build in a
-  release wabar (or the reverse). The file is read, not loaded.
+  release waku (or the reverse). The file is read, not loaded.
 - The same check runs over every other `qmldir` under `<config home>` (a `qmldir` beside
   `shell.qml`, or in a folder reached by `import "./lib"`) each time the shell loads or reloads. A
   plugin that fails refuses the load, and the error names the file and the reason. The scan skips

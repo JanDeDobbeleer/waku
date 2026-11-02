@@ -1,15 +1,15 @@
 // A launcher overlay: a centred window that is hidden until it is asked for. Run it with
 //
-//     wabar --config-home examples/launcher
-//     wabarc --config-home examples/launcher surface toggle launcher
+//     waku --config-home examples/launcher
+//     wakuc --config-home examples/launcher surface toggle launcher
 //
-// `name` is the id `wabarc surface` and hotkeys use. With no anchors the PanelWindow is centred on
+// `name` is the id `wakuc surface` and hotkeys use. With no anchors the PanelWindow is centred on
 // its screen at its implicit size. `keyboardFocus: OnDemand` makes it take the keyboard focus when
-// it is shown, even from a hotkey or from wabarc; Escape and a click elsewhere hide it again
+// it is shown, even from a hotkey or from wakuc; Escape and a click elsewhere hide it again
 // (`dismissOnEscape`, `dismissOnBlur`). `hideDelay` keeps the window up while the card fades out.
 // `visible: false` means no native window exists until the first show.
 import QtQuick
-import wabar
+import waku
 
 ShellRoot {
     PanelWindow {

@@ -13,7 +13,7 @@
 
 #include "features/notifications/notifications.h"
 
-namespace wabar::notifications {
+namespace waku::notifications {
 
 // Enum holders for QML, as in Quickshell.Services.Notifications.
 class NotificationUrgency : public QObject {
@@ -78,7 +78,7 @@ class NotificationToast : public QObject {
   Q_PROPERTY(QString summary READ summary NOTIFY summaryChanged FINAL)
   Q_PROPERTY(QString body READ body NOTIFY bodyChanged FINAL)
   Q_PROPERTY(QString image READ image NOTIFY imageChanged FINAL)
-  Q_PROPERTY(wabar::notifications::NotificationUrgency::Enum urgency READ urgency NOTIFY
+  Q_PROPERTY(waku::notifications::NotificationUrgency::Enum urgency READ urgency NOTIFY
                  urgencyChanged FINAL)
   Q_PROPERTY(QDateTime time READ time NOTIFY timeChanged FINAL)
   Q_PROPERTY(QString timeText READ timeText NOTIFY timeChanged FINAL)
@@ -90,7 +90,7 @@ class NotificationToast : public QObject {
   Q_PROPERTY(QString inlineReplyPlaceholder READ inlineReplyPlaceholder NOTIFY
                  inlineReplyPlaceholderChanged FINAL)
   Q_PROPERTY(QString desktopEntry READ desktopEntry NOTIFY desktopEntryChanged FINAL)
-  Q_PROPERTY(QList<wabar::notifications::NotificationAction*> actions READ actions NOTIFY
+  Q_PROPERTY(QList<waku::notifications::NotificationAction*> actions READ actions NOTIFY
                  actionsChanged FINAL)
   Q_PROPERTY(QVariantMap hints READ hints NOTIFY hintsChanged FINAL)
   Q_PROPERTY(bool tracked READ tracked WRITE setTracked NOTIFY trackedChanged FINAL)
@@ -155,7 +155,7 @@ class NotificationToast : public QObject {
   void actionsChanged();
   void hintsChanged();
   // The toast left the Action Center.
-  void closed(wabar::notifications::NotificationCloseReason::Enum reason);
+  void closed(waku::notifications::NotificationCloseReason::Enum reason);
 
  private:
   friend class NotificationHub;
@@ -169,7 +169,7 @@ class NotificationModel : public QAbstractListModel {
   Q_OBJECT
   QML_ANONYMOUS
   Q_PROPERTY(
-      QList<wabar::notifications::NotificationToast*> values READ values NOTIFY valuesChanged FINAL)
+      QList<waku::notifications::NotificationToast*> values READ values NOTIFY valuesChanged FINAL)
   Q_PROPERTY(int count READ count NOTIFY valuesChanged FINAL)
 
  public:
@@ -212,7 +212,7 @@ class NotificationHub : public QObject {
   void refresh() { service_->refresh(); }
 
  signals:
-  void toastAdded(wabar::notifications::NotificationToast* toast);
+  void toastAdded(waku::notifications::NotificationToast* toast);
 
  private:
   void sync();
@@ -235,7 +235,7 @@ class NotificationFeed : public QObject {
   QML_SINGLETON
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
   Q_PROPERTY(
-      wabar::notifications::NotificationModel* notifications READ notifications CONSTANT FINAL)
+      waku::notifications::NotificationModel* notifications READ notifications CONSTANT FINAL)
 
  public:
   explicit NotificationFeed(QObject* parent = nullptr);
@@ -249,7 +249,7 @@ class NotificationFeed : public QObject {
   Q_INVOKABLE void refresh() { hub_->refresh(); }
 
  signals:
-  void toastAdded(wabar::notifications::NotificationToast* toast);
+  void toastAdded(waku::notifications::NotificationToast* toast);
 
  private:
   std::shared_ptr<NotificationHub> hub_;
@@ -272,7 +272,7 @@ class NotificationServer : public QObject {
   Q_PROPERTY(bool imageSupported MEMBER imageSupported_ NOTIFY capabilitiesChanged)
   Q_PROPERTY(bool inlineReplySupported MEMBER inlineReplySupported_ NOTIFY capabilitiesChanged)
   Q_PROPERTY(bool persistenceSupported MEMBER persistenceSupported_ NOTIFY capabilitiesChanged)
-  Q_PROPERTY(wabar::notifications::NotificationModel* trackedNotifications READ trackedNotifications
+  Q_PROPERTY(waku::notifications::NotificationModel* trackedNotifications READ trackedNotifications
                  CONSTANT FINAL)
 
  public:
@@ -283,7 +283,7 @@ class NotificationServer : public QObject {
   NotificationModel* trackedNotifications() { return &tracked_; }
 
  signals:
-  void notification(wabar::notifications::NotificationToast* notification);
+  void notification(waku::notifications::NotificationToast* notification);
   void capabilitiesChanged();
 
  private:
@@ -303,4 +303,4 @@ class NotificationServer : public QObject {
   bool persistenceSupported_ = false;
 };
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

@@ -6,8 +6,8 @@
 
 #include "kernel/qt/linger.h"
 
-using wabar::kernel::linger;
-using wabar::kernel::LingeringHub;
+using waku::kernel::linger;
+using waku::kernel::LingeringHub;
 
 namespace {
 

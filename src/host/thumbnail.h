@@ -6,7 +6,7 @@
 #include <QtGlobal>
 #include <memory>
 
-namespace wabar::host {
+namespace waku::host {
 
 // Live window previews with DWM thumbnails (the backend of the QML item WindowThumbnail).
 //
@@ -51,4 +51,4 @@ std::unique_ptr<ThumbnailBackend> makeWin32ThumbnailBackend();
 QRect thumbnailDestination(const QRectF& sceneRect, qreal devicePixelRatio, const QSize& source,
                            bool preserveAspect);
 
-}  // namespace wabar::host
+}  // namespace waku::host

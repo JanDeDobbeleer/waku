@@ -6,7 +6,7 @@
 
 #include "features/audio/audio_endpoints.h"
 
-namespace wabar::audio {
+namespace waku::audio {
 
 // Test double of AudioEndpoints: one default endpoint with two devices, no Core Audio.
 class FakeEndpoints final : public AudioEndpoints {
@@ -48,4 +48,4 @@ class FakeEndpoints final : public AudioEndpoints {
   int* stopCounter = nullptr;
 };
 
-}  // namespace wabar::audio
+}  // namespace waku::audio

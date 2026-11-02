@@ -8,7 +8,7 @@
 // Non-throwing parsers for GlazeWM IPC replies (port of GlazewmClient._process_workspaces,
 // _process_binding_modes in glazewm/client.py). The windows of a workspace are only counted:
 // nothing reads them, so the parse does not copy them.
-namespace wabar::workspaces::glazewm {
+namespace waku::workspaces::glazewm {
 
 using Json = nlohmann::json;
 
@@ -45,4 +45,4 @@ std::optional<BindingMode> parseBindingModes(const Json& data);
 // "vertical" is Vertical; a missing or unknown value is Horizontal.
 TilingDirection parseTilingDirection(const Json& data);
 
-}  // namespace wabar::workspaces::glazewm
+}  // namespace waku::workspaces::glazewm

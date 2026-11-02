@@ -26,8 +26,8 @@
 #include "host/qml/qs_window.h"
 #include "host/qml/shell_host.h"
 
-using namespace wabar::control;
-using namespace wabar::host;
+using namespace waku::control;
+using namespace waku::host;
 
 namespace {
 
@@ -38,7 +38,7 @@ QString shellConfig(const QString& startText = QStringLiteral("a"),
                     const QString& panelProperties = QString()) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 
 ShellRoot {
     Panel {
@@ -90,7 +90,7 @@ QPointF positionIn(QQuickWindow* window, const QString& name) {
 // ---- fake native layer ----
 
 struct AppBarRecord {
-  wabar::host::AppBarRequest request;
+  waku::host::AppBarRequest request;
 };
 
 struct Native {
@@ -113,14 +113,14 @@ struct Native {
   std::vector<quintptr> foregrounded;
 
   ShellHost::NativeHooks hooks() {
-    class Recording final : public wabar::host::IAppBar {
+    class Recording final : public waku::host::IAppBar {
      public:
       Recording(Native* owner) : owner_(owner) {}
-      int create(const wabar::host::AppBarRequest& request) override {
+      int create(const waku::host::AppBarRequest& request) override {
         owner_->created.push_back({request});
         return owner_->appBarInset;
       }
-      int reposition(const wabar::host::AppBarRequest& request) override {
+      int reposition(const waku::host::AppBarRequest& request) override {
         owner_->repositioned.push_back({request});
         return owner_->appBarInset;
       }
@@ -130,7 +130,7 @@ struct Native {
       Native* owner_;
     };
     ShellHost::NativeHooks hooks;
-    hooks.makeAppBar = [this]() -> std::unique_ptr<wabar::host::IAppBar> {
+    hooks.makeAppBar = [this]() -> std::unique_ptr<waku::host::IAppBar> {
       return std::make_unique<Recording>(this);
     };
     hooks.applyBackdrop = [this](quintptr, Backdrop::Kind backdrop) {

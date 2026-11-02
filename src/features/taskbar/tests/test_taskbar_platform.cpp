@@ -20,7 +20,7 @@
 #include "features/taskbar/window_system.h"
 #include "features/taskbar/window_tracker.h"
 
-using namespace wabar::taskbar;
+using namespace waku::taskbar;
 
 namespace {
 

@@ -2,7 +2,7 @@
 
 #include "features/apps/qml/app_icon_provider.h"
 
-namespace wabar::apps {
+namespace waku::apps {
 
 DesktopAction::DesktopAction(QString id, QString name, std::function<void()> run, QObject* parent)
     : QObject(parent), id_(std::move(id)), name_(std::move(name)), run_(std::move(run)) {}
@@ -59,4 +59,4 @@ void DesktopEntry::execute() {
   if (launch_) launch_(record_.id, LaunchMode::Normal);
 }
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

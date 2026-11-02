@@ -22,7 +22,7 @@
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/window_focus.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 namespace {
 
 std::function<std::unique_ptr<Wallpapers>()>& testFactory() {
@@ -128,7 +128,7 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
   if (!deps_.backend && deps_.realBackend && kernel::liveDesktop(QStringLiteral("wallpapers"))) {
     deps_.backend = [] { return makeDesktopWallpaperBackend(); };
   }
-  if (!deps_.dryRun) deps_.dryRun = qEnvironmentVariableIntValue("WABAR_WALLPAPER_DRYRUN") != 0;
+  if (!deps_.dryRun) deps_.dryRun = qEnvironmentVariableIntValue("WAKU_WALLPAPER_DRYRUN") != 0;
   if (!deps_.lockScreen && deps_.realBackend && kernel::liveDesktop(QStringLiteral("wallpapers"))) {
     guarded("lock screen", [&] { deps_.lockScreen = makeLockScreenSetter(kernel::appDataDir()); });
   }
@@ -382,7 +382,7 @@ void Wallpapers::random() {
   });
 }
 
-// --- wabarc wallpaper ...
+// --- wakuc wallpaper ...
 
 QString Wallpapers::controlStart(const QString& path, bool dryRun) {
   setWallpaperImpl(path, dryRun);
@@ -507,9 +507,9 @@ void Wallpapers::closeGallery() {
 }
 
 void Wallpapers::focusWindow(QWindow* window) {
-  if (!window || !wabar::kernel::liveDesktop(QStringLiteral("wallpapers"))) return;
+  if (!window || !waku::kernel::liveDesktop(QStringLiteral("wallpapers"))) return;
   window->requestActivate();
-  wabar::kernel::forceForegroundFocus(static_cast<std::uintptr_t>(window->winId()));
+  waku::kernel::forceForegroundFocus(static_cast<std::uintptr_t>(window->winId()));
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

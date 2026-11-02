@@ -5,7 +5,7 @@
 
 #include "features/tray/tray_types.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // The size a tray icon is shown at (Python's validate_icon_data).
 inline constexpr int kTrayIconSize = 32;
@@ -29,4 +29,4 @@ QByteArray scaledTrayIconRgba(const TrayIconData& data);
 QImage lanczosScaleIcon(const QImage& source, int width, int height);
 QImage sharpen(const QImage& source);
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

@@ -7,7 +7,7 @@
 
 #include "features/notifications/win32/wnf_win.h"
 
-using namespace wabar::notifications;
+using namespace waku::notifications;
 
 namespace {
 

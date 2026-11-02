@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import wabar as W
+import waku as W
 
 // Quickshell.Hyprland's `Hyprland` singleton, for QML written for Quickshell. Windows has no
 // Hyprland: this is a compile-compatibility shim, not an implementation. The lists are empty

@@ -15,7 +15,7 @@
 
 #include "features/workspaces/glazewm.h"
 
-using wabar::workspaces::glazewm::GlazewmSocket;
+using waku::workspaces::glazewm::GlazewmSocket;
 
 namespace {
 

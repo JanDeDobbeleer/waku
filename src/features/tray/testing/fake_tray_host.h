@@ -12,7 +12,7 @@
 
 #include "features/tray/tray_host.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // A host the test drives by hand. `stops` may be shared so a test can read the count after the
 // host was destroyed with its owner.
@@ -64,4 +64,4 @@ class FakeApi : public TrayWindowApi {
   std::function<void()> onBroadcast;
 };
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

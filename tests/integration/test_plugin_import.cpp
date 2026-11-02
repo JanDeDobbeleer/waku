@@ -1,6 +1,6 @@
 // User-built QML plugins: <config home>/modules and --import-path folders reach the engine's
 // import path, and the guard refuses a plugin built for another Qt, flavour or processor before
-// anything is loaded. The plugin is tests/plugin (WabarTestModule).
+// anything is loaded. The plugin is tests/plugin (WakuTestModule).
 #include <gtest/gtest.h>
 
 #include <QCoreApplication>
@@ -15,18 +15,18 @@
 
 #include "host/plugin_guard.h"
 
-using namespace wabar::host;
+using namespace waku::host;
 
 namespace {
 
 QString builtModuleDir() {
   return QDir(QCoreApplication::applicationDirPath())
-      .filePath(QStringLiteral("testmodules/WabarTestModule"));
+      .filePath(QStringLiteral("testmodules/WakuTestModule"));
 }
 
 // A modules folder holding a copy of the test plugin.
 bool copyModule(const QString& modulesDir) {
-  const QString target = QDir(modulesDir).filePath(QStringLiteral("WabarTestModule"));
+  const QString target = QDir(modulesDir).filePath(QStringLiteral("WakuTestModule"));
   if (!QDir().mkpath(target)) return false;
   bool any = false;
   QDirIterator it(builtModuleDir(),
@@ -60,7 +60,7 @@ bool patchFile(const QString& path, const std::function<bool(QByteArray&)>& patc
 // The QML text of a component that creates the test type and reads its text.
 QString greetingFrom(QQmlEngine& engine, QString* error) {
   QQmlComponent component(&engine);
-  component.setData("import QtQml\nimport WabarTestModule\nTestGreeting {}\n",
+  component.setData("import QtQml\nimport WakuTestModule\nTestGreeting {}\n",
                     QUrl(QStringLiteral("file:///plugin_user.qml")));
   if (component.isError()) {
     *error = component.errorString();
@@ -199,7 +199,7 @@ TEST(PluginImport, APluginForAnotherProcessorIsRefusedBeforeLoading) {
   }));
   const PluginVerdict verdict = checkPluginFile(plugin);
   EXPECT_FALSE(verdict.ok);
-  EXPECT_TRUE(verdict.reason.contains(QStringLiteral("this wabar runs as")))
+  EXPECT_TRUE(verdict.reason.contains(QStringLiteral("this waku runs as")))
       << qPrintable(verdict.reason);
   EXPECT_TRUE(usableImportRoots(importRoots(QString(), {extra.path()})).isEmpty());
 }

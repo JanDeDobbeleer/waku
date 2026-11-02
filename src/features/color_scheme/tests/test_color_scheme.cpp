@@ -28,7 +28,7 @@
 // palettes_test.ts, typescript/quantize/quantizer_celebi_test.ts, typescript/score/score_test.ts,
 // cpp/scheme/scheme_monochrome_test.cc), and from the published Material 3 baseline colours.
 
-using namespace wabar::color_scheme;
+using namespace waku::color_scheme;
 
 namespace {
 
@@ -830,7 +830,7 @@ TEST(ColorSchemeService, IsUsableFromQml) {
   QQmlComponent component(&engine);
   component.setData(R"(
 import QtQml
-import wabar.services
+import waku.services
 QtObject {
     property var scheme: ColorScheme.fromColor("#6750A4", "tonalspot", false)
     property var primary: scheme.colors.primary

@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-namespace wabar::network {
+namespace waku::network {
 
 // One network interface as the IP helper reports it: the 64-bit octet counters since the adapter
 // came up. `id` is stable while the adapter exists (the interface LUID).
@@ -77,4 +77,4 @@ class ThroughputTracker {
   quint64 txTotal_ = 0;
 };
 
-}  // namespace wabar::network
+}  // namespace waku::network

@@ -8,7 +8,7 @@
 
 #include "host/qml/window_enums.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 class PanelWindow;
 
@@ -20,13 +20,13 @@ class WlrLayershell : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_UNCREATABLE("WlrLayershell is an attached property of PanelWindow")
-  QML_ATTACHED(wabar::host::WlrLayershell)
-  Q_PROPERTY(wabar::host::WlrLayer::Enum layer READ layer WRITE setLayer NOTIFY changed FINAL)
-  Q_PROPERTY(wabar::host::WlrKeyboardFocus::Enum keyboardFocus READ keyboardFocus WRITE
+  QML_ATTACHED(waku::host::WlrLayershell)
+  Q_PROPERTY(waku::host::WlrLayer::Enum layer READ layer WRITE setLayer NOTIFY changed FINAL)
+  Q_PROPERTY(waku::host::WlrKeyboardFocus::Enum keyboardFocus READ keyboardFocus WRITE
                  setKeyboardFocus NOTIFY changed FINAL)
   Q_PROPERTY(QString namespace READ layerNamespace WRITE setLayerNamespace NOTIFY changed FINAL)
-  Q_PROPERTY(wabar::host::ExclusionMode::Enum exclusionMode READ exclusionMode WRITE
-                 setExclusionMode NOTIFY changed FINAL)
+  Q_PROPERTY(waku::host::ExclusionMode::Enum exclusionMode READ exclusionMode WRITE setExclusionMode
+                 NOTIFY changed FINAL)
 
  public:
   explicit WlrLayershell(QObject* attachee = nullptr);
@@ -48,4 +48,4 @@ class WlrLayershell : public QObject {
   QPointer<PanelWindow> panel_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

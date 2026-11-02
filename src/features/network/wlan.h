@@ -7,7 +7,7 @@
 #include <memory>
 #include <optional>
 
-namespace wabar::network {
+namespace waku::network {
 
 // Port of wifi_managers.WifiState (an IntFlag).
 enum WifiStateFlag : int {
@@ -64,9 +64,9 @@ class WifiBackend : public QObject {
   virtual void setAutoConnect(const QString& ssid, bool autoConnect) = 0;
 
  signals:
-  void scanCompleted(int status, const QVector<wabar::network::WifiNetwork>& networks);
-  void currentConnection(bool connected, const wabar::network::WifiNetwork& network);
-  void connectFinished(int status, const QString& ssid, const wabar::network::WifiNetwork& network);
+  void scanCompleted(int status, const QVector<waku::network::WifiNetwork>& networks);
+  void currentConnection(bool connected, const waku::network::WifiNetwork& network);
+  void connectFinished(int status, const QString& ssid, const waku::network::WifiNetwork& network);
   void connectFailed(const QString& message);
   void disconnected(const QString& profileName);
 };
@@ -77,7 +77,7 @@ std::unique_ptr<WifiBackend> createWlanBackend();
 // of the connected network). Returns nullopt when unavailable.
 std::optional<int> currentSignalQuality();
 
-}  // namespace wabar::network
+}  // namespace waku::network
 
-Q_DECLARE_METATYPE(wabar::network::WifiNetwork)
-Q_DECLARE_METATYPE(QVector<wabar::network::WifiNetwork>)
+Q_DECLARE_METATYPE(waku::network::WifiNetwork)
+Q_DECLARE_METATYPE(QVector<waku::network::WifiNetwork>)

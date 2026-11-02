@@ -7,7 +7,7 @@
 
 #include "features/tray/tray_types.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // Wire format of the tray hook pipe (hook/trayhook.cpp, packed 1):
 //   u32 type            1 = text, 2 = WM_COPYDATA copy
@@ -52,4 +52,4 @@ QString trayExeName(const QString& exePath);
 // pack_i32: two 16-bit values in one 32-bit integer (the high part sign-extended).
 std::int32_t packI32(std::int32_t low, std::int32_t high);
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

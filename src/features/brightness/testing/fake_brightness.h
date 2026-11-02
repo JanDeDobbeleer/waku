@@ -8,7 +8,7 @@
 
 #include "features/brightness/brightness.h"
 
-namespace wabar::brightness {
+namespace waku::brightness {
 
 // Test double of BrightnessControl: two monitors, writes and refreshes recorded, no threads.
 class FakeBrightness final : public BrightnessControl {
@@ -39,4 +39,4 @@ class FakeBrightness final : public BrightnessControl {
   int* stopCounter = nullptr;
 };
 
-}  // namespace wabar::brightness
+}  // namespace waku::brightness

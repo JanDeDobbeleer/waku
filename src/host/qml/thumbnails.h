@@ -11,10 +11,10 @@
 
 #include "host/thumbnail_store.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 // image://thumb/<path>?w=<pixels>: a downscaled copy of an image file, from a memory cache, a disk
-// cache (%LOCALAPPDATA%\wabar\thumbs) or a decode off the GUI thread (host/thumbnail_store.h).
+// cache (%LOCALAPPDATA%\waku\thumbs) or a decode off the GUI thread (host/thumbnail_store.h).
 // <path> is a local path or file: URL, percent-encoded or not; w defaults to the Image's
 // sourceSize.width, then to 640. The Image shows its error state for a missing or unreadable file.
 //
@@ -79,4 +79,4 @@ class Thumbnails : public QObject {
   QThreadPool pool_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

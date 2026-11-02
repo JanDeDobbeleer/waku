@@ -15,12 +15,12 @@
 
 namespace {
 
-using wabar::wallpapers::AreaFrame;
-using wabar::wallpapers::clipConvex;
-using wabar::wallpapers::computeAreaFrame;
-using wabar::wallpapers::polygonArea;
-using wabar::wallpapers::revealPath;
-using wabar::wallpapers::revealPieces;
+using waku::wallpapers::AreaFrame;
+using waku::wallpapers::clipConvex;
+using waku::wallpapers::computeAreaFrame;
+using waku::wallpapers::polygonArea;
+using waku::wallpapers::revealPath;
+using waku::wallpapers::revealPieces;
 
 struct Monitor {
   int x, y, w, h;

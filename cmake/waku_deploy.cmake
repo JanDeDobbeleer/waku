@@ -1,21 +1,21 @@
-# deploy: assembles a portable folder, dist/wabar by default (WABAR_DIST_DIR):
+# deploy: assembles a portable folder, dist/waku by default (WAKU_DIST_DIR):
 #
-#   wabar.exe, wabarc.exe, WabarTrayHook[_arm64].dll   the program and the DLL injected into Explorer
+#   waku.exe, wakuc.exe, WakuTrayHook[_arm64].dll   the program and the DLL injected into Explorer
 #   <Qt runtime>                                        windeployqt, scanning src/ and cmake/deploy_imports/
-#   modules/wabar/ ...                                  the built-in widgets as a read-only reference:
-#   modules/wabar/widgets/, modules/wabar/services/     .qml, qmldir and .qmltypes of the three QML
+#   modules/waku/ ...                                  the built-in widgets as a read-only reference:
+#   modules/waku/widgets/, modules/waku/services/     .qml, qmldir and .qmltypes of the three QML
 #                                                       modules (import path root: modules/)
 #   examples/config/                                    the sample config home
 #
-# The built-in widgets stay compiled into wabar.exe; modules/ is only for reading, for copying a
-# widget into a config home's widgets/ folder, and for qmllint/qmlls (pass -I <dist>/wabar/modules).
+# The built-in widgets stay compiled into waku.exe; modules/ is only for reading, for copying a
+# widget into a config home's widgets/ folder, and for qmllint/qmlls (pass -I <dist>/waku/modules).
 #
 #   cmake --build --preset <preset> --target deploy
 #
-# Nothing here writes outside WABAR_DIST_DIR.
-set(WABAR_DIST_DIR "${PROJECT_SOURCE_DIR}/dist/wabar" CACHE PATH "deploy output folder")
-set(_dist "${WABAR_DIST_DIR}")
-set(_modules "${_dist}/modules/wabar")
+# Nothing here writes outside WAKU_DIST_DIR.
+set(WAKU_DIST_DIR "${PROJECT_SOURCE_DIR}/dist/waku" CACHE PATH "deploy output folder")
+set(_dist "${WAKU_DIST_DIR}")
+set(_modules "${_dist}/modules/waku")
 
 # Image formats: windeployqt takes every imageformats plugin it finds (qgif, qico, qjpeg, qsvg and,
 # from the Qt Image Formats add-on, qwebp). Shells load .webp wallpapers, so qwebp is required; the
@@ -28,14 +28,14 @@ if(NOT EXISTS "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}/imageformats/qwebp.d
                   "Qt Image Formats module (qtimageformats), or .webp images will not load.")
 endif()
 
-# QML module sources: wabar (host), wabar.widgets, wabar.services. The generated qmldir and
+# QML module sources: waku (host), waku.widgets, waku.services. The generated qmldir and
 # .qmltypes come from the module targets' output folders.
 file(GLOB _host_qml "${PROJECT_SOURCE_DIR}/src/host/qml/*.qml")
-get_property(_widgets_qml GLOBAL PROPERTY WABAR_WIDGETS_QML_FILES)
+get_property(_widgets_qml GLOBAL PROPERTY WAKU_WIDGETS_QML_FILES)
 
 set(_module_commands "")
-foreach(entry IN ITEMS "wabar_host|${_modules}" "wabar_widgets|${_modules}/widgets"
-                       "wabar_services|${_modules}/services")
+foreach(entry IN ITEMS "waku_host|${_modules}" "waku_widgets|${_modules}/widgets"
+                       "waku_services|${_modules}/services")
   string(REPLACE "|" ";" entry "${entry}")
   list(GET entry 0 _target)
   list(GET entry 1 _dest)
@@ -49,15 +49,15 @@ endforeach()
 add_custom_target(deploy
   COMMAND ${CMAKE_COMMAND} -E make_directory "${_dist}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          $<TARGET_FILE:wabar> $<TARGET_FILE:wabarc> $<TARGET_FILE:WabarTrayHook> "${_dist}"
+          $<TARGET_FILE:waku> $<TARGET_FILE:wakuc> $<TARGET_FILE:WakuTrayHook> "${_dist}"
   COMMAND Qt6::windeployqt ${_windeployqt_flags} --dir "${_dist}"
           --qmldir "${PROJECT_SOURCE_DIR}/src"
-          --qmldir "${PROJECT_SOURCE_DIR}/cmake/deploy_imports" "${_dist}/$<TARGET_FILE_NAME:wabar>"
+          --qmldir "${PROJECT_SOURCE_DIR}/cmake/deploy_imports" "${_dist}/$<TARGET_FILE_NAME:waku>"
   ${_module_commands}
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_host_qml} "${_modules}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_widgets_qml} "${_modules}/widgets"
   COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/examples/config"
           "${_dist}/examples/config"
-  DEPENDS wabar wabarc WabarTrayHook
+  DEPENDS waku wakuc WakuTrayHook
   COMMENT "Deploying to ${_dist}"
   VERBATIM)

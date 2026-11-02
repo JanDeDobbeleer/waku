@@ -17,7 +17,7 @@
 #include "features/taskbar/pin_support.h"
 #include "features/taskbar/window_system.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // A window system that never touches the desktop: windows are rows in a map and every action is
 // only recorded.
@@ -169,4 +169,4 @@ class FakePins final : public PinSupport {
   std::vector<QuickAccessFolder> folders;
 };
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

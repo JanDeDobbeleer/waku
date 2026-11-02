@@ -3,7 +3,7 @@
 #include "kernel/qt/linger.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::media {
+namespace waku::media {
 
 QString imageMimeType(const QByteArray& bytes) {
   if (bytes.startsWith("\x89PNG\r\n\x1a\n")) return QStringLiteral("image/png");
@@ -80,4 +80,4 @@ bool Media::canPrevious() const { return current() && current()->prevEnabled; }
 bool Media::canPlayPause() const { return current() && current()->playEnabled; }
 bool Media::canNext() const { return current() && current()->nextEnabled; }
 
-}  // namespace wabar::media
+}  // namespace waku::media

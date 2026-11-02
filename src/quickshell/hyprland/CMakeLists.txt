@@ -2,7 +2,7 @@
 # written for it load. Windows has no Hyprland: the lists are empty, the focused objects null and
 # dispatch does nothing. GlobalShortcut is the Quickshell one; HyprlandFocusGrab ends on
 # loss of the window activation.
-wabar_quickshell_qml_module(wabar_quickshell_hyprland Quickshell.Hyprland
+waku_quickshell_qml_module(waku_quickshell_hyprland Quickshell.Hyprland
   QML_FILES
     GlobalShortcut.qml
     HyprlandEvent.qml
@@ -12,4 +12,4 @@ wabar_quickshell_qml_module(wabar_quickshell_hyprland Quickshell.Hyprland
     HyprlandWorkspace.qml
   SINGLETONS
     Hyprland.qml
-  DEPENDENCIES wabar)
+  DEPENDENCIES waku)

@@ -11,7 +11,7 @@
 
 #include "features/wallpapers/win32/workerw.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // Geometry of the wallpaper transition (services/wallpapers/engine.py). The goal is to lay the new
 // image out on the same pixels Windows will, so the desktop does not jump when the overlay ends.
@@ -65,4 +65,4 @@ std::vector<ScaledImage> layoutForScreens(const QPixmap& source, std::vector<Scr
 // Reveal shape of the new wallpaper at progress t (0..1). Unknown animations reveal everything.
 QPainterPath revealPath(const QString& animation, int dx, int dy, int dw, int dh, double t);
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

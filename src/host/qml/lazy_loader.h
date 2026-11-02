@@ -11,7 +11,7 @@
 #include <QUrl>
 #include <memory>
 
-namespace wabar::host {
+namespace waku::host {
 
 // Creates its component only when asked (Quickshell `LazyLoader`): a launcher or an OSD window
 // that should not exist, or build its widgets, until it is first needed.
@@ -97,4 +97,4 @@ class LazyLoader : public QObject, public QQmlParserStatus {
   bool wantLoading_ = false;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

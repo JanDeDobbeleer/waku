@@ -14,7 +14,7 @@ and prefixes a particular shell expects are that shell's business, in its own QM
 | `dynamic_scheme.{h,cpp}` | The nine `Variant`s, `makeScheme`, and the Material 3 role table with contrast curves and tone-delta pairs (`roleColor`, `roleTone`, `roleName`). |
 | `quantizer.{h,cpp}` | Wu, weighted k-means (WSMeans), Celebi (Wu then WSMeans) and `rankedSuggestions` (Score). |
 | `image_source.{h,cpp}` | `readImageScaled`, `seedColorFromImage` (128 px, 128 colours, Score top 1) and `meanLuminance`. |
-| `qml/color_scheme_service.{h,cpp}` | The `ColorScheme` singleton in `wabar.services`. |
+| `qml/color_scheme_service.{h,cpp}` | The `ColorScheme` singleton in `waku.services`. |
 | `qml/color_scheme_types.h` | The `scheme` value type (`SchemeValue`). |
 
 ## Behaviour
@@ -85,4 +85,4 @@ file header names the sources.
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `wabar.services.ColorScheme` (`src/features/color_scheme/qml/color_scheme_service.{h,cpp}`): stateless Material 3 colour generator (`fromColor`, `fromImage`, `generate`, `luminance`) over the pure `color_scheme` engine (HCT, tonal palettes, scheme variants, Celebi quantizer, Score); created by the QML engine on first use and destroyed with it. It holds one `ImageStatsCache` (`src/features/color_scheme/image_stats_cache.{h,cpp}`): the seed colour and luminance of an image file, keyed by path, modification time and size, in `%LOCALAPPDATA%\wabar\image_stats.json` (256 entries, atomic writes, memory only when `kernel::liveDesktop("color_scheme")` is false), so a start-up does not decode the wallpaper again. Otherwise it is stateless, so a singleton is only the QML way to expose functions and the async `fromImageFinished` signal. `fromImage` runs on a `QThreadPool` task (see threads). Reads only the file the caller names; does not use `kernel::liveDesktop()`.
+- `waku.services.ColorScheme` (`src/features/color_scheme/qml/color_scheme_service.{h,cpp}`): stateless Material 3 colour generator (`fromColor`, `fromImage`, `generate`, `luminance`) over the pure `color_scheme` engine (HCT, tonal palettes, scheme variants, Celebi quantizer, Score); created by the QML engine on first use and destroyed with it. It holds one `ImageStatsCache` (`src/features/color_scheme/image_stats_cache.{h,cpp}`): the seed colour and luminance of an image file, keyed by path, modification time and size, in `%LOCALAPPDATA%\waku\image_stats.json` (256 entries, atomic writes, memory only when `kernel::liveDesktop("color_scheme")` is false), so a start-up does not decode the wallpaper again. Otherwise it is stateless, so a singleton is only the QML way to expose functions and the async `fromImageFinished` signal. `fromImage` runs on a `QThreadPool` task (see threads). Reads only the file the caller names; does not use `kernel::liveDesktop()`.

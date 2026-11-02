@@ -1,5 +1,5 @@
 // WallpaperManager and the file scan against a fake desktop: no widget, no
-// engine (the animated change is wabar's WallpaperTransition), nothing touches the real wallpaper.
+// engine (the animated change is waku's WallpaperTransition), nothing touches the real wallpaper.
 #include <gtest/gtest.h>
 
 #include <QDir>
@@ -20,9 +20,9 @@
 #include "features/wallpapers/wallpaper_manager.h"
 
 using nlohmann::json;
-using namespace wabar::wallpapers;
-using wabar::wallpapers::DesktopWallpaperBackend;
-using wabar::wallpapers::WallpaperMonitor;
+using namespace waku::wallpapers;
+using waku::wallpapers::DesktopWallpaperBackend;
+using waku::wallpapers::WallpaperMonitor;
 
 namespace {
 

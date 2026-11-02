@@ -2,7 +2,7 @@
 
 #include "host/windows_taskbar.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 QString answerWindowsTaskbarCommand(const QStringList& words, WindowsTaskbar* taskbar) {
   static const QString usage = QStringLiteral("error: usage: taskbar hide | show | status");
@@ -19,4 +19,4 @@ QString answerWindowsTaskbarCommand(const QStringList& words, WindowsTaskbar* ta
   return QStringLiteral("ok: taskbar: ") + taskbarStateName(taskbar->state());
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

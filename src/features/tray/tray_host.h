@@ -8,7 +8,7 @@
 
 #include "features/tray/tray_types.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // Where tray icon notifications come from. The real implementation (`SystrayHook`) intercepts
 // Explorer's Shell_TrayWnd; widgets and tests only see this interface,
@@ -32,8 +32,8 @@ class TrayHost : public QObject {
  signals:
   // The tray should be asked to re-announce its icons (TaskbarCreated broadcast).
   void updateIcons();
-  void iconModified(const wabar::tray::TrayIconData& data);
-  void iconDeleted(const wabar::tray::TrayIconData& data);
+  void iconModified(const waku::tray::TrayIconData& data);
+  void iconDeleted(const waku::tray::TrayIconData& data);
 };
 
 // The Win32 calls a tray icon button makes when the user clicks it, plus the TaskbarCreated
@@ -54,4 +54,4 @@ class TrayWindowApi {
 // The Win32-backed implementation (stateless).
 std::unique_ptr<TrayWindowApi> makeTrayWindowApi();
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

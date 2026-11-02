@@ -3,7 +3,7 @@
 # (also elevated), and the asynchronous image://appicon provider. No dependencies on other
 # features. `import Quickshell` reaches it as DesktopEntries (src/quickshell/core/qml). See
 # design.md.
-wabar_feature(
+waku_feature(
   NAME apps
   SOURCES
     apps_platform.h

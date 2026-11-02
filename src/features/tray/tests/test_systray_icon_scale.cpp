@@ -5,12 +5,12 @@
 
 #include "features/tray/icon_scale.h"
 
-using wabar::tray::lanczosScaleIcon;
-using wabar::tray::scaledTrayIconRgba;
-using wabar::tray::scaleTrayIcon;
-using wabar::tray::sharpen;
-using wabar::tray::TrayIconData;
-using wabar::tray::trayIconImage;
+using waku::tray::lanczosScaleIcon;
+using waku::tray::scaledTrayIconRgba;
+using waku::tray::scaleTrayIcon;
+using waku::tray::sharpen;
+using waku::tray::TrayIconData;
+using waku::tray::trayIconImage;
 
 namespace {
 

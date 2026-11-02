@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <objbase.h>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 ComScope::ComScope(ComApartment apartment, bool disableOle1Dde) {
   DWORD flags =
@@ -17,4 +17,4 @@ ComScope::~ComScope() {
   if (initialised_) CoUninitialize();
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

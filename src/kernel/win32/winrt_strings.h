@@ -5,7 +5,7 @@
 #include <QString>
 #include <cstdint>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // The whole hstring, embedded NULs included (its size, not the first NUL, ends it).
 inline QString toQString(const winrt::hstring& text) {
@@ -17,4 +17,4 @@ inline winrt::hstring toHString(const QString& text) {
                         static_cast<std::uint32_t>(text.size()));
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

@@ -6,7 +6,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::audio {
+namespace waku::audio {
 
 AudioStream::AudioStream(AudioStreamSource* source, AudioStreamInfo info, QObject* parent)
     : QObject(parent), source_(source), info_(std::move(info)) {}
@@ -120,4 +120,4 @@ void AudioStreams::sync() {
   }
 }
 
-}  // namespace wabar::audio
+}  // namespace waku::audio

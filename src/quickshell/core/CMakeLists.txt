@@ -1,16 +1,16 @@
-# The QML module `Quickshell`: wabar's shell types under the names and import of Quickshell v0.3,
-# so `import Quickshell` in a ported shell resolves. The C++ types live in wabar_host (host/qml/)
+# The QML module `Quickshell`: waku's shell types under the names and import of Quickshell v0.3,
+# so `import Quickshell` in a ported shell resolves. The C++ types live in waku_host (host/qml/)
 # and in two features; qml/quickshell_types.h and qml/quickshell_types_core.h register them here a
-# second time with QML_FOREIGN, so a shell may import both `wabar` and `Quickshell` and gets the
+# second time with QML_FOREIGN, so a shell may import both `waku` and `Quickshell` and gets the
 # same types. Two names are the exception: PopupWindow and Variants are QML wrappers here
-# (qml/PopupWindow.qml, qml/Variants.qml), so `Quickshell.PopupWindow` and `wabar.PopupWindow` are
+# (qml/PopupWindow.qml, qml/Variants.qml), so `Quickshell.PopupWindow` and `waku.PopupWindow` are
 # two distinct QML types with the same behaviour.
 #
 # The `Quickshell` singleton is qml/Quickshell.qml: `screens` from the host's ScreenList, the rest
-# forwarded to wabar.services.QuickshellSingleton. `DesktopEntries` (qml/DesktopEntries.qml)
-# forwards to wabar.services.AppsService the same way. DesktopEntry, DesktopAction (apps) and
+# forwarded to waku.services.QuickshellSingleton. `DesktopEntries` (qml/DesktopEntries.qml)
+# forwards to waku.services.AppsService the same way. DesktopEntry, DesktopAction (apps) and
 # ElapsedTimer (quickshell_io) are registered under their Quickshell names by
-# qml/quickshell_types_core.h. The module depends on wabar.services but does not re-export it:
+# qml/quickshell_types_core.h. The module depends on waku.services but does not re-export it:
 # `import Quickshell` shows Quickshell's type names and no others, so a shell's own Wallpapers.qml
 # is never shadowed.
 set(quickshell_qml_files qml/DesktopEntries.qml qml/PopupWindow.qml qml/QsMenuHandle.qml qml/QsMenuOpener.qml qml/Variants.qml qml/Quickshell.qml)
@@ -21,20 +21,20 @@ foreach(file IN LISTS quickshell_qml_files)
   set_source_files_properties(${file} PROPERTIES QT_RESOURCE_ALIAS ${name})
 endforeach()
 
-qt_add_library(wabar_quickshell STATIC)
-qt_add_qml_module(wabar_quickshell
+qt_add_library(waku_quickshell STATIC)
+qt_add_qml_module(waku_quickshell
   URI Quickshell
   VERSION 0.1
   NO_GENERATE_EXTRA_QMLDIRS
-  DEPENDENCIES wabar wabar.services
+  DEPENDENCIES waku waku.services
   QML_FILES ${quickshell_qml_files}
   SOURCES qml/quickshell_types.h
           qml/quickshell_types_core.h
 )
-target_include_directories(wabar_quickshell PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/qml)
-# wabar_services: the staticMetaObject of DesktopEntry, DesktopAction and ElapsedTimer.
-target_link_libraries(wabar_quickshell
-  PUBLIC Qt6::Quick Qt6::Qml wabar_host
-  PRIVATE wabar_options wabar_services)
-wabar_qt_generated_code(wabar_quickshell)
+target_include_directories(waku_quickshell PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/qml)
+# waku_services: the staticMetaObject of DesktopEntry, DesktopAction and ElapsedTimer.
+target_link_libraries(waku_quickshell
+  PUBLIC Qt6::Quick Qt6::Qml waku_host
+  PRIVATE waku_options waku_services)
+waku_qt_generated_code(waku_quickshell)
 

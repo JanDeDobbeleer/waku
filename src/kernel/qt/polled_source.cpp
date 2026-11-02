@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 PolledSource::PolledSource(QObject* parent) : QObject(parent) {
   connect(&timer_, &QTimer::timeout, this, [this] { sample(); });
@@ -62,4 +62,4 @@ void PolledSource::setReady() {
   emit readyChanged();
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

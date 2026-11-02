@@ -19,7 +19,7 @@
 #include "features/taskbar/window_system.h"
 #include "kernel/win32/com_scope.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 namespace {
 
 HWND toHwnd(WindowHandle hwnd) { return reinterpret_cast<HWND>(hwnd); }
@@ -265,7 +265,7 @@ class Win32WindowSystem final : public WindowSystem {
   }
 
   std::optional<QString> appUniqueId(const WindowInfo& info) const override {
-    return wabar::taskbar::appUniqueId(info.hwnd, info.processPath, info.pid);
+    return waku::taskbar::appUniqueId(info.hwnd, info.processPath, info.pid);
   }
 
   IconBitmap windowIcon(WindowHandle handle, int size) const override {
@@ -375,4 +375,4 @@ std::shared_ptr<WindowSystem> makeWin32WindowSystem() {
   return std::make_shared<Win32WindowSystem>();
 }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

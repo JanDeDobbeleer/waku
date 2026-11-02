@@ -17,7 +17,7 @@
 #include "features/network/wlan.h"
 #include "kernel/qml/stat_source.h"
 
-namespace wabar::network {
+namespace waku::network {
 
 // One poll of the network state: what the Wi-Fi widget shows.
 struct NetworkStatus {
@@ -199,4 +199,4 @@ class Network : public kernel::StatSource {
   QString vpnError_;
 };
 
-}  // namespace wabar::network
+}  // namespace waku::network

@@ -1,4 +1,4 @@
-// GlobalShortcut and `wabarc shortcut`, all on the fake hotkey backend: no test registers a real
+// GlobalShortcut and `wakuc shortcut`, all on the fake hotkey backend: no test registers a real
 // hotkey on the machine. The kernel::Hotkeys table itself is tested in
 // src/kernel/tests/test_hotkeys.cpp.
 #include <gtest/gtest.h>
@@ -19,11 +19,11 @@
 #include "kernel/qt/hotkeys.h"
 #include "kernel/testing/hotkeys_fixtures.h"
 
-using namespace wabar::host;
-using wabar::kernel::HotkeyCombo;
-using wabar::kernel::Hotkeys;
-using wabar::kernel::parseHotkey;
-using wabar::kernel::ScopedFakeHotkeys;
+using namespace waku::host;
+using waku::kernel::HotkeyCombo;
+using waku::kernel::Hotkeys;
+using waku::kernel::parseHotkey;
+using waku::kernel::ScopedFakeHotkeys;
 
 namespace {
 
@@ -54,7 +54,7 @@ Scope {
     property bool sawDown: false
     GlobalShortcut {
         name: "launcher"
-        appid: "wabar"
+        appid: "waku"
         description: "Toggle the launcher"
         keys: "alt+space"
         onPressed: { root.presses++; root.sawDown = pressed }
@@ -143,7 +143,7 @@ TEST(GlobalShortcutTest, AHandlerThatDestroysAnotherShortcutOfTheSameNameIsSafe)
 TEST(GlobalShortcutTest, NoKeysRegistersNothing) {
   ScopedFakeHotkeys fake;
   GlobalShortcut shortcut;
-  shortcut.setName(QStringLiteral("only-wabarc"));
+  shortcut.setName(QStringLiteral("only-wakuc"));
   shortcut.componentComplete();
   EXPECT_FALSE(shortcut.isRegistered());
   EXPECT_TRUE(fake.backend->registered.empty());
@@ -186,7 +186,7 @@ TEST(ShortcutCommand, ListWithNoShortcutsSaysSo) {
   EXPECT_EQ(answerShortcutCommand({QStringLiteral("list")}), QStringLiteral("ok: no shortcuts"));
 }
 
-TEST(ShortcutCommand, TheHandlerRoutesItAndWabarcCarriesTheName) {
+TEST(ShortcutCommand, TheHandlerRoutesItAndWakucCarriesTheName) {
   ScopedFakeHotkeys fake;
   Harness h;
   h.start(shellConfig());
@@ -202,16 +202,16 @@ TEST(ShortcutCommand, TheHandlerRoutesItAndWabarcCarriesTheName) {
   EXPECT_EQ(presses, 1);
   EXPECT_TRUE(handler(QStringLiteral("shortcut \"oops")).startsWith(QStringLiteral("error:")));
 
-  const QString wabarc =
-      QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("wabarc.exe"));
-  if (!QFile::exists(wabarc)) GTEST_SKIP() << "wabarc.exe is not built";
+  const QString wakuc =
+      QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("wakuc.exe"));
+  if (!QFile::exists(wakuc)) GTEST_SKIP() << "wakuc.exe is not built";
   QTemporaryDir home;
   ASSERT_TRUE(home.isValid());
-  wabar::control::ControlServer server(wabar::control::controlPipeName(home.path()), handler);
+  waku::control::ControlServer server(waku::control::controlPipeName(home.path()), handler);
   ASSERT_TRUE(server.listen());
   QProcess process;
-  process.start(wabarc, {QStringLiteral("--config-home"), home.path(), QStringLiteral("shortcut"),
-                         QStringLiteral("my pick")});
+  process.start(wakuc, {QStringLiteral("--config-home"), home.path(), QStringLiteral("shortcut"),
+                        QStringLiteral("my pick")});
   ASSERT_TRUE(process.waitForStarted(5000));
   ASSERT_TRUE(QTest::qWaitFor([&] { return process.state() == QProcess::NotRunning; }, 10000));
   EXPECT_EQ(process.exitCode(), 0);

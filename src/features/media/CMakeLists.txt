@@ -1,7 +1,7 @@
 # Now playing through the system media transport controls (GSMTC): sessions, playback state, album
 # art, source app names, and the Media widget. The Windows side is win32/ (WinRT); the app name
 # lookups come from kernel/win32/app_activation.
-wabar_feature(NAME media
+waku_feature(NAME media
   SOURCES
     media_session.cpp
     media_session.h

@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 std::optional<QRect> foregroundMonitorRect() {
   HWND foreground = GetForegroundWindow();
@@ -16,4 +16,4 @@ std::optional<QRect> foregroundMonitorRect() {
   return QRect(r.left, r.top, r.right - r.left, r.bottom - r.top);
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

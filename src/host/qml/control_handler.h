@@ -6,7 +6,7 @@
 
 #include "control/control.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 class ShellHost;
 class WindowsTaskbar;
@@ -21,7 +21,7 @@ using ControlCommands = std::map<QString, ControlCommand>;
 // What a running shell answers on its control channel:
 //   reload  reloads the shell: "ok", or "error: <first message>" (when the new shell was rejected
 //           the previous one stays; when some of its windows failed the others are shown)
-//   status  "running; pid=P; windows=N; safe=yes|no; error=<none or the message>" (`wabarc` reads
+//   status  "running; pid=P; windows=N; safe=yes|no; error=<none or the message>" (`wakuc` reads
 //           the pid to call AllowSetForegroundWindow before `surface show|toggle`)
 //   quit    "ok", then `quit` runs shortly after, so the answer is written first
 //   shortcut <name>  fires the GlobalShortcut with that name: "ok", or "error: no shortcut named
@@ -35,7 +35,7 @@ using ControlCommands = std::map<QString, ControlCommand>;
 //           runs a function of an IpcHandler (ipc_handler.h): the return value as one line, "ok"
 //           for void, "error: <text>"; without words the handlers and their functions
 //   <verb> [words...]
-//           a verb of `commands`, which gets the words after it (wabar.exe adds `wallpaper`);
+//           a verb of `commands`, which gets the words after it (waku.exe adds `wallpaper`);
 //           a built-in verb above wins over a command of the same name
 //   other   "error: unknown command '...' (try: reload, status, quit, shortcut, surface, taskbar,
 //           call, <the verbs of commands>)"
@@ -55,4 +55,4 @@ control::AsyncControlHandler makeAsyncControlHandler(control::ControlHandler han
 // The `shortcut` command on its own (the words after "shortcut"), public for tests.
 QString answerShortcutCommand(const QStringList& words);
 
-}  // namespace wabar::host
+}  // namespace waku::host

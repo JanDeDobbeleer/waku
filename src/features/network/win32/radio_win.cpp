@@ -15,7 +15,7 @@
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/winrt_apartment.h"
 
-namespace wabar::network {
+namespace waku::network {
 namespace {
 
 namespace radios = winrt::Windows::Devices::Radios;
@@ -137,4 +137,4 @@ std::unique_ptr<WifiRadioBackend> createSystemWifiRadio() {
   return std::make_unique<SystemWifiRadio>();
 }
 
-}  // namespace wabar::network
+}  // namespace waku::network

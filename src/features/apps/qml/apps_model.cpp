@@ -2,7 +2,7 @@
 
 #include "features/apps/qml/desktop_entry.h"
 
-namespace wabar::apps {
+namespace waku::apps {
 
 AppsModel::AppsModel(QObject* parent) : QAbstractListModel(parent) {}
 
@@ -35,4 +35,4 @@ QHash<int, QByteArray> AppsModel::roleNames() const {
   return {{Qt::UserRole, QByteArrayLiteral("modelData")}};
 }
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

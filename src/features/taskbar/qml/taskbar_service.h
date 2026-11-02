@@ -25,7 +25,7 @@ class QQmlEngine;
 class QJSEngine;
 class QWindow;
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // One window the tracker reports, as the service keeps it.
 struct TaskbarWindow {
@@ -63,7 +63,7 @@ class WindowIconStore {
   QHash<WindowHandle, QImage> images_;
 };
 
-// The windows of the desktop and the pinned apps, shared by every Taskbar widget of a `wabar`
+// The windows of the desktop and the pinned apps, shared by every Taskbar widget of a `waku`
 // run (Python's shared TaskbarWindowManager and PinManager). Owns the WindowTracker, the PinStore
 // (taskbar_pinned.json, shared with the Widgets build) and the window icons, and performs the
 // actions a button needs: focus, close, pin, launch. `TaskbarModel` turns its state into rows.
@@ -116,7 +116,7 @@ class TaskbarService : public QObject {
 
   const std::vector<TaskbarWindow>& windows() const { return windows_; }
   const TaskbarWindow* window(WindowHandle hwnd) const;
-  wabar::taskbar::PinStore& pinStore() { return *pinStore_; }
+  waku::taskbar::PinStore& pinStore() { return *pinStore_; }
   const std::shared_ptr<WindowSystem>& system() const { return system_; }
 
   // --- icons
@@ -168,8 +168,8 @@ class TaskbarService : public QObject {
   std::shared_ptr<WindowSystem> system_;
   std::shared_ptr<PinSupport> pins_;
   WindowTracker* tracker_ = nullptr;  // child of this; null when unavailable
-  wabar::taskbar::PinStore* pinStore_ = nullptr;
-  wabar::taskbar::TaskbarIcons* icons_ = nullptr;
+  waku::taskbar::PinStore* pinStore_ = nullptr;
+  waku::taskbar::TaskbarIcons* icons_ = nullptr;
   QString reason_;
   std::vector<TaskbarWindow> windows_;  // in the order the windows first appeared
   std::map<WindowHandle, IconEntry> iconCache_;
@@ -192,4 +192,4 @@ class WindowIconProvider : public QQuickImageProvider {
   std::shared_ptr<const WindowIconStore> store_;
 };
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

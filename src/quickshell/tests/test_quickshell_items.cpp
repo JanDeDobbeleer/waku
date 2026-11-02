@@ -107,11 +107,11 @@ QtObject {
   EXPECT_EQ(root->property("childCount").toInt(), 4);
 }
 
-TEST(QuickshellSingleton, ItIsAvailableUnderTheWabarName) {
+TEST(QuickshellSingleton, ItIsAvailableUnderTheWakuName) {
   QQmlEngine engine;
   auto root = create(&engine, R"(
 import QtQml
-import wabar
+import waku
 
 Singleton { property int x: 5 }
 )");

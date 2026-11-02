@@ -29,14 +29,14 @@
 #include "kernel/win32/winrt_apartment.h"
 #include "kernel/win32/winrt_strings.h"
 
-namespace wabar::brightness {
+namespace waku::brightness {
 namespace {
 
 constexpr int kDdcAttempts = 5;
 constexpr auto kDdcRetrySleep = std::chrono::milliseconds(100);
 constexpr BYTE kVcpBrightness = 0x10;
 constexpr BYTE kVcpContrast = 0x12;
-constexpr wchar_t kPolicyWindowClass[] = L"WabarBrightnessPolicyWatcher";
+constexpr wchar_t kPolicyWindowClass[] = L"WakuBrightnessPolicyWatcher";
 
 // The display subgroup of a power scheme and its brightness setting: the SDK's names (winnt.h,
 // defined in uuid.lib).
@@ -381,7 +381,7 @@ class SystemBrightness final : public BrightnessControl {
   }
 
   void run() {
-    wabar::kernel::ensureWinrtApartment();
+    waku::kernel::ensureWinrtApartment();
     for (;;) {
       std::function<void()> task;
       {
@@ -678,7 +678,7 @@ class SystemBrightness final : public BrightnessControl {
       qWarning() << "Brightness policy watcher: RegisterClassW failed";
       return;
     }
-    HWND hwnd = CreateWindowExW(0, kPolicyWindowClass, L"wabar brightness policy", 0, 0, 0, 0, 0,
+    HWND hwnd = CreateWindowExW(0, kPolicyWindowClass, L"waku brightness policy", 0, 0, 0, 0, 0,
                                 HWND_MESSAGE, nullptr, wc.hInstance, this);
     if (!hwnd) {
       qWarning() << "Brightness policy watcher: CreateWindowExW failed";
@@ -774,4 +774,4 @@ BrightnessControl* createSystemBrightness(QObject* parent, int ddcPollSeconds) {
   return new SystemBrightness(parent, ddcPollSeconds);
 }
 
-}  // namespace wabar::brightness
+}  // namespace waku::brightness

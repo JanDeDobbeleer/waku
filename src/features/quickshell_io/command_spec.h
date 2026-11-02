@@ -7,7 +7,7 @@
 #include <QVariantMap>
 #include <optional>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // What Quickshell's Process.exec() and Quickshell.execDetached() accept: an argument list, or an
 // object with `command`, `environment`, `clearEnvironment` and `workingDirectory`.
@@ -31,4 +31,4 @@ QProcessEnvironment makeEnvironment(const CommandSpec& spec);
 // Starts the command detached and hidden (no console window). False when it is empty or fails.
 bool startDetachedSpec(const CommandSpec& spec);
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

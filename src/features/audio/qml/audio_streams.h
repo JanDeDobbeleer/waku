@@ -10,7 +10,7 @@
 
 #include "features/audio/audio_stream_source.h"
 
-namespace wabar::audio {
+namespace waku::audio {
 
 // One app's audio session on the default output, shaped after a Quickshell PwNode of an audio
 // stream so QML written for Quickshell.Services.Pipewire reads it unchanged: `audio` is the stream
@@ -65,7 +65,7 @@ class AudioStream : public QObject {
 class AudioStreamModel : public QAbstractListModel {
   Q_OBJECT
   QML_ANONYMOUS
-  Q_PROPERTY(QList<wabar::audio::AudioStream*> values READ values NOTIFY valuesChanged FINAL)
+  Q_PROPERTY(QList<waku::audio::AudioStream*> values READ values NOTIFY valuesChanged FINAL)
   Q_PROPERTY(int count READ count NOTIFY valuesChanged FINAL)
 
  public:
@@ -96,7 +96,7 @@ class AudioStreams : public QObject {
   QML_ELEMENT
   QML_SINGLETON
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
-  Q_PROPERTY(wabar::audio::AudioStreamModel* streams READ streams CONSTANT FINAL)
+  Q_PROPERTY(waku::audio::AudioStreamModel* streams READ streams CONSTANT FINAL)
 
  public:
   explicit AudioStreams(QObject* parent = nullptr);
@@ -114,4 +114,4 @@ class AudioStreams : public QObject {
   AudioStreamModel streams_;
 };
 
-}  // namespace wabar::audio
+}  // namespace waku::audio

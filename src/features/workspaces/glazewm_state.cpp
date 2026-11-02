@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace wabar::workspaces::glazewm {
+namespace waku::workspaces::glazewm {
 namespace {
 
 const Json* member(const Json& node, const char* key) {
@@ -98,4 +98,4 @@ TilingDirection parseTilingDirection(const Json& data) {
   return TilingDirection::Horizontal;
 }
 
-}  // namespace wabar::workspaces::glazewm
+}  // namespace waku::workspaces::glazewm

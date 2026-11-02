@@ -10,14 +10,14 @@
 #include "host/qml/control_handler.h"
 #include "host/testing/shell_fixtures.h"
 
-using namespace wabar::control;
-using namespace wabar::host;
+using namespace waku::control;
+using namespace waku::host;
 
 namespace {
 
 // A pipe name no other test or running bar uses.
 QString uniqueName() {
-  return QStringLiteral("wabar-test-") + QUuid::createUuid().toString(QUuid::Id128).left(12);
+  return QStringLiteral("waku-test-") + QUuid::createUuid().toString(QUuid::Id128).left(12);
 }
 
 // The blocking client runs on its own thread, because the server needs this thread's event loop.

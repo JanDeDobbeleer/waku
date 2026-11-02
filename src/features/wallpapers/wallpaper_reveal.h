@@ -5,7 +5,7 @@
 #include <QString>
 #include <vector>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // The reveal of the transition as plain geometry, for the scene graph item: the shapes of
 // `revealPath` (wallpaper_layout.h) as convex polygons, which the item draws as triangle fans.
@@ -50,4 +50,4 @@ AreaFrame computeAreaFrame(const QRectF& monitor, const QRectF& oldImage, const 
 // Number of triangles a convex polygon becomes as a fan.
 int fanTriangleCount(const QPolygonF& polygon);
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

@@ -5,7 +5,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::desktop_state {
+namespace waku::desktop_state {
 
 DesktopState::DesktopState(QObject* parent)
     : DesktopState(kernel::liveDesktop() ? createSystemDesktopProbe() : nullptr, parent) {}
@@ -116,4 +116,4 @@ void DesktopState::updatePolling() {
   }
 }
 
-}  // namespace wabar::desktop_state
+}  // namespace waku::desktop_state

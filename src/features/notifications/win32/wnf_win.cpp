@@ -5,7 +5,7 @@
 #include <map>
 #include <mutex>
 
-namespace wabar::notifications {
+namespace waku::notifications {
 
 struct WnfSubscription::Slot {
   std::mutex mutex;  // held while the handler runs and while unsubscribe() retires the slot
@@ -106,4 +106,4 @@ void WnfSubscription::unsubscribe() {
   slot_.reset();
 }
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

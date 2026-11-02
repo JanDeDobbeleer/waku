@@ -10,7 +10,7 @@
 
 #include "kernel/win32/com_scope.h"
 
-namespace wabar::kernel {
+namespace waku::kernel {
 namespace {
 
 // A GetDIBits read of an icon bitmap as top-down 32-bit BGRA.
@@ -122,4 +122,4 @@ IconBitmap shellItemIcon(const QString& parsingName, int size) {
 
 IconBitmap iconBitmapFromHicon(void* hicon) { return bitmapFromHicon(static_cast<HICON>(hicon)); }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

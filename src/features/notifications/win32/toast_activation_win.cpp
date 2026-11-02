@@ -29,7 +29,7 @@
 #include "kernel/win32/shell_launch.h"
 #include "kernel/win32/winrt_strings.h"
 
-namespace wabar::notifications {
+namespace waku::notifications {
 namespace {
 
 // {9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}, 26 (propkey.h does not define it).
@@ -154,14 +154,14 @@ std::optional<CLSID> findActivator(const QString& aumid) {
 bool openUri(const QString& launch) {
   if (!isOpenableToastUri(launch)) return false;
   AllowSetForegroundWindow(ASFW_ANY);
-  wabar::kernel::shellOpen(launch);
+  waku::kernel::shellOpen(launch);
   return true;
 }
 
 bool callActivator(const QString& aumid, const QString& launch) {
   const auto clsid = findActivator(aumid);
   if (!clsid) return false;
-  // Out of process, an app's activator never loads into wabar.
+  // Out of process, an app's activator never loads into waku.
   INotificationActivationCallback* activator = nullptr;
   const HRESULT created =
       CoCreateInstance(*clsid, nullptr, CLSCTX_LOCAL_SERVER, IID_PPV_ARGS(&activator));
@@ -216,9 +216,9 @@ bool activateToast(const QString& aumid, const QString& launch, const QString& a
 
 bool showApp(const QString& aumid) {
   if (aumid.isEmpty()) return false;
-  if (wabar::kernel::activateAppByAumid(aumid)) return true;
+  if (waku::kernel::activateAppByAumid(aumid)) return true;
   if (!hasShellApp(aumid)) return false;
-  wabar::kernel::shellOpen(QStringLiteral("shell:AppsFolder\\") + aumid);
+  waku::kernel::shellOpen(QStringLiteral("shell:AppsFolder\\") + aumid);
   return true;
 }
 
@@ -236,4 +236,4 @@ QString packageInstallFolder(const QString& aumid) {
   return {};
 }
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

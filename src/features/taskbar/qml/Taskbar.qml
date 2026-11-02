@@ -1,15 +1,15 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
-import wabar
-import wabar.services as S
+import waku
+import waku.services as S
 
 // The open windows of this monitor as icon buttons, and the apps you pinned. A left click focuses
 // a window, minimises it when it is already in front and restores it when it is minimised; on an
 // app with several windows (`grouping`) it goes to the next window. A middle click closes the
 // window. A right click opens a menu to close it, close all windows of the app and to pin or
 // unpin the app. Hovering shows the window title. Pinned apps are in
-// %LOCALAPPDATA%\wabar\taskbar_pinned.json; a pinned app that is not running
+// %LOCALAPPDATA%\waku\taskbar_pinned.json; a pinned app that is not running
 // starts when you click it. Hidden when there is nothing to show and `hideEmpty` is set.
 //
 //     Taskbar { iconSize: 16; grouping: true; tooltip: true; hideEmpty: true }

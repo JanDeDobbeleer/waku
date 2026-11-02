@@ -10,7 +10,7 @@
 #include "features/workspaces/komorebi.h"
 #include "kernel/win32/shell_launch.h"
 
-namespace wabar::workspaces::komorebi {
+namespace waku::workspaces::komorebi {
 namespace {
 
 const QString kKomorebic = QStringLiteral("komorebic.exe");
@@ -184,7 +184,7 @@ KomorebiBackend defaultKomorebiBackend() {
 }
 
 bool launchKomorebic(const QStringList& args) {
-  const bool ok = wabar::kernel::startDetachedHidden(kKomorebic, args);
+  const bool ok = waku::kernel::startDetachedHidden(kKomorebic, args);
   if (!ok) qWarning().noquote() << "Failed to run komorebic" << args.join(QLatin1Char(' '));
   return ok;
 }
@@ -376,4 +376,4 @@ void KomorebiPipeListener::readLoop() {
   }
 }
 
-}  // namespace wabar::workspaces::komorebi
+}  // namespace waku::workspaces::komorebi

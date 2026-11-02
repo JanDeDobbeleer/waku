@@ -2,7 +2,7 @@
 
 #include <QString>
 
-namespace wabar::control_center {
+namespace waku::control_center {
 
 // services/power_menu/user_info.py. Both are cached after the first call.
 
@@ -11,4 +11,4 @@ QString windowsUsername();
 // Largest account picture for the current user, else the default user-192.png; "" when none.
 QString userAvatarPath();
 
-}  // namespace wabar::control_center
+}  // namespace waku::control_center

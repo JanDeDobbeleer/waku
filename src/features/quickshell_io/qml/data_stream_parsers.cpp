@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 void StdioCollector::setWaitForEnd(bool wait) {
   if (wait == waitForEnd_) return;
@@ -93,4 +93,4 @@ void SplitParser::streamEnded() {
   }
 }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

@@ -11,7 +11,7 @@
 #include "host/qml/windows_taskbar_command.h"
 #include "host/windows_taskbar.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 QString answerShortcutCommand(const QStringList& words) {
   static const QString usage = QStringLiteral("error: usage: shortcut <name> | shortcut list");
@@ -121,4 +121,4 @@ control::AsyncControlHandler makeAsyncControlHandler(control::ControlHandler han
       };
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

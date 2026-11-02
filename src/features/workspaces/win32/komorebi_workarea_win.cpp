@@ -6,7 +6,7 @@
 
 #include "features/workspaces/komorebi_workarea.h"
 
-namespace wabar::workspaces::komorebi {
+namespace waku::workspaces::komorebi {
 namespace {
 
 class Win32WorkAreaNotifier final : public WorkAreaNotifier {
@@ -40,4 +40,4 @@ std::unique_ptr<WorkAreaNotifier> makeWin32WorkAreaNotifier() {
   return std::make_unique<Win32WorkAreaNotifier>();
 }
 
-}  // namespace wabar::workspaces::komorebi
+}  // namespace waku::workspaces::komorebi

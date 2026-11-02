@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace wabar::host {
+namespace waku::host {
 
 // ---- MaskPollerHub ----
 
@@ -183,4 +183,4 @@ void MaskPoller::setPassThrough(bool passThrough) {
   if (window_) window_->setFlag(Qt::WindowTransparentForInput, passThrough);
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

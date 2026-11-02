@@ -4,7 +4,7 @@
 
 #include "features/color_scheme/hct.h"
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 // One hue and chroma, sampled at any tone 0..100. The colour at a tone keeps the hue and takes the
 // chroma that fits the sRGB gamut at that tone.
@@ -52,4 +52,4 @@ class TemperatureCache {
   size_t warmest_ = 0;
 };
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

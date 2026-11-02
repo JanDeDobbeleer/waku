@@ -26,7 +26,7 @@ class QQmlEngine;
 class QQuickWindow;
 class QScreen;
 
-namespace wabar::host {
+namespace waku::host {
 
 class PanelWindow;
 class QsWindow;
@@ -68,7 +68,7 @@ class ShellHost : public QObject {
   // blur a window.
   struct NativeHooks {
     // One per app bar window; null function: no app bar object at all.
-    std::function<std::unique_ptr<wabar::host::IAppBar>()> makeAppBar;
+    std::function<std::unique_ptr<waku::host::IAppBar>()> makeAppBar;
     std::function<void(quintptr hwnd, Backdrop::Kind backdrop)> applyBackdrop;
     // HMONITOR of the monitor the window is on.
     std::function<qlonglong(quintptr hwnd)> monitorHandle;
@@ -148,7 +148,7 @@ class ShellHost : public QObject {
   ShellRoot* shell() const;
 
   // The windows with a `name` (`name` empty: all of them), in the order they registered. The
-  // surfaces `wabarc surface ...` addresses.
+  // surfaces `wakuc surface ...` addresses.
   QList<QsWindow*> namedWindows(const QString& name = {}) const;
 
   // The debounce state, so a test can tell "no reload is coming" without waiting it out: a reload
@@ -187,9 +187,9 @@ class ShellHost : public QObject {
  private:
   struct Entry {
     QPointer<QsWindow> window;
-    std::unique_ptr<wabar::host::IAppBar> appBar;
+    std::unique_ptr<waku::host::IAppBar> appBar;
     // What the app bar was last asked for; a panel's later layout is compared with it.
-    std::optional<wabar::host::AppBarRequest> appBarRequest;
+    std::optional<waku::host::AppBarRequest> appBarRequest;
     bool layoutConnected = false;
     bool presented = false;
     // Set by retire(): the window waits for its deferred deletion and is skipped everywhere.
@@ -273,4 +273,4 @@ class ShellHost : public QObject {
   bool watching_ = false;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

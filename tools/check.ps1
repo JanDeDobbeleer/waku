@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-    Definition-of-done check for wabar: format, structure, JSON subscripts, build and tests.
+    Definition-of-done check for waku: format, structure, JSON subscripts, build and tests.
 .DESCRIPTION
     Steps, in order:
       1. format     clang-format --dry-run -Werror over *.cpp/*.h in src and tests (with -Staged:
                     only the staged versions of staged files, which is what the pre-commit hook
                     uses).
-      2. structure  rules S1-S8 of the wabar architecture (DEPENDS read from the wabar_feature(
+      2. structure  rules S1-S8 of the waku architecture (DEPENDS read from the waku_feature(
                     calls in src/features/*/CMakeLists.txt); every violation under src/ and tests/
                     fails the step. With -Staged: per-file rules on staged files, global rules on
                     the index.
@@ -83,7 +83,7 @@ function Find-ClangFormat {
 }
 
 function Get-VcvarsScript([string]$PresetName) {
-    $dir = $env:WABAR_VCVARS_DIR
+    $dir = $env:WAKU_VCVARS_DIR
     if (-not $dir) {
         $dir = 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build'
     }
@@ -169,8 +169,8 @@ if ($SkipFormat) {
 }
 
 # 2. structure ------------------------------------------------------------------------------
-# Rules S1-S8 of docs/plans/2026-10-29-wabar-architecture-proposal.md (section 4.2). The DEPENDS
-# graph comes from the wabar_feature( calls in src/features/*/CMakeLists.txt, read with a regex, so
+# Rules S1-S8 of docs/plans/2026-10-29-waku-architecture-proposal.md (section 4.2). The DEPENDS
+# graph comes from the waku_feature( calls in src/features/*/CMakeLists.txt, read with a regex, so
 # no build tree is needed. Units: kernel, control, host, ui, features/<f>, quickshell, app/<exe>; tests/ (the
 # top-level folder) holds the test main and the integration tests.
 # Mode: ENFORCING (any violation fails the step).
@@ -229,9 +229,9 @@ foreach ($cm in @($treeFiles | Where-Object { $_ -match '^src/features/([^/]+)/C
     $folder = ($cm -split '/')[2]
     $text = (Get-CheckLines $cm) -join "`n"
     $text = ($text -split "`n" | ForEach-Object { $_ -replace '#.*$', '' }) -join "`n"
-    $m = [regex]::Match($text, '(?s)wabar_feature\s*\((.*?)\)')
+    $m = [regex]::Match($text, '(?s)waku_feature\s*\((.*?)\)')
     if (-not $m.Success) {
-        Add-StructureViolation 'S1' $cm 'no wabar_feature( call'
+        Add-StructureViolation 'S1' $cm 'no waku_feature( call'
         continue
     }
     $tokens = @($m.Groups[1].Value -split '\s+' | Where-Object { $_ })
@@ -244,7 +244,7 @@ foreach ($cm in @($treeFiles | Where-Object { $_ -match '^src/features/([^/]+)/C
         elseif ($section -eq 'DEPENDS') { $depends += $t }
     }
     if ($name -ne $folder) {
-        Add-StructureViolation 'S1' $cm "wabar_feature NAME '$name' differs from the folder '$folder'"
+        Add-StructureViolation 'S1' $cm "waku_feature NAME '$name' differs from the folder '$folder'"
     }
     $features[$folder] = @{ Depends = $depends; CMake = $m.Groups[1].Value }
 }
@@ -301,8 +301,8 @@ foreach ($h in $servicesHeaders) {
     }
 }
 $moduleQml = @{
-    'wabar.widgets' = @($treeFiles | Where-Object { $_ -match '^src/.+\.qml$' -and $_ -notmatch '^src/(host|quickshell)/' })
-    'wabar'         = @($treeFiles | Where-Object { $_ -match '^src/host/.+\.qml$' })
+    'waku.widgets' = @($treeFiles | Where-Object { $_ -match '^src/.+\.qml$' -and $_ -notmatch '^src/(host|quickshell)/' })
+    'waku'         = @($treeFiles | Where-Object { $_ -match '^src/host/.+\.qml$' })
     'Quickshell'    = @($treeFiles | Where-Object { $_ -match '^src/quickshell/.+\.qml$' })
 }
 foreach ($module in $moduleQml.Keys) {
@@ -331,7 +331,7 @@ foreach ($f in $checkFiles) {
         if (-not $unit) {
             Add-StructureViolation 'S1' $f 'belongs to no unit (kernel, control, host, ui, features/<f>, quickshell, app/<exe>)'
         } elseif ($feature -and -not $features.ContainsKey($feature)) {
-            Add-StructureViolation 'S1' $f "features/$feature has no CMakeLists.txt with wabar_feature("
+            Add-StructureViolation 'S1' $f "features/$feature has no CMakeLists.txt with waku_feature("
         } elseif ($feature -and $f -match '\.(cpp|qml)$') {
             $rel = $f.Substring("src/features/$feature/".Length)
             if ($features[$feature].CMake -notmatch "(^|\s)$([regex]::Escape($rel))(\s|$)") {
@@ -478,10 +478,10 @@ if ($Analyze) {
     Write-Step 'MSVC /analyze (production targets, isolated build)'
     $sw = [Diagnostics.Stopwatch]::StartNew()
     if (-not (Test-Path $vcvars)) {
-        Add-Result 'msvc-analyze' 'FAIL' "missing $vcvars (set WABAR_VCVARS_DIR)" 0
+        Add-Result 'msvc-analyze' 'FAIL' "missing $vcvars (set WAKU_VCVARS_DIR)" 0
         Add-Result 'clang-tidy' 'SKIP' 'configure failed' 0
     } else {
-        $code = Invoke-InVsEnv 'analyze-configure' $vcvars "cmake --preset $Preset -B `"$analysisDir`" -DWABAR_ANALYZE=ON -DBUILD_TESTING=OFF"
+        $code = Invoke-InVsEnv 'analyze-configure' $vcvars "cmake --preset $Preset -B `"$analysisDir`" -DWAKU_ANALYZE=ON -DBUILD_TESTING=OFF"
         if ($code -ne 0) {
             Add-Result 'msvc-analyze' 'FAIL' "configure exit $code" $sw.Elapsed.TotalSeconds
             Add-Result 'clang-tidy' 'SKIP' 'configure failed' 0
@@ -502,10 +502,10 @@ if ($Analyze) {
 
             Write-Step 'clang-tidy (production compile database entries)'
             $sw = [Diagnostics.Stopwatch]::StartNew()
-            $wabar = Get-Command clang-tidy -ErrorAction SilentlyContinue
-            $wabarExe = 'C:\Program Files\LLVM\bin\clang-tidy.exe'
-            if ($wabar) { $wabarExe = $wabar.Source }
-            if (-not (Test-Path $wabarExe)) {
+            $waku = Get-Command clang-tidy -ErrorAction SilentlyContinue
+            $wakuExe = 'C:\Program Files\LLVM\bin\clang-tidy.exe'
+            if ($waku) { $wakuExe = $waku.Source }
+            if (-not (Test-Path $wakuExe)) {
                 Add-Result 'clang-tidy' 'FAIL' 'clang-tidy not found on PATH or in C:\Program Files\LLVM\bin' 0
             } elseif ($code -ne 0) {
                 Add-Result 'clang-tidy' 'FAIL' 'MSVC build failed; generated Qt headers may be unavailable' 0
@@ -513,14 +513,14 @@ if ($Analyze) {
                 $entries = Get-Content (Join-Path $analysisDir 'compile_commands.json') -Raw | ConvertFrom-Json
                 # clang-cl does not accept MSVC's analyzer/anglebrackets switches. Keep the
                 # original database for MSVC; /external:I still marks dependency headers.
-                $wabarDir = Join-Path $analysisDir 'clang-tidy'
-                New-Item -ItemType Directory -Force -Path $wabarDir | Out-Null
+                $wakuDir = Join-Path $analysisDir 'clang-tidy'
+                New-Item -ItemType Directory -Force -Path $wakuDir | Out-Null
                 foreach ($entry in $entries) {
                     $entry.command = $entry.command -replace '(?<=\s)/analyze(?=\s)', '' `
                         -replace '(?<=\s)/analyze:external-(?=\s)', '' `
                         -replace '(?<=\s)/external:anglebrackets(?=\s)', ''
                 }
-                $entries | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $wabarDir 'compile_commands.json')
+                $entries | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $wakuDir 'compile_commands.json')
                 $units = @($entries | Where-Object {
                     $relative = [IO.Path]::GetRelativePath($repo, $_.file).Replace('\', '/')
                     $relative -match '^src/.*\.cpp$'
@@ -534,7 +534,7 @@ if ($Analyze) {
                 foreach ($unit in $units) {
                     $commands.Add("echo Analyzing $unit >> `"$log`"")
                     # Qt signals named event() intentionally do not override QObject::event().
-                    $commands.Add("`"$wabarExe`" -p `"$wabarDir`" --extra-arg=--target=$triple --extra-arg=-Wno-overloaded-virtual `"$unit`" >> `"$log`" 2>&1")
+                    $commands.Add("`"$wakuExe`" -p `"$wakuDir`" --extra-arg=--target=$triple --extra-arg=-Wno-overloaded-virtual `"$unit`" >> `"$log`" 2>&1")
                     $commands.Add('if errorlevel 1 set /a failures+=1 >nul')
                 }
                 $commands.Add("type `"$log`"")
@@ -560,12 +560,12 @@ if ($Analyze) {
     $vcvars = Get-VcvarsScript $Preset
     $buildOk = $false
     if (-not (Test-Path $vcvars)) {
-        Add-Result 'configure' 'FAIL' "missing $vcvars (set WABAR_VCVARS_DIR)" 0
+        Add-Result 'configure' 'FAIL' "missing $vcvars (set WAKU_VCVARS_DIR)" 0
         Add-Result 'build' 'SKIP' 'configure failed' 0
     } else {
         Write-Step "configure (cmake --preset $Preset)"
         $sw = [Diagnostics.Stopwatch]::StartNew()
-        $code = Invoke-InVsEnv 'configure' $vcvars "cmake --preset $Preset -DWABAR_ANALYZE=OFF"
+        $code = Invoke-InVsEnv 'configure' $vcvars "cmake --preset $Preset -DWAKU_ANALYZE=OFF"
         if ($code -ne 0) {
             Add-Result 'configure' 'FAIL' "exit $code" $sw.Elapsed.TotalSeconds
             Add-Result 'build' 'SKIP' 'configure failed' 0

@@ -5,7 +5,7 @@
 
 #include <cmath>
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -89,4 +89,4 @@ class Win32AppBar : public IAppBar {
 
 std::unique_ptr<IAppBar> makeWin32AppBar() { return std::make_unique<Win32AppBar>(); }
 
-}  // namespace wabar::host
+}  // namespace waku::host

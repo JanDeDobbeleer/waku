@@ -4,7 +4,7 @@
 
 #include "features/control_center/app_theme.h"
 
-namespace wabar::control_center {
+namespace waku::control_center {
 namespace {
 
 constexpr wchar_t kPersonalizeKey[] =
@@ -53,4 +53,4 @@ std::optional<QString> toggleThemeMode() {
   return std::nullopt;
 }
 
-}  // namespace wabar::control_center
+}  // namespace waku::control_center

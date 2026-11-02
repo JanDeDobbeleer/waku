@@ -10,7 +10,7 @@
 
 #include "features/wallpapers/wallpaper_layout.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // The one Qt Quick item of the overlay scene: draws, for every monitor area, the old image and the
 // new image revealed by the animation's shape at progress `t` (0..1), as scene graph nodes. The
@@ -67,4 +67,4 @@ class WallpaperScene : public QQuickItem {
   std::atomic<int> areaCount_{0};
 };
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

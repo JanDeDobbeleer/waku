@@ -6,7 +6,7 @@
 #include <QVector>
 #include <memory>
 
-namespace wabar::network {
+namespace waku::network {
 
 // One configured Windows VPN (RAS phone book) entry.
 struct VpnEntry {
@@ -31,7 +31,7 @@ class VpnBackend : public QObject {
   virtual void disconnectEntry(const QString& name) = 0;
 
  signals:
-  void entriesRead(const QVector<wabar::network::VpnEntry>& entries);
+  void entriesRead(const QVector<waku::network::VpnEntry>& entries);
   // `error` is empty on success.
   void operationFinished(const QString& name, bool ok, const QString& error);
 };
@@ -39,7 +39,7 @@ class VpnBackend : public QObject {
 // The real backend; null off the live desktop.
 std::unique_ptr<VpnBackend> createSystemVpnBackend();
 
-}  // namespace wabar::network
+}  // namespace waku::network
 
-Q_DECLARE_METATYPE(wabar::network::VpnEntry)
-Q_DECLARE_METATYPE(QVector<wabar::network::VpnEntry>)
+Q_DECLARE_METATYPE(waku::network::VpnEntry)
+Q_DECLARE_METATYPE(QVector<waku::network::VpnEntry>)

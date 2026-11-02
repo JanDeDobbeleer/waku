@@ -10,7 +10,7 @@
 #include "features/github/github_format.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::github {
+namespace waku::github {
 namespace {
 
 const QString kDefaultVerificationUri = QStringLiteral("https://github.com/login/device");
@@ -41,7 +41,7 @@ class SystemGithubClient final : public GithubClient {
   explicit SystemGithubClient(HttpTransportFactory transport) : transport_(std::move(transport)) {}
 
   QString loadToken() override {
-    return resolveGithubToken(QStringLiteral("env"), qEnvironmentVariable("WABAR_GITHUB_TOKEN"),
+    return resolveGithubToken(QStringLiteral("env"), qEnvironmentVariable("WAKU_GITHUB_TOKEN"),
                               githubTokenFilePath());
   }
   bool saveToken(const QString& token) override {
@@ -347,4 +347,4 @@ void GitHub::endSignIn(const QString& error) {
   emit changed();
 }
 
-}  // namespace wabar::github
+}  // namespace waku::github

@@ -1,4 +1,4 @@
-import wabar as W
+import waku as W
 
-// Quickshell's Variants: wabar's (model, delegate, instances).
+// Quickshell's Variants: waku's (model, delegate, instances).
 W.Variants {}

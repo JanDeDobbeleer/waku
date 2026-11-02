@@ -6,7 +6,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -188,4 +188,4 @@ void WindowThumbnail::setAvailable(bool available) {
   emit availableChanged();
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

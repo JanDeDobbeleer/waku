@@ -14,13 +14,13 @@
 #include "kernel/qt/hotkeys.h"
 #include "kernel/testing/hotkeys_fixtures.h"
 
-using wabar::host::GlobalShortcut;
-using wabar::kernel::HotkeyCombo;
-using wabar::kernel::parseHotkey;
-using wabar::kernel::ScopedFakeHotkeys;
-using wabar::wallpapers::DesktopState;
-using wabar::wallpapers::FakeBackend;
-using wabar::wallpapers::Wallpapers;
+using waku::host::GlobalShortcut;
+using waku::kernel::HotkeyCombo;
+using waku::kernel::parseHotkey;
+using waku::kernel::ScopedFakeHotkeys;
+using waku::wallpapers::DesktopState;
+using waku::wallpapers::FakeBackend;
+using waku::wallpapers::Wallpapers;
 
 namespace {
 

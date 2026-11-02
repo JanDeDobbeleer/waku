@@ -12,7 +12,7 @@
 #include "kernel/win32/task_thread.h"
 
 using namespace std::chrono_literals;
-using wabar::kernel::TaskThread;
+using waku::kernel::TaskThread;
 
 namespace {
 

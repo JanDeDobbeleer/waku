@@ -30,7 +30,7 @@ struct Harness {
     backend.runKomorebic = [](const QStringList&, int, void*) { return kmb::KomorebicResult{}; };
     komorebi = std::make_unique<Komorebi>(
         backend, [this](const std::vector<QStringList>& commands) { runs.push_back(commands); },
-        QStringLiteral("wabar-workspaces-test"), kmb::KomorebiPipeListener::Timing{}, nullptr);
+        QStringLiteral("waku-workspaces-test"), kmb::KomorebiPipeListener::Timing{}, nullptr);
     glaze = std::make_unique<GlazeWM>(
         [this](const QByteArray& bytes) {
           sent.push_back(bytes.toStdString());

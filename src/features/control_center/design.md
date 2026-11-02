@@ -1,9 +1,9 @@
-# Wabar ControlCenter widget: design
+# Waku ControlCenter widget: design
 
 Date: 2026-10-29. Reference: Python YASB `control_center` (the Qt Widgets port that preceded it is
 at the git tag `widgets-main-final`).
 
-Layout (feature `control_center`, namespace `wabar::control_center`): `power.h`, `app_theme.h`,
+Layout (feature `control_center`, namespace `waku::control_center`): `power.h`, `app_theme.h`,
 `touch_keyboard.h` and `user_info.h` at the root with their Windows code in `win32/`; the
 service and widget in `qml/`; the test in `tests/`. DEPENDS audio media notifications brightness:
 the DND state comes from `features/notifications/dnd.h`, the brightness control from `features/brightness/brightness.h`.
@@ -102,7 +102,7 @@ list) and `SliderRow`. Options: `glyph`, `sectionsOrder`, `quickActions`, `colum
 
 - Custom quick actions that run a command (`command` ids in the Python options), the per-action
   `label` and `icon` overrides, `label_position`, and the CSS-class styling. Quick actions use
-  fixed labels and symbols from the widget; this can follow when the wabar theme model has a
+  fixed labels and symbols from the widget; this can follow when the waku theme model has a
   place for them.
 - Popup `alignment`, `direction`, `offset_*`, `border_color`, `round_corners`: owned by
   `PopupWindow` and the theme.
@@ -126,4 +126,4 @@ injected into the engine singleton without a factory seam, which this change doe
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `wabar.services.ControlCenter` (`src/features/control_center/qml/control_center_service.{h,cpp}`): the system side of every ControlCenter widget of a `wabar` run, created by the QML engine as a singleton: Do Not Disturb (its own `wabar::notifications::DndWatcher`, WNF subscription stopped by its destructor), app theme, touch keyboard, power plans and modes, user name and picture, and the session and power actions behind an injectable launcher (shutdown, restart and sign out need a second request). Owns one `wabar::brightness::BrightnessControl` (DDC/CI worker thread plus the power-setting window thread, joined by `stop()` in the destructor). Volume, microphone and the player are not repeated: the widget uses `AudioOutput`, `AudioInput` and `Media`. Inert on the offscreen platform
+- `waku.services.ControlCenter` (`src/features/control_center/qml/control_center_service.{h,cpp}`): the system side of every ControlCenter widget of a `waku` run, created by the QML engine as a singleton: Do Not Disturb (its own `waku::notifications::DndWatcher`, WNF subscription stopped by its destructor), app theme, touch keyboard, power plans and modes, user name and picture, and the session and power actions behind an injectable launcher (shutdown, restart and sign out need a second request). Owns one `waku::brightness::BrightnessControl` (DDC/CI worker thread plus the power-setting window thread, joined by `stop()` in the destructor). Volume, microphone and the player are not repeated: the widget uses `AudioOutput`, `AudioInput` and `Media`. Inert on the offscreen platform

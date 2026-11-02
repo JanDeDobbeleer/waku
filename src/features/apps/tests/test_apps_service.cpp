@@ -16,7 +16,7 @@
 
 #include "features/apps/qml/apps_service.h"
 
-using namespace wabar::apps;
+using namespace waku::apps;
 
 namespace {
 
@@ -29,8 +29,8 @@ void touch(const QString& path) {
   file.write("x");
 }
 
-wabar::kernel::IconBitmap solid(int size, unsigned char b, unsigned char g, unsigned char r) {
-  wabar::kernel::IconBitmap bitmap;
+waku::kernel::IconBitmap solid(int size, unsigned char b, unsigned char g, unsigned char r) {
+  waku::kernel::IconBitmap bitmap;
   bitmap.width = size;
   bitmap.height = size;
   for (int i = 0; i < size * size; ++i) {
@@ -89,7 +89,7 @@ struct Fixture {
     deps.iconLoader = [](const QString& source, int) {
       if (source.contains(s("Alpha"))) return solid(64, 0, 0, 255);
       if (source.contains(s("Photos"))) return solid(48, 0, 255, 0);
-      return wabar::kernel::IconBitmap();
+      return waku::kernel::IconBitmap();
     };
     deps.frecencyPath = data.filePath(s("apps_frecency.json"));
     deps.async = async;
@@ -369,7 +369,7 @@ TEST(AppsIconProvider, PaintsTheScaledIcon) {
   index->replace({{s("Alpha"), s("C:\\menu\\Alpha.lnk")}, {s("Dev Tools/Beta"), s("none")}});
   AppIconProvider provider(index, [](const QString& source, int size) {
     EXPECT_EQ(size, 32);
-    return source.contains(s("Alpha")) ? solid(64, 0, 0, 255) : wabar::kernel::IconBitmap();
+    return source.contains(s("Alpha")) ? solid(64, 0, 0, 255) : waku::kernel::IconBitmap();
   });
 
   std::unique_ptr<QQuickImageResponse> response(

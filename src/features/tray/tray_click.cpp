@@ -2,7 +2,7 @@
 
 #include "features/tray/tray_pipe.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 bool isTrayMouseMessage(std::uint32_t message) {
   switch (message) {
@@ -47,4 +47,4 @@ void sendTrayAction(const TrayIconData& icon, TrayWindowApi& api, std::uint32_t 
   }
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

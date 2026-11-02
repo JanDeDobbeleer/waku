@@ -25,7 +25,7 @@
 #include "host/qml/shell_screen.h"
 #include "host/qml/window_enums.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 class ShellHost;
 class QsWindow;
@@ -50,7 +50,7 @@ class ProxiedWindow : public QQuickWindow {
 };
 
 // `surfaceFormat` of a window (Quickshell's QsSurfaceFormat): accepted so ported shells load, and
-// ignored. wabar always draws into a swap chain with an alpha channel.
+// ignored. waku always draws into a swap chain with an alpha channel.
 class SurfaceFormat : public QObject {
   Q_OBJECT
   QML_ANONYMOUS
@@ -72,7 +72,7 @@ class SurfaceFormat : public QObject {
 //
 // Life cycle: the window is built when the declaration completes. In a shell loaded by ShellHost
 // it is shown once the host installs the shell (a window created later, by a Variants or a
-// LazyLoader, is shown at once); without a host it shows itself. wabar's `content` component, when
+// LazyLoader, is shown at once); without a host it shows itself. waku's `content` component, when
 // set, is built into the window first; if that fails the window is not shown and the host records
 // the error (proposal 4.1.3: one broken window does not take the others down).
 //
@@ -82,13 +82,13 @@ class QsWindow : public QObject, public QQmlParserStatus {
   Q_INTERFACES(QQmlParserStatus)
   QML_NAMED_ELEMENT(QsWindow)
   QML_UNCREATABLE("QsWindow is the base of PanelWindow and FloatingWindow")
-  QML_ATTACHED(wabar::host::QsWindowAttached)
+  QML_ATTACHED(waku::host::QsWindowAttached)
   Q_CLASSINFO("DefaultProperty", "data")
   Q_PROPERTY(QQmlListProperty<QObject> data READ data FINAL)
   Q_PROPERTY(QQuickItem* contentItem READ contentItem CONSTANT)
   // Null: the primary screen.
-  Q_PROPERTY(wabar::host::ShellScreen* screen READ screen WRITE setScreen NOTIFY screenChanged)
-  // Unset: the wabar surface colour (`background`, else Theme.surface; transparent with islands).
+  Q_PROPERTY(waku::host::ShellScreen* screen READ screen WRITE setScreen NOTIFY screenChanged)
+  // Unset: the waku surface colour (`background`, else Theme.surface; transparent with islands).
   Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged FINAL)
   // On or off the screen. A window with `visible: false` has no native window until it is first
   // shown. Setting it to false starts the `hideDelay`; the window leaves the screen after it.
@@ -101,25 +101,25 @@ class QsWindow : public QObject, public QQmlParserStatus {
   Q_PROPERTY(int width READ width NOTIFY widthChanged FINAL)
   Q_PROPERTY(int height READ height NOTIFY heightChanged FINAL)
   Q_PROPERTY(qreal devicePixelRatio READ devicePixelRatio NOTIFY screenChanged FINAL)
-  // wabar: the screen edge the window is docked to, derived from `anchors` (None for a window that
+  // waku: the screen edge the window is docked to, derived from `anchors` (None for a window that
   // is not a docked PanelWindow), and whether that edge is Left or Right. Read-only. They are named
   // `dockEdge` and `dockVertical`, not `edge` and `vertical`, so a Quickshell shell that declares
   // its own `edge` or `vertical` property on a window keeps loading.
-  Q_PROPERTY(wabar::host::DockEdge::Enum dockEdge READ dockEdge NOTIFY dockEdgeChanged FINAL)
+  Q_PROPERTY(waku::host::DockEdge::Enum dockEdge READ dockEdge NOTIFY dockEdgeChanged FINAL)
   Q_PROPERTY(bool dockVertical READ dockVertical NOTIFY dockEdgeChanged FINAL)
   // The window is on the screen (it is visible, built, and its shell is installed).
   Q_PROPERTY(
       bool backingWindowVisible READ backingWindowVisible NOTIFY backingWindowVisibleChanged FINAL)
 
   // Accepted and ignored: see SurfaceFormat.
-  Q_PROPERTY(wabar::host::SurfaceFormat* surfaceFormat READ surfaceFormat CONSTANT FINAL)
+  Q_PROPERTY(waku::host::SurfaceFormat* surfaceFormat READ surfaceFormat CONSTANT FINAL)
   // The input region (Quickshell `mask`): only points inside it take input; the rest click through
   // to the window below. Null: the whole window takes input. An empty `Region {}`: none does. See
   // MaskPoller (host/mask_poller.h) for how, and for the live-desktop gate.
-  Q_PROPERTY(wabar::host::Region* mask READ mask WRITE setMask NOTIFY maskChanged FINAL)
+  Q_PROPERTY(waku::host::Region* mask READ mask WRITE setMask NOTIFY maskChanged FINAL)
 
-  // wabar extensions.
-  // The id of the window for `wabarc surface ...` and hotkeys; unique per shell. One name can
+  // waku extensions.
+  // The id of the window for `wakuc surface ...` and hotkeys; unique per shell. One name can
   // belong to several windows (a Variants makes one per screen) and every verb applies to all of
   // them. Not FINAL: a ported shell that declares its own `name` property on a window (caelestia's
   // StyledWindow does) still loads, and the surface verbs use that property (surfaceName()).
@@ -136,9 +136,9 @@ class QsWindow : public QObject, public QQmlParserStatus {
                  dismissOnEscapeChanged FINAL)
   // Built into the window when it is created (the Panel preset's content).
   Q_PROPERTY(QQmlComponent* content READ content WRITE setContent NOTIFY contentChanged FINAL)
-  Q_PROPERTY(wabar::host::Backdrop::Kind backdrop READ backdrop WRITE setBackdrop NOTIFY
+  Q_PROPERTY(waku::host::Backdrop::Kind backdrop READ backdrop WRITE setBackdrop NOTIFY
                  backdropChanged FINAL)
-  // The surface colour of a wabar panel: the window colour while `color` is unset, and what
+  // The surface colour of a waku panel: the window colour while `color` is unset, and what
   // islands paint with. Unset: Theme.surface.
   Q_PROPERTY(QColor background READ background WRITE setBackground NOTIFY backgroundChanged FINAL)
   Q_PROPERTY(bool hasColor READ hasColor NOTIFY colorChanged FINAL)
@@ -177,7 +177,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   void setName(const QString& name);
   // The id the surface verbs and the visibility memory use: the `name` property as the QML object
   // has it (so a component that declares its own `name`, as Caelestia's StyledWindow does, is found
-  // by that), else wabar's `name`, else `objectName`. Empty: the window is not addressable.
+  // by that), else waku's `name`, else `objectName`. Empty: the window is not addressable.
   QString surfaceName() const;
   int hideDelay() const { return hideDelay_; }
   void setHideDelay(int milliseconds);
@@ -217,9 +217,9 @@ class QsWindow : public QObject, public QQmlParserStatus {
   Q_INVOKABLE QRectF itemRect(QQuickItem* item) const;
   Q_INVOKABLE QPointF mapFromItem(QQuickItem* item, qreal x, qreal y) const;
 
-  // wabar: `visible = true`, `visible = false` and the flip of it. The signals below tell when
+  // waku: `visible = true`, `visible = false` and the flip of it. The signals below tell when
   // the native window really appeared and left. A window with keyboard focus (OnDemand) takes the
-  // keyboard focus when shown this way, from a hotkey or from `wabarc` too.
+  // keyboard focus when shown this way, from a hotkey or from `wakuc` too.
   Q_INVOKABLE void show() { setVisible(true); }
   Q_INVOKABLE void hide() { setVisible(false); }
   Q_INVOKABLE void toggle() { setVisible(!visible_); }
@@ -235,7 +235,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   // counting as a window of its shell now.
   void retire();
   void setMonitorHandle(qlonglong handle);
-  // Whether the wabar chrome of this window shows the host's error pill.
+  // Whether the waku chrome of this window shows the host's error pill.
   virtual bool showsErrors() const { return false; }
   // The native window is kept above the others / can take the keyboard focus.
   virtual bool stackTopmost() const { return false; }
@@ -252,7 +252,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   void hideDelayChanged();
   void dismissOnBlurChanged();
   void dismissOnEscapeChanged();
-  // The native window appeared / left the screen (after `hideDelay`). wabar extensions.
+  // The native window appeared / left the screen (after `hideDelay`). waku extensions.
   void shown();
   void hidden();
   void implicitWidthChanged();
@@ -331,7 +331,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
 class QsWindowAttached : public QObject {
   Q_OBJECT
   QML_ANONYMOUS
-  Q_PROPERTY(wabar::host::QsWindow* window READ window NOTIFY windowChanged FINAL)
+  Q_PROPERTY(waku::host::QsWindow* window READ window NOTIFY windowChanged FINAL)
   Q_PROPERTY(QQuickItem* contentItem READ contentItem NOTIFY windowChanged FINAL)
 
  public:
@@ -354,4 +354,4 @@ class QsWindowAttached : public QObject {
   QPointer<QsWindow> window_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

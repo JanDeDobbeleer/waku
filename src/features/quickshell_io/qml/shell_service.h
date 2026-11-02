@@ -7,7 +7,7 @@
 #include <QStringList>
 #include <functional>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // What a widget does on click, as a QML singleton: start a program, run a command line, open a
 // URL, file or folder. Nothing is returned from a launch beyond whether it started; use
@@ -29,7 +29,7 @@ class Shell : public QObject {
     std::function<void(const QString& target)> open;
   };
 
-  // Real launches; the config home is $WABAR_CONFIG_HOME or <home>\.config\wabar.
+  // Real launches; the config home is $WAKU_CONFIG_HOME or <home>\.config\waku.
   explicit Shell(QObject* parent = nullptr);
   Shell(Launcher launcher, QString configHome, QObject* parent);
 
@@ -50,4 +50,4 @@ class Shell : public QObject {
   QString configHome_;
 };
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

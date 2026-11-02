@@ -6,7 +6,7 @@
 #include <QString>
 #include <QVariantList>
 
-namespace wabar::host {
+namespace waku::host {
 
 // Quickshell's `ScriptModel`: a list model driven by a JavaScript array. Assigning a new array
 // does not reset the model; it inserts, removes and moves rows so a view keeps the delegates of the
@@ -51,4 +51,4 @@ class ScriptModel : public QAbstractListModel {
   QString objectProp_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

@@ -1,7 +1,7 @@
 # workspaces: komorebi and GlazeWM clients and the shared Workspaces model.
 # winhttp: the GlazeWM WebSocket client (win32/glazewm_socket.cpp); iphlpapi: its check that the
 # port listens (GetExtendedTcpTable).
-wabar_feature(NAME workspaces
+waku_feature(NAME workspaces
   SOURCES
     command_line.h
     command_line.cpp
@@ -45,4 +45,4 @@ wabar_feature(NAME workspaces
     tests/test_workspaces.cpp
   SYSTEM_LIBS winhttp iphlpapi)
 # The komorebi state is parsed JSON (komorebi_service.h, komorebi_state.h).
-target_link_libraries(wabar_workspaces PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(waku_workspaces PUBLIC nlohmann_json::nlohmann_json)

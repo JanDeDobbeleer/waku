@@ -10,7 +10,7 @@
 
 #include "features/wallpapers/lock_screen.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 struct LockScreenLog {
   QStringList sets;
@@ -29,4 +29,4 @@ class FakeLockScreen final : public LockScreenSetter {
   std::shared_ptr<LockScreenLog> log_;
 };
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

@@ -7,7 +7,7 @@
 
 #include "features/quickshell_io/qml/shell_process.h"
 
-using namespace wabar::quickshell_io;
+using namespace waku::quickshell_io;
 
 namespace {
 
@@ -54,7 +54,7 @@ TEST(ShellProcess, CapturesStandardError) {
 
 TEST(ShellProcess, ProgramThatCannotStartFinishesWithMinusOne) {
   ShellProcess process;
-  process.setProgram(QStringLiteral("definitely-not-a-program-wabar.exe"));
+  process.setProgram(QStringLiteral("definitely-not-a-program-waku.exe"));
   QSignalSpy finished(&process, &ShellProcess::finished);
   process.run();
   ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));

@@ -11,7 +11,7 @@
 
 #include "kernel/win32/shell_icons.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // An HWND as an integer. 0 means "no window".
 using WindowHandle = std::uintptr_t;
@@ -86,4 +86,4 @@ class WindowSystem {
 
 std::shared_ptr<WindowSystem> makeWin32WindowSystem();
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

@@ -5,7 +5,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::bluetooth {
+namespace waku::bluetooth {
 
 namespace {
 
@@ -242,4 +242,4 @@ void Bluetooth::cancelPair() {
   if (backend_ && pairing_) backend_->cancelPair();
 }
 
-}  // namespace wabar::bluetooth
+}  // namespace waku::bluetooth

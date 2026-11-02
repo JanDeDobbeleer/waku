@@ -5,7 +5,7 @@
 #include "features/tray/tray_host.h"
 #include "features/tray/tray_types.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // winuser.h mouse messages, spelled out so no caller needs Win32 headers.
 inline constexpr std::uint32_t kWmLButtonDown = 0x0201;
@@ -33,4 +33,4 @@ void sendTrayNotify(const TrayIconData& icon, TrayWindowApi& api, std::uint32_t 
 // followed by NIN_SELECT and a right button release by NIN_CONTEXTMENU.
 void sendTrayAction(const TrayIconData& icon, TrayWindowApi& api, std::uint32_t action);
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

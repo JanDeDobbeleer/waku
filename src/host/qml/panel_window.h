@@ -12,7 +12,7 @@
 #include "host/qml/qs_window.h"
 #include "host/qml/window_enums.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 // `anchors` of a PanelWindow: the screen edges it is attached to.
 class PanelAnchors : public QObject {
@@ -77,19 +77,19 @@ class PanelMargins : public QObject {
 class PanelWindow : public QsWindow {
   Q_OBJECT
   QML_ELEMENT
-  Q_PROPERTY(wabar::host::PanelAnchors* anchors READ anchors CONSTANT FINAL)
-  Q_PROPERTY(wabar::host::PanelMargins* margins READ margins CONSTANT FINAL)
+  Q_PROPERTY(waku::host::PanelAnchors* anchors READ anchors CONSTANT FINAL)
+  Q_PROPERTY(waku::host::PanelMargins* margins READ margins CONSTANT FINAL)
   // Setting it switches `exclusionMode` from Auto to Normal (as Quickshell does).
   Q_PROPERTY(
       int exclusiveZone READ exclusiveZone WRITE setExclusiveZone NOTIFY exclusiveZoneChanged FINAL)
-  Q_PROPERTY(wabar::host::ExclusionMode::Enum exclusionMode READ exclusionMode WRITE
-                 setExclusionMode NOTIFY exclusionModeChanged FINAL)
+  Q_PROPERTY(waku::host::ExclusionMode::Enum exclusionMode READ exclusionMode WRITE setExclusionMode
+                 NOTIFY exclusionModeChanged FINAL)
   // `layer` is Top or Overlay.
   Q_PROPERTY(bool aboveWindows READ aboveWindows WRITE setAboveWindows NOTIFY layerChanged FINAL)
   // `keyboardFocus` is not None.
   Q_PROPERTY(bool focusable READ focusable WRITE setFocusable NOTIFY keyboardFocusChanged FINAL)
-  Q_PROPERTY(wabar::host::WlrLayer::Enum layer READ layer WRITE setLayer NOTIFY layerChanged FINAL)
-  Q_PROPERTY(wabar::host::WlrKeyboardFocus::Enum keyboardFocus READ keyboardFocus WRITE
+  Q_PROPERTY(waku::host::WlrLayer::Enum layer READ layer WRITE setLayer NOTIFY layerChanged FINAL)
+  Q_PROPERTY(waku::host::WlrKeyboardFocus::Enum keyboardFocus READ keyboardFocus WRITE
                  setKeyboardFocus NOTIFY keyboardFocusChanged FINAL)
 
  public:
@@ -157,4 +157,4 @@ class PanelWindow : public QsWindow {
   QString namespace_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

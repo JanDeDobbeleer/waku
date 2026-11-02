@@ -7,14 +7,14 @@
 #include <QQmlListProperty>
 #include <QString>
 
-namespace wabar::host {
+namespace waku::host {
 
 // A group of shell objects (Quickshell `Scope`): windows, Variants, LazyLoaders and non-visual
 // parts, kept alive as its children. It draws nothing.
 //
 // A "part" is any object that is not a window, such as the non-visual WallpaperSettings. The host
 // activates the parts of the root and of nested Scopes once the shell is installed: it calls their
-// `activate()` (a Q_INVOKABLE, found by name so that wabar does not depend on the part's module).
+// `activate()` (a Q_INVOKABLE, found by name so that waku does not depend on the part's module).
 // A part is deactivated by being destroyed with the shell.
 class Scope : public QObject {
   Q_OBJECT
@@ -25,7 +25,7 @@ class Scope : public QObject {
   Q_PROPERTY(QQmlListProperty<QObject> shellChildren READ data FINAL)
   // Not FINAL: a ported shell that declares its own `data` property (Noctalia's Settings) loads.
   Q_PROPERTY(QQmlListProperty<QObject> data READ data)
-  // Quickshell's Reloadable id. Accepted so a shell can set it; wabar keeps no state by it.
+  // Quickshell's Reloadable id. Accepted so a shell can set it; waku keeps no state by it.
   Q_PROPERTY(QString reloadableId MEMBER reloadableId_ NOTIFY reloadableIdChanged)
 
  public:
@@ -64,7 +64,7 @@ class Scope : public QObject {
 
 // The root of shell.qml (Quickshell `ShellRoot`): a Scope the host builds and replaces as a whole.
 //
-//     import wabar
+//     import waku
 //     ShellRoot {
 //         PanelWindow { anchors { top: true; left: true; right: true }; implicitHeight: 30 }
 //     }
@@ -91,4 +91,4 @@ class Singleton : public Scope {
   explicit Singleton(QObject* parent = nullptr) : Scope(parent) {}
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

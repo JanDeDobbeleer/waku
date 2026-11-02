@@ -1,6 +1,6 @@
 #include "features/wallpapers/wallpaper_command.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 QString answerWallpaperCommand(const QStringList& words, WallpaperControl* wallpapers) {
   static const QString usage = QStringLiteral(
@@ -34,4 +34,4 @@ QString answerWallpaperCommand(const QStringList& words, WallpaperControl* wallp
   return wallpapers->controlGallery();
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

@@ -13,7 +13,7 @@
 #include "kernel/qt/linger.h"
 #include "kernel/win32/windows_build.h"
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 namespace {
 
 constexpr DWORD kWin1124H2Build = 26100;
@@ -89,7 +89,7 @@ struct PdhCpuDataSource::Impl {
       return false;
     }
 
-    const unsigned build = wabar::kernel::windowsBuild();
+    const unsigned build = waku::kernel::windowsBuild();
     const bool modern = build >= kWin1124H2Build;
     const wchar_t* counter = modern ? L"\\Processor Information(_Total)\\% Processor Time"
                                     : L"\\Processor Information(_Total)\\% Processor Utility";
@@ -186,4 +186,4 @@ std::shared_ptr<CpuDataSource> createCpuDataSource() {
   return hub.acquire([] { return std::make_shared<PdhCpuDataSource>(); });
 }
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

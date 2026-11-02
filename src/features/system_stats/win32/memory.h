@@ -4,7 +4,7 @@
 
 #include "features/system_stats/system_stats.h"
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 
 class WindowsMemoryDataSource final : public MemoryDataSource {
  public:
@@ -18,4 +18,4 @@ class WindowsMemoryDataSource final : public MemoryDataSource {
   std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

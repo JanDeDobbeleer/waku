@@ -7,7 +7,7 @@
 #include "features/system_stats/system_stats.h"
 #include "kernel/qt/linger.h"
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 namespace {
 
 // Documented Win32 only: GetLogicalDrives, GetDriveTypeW, GetDiskFreeSpaceExW,
@@ -70,4 +70,4 @@ std::shared_ptr<DiskDataSource> createDiskDataSource() {
   return hub.acquire([] { return std::make_shared<WindowsDiskDataSource>(); });
 }
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

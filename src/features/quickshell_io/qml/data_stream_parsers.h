@@ -7,7 +7,7 @@
 #include <QString>
 #include <QStringDecoder>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // Quickshell.Io DataStreamParser: what a Process feeds its stdout or stderr into. The process calls
 // feed() for each chunk and streamEnded() once, when the stream closes. GUI thread only.
@@ -97,4 +97,4 @@ class SplitParser : public DataStreamParser {
   QString marker_ = QStringLiteral("\n");
 };
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

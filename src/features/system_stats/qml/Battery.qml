@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import wabar
-import wabar.services as S
+import waku
+import waku.services as S
 
 // Battery charge. Hidden on a machine without a battery.
 //

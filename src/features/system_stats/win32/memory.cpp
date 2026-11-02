@@ -10,7 +10,7 @@
 
 #include "kernel/qt/linger.h"
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 namespace {
 
 struct MemoryListInformation {
@@ -123,4 +123,4 @@ std::shared_ptr<MemoryDataSource> createMemoryDataSource() {
   return hub.acquire([] { return std::make_shared<WindowsMemoryDataSource>(); });
 }
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

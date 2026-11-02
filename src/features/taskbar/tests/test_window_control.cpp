@@ -5,7 +5,7 @@
 #include "features/taskbar/qml/window_control.h"
 #include "features/taskbar/testing/fake_window_control.h"
 
-using namespace wabar::taskbar;
+using namespace waku::taskbar;
 
 namespace {
 

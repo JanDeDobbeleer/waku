@@ -7,7 +7,7 @@
 
 #include "features/notifications/qml/notification_service.h"
 
-namespace wabar::notifications {
+namespace waku::notifications {
 
 NotificationUrgency::Enum urgencyForScenario(const QString& scenario) {
   if (scenario.compare(QStringLiteral("alarm"), Qt::CaseInsensitive) == 0 ||
@@ -197,4 +197,4 @@ void NotificationServer::onToastAdded(NotificationToast* toast) {
   emit notification(toast);
 }
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

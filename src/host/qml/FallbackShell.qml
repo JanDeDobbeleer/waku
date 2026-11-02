@@ -15,7 +15,7 @@ ShellRoot {
             color: Theme.text
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSize
-            text: "wabar"
+            text: "waku"
         }
     }
 }

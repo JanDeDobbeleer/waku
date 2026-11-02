@@ -4,7 +4,7 @@
 #include <QTimer>
 #include <utility>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 void linger(std::shared_ptr<void> held, int ms) {
   if (!held) return;
@@ -14,4 +14,4 @@ void linger(std::shared_ptr<void> held, int ms) {
   QTimer::singleShot(ms, app, [held = std::move(held)]() mutable { held.reset(); });
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

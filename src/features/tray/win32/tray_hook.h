@@ -14,16 +14,16 @@
 
 #include "features/tray/tray_host.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // Names shared with hook/trayhook.cpp. CMake passes them to both targets as compile definitions
-// (WABAR_TRAY_PIPE_NAME, WABAR_TRAY_MUTEX_NAME); the defaults below keep other build systems
+// (WAKU_TRAY_PIPE_NAME, WAKU_TRAY_MUTEX_NAME); the defaults below keep other build systems
 // working.
-#ifndef WABAR_TRAY_PIPE_NAME
-#define WABAR_TRAY_PIPE_NAME "wabar_systray_monitor"
+#ifndef WAKU_TRAY_PIPE_NAME
+#define WAKU_TRAY_PIPE_NAME "waku_systray_monitor"
 #endif
-#ifndef WABAR_TRAY_MUTEX_NAME
-#define WABAR_TRAY_MUTEX_NAME "WabarTrayHookAlive"
+#ifndef WAKU_TRAY_MUTEX_NAME
+#define WAKU_TRAY_MUTEX_NAME "WakuTrayHookAlive"
 #endif
 
 inline constexpr int kHookPipeBufferSize = 32 * 1024;
@@ -51,7 +51,7 @@ class TrayInjector {
   virtual void setStopCheck(std::function<bool()> stopping) { (void)stopping; }
 };
 
-// `dllPath` is the full path of WabarTrayHook[_arm64].dll.
+// `dllPath` is the full path of WakuTrayHook[_arm64].dll.
 std::unique_ptr<TrayInjector> makeExplorerInjector(const QString& dllPath);
 
 // Path of the hook DLL for this host, searched next to the executable then in a lib folder.
@@ -70,8 +70,8 @@ class SystrayHook : public TrayHost {
   Q_OBJECT
  public:
   struct Options {
-    QString pipeName = QStringLiteral("\\\\.\\pipe\\" WABAR_TRAY_PIPE_NAME);
-    QString mutexName = QStringLiteral("Global\\" WABAR_TRAY_MUTEX_NAME);
+    QString pipeName = QStringLiteral("\\\\.\\pipe\\" WAKU_TRAY_PIPE_NAME);
+    QString mutexName = QStringLiteral("Global\\" WAKU_TRAY_MUTEX_NAME);
     std::unique_ptr<TrayInjector> injector;
     // Called with every retry delay before the worker waits (tests record them).
     std::function<void(std::chrono::milliseconds)> retryObserver;
@@ -124,4 +124,4 @@ class SystrayHook : public TrayHost {
   std::thread thread_;
 };
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

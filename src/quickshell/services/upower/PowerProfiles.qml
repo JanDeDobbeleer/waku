@@ -1,6 +1,6 @@
 pragma Singleton
 import QtQuick
-import wabar.services as S
+import waku.services as S
 
 // Quickshell.Services.UPower's `PowerProfiles` singleton over the Windows power modes (the
 // overlays of the control center service). The modes map by name: the efficiency mode to

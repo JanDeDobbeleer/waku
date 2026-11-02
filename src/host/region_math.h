@@ -7,7 +7,7 @@
 #include <QSizeF>
 #include <optional>
 
-namespace wabar::host {
+namespace waku::host {
 
 // How a child region combines with what its parent has built so far (Quickshell `Intersection`).
 enum class RegionOp { Combine, Intersect, Xor, Subtract };
@@ -60,4 +60,4 @@ qreal regionEdgeDistance(const RegionNode& root, const QPointF& point,
 QPointF cursorInWindow(const QPoint& physical, const QPoint& screenOrigin, qreal dpr,
                        const QPointF& windowTopLeft);
 
-}  // namespace wabar::host
+}  // namespace waku::host

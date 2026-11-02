@@ -13,7 +13,7 @@
 #include "features/tray/qml/tray_icon_model.h"
 #include "features/tray/tray_state.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 class TrayPins;
 
@@ -65,13 +65,13 @@ class TrayPinList : public QAbstractListModel {
 class TrayPins : public QObject {
   Q_OBJECT
   QML_ELEMENT
-  Q_PROPERTY(wabar::tray::TrayIconModel* icons READ icons WRITE setIcons NOTIFY iconsChanged FINAL)
+  Q_PROPERTY(waku::tray::TrayIconModel* icons READ icons WRITE setIcons NOTIFY iconsChanged FINAL)
   Q_PROPERTY(QString screenId READ screenId WRITE setScreenId NOTIFY screenIdChanged FINAL)
   Q_PROPERTY(QScreen* screen READ screen WRITE setScreen NOTIFY screenChanged FINAL)
   Q_PROPERTY(QWindow* window READ window WRITE setWindow NOTIFY windowChanged FINAL)
   Q_PROPERTY(QString stateDir READ stateDir WRITE setStateDir NOTIFY stateDirChanged FINAL)
-  Q_PROPERTY(wabar::tray::TrayPinList* pinned READ pinned CONSTANT FINAL)
-  Q_PROPERTY(wabar::tray::TrayPinList* unpinned READ unpinned CONSTANT FINAL)
+  Q_PROPERTY(waku::tray::TrayPinList* pinned READ pinned CONSTANT FINAL)
+  Q_PROPERTY(waku::tray::TrayPinList* unpinned READ unpinned CONSTANT FINAL)
 
  public:
   explicit TrayPins(QObject* parent = nullptr);
@@ -129,9 +129,9 @@ class TrayPins : public QObject {
   QPointer<QWindow> window_;
   QString stateDir_;
   bool loaded_ = false;
-  wabar::tray::IconStateMap currentState_;
+  waku::tray::IconStateMap currentState_;
   TrayPinList pinned_;
   TrayPinList unpinned_;
 };
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

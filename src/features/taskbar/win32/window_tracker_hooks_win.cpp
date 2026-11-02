@@ -8,7 +8,7 @@
 
 #include "features/taskbar/window_tracker.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 namespace {
 
 // The WinEvent callback is a bare function pointer, so it reaches the tracker through this. Only
@@ -107,4 +107,4 @@ std::unique_ptr<TrackerHooks> makeWin32TrackerHooks() {
   return std::make_unique<Win32TrackerHooks>();
 }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

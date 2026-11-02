@@ -23,12 +23,12 @@
 
 namespace {
 
-namespace plat = wabar::taskbar;
-using wabar::taskbar::FakePins;
-using wabar::taskbar::FakeSystem;
-using wabar::taskbar::TaskbarModel;
-using wabar::taskbar::TaskbarService;
-using wabar::taskbar::WindowIconProvider;
+namespace plat = waku::taskbar;
+using waku::taskbar::FakePins;
+using waku::taskbar::FakeSystem;
+using waku::taskbar::TaskbarModel;
+using waku::taskbar::TaskbarService;
+using waku::taskbar::WindowIconProvider;
 
 constexpr plat::WindowHandle kFirst = 101;
 constexpr plat::WindowHandle kSecond = 102;
@@ -428,8 +428,8 @@ class TaskbarWidgetTest : public testing::Test {
   bool start(Harness& h, const QString& props = QString()) {
     h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.widgets
+import waku
+import waku.widgets
 ShellRoot {
     Panel {
         content: PanelLayout {

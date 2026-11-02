@@ -12,8 +12,8 @@
 #include "features/media/qml/media_service.h"
 #include "features/media/testing/fake_media_source.h"
 
-using namespace wabar::media;
-using namespace wabar::media::testing;
+using namespace waku::media;
+using namespace waku::media::testing;
 
 namespace {
 

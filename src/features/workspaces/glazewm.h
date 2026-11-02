@@ -5,7 +5,7 @@
 #include <QString>
 #include <memory>
 
-namespace wabar::workspaces::glazewm {
+namespace waku::workspaces::glazewm {
 
 // Transport half of GlazeWM's IPC client (Python: glazewm/client.py): a plain `ws://` WebSocket
 // client on the documented WinHTTP WebSocket API. Text frames only; fragmented messages are
@@ -59,4 +59,4 @@ class GlazewmSocket : public QObject {
   std::shared_ptr<Worker> worker_;
 };
 
-}  // namespace wabar::workspaces::glazewm
+}  // namespace waku::workspaces::glazewm

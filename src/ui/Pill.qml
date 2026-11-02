@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Window
-import wabar
+import waku
 
 // The building block of the built-in widgets, and of yours: a rounded background with optional
 // text and any extra items beside it.

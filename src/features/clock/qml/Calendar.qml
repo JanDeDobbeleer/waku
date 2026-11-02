@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import wabar
+import waku
 
 // A month grid for popups, drawn like the calendar of Python YASB: a row of weekday names and six
 // rows of days, the selected day (today at first) as an accent filled pill. The wheel (or, with

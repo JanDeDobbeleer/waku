@@ -4,7 +4,7 @@
 #include <QStringList>
 #include <vector>
 
-namespace wabar::apps {
+namespace waku::apps {
 
 // How well `query` matches `text`, 0 for no match. Case-insensitive. Tiers, best first:
 //   exact            1000
@@ -29,4 +29,4 @@ struct RankCandidate {
 std::vector<int> rankApps(const QString& query, const std::vector<RankCandidate>& candidates,
                           int limit);
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

@@ -6,7 +6,7 @@
 #include <optional>
 #include <vector>
 
-namespace wabar::control_center {
+namespace waku::control_center {
 
 // --- power plans (services/power_plan/power_plan_api.py) -----------------------------------------
 
@@ -46,4 +46,4 @@ void hibernateSystem();
 // Starts `shutdown <args>` hidden and detached.
 bool runShutdown(const QStringList& arguments);
 
-}  // namespace wabar::control_center
+}  // namespace waku::control_center

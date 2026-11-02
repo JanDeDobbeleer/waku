@@ -1,30 +1,30 @@
-// wabarc: the command-line client of a running bar.
+// wakuc: the command-line client of a running bar.
 //
-//     wabarc reload     reload the config of the running bar
-//     wabarc status     what the running bar is doing
-//     wabarc quit       stop the running bar
-//     wabarc wallpaper set [--dry-run] <file-or-path>
+//     wakuc reload     reload the config of the running bar
+//     wakuc status     what the running bar is doing
+//     wakuc quit       stop the running bar
+//     wakuc wallpaper set [--dry-run] <file-or-path>
 //                       set the wallpaper: a full path to any image, or a file name inside the
 //                       wallpaper folder (case does not matter, the extension may be left out)
-//     wabarc wallpaper random|next|previous [--dry-run]
+//     wakuc wallpaper random|next|previous [--dry-run]
 //                       a random wallpaper of the folder, the one after or before the current
-//     wabarc wallpaper gallery
+//     wakuc wallpaper gallery
 //                       open or close the picker
-//     wabarc shortcut <name>
+//     wakuc shortcut <name>
 //                       fire the GlobalShortcut with that name (bind a key to this command in
 //                       whkd or AutoHotkey)
-//     wabarc shortcut list
+//     wakuc shortcut list
 //                       the names of the shortcuts the bar has
-//     wabarc surface list
-//     wabarc surface show|hide|toggle|status <name>
+//     wakuc surface list
+//     wakuc surface show|hide|toggle|status <name>
 //                       the windows of the shell that have a `name`: a launcher, an OSD, a menu.
 //                       show and toggle first allow the bar to take the keyboard focus
 //                       (AllowSetForegroundWindow), so a launcher opened from a hotkey gets it
-//     wabarc taskbar hide|show|status
+//     wakuc taskbar hide|show|status
 //                       hide the Windows taskbar (auto-hide on, windows hidden), show it again
-//                       (restores what wabar changed), or report "taskbar: hidden|visible|
-//                       autohide-was-on". `wabar --hide-taskbar` hides it at start
-//     wabarc call [<target> <function> [args...]]
+//                       (restores what waku changed), or report "taskbar: hidden|visible|
+//                       autohide-was-on". `waku --hide-taskbar` hides it at start
+//     wakuc call [<target> <function> [args...]]
 //                       run a function of an IpcHandler; the answer is its return value on one
 //                       line ("ok" for void). Without arguments: the handlers and their functions
 //
@@ -32,7 +32,7 @@
 // arguments with spaces are quoted (control.h, joinCommand).
 //
 // A separate console program, as komorebic is to komorebi: the bar itself is a Windows (GUI)
-// program with no console to print to. `--config-home <dir>` (or $WABAR_CONFIG_HOME) selects
+// program with no console to print to. `--config-home <dir>` (or $WAKU_CONFIG_HOME) selects
 // the instance, as it does for the bar.
 //
 // Exit code: 0 the bar answered ok, 1 it answered an error, 2 no bar is running, 3 usage error or
@@ -55,9 +55,9 @@ namespace {
 // user's input (a hotkey) just started, allows it. The bar's pid is in its `status` answer.
 void allowBarToTakeFocus(const QString& pipeName) {
 #ifdef Q_OS_WIN
-  const wabar::control::ControlReply status =
-      wabar::control::sendControlCommand(pipeName, QStringLiteral("status"));
-  if (status.status != wabar::control::ControlReply::Ok) return;
+  const waku::control::ControlReply status =
+      waku::control::sendControlCommand(pipeName, QStringLiteral("status"));
+  if (status.status != waku::control::ControlReply::Ok) return;
   const QRegularExpressionMatch match =
       QRegularExpression(QStringLiteral("\\bpid=(\\d+)")).match(status.text);
   if (!match.hasMatch()) return;
@@ -86,11 +86,11 @@ void print(FILE* stream, const QString& text) {
 
 int main(int argc, char* argv[]) {
   QCoreApplication app(argc, argv);
-  QCoreApplication::setApplicationName(QStringLiteral("wabarc"));
+  QCoreApplication::setApplicationName(QStringLiteral("wakuc"));
 
   QCommandLineParser parser;
   parser.setApplicationDescription(QStringLiteral(
-      "Controls a running wabar bar.\n\nCommands:\n  reload  reload the config\n"
+      "Controls a running waku bar.\n\nCommands:\n  reload  reload the config\n"
       "  status  show what the bar is doing\n  quit    stop the bar\n"
       "  wallpaper set <file-or-path>   a full path, or a file name in the wallpaper folder\n"
       "  wallpaper random | next | previous\n"
@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
 
   const QStringList positional = parser.positionalArguments();
   const QString usage = QStringLiteral(
-      "usage: wabarc [--config-home <dir>] reload|status|quit|wallpaper "
+      "usage: wakuc [--config-home <dir>] reload|status|quit|wallpaper "
       "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|shortcut <name>|list|surface "
       "(list|show|hide|toggle|status <name>)|taskbar (hide|show|status)|call <target> <function> "
       "[args...]");
@@ -150,37 +150,37 @@ int main(int argc, char* argv[]) {
       }
       words << target;
     }
-    line = wabar::control::joinCommand(words);
+    line = waku::control::joinCommand(words);
   } else if (parser.isSet(dryRunOpt)) {
     print(stderr, usage);
     return kUsage;
   } else {
     // Any other command goes to the bar as typed: the bar knows its verbs and answers for an
     // unknown one ("error: unknown command ...").
-    line = wabar::control::joinCommand(positional);
+    line = waku::control::joinCommand(positional);
   }
 
   // The same default as the bar, so that the two meet without any option.
-  const QString configHome = wabar::control::resolveConfigHome(
-      parser.value(configHomeOpt), QStringLiteral(WABAR_SAMPLE_CONFIG_DIR));
-  const QString pipeName = wabar::control::controlPipeName(configHome);
+  const QString configHome = waku::control::resolveConfigHome(
+      parser.value(configHomeOpt), QStringLiteral(WAKU_SAMPLE_CONFIG_DIR));
+  const QString pipeName = waku::control::controlPipeName(configHome);
   if (command == QLatin1String("surface") && (positional.value(1) == QLatin1String("show") ||
                                               positional.value(1) == QLatin1String("toggle"))) {
     allowBarToTakeFocus(pipeName);
   }
   // A reload answers when the new shell is up, which takes seconds with a large shell.
   const int timeoutMs = command == QLatin1String("reload") ? kReloadTimeoutMs : kTimeoutMs;
-  const wabar::control::ControlReply reply =
-      wabar::control::sendControlCommand(pipeName, line, timeoutMs);
+  const waku::control::ControlReply reply =
+      waku::control::sendControlCommand(pipeName, line, timeoutMs);
 
   switch (reply.status) {
-    case wabar::control::ControlReply::NotRunning:
-      print(stderr, QStringLiteral("wabarc: no bar is running for %1").arg(configHome));
+    case waku::control::ControlReply::NotRunning:
+      print(stderr, QStringLiteral("wakuc: no bar is running for %1").arg(configHome));
       return kNotRunning;
-    case wabar::control::ControlReply::Failed:
-      print(stderr, QStringLiteral("wabarc: %1").arg(reply.text));
+    case waku::control::ControlReply::Failed:
+      print(stderr, QStringLiteral("wakuc: %1").arg(reply.text));
       return kUsage;
-    case wabar::control::ControlReply::Ok:
+    case waku::control::ControlReply::Ok:
       break;
   }
   const bool error = reply.text.startsWith(QLatin1String("error:"));

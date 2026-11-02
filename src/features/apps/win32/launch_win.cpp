@@ -7,7 +7,7 @@
 #include "features/apps/apps_platform.h"
 #include "kernel/win32/app_activation.h"
 
-namespace wabar::apps {
+namespace waku::apps {
 namespace {
 
 bool shellExecute(const QString& file, const QString& parameters, const wchar_t* verb,
@@ -32,7 +32,7 @@ bool launch(const AppRecord& app, LaunchMode mode) {
       if (app.kind == AppKind::Store) {
         if (app.aumid.isEmpty()) return false;
         // Raise the window of a running app; otherwise start it.
-        if (wabar::kernel::activateAppByAumid(app.aumid)) return true;
+        if (waku::kernel::activateAppByAumid(app.aumid)) return true;
         return shellExecute(QStringLiteral("shell:AppsFolder\\") + app.aumid, QString(), nullptr);
       }
       return !app.path.isEmpty() && shellExecute(app.path, QString(), nullptr);
@@ -58,4 +58,4 @@ bool launch(const AppRecord& app, LaunchMode mode) {
 
 AppLauncher makeWin32Launcher() { return &launch; }
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

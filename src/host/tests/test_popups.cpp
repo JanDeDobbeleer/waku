@@ -9,7 +9,7 @@ QString popupConfig(const QString& barProperties = QString(),
                     const QString& group = QStringLiteral("start")) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel {
         %1
@@ -37,7 +37,7 @@ ShellRoot {
 QString tooltipConfig(const QString& text = QStringLiteral("hello tip")) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel {
         content: PanelLayout {
@@ -181,9 +181,9 @@ TEST(PopupPlacementTest, SideEdgesSlideAlongTheScreenEdgeAndFlip) {
 }
 
 TEST(PopupPlacementTest, EachDockEdgeOpensAwayFromItsEdge) {
-  using wabar::host::AppBarEdge;
-  using wabar::host::PopupEdge;
-  using wabar::host::popupEdgeForDock;
+  using waku::host::AppBarEdge;
+  using waku::host::PopupEdge;
+  using waku::host::popupEdgeForDock;
   EXPECT_EQ(popupEdgeForDock(AppBarEdge::Top), PopupEdge::Below);
   EXPECT_EQ(popupEdgeForDock(AppBarEdge::Bottom), PopupEdge::Above);
   EXPECT_EQ(popupEdgeForDock(AppBarEdge::Left), PopupEdge::Right);
@@ -192,7 +192,7 @@ TEST(PopupPlacementTest, EachDockEdgeOpensAwayFromItsEdge) {
 }
 
 TEST(PopupPlacementTest, TheAnchorIsExtendedAcrossThePanelThickness) {
-  using wabar::host::panelAnchorRect;
+  using waku::host::panelAnchorRect;
   const QRectF item(200, 4, 60, 24);
   EXPECT_EQ(panelAnchorRect(item, QRectF(0, 0, 1000, 40), false), QRectF(200, 0, 60, 40));
   const QRectF sideItem(4, 200, 40, 24);
@@ -201,11 +201,11 @@ TEST(PopupPlacementTest, TheAnchorIsExtendedAcrossThePanelThickness) {
 
 TEST(PopupPlacementTest, TheQmlEdgeForADockMatches) {
   PopupPlacement qml;
-  EXPECT_EQ(qml.edgeForDock(wabar::host::DockEdge::Top), PopupPlacement::Below);
-  EXPECT_EQ(qml.edgeForDock(wabar::host::DockEdge::Bottom), PopupPlacement::Above);
-  EXPECT_EQ(qml.edgeForDock(wabar::host::DockEdge::Left), PopupPlacement::Right);
-  EXPECT_EQ(qml.edgeForDock(wabar::host::DockEdge::Right), PopupPlacement::Left);
-  EXPECT_EQ(qml.edgeForDock(wabar::host::DockEdge::None), PopupPlacement::Below);
+  EXPECT_EQ(qml.edgeForDock(waku::host::DockEdge::Top), PopupPlacement::Below);
+  EXPECT_EQ(qml.edgeForDock(waku::host::DockEdge::Bottom), PopupPlacement::Above);
+  EXPECT_EQ(qml.edgeForDock(waku::host::DockEdge::Left), PopupPlacement::Right);
+  EXPECT_EQ(qml.edgeForDock(waku::host::DockEdge::Right), PopupPlacement::Left);
+  EXPECT_EQ(qml.edgeForDock(waku::host::DockEdge::None), PopupPlacement::Below);
 }
 
 // ---- PopupWindow ----
@@ -400,7 +400,7 @@ TEST(PopupWindowTest, ZeroPaddingLetsTheContentFillTheWindow) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel {
         content: PanelLayout {
@@ -434,7 +434,7 @@ TEST(PopupWindowTest, ItDoesNotOpenWithoutAnAnchor) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot { Panel { content: PanelLayout { start: [ Item { PopupWindow { objectName: "orphan" } } ] } } }
 )"));
   ASSERT_TRUE(started(h));
@@ -519,7 +519,7 @@ TEST(PopupWindowTest, ImplicitWidthAndHeightSizeTheWindowAsInQuickshell) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel {
         content: PanelLayout {

@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 unsigned windowsBuild() {
   using RtlGetVersionFn = LONG(WINAPI*)(OSVERSIONINFOW*);
@@ -17,4 +17,4 @@ unsigned windowsBuild() {
   return build;
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

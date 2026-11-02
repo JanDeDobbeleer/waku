@@ -4,7 +4,7 @@
 
 #include <QObject>
 
-namespace wabar::quickshell {
+namespace waku::quickshell {
 
 // The base of the `UPower` singleton (UPower.qml). It exists only for `onBattery`: QML cannot
 // declare a property whose name starts with "on" followed by a capital (it reads as a signal
@@ -31,4 +31,4 @@ class UPowerBase : public QObject {
   bool onBattery_ = false;
 };
 
-}  // namespace wabar::quickshell
+}  // namespace waku::quickshell

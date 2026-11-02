@@ -8,7 +8,7 @@
 #include <set>
 #include <vector>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // A global hotkey as RegisterHotKey wants it: MOD_ALT 1, MOD_CONTROL 2, MOD_SHIFT 4, MOD_WIN 8.
 struct HotkeyCombo {
@@ -95,4 +95,4 @@ class Hotkeys {
   std::set<HotkeyCombo> reported_;
 };
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

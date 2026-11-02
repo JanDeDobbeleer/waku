@@ -6,7 +6,7 @@
 
 #include "features/apps/catalog.h"
 
-namespace wabar::apps {
+namespace waku::apps {
 
 // What a launch does.
 enum class LaunchMode {
@@ -27,4 +27,4 @@ AppsFolderEnumerator makeWin32AppsFolderEnumerator();
 // those that exist.
 QStringList startMenuFolders();
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

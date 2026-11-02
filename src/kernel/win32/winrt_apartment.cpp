@@ -2,7 +2,7 @@
 
 #include <winrt/base.h>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 void ensureWinrtApartment() {
   thread_local bool initialized = false;
@@ -15,4 +15,4 @@ void ensureWinrtApartment() {
   }
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

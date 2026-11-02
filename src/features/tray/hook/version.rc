@@ -13,17 +13,17 @@ BEGIN
     BEGIN
         BLOCK "040904B0"
         BEGIN
-            VALUE "CompanyName",      "wabar"
-            VALUE "FileDescription",  "wabar system tray monitor hook"
+            VALUE "CompanyName",      "waku"
+            VALUE "FileDescription",  "waku system tray monitor hook"
             VALUE "FileVersion",      "1.0.2.0"
-            VALUE "InternalName",     "WabarTrayHook"
+            VALUE "InternalName",     "WakuTrayHook"
             VALUE "LegalCopyright",   "MIT License"
 #if defined(BUILD_ARM64)
-            VALUE "OriginalFilename", "WabarTrayHook_arm64.dll"
+            VALUE "OriginalFilename", "WakuTrayHook_arm64.dll"
 #else
-            VALUE "OriginalFilename", "WabarTrayHook.dll"
+            VALUE "OriginalFilename", "WakuTrayHook.dll"
 #endif
-            VALUE "ProductName",      "wabar"
+            VALUE "ProductName",      "waku"
             VALUE "ProductVersion",   "1.0.2.0"
         END
     END

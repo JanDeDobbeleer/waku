@@ -6,7 +6,7 @@
 
 #include "features/color_scheme/color_math.h"
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 // Reads an image file, shrunk so neither side exceeds `maxSide` pixels (the decoder scales while
 // reading where the format allows it). Returns a null image and sets `error` on failure.
@@ -24,4 +24,4 @@ std::optional<Argb> seedColorFromImage(const QImage& image);
 // as 0.5.
 double meanLuminance(const QImage& image);
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

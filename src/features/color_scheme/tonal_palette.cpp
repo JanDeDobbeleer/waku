@@ -4,7 +4,7 @@
 #include <cmath>
 #include <map>
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 namespace {
 
@@ -183,4 +183,4 @@ std::vector<Hct> TemperatureCache::analogousColors(int count, int divisions) con
   return answers;
 }
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

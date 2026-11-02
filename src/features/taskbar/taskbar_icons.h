@@ -13,7 +13,7 @@
 #include "features/taskbar/pin_support.h"
 #include "features/taskbar/window_system.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // Port of the part of IconService the taskbar uses (WindowIcon): icons load on a worker thread and
 // the widget shows a blank until `iconsChanged` fires, then asks again. With `async` false the load
@@ -80,4 +80,4 @@ class TaskbarIcons final : public QObject {
 IconBitmap loadPinnedIcon(const PinSupport& pins, const QString& uniqueId,
                           const PinMetadata& metadata, int size);
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

@@ -15,7 +15,7 @@
 #include <system_error>
 #include <vector>
 
-namespace wabar::host {
+namespace waku::host {
 namespace {
 
 constexpr int kQuality = 85;
@@ -282,4 +282,4 @@ int ThumbnailStore::prune(int maxFiles, qint64 maxBytes) {
   return removed;
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

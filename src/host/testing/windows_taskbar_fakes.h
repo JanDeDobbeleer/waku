@@ -10,7 +10,7 @@
 
 #include "host/windows_taskbar.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 class FakeTaskbarSystem : public TaskbarSystem {
  public:
@@ -73,4 +73,4 @@ class FakeWindowsTaskbar : public WindowsTaskbar {
   TaskbarState state_ = TaskbarState::Visible;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

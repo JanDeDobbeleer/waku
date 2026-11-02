@@ -5,7 +5,7 @@
 
 #include "features/notifications/notifications.h"
 
-namespace wabar::notifications {
+namespace waku::notifications {
 
 // Test double of NotificationSource: records commands and exposes the sink the service gave it.
 class FakeSource final : public NotificationSource {
@@ -24,4 +24,4 @@ class FakeSource final : public NotificationSource {
   std::vector<std::uint32_t> activated;
 };
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

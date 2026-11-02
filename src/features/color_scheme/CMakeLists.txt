@@ -2,7 +2,7 @@
 # material-color-utilities (HCT, tonal palettes, the nine scheme variants, the Material 3 role set,
 # the Celebi quantizer and Score) plus the ColorScheme QML singleton that turns a colour or a
 # wallpaper into a palette. No dependencies on other features.
-wabar_feature(NAME color_scheme
+waku_feature(NAME color_scheme
   SOURCES
     color_math.h
     color_math.cpp

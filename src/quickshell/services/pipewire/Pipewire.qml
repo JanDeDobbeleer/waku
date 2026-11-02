@@ -1,9 +1,9 @@
 pragma Singleton
 import QtQuick
-import wabar as W
-import wabar.services as S
+import waku as W
+import waku.services as S
 
-// Quickshell.Services.Pipewire's `Pipewire` singleton over wabar's audio services.
+// Quickshell.Services.Pipewire's `Pipewire` singleton over waku's audio services.
 //
 //   defaultAudioSink / defaultAudioSource  the default output and input as PwNode; null while
 //                                          the service has no endpoint

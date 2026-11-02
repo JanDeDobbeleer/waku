@@ -21,9 +21,9 @@ class QJSEngine;
 class QQmlEngine;
 class QWindow;
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
-// The file a `wabarc wallpaper set` target means. `target` is a full path (any readable image
+// The file a `wakuc wallpaper set` target means. `target` is a full path (any readable image
 // file) or a file name inside `folder` (case-insensitive; without an extension the supported
 // ones are tried). On success `path` is the full path; otherwise `error` says why (no "error: "
 // prefix). Checks that the file exists, is a regular file, has a supported image extension and
@@ -36,11 +36,11 @@ struct ResolvedWallpaper {
 ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& folder);
 
 // The wallpaper folder, the current wallpaper and the gallery of every Wallpapers widget of a
-// `wabar` run, as a QML singleton. Wraps the UI-free classes of the Widgets build:
-// wabar::wallpapers::WallpaperManager (set, random, auto-change timer; the animated change is the
-// Qt Quick WallpaperTransition, see docs/plans/2026-10-29-wabar-wallpapers-design.md),
+// `waku` run, as a QML singleton. Wraps the UI-free classes of the Widgets build:
+// waku::wallpapers::WallpaperManager (set, random, auto-change timer; the animated change is the
+// Qt Quick WallpaperTransition, see docs/plans/2026-10-29-waku-wallpapers-design.md),
 // collectImageFiles and DesktopWallpaperBackend. The gallery's thumbnails come from the host's
-// image://thumb/ provider (wabar.Thumbnails), which keeps one memory and disk cache for the run.
+// image://thumb/ provider (waku.Thumbnails), which keeps one memory and disk cache for the run.
 //
 // Threads: GUI thread. The transition's decoder thread is described there, the lock screen worker
 // in win32/lock_screen_win.cpp.
@@ -79,15 +79,15 @@ class Wallpapers : public QObject, public WallpaperControl {
   // `backend` means unavailable. The hotkey goes to kernel::Hotkeys, whose backend a test
   // replaces with kernel/testing/hotkeys_fixtures.h.
   struct Deps {
-    wabar::wallpapers::WallpaperManager::BackendFactory backend;
-    wabar::wallpapers::WallpaperManager::Picker picker;
+    waku::wallpapers::WallpaperManager::BackendFactory backend;
+    waku::wallpapers::WallpaperManager::Picker picker;
     // Builds the transition for (image, animation); null means the real WallpaperTransition.
     std::function<std::unique_ptr<WallpaperTransition>(const QString&, const QString&)> transition;
     // Sets the lock screen picture; null means the real one on a live desktop, none otherwise.
     std::unique_ptr<LockScreenSetter> lockScreen;
     bool realBackend = true;
-    // Play the transition but never call SetWallpaper (WABAR_WALLPAPER_DRYRUN=1 sets it). A
-    // `wabarc ... --dry-run` does the same for one call.
+    // Play the transition but never call SetWallpaper (WAKU_WALLPAPER_DRYRUN=1 sets it). A
+    // `wakuc ... --dry-run` does the same for one call.
     bool dryRun = false;
   };
 
@@ -126,9 +126,9 @@ class Wallpapers : public QObject, public WallpaperControl {
   Q_INVOKABLE void toggleGallery();
   Q_INVOKABLE void closeGallery();
   // Gives the gallery window the keyboard focus even when the user opened it from a hotkey or from
-  // `wabarc` (kernel::forceForegroundFocus). Does nothing off the live desktop.
+  // `wakuc` (kernel::forceForegroundFocus). Does nothing off the live desktop.
   Q_INVOKABLE void focusWindow(QWindow* window);
-  // `wabarc wallpaper ...` (WallpaperControl): the answer is "ok: <full path>" once the change
+  // `wakuc wallpaper ...` (WallpaperControl): the answer is "ok: <full path>" once the change
   // has started (the animation may still run), or "error: <why>" with nothing changed. `dryRun`
   // plays the animation and skips the setter, for this call only.
   QString controlSet(const QString& target, bool dryRun) override;
@@ -166,7 +166,7 @@ class Wallpapers : public QObject, public WallpaperControl {
   Deps deps_;
   bool available_ = false;
   std::unique_ptr<DesktopWallpaperBackend> backend_;
-  std::unique_ptr<wabar::wallpapers::WallpaperManager> manager_;
+  std::unique_ptr<waku::wallpapers::WallpaperManager> manager_;
   QString imagePath_;
   QString hotkey_;
   kernel::Hotkeys::Handle hotkeyHandle_ = 0;
@@ -183,4 +183,4 @@ class Wallpapers : public QObject, public WallpaperControl {
   bool setLockScreen_ = true;
 };
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

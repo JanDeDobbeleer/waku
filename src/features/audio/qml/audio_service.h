@@ -8,7 +8,7 @@
 
 #include "features/audio/audio_endpoints.h"
 
-namespace wabar::audio {
+namespace waku::audio {
 
 // Default audio endpoint of one direction as a QML singleton (AudioOutput, AudioInput). Created
 // by the engine on first use and shared by every widget. GUI thread only: AudioEndpoints
@@ -72,4 +72,4 @@ class AudioInput : public AudioBase {
       : AudioBase(systemAudioIfLive(AudioFlow::Capture), parent) {}
 };
 
-}  // namespace wabar::audio
+}  // namespace waku::audio

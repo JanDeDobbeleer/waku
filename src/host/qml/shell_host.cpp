@@ -27,14 +27,14 @@
 #include "host/qml/shell_screen.h"
 #include "host/startup_trace.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
-constexpr auto kFallbackUrl = "qrc:/qt/qml/wabar/FallbackShell.qml";
-constexpr auto kSafeUrl = "qrc:/qt/qml/wabar/widgets/SafeShell.qml";
-// Loaded once so the wabar types are registered before the host asks for its singletons.
-constexpr auto kChromeUrl = "qrc:/qt/qml/wabar/WindowChrome.qml";
+constexpr auto kFallbackUrl = "qrc:/qt/qml/waku/FallbackShell.qml";
+constexpr auto kSafeUrl = "qrc:/qt/qml/waku/widgets/SafeShell.qml";
+// Loaded once so the waku types are registered before the host asks for its singletons.
+constexpr auto kChromeUrl = "qrc:/qt/qml/waku/WindowChrome.qml";
 constexpr auto kHostProperty = "ShellHost";
 
 // "file:line:col: message", with the file name only.
@@ -153,7 +153,7 @@ class ShellHost::GenerationInterceptor : public QQmlAbstractUrlInterceptor {
     if (generation_ == 0 || type != QmlFile || !url.isLocalFile()) return url;
     if (!url.toLocalFile().startsWith(root_, Qt::CaseInsensitive)) return url;
     QUrl versioned = url;
-    versioned.setQuery(QStringLiteral("wabar=%1").arg(generation_));
+    versioned.setQuery(QStringLiteral("waku=%1").arg(generation_));
     return versioned;
   }
 
@@ -183,10 +183,10 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
       QDir::fromNativeSeparators(QDir(options_.configHome).absolutePath()));
   engine_->addUrlInterceptor(interceptor_.get());
   {
-    // Registers the wabar types (static plugin) so singletonInstance() finds Theme and ScreenList.
+    // Registers the waku types (static plugin) so singletonInstance() finds Theme and ScreenList.
     QQmlComponent chrome(engine_, QUrl(QString::fromLatin1(kChromeUrl)));
     if (chrome.isError()) {
-      qCritical().noquote() << "wabar: cannot load the window chrome:"
+      qCritical().noquote() << "waku: cannot load the window chrome:"
                             << describeAll(chrome.errors()).join('\n');
     }
   }
@@ -274,7 +274,7 @@ bool ShellHost::validate(const QUrl& url, const QMetaObject& expected, bool crea
   QQmlComponent component(&probe, url);
   if (component.isError()) {
     const QStringList lines = describeAll(component.errors());
-    qWarning().noquote() << "wabar: config errors:\n" << lines.join('\n');
+    qWarning().noquote() << "waku: config errors:\n" << lines.join('\n');
     *error = lines.value(0);
     return false;
   }
@@ -283,14 +283,14 @@ bool ShellHost::validate(const QUrl& url, const QMetaObject& expected, bool crea
     *error = QStringLiteral("%1 must declare a %2 at its root")
                  .arg(QFileInfo(url.toLocalFile()).fileName(),
                       QString::fromLatin1(expected.className()).section(QStringLiteral("::"), -1));
-    qWarning().noquote() << "wabar:" << *error;
+    qWarning().noquote() << "waku:" << *error;
     return false;
   }
   if (create) {
     std::unique_ptr<QObject> object(component.create());
     if (!object) {
       const QStringList lines = describeAll(component.errors());
-      qWarning().noquote() << "wabar: config errors:\n" << lines.join('\n');
+      qWarning().noquote() << "waku: config errors:\n" << lines.join('\n');
       *error = lines.value(0, QStringLiteral("the file could not be created"));
       return false;
     }
@@ -305,8 +305,7 @@ bool ShellHost::validateTheme(QString* error) {
 }
 
 void ShellHost::applyTheme() {
-  auto* theme =
-      engine_->singletonInstance<Theme*>(QStringLiteral("wabar"), QStringLiteral("Theme"));
+  auto* theme = engine_->singletonInstance<Theme*>(QStringLiteral("waku"), QStringLiteral("Theme"));
   if (!theme) return;
   const ThemeSpec defaults;
   if (options_.safe || !QFileInfo::exists(themePath())) {
@@ -335,7 +334,7 @@ bool ShellHost::buildFallback() {
     install(std::move(fallback));
     return true;
   }
-  qCritical().noquote() << "wabar: the fallback shell failed:" << fallbackError;
+  qCritical().noquote() << "waku: the fallback shell failed:" << fallbackError;
   return false;
 }
 
@@ -417,14 +416,14 @@ bool ShellHost::reload() {
   if (!QFileInfo::exists(entryPath())) {
     if (!options_.legacyEntryFile.isEmpty() && QFileInfo::exists(legacyPath)) {
       error = QStringLiteral(
-                  "%1 is the wabar 1 format: rename it to %2 and its Config to ShellRoot, Bar to "
+                  "%1 is the waku 1 format: rename it to %2 and its Config to ShellRoot, Bar to "
                   "Panel, BarLayout to PanelLayout (see docs/building.md)")
                   .arg(options_.legacyEntryFile, options_.entryFile);
     } else {
       error = QStringLiteral("%1 not found in %2")
                   .arg(options_.entryFile, QDir::toNativeSeparators(options_.configHome));
     }
-    qWarning().noquote() << "wabar:" << error;
+    qWarning().noquote() << "waku:" << error;
   } else if (const QList<PluginFailure> refused =
                  [this] {
                    QList<PluginFailure> found =
@@ -437,7 +436,7 @@ bool ShellHost::reload() {
     // a plugin that does not fit this process: loading it could crash the bar.
     error = QStringLiteral("plugin %1 refused: %2")
                 .arg(QDir::toNativeSeparators(refused.first().file), refused.first().reason);
-    qWarning().noquote() << "wabar:" << error;
+    qWarning().noquote() << "waku:" << error;
   } else if ((!loaded_ || validate(QUrl::fromLocalFile(entryPath()), ShellRoot::staticMetaObject,
                                    false, &error)) &&
              validateTheme(&error)) {
@@ -462,12 +461,12 @@ bool ShellHost::reload() {
       // Nothing failed loudly, yet no window exists and the old shell is already gone.
       error = QStringLiteral("the shell created no windows");
       if (!warnings.first().isEmpty()) error += QStringLiteral(": ") + warnings.first();
-      qWarning().noquote() << "wabar:" << error;
+      qWarning().noquote() << "waku:" << error;
       next.reset();
     } else if (!failed.isEmpty() && built == 0) {
       // Not one window of the new shell could be built: nothing to show but the error.
       error = failed;
-      qWarning().noquote() << "wabar: no window could be built:" << error;
+      qWarning().noquote() << "waku: no window could be built:" << error;
       next.reset();
     } else {
       setError(failed);
@@ -502,7 +501,7 @@ void ShellHost::dropShell() {
   // A Variants (QQmlDelegateModel) and a LazyLoader release their windows with deleteLater: those
   // windows, their items, bindings and QQuickWindows would otherwise live on next to the new shell
   // and bind against singletons that are about to be deleted. Delete them now. reload() is never
-  // entered from an event of one of these windows (Quickshell.reload() is queued; wabarc and the
+  // entered from an event of one of these windows (Quickshell.reload() is queued; wakuc and the
   // file watcher come through their own slots), so none of them is on the stack.
   QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
 }
@@ -515,7 +514,7 @@ std::unique_ptr<ShellHost::Loaded> ShellHost::build(const QUrl& url, QString* er
   loaded->component = std::make_unique<QQmlComponent>(engine_, url);
   if (loaded->component->isError()) {
     const QStringList lines = describeAll(loaded->component->errors());
-    qWarning().noquote() << "wabar: config errors:\n" << lines.join('\n');
+    qWarning().noquote() << "waku: config errors:\n" << lines.join('\n');
     *error = lines.value(0);
     return nullptr;
   }
@@ -524,7 +523,7 @@ std::unique_ptr<ShellHost::Loaded> ShellHost::build(const QUrl& url, QString* er
     *error = QStringLiteral("%1 must declare a ShellRoot at its root")
                  .arg(QFileInfo(url.toLocalFile().isEmpty() ? url.fileName() : url.toLocalFile())
                           .fileName());
-    qWarning().noquote() << "wabar:" << *error;
+    qWarning().noquote() << "waku:" << *error;
   };
   // Checked before anything is created, as validate() does: a root that is no ShellRoot starts
   // nothing.
@@ -541,7 +540,7 @@ std::unique_ptr<ShellHost::Loaded> ShellHost::build(const QUrl& url, QString* er
   traceStep("shell created");
   if (!loaded->root) {
     const QStringList lines = describeAll(loaded->component->errors());
-    qWarning().noquote() << "wabar: config errors:\n" << lines.join('\n');
+    qWarning().noquote() << "waku: config errors:\n" << lines.join('\n');
     *error = lines.value(0, QStringLiteral("the shell could not be created"));
     return nullptr;
   }
@@ -588,9 +587,9 @@ void ShellHost::install(std::unique_ptr<Loaded> loaded) {
     try {
       QMetaObject::invokeMethod(part, "activate");
     } catch (const std::exception& e) {
-      qWarning().noquote() << "wabar: a shell part failed to start:" << e.what();
+      qWarning().noquote() << "waku: a shell part failed to start:" << e.what();
     } catch (...) {
-      qWarning().noquote() << "wabar: a shell part failed to start";
+      qWarning().noquote() << "waku: a shell part failed to start";
     }
   }
   traceStep("shell parts activated");
@@ -667,9 +666,9 @@ void ShellHost::windowShown(QsWindow* window, bool activate) {
       if (hooks.forceForeground) hooks.forceForeground(hwnd);
     }
   } catch (const std::exception& e) {
-    qWarning().noquote() << "wabar: stacking a window failed:" << e.what();
+    qWarning().noquote() << "waku: stacking a window failed:" << e.what();
   } catch (...) {
-    qWarning().noquote() << "wabar: stacking a window failed";
+    qWarning().noquote() << "waku: stacking a window failed";
   }
 }
 
@@ -729,9 +728,9 @@ void ShellHost::applyNative(Entry& entry) {
     }
     syncAppBar(entry);
   } catch (const std::exception& e) {
-    qWarning().noquote() << "wabar: the native look of a window failed:" << e.what();
+    qWarning().noquote() << "waku: the native look of a window failed:" << e.what();
   } catch (...) {
-    qWarning().noquote() << "wabar: the native look of a window failed";
+    qWarning().noquote() << "waku: the native look of a window failed";
   }
 }
 
@@ -742,9 +741,9 @@ void ShellHost::panelLayoutChanged(PanelWindow* panel) {
     try {
       syncAppBar(entry);
     } catch (const std::exception& e) {
-      qWarning().noquote() << "wabar: updating an app bar failed:" << e.what();
+      qWarning().noquote() << "waku: updating an app bar failed:" << e.what();
     } catch (...) {
-      qWarning().noquote() << "wabar: updating an app bar failed";
+      qWarning().noquote() << "waku: updating an app bar failed";
     }
   }
 }
@@ -763,7 +762,7 @@ void ShellHost::syncAppBar(Entry& entry) {
     return;
   }
   const int zone = panel->reservedZone();
-  wabar::host::AppBarRequest request;
+  waku::host::AppBarRequest request;
   request.hwnd = static_cast<quintptr>(panel->backingWindow()->winId());
   request.edge = *edge;
   request.thickness =
@@ -852,4 +851,4 @@ void ShellHost::watchPaths(const QStringList& paths) {
   watcher_.addPaths(paths);
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

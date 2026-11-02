@@ -9,7 +9,7 @@
 #include "features/control_center/power.h"
 #include "kernel/win32/windows_build.h"
 
-namespace wabar::control_center {
+namespace waku::control_center {
 namespace {
 
 constexpr wchar_t kPowerSchemesKey[] =
@@ -166,7 +166,7 @@ bool setPowerMode(const QUuid& guid) {
 
 bool isWindows10() {
   // Windows 10 and 11 both report major version 10; builds below 22000 are Windows 10.
-  const unsigned build = wabar::kernel::windowsBuild();
+  const unsigned build = waku::kernel::windowsBuild();
   return build != 0 && build < 22000;
 }
 
@@ -186,4 +186,4 @@ bool runShutdown(const QStringList& arguments) {
   return runHidden(QStringLiteral("shutdown ") + arguments.join(QLatin1Char(' ')));
 }
 
-}  // namespace wabar::control_center
+}  // namespace waku::control_center

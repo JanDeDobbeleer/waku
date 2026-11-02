@@ -1,44 +1,44 @@
-# wabar
+# waku
 
-wabar (/ˈwæbɑːr/, say "wab-bar": the a is the one in "actually"; "Windows, actuallee") is a Qt Quick
-top bar for Windows, configured in QML. The name stands for "Windows, actually. With a bar." and nods
-to Waybar, the bar for Wayland. It is written in lower case and plain ASCII in code and paths.
+waku (枠, "frame", say "wah-koo") is a Qt Quick top bar for Windows, configured in QML. The name is
+the Japanese word for a window frame. It began as a counterpart of Waybar, the bar for Wayland. It is
+written in lower case and plain ASCII in code and paths.
 
-- `wabar.exe` runs the bar; `wabarc.exe` controls a running one:
-  - `wabarc reload`, `wabarc status`, `wabarc quit`
-  - `wabarc wallpaper set <file-or-path>`: a full path to any image, or a file name in the
+- `waku.exe` runs the bar; `wakuc.exe` controls a running one:
+  - `wakuc reload`, `wakuc status`, `wakuc quit`
+  - `wakuc wallpaper set <file-or-path>`: a full path to any image, or a file name in the
     wallpaper folder (case does not matter, the extension may be left out; an ambiguous name is an
     error that lists the candidates)
-  - `wabarc wallpaper random`, `next`, `previous`: pick from the wallpaper folder (they wrap)
-  - `wabarc wallpaper gallery`: open or close the picker
-  - `wabarc call <target> <function> [args...]`: run a function of an `IpcHandler` declared in the
-    shell; `wabarc call` alone lists the targets
-  - `wabarc shortcut <name>`: fire the `GlobalShortcut` with that name; `wabarc shortcut list`
+  - `wakuc wallpaper random`, `next`, `previous`: pick from the wallpaper folder (they wrap)
+  - `wakuc wallpaper gallery`: open or close the picker
+  - `wakuc call <target> <function> [args...]`: run a function of an `IpcHandler` declared in the
+    shell; `wakuc call` alone lists the targets
+  - `wakuc shortcut <name>`: fire the `GlobalShortcut` with that name; `wakuc shortcut list`
     prints the names
-  - `wabarc surface list`, `wabarc surface show|hide|toggle|status <name>`: the shell windows that
+  - `wakuc surface list`, `wakuc surface show|hide|toggle|status <name>`: the shell windows that
     have a `name` (a launcher, an OSD); `show` and `toggle` let the bar take the keyboard focus
   - `--dry-run` after `wallpaper` (`set`, `random`, `next`, `previous`) plays the animation but does
     not set the wallpaper
 
   Exit code: 0 ok, 1 the bar answered an error, 2 no bar is running, 3 usage error. The wallpaper
   folder, hotkey and animation come from a `WallpaperSettings { ... }` next to the windows in `shell.qml`
-  (`import wabar.services as S`, then `S.WallpaperSettings`: the services share names with the
+  (`import waku.services as S`, then `S.WallpaperSettings`: the services share names with the
   widgets, so import them under an alias) or from a `Wallpapers` widget.
 - Config home: a folder with `shell.qml`, optionally `theme.qml` and your own widgets in `widgets/`.
-  Select it with `--config-home <dir>` or `WABAR_CONFIG_HOME`; without either, `wabar` and `wabarc`
+  Select it with `--config-home <dir>` or `WAKU_CONFIG_HOME`; without either, `waku` and `wakuc`
   use the `examples/config` of the checkout they were built from. A personal config
-  conventionally lives in `%USERPROFILE%\.config\wabar`; pass that folder with `--config-home`.
+  conventionally lives in `%USERPROFILE%\.config\waku`; pass that folder with `--config-home`.
   Edit and save: the shell reloads. A 1.x `bar.qml` without a `shell.qml` shows an error that
   names the rename (`docs/building.md`).
-- QML modules: `wabar` 2.0 (ShellRoot, Scope, PanelWindow, FloatingWindow, Panel, PanelLayout,
-  Variants, LazyLoader, Theme, ...), `wabar.widgets` (the built-in widgets), `wabar.services` (the C++
+- QML modules: `waku` 2.0 (ShellRoot, Scope, PanelWindow, FloatingWindow, Panel, PanelLayout,
+  Variants, LazyLoader, Theme, ...), `waku.widgets` (the built-in widgets), `waku.services` (the C++
   data sources), and the Quickshell compatibility modules (`Quickshell`, `Quickshell.Wayland`,
   `Quickshell.Io` and others: the same types under Quickshell's names, for ported shells; the list
   is in `docs/architecture.md`).
 - Panels dock to any of the four edges (`examples/sidebar` is a left one); a docked panel
   reports its edge as `QsWindow.window.dockEdge`.
-- `--hide-taskbar` hides the Windows taskbar while wabar runs and restores it on exit;
-  `wabarc taskbar hide|show|status` does the same at run time.
+- `--hide-taskbar` hides the Windows taskbar while waku runs and restores it on exit;
+  `wakuc taskbar hide|show|status` does the same at run time.
 - `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
   the built-in shell and ignores the config; `--font-engine=directwrite` honours variable-font axes.
 - komorebi's work area follows the OS after every screen or work area change (the engine nudges

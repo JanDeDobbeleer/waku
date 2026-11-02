@@ -7,7 +7,7 @@
 
 #include "features/desktop_state/desktop_probe.h"
 
-namespace wabar::desktop_state {
+namespace waku::desktop_state {
 
 // Keeps the display and the system awake while `enabled` is true (Quickshell.Wayland's
 // IdleInhibitor). Windows holds the state with SetThreadExecutionState(ES_CONTINUOUS |
@@ -42,4 +42,4 @@ class IdleInhibitor : public QObject {
   QPointer<QObject> window_;
 };
 
-}  // namespace wabar::desktop_state
+}  // namespace waku::desktop_state

@@ -6,7 +6,7 @@
 #include <QList>
 #include <QVariantList>
 
-namespace wabar::apps {
+namespace waku::apps {
 
 class DesktopEntry;
 
@@ -39,4 +39,4 @@ class AppsModel : public QAbstractListModel {
   QList<DesktopEntry*> entries_;
 };
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

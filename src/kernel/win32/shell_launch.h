@@ -5,7 +5,7 @@
 
 class QProcess;
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // utils/shell_utils.shell_open: ShellExecuteW ("open") on a detached thread so a slow launch never
 // blocks the GUI thread. Returns at once; failures are logged.
@@ -24,4 +24,4 @@ bool startDetachedHidden(const QString& program, const QStringList& args,
 // starts with one. Failures are logged.
 bool launchHiddenShell(const QString& commandLine);
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

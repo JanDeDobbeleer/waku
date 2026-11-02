@@ -7,7 +7,7 @@
 
 #include "features/tray/tray_host.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // How `createTrayHost` builds each kind of host; the defaults are the real ones, tests count
 // calls instead of touching Explorer.
@@ -53,4 +53,4 @@ class SystrayService : public QObject {
   bool refreshClaimed_ = false;
 };
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

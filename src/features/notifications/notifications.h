@@ -9,7 +9,7 @@
 
 #include "features/notifications/toast_xml.h"
 
-namespace wabar::notifications {
+namespace waku::notifications {
 
 // Receives source events. A source may call it from any thread.
 class NotificationSink {
@@ -95,4 +95,4 @@ class NotificationService final : public QObject {
   bool started_ = false;
 };
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

@@ -9,7 +9,7 @@
 
 #include "kernel/qt/hotkeys.h"
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 class FakeHotkeyBackend final : public HotkeyBackend {
  public:
@@ -56,4 +56,4 @@ class ScopedFakeHotkeys {
   FakeHotkeyBackend* backend = nullptr;
 };
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

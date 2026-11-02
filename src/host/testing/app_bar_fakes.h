@@ -10,7 +10,7 @@
 
 #include "host/app_bar.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 class FakeAppBarSystem final : public IAppBarSystem {
  public:
@@ -67,4 +67,4 @@ class FakeAppBarSystem final : public IAppBarSystem {
   }
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

@@ -10,7 +10,7 @@
 #include "features/github/github_icons.h"
 
 // Pure helpers of yasb:src/core/widgets/yasb/github.py and core/utils/time_utils.py.
-namespace wabar::github {
+namespace waku::github {
 
 // time_utils.get_relative_time(iso, short=False); "" for an empty or unparsable timestamp.
 QString relativeTime(const QString& isoTimestamp, const QDateTime& nowUtc);
@@ -32,4 +32,4 @@ QString truncateField(const QString& text, int maxSize);
 QStringList orderedCategories(const std::vector<GithubNotification>& notifications,
                               const std::vector<std::string>& configuredOrder);
 
-}  // namespace wabar::github
+}  // namespace waku::github

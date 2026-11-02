@@ -2,7 +2,7 @@
 
 #include <windows.h>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 void forceForegroundFocus(std::uintptr_t handle) {
   HWND hwnd = reinterpret_cast<HWND>(handle);
@@ -21,4 +21,4 @@ void forceForegroundFocus(std::uintptr_t handle) {
   }
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

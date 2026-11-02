@@ -7,7 +7,7 @@
 
 #include "kernel/qt/file_write.h"
 
-using wabar::kernel::writeFileAtomic;
+using waku::kernel::writeFileAtomic;
 
 namespace {
 

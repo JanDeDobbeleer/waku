@@ -2,7 +2,7 @@
 
 #include <QQmlEngine>
 
-namespace wabar::workspaces {
+namespace waku::workspaces {
 
 namespace {
 
@@ -76,8 +76,8 @@ Workspaces::Workspaces(Komorebi* komorebi, GlazeWM* glazewm, QObject* parent)
 }
 
 Workspaces* Workspaces::create(QQmlEngine* engine, QJSEngine*) {
-  auto* komorebi = engine->singletonInstance<Komorebi*>("wabar.services", "Komorebi");
-  auto* glazewm = engine->singletonInstance<GlazeWM*>("wabar.services", "GlazeWM");
+  auto* komorebi = engine->singletonInstance<Komorebi*>("waku.services", "Komorebi");
+  auto* glazewm = engine->singletonInstance<GlazeWM*>("waku.services", "GlazeWM");
   return new Workspaces(komorebi, glazewm);
 }
 
@@ -150,4 +150,4 @@ void Workspaces::step(qlonglong monitorHandle, int direction) {
   }
 }
 
-}  // namespace wabar::workspaces
+}  // namespace waku::workspaces

@@ -6,7 +6,7 @@
 #include "features/desktop_state/desktop_probe.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::desktop_state {
+namespace waku::desktop_state {
 namespace {
 
 // Documented Win32 only: GetKeyState, GetForegroundWindow, GetWindowThreadProcessId,
@@ -80,4 +80,4 @@ IdleInhibitCounter& systemIdleInhibitCounter() {
   return counter;
 }
 
-}  // namespace wabar::desktop_state
+}  // namespace waku::desktop_state

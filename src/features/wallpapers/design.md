@@ -1,12 +1,12 @@
-# wabar Wallpapers widget: design note
+# waku Wallpapers widget: design note
 
 Date: 2026-10-29. Reference: Python YASB `wallpapers` widget (the Qt Widgets port that preceded
-wabar is at the git tag `widgets-main-final`).
+waku is at the git tag `widgets-main-final`).
 
 ## What it does
 
 Python's wallpapers widget does four things: an optional bar button, a gallery of the wallpapers in
-`image_path`, a hotkey that toggles the gallery, and an animated change (`engine`). wabar ships the
+`image_path`, a hotkey that toggles the gallery, and an animated change (`engine`). waku ships the
 first three plus an optional random timer, and the animation (see "Transition engine").
 
 The user's config (`label ""`, `image_path ~/.config/wallpapers`, gallery `strip`, portrait, 240 px,
@@ -17,18 +17,18 @@ so the hotkey works.
 
 No wallpaper logic is re-implemented. The `Wallpapers` singleton wraps the UI-free classes:
 
-- `wabar::wallpapers::WallpaperManager`: set a wallpaper (`changeBackground(path)`), the random pick
+- `waku::wallpapers::WallpaperManager`: set a wallpaper (`changeBackground(path)`), the random pick
   (never the same twice), the auto-change timer, post-change commands.
 - `collectImageFiles` / `imagePathsFrom` (`wallpaper_files`): the folder scan in Explorer name order.
-- Thumbnails: the host's `image://thumb/` provider (`wabar.Thumbnails`, one memory LRU and one
+- Thumbnails: the host's `image://thumb/` provider (`waku.Thumbnails`, one memory LRU and one
   WebP disk cache for the run). The gallery builds its URLs with `Thumbnails.url(path, width)`.
   The feature's own PNG cache and `image://wallpaper` provider are gone; the first start removes
-  their folder `%LOCALAPPDATA%\wabar\wallpaper_thumbnails`, which nothing pruned.
+  their folder `%LOCALAPPDATA%\waku\wallpaper_thumbnails`, which nothing pruned.
 - `wallpapers::DesktopWallpaperBackend` (`desktop_wallpaper.h`, `IDesktopWallpaper`): reads the current wallpaper and, through
   the manager, sets it. Tests give both a fake.
 - `wallpapers::foregroundMonitorRect()` (`win32/window_focus.h`) for the `active` screen mode.
 
-## QML-facing API (`wabar.services.Wallpapers`, singleton)
+## QML-facing API (`waku.services.Wallpapers`, singleton)
 
 | Member | Meaning |
 |---|---|
@@ -62,7 +62,7 @@ Qt Quick window.
    share one id range, one filter and `--no-hotkeys`. A `GlobalShortcut` on the same combination
    shares the registration, and both fire. If another program owns the combination the table logs
    it as taken, the service logs a warning and the gallery stays reachable through the bar button
-   and `wabarc wallpaper gallery`. Never registered offscreen, in tests (they install the kernel's
+   and `wakuc wallpaper gallery`. Never registered offscreen, in tests (they install the kernel's
    fake backend), when `kernel::liveDesktop("hotkeys")` is false (`--no-hotkeys`), or when the
    service is unavailable (`kernel::liveDesktop("wallpapers")` false).
 4. **Thumbnails come from the host.** `image://thumb/` decodes on its own pool with a scaled
@@ -88,15 +88,15 @@ screen shows too. `setLockScreen` is on by default; a shell turns it off with
   `win32/lock_screen_win.cpp`, tests use `testing/fake_lock_screen.h`. Off the live desktop the
   service has no setter, so tests and offscreen runs never touch the lock screen.
 - **When.** After the wallpaper was set: `current` (read back from `IDesktopWallpaper`) must equal
-  the new path, so a failed set leaves the lock screen alone. Gallery clicks, `random()`, `wabarc
+  the new path, so a failed set leaves the lock screen alone. Gallery clicks, `random()`, `wakuc
   wallpaper ...`, the animated change and the auto-change timer (which calls `random()`) all
   qualify.
-- **Dry run.** `WABAR_WALLPAPER_DRYRUN=1` or `--dry-run` never calls the API; the service logs
+- **Dry run.** `WAKU_WALLPAPER_DRYRUN=1` or `--dry-run` never calls the API; the service logs
   `Wallpapers: lock screen (dry run): <path>`.
 - **Skipped files.** Missing files, videos (by extension) and animated GIF or WebP files: one info
   line, no call.
 - **Formats.** jpg, jpeg, png and bmp go as they are. Anything else (webp, tif, still gif) is
-  decoded on the worker and written to `%LOCALAPPDATA%\wabar\lock_screen.png` first.
+  decoded on the worker and written to `%LOCALAPPDATA%\waku\lock_screen.png` first.
 - **Thread.** One worker thread, started by the first call, MTA; only the latest path is set. The
   GUI thread never waits on WinRT. A failure is one warning line. Group policy or an unpackaged
   process can make the call fail; it then fails soft.
@@ -104,7 +104,7 @@ screen shows too. `setLockScreen` is on by default; a shell turns it off with
 ## Transition engine (Qt Quick)
 
 The animated change (`engine`, `animation`) is ported from the `QWidget` `WallpaperEngine` to Qt Quick,
-so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the Widgets build
+so the waku wallpaper widget needs no Qt Widgets code. The old engine is in the Widgets build
 (git tag `widgets-main-final`).
 
 - **Approach.** `qml/wallpaper_transition.*`: `WallpaperTransition` owns a frameless,
@@ -155,7 +155,7 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
   window once its opacity is not 1). The auto-change timer animates like the gallery and the
   right-click random, since it calls `random()`. Seams for tests: `WallpaperTransition::Platform`
   (settings, old image path, attach, decode, show) and `Wallpapers::Deps::transition`.
-- **Dry run.** `WABAR_WALLPAPER_DRYRUN=1` plays the transition and logs instead of calling
+- **Dry run.** `WAKU_WALLPAPER_DRYRUN=1` plays the transition and logs instead of calling
   `IDesktopWallpaper`, so it can be watched without changing the real wallpaper.
 
 ## Left out
@@ -165,30 +165,30 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
   other keybinding actions (`change_wallpaper`), `system` accent colour, tooltips.
 - Double-click to apply (Python): a single click applies, which is what the brief asks for.
 
-## No widget: `WallpaperSettings` and `wabarc wallpaper`
+## No widget: `WallpaperSettings` and `wakuc wallpaper`
 
-- **`WallpaperSettings`** (`wabar.services`, `qml/wallpaper_settings.*`) is a non-visual QML
+- **`WallpaperSettings`** (`waku.services`, `qml/wallpaper_settings.*`) is a non-visual QML
   type declared next to the windows: `ShellRoot { WallpaperSettings { imagePath: ...; hotkey: "alt+e";
   engine: true; animation: "split" } Panel { ... } }`. It has `imagePath`, `hotkey`, `hotkeyScreen`,
   `autoChange`, `engine`, `animation` and the gallery look (`imageWidth`, `orientation`,
   `cornerRadius`, `accentColor`). `ShellRoot` and `Scope` keep any object they declare; one that is not
   a window is a part.
-- **Activation.** `ShellHost::install` calls `activate()` (found by name, so `wabar` does not link
-  `wabar.services`) on every part once the config is live. Not in the validation pass: that runs in
+- **Activation.** `ShellHost::install` calls `activate()` (found by name, so `waku` does not link
+  `waku.services`) on every part once the config is live. Not in the validation pass: that runs in
   a throwaway engine and must not build a second service or grab the hotkey. `activate()` fetches
   the `Wallpapers` singleton of the engine (creating it), calls `configure` and `configureEngine`,
   and creates the gallery window (`WallpaperGallery.qml`, loaded by URL) as its child, so the hotkey
-  and `wabarc wallpaper gallery` work with no widget. Destroying the object (a reload, quitting)
+  and `wakuc wallpaper gallery` work with no widget. Destroying the object (a reload, quitting)
   switches the folder, hotkey and engine off; the next config's settings then switch them on.
 - **Sharing.** The singleton is shared with any `Wallpapers` widget; the last `configure` wins. Use
   one or the other: both create a gallery and two would open at once.
-- **CLI.** `wabarc wallpaper set|random|next|previous [--dry-run]` and `gallery`. The client sends one
+- **CLI.** `wakuc wallpaper set|random|next|previous [--dry-run]` and `gallery`. The client sends one
   line; arguments with spaces are quoted by doubling (`"a ""b"" c"`, no backslash escapes, so a
   Windows path is left alone: `joinCommand`/`splitCommand` in `control/control.h`). A relative
   path with a folder part is made absolute by the client; a bare name is looked up in the folder.
   `answerWallpaperCommand` (`wallpaper_command.h`) parses `wallpaper <verb> [--dry-run] [arg]` and
   calls the `WallpaperControl` interface of the same header, which `Wallpapers` implements and
-  tests fake. Neither `control` nor `host` knows the verb: `src/app/wabar/main.cpp` adds it to the
+  tests fake. Neither `control` nor `host` knows the verb: `src/app/waku/main.cpp` adds it to the
   bar's control handler as a `host::ControlCommands` entry. The service is looked up when a
   command arrives, so a bar without wallpaper settings builds it only on the first command.
 - **Answers.** `ok: <full path>` once the change has started (the animation may still run), `ok:
@@ -198,7 +198,7 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
   in the folder `next` is the first file and `previous` the last. `random` never picks the current
   one.
 - **Dry run.** `--dry-run` is a per-call argument of the service (`Wallpapers::Deps::dryRun` and
-  `WABAR_WALLPAPER_DRYRUN` still work): the animation plays and the setter is skipped. Because the
+  `WAKU_WALLPAPER_DRYRUN` still work): the animation plays and the setter is skipped. Because the
   wallpaper does not change, repeated `next --dry-run` shows the same file.
 - **Left out.** A `WallpaperSettings` removed from `shell.qml` is switched off by the reload that drops it.
 
@@ -206,4 +206,4 @@ so the wabar wallpaper widget needs no Qt Widgets code. The old engine is in the
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `wabar.services.Wallpapers` (`src/features/wallpapers/qml/wallpapers_service.{h,cpp}`): the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `wabar` run, shared by every Wallpapers widget; created by the QML engine on first use and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles` and `DesktopWallpaperBackend` (animated `engine` off); thumbnails are the host's `image://thumb/`. No thread of its own: the hotkey is a handle in `kernel::Hotkeys` (GUI thread), removed in the destructor. Inert, no hotkey, when `kernel::liveDesktop("wallpapers")` is false; no hotkey either when `kernel::liveDesktop("hotkeys")` is false (`--no-hotkeys`).
+- `waku.services.Wallpapers` (`src/features/wallpapers/qml/wallpapers_service.{h,cpp}`): the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `waku` run, shared by every Wallpapers widget; created by the QML engine on first use and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles` and `DesktopWallpaperBackend` (animated `engine` off); thumbnails are the host's `image://thumb/`. No thread of its own: the hotkey is a handle in `kernel::Hotkeys` (GUI thread), removed in the destructor. Inert, no hotkey, when `kernel::liveDesktop("wallpapers")` is false; no hotkey either when `kernel::liveDesktop("hotkeys")` is false (`--no-hotkeys`).

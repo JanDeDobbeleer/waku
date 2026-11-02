@@ -8,7 +8,7 @@
 
 #include "features/wallpapers/win32/workerw.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // How large a wallpaper has to be decoded for the transition. The layout scales every image to the
 // screen anyway, so the full-size picture (33 MB for 4K) never needs to exist.
@@ -29,4 +29,4 @@ QSize decodeSize(QSize image, const DecodeBudget& budget);
 // image means the file could not be read.
 QImage decodeWallpaper(const QString& path, const DecodeBudget& budget, bool autoTransform);
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

@@ -5,7 +5,7 @@
 
 #include "features/workspaces/komorebi_state.h"
 
-namespace wabar::workspaces {
+namespace waku::workspaces {
 
 namespace kmb = komorebi;
 
@@ -171,4 +171,4 @@ QVariantMap Komorebi::monitorAt(int monitorIndex) const {
   return {};
 }
 
-}  // namespace wabar::workspaces
+}  // namespace waku::workspaces

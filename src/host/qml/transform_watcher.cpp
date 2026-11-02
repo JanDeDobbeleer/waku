@@ -3,7 +3,7 @@
 #include <QSet>
 #include <utility>
 
-namespace wabar::host {
+namespace waku::host {
 
 void TransformWatcher::setA(QQuickItem* item) {
   if (a_ == item) return;
@@ -67,4 +67,4 @@ void TransformWatcher::rebuild() {
   for (QQuickItem* item = b_; item && item != common; item = item->parentItem()) listen(item);
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

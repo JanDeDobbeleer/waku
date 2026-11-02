@@ -11,14 +11,14 @@
 
 #include "kernel/win32/shell_icons.h"
 
-namespace wabar::apps {
+namespace waku::apps {
 
 // The image URL of an app: image://appicon/<id>, the id percent-encoded.
 QString appIconUrl(const QString& id);
 
 // Reads the icon of a shell item (a path or shell:AppsFolder\<aumid>) at `size` pixels, off the GUI
 // thread. Real: kernel::shellItemIcon, which joins the worker thread to COM for the call.
-using IconLoader = std::function<wabar::kernel::IconBitmap(const QString& iconSource, int size)>;
+using IconLoader = std::function<waku::kernel::IconBitmap(const QString& iconSource, int size)>;
 IconLoader realIconLoader();
 
 // App id -> what the shell reads its icon from. The service replaces the contents after every
@@ -56,4 +56,4 @@ class AppIconProvider : public QQuickAsyncImageProvider {
   QThreadPool pool_;
 };
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

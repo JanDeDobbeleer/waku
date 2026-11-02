@@ -39,7 +39,7 @@ bool clickThrough(Harness& h) {
 
 TEST(RegionMaskTest, WithoutAMaskTheWholeWindowTakesInput) {
   Harness h;
-  h.start(maskShell(QStringLiteral("import wabar"), QString()));
+  h.start(maskShell(QStringLiteral("import waku"), QString()));
   ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
   settle();
   QsWindow* window = h.shellWindow();
@@ -50,7 +50,7 @@ TEST(RegionMaskTest, WithoutAMaskTheWholeWindowTakesInput) {
 
 TEST(RegionMaskTest, AnEmptyRegionMakesTheWindowFullyClickThrough) {
   Harness h;
-  h.start(maskShell(QStringLiteral("import wabar"), QStringLiteral("mask: Region {}")));
+  h.start(maskShell(QStringLiteral("import waku"), QStringLiteral("mask: Region {}")));
   ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
   settle();
   QsWindow* window = h.shellWindow();
@@ -111,7 +111,7 @@ TEST(RegionMaskTest, ACaelestiaStyleMaskLoadsAndEvaluates) {
 
 TEST(RegionMaskTest, NestedAndItemRegionsFollowTheItem) {
   Harness h;
-  h.start(maskShell(QStringLiteral("import wabar"), QStringLiteral(R"(
+  h.start(maskShell(QStringLiteral("import waku"), QStringLiteral(R"(
     mask: Region {
         Region { x: 0; y: 100; width: 100; height: 100 }
         Region { item: box }
@@ -140,7 +140,7 @@ TEST(RegionMaskTest, NestedAndItemRegionsFollowTheItem) {
 TEST(RegionMaskTest, AnItemRegionIgnoresItsOwnRectangle) {
   Harness h;
   h.start(
-      maskShell(QStringLiteral("import wabar"),
+      maskShell(QStringLiteral("import waku"),
                 QStringLiteral("mask: Region { x: 0; y: 300; width: 50; height: 50; item: box }")));
   ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
   settle();
@@ -152,7 +152,7 @@ TEST(RegionMaskTest, AnItemRegionIgnoresItsOwnRectangle) {
 
 TEST(RegionMaskTest, HidingTheWindowStopsThePollAndShowingStartsIt) {
   Harness h;
-  h.start(maskShell(QStringLiteral("import wabar"),
+  h.start(maskShell(QStringLiteral("import waku"),
                     QStringLiteral("mask: Region { x: 0; y: 0; width: 50; height: 50 }")));
   ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
   settle();
@@ -167,7 +167,7 @@ TEST(RegionMaskTest, HidingTheWindowStopsThePollAndShowingStartsIt) {
 
 TEST(RegionMaskTest, ClearingTheMaskRestoresInput) {
   Harness h;
-  h.start(maskShell(QStringLiteral("import wabar"),
+  h.start(maskShell(QStringLiteral("import waku"),
                     QStringLiteral("mask: Region { x: 0; y: 0; width: 50; height: 50 }")));
   ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
   settle();
@@ -184,7 +184,7 @@ TEST(RegionMaskTest, WithoutACursorHookMasksAreInert) {
   // What a headless host (offscreen, no live desktop) looks like: no cursor source.
   Harness h;
   h.native.cursorHook = false;
-  h.start(maskShell(QStringLiteral("import wabar"), QStringLiteral("mask: Region {}")));
+  h.start(maskShell(QStringLiteral("import waku"), QStringLiteral("mask: Region {}")));
   ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
   settle();
   EXPECT_NE(h.shellWindow()->maskNode(), std::nullopt);
@@ -194,7 +194,7 @@ TEST(RegionMaskTest, WithoutACursorHookMasksAreInert) {
 
 TEST(RegionMaskTest, ARealPollTickFlipsTheWindow) {
   Harness h;
-  h.start(maskShell(QStringLiteral("import wabar"),
+  h.start(maskShell(QStringLiteral("import waku"),
                     QStringLiteral("mask: Region { x: 0; y: 0; width: 50; height: 50 }")));
   ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
   settle();
@@ -207,7 +207,7 @@ TEST(RegionMaskTest, ARealPollTickFlipsTheWindow) {
 
 TEST(RegionMaskTest, AChangedRegionIsTestedAgainUnderARestingCursor) {
   Harness h;
-  h.start(maskShell(QStringLiteral("import wabar"), QStringLiteral(R"(
+  h.start(maskShell(QStringLiteral("import waku"), QStringLiteral(R"(
     property alias inner: inner
     mask: Region { x: 0; y: 0; width: 50; height: 50; Region { id: inner; x: 0; y: 0; width: 1; height: 1 } }
 )")));
@@ -268,7 +268,7 @@ TEST(RegionMaskTest, EachRegionPropertyHasItsOwnNotifySignal) {
 TEST(RegionMaskTest, ABindingThatReadsAnotherRegionPropertyDoesNotLoop) {
   WarningCapture capture;
   Harness h;
-  h.start(maskShell(QStringLiteral("import wabar"), QStringLiteral(R"(
+  h.start(maskShell(QStringLiteral("import waku"), QStringLiteral(R"(
     property int w: 120
     property int h: 80
     mask: Region {
@@ -303,7 +303,7 @@ TEST(RegionMaskTest, ABindingThatReadsAnotherRegionPropertyDoesNotLoop) {
 
 TEST(RegionMaskTest, EveryPropertyChangeReachesTheMaskPoller) {
   Harness h;
-  h.start(maskShell(QStringLiteral("import wabar"), QStringLiteral(R"(
+  h.start(maskShell(QStringLiteral("import waku"), QStringLiteral(R"(
     property alias inner: inner
     mask: Region { id: inner; x: 0; y: 0; width: 50; height: 50 }
 )")));

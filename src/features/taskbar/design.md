@@ -1,7 +1,7 @@
-# wabar taskbar: design note
+# waku taskbar: design note
 
 Status: built. Sits next to the Tray widget (`src/features/tray/design.md`). Reference: Python YASB
-`yasb/taskbar*` (branch `local/build`); the Qt Widgets taskbar that preceded wabar is at the git tag
+`yasb/taskbar*` (branch `local/build`); the Qt Widgets taskbar that preceded waku is at the git tag
 `widgets-main-final`.
 
 ## What the widget does
@@ -22,7 +22,7 @@ a window with no id never groups.
 - Right click: a menu in a `PopupWindow`: close window, close all windows (groups only), pin to or
   unpin from the taskbar. A pinned app that does not run gets "Open app" and "Unpin".
 - Hover: the window title as a tooltip (`tooltip`, off by default as in Python).
-- Pinned apps are `%LOCALAPPDATA%\wabar\taskbar_pinned.json` (copied once from `YASB`), read and written
+- Pinned apps are `%LOCALAPPDATA%\waku\taskbar_pinned.json` (copied once from `YASB`), read and written
   through `PinStore`.
 
 Options (Python names, camel case): `iconSize`, `tooltip`, `showOnlyVisible`, `strictFiltering`,
@@ -38,10 +38,10 @@ Options (Python names, camel case): `iconSize`, `tooltip`, `showOnlyVisible`, `s
 | `PinSupport` (pin metadata, launch, pinned icons) | `pin_support.h`, `win32/pin_support_win.cpp` | root, `win32/` | tests substitute a fake |
 | `PinStore` (taskbar_pinned.json, change signal) | `pin_store.*` | root (no UI) | as is |
 | `TaskbarIcons` (icon loader on a worker thread, cache), `loadPinnedIcon` | `taskbar_icons.*` | root (no UI) | as is |
-| `TaskbarService` (singleton) | `qml/taskbar_service.*` | `qml/` (`wabar.services`) | tracker + pin store + icons + the focus/close/pin actions |
-| `TaskbarModel` (per widget) | `qml/taskbar_model.*` | `qml/` (`wabar.services`) | filters and groups the service's windows into button rows |
-| `WindowIconProvider` | `qml/taskbar_service.*` | `qml/` (`wabar.services`) | `image://windowicon/<key>/<rev>` |
-| `Taskbar.qml` | `qml/` | `qml/` (`wabar.widgets`) | the widget |
+| `TaskbarService` (singleton) | `qml/taskbar_service.*` | `qml/` (`waku.services`) | tracker + pin store + icons + the focus/close/pin actions |
+| `TaskbarModel` (per widget) | `qml/taskbar_model.*` | `qml/` (`waku.services`) | filters and groups the service's windows into button rows |
+| `WindowIconProvider` | `qml/taskbar_service.*` | `qml/` (`waku.services`) | `image://windowicon/<key>/<rev>` |
+| `Taskbar.qml` | `qml/` | `qml/` (`waku.widgets`) | the widget |
 
 The classes of the Widgets build (`TaskbarWidget`, `AppButton`, `TaskbarMenu`, `PreviewManager`) were
 QWidgets and are not used; their logic (filter, group key, `bringToForeground`, pin/unpin) is ported
@@ -108,7 +108,7 @@ No new Windows API. It does not touch the tracker, so it does not toggle or mini
   the Recycle Bin pin, Explorer quick-access and "New window" jump list entries, "End task",
   keybindings and `on_*` callbacks, `ignore_apps` as one nested object (three flat lists
   instead).
-- A `--no-taskbar` switch: `src/app/wabar/main.cpp` would call
+- A `--no-taskbar` switch: `src/app/waku/main.cpp` would call
   `kernel::setCapabilityDisabled("taskbar", true)` and the service would ask
   `kernel::liveDesktop("taskbar")`.
 - Live check against real windows. Tests run on fakes only.
@@ -117,6 +117,6 @@ No new Windows API. It does not touch the tracker, so it does not toggle or mini
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `wabar.services.WindowControl` (`src/features/taskbar/qml/window_control.{h,cpp}`): `activate(hwnd)` (restore when minimised, then `kernel::forceForegroundFocus`; the taskbar button flashes and the call returns false when the foreground lock refuses), `foreground()` and `isWindow(hwnd)` for a shell that gets HWNDs from elsewhere (komorebi state) and has no tracker rows. A singleton only because QML needs an object to call; it holds no state, a thin call into Win32 through a `WindowControlBackend`. GUI thread only, no thread, no timer. Inert (false, 0) when `kernel::liveDesktop()` is false
+- `waku.services.WindowControl` (`src/features/taskbar/qml/window_control.{h,cpp}`): `activate(hwnd)` (restore when minimised, then `kernel::forceForegroundFocus`; the taskbar button flashes and the call returns false when the foreground lock refuses), `foreground()` and `isWindow(hwnd)` for a shell that gets HWNDs from elsewhere (komorebi state) and has no tracker rows. A singleton only because QML needs an object to call; it holds no state, a thin call into Win32 through a `WindowControlBackend`. GUI thread only, no thread, no timer. Inert (false, 0) when `kernel::liveDesktop()` is false
 
-- `wabar.services.TaskbarService` (`src/features/taskbar/qml/taskbar_service.{h,cpp}`): the one window tracker (`wabar::taskbar::WindowTracker`: shell hook and WinEvent hooks), pinned-apps store (`taskbar_pinned.json`) and window-icon cache of a `wabar` run, shared by every Taskbar widget; created by the QML engine on first use and destroyed with it (the tracker stops, the icon loader's one-thread pool is joined). Registers `image://windowicon`. The tracker starts when the first Taskbar widget hands over its bar window; it never starts on the offscreen platform.
+- `waku.services.TaskbarService` (`src/features/taskbar/qml/taskbar_service.{h,cpp}`): the one window tracker (`waku::taskbar::WindowTracker`: shell hook and WinEvent hooks), pinned-apps store (`taskbar_pinned.json`) and window-icon cache of a `waku` run, shared by every Taskbar widget; created by the QML engine on first use and destroyed with it (the tracker stops, the icon loader's one-thread pool is joined). Registers `image://windowicon`. The tracker starts when the first Taskbar widget hands over its bar window; it never starts on the offscreen platform.

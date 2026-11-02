@@ -10,7 +10,7 @@
 #include "kernel/win32/com_scope.h"
 #include "kernel/win32/environment.h"
 
-namespace wabar::apps {
+namespace waku::apps {
 namespace {
 
 using kernel::expandEnvironment;
@@ -78,4 +78,4 @@ QStringList startMenuFolders() {
   return folders;
 }
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

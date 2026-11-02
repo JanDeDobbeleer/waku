@@ -18,7 +18,7 @@
 #undef stdout
 #undef stderr
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // Quickshell.Io Process: a tracked child process. Setting `running` to true starts `command` (no
 // shell, no console window; before the command is set it starts when the command arrives); false
@@ -44,9 +44,9 @@ class QsProcess : public QObject {
       bool stdinEnabled READ stdinEnabled WRITE setStdinEnabled NOTIFY stdinEnabledChanged FINAL)
   Q_PROPERTY(QVariant processId READ processId NOTIFY processIdChanged FINAL)
   Q_PROPERTY(QVariant pid READ processId NOTIFY processIdChanged FINAL)
-  Q_PROPERTY(wabar::quickshell_io::DataStreamParser* stdout READ stdoutParser WRITE setStdoutParser
+  Q_PROPERTY(waku::quickshell_io::DataStreamParser* stdout READ stdoutParser WRITE setStdoutParser
                  NOTIFY stdoutChanged FINAL)
-  Q_PROPERTY(wabar::quickshell_io::DataStreamParser* stderr READ stderrParser WRITE setStderrParser
+  Q_PROPERTY(waku::quickshell_io::DataStreamParser* stderr READ stderrParser WRITE setStderrParser
                  NOTIFY stderrChanged FINAL)
 
  public:
@@ -94,7 +94,7 @@ class QsProcess : public QObject {
   void stdoutChanged();
   void stderrChanged();
   void started();
-  void exited(int exitCode, wabar::quickshell_io::QsProcess::ExitStatus exitStatus);
+  void exited(int exitCode, waku::quickshell_io::QsProcess::ExitStatus exitStatus);
 
  private:
   // Starts the process when `running` was asked for, none runs and there is a command.
@@ -123,4 +123,4 @@ class QsProcess : public QObject {
   int killSignal_ = 0;
 };
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

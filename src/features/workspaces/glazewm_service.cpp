@@ -10,7 +10,7 @@
 #include "features/workspaces/glazewm.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::workspaces::glazewm {
+namespace waku::workspaces::glazewm {
 namespace {
 
 struct TopicMessages {
@@ -254,4 +254,4 @@ void GlazewmService::emitBindingMode() {
                    {QStringLiteral("bindingMode"), QVariant::fromValue(lastBindingMode_)}});
 }
 
-}  // namespace wabar::workspaces::glazewm
+}  // namespace waku::workspaces::glazewm

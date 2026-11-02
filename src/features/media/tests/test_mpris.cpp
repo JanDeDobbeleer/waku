@@ -12,8 +12,8 @@
 #include "features/media/qml/mpris.h"
 #include "features/media/testing/fake_media_source.h"
 
-using namespace wabar::media;
-using namespace wabar::media::testing;
+using namespace waku::media;
+using namespace waku::media::testing;
 
 namespace {
 
@@ -208,7 +208,7 @@ TEST(Mpris, IsUsableFromQml) {
   QQmlComponent component(&engine);
   component.setData(R"(
 import QtQml
-import wabar.services
+import waku.services
 QtObject {
     readonly property list<MprisPlayer> list: mpris.players.values
     readonly property MprisPlayer active: list.find(p => p.identity === "b.exe name") ?? list[0] ?? null

@@ -3,7 +3,7 @@
 #include <QString>
 #include <QStringList>
 
-// `--font-engine=gdi|directwrite` of wabar.exe. The font engine is chosen by the platform plugin
+// `--font-engine=gdi|directwrite` of waku.exe. The font engine is chosen by the platform plugin
 // string, which Qt reads when the QGuiApplication is built, before the command line parser runs,
 // so the option is read from the raw arguments here.
 //
@@ -12,7 +12,7 @@
 //   renders at its default instance.
 // directwrite: Qt's default engine. It honours variable-font axes and costs about 2 MB more
 //   working set (it maps every installed font at start-up). A shell that needs axes opts in.
-namespace wabar::app {
+namespace waku::app {
 
 enum class FontEngine { Gdi, DirectWrite };
 
@@ -63,4 +63,4 @@ inline QString platformSpec(FontEngine engine) {
                                            : QStringLiteral("windows:fontengine=gdi");
 }
 
-}  // namespace wabar::app
+}  // namespace waku::app

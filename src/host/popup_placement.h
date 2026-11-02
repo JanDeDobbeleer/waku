@@ -7,7 +7,7 @@
 
 #include "host/app_bar.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 // Which side of the anchor a popup prefers. A top panel opens Below, a bottom panel Above, a left
 // panel Right and a right panel Left.
@@ -33,4 +33,4 @@ PopupEdge popupEdgeForDock(std::optional<AppBarEdge> edge);
 // the panel's x range.
 QRectF panelAnchorRect(const QRectF& item, const QRectF& panel, bool vertical);
 
-}  // namespace wabar::host
+}  // namespace waku::host

@@ -11,14 +11,14 @@
 #include "features/quickshell_io/command_spec.h"
 #include "features/quickshell_io/qml/clipboard_text.h"
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // The window-free members of Quickshell's `Quickshell` singleton: env, execDetached, the path
 // helpers, clipboardText, processId, iconPath, reload and the version checks. Registered as
-// `QuickshellSingleton` in wabar.services (and so in Quickshell.Io through its import).
+// `QuickshellSingleton` in waku.services (and so in Quickshell.Io through its import).
 //
 // The QML name `Quickshell` is src/quickshell/core/qml/Quickshell.qml: it adds `screens` and
-// forwards the rest to this class. The composition root (src/app/wabar/quickshell_glue.h) connects
+// forwards the rest to this class. The composition root (src/app/waku/quickshell_glue.h) connects
 // reloadRequested(bool) to the shell host's reload, calls setShellDir() with the config home and
 // emits reloadCompleted() / reloadFailed().
 //
@@ -47,8 +47,8 @@ class QuickshellSingleton : public QObject {
     QString state;
     QString cache;
   };
-  // The real directories: shell = $WABAR_CONFIG_HOME or <home>\.config\wabar; data, state and
-  // cache = %LOCALAPPDATA%\wabar\{data,state,cache}. Nothing is created.
+  // The real directories: shell = $WAKU_CONFIG_HOME or <home>\.config\waku; data, state and
+  // cache = %LOCALAPPDATA%\waku\{data,state,cache}. Nothing is created.
   static Dirs defaultDirs();
 
   using Launcher = std::function<bool(const CommandSpec&)>;
@@ -82,7 +82,7 @@ class QuickshellSingleton : public QObject {
   Q_INVOKABLE QString dataPath(const QString& path) const;
   Q_INVOKABLE QString statePath(const QString& path) const;
   Q_INVOKABLE QString cachePath(const QString& path) const;
-  // STUB: wabar has no icon-theme provider yet (TODO: an image://icon/ provider over the Start
+  // STUB: waku has no icon-theme provider yet (TODO: an image://icon/ provider over the Start
   // menu and shell icons). Returns an image://icon/<name> URL when the Qt theme has the icon, a
   // file path or URL as is, "" when `checkOrFallback` is true and the icon is unknown, the fallback
   // when it is a string, and the name otherwise.
@@ -133,4 +133,4 @@ class ElapsedTimer : public QObject {
   QElapsedTimer timer_;
 };
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

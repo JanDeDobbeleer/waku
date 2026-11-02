@@ -5,7 +5,7 @@
 
 #include "kernel/win32/shell_launch.h"
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 namespace {
 
@@ -18,10 +18,10 @@ bool startDetached(const QString& program, const QStringList& arguments) {
 }
 
 QString defaultConfigHome() {
-  if (const QString fromEnv = qEnvironmentVariable("WABAR_CONFIG_HOME"); !fromEnv.isEmpty()) {
+  if (const QString fromEnv = qEnvironmentVariable("WAKU_CONFIG_HOME"); !fromEnv.isEmpty()) {
     return QDir::toNativeSeparators(fromEnv);
   }
-  return QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/.config/wabar"));
+  return QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/.config/waku"));
 }
 
 }  // namespace
@@ -53,4 +53,4 @@ void Shell::open(const QString& target) {
 
 QString Shell::env(const QString& name) const { return qEnvironmentVariable(qPrintable(name)); }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

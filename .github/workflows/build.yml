@@ -80,7 +80,7 @@ jobs:
       - name: Test
         run: ctest --preset ${{ matrix.preset }}
 
-      # The portable folder: wabar.exe, wabarc.exe, WabarTrayHook*.dll, the Qt runtime, modules/, examples/.
+      # The portable folder: waku.exe, wakuc.exe, WakuTrayHook*.dll, the Qt runtime, modules/, examples/.
       - name: Deploy
         if: matrix.preset != 'arm64-debug'
         run: cmake --build --preset ${{ matrix.preset }} --target deploy
@@ -88,5 +88,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: matrix.preset != 'arm64-debug'
         with:
-          name: wabar-${{ matrix.preset }}
-          path: dist/wabar
+          name: waku-${{ matrix.preset }}
+          path: dist/waku

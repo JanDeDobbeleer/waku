@@ -5,7 +5,7 @@
 #include <functional>
 #include <vector>
 
-namespace wabar::apps {
+namespace waku::apps {
 
 enum class AppKind {
   Shortcut,  // a .lnk file under a Start Menu folder
@@ -74,4 +74,4 @@ QStringList commandFor(const AppRecord& record);
 // The target's file name without extension ("code" for "C:\...\Code.exe"), "" without a target.
 QString startupClassFor(const AppRecord& record);
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

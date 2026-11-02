@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace wabar::github {
+namespace waku::github {
 
 // The icon strings the notification list needs, one per notification kind. The defaults are the
 // Nerd Font glyphs of Python YASB's GithubWidget.
@@ -20,4 +20,4 @@ struct GithubIcons {
   std::string default_ = "\xEE\xAA\x84";             // U+EA84
 };
 
-}  // namespace wabar::github
+}  // namespace waku::github

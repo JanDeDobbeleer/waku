@@ -12,7 +12,7 @@
 #include "features/desktop_state/qml/idle_inhibitor.h"
 #include "features/desktop_state/testing/fake_desktop_probe.h"
 
-using namespace wabar::desktop_state;
+using namespace waku::desktop_state;
 
 namespace {
 
@@ -177,7 +177,7 @@ TEST(IdleInhibitor, IsUsableFromQmlWithTheWindowProperty) {
   QQmlComponent component(&engine);
   component.setData(R"(
 import QtQml
-import wabar.services
+import waku.services
 QtObject {
     property QtObject inhibitor: IdleInhibitor {
         enabled: false

@@ -22,7 +22,7 @@
 #include "kernel/qt/gui_post.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::network {
+namespace waku::network {
 namespace {
 
 constexpr int kHangUpWaitMs = 4000;
@@ -199,4 +199,4 @@ std::unique_ptr<VpnBackend> createSystemVpnBackend() {
   return std::make_unique<SystemVpnBackend>();
 }
 
-}  // namespace wabar::network
+}  // namespace waku::network

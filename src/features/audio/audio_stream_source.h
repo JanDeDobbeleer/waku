@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace wabar::audio {
+namespace waku::audio {
 
 // One audio session of the default output device (an app's stream in the Windows volume mixer).
 struct AudioStreamInfo {
@@ -43,4 +43,4 @@ class AudioStreamSource : public QObject {
 // Core Audio implementation. Never null; without an endpoint `streams()` is empty.
 AudioStreamSource* createSystemAudioStreams(QObject* parent = nullptr);
 
-}  // namespace wabar::audio
+}  // namespace waku::audio

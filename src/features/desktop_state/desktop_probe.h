@@ -4,7 +4,7 @@
 #include <memory>
 #include <optional>
 
-namespace wabar::desktop_state {
+namespace waku::desktop_state {
 
 struct LockKeys {
   bool caps = false;
@@ -73,4 +73,4 @@ class IdleInhibitCounter {
 // The counter of the process, over the system probe. Without a live desktop it has no probe.
 IdleInhibitCounter& systemIdleInhibitCounter();
 
-}  // namespace wabar::desktop_state
+}  // namespace waku::desktop_state

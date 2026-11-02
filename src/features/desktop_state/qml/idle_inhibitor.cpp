@@ -1,6 +1,6 @@
 #include "features/desktop_state/qml/idle_inhibitor.h"
 
-namespace wabar::desktop_state {
+namespace waku::desktop_state {
 
 IdleInhibitor::IdleInhibitor(QObject* parent)
     : IdleInhibitor(&systemIdleInhibitCounter(), parent) {}
@@ -29,4 +29,4 @@ void IdleInhibitor::setWindow(QObject* window) {
   emit windowChanged();
 }
 
-}  // namespace wabar::desktop_state
+}  // namespace waku::desktop_state

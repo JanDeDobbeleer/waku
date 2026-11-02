@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 namespace {
 
 struct ProcessEntry {
@@ -290,4 +290,4 @@ bool activateAppByAumid(const QString& aumid) {
   return true;
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

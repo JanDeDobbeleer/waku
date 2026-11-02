@@ -2,7 +2,7 @@
 # pdh: Performance Data Helper counters (CPU, swap); psapi: GetPerformanceInfo (cache size);
 # setupapi: battery device enumeration; dxgi: GPU adapter names and dedicated memory;
 # gdi32: D3DKMT adapter performance data (GPU temperature).
-wabar_feature(NAME system_stats
+waku_feature(NAME system_stats
   SOURCES
     gpu_engines.cpp
     gpu_engines.h

@@ -7,7 +7,7 @@
 
 #include "kernel/qt/file_write.h"
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 namespace {
 
@@ -59,4 +59,4 @@ FileAccess& fileAccess() {
 
 void setFileAccessForTests(FileAccess* fake) { g_override.store(fake); }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

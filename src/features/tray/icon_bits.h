@@ -6,7 +6,7 @@
 
 #include "features/tray/tray_types.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // The pixel conversions of an icon read with GetDIBits, kept free of Windows types so tests can
 // feed them hand-made bitmaps. Every buffer is top-down, 4 bytes per pixel.
@@ -29,4 +29,4 @@ QByteArray monochromeIconToRgba(const QByteArray& maskBgra, int width, int heigh
 // iconWidth x iconHeight, or every pixel fully transparent. nullopt when it can.
 std::optional<QString> trayIconPixelsProblem(const TrayIconData& data);
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

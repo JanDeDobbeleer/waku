@@ -7,7 +7,7 @@
 
 #include "features/tray/tray_types.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 enum class HostArch { Unknown, X64, Arm64 };
 
@@ -16,8 +16,8 @@ HostArch hostArch();
 // True for a process running under WOW64 or Prism emulation (an x64 build on an ARM64 host).
 bool runningUnderEmulation();
 
-// File name of the tray hook DLL for the host architecture ("WabarTrayHook.dll" on x64,
-// "WabarTrayHook_arm64.dll" on ARM64); empty when the architecture is unsupported.
+// File name of the tray hook DLL for the host architecture ("WakuTrayHook.dll" on x64,
+// "WakuTrayHook_arm64.dll" on ARM64); empty when the architecture is unsupported.
 QString trayHookDllName();
 
 // Full path of the executable that owns `hwnd`; empty when it cannot be opened.
@@ -39,4 +39,4 @@ bool anyMouseButtonDown();
 // false and sets data.iconError when the handle is stale, unreadable or larger than 256 px.
 bool extractIconRgba(TrayIconData& data);
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

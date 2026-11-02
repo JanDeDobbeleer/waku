@@ -4,7 +4,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::audio {
+namespace waku::audio {
 
 AudioEndpoints* systemAudioIfLive(AudioFlow flow) {
   return kernel::liveDesktop(QStringLiteral("audio")) ? createSystemAudio(flow) : nullptr;
@@ -53,4 +53,4 @@ bool AudioBase::setDefaultDevice(const QString& id) {
   return endpoints_ && endpoints_->setDefaultDevice(id);
 }
 
-}  // namespace wabar::audio
+}  // namespace waku::audio

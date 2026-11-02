@@ -7,9 +7,9 @@
 #include <QString>
 #include <QStringList>
 
-namespace wabar::host {
+namespace waku::host {
 
-// Quickshell's `IpcHandler`: functions declared in QML that `wabarc call` runs.
+// Quickshell's `IpcHandler`: functions declared in QML that `wakuc call` runs.
 //
 //     IpcHandler {
 //         target: "launcher"
@@ -17,9 +17,9 @@ namespace wabar::host {
 //         function setSize(w: int, h: int): void { size = Qt.size(w, h) }
 //     }
 //
-//     wabarc call launcher open "term"
+//     wakuc call launcher open "term"
 //
-//   target   the name `wabarc call` addresses; required, unique (the newest enabled handler wins,
+//   target   the name `wakuc call` addresses; required, unique (the newest enabled handler wins,
 //            so a reload's new shell answers while the old one is still alive)
 //   enabled  false: the handler is not reachable (default true)
 //
@@ -53,10 +53,10 @@ class IpcHandler : public QObject, public QQmlParserStatus {
   // The functions of this handler as "name(type arg, ...): type".
   QStringList functionSignatures() const;
 
-  // `wabarc call`: words are target, function and the arguments. The one-line answer is the
+  // `wakuc call`: words are target, function and the arguments. The one-line answer is the
   // return value ("ok" for void), or "error: <text>".
   static QString callByName(const QStringList& words);
-  // The reachable targets and their functions, one string, for `wabarc call` without arguments.
+  // The reachable targets and their functions, one string, for `wakuc call` without arguments.
   static QString list();
 
  signals:
@@ -71,4 +71,4 @@ class IpcHandler : public QObject, public QQmlParserStatus {
   bool complete_ = false;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

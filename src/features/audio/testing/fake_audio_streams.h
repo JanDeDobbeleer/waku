@@ -5,7 +5,7 @@
 
 #include "features/audio/audio_stream_source.h"
 
-namespace wabar::audio {
+namespace waku::audio {
 
 // Test double of AudioStreamSource: a list tests edit, no Core Audio.
 class FakeStreams final : public AudioStreamSource {
@@ -43,4 +43,4 @@ class FakeStreams final : public AudioStreamSource {
   int* stopCounter = nullptr;
 };
 
-}  // namespace wabar::audio
+}  // namespace waku::audio

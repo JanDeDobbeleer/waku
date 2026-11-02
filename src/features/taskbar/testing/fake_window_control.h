@@ -7,7 +7,7 @@
 
 #include "features/taskbar/window_control_backend.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // A desktop of a few windows. `log` records the calls that change something, in order.
 class FakeWindowControl final : public WindowControlBackend {
@@ -36,4 +36,4 @@ class FakeWindowControl final : public WindowControlBackend {
   }
 };
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

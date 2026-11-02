@@ -14,7 +14,7 @@
 #include "features/tray/tray_pipe.h"
 #include "features/tray/win32/tray_win.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 namespace {
 
 HWND findShellTrayWnd(DWORD explorerPid) {
@@ -42,9 +42,7 @@ class ExplorerInjector final : public TrayInjector {
  public:
   explicit ExplorerInjector(QString dllPath) : dllPath_(std::move(dllPath)) {}
 
-  std::optional<std::uint32_t> explorerPid() override {
-    return wabar::tray::explorerPid(stopping_);
-  }
+  std::optional<std::uint32_t> explorerPid() override { return waku::tray::explorerPid(stopping_); }
 
   void setStopCheck(std::function<bool()> stopping) override { stopping_ = std::move(stopping); }
 
@@ -427,4 +425,4 @@ bool SystrayHook::handleMessage(const QByteArray& message) {
   return true;
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

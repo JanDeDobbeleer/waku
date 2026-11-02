@@ -16,7 +16,7 @@
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/shell_launch.h"
 
-namespace wabar::control_center {
+namespace waku::control_center {
 
 namespace {
 
@@ -30,8 +30,8 @@ void runAfterQuit(const QStringList& arguments) {
 
 ControlCenter::Backend systemBackend() {
   ControlCenter::Backend b;
-  b.dndStatus = [] { return wabar::notifications::dndStatus(); };
-  b.setDndStatus = [](const QString& mode) { return wabar::notifications::setDndStatus(mode); };
+  b.dndStatus = [] { return waku::notifications::dndStatus(); };
+  b.setDndStatus = [](const QString& mode) { return waku::notifications::setDndStatus(mode); };
   b.themeMode = [] { return themeMode(); };
   b.toggleTheme = [] { return toggleThemeMode(); };
   b.toggleTouchKeyboard = [] { toggleTouchKeyboard(); };
@@ -71,23 +71,23 @@ ControlCenter::ControlCenter(QObject* parent)
     : ControlCenter(
           kernel::liveDesktop() ? systemBackend() : Backend{},
           kernel::liveDesktop() ? systemLauncher() : Launcher{},
-          kernel::liveDesktop() ? wabar::brightness::createSystemBrightness(nullptr) : nullptr,
+          kernel::liveDesktop() ? waku::brightness::createSystemBrightness(nullptr) : nullptr,
           parent, /*readLater=*/kernel::liveDesktop()) {
   available_ = kernel::liveDesktop();
   if (!available_) return;
   // Focus Assist changes made outside the bar (Settings, the action centre).
-  auto* watcher = new wabar::notifications::DndWatcher(this);
-  connect(watcher, &wabar::notifications::DndWatcher::statusChanged, this,
+  auto* watcher = new waku::notifications::DndWatcher(this);
+  connect(watcher, &waku::notifications::DndWatcher::statusChanged, this,
           &ControlCenter::onDndStatus);
   watcher->start();
 }
 
 ControlCenter::ControlCenter(Backend backend, Launcher launcher,
-                             wabar::brightness::BrightnessControl* brightness, QObject* parent)
+                             waku::brightness::BrightnessControl* brightness, QObject* parent)
     : ControlCenter(std::move(backend), std::move(launcher), brightness, parent, false) {}
 
 ControlCenter::ControlCenter(Backend backend, Launcher launcher,
-                             wabar::brightness::BrightnessControl* brightness, QObject* parent,
+                             waku::brightness::BrightnessControl* brightness, QObject* parent,
                              bool readLater)
     : QObject(parent),
       backend_(std::move(backend)),
@@ -99,7 +99,7 @@ ControlCenter::ControlCenter(Backend backend, Launcher launcher,
   if (brightnessControl_) {
     brightnessControl_->setParent(this);
     // A slider write, a power-setting notification or a DDC re-read.
-    connect(brightnessControl_, &wabar::brightness::BrightnessControl::brightnessChanged, this,
+    connect(brightnessControl_, &waku::brightness::BrightnessControl::brightnessChanged, this,
             [this](qulonglong, int) { announce(kBrightness | readBrightness()); });
   }
   if (readLater) {
@@ -421,4 +421,4 @@ bool ControlCenter::requestAction(const QString& id) {
   return false;
 }
 
-}  // namespace wabar::control_center
+}  // namespace waku::control_center

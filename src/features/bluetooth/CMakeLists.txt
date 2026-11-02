@@ -1,5 +1,5 @@
 # bluetooth: radio, paired devices, battery, connect; the Bluetooth widget.
-wabar_feature(NAME bluetooth
+waku_feature(NAME bluetooth
   DEPENDS quickshell_io
   SOURCES
     bluetooth.h

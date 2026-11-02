@@ -1,6 +1,6 @@
 #pragma once
 
-// Helpers for tests that put built-in widgets (wabar.widgets) into a real panel on the offscreen
+// Helpers for tests that put built-in widgets (waku.widgets) into a real panel on the offscreen
 // platform. On top of shell_fixtures.h (the Harness).
 
 #include "host/testing/shell_fixtures.h"
@@ -10,8 +10,8 @@ namespace {
 QString widgetConfig(const QString& widgets) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.widgets
+import waku
+import waku.widgets
 ShellRoot {
     Panel {
         content: PanelLayout {

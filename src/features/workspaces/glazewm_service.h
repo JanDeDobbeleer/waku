@@ -12,7 +12,7 @@
 
 #include "features/workspaces/glazewm_state.h"
 
-namespace wabar::workspaces {
+namespace waku::workspaces {
 
 class EventBus;
 
@@ -133,7 +133,7 @@ class GlazewmService : public QObject {
 };
 
 }  // namespace glazewm
-}  // namespace wabar::workspaces
+}  // namespace waku::workspaces
 
-Q_DECLARE_METATYPE(wabar::workspaces::glazewm::MonitorsPtr)
-Q_DECLARE_METATYPE(wabar::workspaces::glazewm::BindingModePtr)
+Q_DECLARE_METATYPE(waku::workspaces::glazewm::MonitorsPtr)
+Q_DECLARE_METATYPE(waku::workspaces::glazewm::BindingModePtr)

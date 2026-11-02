@@ -13,7 +13,7 @@
 #include "features/github/github_icons.h"
 
 using nlohmann::json;
-using namespace wabar::github;
+using namespace waku::github;
 
 namespace {
 
@@ -93,7 +93,7 @@ const QDateTime kNow = QDateTime(QDate(2026, 10, 28), QTime(12, 0), QTimeZone::U
 // --- pure helpers ------------------------------------------------------------------------------
 
 TEST(GithubFormat, RelativeTimeMatchesPythonBuckets) {
-  using wabar::github::relativeTime;
+  using waku::github::relativeTime;
   const auto at = [](const char* iso) { return relativeTime(QString(iso), kNow); };
   EXPECT_EQ(at("2026-10-28T11:59:30Z"), "just now");
   EXPECT_EQ(at("2026-10-28T11:59:00Z"), "1 minute ago");
@@ -110,7 +110,7 @@ TEST(GithubFormat, RelativeTimeMatchesPythonBuckets) {
 }
 
 TEST(GithubFormat, CategoryTitlesAndTruncation) {
-  using namespace wabar::github;
+  using namespace waku::github;
   EXPECT_EQ(categoryTitle("PullRequest"), "Pull Requests");
   EXPECT_EQ(categoryTitle("CheckSuite"), "Check Suites");
   EXPECT_EQ(categoryTitle("RepositoryVulnerabilityAlert"), "Repository Vulnerability Alert");
@@ -121,7 +121,7 @@ TEST(GithubFormat, CategoryTitlesAndTruncation) {
 }
 
 TEST(GithubFormat, IconsAndStatesFollowPythonPriority) {
-  wabar::github::GithubIcons icons;
+  waku::github::GithubIcons icons;
   icons.issue = "I";
   icons.issue_closed = "IC";
   icons.pull_request = "P";
@@ -133,7 +133,7 @@ TEST(GithubFormat, IconsAndStatesFollowPythonPriority) {
   icons.release = "R";
   icons.checksuite = "CS";
   icons.default_ = "X";
-  using namespace wabar::github;
+  using namespace waku::github;
   GithubNotification issue = note("1", "Issue", true);
   EXPECT_EQ(iconAndStates(issue, icons).icon, "I");
   issue.issueState = QString("closed");
@@ -332,7 +332,7 @@ TEST(GithubApi, MarkReadRequestsMatchPython) {
 TEST(GithubApi, TokenResolutionOrderAndFile) {
   QTemporaryDir dir;
   ASSERT_TRUE(dir.isValid());
-  const QString file = dir.filePath("wabar/github_token");
+  const QString file = dir.filePath("waku/github_token");
   EXPECT_EQ(resolveGithubToken("", "", file), "");
   ASSERT_TRUE(saveGithubTokenFile(file, "from-file"));
   EXPECT_EQ(readGithubTokenFile(file), "from-file");

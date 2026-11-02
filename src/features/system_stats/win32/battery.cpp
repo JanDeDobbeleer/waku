@@ -13,7 +13,7 @@
 #include <cmath>
 #include <vector>
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 namespace {
 
 constexpr int kPowerTimeUnknown = -1;
@@ -145,4 +145,4 @@ std::shared_ptr<BatteryDataSource> createBatteryDataSource() {
   return hub.acquire([] { return std::make_shared<WindowsBatteryDataSource>(); });
 }
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

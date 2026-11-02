@@ -11,7 +11,7 @@
 #include <atomic>
 #include <optional>
 
-namespace wabar::bluetooth {
+namespace waku::bluetooth {
 
 // True if an audio endpoint whose name contains `deviceName` is active, false if all such
 // endpoints are unplugged, nullopt if none matches.
@@ -26,4 +26,4 @@ QString setAudioConnection(IMMDeviceEnumerator* enumerator, quint64 addressInt,
 // The message the menu shows for a failed `action` ("connect" or "disconnect") and `reason`.
 QString connectError(const QString& action, const QString& reason);
 
-}  // namespace wabar::bluetooth
+}  // namespace waku::bluetooth

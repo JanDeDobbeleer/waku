@@ -1,6 +1,6 @@
 # notifications: Action Center toasts, toast activation and Do Not Disturb (quiet hours).
 # control_center reads Do Not Disturb through `DEPENDS notifications` (features/notifications/dnd.h).
-wabar_feature(NAME notifications
+waku_feature(NAME notifications
   SOURCES
     dnd.h
     notifications.h

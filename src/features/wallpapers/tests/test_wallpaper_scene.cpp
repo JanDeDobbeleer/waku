@@ -14,9 +14,9 @@
 
 namespace {
 
-using wabar::wallpapers::ScaledImage;
-using wabar::wallpapers::ScreenArea;
-using wabar::wallpapers::WallpaperScene;
+using waku::wallpapers::ScaledImage;
+using waku::wallpapers::ScreenArea;
+using waku::wallpapers::WallpaperScene;
 
 QPixmap solid(QRgb color, QSize size) {
   QImage image(size, QImage::Format_RGB32);

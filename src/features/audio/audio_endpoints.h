@@ -5,7 +5,7 @@
 #include <optional>
 #include <vector>
 
-namespace wabar::audio {
+namespace waku::audio {
 
 enum class AudioFlow { Render, Capture };
 
@@ -48,4 +48,4 @@ class AudioEndpoints : public QObject {
 // Core Audio implementation. Never null; without a usable endpoint every query reports "none".
 AudioEndpoints* createSystemAudio(AudioFlow flow, QObject* parent = nullptr);
 
-}  // namespace wabar::audio
+}  // namespace waku::audio

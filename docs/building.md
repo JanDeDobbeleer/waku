@@ -29,72 +29,72 @@ cmd /c "call `"$vc`" arm64_amd64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64
 
 On an x64 host use `vcvarsall.bat x64` and the same presets.
 
-Everything lands in `build\<preset>`: `wabar.exe`, `wabarc.exe`, the tray hook DLL next to them and
-`wabar_tests.exe` with the Qt DLLs and the offscreen platform plugin that `windeployqt` copies next
-to it. The targets are `wabar`, `wabarc`, `WabarTrayHook` (`WabarTrayHook_arm64` on ARM64),
-`wabar_tests` and `deploy`; select one with `cmake --build --preset <preset> --target <name>`.
+Everything lands in `build\<preset>`: `waku.exe`, `wakuc.exe`, the tray hook DLL next to them and
+`waku_tests.exe` with the Qt DLLs and the offscreen platform plugin that `windeployqt` copies next
+to it. The targets are `waku`, `wakuc`, `WakuTrayHook` (`WakuTrayHook_arm64` on ARM64),
+`waku_tests` and `deploy`; select one with `cmake --build --preset <preset> --target <name>`.
 
 `build\<preset>\qml_modules` holds the build copy of every QML module of `src/` (qmldir, `.qmltypes`,
-the `.qml` files), one folder per URI: `qml_modules\wabar`, `qml_modules\wabar\services`,
-`qml_modules\wabar\widgets`, `qml_modules\Quickshell\Io` and so on (`QT_QML_OUTPUT_DIRECTORY`, set in
+the `.qml` files), one folder per URI: `qml_modules\waku`, `qml_modules\waku\services`,
+`qml_modules\waku\widgets`, `qml_modules\Quickshell\Io` and so on (`QT_QML_OUTPUT_DIRECTORY`, set in
 `src/CMakeLists.txt`). qmlcachegen and qmllint get `qml_modules` as import path and so resolve
-imports across modules; for an editor, pass it to qmlls or `qmllint -I`. `wabar.exe` never reads the
+imports across modules; for an editor, pass it to qmlls or `qmllint -I`. `waku.exe` never reads the
 folder: it loads its modules from the static plugins and the resources (`qrc:/qt/qml/<URI>`).
 `build\<preset>\qml` is a different folder: Qt's own modules, copied there by `windeployqt`.
 
 ## Run
 
-Run `wabar` from the build folder. It needs a config home: a folder with `shell.qml` (and optionally
+Run `waku` from the build folder. It needs a config home: a folder with `shell.qml` (and optionally
 `theme.qml` and `widgets/`). The repository has a sample in `examples/config`.
 
 ```powershell
-build\arm64-debug\wabar.exe --config-home examples\config
-build\arm64-debug\wabarc.exe --config-home examples\config status
+build\arm64-debug\waku.exe --config-home examples\config
+build\arm64-debug\wakuc.exe --config-home examples\config status
 ```
 
-`wabar.exe` flags:
+`waku.exe` flags:
 
 | Flag | Effect |
 |---|---|
-| `--config-home <dir>` | The config home. Default: `$WABAR_CONFIG_HOME`, else the `examples/config` of the checkout the build came from. |
+| `--config-home <dir>` | The config home. Default: `$WAKU_CONFIG_HOME`, else the `examples/config` of the checkout the build came from. |
 | `--register-app-bar` | Let windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve screen work area. Without it no window reserves space. |
 | `--safe` | Start the built-in shell with the default theme and ignore the config home. |
 | `--import-path <dir>` | Add a folder of QML modules to the import path. Repeatable. See "User-built QML plugins". |
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
-| `--hide-taskbar` | Hide the Windows taskbar (all monitors) while wabar runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
-| `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wabarc shortcut`. |
-| `--no-workarea-sync` | Never tell komorebi that the work area changed. By default wabar sends `WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window 0.5 s after a screen or work area change and again 5 s later, so windows do not tile under the bar. See "komorebi's work area" in `docs/architecture.md`. |
+| `--hide-taskbar` | Hide the Windows taskbar (all monitors) while waku runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
+| `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wakuc shortcut`. |
+| `--no-workarea-sync` | Never tell komorebi that the work area changed. By default waku sends `WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window 0.5 s after a screen or work area change and again 5 s later, so windows do not tile under the bar. See "komorebi's work area" in `docs/architecture.md`. |
 | `--font-engine <engine>` | `gdi` (default, small) or `directwrite` (honours variable-font axes, about 2 MB more memory). A shell that uses variable fonts needs `directwrite`. `QT_QPA_PLATFORM` wins when it is set. |
 | `--help` | Print the options. |
 
-`wabarc.exe` talks to the bar that runs for the same config home (`--config-home <dir>` or
-`WABAR_CONFIG_HOME`):
+`wakuc.exe` talks to the bar that runs for the same config home (`--config-home <dir>` or
+`WAKU_CONFIG_HOME`):
 
 | Command | Effect |
 |---|---|
-| `wabarc reload` | Reload the config of the running bar. |
-| `wabarc status` | Print what the shell is doing: `running; pid=P; windows=N; safe=yes|no; error=...`. |
-| `wabarc surface list` | List the windows that have a `name`: `ok: launcher=hidden, osd=shown`. |
-| `wabarc surface show`, `hide`, `toggle`, `status <name>` | Show, hide, flip or report the windows with that `name` (all screens). `show` and `toggle` first allow the bar to take the keyboard focus (`AllowSetForegroundWindow`). Example: `examples/launcher`. |
-| `wabarc call` | List the `IpcHandler` targets and their functions. |
-| `wabarc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
-| `wabarc taskbar hide`, `show`, `status` | Hide the Windows taskbar, restore what wabar changed (it stays shown until `hide`), or print `ok: taskbar: hidden|visible|autohide-was-on`. |
-| `wabarc quit` | Stop the bar. |
-| `wabarc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
-| `wabarc wallpaper random`, `next`, `previous` | Pick from the wallpaper folder; `next` and `previous` wrap. |
-| `wabarc wallpaper gallery` | Open or close the wallpaper picker. |
-| `wabarc shortcut <name>` | Fire the `GlobalShortcut` with that name (its `onPressed`, then `onReleased`). Bind a key to this command in whkd or AutoHotkey for a shortcut with no `keys`. |
-| `wabarc shortcut list` | Print the names of the shortcuts the shell declares. A shortcut named `list` cannot be fired. |
+| `wakuc reload` | Reload the config of the running bar. |
+| `wakuc status` | Print what the shell is doing: `running; pid=P; windows=N; safe=yes|no; error=...`. |
+| `wakuc surface list` | List the windows that have a `name`: `ok: launcher=hidden, osd=shown`. |
+| `wakuc surface show`, `hide`, `toggle`, `status <name>` | Show, hide, flip or report the windows with that `name` (all screens). `show` and `toggle` first allow the bar to take the keyboard focus (`AllowSetForegroundWindow`). Example: `examples/launcher`. |
+| `wakuc call` | List the `IpcHandler` targets and their functions. |
+| `wakuc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
+| `wakuc taskbar hide`, `show`, `status` | Hide the Windows taskbar, restore what waku changed (it stays shown until `hide`), or print `ok: taskbar: hidden|visible|autohide-was-on`. |
+| `wakuc quit` | Stop the bar. |
+| `wakuc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
+| `wakuc wallpaper random`, `next`, `previous` | Pick from the wallpaper folder; `next` and `previous` wrap. |
+| `wakuc wallpaper gallery` | Open or close the wallpaper picker. |
+| `wakuc shortcut <name>` | Fire the `GlobalShortcut` with that name (its `onPressed`, then `onReleased`). Bind a key to this command in whkd or AutoHotkey for a shortcut with no `keys`. |
+| `wakuc shortcut list` | Print the names of the shortcuts the shell declares. A shortcut named `list` cannot be fired. |
 
 `--dry-run` after `wallpaper` (not `gallery`) plays the animation without setting the wallpaper.
 
-### Moving a wabar 1 config to wabar 2
+### Moving a waku 1 config to waku 2
 
-wabar 2 uses Quickshell's names (`docs/plans/2026-10-29-wabar-extensibility-proposal.md`, section
+waku 2 uses Quickshell's names (`docs/plans/2026-10-29-waku-extensibility-proposal.md`, section
 11). A config home with a `bar.qml` and no `shell.qml` loads the fallback shell, whose error pill
 names the rename. There are no aliases; edit the file:
 
-| wabar 1 | wabar 2 |
+| waku 1 | waku 2 |
 |---|---|
 | file `bar.qml` | file `shell.qml` |
 | `Config` | `ShellRoot` (`Scope` groups objects inside it) |
@@ -106,8 +106,8 @@ names the rename. There are no aliases; edit the file:
 | `layout: BarLayout {}` | `content: PanelLayout {}` |
 | `PopupWindow { anchorItem: x }` | `PopupWindow { anchor.item: x }` |
 | `Window.window.spec`, `Window.window.monitorHandle` | `QsWindow.window`, `QsWindow.window.monitorHandle` |
-| `Process` from `wabar.services` (a command run on an interval: `program`, `arguments`, `interval`) | `ShellProcess`, same properties. `Process` is now Quickshell's (`import Quickshell.Io`: `command`, `running`, `stdout`) |
-| `wabarc status`: `bars=N` | `windows=N` |
+| `Process` from `waku.services` (a command run on an interval: `program`, `arguments`, `interval`) | `ShellProcess`, same properties. `Process` is now Quickshell's (`import Quickshell.Io`: `command`, `running`, `stdout`) |
+| `wakuc status`: `bars=N` | `windows=N` |
 
 The Quickshell form of a panel is a `PanelWindow` (`anchors`, `margins`, `implicitHeight`,
 `exclusiveZone`, `exclusionMode`, `layer`, `keyboardFocus`), one per screen through
@@ -121,38 +121,38 @@ the bar: `src/app/README.md`.
 `<config home>\modules` and every `--import-path <dir>` are added to the QML import path, so a shell
 can `import MyModule` for a Qt QML plugin built outside this repository. A folder follows the Qt
 layout: `modules\MyModule\qmldir`, the plugin DLL named in `qmldir`, and optionally a
-`.qmltypes` file. (The `dist\wabar\modules` folder that `deploy` writes is a different thing: a
+`.qmltypes` file. (The `dist\waku\modules` folder that `deploy` writes is a different thing: a
 read-only copy of the built-in widgets.)
 
 Build the plugin with the same Qt (major.minor), the same debug or release flavour and the same
-processor as the `wabar.exe` that loads it. Before a folder is added, wabar reads the metadata of
+processor as the `waku.exe` that loads it. Before a folder is added, waku reads the metadata of
 each plugin in it; one built for another Qt, flavour or processor is refused, one line is logged
-(`wabar: plugin refused: <file> - <reason>`) and the whole folder is left out, so an import from it
+(`waku: plugin refused: <file> - <reason>`) and the whole folder is left out, so an import from it
 then fails with the usual "module is not installed" error. `--safe` adds no folder. Qt's own `Qt6::Qml`
 documents how to write a plugin; `tests/plugin/` is a minimal one. A plugin runs as native code:
 see `SECURITY.md`.
 
 ## Tray hook DLL
 
-`wabar.exe` ships `WabarTrayHook.dll` (x64) or `WabarTrayHook_arm64.dll` next to it; the
+`waku.exe` ships `WakuTrayHook.dll` (x64) or `WakuTrayHook_arm64.dll` next to it; the
 Tray widget injects it into Explorer to see tray icons. `src/features/tray/hook/` builds it with a static CRT, and
 each preset builds the DLL for its own architecture, so an ARM64 host runs the ARM64 preset's build.
 The DLL must match Explorer's architecture: an x64 build running under emulation on ARM64 cannot use
 it and has no tray host (the tray stays empty). The pipe and watchdog mutex names are set once in
-the root `CMakeLists.txt` (`WABAR_TRAY_PIPE_NAME`, `WABAR_TRAY_MUTEX_NAME`) and passed to both the DLL
-and `wabar_tray`. The DLL detaches from Explorer by itself (up to 5 s) after the host exits, so wait
+the root `CMakeLists.txt` (`WAKU_TRAY_PIPE_NAME`, `WAKU_TRAY_MUTEX_NAME`) and passed to both the DLL
+and `waku_tray`. The DLL detaches from Explorer by itself (up to 5 s) after the host exits, so wait
 for it to unload before starting another run that hooks the tray. Automated tests never inject it:
 they use a private pipe and fake injector, and the tray host is not created on the `offscreen`
-platform. Pass `--no-tray` to `wabar.exe` for runs that must not hook Explorer.
+platform. Pass `--no-tray` to `waku.exe` for runs that must not hook Explorer.
 
 ## Deploy
 
-`cmake --build --preset <preset> --target deploy` assembles a portable folder, `dist/wabar` by
-default (`-DWABAR_DIST_DIR=...` changes it; `dist/` is not tracked):
+`cmake --build --preset <preset> --target deploy` assembles a portable folder, `dist/waku` by
+default (`-DWAKU_DIST_DIR=...` changes it; `dist/` is not tracked):
 
 ```
-dist/wabar/
-  wabar.exe, wabarc.exe, WabarTrayHook[_arm64].dll
+dist/waku/
+  waku.exe, wakuc.exe, WakuTrayHook[_arm64].dll
   <Qt runtime>                  from windeployqt, scanning src/ and cmake/deploy_imports/ for QML imports
                                 (the latter lists QtQuick.Layouts, QtQuick.Effects, Qt.labs.folderlistmodel,
                                 QtQuick.Templates and QtQuick.Controls.Basic, which shells written for
@@ -162,15 +162,15 @@ dist/wabar/
                                 from the Qt Image Formats module (qtimageformats); `deploy` warns at
                                 configure time when it is missing
   examples/config/              the sample config home
-  modules/wabar/                the host QML files, qmldir and .qmltypes (module `wabar`)
-  modules/wabar/widgets/        the built-in widget .qml files, qmldir, .qmltypes (`wabar.widgets`)
-  modules/wabar/services/       qmldir and .qmltypes of the C++ services (`wabar.services`)
+  modules/waku/                the host QML files, qmldir and .qmltypes (module `waku`)
+  modules/waku/widgets/        the built-in widget .qml files, qmldir, .qmltypes (`waku.widgets`)
+  modules/waku/services/       qmldir and .qmltypes of the C++ services (`waku.services`)
 ```
 
-The widgets stay compiled into `wabar.exe`; `modules/` is a read-only reference. Copy a widget into
+The widgets stay compiled into `waku.exe`; `modules/` is a read-only reference. Copy a widget into
 the config home's `widgets/` folder to change it, and lint it with
-`qmllint -I <dist>/wabar/modules widgets/Clock.qml`. The target never touches an installed or
-running copy. Note that a copy of `wabar.exe` outside the checkout has no sample config to fall back
+`qmllint -I <dist>/waku/modules widgets/Clock.qml`. The target never touches an installed or
+running copy. Note that a copy of `waku.exe` outside the checkout has no sample config to fall back
 on: pass `--config-home`.
 
 ## Checks
@@ -180,7 +180,7 @@ on: pass `--config-home`.
 environment itself. The `qmllint` step builds `all_qmllint` and fails when its warning count rises
 above `tools/qmllint-baseline.txt` (lower the file when the count falls; never raise it). The
 modules resolve each other through `build\<preset>\qml_modules` (see Build). `all_qmllint` also
-runs `wabar_examples_qmllint` (`cmake/wabar_examples_lint.cmake`), which lints every `.qml` under
+runs `waku_examples_qmllint` (`cmake/waku_examples_lint.cmake`), which lints every `.qml` under
 `examples/` against the same folder, as a config home would be linted.
 ```powershell
 pwsh -NoProfile -ExecutionPolicy Bypass -File tools\check.ps1          # everything
@@ -211,9 +211,9 @@ and clang-tidy over production compilation units under `src`. It does not
 run tests, launch the bar or register an app-bar. `-Fast` and `-Staged` cannot be combined with
 `-Analyze`; hooks still run only fast checks.
 
-Analysis uses `build\<preset>-analyze` with `BUILD_TESTING=OFF` and `WABAR_ANALYZE=ON`.
-The default `WABAR_ANALYZE` is `OFF`; ordinary checks explicitly reset it to `OFF`.
-The option applies `/analyze /analyze:external-` only through our `wabar_options` target.
+Analysis uses `build\<preset>-analyze` with `BUILD_TESTING=OFF` and `WAKU_ANALYZE=ON`.
+The default `WAKU_ANALYZE` is `OFF`; ordinary checks explicitly reset it to `OFF`.
+The option applies `/analyze /analyze:external-` only through our `waku_options` target.
 Qt and third-party headers are external for MSVC and excluded by clang-tidy. Generated MOC units
 are built by MSVC but are not clang-tidy entry points. Logs and diagnostic counts appear in the
 analysis directory and the check summary. Missing tools, compiler errors and analyzer findings fail
@@ -234,33 +234,33 @@ errors. The x64/Release presets are supported by the command but were not valida
 
 Notes:
 
-- Tests are copied next to `wabar_tests.exe` with `windeployqt` (including the `offscreen`
+- Tests are copied next to `waku_tests.exe` with `windeployqt` (including the `offscreen`
   platform plugin) and `ctest` sets `QT_QPA_PLATFORM=offscreen`.
 - `ctest` has one test per gtest suite (about 210, read from the `TEST` lines at configure time),
   not one per case (about 1300): a suite runs in one process, and `-j` runs suites in parallel
   (`CTEST_PARALLEL_LEVEL` limits it). `ctest -R Tray` still selects by suite name; run one case
-  with `wabar_tests --gtest_filter=Suite.Case`. Editing a test source re-runs the configure step
-  so a new suite is picked up. `-DWABAR_TEST_PER_CASE=ON` brings back one process per case.
+  with `waku_tests --gtest_filter=Suite.Case`. Editing a test source re-runs the configure step
+  so a new suite is picked up. `-DWAKU_TEST_PER_CASE=ON` brings back one process per case.
 - Warnings are errors (`/WX`) for our targets only; vcpkg and Qt code are unaffected, and headers
   included with angle brackets are treated as external (`/external:anglebrackets /external:W0`).
 - MSVC only: configuring with another compiler stops with an error.
-- `wabar.services` is one QML module built from every feature's `qml/*.{h,cpp}` (one module, so
+- `waku.services` is one QML module built from every feature's `qml/*.{h,cpp}` (one module, so
   widget and service names cannot clash; see `src/modules/qml_modules.cmake`). Its generated type
   registration includes every one of those headers, so a change to any service header recompiles
-  `wabar_services_qmltyperegistrations.cpp` (12 s on the ARM64 debug build with two jobs) and
+  `waku_services_qmltyperegistrations.cpp` (12 s on the ARM64 debug build with two jobs) and
   `mocs_compilation.cpp` (15 s), against about 3 s for a service `.cpp`. That is acceptable today;
   if it starts to dominate incremental builds, the services' C++ can move into per-feature static
   libraries with only the registration kept central.
-- After adding a QML-facing header an incremental build may skip moc for `wabar_services` (AUTOMOC
-  misses the new header). Delete `build\<preset>\src\wabar_services_autogen\timestamp` and build
+- After adding a QML-facing header an incremental build may skip moc for `waku_services` (AUTOMOC
+  misses the new header). Delete `build\<preset>\src\waku_services_autogen\timestamp` and build
   again.
 - A feature whose `win32/` code includes C++/WinRT headers can precompile them with
-  `wabar_feature(... WINRT_PCH winrt/base.h winrt/Windows.Foundation.h ...)`. Measured on the
+  `waku_feature(... WINRT_PCH winrt/base.h winrt/Windows.Foundation.h ...)`. Measured on the
   ARM64 debug build (two jobs, nine WinRT translation units of audio, media, network and
   notifications): recompiling the nine went from 33 s to 15 s of compile time (24 s to 15 s wall),
   and building the four libraries from scratch from 44 s to 31 s including the four PCHs.
 - Debug builds use `/Z7` because `/ZI` conflicts with `/guard:cf`.
-- Because qmlcachegen resolves the imports between wabar's modules (`build\<preset>\qml_modules`),
+- Because qmlcachegen resolves the imports between waku's modules (`build\<preset>\qml_modules`),
   it compiles more bindings and functions of the built-in QML to C++: 1313 instead of 848 in the
   generated `*_qml.cpp` when the folders became URI-shaped. A binding that qmlcachegen cannot type
   still runs in the interpreter, as before.

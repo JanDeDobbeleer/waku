@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Window
-import wabar
-import wabar.services as S
+import waku
+import waku.services as S
 
 // The wallpaper gallery: a strip of thumbnails of the files in the wallpaper folder, centred on a
 // dimmed full-screen window on the screen the service picked (S.Wallpapers.galleryScreen). A click

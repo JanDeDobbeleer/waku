@@ -11,7 +11,7 @@
 #include "features/tray/tray_state.h"
 #include "features/tray/tray_types.h"
 
-using namespace wabar::tray;
+using namespace waku::tray;
 
 namespace {
 
@@ -255,7 +255,7 @@ TEST(SystrayHostChoice, UseHookFalseNeverTouchesTheHook) {
 TEST(SystrayHostChoice, MissingDllMeansNoHost) {
   FactoryProbe probe;
   probe.dll.clear();
-  probe.reason = "WabarTrayHook.dll not found next to the executable";
+  probe.reason = "WakuTrayHook.dll not found next to the executable";
   EXPECT_EQ(createTrayHost(true, "app", probe.factories()), nullptr);
   EXPECT_EQ(probe.hooksMade, 0);
 }

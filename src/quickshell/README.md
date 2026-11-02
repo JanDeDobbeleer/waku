@@ -2,37 +2,37 @@
 
 Shells written for Quickshell import `Quickshell`, `Quickshell.Io`, `Quickshell.Wayland` and the
 other modules below. This unit builds those modules. It holds no engine logic of its own: every
-type is a wabar type registered again under Quickshell's name (`QML_FOREIGN`), or a QML file over
-a wabar type or service. The engine C++ stays in `src/host/qml/` and in the features.
+type is a waku type registered again under Quickshell's name (`QML_FOREIGN`), or a QML file over
+a waku type or service. The engine C++ stays in `src/host/qml/` and in the features.
 
 Dependencies point one way: `app` -> `quickshell` -> (`features`, `host`). The unit may include
 `host/qml/`, `control/`, `kernel/` and the root and `qml/` headers of any feature. Only `app/` and
-`tests/` include it (`tools/check.ps1`, rule S2). `wabar` and `wabar_tests` link one target of it,
-`wabar_quickshell_modules`.
+`tests/` include it (`tools/check.ps1`, rule S2). `waku` and `waku_tests` link one target of it,
+`waku_quickshell_modules`.
 
-A module does not re-export `wabar` or `wabar.services`: `import Quickshell` shows Quickshell's
-names only, so a shell's own `Wallpapers.qml` is never shadowed by a wabar service.
+A module does not re-export `waku` or `waku.services`: `import Quickshell` shows Quickshell's
+names only, so a shell's own `Wallpapers.qml` is never shadowed by a waku service.
 
-Two names are the exception to "the same type as in `wabar`": `PopupWindow` and `Variants` of
+Two names are the exception to "the same type as in `waku`": `PopupWindow` and `Variants` of
 module `Quickshell` are QML wrappers (`core/qml/PopupWindow.qml`, `core/qml/Variants.qml`) of the
-`wabar` types. `Variants` behaves the same. `Quickshell.PopupWindow` is not the themed `wabar.PopupWindow`: it is
+`waku` types. `Variants` behaves the same. `Quickshell.PopupWindow` is not the themed `waku.PopupWindow`: it is
 the bare `PopupWindowBase` (anchor, placement, open/close, no surface and no column), as in Quickshell, so
 a child with `anchors.fill: parent` fills it. Both are sized by `implicitWidth` and `implicitHeight`.
 
 | Folder | Module | Built by |
 |---|---|---|
-| `core/` | `Quickshell` | `core/CMakeLists.txt` (`wabar_quickshell`) |
-| `wayland/` | `Quickshell.Wayland` | `wabar_quickshell_qml_module()` |
-| `widgets/` | `Quickshell.Widgets` | `wabar_quickshell_qml_module()` |
-| `hyprland/` | `Quickshell.Hyprland` | `wabar_quickshell_qml_module()` |
-| `bluetooth/` | `Quickshell.Bluetooth` | `wabar_quickshell_qml_module()` |
-| `networking/` | `Quickshell.Networking` | `wabar_quickshell_qml_module()` |
-| `services/upower/` | `Quickshell.Services.UPower` | `wabar_quickshell_qml_module()` |
-| `services/pipewire/` | `Quickshell.Services.Pipewire` | `wabar_quickshell_qml_module()` |
-| `services/systemtray/` | `Quickshell.Services.SystemTray` | `wabar_quickshell_qml_module()` |
-| `io/` | `Quickshell.Io` | `wabar_quickshell_service_module()` |
-| `services/mpris/` | `Quickshell.Services.Mpris` | `wabar_quickshell_service_module()` |
-| `services/notifications/` | `Quickshell.Services.Notifications` | `wabar_quickshell_service_module()` |
+| `core/` | `Quickshell` | `core/CMakeLists.txt` (`waku_quickshell`) |
+| `wayland/` | `Quickshell.Wayland` | `waku_quickshell_qml_module()` |
+| `widgets/` | `Quickshell.Widgets` | `waku_quickshell_qml_module()` |
+| `hyprland/` | `Quickshell.Hyprland` | `waku_quickshell_qml_module()` |
+| `bluetooth/` | `Quickshell.Bluetooth` | `waku_quickshell_qml_module()` |
+| `networking/` | `Quickshell.Networking` | `waku_quickshell_qml_module()` |
+| `services/upower/` | `Quickshell.Services.UPower` | `waku_quickshell_qml_module()` |
+| `services/pipewire/` | `Quickshell.Services.Pipewire` | `waku_quickshell_qml_module()` |
+| `services/systemtray/` | `Quickshell.Services.SystemTray` | `waku_quickshell_qml_module()` |
+| `io/` | `Quickshell.Io` | `waku_quickshell_service_module()` |
+| `services/mpris/` | `Quickshell.Services.Mpris` | `waku_quickshell_service_module()` |
+| `services/notifications/` | `Quickshell.Services.Notifications` | `waku_quickshell_service_module()` |
 
 Both functions are in `CMakeLists.txt` here. Tests: `tests/` (the four `test_quickshell*.cpp`),
 `src/features/quickshell_io/tests/` and `tests/integration/test_quickshell_glue.cpp`. Behaviour
@@ -40,7 +40,7 @@ and limits per type: the QML module table in `docs/architecture.md`.
 
 ## Where each type lives
 
-| Quickshell type | Module | wabar implementation | Registered by |
+| Quickshell type | Module | waku implementation | Registered by |
 |---|---|---|---|
 | `ShellRoot`, `Scope`, `Singleton` | `Quickshell` | `src/host/qml/scope.h` | `core/qml/quickshell_types.h` |
 | `PanelWindow` | `Quickshell` | `src/host/qml/panel_window.*` | `core/qml/quickshell_types.h` |
@@ -64,8 +64,8 @@ and limits per type: the QML module table in `docs/architecture.md`.
 | `ElapsedTimer` | `Quickshell` | `src/features/quickshell_io/qml/quickshell_singleton.*` | `core/qml/quickshell_types_core.h` |
 | `WlrLayershell`, `WlrLayer`, `WlrKeyboardFocus` | `Quickshell.Wayland` | `src/host/qml/wlr_layershell.*`, `src/host/qml/window_enums.h` | `wayland/qml/wayland_types.h` |
 | `IdleInhibitor` | `Quickshell.Wayland` | `src/features/desktop_state/qml/idle_inhibitor.*` | `wayland/qml/wayland_types.h` |
-| `ToplevelManager`, `Toplevel` | `Quickshell.Wayland` | `wabar.services` `TaskbarService`, `TaskbarModel` | `wayland/ToplevelManager.qml`, `wayland/Toplevel.qml` |
-| `IdleMonitor` | `Quickshell.Wayland` | `wabar.services` `DesktopState` (`idleSeconds`) | `wayland/IdleMonitor.qml` |
+| `ToplevelManager`, `Toplevel` | `Quickshell.Wayland` | `waku.services` `TaskbarService`, `TaskbarModel` | `wayland/ToplevelManager.qml`, `wayland/Toplevel.qml` |
+| `IdleMonitor` | `Quickshell.Wayland` | `waku.services` `DesktopState` (`idleSeconds`) | `wayland/IdleMonitor.qml` |
 | `QsMenuOpener`, `QsMenuHandle` | `Quickshell` | plain QML (no entries: a tray item's `menu` is null) | `core/qml/QsMenuOpener.qml`, `core/qml/QsMenuHandle.qml` |
 | `Process` | `Quickshell.Io` | `src/features/quickshell_io/qml/qs_process.*` | `io/qml/quickshell_types_io.h` |
 | `DataStreamParser`, `StdioCollector`, `SplitParser` | `Quickshell.Io` | `src/features/quickshell_io/qml/data_stream_parsers.*` | `io/qml/quickshell_types_io.h` |
@@ -75,11 +75,11 @@ and limits per type: the QML module table in `docs/architecture.md`.
 | `NotificationServer`, `Notification`, `NotificationAction`, `NotificationUrgency`, `NotificationCloseReason` | `Quickshell.Services.Notifications` | `src/features/notifications/qml/notification_feed.*` | `services/notifications/qml/quickshell_types_notifications.h` |
 | `IconImage`, `ClippingRectangle`, `ClippingWrapperRectangle`, `WrapperRectangle`, `WrapperItem`, `WrapperMouseArea` | `Quickshell.Widgets` | plain QML | `widgets/*.qml` |
 | `Hyprland`, `HyprlandFocusGrab`, `HyprlandMonitor`, `HyprlandWorkspace`, `HyprlandToplevel`, `HyprlandEvent` | `Quickshell.Hyprland` | plain QML (empty models, no-op `dispatch`) | `hyprland/*.qml` |
-| `UPower`, `UPowerDevice`, `PowerProfiles` and their enums | `Quickshell.Services.UPower` | `wabar.services` `Battery`, `ControlCenter` | `services/upower/*.qml`, `services/upower/qml/upower_base.h` |
-| `Pipewire`, `PwNode`, `PwNodeAudio`, `PwLink`, `PwLinkGroup`, `PwObjectTracker`, `PwNodeLinkTracker` | `Quickshell.Services.Pipewire` | `wabar.services` `AudioOutput`, `AudioInput`, `AudioStreams` | `services/pipewire/*.qml` |
-| `SystemTray`, `SystemTrayItem`, `Status` | `Quickshell.Services.SystemTray` | `wabar.services` `Systray` | `services/systemtray/SystemTray.qml`, `services/systemtray/qml/system_tray_item.*` |
-| `Bluetooth`, `BluetoothAdapter`, `BluetoothDevice` and their state enums | `Quickshell.Bluetooth` | `wabar.services` `Bluetooth` | `bluetooth/*.qml` |
-| `Networking` (`wifiEnabled`, `wifiHardwareEnabled`) | `Quickshell.Networking` (a noctalia-qs addition) | `wabar.services` `Network` | `networking/Networking.qml` |
+| `UPower`, `UPowerDevice`, `PowerProfiles` and their enums | `Quickshell.Services.UPower` | `waku.services` `Battery`, `ControlCenter` | `services/upower/*.qml`, `services/upower/qml/upower_base.h` |
+| `Pipewire`, `PwNode`, `PwNodeAudio`, `PwLink`, `PwLinkGroup`, `PwObjectTracker`, `PwNodeLinkTracker` | `Quickshell.Services.Pipewire` | `waku.services` `AudioOutput`, `AudioInput`, `AudioStreams` | `services/pipewire/*.qml` |
+| `SystemTray`, `SystemTrayItem`, `Status` | `Quickshell.Services.SystemTray` | `waku.services` `Systray` | `services/systemtray/SystemTray.qml`, `services/systemtray/qml/system_tray_item.*` |
+| `Bluetooth`, `BluetoothAdapter`, `BluetoothDevice` and their state enums | `Quickshell.Bluetooth` | `waku.services` `Bluetooth` | `bluetooth/*.qml` |
+| `Networking` (`wifiEnabled`, `wifiHardwareEnabled`) | `Quickshell.Networking` (a noctalia-qs addition) | `waku.services` `Network` | `networking/Networking.qml` |
 
-`src/app/wabar/quickshell_glue.h` joins the `Quickshell` singleton to the shell host (`shellDir`,
+`src/app/waku/quickshell_glue.h` joins the `Quickshell` singleton to the shell host (`shellDir`,
 `reload()`). It stays in `app/`: it is composition-root wiring, not a registration.

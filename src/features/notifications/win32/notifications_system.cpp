@@ -32,7 +32,7 @@
 #include "kernel/win32/task_thread.h"
 #include "kernel/win32/winrt_strings.h"
 
-namespace wabar::notifications {
+namespace waku::notifications {
 namespace {
 
 namespace wun = winrt::Windows::UI::Notifications;
@@ -393,4 +393,4 @@ std::unique_ptr<NotificationSource> createSystemNotificationSource() {
   return std::make_unique<SystemNotificationSource>();
 }
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

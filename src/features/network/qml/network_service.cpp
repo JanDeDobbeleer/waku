@@ -5,7 +5,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::network {
+namespace waku::network {
 
 NetworkStatus statusFromSample(const ConnectivitySample& sample,
                                const std::optional<int>& exactQuality) {
@@ -309,4 +309,4 @@ bool Network::connectTo(const QString& ssid) {
   return true;
 }
 
-}  // namespace wabar::network
+}  // namespace waku::network

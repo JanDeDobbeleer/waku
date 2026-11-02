@@ -12,7 +12,7 @@
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/shell_launch.h"
 
-namespace wabar::workspaces::komorebi {
+namespace waku::workspaces::komorebi {
 namespace {
 
 JsonPtr parse(const QByteArray& bytes) {
@@ -27,7 +27,7 @@ void runCommands(const std::vector<QStringList>& commands) {
   if (commands.size() == 1) {
     launchKomorebic(commands.front());
   } else {
-    wabar::kernel::launchHiddenShell(KomorebiService::shellChain(commands));
+    waku::kernel::launchHiddenShell(KomorebiService::shellChain(commands));
   }
 }
 
@@ -66,7 +66,7 @@ KomorebiService::KomorebiService(EventBus& bus, KomorebiBackend backend, Command
 KomorebiService::~KomorebiService() { stop(); }
 
 QString KomorebiService::uniquePipeName() {
-  return QStringLiteral("wabar-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
+  return QStringLiteral("waku-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
 
 QString KomorebiService::shellChain(const std::vector<QStringList>& commands) {
@@ -162,4 +162,4 @@ void KomorebiService::deliverDisconnect() {
   emit bus_.event(kStateEvent, {{QStringLiteral("kind"), QStringLiteral("disconnect")}});
 }
 
-}  // namespace wabar::workspaces::komorebi
+}  // namespace waku::workspaces::komorebi

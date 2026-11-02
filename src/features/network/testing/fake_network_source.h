@@ -7,7 +7,7 @@
 
 #include "features/network/qml/network_service.h"
 
-namespace wabar::network::testing {
+namespace waku::network::testing {
 
 class FakeWifiBackend final : public WifiBackend {
  public:
@@ -132,4 +132,4 @@ class FakeSource final : public NetworkSource {
   NetworkStatus status;
 };
 
-}  // namespace wabar::network::testing
+}  // namespace waku::network::testing

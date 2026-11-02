@@ -11,13 +11,13 @@
 
 #include "control/control.h"
 
-using namespace wabar::control;
+using namespace waku::control;
 
 namespace {
 
 // A pipe name no other test or running bar uses.
 QString uniqueName() {
-  return QStringLiteral("wabar-test-") + QUuid::createUuid().toString(QUuid::Id128).left(12);
+  return QStringLiteral("waku-test-") + QUuid::createUuid().toString(QUuid::Id128).left(12);
 }
 
 // The blocking client runs on its own thread, because the server needs this thread's event loop.
@@ -52,10 +52,10 @@ ControlReply askAndWait(const QString& name, const QString& command) {
 // ---- names and config home ----
 
 TEST(ControlNames, ThePipeNameIsStableAndIgnoresCaseSlashesAndTrailingSeparators) {
-  const QString a = controlPipeName(QStringLiteral("C:\\Users\\me\\.config\\wabar"));
-  EXPECT_TRUE(a.startsWith(QStringLiteral("wabar-")));
-  EXPECT_EQ(a, controlPipeName(QStringLiteral("c:/users/ME/.config/wabar/")));
-  EXPECT_EQ(a, controlPipeName(QStringLiteral("C:\\Users\\me\\.config\\wabar\\")));
+  const QString a = controlPipeName(QStringLiteral("C:\\Users\\me\\.config\\waku"));
+  EXPECT_TRUE(a.startsWith(QStringLiteral("waku-")));
+  EXPECT_EQ(a, controlPipeName(QStringLiteral("c:/users/ME/.config/waku/")));
+  EXPECT_EQ(a, controlPipeName(QStringLiteral("C:\\Users\\me\\.config\\waku\\")));
 }
 
 TEST(ControlNames, DifferentConfigHomesGetDifferentPipes) {
@@ -63,13 +63,13 @@ TEST(ControlNames, DifferentConfigHomesGetDifferentPipes) {
 }
 
 TEST(ControlNames, TheConfigHomeIsTheOptionThenTheEnvironmentThenTheFallback) {
-  qunsetenv("WABAR_CONFIG_HOME");
+  qunsetenv("WAKU_CONFIG_HOME");
   EXPECT_EQ(resolveConfigHome(QString(), QStringLiteral("fallback")), QStringLiteral("fallback"));
-  qputenv("WABAR_CONFIG_HOME", "from-env");
+  qputenv("WAKU_CONFIG_HOME", "from-env");
   EXPECT_EQ(resolveConfigHome(QString(), QStringLiteral("fallback")), QStringLiteral("from-env"));
   EXPECT_EQ(resolveConfigHome(QStringLiteral("from-option"), QStringLiteral("fallback")),
             QStringLiteral("from-option"));
-  qunsetenv("WABAR_CONFIG_HOME");
+  qunsetenv("WAKU_CONFIG_HOME");
 }
 
 // ---- the transport ----

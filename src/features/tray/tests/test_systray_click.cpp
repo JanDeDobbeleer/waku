@@ -6,7 +6,7 @@
 
 #include "features/tray/tray_click.h"
 
-using namespace wabar::tray;
+using namespace waku::tray;
 
 namespace {
 

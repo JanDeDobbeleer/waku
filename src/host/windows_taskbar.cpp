@@ -5,7 +5,7 @@
 
 #include "kernel/qt/file_write.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 QString taskbarStateName(TaskbarState state) {
   switch (state) {
@@ -21,7 +21,7 @@ QString taskbarStateName(TaskbarState state) {
 
 QString formatTaskbarMarker(const TaskbarMarker& marker) {
   return QStringLiteral(
-             "taskbar hidden by wabar\n"
+             "taskbar hidden by waku\n"
              "pid=%1\n"
              "previous_autohide=%2\n"
              "windows_were_visible=%3\n")
@@ -32,7 +32,7 @@ QString formatTaskbarMarker(const TaskbarMarker& marker) {
 
 std::optional<TaskbarMarker> parseTaskbarMarker(const QString& text) {
   const QStringList lines = text.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
-  if (lines.isEmpty() || lines.first().trimmed() != QLatin1String("taskbar hidden by wabar")) {
+  if (lines.isEmpty() || lines.first().trimmed() != QLatin1String("taskbar hidden by waku")) {
     return std::nullopt;
   }
   TaskbarMarker marker;
@@ -111,7 +111,7 @@ void WindowsTaskbarHider::hide() {
   if (hiding_) return;
   changedAutoHide_ = !system_.autoHide();
   changedWindows_ = system_.windowsVisible();
-  // Only a run that changes something owns a marker: a second wabar that finds the taskbar
+  // Only a run that changes something owns a marker: a second waku that finds the taskbar
   // already hidden by the first must not overwrite the first one's marker.
   if (changedAutoHide_ || changedWindows_) {
     store_.write({ownPid_, changedAutoHide_, changedWindows_});
@@ -149,4 +149,4 @@ void WindowsTaskbarHider::reassert() {
   if (changedWindows_ && system_.windowsVisible()) system_.setWindowsHidden(true);
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

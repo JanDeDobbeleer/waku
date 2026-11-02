@@ -1,5 +1,5 @@
 import QtQuick
-import wabar
+import waku
 
 // A positioner for the items of a widget: a Row on a horizontal panel, a Column on a panel docked
 // to the left or right edge (`QsWindow.window.dockVertical`). The built-in Workspaces, Taskbar and

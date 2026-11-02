@@ -6,7 +6,7 @@
 #include <QString>
 #include <QVariantMap>
 
-namespace wabar::quickshell {
+namespace waku::quickshell {
 
 // Quickshell.Services.SystemTray's Status. Windows tray icons are always Active.
 namespace TrayStatus {
@@ -89,4 +89,4 @@ class SystemTrayItem : public QObject {
   bool ready_ = false;
 };
 
-}  // namespace wabar::quickshell
+}  // namespace waku::quickshell

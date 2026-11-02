@@ -4,6 +4,6 @@
 #include "kernel/win32/window_focus.h"
 
 TEST(KernelWindowFocus, ANullWindowIsIgnored) {
-  wabar::kernel::forceForegroundFocus(0);
+  waku::kernel::forceForegroundFocus(0);
   SUCCEED();
 }

@@ -4,7 +4,7 @@
 #include <QStringList>
 #include <vector>
 
-namespace wabar::host {
+namespace waku::host {
 
 struct ScreenRef {
   QString name;  // e.g. "\\.\DISPLAY2"
@@ -18,4 +18,4 @@ struct ScreenRef {
 // Patterns that match nothing are ignored. An empty pattern list selects nothing.
 std::vector<int> matchScreens(const QStringList& patterns, const std::vector<ScreenRef>& screens);
 
-}  // namespace wabar::host
+}  // namespace waku::host

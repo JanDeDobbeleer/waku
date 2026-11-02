@@ -6,7 +6,7 @@
 
 #include "kernel/qt/app_data.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 namespace {
 
@@ -130,8 +130,8 @@ void TrayPins::setScreenId(const QString& id) {
 void TrayPins::setScreen(QScreen* screen) {
   const bool changed = screen != screen_.data();
   screen_ = screen;
-  setScreenId(screen ? wabar::tray::cleanScreenId(screen->manufacturer(), screen->name(),
-                                                  screen->serialNumber())
+  setScreenId(screen ? waku::tray::cleanScreenId(screen->manufacturer(), screen->name(),
+                                                 screen->serialNumber())
                      : QStringLiteral("None"));
   if (changed) emit screenChanged();
 }
@@ -157,7 +157,7 @@ void TrayPins::setStateDir(const QString& dir) {
 void TrayPins::reload() {
   try {
     if (stateDir_.isEmpty()) stateDir_ = kernel::appDataDir();
-    const wabar::tray::SystrayStateStore store(stateDir_, effectiveScreenId());
+    const waku::tray::SystrayStateStore store(stateDir_, effectiveScreenId());
     currentState_ = store.load();
   } catch (const std::exception& error) {
     qWarning().noquote() << "Tray pins: could not read the state file:" << error.what();
@@ -173,7 +173,7 @@ void TrayPins::reload() {
       const TrayIconData* data = icons_->iconData(id);
       if (!data) continue;
       std::vector<int>& list =
-          wabar::tray::savedStateFor(currentState_, *data).isPinned ? pinned : unpinned;
+          waku::tray::savedStateFor(currentState_, *data).isPinned ? pinned : unpinned;
       list.insert(list.begin() + positionFor(list, id), id);
     }
   }
@@ -184,7 +184,7 @@ void TrayPins::reload() {
 int TrayPins::sortKey(int id) const {
   const TrayIconData* data = icons_ ? icons_->iconData(id) : nullptr;
   if (!data) return kNoIndex;
-  const int index = wabar::tray::savedStateFor(currentState_, *data).index;
+  const int index = waku::tray::savedStateFor(currentState_, *data).index;
   return index < 0 ? kNoIndex : index;
 }
 
@@ -206,7 +206,7 @@ void TrayPins::onRowsInserted(int first, int last) {
     const TrayIconData* data = icons_->iconData(id);
     if (!data) continue;
     TrayPinList& list =
-        wabar::tray::savedStateFor(currentState_, *data).isPinned ? pinned_ : unpinned_;
+        waku::tray::savedStateFor(currentState_, *data).isPinned ? pinned_ : unpinned_;
     list.insertAt(positionFor(list.ids(), id), id);
   }
 }
@@ -223,7 +223,7 @@ void TrayPins::onRowsRemoved() {
 
 QString TrayPins::keyOf(int id) const {
   const TrayIconData* data = icons_ ? icons_->iconData(id) : nullptr;
-  return data ? wabar::tray::iconStateKey(*data) : QString();
+  return data ? waku::tray::iconStateKey(*data) : QString();
 }
 
 QStringList TrayPins::keysOf(const std::vector<int>& ids) const {
@@ -284,8 +284,8 @@ void TrayPins::moveBy(int id, int delta) {
 
 void TrayPins::persist() {
   try {
-    wabar::tray::updateCurrentState(currentState_, keysOf(pinned_.ids()), keysOf(unpinned_.ids()));
-    const wabar::tray::SystrayStateStore store(stateDir_, effectiveScreenId());
+    waku::tray::updateCurrentState(currentState_, keysOf(pinned_.ids()), keysOf(unpinned_.ids()));
+    const waku::tray::SystrayStateStore store(stateDir_, effectiveScreenId());
     if (!store.save(currentState_))
       qWarning().noquote() << "Tray pins: state could not be written to" << store.path();
   } catch (const std::exception& error) {
@@ -293,4 +293,4 @@ void TrayPins::persist() {
   }
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

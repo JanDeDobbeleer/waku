@@ -4,7 +4,7 @@
 #include <memory>
 #include <optional>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // Sets the Windows lock screen picture, which the sign-in screen shows too. The wallpaper service
 // only talks to this interface, so tests substitute a fake and never touch the real lock screen.
@@ -30,4 +30,4 @@ std::optional<QString> lockScreenSkipReason(const QString& path);
 // setter writes a PNG copy first.
 bool lockScreenNeedsCopy(const QString& path);
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

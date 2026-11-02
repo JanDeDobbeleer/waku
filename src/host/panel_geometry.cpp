@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -67,4 +67,4 @@ int panelReservedZone(const PanelAnchorSet& anchors, const QMargins& margins, in
   return zone > 0 ? zone + margin : 0;
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

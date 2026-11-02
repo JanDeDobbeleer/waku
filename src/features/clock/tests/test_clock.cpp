@@ -101,8 +101,8 @@ TEST(CalendarPopupTest, TheSelectedDayStartsAtTodayAndFollowsAClickAndTheMonth) 
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.widgets
+import waku
+import waku.widgets
 ShellRoot {
     Panel {
         content: PanelLayout {

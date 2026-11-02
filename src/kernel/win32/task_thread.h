@@ -6,7 +6,7 @@
 #include <memory>
 #include <thread>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // One worker std::thread in the multi-threaded WinRT apartment that runs posted tasks in order, for
 // a source whose WinRT or COM objects must live on one thread the GUI thread never blocks on.
@@ -63,4 +63,4 @@ class TaskThread {
   std::thread thread_;
 };
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

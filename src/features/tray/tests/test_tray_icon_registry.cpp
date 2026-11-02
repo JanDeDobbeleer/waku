@@ -9,8 +9,8 @@
 #include "features/tray/tray_icon_registry.h"
 #include "features/tray/tray_state.h"
 
-using namespace wabar::tray;
-namespace platform = wabar::tray;
+using namespace waku::tray;
+namespace platform = waku::tray;
 
 namespace {
 

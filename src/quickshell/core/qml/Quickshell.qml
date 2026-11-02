@@ -1,10 +1,10 @@
 pragma Singleton
 import QtQml
-import wabar
-import wabar.services as S
+import waku
+import waku.services as S
 
 // Quickshell's `Quickshell` singleton. `screens` is the host's screen list; everything else is
-// forwarded to wabar.services.QuickshellSingleton (env, execDetached, the paths, clipboardText,
+// forwarded to waku.services.QuickshellSingleton (env, execDetached, the paths, clipboardText,
 // reload, ...). A QML file because the host unit cannot include a feature's headers, and QML may
 // use any unit.
 QtObject {

@@ -1,6 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import wabar as W
+import waku as W
 
 // Quickshell.Bluetooth's BluetoothAdapter over the Bluetooth service (the Windows radio). The
 // Bluetooth singleton creates it.

@@ -61,7 +61,7 @@ TEST(PillWidget, OnABarItIsFlatAndTakesTheBarFill) {
   Harness h;
   write(h.dir.filePath(QStringLiteral("theme.qml")),
         QStringLiteral(
-            "import wabar\nThemeSpec { barFill: \"#00000000\"; barFillHover: \"#26c6d0f5\" }\n"));
+            "import waku\nThemeSpec { barFill: \"#00000000\"; barFillHover: \"#26c6d0f5\" }\n"));
   h.start(widgetConfig(QStringLiteral(R"(Pill { objectName: "p"; text: "x" })")));
   ASSERT_TRUE(started(h));
   QQuickItem* pill = item(h, QStringLiteral("p"));
@@ -74,7 +74,7 @@ TEST(PillWidget, OnABarItIsFlatAndTakesTheBarFill) {
 TEST(PillWidget, InAPopupItKeepsTheVisibleFill) {
   Harness h;
   write(h.dir.filePath(QStringLiteral("theme.qml")),
-        QStringLiteral("import wabar\nThemeSpec { barFill: \"#00000000\" }\n"));
+        QStringLiteral("import waku\nThemeSpec { barFill: \"#00000000\" }\n"));
   h.start(widgetConfig(QStringLiteral(R"(
 Pill {
     objectName: "anchor"; text: "a"
@@ -112,7 +112,7 @@ QQuickItem* textChild(QQuickItem* root, const QString& text) {
 TEST(PillWidget, AnIconIsDrawnInTheIconFont) {
   Harness h;
   write(h.dir.filePath(QStringLiteral("theme.qml")),
-        QStringLiteral("import wabar\nThemeSpec { iconFont: \"Test Icons\"; iconSize: 18 }\n"));
+        QStringLiteral("import waku\nThemeSpec { iconFont: \"Test Icons\"; iconSize: 18 }\n"));
   h.start(widgetConfig(QStringLiteral(R"(Pill { objectName: "p"; icon: ""; text: "hi" })")));
   ASSERT_TRUE(started(h));
   QQuickItem* pill = item(h, QStringLiteral("p"));

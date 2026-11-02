@@ -12,7 +12,7 @@
 
 #include "features/workspaces/komorebi_workarea.h"
 
-namespace wabar::workspaces::komorebi {
+namespace waku::workspaces::komorebi {
 
 struct FakeWorkAreaLog {
   // The fake clock's time (ms) of every notify() call.
@@ -84,4 +84,4 @@ struct WorkAreaRig {
   }
 };
 
-}  // namespace wabar::workspaces::komorebi
+}  // namespace waku::workspaces::komorebi

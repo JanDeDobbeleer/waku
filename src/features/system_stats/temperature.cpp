@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 namespace {
 
 constexpr double kMaxCelsius = 150.0;
@@ -43,4 +43,4 @@ std::optional<double> celsiusFromDeciCelsius(std::uint32_t deciCelsius) {
   return plausible(static_cast<double>(deciCelsius) / 10.0);
 }
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

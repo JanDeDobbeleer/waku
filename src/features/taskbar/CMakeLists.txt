@@ -1,7 +1,7 @@
 # taskbar: running and pinned apps. Window tracking (shell hook and WinEvent hooks), app identity,
 # pin support and store, window and pinned-app icons, the Taskbar service and model, the Taskbar
 # widget. No dependencies on other features.
-wabar_feature(
+waku_feature(
   NAME taskbar
   SOURCES
     app_identity.h

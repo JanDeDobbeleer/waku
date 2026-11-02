@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // NOTIFYICONDATA flags, NIM_* messages and notification codes the tray code relies on.
 inline constexpr std::uint32_t kNifMessage = 0x1;
@@ -60,6 +60,6 @@ struct TrayIconData {
   QString exePath;
 };
 
-}  // namespace wabar::tray
+}  // namespace waku::tray
 
-Q_DECLARE_METATYPE(wabar::tray::TrayIconData)
+Q_DECLARE_METATYPE(waku::tray::TrayIconData)

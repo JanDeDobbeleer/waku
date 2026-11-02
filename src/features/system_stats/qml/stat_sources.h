@@ -10,7 +10,7 @@
 #include "features/system_stats/system_stats.h"
 #include "kernel/qml/stat_source.h"
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 
 class Memory : public kernel::StatSource {
   Q_OBJECT
@@ -175,4 +175,4 @@ class Disks : public kernel::StatSource {
   QVariantMap primary_;
 };
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

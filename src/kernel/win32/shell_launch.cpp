@@ -10,7 +10,7 @@
 
 #include "kernel/win32/com_scope.h"
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 void shellOpen(const QString& file, const QString& parameters) {
   const std::wstring target = file.toStdWString();
@@ -49,4 +49,4 @@ bool launchHiddenShell(const QString& commandLine) {
   return ok;
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

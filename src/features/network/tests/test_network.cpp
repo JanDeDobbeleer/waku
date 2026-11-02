@@ -11,8 +11,8 @@
 #include "features/network/qml/network_service.h"
 #include "features/network/testing/fake_network_source.h"
 
-using namespace wabar::network;
-using namespace wabar::network::testing;
+using namespace waku::network;
+using namespace waku::network::testing;
 
 namespace {
 

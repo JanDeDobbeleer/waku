@@ -10,7 +10,7 @@
 #include "features/bluetooth/qml/bluetooth_service.h"
 #include "features/bluetooth/testing/fake_bluetooth_backend.h"
 
-using namespace wabar::bluetooth;
+using namespace waku::bluetooth;
 
 namespace {
 

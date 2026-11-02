@@ -6,7 +6,7 @@
 #include <vector>
 
 // Non-throwing reads of `komorebic state` JSON (port of the KomorebiClient getters).
-namespace wabar::workspaces::komorebi {
+namespace waku::workspaces::komorebi {
 
 using Json = nlohmann::json;
 
@@ -44,4 +44,4 @@ int windowCount(const Json* workspace, bool hideFloating);
 // skipped.
 std::vector<long long> windowHwnds(const Json* workspace, bool hideFloating);
 
-}  // namespace wabar::workspaces::komorebi
+}  // namespace waku::workspaces::komorebi

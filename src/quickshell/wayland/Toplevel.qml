@@ -1,5 +1,5 @@
 import QtQml
-import wabar.services as S
+import waku.services as S
 
 // Quickshell.Wayland's Toplevel: one window of the desktop, from ToplevelManager.toplevels.
 //

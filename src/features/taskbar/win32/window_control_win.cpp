@@ -5,7 +5,7 @@
 #include "features/taskbar/window_control_backend.h"
 #include "kernel/win32/window_focus.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 namespace {
 
 HWND toHwnd(std::uintptr_t hwnd) { return reinterpret_cast<HWND>(hwnd); }
@@ -43,4 +43,4 @@ std::shared_ptr<WindowControlBackend> makeWin32WindowControlBackend() {
   return std::make_shared<Win32WindowControlBackend>();
 }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

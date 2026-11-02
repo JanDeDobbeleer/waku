@@ -13,7 +13,7 @@
 
 #include "features/wallpapers/desktop_wallpaper.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // What the fake desktop was told, and how it answers. Shared by the backends a test creates.
 struct DesktopState {
@@ -48,4 +48,4 @@ class FakeBackend final : public DesktopWallpaperBackend {
   std::shared_ptr<DesktopState> state_;
 };
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

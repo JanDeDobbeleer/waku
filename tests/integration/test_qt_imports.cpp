@@ -1,4 +1,4 @@
-// Qt QML modules that shells written for Quickshell import although no built-in wabar file does.
+// Qt QML modules that shells written for Quickshell import although no built-in waku file does.
 // They reach the deployed folder through cmake/deploy_imports (windeployqt --qmldir); this test
 // checks that the engine can load each one.
 #include <gtest/gtest.h>

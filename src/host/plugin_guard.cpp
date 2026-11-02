@@ -8,7 +8,7 @@
 #include <QPluginLoader>
 #include <QtGlobal>
 
-namespace wabar::host {
+namespace waku::host {
 namespace {
 
 constexpr quint16 kMachineX64 = 0x8664;
@@ -51,11 +51,11 @@ PluginVerdict checkPluginMetadata(const QJsonObject& metaData, int qtVersion, bo
   }
   const int built = version.toInt();
   if ((built >> 16) != (qtVersion >> 16) || ((built >> 8) & 0xff) != ((qtVersion >> 8) & 0xff)) {
-    return {false, QStringLiteral("built for Qt %1, this wabar uses Qt %2")
+    return {false, QStringLiteral("built for Qt %1, this waku uses Qt %2")
                        .arg(versionText(built), versionText(qtVersion))};
   }
   if (debug.toBool() != debugBuild) {
-    return {false, QStringLiteral("built as a %1 plugin, this wabar is a %2 build")
+    return {false, QStringLiteral("built as a %1 plugin, this waku is a %2 build")
                        .arg(debug.toBool() ? QStringLiteral("debug") : QStringLiteral("release"),
                             debugBuild ? QStringLiteral("debug") : QStringLiteral("release"))};
   }
@@ -92,7 +92,7 @@ PluginVerdict checkPluginFile(const QString& libraryPath) {
   file.close();
   if (machine == 0) return {false, QStringLiteral("not a Windows library")};
   if (hostMachine() != 0 && machine != hostMachine()) {
-    return {false, QStringLiteral("built for %1, this wabar runs as %2")
+    return {false, QStringLiteral("built for %1, this waku runs as %2")
                        .arg(machineName(machine), machineName(hostMachine()))};
   }
   // Reads the embedded metadata from the file; the library is not loaded.
@@ -198,7 +198,7 @@ QStringList usableImportRoots(const QStringList& roots) {
       const PluginVerdict verdict = checkPluginFile(plugin);
       if (verdict.ok) continue;
       ok = false;
-      qWarning().noquote() << "wabar: plugin refused:" << QDir::toNativeSeparators(plugin) << "-"
+      qWarning().noquote() << "waku: plugin refused:" << QDir::toNativeSeparators(plugin) << "-"
                            << verdict.reason << "; the folder" << QDir::toNativeSeparators(root)
                            << "is not used";
     }
@@ -207,4 +207,4 @@ QStringList usableImportRoots(const QStringList& roots) {
   return usable;
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

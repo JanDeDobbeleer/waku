@@ -4,7 +4,7 @@
 #include <QScreen>
 #include <algorithm>
 
-namespace wabar::host {
+namespace waku::host {
 
 PanelWindow::PanelWindow(QObject* parent)
     : QsWindow(parent), anchors_(new PanelAnchors(this)), margins_(new PanelMargins(this)) {
@@ -139,4 +139,4 @@ void PanelWindow::afterShow() {
   // Top and Overlay are raised by ShellHost::windowShown (NativeHooks::raiseTopmost).
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

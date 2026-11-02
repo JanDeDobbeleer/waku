@@ -10,7 +10,7 @@
 
 #include "host/thumbnail.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 // A live preview of another window, drawn by the compositor (a DWM thumbnail).
 //
@@ -105,4 +105,4 @@ class WindowThumbnail : public QQuickItem {
   QTimer refresh_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

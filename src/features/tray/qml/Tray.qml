@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
-import wabar
-import wabar.services as S
+import waku
+import waku.services as S
 
 // The notification-area icons of other programs. Icons you pin stay in the bar; the others are
 // shown after them, inline or in a popup behind a chevron button. A click reaches the program,
@@ -15,7 +15,7 @@ import wabar.services as S
 // `hide` lists executable names whose icons are never shown. Windows' own battery, volume and
 // network icons are left out unless `showSystemIcons` is set. `iconsPerRow` is the width of the
 // popup grid. `collapsedText` and `expandedText` are the chevron's glyphs. `stateDir` moves the
-// pin state folder away from %LOCALAPPDATA%\wabar (for tests). When the tray cannot be used the
+// pin state folder away from %LOCALAPPDATA%\waku (for tests). When the tray cannot be used the
 // widget says "tray unavailable" and hovering it shows why. On a panel docked to the left or right
 // edge the icons stack top to bottom.
 Strip {

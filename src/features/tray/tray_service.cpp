@@ -5,7 +5,7 @@
 
 #include "features/tray/win32/tray_hook.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 TrayHostFactories realTrayHostFactories() {
   TrayHostFactories factories;
@@ -57,4 +57,4 @@ void SystrayService::stop() {
   if (host_) host_->stop();
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

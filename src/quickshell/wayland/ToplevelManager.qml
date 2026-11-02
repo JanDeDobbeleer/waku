@@ -1,8 +1,8 @@
 pragma Singleton
 import QtQuick
 import QtQuick.Window
-import wabar as W
-import wabar.services as S
+import waku as W
+import waku.services as S
 
 // Quickshell.Wayland's `ToplevelManager` over the taskbar service.
 //
@@ -33,7 +33,7 @@ QtObject {
         height: 1
         color: "transparent"
         opacity: 0
-        title: "wabar-toplevel-anchor"
+        title: "waku-toplevel-anchor"
         flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus
     }
 

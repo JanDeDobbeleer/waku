@@ -11,7 +11,7 @@
 #include "features/tray/tray_host.h"
 #include "features/tray/tray_pipe.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 namespace {
 
 HWND toHwnd(std::uint64_t value) { return reinterpret_cast<HWND>(static_cast<ULONG_PTR>(value)); }
@@ -54,7 +54,7 @@ class RealTrayWindowApi final : public TrayWindowApi {
 }  // namespace
 
 TrayHost::TrayHost(QObject* parent) : QObject(parent) {
-  qRegisterMetaType<wabar::tray::TrayIconData>();
+  qRegisterMetaType<waku::tray::TrayIconData>();
 }
 
 std::unique_ptr<TrayWindowApi> makeTrayWindowApi() { return std::make_unique<RealTrayWindowApi>(); }
@@ -84,9 +84,9 @@ bool runningUnderEmulation() {
 QString trayHookDllName() {
   switch (hostArch()) {
     case HostArch::X64:
-      return QStringLiteral("WabarTrayHook.dll");
+      return QStringLiteral("WakuTrayHook.dll");
     case HostArch::Arm64:
-      return QStringLiteral("WabarTrayHook_arm64.dll");
+      return QStringLiteral("WakuTrayHook_arm64.dll");
     default:
       return {};
   }
@@ -242,4 +242,4 @@ bool extractIconRgba(TrayIconData& data) {
   return ok;
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

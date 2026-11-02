@@ -23,8 +23,8 @@
 #include "kernel/win32/shell_launch.h"
 
 using nlohmann::json;
-using namespace wabar::workspaces;
-namespace komo = wabar::workspaces::komorebi;
+using namespace waku::workspaces;
+namespace komo = waku::workspaces::komorebi;
 
 TEST(KomorebiState, WindowHwndsFollowPythonOrder) {
   const json workspace = {
@@ -93,7 +93,7 @@ TEST(KomorebiServiceTest, ShellChainQuotesLikePython) {
             QStringLiteral("\"komorebic.exe\" focus-monitor-at-cursor && \"komorebic.exe\" "
                            "toggle-tiling"));
   const QString name = komo::KomorebiService::uniquePipeName();
-  EXPECT_TRUE(name.startsWith(QStringLiteral("wabar-")));
+  EXPECT_TRUE(name.startsWith(QStringLiteral("waku-")));
   EXPECT_NE(name, komo::KomorebiService::uniquePipeName());
 }
 
@@ -105,7 +105,7 @@ TEST(KomorebiServiceTest, HiddenShellRunsQuotedCommandChains) {
   const QString chain =
       QStringLiteral("\"cmd.exe\" /c echo first> \"%1\" && \"cmd.exe\" /c echo second>> \"%1\"")
           .arg(out);
-  ASSERT_TRUE(wabar::kernel::launchHiddenShell(chain));
+  ASSERT_TRUE(waku::kernel::launchHiddenShell(chain));
   QFile file(out);
   ASSERT_TRUE(QTest::qWaitFor([&] { return file.exists() && QFileInfo(out).size() >= 14; }, 10000));
   ASSERT_TRUE(file.open(QIODevice::ReadOnly));
@@ -117,7 +117,7 @@ TEST(KomorebiServiceTest, CommandEventsReachTheRunner) {
   std::vector<std::vector<QStringList>> runs;
   komo::KomorebiService service(
       bus, {}, [&](const std::vector<QStringList>& commands) { runs.push_back(commands); },
-      QStringLiteral("wabar-unused"), {});
+      QStringLiteral("waku-unused"), {});
   komo::sendCommand(
       bus, {QStringLiteral("focus-monitor-workspace"), QStringLiteral("0"), QStringLiteral("2")});
   komo::sendCommandChain(
@@ -199,7 +199,7 @@ TEST(KomorebiServiceTest, ListensOnItsOwnPipeReconnectsAndSurvivesMalformedJson)
   timing.stateRetryMs = 20;
   timing.reconnectMs = 50;
   const QString pipe =
-      QStringLiteral("wabar-test-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
+      QStringLiteral("waku-test-") + QUuid::createUuid().toString(QUuid::WithoutBraces);
   komo::KomorebiService service(bus, backend, nullptr, pipe, timing);
   EXPECT_NE(pipe, komo::KomorebiService::uniquePipeName());
 
@@ -263,8 +263,7 @@ TEST(KomorebiServiceTest, OfflineKomorebiKeepsRetryingUntilStopped) {
   };
   komo::KomorebiPipeListener::Timing timing;
   timing.subscribeRetryMs = 10;
-  komo::KomorebiService service(bus, backend, nullptr, QStringLiteral("wabar-test-offline"),
-                                timing);
+  komo::KomorebiService service(bus, backend, nullptr, QStringLiteral("waku-test-offline"), timing);
   emit bus.event(komo::kSubscribeEvent, {});
   // The listener asks for komorebi.exe once per retry: a few rounds have gone by.
   ASSERT_TRUE(QTest::qWaitFor([&] { return runningChecks.load() >= 3; }, 5000));
@@ -295,7 +294,7 @@ TEST(KomorebiServiceTest, StopCancelsARunningKomorebicAndDoesNotWaitForUnsubscri
     return result;
   };
   backend.launchKomorebic = [&](const QStringList&) { ++launched; };
-  komo::KomorebiPipeListener listener(backend, {}, QStringLiteral("wabar-test-cancel"), {});
+  komo::KomorebiPipeListener listener(backend, {}, QStringLiteral("waku-test-cancel"), {});
   listener.start();
   ASSERT_TRUE(QTest::qWaitFor([&] { return entered.load(); }, 5000));
   QElapsedTimer timer;

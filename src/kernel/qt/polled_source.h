@@ -10,7 +10,7 @@
 #include <memory>
 #include <optional>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // Base of the polled data sources (Memory, Cpu, Battery, Network). After begin() it samples every
 // `interval` ms while `active`. The platform call runs on a QThreadPool thread, one
@@ -101,4 +101,4 @@ class PolledSource : public QObject {
   std::deque<double> history_;
 };
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

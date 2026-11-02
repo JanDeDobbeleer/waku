@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace wabar::host {
+namespace waku::host {
 
 AppBarRect physicalScreenRect(const QRect& g, double dpr) {
   const double scale = dpr > 0 ? dpr : 1.0;
@@ -90,4 +90,4 @@ QPoint appBarWindowShift(AppBarEdge edge, int inset) {
   return {};
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

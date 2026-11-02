@@ -9,7 +9,7 @@
 #include <QXmlStreamReader>
 #include <memory>
 
-namespace wabar::notifications {
+namespace waku::notifications {
 namespace {
 
 struct Node {
@@ -260,4 +260,4 @@ std::vector<NotificationItem> assembleItems(
   return items;
 }
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Shapes
-import wabar
+import waku
 
 // A rolling area chart of percentages (0 to 100), the graph of the CPU and memory popups.
 //

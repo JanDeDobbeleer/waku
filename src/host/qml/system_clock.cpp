@@ -2,7 +2,7 @@
 
 #include <QTime>
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -93,4 +93,4 @@ void SystemClock::refresh() {
   if (old.time().second() != next.time().second()) emit secondsChanged();
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

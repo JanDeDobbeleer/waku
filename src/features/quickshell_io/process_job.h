@@ -3,7 +3,7 @@
 #include <QtGlobal>
 #include <memory>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // A Windows job object that owns one child and its descendants: closing the job (or terminate())
 // kills the whole tree. One job per started process. Not thread-safe; GUI thread only.
@@ -28,4 +28,4 @@ class ProcessJob {
   std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

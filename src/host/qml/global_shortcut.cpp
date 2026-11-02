@@ -5,10 +5,10 @@
 #include <algorithm>
 #include <vector>
 
-namespace wabar::host {
+namespace waku::host {
 namespace {
 
-// The shortcuts of the process, for `wabarc shortcut <name>`. GUI thread only.
+// The shortcuts of the process, for `wakuc shortcut <name>`. GUI thread only.
 std::vector<GlobalShortcut*>& liveShortcuts() {
   static std::vector<GlobalShortcut*> shortcuts;
   return shortcuts;
@@ -115,4 +115,4 @@ QStringList GlobalShortcut::names() {
   return result;
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

@@ -13,7 +13,7 @@
 class QJSEngine;
 class QQmlEngine;
 
-namespace wabar::workspaces {
+namespace waku::workspaces {
 
 // The workspaces of whichever tiling window manager is running, as one QML singleton, so a widget
 // never mentions komorebi or GlazeWM. Built on the Komorebi and GlazeWM singletons (shared with
@@ -75,4 +75,4 @@ class Workspaces : public QObject {
   QVariantList monitors_;
 };
 
-}  // namespace wabar::workspaces
+}  // namespace waku::workspaces

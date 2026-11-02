@@ -4,7 +4,7 @@
 #include <QString>
 #include <QVariantMap>
 
-namespace wabar::workspaces {
+namespace waku::workspaces {
 
 // Runtime-owned signal hub (replaces Python's EventService). Widgets connect in their constructor;
 // emitters deliver signals on the GUI thread.
@@ -21,4 +21,4 @@ class EventBus : public QObject {
   void event(const QString& name, const QVariantMap& payload);
 };
 
-}  // namespace wabar::workspaces
+}  // namespace waku::workspaces

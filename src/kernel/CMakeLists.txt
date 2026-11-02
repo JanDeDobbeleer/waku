@@ -1,14 +1,14 @@
-# wabar_kernel: helpers with no domain knowledge that two or more units use (proposal, section 6).
+# waku_kernel: helpers with no domain knowledge that two or more units use (proposal, section 6).
 #   win32/  Windows build number, WinRT apartment, hidden process launch, shell open, app activation,
 #           forced foreground focus, shell icons, COM scope, task thread, WinRT strings,
 #           environment expansion, the RegisterHotKey backend of the hotkey table
 #   qt/     live-desktop gate, polled-source base class, the one app data folder, lingering hubs,
 #           atomic file write, guarded post to the GUI thread, the global hotkey table (Hotkeys)
-#   qml/    the QML face of the polled source (compiled into wabar.services, not into this library)
+#   qml/    the QML face of the polled source (compiled into waku.services, not into this library)
 #   testing/ header-only fakes for tests (the fake hotkey backend)
 # Include root is src/ (#include "kernel/qt/app_data.h"). Qt Core and Gui only; the Windows SDK
-# only under win32/ (rule S3). Everything links this library through wabar_feature() or by name.
-add_library(wabar_kernel STATIC
+# only under win32/ (rule S3). Everything links this library through waku_feature() or by name.
+add_library(waku_kernel STATIC
   win32/app_activation.h
   win32/app_activation.cpp
   win32/com_scope.h
@@ -43,14 +43,14 @@ add_library(wabar_kernel STATIC
   win32/winrt_apartment.cpp
   win32/winrt_strings.h
 )
-target_include_directories(wabar_kernel PUBLIC ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(wabar_kernel
+target_include_directories(waku_kernel PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(waku_kernel
   PUBLIC Qt6::Core Qt6::Gui
-  PRIVATE wabar_options shell32 ole32 windowsapp propsys user32 version)
+  PRIVATE waku_options shell32 ole32 windowsapp propsys user32 version)
 
-# qml/ is the QML face of the polled source. It is not part of wabar_kernel (wabarc links the kernel
-# without QtQml); the header is compiled into the wabar.services module like a feature's qml/.
-wabar_contribute(
+# qml/ is the QML face of the polled source. It is not part of waku_kernel (wakuc links the kernel
+# without QtQml); the header is compiled into the waku.services module like a feature's qml/.
+waku_contribute(
   SERVICES_SOURCES qml/stat_source.h
   SERVICES_INCLUDE_DIRS qml
   TESTS
@@ -69,5 +69,5 @@ wabar_contribute(
     tests/test_task_thread.cpp
     tests/test_windows_build.cpp
     tests/test_winrt_strings.cpp
-  TEST_LIBS wabar_kernel
+  TEST_LIBS waku_kernel
 )

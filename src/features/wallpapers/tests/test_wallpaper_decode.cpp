@@ -9,10 +9,10 @@
 
 namespace {
 
-using wabar::wallpapers::DecodeBudget;
-using wabar::wallpapers::decodeSize;
-using wabar::wallpapers::decodeWallpaper;
-using wabar::wallpapers::WallpaperFit;
+using waku::wallpapers::DecodeBudget;
+using waku::wallpapers::decodeSize;
+using waku::wallpapers::decodeWallpaper;
+using waku::wallpapers::WallpaperFit;
 
 DecodeBudget budget(QSize target, WallpaperFit fit = WallpaperFit::Fill) {
   DecodeBudget b;

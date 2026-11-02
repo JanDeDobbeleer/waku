@@ -4,7 +4,7 @@
 #include <QImageReader>
 #include <QStringList>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 std::optional<QString> lockScreenSkipReason(const QString& path) {
   const QFileInfo info(path);
@@ -30,4 +30,4 @@ bool lockScreenNeedsCopy(const QString& path) {
   return !accepted.contains(QFileInfo(path).suffix().toLower());
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

@@ -7,7 +7,7 @@
 
 #include "kernel/qt/app_data.h"
 
-using namespace wabar::kernel;
+using namespace waku::kernel;
 
 namespace {
 
@@ -27,9 +27,7 @@ class FakeLocalAppData {
   }
   QString base() const { return dir_.path(); }
   QString yasb(const QString& name = QString()) const { return path(QStringLiteral("YASB"), name); }
-  QString wabar(const QString& name = QString()) const {
-    return path(QStringLiteral("wabar"), name);
-  }
+  QString waku(const QString& name = QString()) const { return path(QStringLiteral("waku"), name); }
 
   static void write(const QString& file, const QByteArray& content) {
     QDir().mkpath(QFileInfo(file).absolutePath());
@@ -58,11 +56,11 @@ TEST(KernelAppData, TheBaseFollowsLocalAppData) {
   EXPECT_EQ(localAppDataBase(), local.base());
 }
 
-TEST(KernelAppData, TheFolderIsWabarUnderLocalAppDataAndCreatedOnDemand) {
+TEST(KernelAppData, TheFolderIsWakuUnderLocalAppDataAndCreatedOnDemand) {
   FakeLocalAppData local;
-  EXPECT_FALSE(QDir(local.wabar()).exists());
-  EXPECT_EQ(QDir(appDataDir()).absolutePath(), QDir(local.wabar()).absolutePath());
-  EXPECT_TRUE(QDir(local.wabar()).exists());
+  EXPECT_FALSE(QDir(local.waku()).exists());
+  EXPECT_EQ(QDir(appDataDir()).absolutePath(), QDir(local.waku()).absolutePath());
+  EXPECT_TRUE(QDir(local.waku()).exists());
   EXPECT_EQ(appDataDir(), appDataDir());
   EXPECT_FALSE(QDir(local.yasb()).exists()) << "the old folder is never created";
 }
@@ -78,11 +76,11 @@ TEST(KernelAppDataMigration, CopiesThePinsTheTokenAndEveryTrayStateFile) {
   const AppDataMigration result = migrateLegacyAppData(local.base());
   EXPECT_TRUE(result.ran);
   EXPECT_EQ(result.copied.size(), 4);
-  EXPECT_EQ(FakeLocalAppData::read(local.wabar("taskbar_pinned.json")), "pins");
-  EXPECT_EQ(FakeLocalAppData::read(local.wabar("github_token")), "token");
-  EXPECT_EQ(FakeLocalAppData::read(local.wabar("systray_state_S1.json")), "s1");
-  EXPECT_EQ(FakeLocalAppData::read(local.wabar("systray_state_S2.json")), "s2");
-  EXPECT_FALSE(QFile::exists(local.wabar("unrelated.json")));
+  EXPECT_EQ(FakeLocalAppData::read(local.waku("taskbar_pinned.json")), "pins");
+  EXPECT_EQ(FakeLocalAppData::read(local.waku("github_token")), "token");
+  EXPECT_EQ(FakeLocalAppData::read(local.waku("systray_state_S1.json")), "s1");
+  EXPECT_EQ(FakeLocalAppData::read(local.waku("systray_state_S2.json")), "s2");
+  EXPECT_FALSE(QFile::exists(local.waku("unrelated.json")));
 }
 
 TEST(KernelAppDataMigration, CopiesAndNeverMovesOrWritesTheOldFolder) {
@@ -93,15 +91,15 @@ TEST(KernelAppDataMigration, CopiesAndNeverMovesOrWritesTheOldFolder) {
   EXPECT_EQ(QDir(local.yasb()).entryList(QDir::Files).size(), 1);
 }
 
-TEST(KernelAppDataMigration, NeverOverwritesAWabarFile) {
+TEST(KernelAppDataMigration, NeverOverwritesAWakuFile) {
   FakeLocalAppData local;
   local.write(local.yasb("taskbar_pinned.json"), "old");
   local.write(local.yasb("github_token"), "old-token");
-  local.write(local.wabar("taskbar_pinned.json"), "mine");
+  local.write(local.waku("taskbar_pinned.json"), "mine");
 
   const AppDataMigration result = migrateLegacyAppData(local.base());
-  EXPECT_EQ(FakeLocalAppData::read(local.wabar("taskbar_pinned.json")), "mine");
-  EXPECT_EQ(FakeLocalAppData::read(local.wabar("github_token")), "old-token");
+  EXPECT_EQ(FakeLocalAppData::read(local.waku("taskbar_pinned.json")), "mine");
+  EXPECT_EQ(FakeLocalAppData::read(local.waku("github_token")), "old-token");
   EXPECT_EQ(result.copied, QStringList{QStringLiteral("github_token")});
   EXPECT_EQ(result.skipped, QStringList{QStringLiteral("taskbar_pinned.json")});
 }
@@ -111,7 +109,7 @@ TEST(KernelAppDataMigration, DoesNothingWhenTheOldFolderIsMissing) {
   const AppDataMigration result = migrateLegacyAppData(local.base());
   EXPECT_FALSE(result.ran);
   EXPECT_TRUE(result.copied.isEmpty());
-  EXPECT_FALSE(QDir(local.wabar()).exists());
+  EXPECT_FALSE(QDir(local.waku()).exists());
   EXPECT_FALSE(QDir(local.yasb()).exists());
 }
 
@@ -120,11 +118,11 @@ TEST(KernelAppDataMigration, RunsOnceEvenWhenAFileIsDeletedLater) {
   local.write(local.yasb("github_token"), "token");
   EXPECT_TRUE(migrateLegacyAppData(local.base()).ran);
 
-  QFile::remove(local.wabar("github_token"));
+  QFile::remove(local.waku("github_token"));
   const AppDataMigration again = migrateLegacyAppData(local.base());
   EXPECT_FALSE(again.ran);
   EXPECT_TRUE(again.copied.isEmpty());
-  EXPECT_FALSE(QFile::exists(local.wabar("github_token"))) << "a deleted file does not come back";
+  EXPECT_FALSE(QFile::exists(local.waku("github_token"))) << "a deleted file does not come back";
 }
 
 TEST(KernelAppDataMigration, AppDataDirMigratesBeforeItReturns) {

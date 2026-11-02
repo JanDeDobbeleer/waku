@@ -4,7 +4,7 @@
 
 #include "features/media/qml/media_service.h"
 
-namespace wabar::media {
+namespace waku::media {
 
 MprisPlayer::MprisPlayer(MediaSessionService* service, QString appId, int serial, QObject* parent)
     : QObject(parent), service_(service), appId_(std::move(appId)), serial_(serial) {}
@@ -211,4 +211,4 @@ void Mpris::sync() {
   }
 }
 
-}  // namespace wabar::media
+}  // namespace waku::media

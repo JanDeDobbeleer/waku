@@ -9,7 +9,7 @@
 #include "features/control_center/touch_keyboard.h"
 #include "kernel/win32/com_scope.h"
 
-namespace wabar::control_center {
+namespace waku::control_center {
 namespace {
 
 // Undocumented TabTip COM server (docs/architecture.md allowlist).
@@ -76,4 +76,4 @@ void toggleTouchKeyboard() {
   std::thread(launchAndToggle).detach();
 }
 
-}  // namespace wabar::control_center
+}  // namespace waku::control_center

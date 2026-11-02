@@ -9,7 +9,7 @@
 
 #include "features/bluetooth/bluetooth.h"
 
-namespace wabar::bluetooth {
+namespace waku::bluetooth {
 
 QString btDeviceTypeName(BtDeviceType type) {
   switch (type) {
@@ -207,4 +207,4 @@ std::vector<BluetoothDevice> mergeSameDevices(const std::vector<BluetoothDevice>
   for (const auto& group : groups) result.push_back(mergeGroup(group));
   return result;
 }
-}  // namespace wabar::bluetooth
+}  // namespace waku::bluetooth

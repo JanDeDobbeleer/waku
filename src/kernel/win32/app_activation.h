@@ -2,7 +2,7 @@
 
 #include <QString>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // The Start menu entry of a packaged or shortcut app: its display name and the exe it launches.
 struct ShellApp {
@@ -26,4 +26,4 @@ QString appNameForWindowAumid(const QString& aumid);
 // app has no window. GUI thread.
 bool activateAppByAumid(const QString& aumid);
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

@@ -6,7 +6,7 @@
 
 #include "features/tray/qml/tray_icon_model.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // image://tray/<id>/<revision>: the scaled icon of one TrayIconModel row. The revision only
 // busts QML's image cache and is ignored here. Qt calls requestImage on the GUI thread for a
@@ -22,4 +22,4 @@ class TrayImageProvider : public QQuickImageProvider {
   std::shared_ptr<const TrayImageStore> store_;
 };
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

@@ -8,7 +8,7 @@
 
 #include "features/tray/tray_types.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // Port of IconState (services/systray/systray_widget.py).
 struct IconState {
@@ -76,4 +76,4 @@ class SystrayStateStore {
 // removed.
 QString cleanScreenId(const QString& manufacturer, const QString& name, const QString& serial);
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

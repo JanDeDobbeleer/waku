@@ -1,7 +1,7 @@
 # apps
 
 The app catalogue for a launcher, in Quickshell's shape so a ported launcher (caelestia) loads.
-Plan: `docs/plans/2026-10-29-wabar-extensibility-proposal.md` section 4.4 (the `apps` row) and
+Plan: `docs/plans/2026-10-29-waku-extensibility-proposal.md` section 4.4 (the `apps` row) and
 section 5 (Start menu, Store apps, icons); `docs/plans/2026-10-30-caelestia-port-assessment.md`.
 
 ## What it gives QML
@@ -9,19 +9,19 @@ section 5 (Start menu, Store apps, icons); `docs/plans/2026-10-30-caelestia-port
 | Where | Name | What |
 |---|---|---|
 | `import Quickshell` | `DesktopEntries` | singleton: `applications` (a model of `DesktopEntry`, role `modelData`, plus `values`, a JS array, and `count`), `byId(id)`, `heuristicLookup(name)` |
-| `import Quickshell` | `DesktopEntry` | `id`, `name`, `genericName`, `comment`, `icon`, `execString`, `command`, `workingDirectory`, `startupClass`, `categories`, `keywords`, `noDisplay`, `runInTerminal`, `isApplication`, `actions`, `execute()`; wabar adds `isStoreApp`, `aumid` |
+| `import Quickshell` | `DesktopEntry` | `id`, `name`, `genericName`, `comment`, `icon`, `execString`, `command`, `workingDirectory`, `startupClass`, `categories`, `keywords`, `noDisplay`, `runInTerminal`, `isApplication`, `actions`, `execute()`; waku adds `isStoreApp`, `aumid` |
 | `import Quickshell` | `DesktopAction` | `id`, `name`, `icon`, `execString`, `command`, `execute()` |
-| `import wabar.services` | `AppsService` | the C++ singleton behind all of it, plus the wabar form below |
+| `import waku.services` | `AppsService` | the C++ singleton behind all of it, plus the waku form below |
 
-`AppsService` (wabar form): `applications`, `ready`, `loading`, `count`, `scanMs`; `search(query,
+`AppsService` (waku form): `applications`, `ready`, `loading`, `count`, `scanMs`; `search(query,
 limit)` (ranked `DesktopEntry` list), `launch(id)`, `launchAsAdmin(id)`, `openLocation(id)`,
 `refresh()`, `byId`, `heuristicLookup`.
 
 `DesktopEntries.qml` (in `src/quickshell/core/qml`) is a QML singleton that forwards to
 `AppsService`, because the host unit cannot include a feature's headers (rule S2). `DesktopEntry`
-and `DesktopAction` are `wabar.services` types. The `Quickshell` module registers them again under
-the same names (`src/quickshell/core/qml/quickshell_types_core.h`) and does not re-export `wabar.services`, so
-`import Quickshell` shows no other `wabar.services` name. A launcher that declares
+and `DesktopAction` are `waku.services` types. The `Quickshell` module registers them again under
+the same names (`src/quickshell/core/qml/quickshell_types_core.h`) and does not re-export `waku.services`, so
+`import Quickshell` shows no other `waku.services` name. A launcher that declares
 `required property DesktopEntry modelData` therefore compiles.
 
 ## Sources
@@ -60,7 +60,7 @@ start (600..700, earlier words higher), all query words start some word (500), s
 (200..300, consecutive runs higher). A keyword or generic-name match counts half. Ties go to
 frecency, then name. A blank query lists the most used apps first.
 
-`frecency.h`: a launch count that halves every 14 days, in `%LOCALAPPDATA%\wabar\apps_frecency.json`
+`frecency.h`: a launch count that halves every 14 days, in `%LOCALAPPDATA%\waku\apps_frecency.json`
 (`appDataDir()`; at most 500 entries). Written after every successful launch. Not written when the
 desktop is not live.
 
@@ -124,4 +124,4 @@ resolution can be spread over a few threads.
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `wabar.services.AppsService` (`src/features/apps/qml/apps_service.{h,cpp}`): the one app catalogue of a `wabar` run (Start Menu shortcuts and Store apps as `DesktopEntry` objects, ranked search, launch, frecency in `%LOCALAPPDATA%\wabar\apps_frecency.json`), shared by every widget and by `DesktopEntries` of the `Quickshell` module; created by the QML engine on first use and destroyed with it (`create()` registers `image://appicon`). A `QFileSystemWatcher` on the Start Menu folders rescans after 1.5 s of quiet. Empty and inert unless `kernel::liveDesktop("apps")`
+- `waku.services.AppsService` (`src/features/apps/qml/apps_service.{h,cpp}`): the one app catalogue of a `waku` run (Start Menu shortcuts and Store apps as `DesktopEntry` objects, ranked search, launch, frecency in `%LOCALAPPDATA%\waku\apps_frecency.json`), shared by every widget and by `DesktopEntries` of the `Quickshell` module; created by the QML engine on first use and destroyed with it (`create()` registers `image://appicon`). A `QFileSystemWatcher` on the Start Menu folders rescans after 1.5 s of quiet. Empty and inert unless `kernel::liveDesktop("apps")`

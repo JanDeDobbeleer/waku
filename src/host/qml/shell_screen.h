@@ -12,7 +12,7 @@
 
 class QQmlEngine;
 
-namespace wabar::host {
+namespace waku::host {
 
 // One screen as QML sees it (Quickshell `ShellScreen`): a window's `screen` and an entry of
 // `ScreenList.screens`. Mirrors QScreen: `width` and `height` are logical (device-independent)
@@ -32,7 +32,7 @@ class ShellScreen : public QObject {
   Q_PROPERTY(qreal devicePixelRatio READ devicePixelRatio NOTIFY geometryChanged FINAL)
   Q_PROPERTY(QString model READ model CONSTANT FINAL)
   Q_PROPERTY(QString serialNumber READ serialNumber CONSTANT FINAL)
-  // wabar: the primary screen of the desktop.
+  // waku: the primary screen of the desktop.
   Q_PROPERTY(bool primary READ primary CONSTANT FINAL)
 
  public:
@@ -73,14 +73,14 @@ class ScreenList : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
-  Q_PROPERTY(QQmlListProperty<wabar::host::ShellScreen> screens READ screensProperty NOTIFY
+  Q_PROPERTY(QQmlListProperty<waku::host::ShellScreen> screens READ screensProperty NOTIFY
                  screensChanged FINAL)
-  Q_PROPERTY(wabar::host::ShellScreen* primary READ primary NOTIFY screensChanged FINAL)
+  Q_PROPERTY(waku::host::ShellScreen* primary READ primary NOTIFY screensChanged FINAL)
 
  public:
   explicit ScreenList(QObject* parent = nullptr);
 
-  // The engine's list (the singleton instance); null when `engine` has none or no wabar import.
+  // The engine's list (the singleton instance); null when `engine` has none or no waku import.
   static ScreenList* of(QQmlEngine* engine);
 
   // Replaces the list. `primary` is the screen "primary" stands for; null: the first of `screens`.
@@ -104,4 +104,4 @@ class ScreenList : public QObject {
   QList<ShellScreen*> screens_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

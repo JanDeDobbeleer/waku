@@ -7,7 +7,7 @@
 
 #include "features/taskbar/window_control_backend.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // Brings a window to the front by its HWND, for a shell that learns its windows from somewhere
 // other than the taskbar tracker (komorebi's state, for example). No state: every call goes
@@ -38,4 +38,4 @@ class WindowControl : public QObject {
   std::shared_ptr<WindowControlBackend> backend_;  // null when inert
 };
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

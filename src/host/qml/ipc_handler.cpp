@@ -11,7 +11,7 @@
 #include <QVariantMap>
 #include <vector>
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -260,4 +260,4 @@ QString IpcHandler::invoke(const QString& function, const QStringList& arguments
   return formatResult(typedResult);
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

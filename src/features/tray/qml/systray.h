@@ -18,7 +18,7 @@
 class QQmlEngine;
 class QJSEngine;
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // The notification-area icons of other programs, as a QML singleton shared by every Tray widget.
 // Owns the one TrayHost (the hook in Explorer), applies the
@@ -55,7 +55,7 @@ class Systray : public QObject {
   bool available() const { return host_ != nullptr; }
   QString unavailableReason() const { return reason_; }
   TrayIconModel* icons() { return &model_; }
-  wabar::tray::TrayIconRegistry& registry() { return registry_; }
+  waku::tray::TrayIconRegistry& registry() { return registry_; }
   // Whether the refresh after the hook asked for icons is still to come (tests).
   bool refreshPending() const { return refreshTimer_.isActive(); }
 
@@ -77,7 +77,7 @@ class Systray : public QObject {
  private:
   void onIconModified(const TrayIconData& data);
   void onIconDeleted(const TrayIconData& data);
-  // Logs `wabar: tray icon <exe>#<id>: <reason>` when the icon cannot show (unreadable handle, no
+  // Logs `waku: tray icon <exe>#<id>: <reason>` when the icon cannot show (unreadable handle, no
   // pixels, fully transparent), once per icon and reason.
   void diagnoseIcon(int id, const TrayIconData& incoming, const TrayIconData& stored);
   void sweep();
@@ -86,7 +86,7 @@ class Systray : public QObject {
   std::unique_ptr<TrayHost> host_;
   std::unique_ptr<TrayWindowApi> api_;
   QString reason_;
-  wabar::tray::TrayIconRegistry registry_;
+  waku::tray::TrayIconRegistry registry_;
   TrayIconModel model_;
   // Ids whose next left-button release is swallowed: set by doubleClick (the release of the
   // double-click gesture must not act as a second click), cleared by the next left click.
@@ -97,4 +97,4 @@ class Systray : public QObject {
   QTimer sweepTimer_;    // 5 s, as the Widgets build: drops icons whose owner window is gone
 };
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

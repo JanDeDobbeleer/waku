@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -69,4 +69,4 @@ QRectF panelAnchorRect(const QRectF& item, const QRectF& panel, bool vertical) {
   return QRectF(item.x(), panel.y(), item.width(), panel.height());
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

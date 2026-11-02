@@ -2,7 +2,7 @@
 
 #include <QString>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // One policy for "may this run touch the real desktop?". Services whose real constructors read or
 // change the machine (Explorer hooks, WinRT listeners, the wallpaper, Bluetooth, ...) ask it
@@ -27,4 +27,4 @@ void setCapabilityDisabled(const QString& capability, bool disabled);
 // True when setCapabilityDisabled(capability, true) is in effect, whatever the platform.
 bool capabilityDisabled(const QString& capability);
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

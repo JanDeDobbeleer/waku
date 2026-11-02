@@ -21,7 +21,7 @@
 #include "features/quickshell_io/qml/qs_process.h"
 #include "features/quickshell_io/qml/shell_process.h"
 
-using namespace wabar::quickshell_io;
+using namespace waku::quickshell_io;
 
 namespace {
 
@@ -134,9 +134,9 @@ TEST(QuickshellProcess, ExecObjectSetsEnvironmentAndWorkingDirectory) {
   ASSERT_TRUE(dir.isValid());
   Child run;
   QVariantMap context;
-  context.insert(QStringLiteral("command"), cmd(QStringLiteral("echo %WABAR_QS_VAR%& cd")));
+  context.insert(QStringLiteral("command"), cmd(QStringLiteral("echo %WAKU_QS_VAR%& cd")));
   context.insert(QStringLiteral("environment"),
-                 QVariantMap{{QStringLiteral("WABAR_QS_VAR"), QStringLiteral("xyz")}});
+                 QVariantMap{{QStringLiteral("WAKU_QS_VAR"), QStringLiteral("xyz")}});
   context.insert(QStringLiteral("workingDirectory"), dir.path());
   run.process.exec(context);
   ASSERT_TRUE(run.finish());
@@ -147,16 +147,16 @@ TEST(QuickshellProcess, ExecObjectSetsEnvironmentAndWorkingDirectory) {
 }
 
 TEST(QuickshellProcess, NullEnvironmentValueRemovesAVariable) {
-  qputenv("WABAR_QS_REMOVE", "present");
+  qputenv("WAKU_QS_REMOVE", "present");
   Child run;
   QVariantMap context;
-  context.insert(QStringLiteral("command"), cmd(QStringLiteral("echo [%WABAR_QS_REMOVE%]")));
+  context.insert(QStringLiteral("command"), cmd(QStringLiteral("echo [%WAKU_QS_REMOVE%]")));
   context.insert(QStringLiteral("environment"),
-                 QVariantMap{{QStringLiteral("WABAR_QS_REMOVE"), QVariant()}});
+                 QVariantMap{{QStringLiteral("WAKU_QS_REMOVE"), QVariant()}});
   run.process.exec(context);
   ASSERT_TRUE(run.finish());
-  qunsetenv("WABAR_QS_REMOVE");
-  EXPECT_TRUE(run.out.text().contains(QStringLiteral("[%WABAR_QS_REMOVE%]")))
+  qunsetenv("WAKU_QS_REMOVE");
+  EXPECT_TRUE(run.out.text().contains(QStringLiteral("[%WAKU_QS_REMOVE%]")))
       << run.out.text().toStdString();
 }
 
@@ -245,7 +245,7 @@ TEST(QuickshellProcess, SignalKillsOnlyForTerminatingNumbers) {
 
 TEST(QuickshellProcess, ProgramThatCannotStartLeavesItNotRunning) {
   QsProcess process;
-  process.setCommand({QStringLiteral("definitely-not-a-program-wabar.exe")});
+  process.setCommand({QStringLiteral("definitely-not-a-program-waku.exe")});
   QList<bool> states;
   QObject::connect(&process, &QsProcess::runningChanged, [&] { states << process.running(); });
   QSignalSpy started(&process, &QsProcess::started);
@@ -302,7 +302,7 @@ TEST(QuickshellProcess, WorksFromQml) {
   QQmlComponent component(&engine);
   component.setData(R"(
 import QtQml
-import wabar.services
+import waku.services
 QtObject {
     id: root
     property string result: ""
@@ -327,7 +327,7 @@ TEST(QuickshellProcess, ShellProcessKeepsItsOldInterfaceUnderTheNewName) {
   QQmlComponent component(&engine);
   component.setData(R"(
 import QtQml
-import wabar.services
+import waku.services
 ShellProcess { program: "cmd.exe"; arguments: ["/c", "echo x"] }
 )",
                     QUrl());

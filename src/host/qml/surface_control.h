@@ -3,7 +3,7 @@
 #include <QString>
 #include <QStringList>
 
-namespace wabar::host {
+namespace waku::host {
 
 class ShellHost;
 
@@ -18,4 +18,4 @@ class ShellHost;
 // '...' (known: ...)". Public for tests.
 QString answerSurfaceCommand(const QStringList& words, ShellHost* host);
 
-}  // namespace wabar::host
+}  // namespace waku::host

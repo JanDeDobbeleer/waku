@@ -26,7 +26,7 @@
 #include "kernel/win32/task_thread.h"
 #include "kernel/win32/winrt_strings.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 namespace {
 
 class WinrtLockScreenSetter final : public LockScreenSetter {
@@ -109,4 +109,4 @@ std::unique_ptr<LockScreenSetter> makeLockScreenSetter(const QString& cacheDir) 
   return std::make_unique<WinrtLockScreenSetter>(cacheDir);
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

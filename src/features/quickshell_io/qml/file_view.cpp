@@ -9,7 +9,7 @@
 #include <memory>
 #include <string_view>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 namespace {
 
@@ -329,4 +329,4 @@ void FileView::updateWatcher() {
   if (QFileInfo::exists(dir)) watcher_.addPath(dir);
 }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

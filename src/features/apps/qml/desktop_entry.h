@@ -12,9 +12,9 @@
 #include "features/apps/apps_platform.h"
 #include "features/apps/catalog.h"
 
-namespace wabar::apps {
+namespace waku::apps {
 
-// Quickshell's DesktopAction: one extra command of an entry. wabar entries have "Run as
+// Quickshell's DesktopAction: one extra command of an entry. waku entries have "Run as
 // administrator" (shortcuts) and "Open file location" (shortcuts).
 class DesktopAction : public QObject {
   Q_OBJECT
@@ -71,7 +71,7 @@ class DesktopEntry : public QObject {
   Q_PROPERTY(bool isApplication READ isApplication CONSTANT FINAL)
   Q_PROPERTY(bool isStoreApp READ isStoreApp NOTIFY changed FINAL)
   Q_PROPERTY(QString aumid READ aumid NOTIFY changed FINAL)
-  Q_PROPERTY(QQmlListProperty<wabar::apps::DesktopAction> actions READ actions NOTIFY changed FINAL)
+  Q_PROPERTY(QQmlListProperty<waku::apps::DesktopAction> actions READ actions NOTIFY changed FINAL)
 
  public:
   using Launch = std::function<bool(const QString& id, LaunchMode mode)>;
@@ -114,4 +114,4 @@ class DesktopEntry : public QObject {
   QList<DesktopAction*> actions_;
 };
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

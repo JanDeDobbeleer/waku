@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 
 struct CpuSample {
   double percent = 0;
@@ -108,11 +108,11 @@ std::shared_ptr<BatteryDataSource> createBatteryDataSource();
 std::shared_ptr<GpuDataSource> createGpuDataSource();
 std::shared_ptr<DiskDataSource> createDiskDataSource();
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats
 
 #include <QMetaType>
-Q_DECLARE_METATYPE(wabar::system_stats::CpuSample)
-Q_DECLARE_METATYPE(wabar::system_stats::MemorySample)
-Q_DECLARE_METATYPE(wabar::system_stats::BatterySample)
-Q_DECLARE_METATYPE(wabar::system_stats::GpuSample)
-Q_DECLARE_METATYPE(wabar::system_stats::DiskSample)
+Q_DECLARE_METATYPE(waku::system_stats::CpuSample)
+Q_DECLARE_METATYPE(waku::system_stats::MemorySample)
+Q_DECLARE_METATYPE(waku::system_stats::BatterySample)
+Q_DECLARE_METATYPE(waku::system_stats::GpuSample)
+Q_DECLARE_METATYPE(waku::system_stats::DiskSample)

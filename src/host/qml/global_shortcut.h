@@ -9,7 +9,7 @@
 
 #include "kernel/qt/hotkeys.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 // A named action a key can trigger (Quickshell `GlobalShortcut`, without Hyprland):
 //
@@ -20,9 +20,9 @@ namespace wabar::host {
 //         onPressed: launcher.active = !launcher.active
 //     }
 //
-//   name, appid, description  identify the shortcut; `name` is what `wabarc shortcut <name>` fires
+//   name, appid, description  identify the shortcut; `name` is what `wakuc shortcut <name>` fires
 //   keys       "alt+e", "ctrl+shift+f5", "win+space" (kernel::parseHotkey); empty: no key, the
-//              shortcut fires only through `wabarc shortcut <name>` (bind the key in whkd or
+//              shortcut fires only through `wakuc shortcut <name>` (bind the key in whkd or
 //              AutoHotkey)
 //   pressed    true while the shortcut fires. Windows reports no key release for a registered
 //              hotkey, so a key press is `pressed` then `released` at once
@@ -92,4 +92,4 @@ class GlobalShortcut : public QObject, public QQmlParserStatus {
   kernel::Hotkeys::Handle handle_ = 0;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

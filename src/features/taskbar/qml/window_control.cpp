@@ -6,7 +6,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 WindowControl::WindowControl(QObject* parent)
     : WindowControl(kernel::liveDesktop() ? makeWin32WindowControlBackend() : nullptr,
@@ -51,4 +51,4 @@ bool WindowControl::isWindow(qlonglong hwnd) const {
   }
 }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

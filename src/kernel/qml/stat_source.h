@@ -6,7 +6,7 @@
 
 #include "kernel/qt/polled_source.h"
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // The QML face of PolledSource: polling starts when the QML component is complete. Base of
 // the polled data sources (Memory, Cpu, Battery, Network).
@@ -22,4 +22,4 @@ class StatSource : public PolledSource, public QQmlParserStatus {
   void componentComplete() override { begin(); }
 };
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

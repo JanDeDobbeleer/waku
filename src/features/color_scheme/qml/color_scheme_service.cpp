@@ -13,7 +13,7 @@
 #include "kernel/qt/gui_post.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 namespace {
 
@@ -110,8 +110,8 @@ ImageResult schemeFromImageFile(ImageStatsCache* stats, const QString& path, Var
 
 ColorSchemeService::ColorSchemeService(QObject* parent)
     : ColorSchemeService(std::make_shared<ImageStatsCache>(
-                             wabar::kernel::liveDesktop(QStringLiteral("color_scheme"))
-                                 ? wabar::kernel::appDataDir() + QStringLiteral("/image_stats.json")
+                             waku::kernel::liveDesktop(QStringLiteral("color_scheme"))
+                                 ? waku::kernel::appDataDir() + QStringLiteral("/image_stats.json")
                                  : QString()),
                          parent) {}
 
@@ -205,4 +205,4 @@ QColor ColorSchemeService::seedColor(const QString& path) const {
   return seed ? toQColor(*seed) : QColor();
 }
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

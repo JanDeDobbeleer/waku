@@ -11,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-namespace wabar::bluetooth {
+namespace waku::bluetooth {
 
 // Port of bluetooth_types.DeviceType (the string names double as the device_icons keys).
 enum class BtDeviceType {
@@ -133,14 +133,14 @@ class BluetoothBackend : public QObject {
 
  signals:
   void scanStarted();
-  void scanCompleted(int status, const QVector<wabar::bluetooth::BluetoothDevice>& devices);
-  void statusUpdated(const wabar::bluetooth::BluetoothStatus& status);
+  void scanCompleted(int status, const QVector<waku::bluetooth::BluetoothDevice>& devices);
+  void statusUpdated(const waku::bluetooth::BluetoothStatus& status);
   void refreshFailed(const QString& message);
   void connectionFinished(bool success, const QString& message,
-                          const wabar::bluetooth::BluetoothDevice& device);
+                          const waku::bluetooth::BluetoothDevice& device);
   // The end of pairDevice() or unpairDevice().
   void pairingFinished(bool success, const QString& message,
-                       const wabar::bluetooth::BluetoothDevice& device);
+                       const waku::bluetooth::BluetoothDevice& device);
 
  protected:
   void publishStatus(const BluetoothStatus& status) {
@@ -158,8 +158,8 @@ std::unique_ptr<BluetoothBackend> createBluetoothBackend();
 // once). The adapter being switched off still counts.
 bool hasBluetoothAdapter();
 
-}  // namespace wabar::bluetooth
+}  // namespace waku::bluetooth
 
-Q_DECLARE_METATYPE(wabar::bluetooth::BluetoothDevice)
-Q_DECLARE_METATYPE(wabar::bluetooth::BluetoothStatus)
-Q_DECLARE_METATYPE(QVector<wabar::bluetooth::BluetoothDevice>)
+Q_DECLARE_METATYPE(waku::bluetooth::BluetoothDevice)
+Q_DECLARE_METATYPE(waku::bluetooth::BluetoothStatus)
+Q_DECLARE_METATYPE(QVector<waku::bluetooth::BluetoothDevice>)

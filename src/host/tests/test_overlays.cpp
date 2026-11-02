@@ -22,7 +22,7 @@ namespace {
 QString overlayShell(const QString& properties, const QString& extra = QString()) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     PanelWindow {
         name: "launcher"
@@ -409,7 +409,7 @@ TEST(OverlayControl, AVerbAppliesToEveryWindowOfTheName) {
   h.screenCount = 2;
   ASSERT_TRUE(started(h, QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Variants {
         model: ScreenList.screens
@@ -439,10 +439,10 @@ ShellRoot {
 }
 
 TEST(OverlayControl, AWindowComponentWithItsOwnRequiredNameIsFoundByThatName) {
-  // Caelestia's StyledWindow declares `required property string name`, which shadows wabar's.
+  // Caelestia's StyledWindow declares `required property string name`, which shadows waku's.
   Harness h;
   write(h.dir.filePath(QStringLiteral("StyledWindow.qml")), QStringLiteral(R"(
-import wabar
+import waku
 PanelWindow {
     required property string name
     implicitWidth: 200
@@ -451,7 +451,7 @@ PanelWindow {
 }
 )"));
   ASSERT_TRUE(started(h, QStringLiteral(R"(
-import wabar
+import waku
 ShellRoot {
     StyledWindow { name: "drawers" }
 }
@@ -466,7 +466,7 @@ ShellRoot {
 TEST(OverlayControl, AWindowWithoutANameFallsBackToItsObjectName) {
   Harness h;
   ASSERT_TRUE(started(h, QStringLiteral(R"(
-import wabar
+import waku
 ShellRoot {
     PanelWindow {
         objectName: "menu"
@@ -495,7 +495,7 @@ TEST(OverlayControl, UnnamedWindowsAreNotListedAndStatusCarriesThePid) {
 // ---- examples/launcher ----
 
 TEST(OverlayExample, TheLauncherLoadsHiddenAndTogglesThroughTheHostAndTheHandler) {
-  QFile file(QStringLiteral(WABAR_EXAMPLES_DIR "/launcher/shell.qml"));
+  QFile file(QStringLiteral(WAKU_EXAMPLES_DIR "/launcher/shell.qml"));
   ASSERT_TRUE(file.open(QIODevice::ReadOnly));
   Harness h;
   h.start(QString::fromUtf8(file.readAll()));
@@ -541,7 +541,7 @@ TEST(OverlayControl, AWindowComponentMayRedeclareScreenContentItemAndHideDelay) 
   // lets them shadow its properties instead of refusing to load the file.
   Harness h;
   write(h.dir.filePath(QStringLiteral("MenuWindow.qml")), QStringLiteral(R"(
-import wabar
+import waku
 PanelWindow {
     property var screen: null
     property var contentItem: null
@@ -552,7 +552,7 @@ PanelWindow {
 }
 )"));
   ASSERT_TRUE(started(h, QStringLiteral(R"(
-import wabar
+import waku
 ShellRoot {
     MenuWindow { objectName: "menu" }
 }

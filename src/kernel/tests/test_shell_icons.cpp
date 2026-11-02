@@ -4,7 +4,7 @@
 
 #include "kernel/win32/shell_icons.h"
 
-using wabar::kernel::IconBitmap;
+using waku::kernel::IconBitmap;
 
 TEST(KernelShellIcons, NullBitmapReportsNull) {
   IconBitmap bitmap;
@@ -18,15 +18,15 @@ TEST(KernelShellIcons, NullBitmapReportsNull) {
 
 TEST(KernelShellIcons, MissingItemGivesNullBitmap) {
   EXPECT_TRUE(
-      wabar::kernel::shellItemIcon(QStringLiteral("C:\\wabar-no-such-folder\\x.exe"), 32).isNull());
-  EXPECT_TRUE(wabar::kernel::shellItemIcon(QString(), 32).isNull());
-  EXPECT_TRUE(wabar::kernel::iconBitmapFromHicon(nullptr).isNull());
+      waku::kernel::shellItemIcon(QStringLiteral("C:\\waku-no-such-folder\\x.exe"), 32).isNull());
+  EXPECT_TRUE(waku::kernel::shellItemIcon(QString(), 32).isNull());
+  EXPECT_TRUE(waku::kernel::iconBitmapFromHicon(nullptr).isNull());
 }
 
 // Reads the system's own explorer.exe icon: read only, no desktop state involved.
 TEST(KernelShellIcons, SystemFileHasAnIcon) {
   const IconBitmap bitmap =
-      wabar::kernel::shellItemIcon(QStringLiteral("C:\\Windows\\explorer.exe"), 32);
+      waku::kernel::shellItemIcon(QStringLiteral("C:\\Windows\\explorer.exe"), 32);
   ASSERT_FALSE(bitmap.isNull());
   EXPECT_GT(bitmap.width, 0);
   EXPECT_EQ(bitmap.bgra.size(), qsizetype(bitmap.width) * bitmap.height * 4);

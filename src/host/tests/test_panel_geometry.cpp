@@ -2,12 +2,12 @@
 
 #include "host/panel_geometry.h"
 
-using wabar::host::AppBarEdge;
-using wabar::host::PanelAnchorSet;
-using wabar::host::panelAppBarEdge;
-using wabar::host::panelGeometry;
-using wabar::host::panelReservedZone;
-using wabar::host::panelThickness;
+using waku::host::AppBarEdge;
+using waku::host::PanelAnchorSet;
+using waku::host::panelAppBarEdge;
+using waku::host::panelGeometry;
+using waku::host::panelReservedZone;
+using waku::host::panelThickness;
 
 namespace {
 

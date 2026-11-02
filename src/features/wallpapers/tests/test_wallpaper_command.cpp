@@ -1,5 +1,5 @@
-// `wabarc wallpaper ...`: the parser of the `wallpaper` verb (on a fake WallpaperControl), the
-// control pipe that carries its quoted line and the wabarc client.
+// `wakuc wallpaper ...`: the parser of the `wallpaper` verb (on a fake WallpaperControl), the
+// control pipe that carries its quoted line and the wakuc client.
 #include <gtest/gtest.h>
 
 #include <QCoreApplication>
@@ -12,8 +12,8 @@
 #include "control/control.h"
 #include "features/wallpapers/wallpaper_command.h"
 
-using wabar::wallpapers::answerWallpaperCommand;
-using wabar::wallpapers::WallpaperControl;
+using waku::wallpapers::answerWallpaperCommand;
+using waku::wallpapers::WallpaperControl;
 
 namespace {
 
@@ -47,7 +47,7 @@ class FakeControl final : public WallpaperControl {
 // the line, drop the verb, hand the rest to the command.
 QString dispatch(const QString& line, WallpaperControl* wallpapers) {
   QStringList words;
-  if (!wabar::control::splitCommand(line, &words))
+  if (!waku::control::splitCommand(line, &words))
     return QStringLiteral("error: unterminated quote");
   if (words.isEmpty() || words.first() != QLatin1String("wallpaper"))
     return QStringLiteral("error: not a wallpaper command");
@@ -55,8 +55,8 @@ QString dispatch(const QString& line, WallpaperControl* wallpapers) {
   return answerWallpaperCommand(words, wallpapers);
 }
 
-QString wabarcPath() {
-  return QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("wabarc.exe"));
+QString wakucPath() {
+  return QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("wakuc.exe"));
 }
 
 }  // namespace
@@ -116,21 +116,21 @@ TEST(WallpaperCommand, WithoutAServiceTheAnswerIsAnError) {
                   .startsWith(QStringLiteral("error: unknown wallpaper command 'bogus'")));
 }
 
-TEST(WallpaperCommand, ThePipeCarriesTheQuotedLineFromWabarc) {
-  if (!QFile::exists(wabarcPath())) GTEST_SKIP() << "wabarc.exe is not built";
+TEST(WallpaperCommand, ThePipeCarriesTheQuotedLineFromWakuc) {
+  if (!QFile::exists(wakucPath())) GTEST_SKIP() << "wakuc.exe is not built";
   FakeControl fake;
   QTemporaryDir home;
   ASSERT_TRUE(home.isValid());
-  wabar::control::ControlServer server(wabar::control::controlPipeName(home.path()),
-                                       wabar::control::ControlHandler([&fake](const QString& line) {
-                                         return dispatch(line, &fake);
-                                       }));
+  waku::control::ControlServer server(waku::control::controlPipeName(home.path()),
+                                      waku::control::ControlHandler([&fake](const QString& line) {
+                                        return dispatch(line, &fake);
+                                      }));
   ASSERT_TRUE(server.listen());
 
   auto run = [&](const QStringList& args, int* exitCode, QString* out, QString* err) {
     QProcess process;
-    process.start(wabarcPath(), QStringList{QStringLiteral("--config-home"), home.path()} + args);
-    // Upper bounds only: a debug wabarc.exe that loads its Qt DLLs on a busy machine can take
+    process.start(wakucPath(), QStringList{QStringLiteral("--config-home"), home.path()} + args);
+    // Upper bounds only: a debug wakuc.exe that loads its Qt DLLs on a busy machine can take
     // seconds to start; the wait ends when the process does.
     ASSERT_TRUE(process.waitForStarted(30000));
     ASSERT_TRUE(QTest::qWaitFor([&] { return process.state() == QProcess::NotRunning; }, 30000))
@@ -156,15 +156,15 @@ TEST(WallpaperCommand, ThePipeCarriesTheQuotedLineFromWabarc) {
   EXPECT_EQ(err, QStringLiteral("error: nope"));
 }
 
-// ---- the wabarc client without a bar ----
+// ---- the wakuc client without a bar ----
 
 TEST(WallpaperCli, NoBarRunningExitsWithTwoAndBadUsageWithThree) {
-  if (!QFile::exists(wabarcPath())) GTEST_SKIP() << "wabarc.exe is not built";
+  if (!QFile::exists(wakucPath())) GTEST_SKIP() << "wakuc.exe is not built";
   QTemporaryDir home;
   ASSERT_TRUE(home.isValid());
   auto exitOf = [&](const QStringList& args) {
     QProcess process;
-    process.start(wabarcPath(), QStringList{QStringLiteral("--config-home"), home.path()} + args);
+    process.start(wakucPath(), QStringList{QStringLiteral("--config-home"), home.path()} + args);
     EXPECT_TRUE(process.waitForFinished(10000));
     return process.exitCode();
   };

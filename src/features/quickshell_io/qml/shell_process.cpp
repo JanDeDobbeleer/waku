@@ -4,7 +4,7 @@
 
 #include "kernel/win32/shell_launch.h"
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 ShellProcess::ShellProcess(QObject* parent) : QObject(parent) {
   connect(&intervalTimer_, &QTimer::timeout, this, [this] { run(); });
@@ -113,4 +113,4 @@ void ShellProcess::finish(int exitCode) {
   emit finished();
 }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

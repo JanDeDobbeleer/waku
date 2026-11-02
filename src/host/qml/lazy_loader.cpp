@@ -9,7 +9,7 @@
 
 #include "host/qml/qs_window.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 class LazyLoader::Incubator : public QQmlIncubator {
  public:
@@ -133,7 +133,7 @@ void LazyLoader::finishAsync() {
   QObject* object = incubator_->isReady() ? incubator_->object() : nullptr;
   if (incubator_->isError()) {
     for (const QQmlError& error : incubator_->errors()) {
-      qWarning().noquote() << "wabar: LazyLoader:" << error.toString();
+      qWarning().noquote() << "waku: LazyLoader:" << error.toString();
     }
   }
   incubator_.reset();
@@ -154,7 +154,7 @@ void LazyLoader::createNow() {
   QObject* object = component->create(context);
   if (!object) {
     for (const QQmlError& error : component->errors()) {
-      qWarning().noquote() << "wabar: LazyLoader:" << error.toString();
+      qWarning().noquote() << "waku: LazyLoader:" << error.toString();
     }
     return;
   }
@@ -200,4 +200,4 @@ void LazyLoader::cancel() {
   emit loadingChanged();
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

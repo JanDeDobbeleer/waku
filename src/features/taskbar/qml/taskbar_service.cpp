@@ -12,7 +12,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 namespace {
 
 std::function<std::unique_ptr<TaskbarService>()>& testFactory() {
@@ -63,14 +63,13 @@ void TaskbarService::init(Deps deps) {
   reason_ = std::move(deps.unavailableReason);
   system_ = deps.system ? std::move(deps.system) : makeWin32WindowSystem();
   pins_ = deps.pins ? std::move(deps.pins) : makeWin32PinSupport();
-  pinStore_ = new wabar::taskbar::PinStore(
-      deps.pinFile.isEmpty() ? wabar::taskbar::PinStore::defaultFile() : deps.pinFile, this);
+  pinStore_ = new waku::taskbar::PinStore(
+      deps.pinFile.isEmpty() ? waku::taskbar::PinStore::defaultFile() : deps.pinFile, this);
   pinStore_->load();
-  icons_ = new wabar::taskbar::TaskbarIcons(system_, deps.asyncIcons, this);
-  connect(icons_, &wabar::taskbar::TaskbarIcons::iconsChanged, this,
+  icons_ = new waku::taskbar::TaskbarIcons(system_, deps.asyncIcons, this);
+  connect(icons_, &waku::taskbar::TaskbarIcons::iconsChanged, this,
           [this] { guarded("icons", [&] { onIconsChanged(); }); });
-  connect(pinStore_, &wabar::taskbar::PinStore::pinnedAppsChanged, this,
-          [this] { emit changed(); });
+  connect(pinStore_, &waku::taskbar::PinStore::pinnedAppsChanged, this, [this] { emit changed(); });
 
   if (!deps.trackerAvailable) return;
   tracker_ = new WindowTracker(system_, std::move(deps.hooks), this);
@@ -208,7 +207,7 @@ QImage TaskbarService::iconImage(WindowHandle key) {
         const PinMetadata metadata{pinStore_->title(uniqueId), pinStore_->shortcutPath(uniqueId)};
         const std::shared_ptr<PinSupport> pins = pins_;
         image = icons_->imageFor(key, kIconSize, 1.0, [pins, uniqueId, metadata](int size) {
-          return wabar::taskbar::loadPinnedIcon(*pins, uniqueId, metadata, size);
+          return waku::taskbar::loadPinnedIcon(*pins, uniqueId, metadata, size);
         });
       }
     } else {
@@ -355,4 +354,4 @@ QImage WindowIconProvider::requestImage(const QString& id, QSize* size,
   return image;
 }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

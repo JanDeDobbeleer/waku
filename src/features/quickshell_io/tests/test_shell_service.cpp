@@ -8,7 +8,7 @@
 
 #include "features/quickshell_io/qml/shell_service.h"
 
-using namespace wabar::quickshell_io;
+using namespace waku::quickshell_io;
 
 namespace {
 
@@ -75,30 +75,30 @@ TEST(ShellService, CommandAndOpenReachTheLauncher) {
 
 TEST(ShellService, ExposesPathsAndEnvironment) {
   Launches l;
-  Shell shell(l.launcher(), QStringLiteral("C:\\cfg\\wabar"), nullptr);
-  EXPECT_EQ(shell.configHome(), QStringLiteral("C:\\cfg\\wabar"));
+  Shell shell(l.launcher(), QStringLiteral("C:\\cfg\\waku"), nullptr);
+  EXPECT_EQ(shell.configHome(), QStringLiteral("C:\\cfg\\waku"));
   EXPECT_FALSE(shell.homeDir().isEmpty());
   EXPECT_EQ(shell.homeDir(), QDir::toNativeSeparators(QDir::homePath()));
 
-  qputenv("WABAR_TEST_VALUE", "hello");
-  EXPECT_EQ(shell.env(QStringLiteral("WABAR_TEST_VALUE")), QStringLiteral("hello"));
-  EXPECT_TRUE(shell.env(QStringLiteral("WABAR_TEST_UNSET_VALUE")).isEmpty());
-  qunsetenv("WABAR_TEST_VALUE");
+  qputenv("WAKU_TEST_VALUE", "hello");
+  EXPECT_EQ(shell.env(QStringLiteral("WAKU_TEST_VALUE")), QStringLiteral("hello"));
+  EXPECT_TRUE(shell.env(QStringLiteral("WAKU_TEST_UNSET_VALUE")).isEmpty());
+  qunsetenv("WAKU_TEST_VALUE");
 }
 
 TEST(ShellService, DefaultConfigHomeFollowsTheEnvironmentOrTheHomeFolder) {
-  qunsetenv("WABAR_CONFIG_HOME");
+  qunsetenv("WAKU_CONFIG_HOME");
   {
     Shell shell;
-    EXPECT_TRUE(shell.configHome().endsWith(QStringLiteral("\\.config\\wabar")))
+    EXPECT_TRUE(shell.configHome().endsWith(QStringLiteral("\\.config\\waku")))
         << qPrintable(shell.configHome());
   }
-  qputenv("WABAR_CONFIG_HOME", "D:/somewhere/else");
+  qputenv("WAKU_CONFIG_HOME", "D:/somewhere/else");
   {
     Shell shell;
     EXPECT_EQ(shell.configHome(), QStringLiteral("D:\\somewhere\\else"));
   }
-  qunsetenv("WABAR_CONFIG_HOME");
+  qunsetenv("WAKU_CONFIG_HOME");
 }
 
 // The real launches, writing into a temp folder: they start hidden detached processes.
@@ -124,5 +124,5 @@ TEST(ShellServiceReal, StartRunsADetachedProgram) {
 
 TEST(ShellServiceReal, StartOfAMissingProgramFails) {
   Shell shell;
-  EXPECT_FALSE(shell.start(QStringLiteral("definitely-not-a-program-wabar.exe")));
+  EXPECT_FALSE(shell.start(QStringLiteral("definitely-not-a-program-waku.exe")));
 }

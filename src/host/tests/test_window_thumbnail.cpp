@@ -11,7 +11,7 @@
 #include "host/testing/thumbnail_fakes.h"
 #include "host/thumbnail.h"
 
-using namespace wabar::host;
+using namespace waku::host;
 
 namespace {
 

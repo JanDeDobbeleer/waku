@@ -10,7 +10,7 @@
 
 #include "features/desktop_state/desktop_probe.h"
 
-namespace wabar::desktop_state {
+namespace waku::desktop_state {
 
 // Lock keys, keyboard layout and idle time as a QML singleton.
 //
@@ -85,4 +85,4 @@ class DesktopState : public QObject {
   int idleSeconds_ = 0;
 };
 
-}  // namespace wabar::desktop_state
+}  // namespace waku::desktop_state

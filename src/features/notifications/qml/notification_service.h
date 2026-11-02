@@ -8,7 +8,7 @@
 
 #include "features/notifications/notifications.h"
 
-namespace wabar::notifications {
+namespace waku::notifications {
 
 // The process-wide NotificationService, shared by `Notifications` and the Notification* feed types
 // so the listener runs once. Without a live desktop it has no source. GUI thread only; gone when
@@ -62,4 +62,4 @@ class Notifications : public QObject {
   QVariantList items_;
 };
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

@@ -7,7 +7,7 @@
 #include <QPointer>
 #include <QString>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 class Wallpapers;
 
@@ -22,7 +22,7 @@ class Wallpapers;
 //
 // Not an item: the host calls activate() once the shell is installed (see Scope in
 // host/qml/scope.h), which creates the Wallpapers singleton, hands it these values and creates the
-// gallery window (the strip the hotkey and `wabarc wallpaper gallery` open), so the hotkey and
+// gallery window (the strip the hotkey and `wakuc wallpaper gallery` open), so the hotkey and
 // the command-line client work with no widget. The properties mean what they mean on the
 // Wallpapers widget; a change after activation is applied at once. Destroying the object (a
 // reload, or quitting) switches the hotkey and the folder off again.
@@ -83,4 +83,4 @@ class WallpaperSettings : public QObject {
   QPointer<QObject> gallery_;
 };
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

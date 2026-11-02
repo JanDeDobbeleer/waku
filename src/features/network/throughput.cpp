@@ -1,6 +1,6 @@
 #include "features/network/throughput.h"
 
-namespace wabar::network {
+namespace waku::network {
 
 void ThroughputTracker::update(const std::vector<InterfaceCounters>& counters,
                                double elapsedSeconds) {
@@ -51,4 +51,4 @@ void ThroughputTracker::clearRates() {
   tx_ = 0;
 }
 
-}  // namespace wabar::network
+}  // namespace waku::network

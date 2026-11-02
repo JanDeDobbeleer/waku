@@ -18,7 +18,7 @@
 #include <thread>
 #include <vector>
 
-namespace wabar::bluetooth {
+namespace waku::bluetooth {
 
 namespace {
 
@@ -209,4 +209,4 @@ QString connectError(const QString& action, const QString& reason) {
   return QStringLiteral("Failed to %1 device").arg(action);
 }
 
-}  // namespace wabar::bluetooth
+}  // namespace waku::bluetooth

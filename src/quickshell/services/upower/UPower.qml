@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
-import wabar as W
-import wabar.services as S
+import waku as W
+import waku.services as S
 
 // Quickshell.Services.UPower's `UPower` singleton over the battery service.
 //

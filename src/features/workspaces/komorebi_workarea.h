@@ -7,7 +7,7 @@
 
 class QScreen;
 
-namespace wabar::workspaces::komorebi {
+namespace waku::workspaces::komorebi {
 
 // What one notification did: whether komorebi's hidden window exists, whether the message was
 // accepted, the window handle and the Win32 error of a refused send (0 otherwise).
@@ -57,7 +57,7 @@ std::unique_ptr<WorkAreaTimers> makeQtWorkAreaTimers();
 // (after komorebi's 3 s monitor verification). A new burst re-arms the pair. No polling: idle, no
 // timer runs.
 //
-// Created and owned by src/app/wabar/main.cpp for the whole run, so a reload never loses the late
+// Created and owned by src/app/waku/main.cpp for the whole run, so a reload never loses the late
 // notification. makeKomorebiWorkAreaGuard() gives it the real notifier only when
 // kernel::liveDesktop("workarea_sync") (off with --no-workarea-sync and on the offscreen
 // platform); without a notifier the guard is inert.
@@ -99,8 +99,8 @@ class KomorebiWorkAreaGuard : public QObject {
   bool refusalLogged_ = false;
 };
 
-// The guard of a `wabar` run: the real notifier when kernel::liveDesktop("workarea_sync"), none
+// The guard of a `waku` run: the real notifier when kernel::liveDesktop("workarea_sync"), none
 // (inert) otherwise.
 std::unique_ptr<KomorebiWorkAreaGuard> makeKomorebiWorkAreaGuard(QObject* parent = nullptr);
 
-}  // namespace wabar::workspaces::komorebi
+}  // namespace waku::workspaces::komorebi

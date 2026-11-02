@@ -6,7 +6,7 @@
 #include "features/audio/qml/audio_service.h"
 #include "features/audio/testing/fake_audio_endpoints.h"
 
-using namespace wabar::audio;
+using namespace waku::audio;
 
 namespace {
 

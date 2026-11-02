@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QString>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // The text of the system clipboard, read lazily: nothing is read until text() is called, and the
 // value is cached until the clipboard changes. Quickshell's `clipboardText` reads through it, so
@@ -15,7 +15,7 @@ namespace wabar::quickshell_io {
 // GetClipboardData waiting for seconds.
 //
 // textChanged() fires on a clipboard change only after a read, since nothing can depend on a value
-// that was never read. Registered as `ClipboardText` in wabar.services. GUI thread only.
+// that was never read. Registered as `ClipboardText` in waku.services. GUI thread only.
 class ClipboardText : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -41,4 +41,4 @@ class ClipboardText : public QObject {
   mutable bool cached_ = false;
 };
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

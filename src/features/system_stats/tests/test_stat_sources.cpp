@@ -12,8 +12,8 @@
 #include "features/system_stats/qml/stat_sources.h"
 #include "features/system_stats/testing/fake_stat_sources.h"
 
-using namespace wabar::system_stats;
-using namespace wabar::system_stats::testing;
+using namespace waku::system_stats;
+using namespace waku::system_stats::testing;
 
 namespace {
 

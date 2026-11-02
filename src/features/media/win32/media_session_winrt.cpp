@@ -24,7 +24,7 @@
 #include "kernel/win32/task_thread.h"
 #include "kernel/win32/winrt_strings.h"
 
-namespace wabar::media {
+namespace waku::media {
 namespace {
 
 namespace wmc = winrt::Windows::Media::Control;
@@ -337,4 +337,4 @@ std::unique_ptr<MediaSessionSource> createSystemMediaSource() {
   return std::make_unique<SystemMediaSource>();
 }
 
-}  // namespace wabar::media
+}  // namespace waku::media

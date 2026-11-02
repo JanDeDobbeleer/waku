@@ -4,7 +4,7 @@
 #include <QPointer>
 #include <QThreadPool>
 
-namespace wabar::network {
+namespace waku::network {
 
 QThreadPool* networkPool() {
   static QPointer<QThreadPool> pool;
@@ -16,4 +16,4 @@ QThreadPool* networkPool() {
   return pool.data();
 }
 
-}  // namespace wabar::network
+}  // namespace waku::network

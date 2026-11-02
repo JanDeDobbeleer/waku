@@ -8,7 +8,7 @@
 #include <QTimer>
 #include <functional>
 
-namespace wabar::host {
+namespace waku::host {
 
 // Quickshell's `SystemClock`: the time, updated on the boundary of its precision.
 //
@@ -82,4 +82,4 @@ class SystemClock : public QObject, public QQmlParserStatus {
   QTimer timer_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

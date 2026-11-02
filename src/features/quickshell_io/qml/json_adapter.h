@@ -7,7 +7,7 @@
 #include <QObject>
 #include <QQmlParserStatus>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // Quickshell.Io FileViewAdapter: what a FileView converts its file to and from. A FileView calls
 // deserialize() after each successful load and serialize() in writeAdapter(). The adapter emits
@@ -87,4 +87,4 @@ class JsonAdapter : public FileViewAdapter, public QQmlParserStatus {
   PropertyRelay relay_;
 };
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

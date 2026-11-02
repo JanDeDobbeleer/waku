@@ -4,7 +4,7 @@
 
 #include "features/desktop_state/desktop_probe.h"
 
-namespace wabar::desktop_state {
+namespace waku::desktop_state {
 
 // Test double of DesktopProbe: public values the test edits, call counters, no Win32.
 class FakeProbe final : public DesktopProbe {
@@ -29,4 +29,4 @@ class FakeProbe final : public DesktopProbe {
   int reads = 0;
 };
 
-}  // namespace wabar::desktop_state
+}  // namespace waku::desktop_state

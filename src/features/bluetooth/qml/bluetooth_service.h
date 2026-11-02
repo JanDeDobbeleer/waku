@@ -13,7 +13,7 @@
 
 #include "features/bluetooth/bluetooth.h"
 
-namespace wabar::bluetooth {
+namespace waku::bluetooth {
 
 // The Bluetooth radio and its paired devices as a QML singleton, shared by every Bluetooth
 // widget. Wraps BluetoothBackend, which owns the enumeration thread (BluetoothAPIs and
@@ -118,4 +118,4 @@ class Bluetooth : public QObject {
   QTimer safetyTimer_;
 };
 
-}  // namespace wabar::bluetooth
+}  // namespace waku::bluetooth

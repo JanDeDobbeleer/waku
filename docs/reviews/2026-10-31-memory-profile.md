@@ -30,22 +30,22 @@ Lane 1a result, release build: idle private bytes 390 -> 336 MB, with the panels
 
 ## Method
 
-- Engine: a copy of the deployed `dist\wabar` (`cdcc88a`) for the baseline experiments; for the
-  code changes, a release build of the review worktree (`arm64-release`, wabar and wabarc only)
-  copied over the same deployment, so only `wabar.exe` differs between before and after.
-- Shell: a worktree of the caelestia port (`D:\wabar-ports\wt\memprobe`, branch `memprobe` at
+- Engine: a copy of the deployed `dist\waku` (`cdcc88a`) for the baseline experiments; for the
+  code changes, a release build of the review worktree (`arm64-release`, waku and wakuc only)
+  copied over the same deployment, so only `waku.exe` differs between before and after.
+- Shell: a worktree of the caelestia port (`D:\waku-ports\wt\memprobe`, branch `memprobe` at
   `3e90c0d`), never the production config home.
 - Private instances only: `--config-home <copy> --import-path <copy>\modules --no-tray
   --font-engine=directwrite`, no `--register-app-bar` and no `--hide-taskbar`;
-  `CAELESTIA_DRYRUN=1`, `WABAR_WALLPAPER_DRYRUN=1` and a private `LOCALAPPDATA` (warm QML disk
+  `CAELESTIA_DRYRUN=1`, `WAKU_WALLPAPER_DRYRUN=1` and a private `LOCALAPPDATA` (warm QML disk
   cache after the first run).
 - Numbers: `Get-Process` (private bytes, working set, threads, handles), the
   `\Process V2(...)\Working Set - Private` counter and the `\GPU Process Memory(...)` counters
   (dedicated and shared usage). Committed memory by usage from `cdb -pv` and `!address
-  -f:MEM_COMMIT` (VMMap is not installed). Timing from `wabarc status` and, after the first commit
-  of this lane, from the `WABAR_TRACE=1` lines.
-- Phases: ready, idle after 30 s, launcher open (`wabarc call launcher open`), dashboard open
-  (`wabarc call bar dashTab 0`), both closed, then reloads (`wabarc reload`). The scripts are in
+  -f:MEM_COMMIT` (VMMap is not installed). Timing from `wakuc status` and, after the first commit
+  of this lane, from the `WAKU_TRACE=1` lines.
+- Phases: ready, idle after 30 s, launcher open (`wakuc call launcher open`), dashboard open
+  (`wakuc call bar dashTab 0`), both closed, then reloads (`wakuc reload`). The scripts are in
   the job folder (`mp\lib.ps1`, `phase1.ps1`, `exp.ps1`, `bench.ps1`).
 - A screen grab to compare the rendering with and without the depth buffer was not possible: the
   session was locked, and `CopyFromScreen` returned black frames.
@@ -116,7 +116,7 @@ threads together), and the QML disk cache (memory; it matters for start-up).
 
 `QSG_RHI_BACKEND=d3d12` doubles the idle memory (438 MB GPU) and must not be used.
 
-## Start-up and reloads (release build, `WABAR_TRACE=1`)
+## Start-up and reloads (release build, `WAKU_TRACE=1`)
 
 Before (`e34ce54`, the trace commit), start 3 of 3:
 
@@ -156,7 +156,7 @@ before the slow ones.
 
 | Commit | Change | Before | After |
 |---|---|---|---|
-| `e34ce54` | `WABAR_TRACE=1` start-up and reload steps | | |
+| `e34ce54` | `WAKU_TRACE=1` start-up and reload steps | | |
 | `aad4dea` | trace the destroy and singleton steps of a reload | | |
 | `6d5f8af` | skip the probe-engine check on the first load (C35) | reload started -> parts 3140 ms, first frame 3.06-4.19 s | 2142 ms, first frame 2.36-2.88 s |
 | `5e36cb6` | `QSG_NO_DEPTH_BUFFER=1` unless set (C27) | idle 392 MB (GPU 134), panels 849 (499), reload 470 (129) | idle 338 MB (GPU 80), panels 797 (446), reload 417 (77) |
@@ -219,7 +219,7 @@ probe-engine check on purpose.
   from QML, not in a binding at creation) or read it through `QClipboard::dataChanged` only when
   something observes it. Expected gain: about 2.5 s per reload, the 30 s stalls, and part of the
   first build's 0.9-1.5 s of creation. One stack is a strong lead, not proof: confirm with a
-  `WABAR_TRACE` step around the read. The GlazeWM reconnect line before the slow reloads is
+  `WAKU_TRACE` step around the read. The GlazeWM reconnect line before the slow reloads is
   probably timing, not the cause.
 - COM thread mode, `app`/features: ten `Failed to initialize COM library (Cannot change thread mode
   after it is set.)` lines per reload: something calls `CoInitialize`/`OleInitialize` (STA) on a
@@ -234,11 +234,11 @@ probe-engine check on purpose.
   closed (`Loader { active: open }` or `LazyLoader`), and avoid `layer.enabled` on full-window items
   (`ContentWindow.qml:220`). With both panels opened once the shell holds 300-370 MB of textures
   that the software backend shows are not needed for the content itself.
-- Wallpapers and thumbnails (lanes 1b, 1c): not measurable with `WABAR_WALLPAPER_DRYRUN=1` and no
+- Wallpapers and thumbnails (lanes 1b, 1c): not measurable with `WAKU_WALLPAPER_DRYRUN=1` and no
   wallpaper change; the review's C28/C29 estimates stand. The production gap (982 MB against
   849 MB here with the panels opened) fits the real wallpaper, the tray and the thumbnails.
 - Fonts: `--font-engine=directwrite`, which the port needs for its variable fonts, maps every
-  installed font (about 100 MB of working set and 1,700 handles per `app/wabar/font_engine.h`).
+  installed font (about 100 MB of working set and 1,700 handles per `app/waku/font_engine.h`).
   Not measured separately here, since the port does not render with the GDI engine.
 
 ## Atlas copies (2026-11-01)
@@ -284,7 +284,7 @@ the close depending on when the icons arrive; it does not grow on later opens. T
 adds nothing on this machine. Private bytes follow the GPU numbers (894 -> 608 MB with both panels
 opened, dashboard first).
 
-Change: `wabar.exe` sets `QSG_ATLAS_SIZE_LIMIT=1` unless the caller set it, so every image gets its
+Change: `waku.exe` sets `QSG_ATLAS_SIZE_LIMIT=1` unless the caller set it, so every image gets its
 own texture. A debug build of the change, without the variable set by the caller, holds 158 MB
 after the launcher opened and closed (default: 446 MB). Rendering is the same; the cost is one batch per image instead of one per atlas, which
 the shells' few dozen visible images do not feel.

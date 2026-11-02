@@ -6,7 +6,7 @@
 #include "features/apps/apps_platform.h"
 #include "kernel/win32/com_scope.h"
 
-namespace wabar::apps {
+namespace waku::apps {
 namespace {
 
 QString displayName(IShellItem* item, SIGDN kind) {
@@ -57,4 +57,4 @@ std::vector<AppRecord> enumerateAppsFolder() {
 
 AppsFolderEnumerator makeWin32AppsFolderEnumerator() { return &enumerateAppsFolder; }
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

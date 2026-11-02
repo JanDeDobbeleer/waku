@@ -9,7 +9,7 @@
 #include <QWaitCondition>
 #include <optional>
 
-namespace wabar::host {
+namespace waku::host {
 
 // Downscaled copies of image files, for a gallery that would otherwise decode full-size images
 // (a 4K PNG, a 60 MB JPEG) on every open. Pure Qt Gui; the QML side is in qml/thumbnails.h.
@@ -86,4 +86,4 @@ class ThumbnailStore {
   QSet<QString> inFlight_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

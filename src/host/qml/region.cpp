@@ -1,6 +1,6 @@
 #include "host/qml/region.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 void Region::setItem(QQuickItem* item) {
   if (item_ == item) return;
@@ -64,4 +64,4 @@ RegionNode Region::node() const {
   return node;
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

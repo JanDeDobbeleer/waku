@@ -8,7 +8,7 @@
 #include <QPointer>
 #include <QQuickItem>
 
-namespace wabar::host {
+namespace waku::host {
 
 // Quickshell's `TransformWatcher`: tells a binding when the transform between two items changed.
 //
@@ -62,4 +62,4 @@ class TransformWatcher : public QObject {
   QList<QMetaObject::Connection> connections_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

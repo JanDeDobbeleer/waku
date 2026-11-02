@@ -4,7 +4,7 @@
 
 #include "features/system_stats/system_stats.h"
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 
 class PdhCpuDataSource final : public CpuDataSource {
  public:
@@ -19,4 +19,4 @@ class PdhCpuDataSource final : public CpuDataSource {
   std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

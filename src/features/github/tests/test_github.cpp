@@ -17,8 +17,8 @@
 #include "features/github/testing/fake_github_client.h"
 #include "host/testing/shell_fixtures.h"
 
-using namespace wabar::github;
-using namespace wabar::github::testing;
+using namespace waku::github;
+using namespace waku::github::testing;
 
 namespace {
 
@@ -522,8 +522,8 @@ TEST(GithubWidget, LoadsAndIsHiddenWithoutTheService) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.widgets
+import waku
+import waku.widgets
 ShellRoot {
     Panel {
         content: PanelLayout {

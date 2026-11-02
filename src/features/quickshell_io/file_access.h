@@ -3,7 +3,7 @@
 #include <QByteArray>
 #include <QString>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // Mirrors FileViewError (qml/file_view.h); the values must stay equal.
 enum class FileError { Success = 0, Unknown, FileNotFound, PermissionDenied, NotAFile };
@@ -28,4 +28,4 @@ FileAccess& fileAccess();
 // Installs `fake` (not owned; must outlive its use); nullptr restores the real access.
 void setFileAccessForTests(FileAccess* fake);
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

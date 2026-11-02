@@ -8,18 +8,18 @@ code reached by grep and spot reads.
 ## Verdict
 
 The layout is sound and the rules that keep it so are enforced by `tools/check.ps1` and
-`wabar_feature()`: includes point one way (no `host` file includes `features/`, features reach `host`
+`waku_feature()`: includes point one way (no `host` file includes `features/`, features reach `host`
 only through `host/testing/` from tests), the kernel passes its own admission test (every file has
 two or more users), no `m_` members, one TODO, every allowlist path exists, CI builds three presets.
 The weak spot is the Quickshell compatibility layer: its pieces sit in six places (`src/host/qml`,
-`src/host/quickshell`, `src/app/wabar/quickshell_types_*.h`, `src/modules/qml_modules.cmake`,
+`src/host/quickshell`, `src/app/waku/quickshell_types_*.h`, `src/modules/qml_modules.cmake`,
 `src/features/quickshell_io`, and the `media`, `notifications`, `apps` features), and a host target
 compiles an `app/` header, which inverts the dependency direction behind rule S2's back. The second
 weak spot is drift between `docs/architecture.md` and the code: nine QML singletons and two threads
 have no row, the target table predates the seven extra Quickshell modules, and `building.md` misses
 a flag. Tests are broad (1169 cases in 97 files) but 88 fixed `qWait(N)` calls and one ctest entry
 per case make the suite slower and flakier than it needs to be, and nothing lints the 73 QML files.
-The rest is naming debt from wabar 1 and a few small misplacements. Nothing found needs a redesign.
+The rest is naming debt from waku 1 and a few small misplacements. Nothing found needs a redesign.
 
 ## Findings
 
@@ -33,14 +33,14 @@ Severity: high. Effort: L. Parallel: no (run last, after A10, A11 and A15 are me
 
 Where:
 
-- `src/host/quickshell/CMakeLists.txt` lines 31-35: `wabar_quickshell` compiles
-  `${PROJECT_SOURCE_DIR}/src/app/wabar/quickshell_types_core.h` and adds `src/app/wabar` to its
+- `src/host/quickshell/CMakeLists.txt` lines 31-35: `waku_quickshell` compiles
+  `${PROJECT_SOURCE_DIR}/src/app/waku/quickshell_types_core.h` and adds `src/app/waku` to its
   include path.
-- `src/app/wabar/quickshell_types_core.h` includes `features/apps/qml/desktop_entry.h` and
+- `src/app/waku/quickshell_types_core.h` includes `features/apps/qml/desktop_entry.h` and
   `features/quickshell_io/qml/quickshell_singleton.h`.
 - `src/modules/qml_modules.cmake` lines 98-123: three more module targets (`Quickshell.Io`,
   `Quickshell.Services.Mpris`, `Quickshell.Services.Notifications`) built from
-  `src/app/wabar/quickshell_types_{io,mpris,notifications}.h`.
+  `src/app/waku/quickshell_types_{io,mpris,notifications}.h`.
 - `src/host/quickshell/{wayland,widgets,hyprland,upower,pipewire,systemtray,bluetooth}/`: seven
   modules, QML plus two C++ files.
 - `src/host/qml/{script_model,system_clock,persistent_properties,ipc_handler,transform_watcher,shell_config}.*`:
@@ -53,14 +53,14 @@ Where:
 
 Problem: a newcomer who wants to know "where does Quickshell's `X` live" has no single place to
 look; `docs/architecture.md` needs five table rows to answer it. The layering is bent: `host`
-(`wabar_quickshell`) depends on `app/` sources and, through them, on two features. S2 does not
+(`waku_quickshell`) depends on `app/` sources and, through them, on two features. S2 does not
 catch it because `app/` is exempt and the include is done by CMake. The link dependencies are
-under-declared as a result: `wabar_quickshell` registers `wabar::apps::DesktopEntry` and
-`wabar::quickshell_io::ElapsedTimer` (their `staticMetaObject` lives in `wabar_services`) but
-links only `wabar_host`; the three service modules link `wabar_kernel` only. Both build because
+under-declared as a result: `waku_quickshell` registers `waku::apps::DesktopEntry` and
+`waku::quickshell_io::ElapsedTimer` (their `staticMetaObject` lives in `waku_services`) but
+links only `waku_host`; the three service modules link `waku_kernel` only. Both build because
 the executables link everything. The comment in `src/host/quickshell/CMakeLists.txt` ("the names
 resolve to the same types") is not true for `PopupWindow` and `Variants`: `src/host/quickshell/qml/PopupWindow.qml`
-and `Variants.qml` are wrapper components, so `import Quickshell` and `import wabar` give two
+and `Variants.qml` are wrapper components, so `import Quickshell` and `import waku` give two
 distinct QML types there.
 
 Fix: a unit `src/quickshell/` between `features` and `app` (dependency table row: may include
@@ -68,8 +68,8 @@ Fix: a unit `src/quickshell/` between `features` and `app` (dependency table row
 include it). Inside: `core/` (today's `src/host/quickshell/qml` plus `quickshell_types_core.h`),
 `wayland/`, `io/`, `widgets/`, `hyprland/`, `services/{mpris,notifications,upower,pipewire,systemtray}/`,
 `bluetooth/`, each with its own `CMakeLists.txt`, and a `README.md` with one table: Quickshell
-type, module, wabar implementation file. Move `wabar_quickshell_service_module()` out of
-`src/modules/qml_modules.cmake`. Link every module target to `wabar_services`. Register the
+type, module, waku implementation file. Move `waku_quickshell_service_module()` out of
+`src/modules/qml_modules.cmake`. Link every module target to `waku_services`. Register the
 unit in `tools/check.ps1` (S1, S2, S3, S4) and in the structure section of `AGENTS.md`. Document
 the two wrapper types as the exception. The C++ of the core types stays in `src/host/qml/` (it is
 the engine); only registrations and QML move.
@@ -83,14 +83,14 @@ Missing (all `QML_SINGLETON`):
 
 | Singleton | File |
 |---|---|
-| `wabar.services.Workspaces` | `src/features/workspaces/qml/workspaces_service.h` |
-| `wabar.services.Komorebi` | `src/features/workspaces/qml/komorebi_client.h` |
-| `wabar.services.GlazeWM` | `src/features/workspaces/qml/glazewm_client.h` |
-| `wabar.services.Media` | `src/features/media/qml/media_service.h` |
-| `wabar.services.AudioOutput`, `AudioInput` | `src/features/audio/qml/audio_service.h` |
-| `wabar.services.Shell` | `src/features/shell/qml/shell_service.h` |
-| `wabar.Theme` | `src/host/qml/bar_theme.h` |
-| `wabar.PopupPlacement` | `src/host/qml/popup_placement_qml.h` |
+| `waku.services.Workspaces` | `src/features/workspaces/qml/workspaces_service.h` |
+| `waku.services.Komorebi` | `src/features/workspaces/qml/komorebi_client.h` |
+| `waku.services.GlazeWM` | `src/features/workspaces/qml/glazewm_client.h` |
+| `waku.services.Media` | `src/features/media/qml/media_service.h` |
+| `waku.services.AudioOutput`, `AudioInput` | `src/features/audio/qml/audio_service.h` |
+| `waku.services.Shell` | `src/features/shell/qml/shell_service.h` |
+| `waku.Theme` | `src/host/qml/bar_theme.h` |
+| `waku.PopupPlacement` | `src/host/qml/popup_placement_qml.h` |
 
 Fix: one row each (owner thread, what it holds, how it stops, live-desktop behaviour), in the
 format of the existing rows.
@@ -111,10 +111,10 @@ Severity: medium. Effort: S. Parallel: yes (same agent as A2).
 
 Severity: medium. Effort: S. Parallel: yes (same agent as A2).
 
-- `docs/architecture.md` line 22: the `wabar_quickshell` row says "two QML wrappers" and names
-  only `Quickshell` and `Quickshell.Wayland`. Missing targets: `wabar_quickshell_{widgets,hyprland,upower,pipewire,systemtray,bluetooth}`
-  (`src/host/quickshell/*/CMakeLists.txt`), `wabar_quickshell_services` and the three module
-  targets of `src/modules/qml_modules.cmake` lines 98-123, `wabar_test_module`
+- `docs/architecture.md` line 22: the `waku_quickshell` row says "two QML wrappers" and names
+  only `Quickshell` and `Quickshell.Wayland`. Missing targets: `waku_quickshell_{widgets,hyprland,upower,pipewire,systemtray,bluetooth}`
+  (`src/host/quickshell/*/CMakeLists.txt`), `waku_quickshell_services` and the three module
+  targets of `src/modules/qml_modules.cmake` lines 98-123, `waku_test_module`
   (`tests/plugin/CMakeLists.txt`).
 - Kernel table, `win32/app_activation.*` users: add `src/features/apps/win32/launch_win.cpp`.
 - Kernel table, `qt/app_data.*` users: add apps frecency (`apps_service.cpp`), `color_scheme`
@@ -131,11 +131,11 @@ the rows short.
 Severity: medium. Effort: S. Parallel: yes (files: `docs/building.md`, `README.md`,
 `docs/plans/README.md`, `docs/styling.md`, `docs/shells.md`, `src/app/README.md`).
 
-- `docs/building.md` flag table lacks `--font-engine` (`src/app/wabar/main.cpp` line 57; the
+- `docs/building.md` flag table lacks `--font-engine` (`src/app/waku/main.cpp` line 57; the
   handoff section 7 says a shell with variable fonts needs it).
-- `README.md` lists the `wabarc` commands without `call`, `shortcut`, `taskbar`.
-- `docs/plans/README.md` has no row for `2026-10-29-wabar-extensibility-proposal.md` (941 lines,
-  the document that decided the Quickshell names) or `2026-10-29-wabar-styling-proposal.md`.
+- `README.md` lists the `wakuc` commands without `call`, `shortcut`, `taskbar`.
+- `docs/plans/README.md` has no row for `2026-10-29-waku-extensibility-proposal.md` (941 lines,
+  the document that decided the Quickshell names) or `2026-10-29-waku-styling-proposal.md`.
 - `docs/styling.md` is a three-line stub and `README.md` links to it as "How the look is
   configured".
 - `docs/shells.md` (notes for shell authors: masks, shortcuts) is linked from nowhere.
@@ -175,7 +175,7 @@ case becomes a ctest test and a process that builds a `QGuiApplication` on the o
 
 Fix, in order of cost: add `-j` (number of cores) to the four documented `ctest` lines and to
 `check.ps1`; then register one ctest test per suite prefix generated from the `TESTS` list
-(`add_test(NAME Tray COMMAND wabar_tests --gtest_filter=Tray*)`), which keeps `ctest -R Tray`
+(`add_test(NAME Tray COMMAND waku_tests --gtest_filter=Tray*)`), which keeps `ctest -R Tray`
 working and cuts the process count from 1169 to about 60. Keep `--gtest_filter` for single cases.
 
 ### A8. Fixed sleeps in tests
@@ -189,8 +189,8 @@ ones: `src/host/tests/test_shell_host.cpp` lines 68, 563, 565 (700-900 ms to pro
 fired once), `tests/integration/test_safe_mode.cpp` line 97 (500 ms "more than the debounce"),
 `src/host/tests/test_popups.cpp` lines 299, 479, `src/host/tests/test_overlays.cpp` line 213,
 `src/kernel/tests/test_polled_source.cpp` lines 34, 58, `src/features/wallpapers/tests/test_wallpaper_transition.cpp`
-and `test_wallpaper_service.cpp` line 270. Known flake: `WallpaperHandler.ThePipeCarriesTheQuotedLineFromWabarc`
-(`src/host/tests/test_wallpaper_handler.cpp`, a real `wabarc.exe` round trip).
+and `test_wallpaper_service.cpp` line 270. Known flake: `WallpaperHandler.ThePipeCarriesTheQuotedLineFromWakuc`
+(`src/host/tests/test_wallpaper_handler.cpp`, a real `wakuc.exe` round trip).
 
 Fix: for "nothing more happens" assertions, expose the debounce as a constant or a settable
 interval on the class (`ShellHost`, `PolledSource`, the file watcher) and wait that plus a small
@@ -212,7 +212,7 @@ configured tree): `cmake --build --preset arm64-debug --target all_qmllint`, fai
 for `src/`, and a separate pass over `examples/*/shell.qml` with `-I build/.../src/modules`.
 Document it in `AGENTS.md` under "Definition of done".
 
-### A10. Names left over from wabar 1, and a host/feature name clash
+### A10. Names left over from waku 1, and a host/feature name clash
 
 Severity: medium. Effort: S to M. Parallel: yes for the host files, but serial with A15 (same
 headers).
@@ -224,7 +224,7 @@ headers).
 - `src/host/taskbar_control.{h,cpp}`, `src/host/win32/taskbar_control.cpp`,
   `src/host/qml/taskbar_command.{h,cpp}`, `src/host/testing/taskbar_fakes.h`,
   `src/host/tests/test_taskbar_control.cpp` are about hiding the Windows taskbar;
-  `src/features/taskbar/` is wabar's own taskbar widget. `ctest -R Taskbar` selects both. Rename
+  `src/features/taskbar/` is waku's own taskbar widget. `ctest -R Taskbar` selects both. Rename
   the host side to `windows_taskbar_*` (class `WindowsTaskbar`, test suite `WindowsTaskbar`).
 - 32 commits on the branch carry the scope `bar`, which `tools/hooks/commit-msg` refuses today.
   History only; mention it in the handoff for the squash to `main`.
@@ -253,22 +253,22 @@ scopes, and `design.md`.
 
 Severity: low. Effort: M. Parallel: yes (files: `src/control/wallpaper_control.h`,
 `src/host/qml/control_handler.*`, `src/host/tests/test_wallpaper_handler.cpp`,
-`src/features/wallpapers/qml/wallpapers_service.*`, `src/app/wabarc/main.cpp`).
+`src/features/wallpapers/qml/wallpapers_service.*`, `src/app/wakuc/main.cpp`).
 
 `src/control/wallpaper_control.h` and `host/qml/control_handler.h` lines 19-21, 42-44 carry a
 feature's vocabulary (set, random, next, previous, gallery, dry run) in two generic units. The
-generic path already exists: `IpcHandler` and `wabarc call <target> <function>`.
+generic path already exists: `IpcHandler` and `wakuc call <target> <function>`.
 
 Fix: the wallpapers service declares an `IpcHandler`-equivalent target `wallpaper` from C++ (or the
-host offers a C++ registration API next to the QML one); `wabarc wallpaper ...` becomes a
-client-side alias for `wabarc call wallpaper ...`; `WallpaperControl` and `answerWallpaperCommand`
+host offers a C++ registration API next to the QML one); `wakuc wallpaper ...` becomes a
+client-side alias for `wakuc call wallpaper ...`; `WallpaperControl` and `answerWallpaperCommand`
 go. `control` is then protocol only.
 
 ### A13. Host types with no consumer in the repository
 
 Severity: low. Effort: S. Parallel: yes.
 
-`wabar.Thumbnails` (`src/host/qml/thumbnails.*`, `src/host/thumbnail_store.*`, two thread pools)
+`waku.Thumbnails` (`src/host/qml/thumbnails.*`, `src/host/thumbnail_store.*`, two thread pools)
 and `WindowThumbnail` (`src/host/qml/window_thumbnail.*`, `src/host/thumbnail.*`,
 `src/host/win32/thumbnail_win.cpp`) are used by no `.qml` under `src/` or `examples/`; they
 exist for the external caelestia port. They are generic, so they may stay, but nothing in the
@@ -283,7 +283,7 @@ built-in widgets.
 
 Severity: low. Effort: M. Parallel: no (touches most host paths; skip if A1 and A15 land).
 
-`wabar_host_base` mixes the app bar, hotkeys, the mask poller, the plugin guard, region math,
+`waku_host_base` mixes the app bar, hotkeys, the mask poller, the plugin guard, region math,
 thumbnails, the Windows taskbar and the DWM backdrop; with `qml/` (44 files) and `tests/` (23)
 the unit holds 129 files. It is correct, but a reader has no sub-structure to follow.
 
@@ -305,12 +305,12 @@ Any edit rebuilds all of them.
 Fix: split into `qs_window.h` (base, attached, anchors, margins, surface format),
 `panel_window.h`, `floating_window.h`, `wlr_layershell.h`; `shell_host.h` forward-declares.
 
-### A16. `wabar.services` is one registration unit over 40 headers
+### A16. `waku.services` is one registration unit over 40 headers
 
 Severity: low. Effort: S (document) or L (restructure). Parallel: yes.
 
 `src/modules/qml_modules.cmake` builds one module from every feature's `qml/*.h`. The generated
-`wabar_services_qmltyperegistrations.cpp` includes all of them, so one changed service header
+`waku_services_qmltyperegistrations.cpp` includes all of them, so one changed service header
 recompiles it, the plugin and the executables' link. The handoff section 7 notes an AUTOMOC
 timestamp miss after adding a header. The reason for one module (name clash between widgets and
 services) is documented and valid.
@@ -323,16 +323,16 @@ central).
 
 ### A17. WinRT translation units and one 1649-line file
 
-Severity: medium (build time). Effort: M. Parallel: yes (files: `cmake/wabar_feature.cmake`,
+Severity: medium (build time). Effort: M. Parallel: yes (files: `cmake/waku_feature.cmake`,
 `src/features/bluetooth/win32/`, feature `CMakeLists.txt` of the WinRT users).
 
 Twelve `.cpp` files include `<winrt/...>` (audio 2, bluetooth 1, brightness 1, media 2, network 3,
 notifications 2, kernel 1). Each one parses the C++/WinRT projection headers from scratch. No
-precompiled header, no unity build (`cmake/wabar_options.cmake` sets none).
+precompiled header, no unity build (`cmake/waku_options.cmake` sets none).
 `src/features/bluetooth/win32/bluetooth_win.cpp` is 1649 lines and `brightness_win.cpp` 778.
 
-Fix: a `WINRT_PCH` option on `wabar_feature()` that applies
-`target_precompile_headers(wabar_<f> PRIVATE <winrt/base.h> <winrt/Windows.Foundation.h>)` to the
+Fix: a `WINRT_PCH` option on `waku_feature()` that applies
+`target_precompile_headers(waku_<f> PRIVATE <winrt/base.h> <winrt/Windows.Foundation.h>)` to the
 `WIN32_SOURCES`; split `bluetooth_win.cpp` into radio, devices and battery, audio connection,
 pairing. Measure before and after with `-d stats` on the Ninja log.
 
@@ -342,7 +342,7 @@ Severity: low. Effort: S. Parallel: yes.
 
 `.gitignore` lacks `/.claude/` (git status shows `?? .claude/`). `git worktree list` has four
 `.claude/worktrees/agent-*` entries (three locked) whose branches are merged, plus
-`D:/wabar-wt/crash` and `D:/wabar-wt/thumbs` on commits already in this branch. Every repository
+`D:/waku-wt/crash` and `D:/waku-wt/thumbs` on commits already in this branch. Every repository
 grep returns their copies too. The handoff section 2 asks for the prune.
 
 Fix: `git worktree remove` (unlock first), `git branch -d`, add `/.claude/` to `.gitignore`.
@@ -398,15 +398,15 @@ rest.
 
 Severity: low. Effort: S (decide and document). Parallel: yes.
 
-Module `wabar` (`src/host/qml/`) holds `Theme`/`ThemeSpec` (`bar_theme.h`, about 150 properties),
+Module `waku` (`src/host/qml/`) holds `Theme`/`ThemeSpec` (`bar_theme.h`, about 150 properties),
 `Panel`, `PanelLayout`, `Tooltip`, `PopupWindow`, `WindowChrome`: the look and presets of the
 built-in widgets. `AGENTS.md` says the engine holds "only what QML cannot do and generic
 Quickshell compatibility"; a ported shell uses none of these. They are in `host` because
 `theme.qml` loading is wired into `ShellHost`.
 
-Fix: no move now. Add a paragraph to `docs/architecture.md` naming which `wabar` types are engine
+Fix: no move now. Add a paragraph to `docs/architecture.md` naming which `waku` types are engine
 (`ShellRoot` to `Region`) and which are the built-in look (`Theme` to `WindowChrome`), and that a
-later step may move the latter to a `wabar.ui` module when `ui` gains C++. The styling proposal
+later step may move the latter to a `waku.ui` module when `ui` gains C++. The styling proposal
 already discusses this; link it.
 
 ### A24. `docs/architecture.md` rows are paragraphs
@@ -449,10 +449,10 @@ the order given. Run batch 6 after batches 3 and 4 are merged.
 | 2. User docs and hygiene | A5, A21, A22, A18 | `docs/building.md`, `README.md`, `docs/plans/README.md`, `docs/styling.md`, `docs/shells.md`, `src/app/README.md`, `docs/plans/2026-10-30-handoff.md`, `.github/copilot-instructions.md`, `.gitignore`, worktrees | S |
 | 3. Host naming and headers | A10, A15 | `src/host/qml/*`, `src/host/*taskbar*`, `src/host/quickshell/qml/quickshell_types.h`, `src/host/CMakeLists.txt` | M |
 | 4. Features | A6, A11, A19, A13 | `src/features/taskbar/win32/`, `src/features/brightness/win32/`, `src/features/shell/`, `src/features/quickshell_io/`, `src/features/wallpapers/tests/`, `examples/gallery/` | M |
-| 5. Build and test infrastructure | A7, A9, A17, A16 (document) | `tests/CMakeLists.txt`, `tools/check.ps1`, `cmake/wabar_feature.cmake`, `src/features/bluetooth/win32/`, `AGENTS.md`, `docs/building.md` (Notes) | M |
+| 5. Build and test infrastructure | A7, A9, A17, A16 (document) | `tests/CMakeLists.txt`, `tools/check.ps1`, `cmake/waku_feature.cmake`, `src/features/bluetooth/win32/`, `AGENTS.md`, `docs/building.md` (Notes) | M |
 | 6. Test timing | A8 | the test files listed in A8, plus small accessors on `ShellHost`, `PolledSource` | M |
-| 7. Risk record | A20, A23, A12 | `docs/release-checklist.md`, `docs/architecture.md` (one paragraph; after batch 1), `src/control/`, `src/host/qml/control_handler.*`, `src/features/wallpapers/qml/`, `src/app/wabarc/main.cpp` | M |
-| 8. Quickshell unit | A1 | new `src/quickshell/`, `src/host/quickshell/` (removed), `src/app/wabar/quickshell_types_*.h` (moved), `src/modules/qml_modules.cmake`, `tools/check.ps1`, `AGENTS.md`, `docs/architecture.md` | L |
+| 7. Risk record | A20, A23, A12 | `docs/release-checklist.md`, `docs/architecture.md` (one paragraph; after batch 1), `src/control/`, `src/host/qml/control_handler.*`, `src/features/wallpapers/qml/`, `src/app/wakuc/main.cpp` | M |
+| 8. Quickshell unit | A1 | new `src/quickshell/`, `src/host/quickshell/` (removed), `src/app/waku/quickshell_types_*.h` (moved), `src/modules/qml_modules.cmake`, `tools/check.ps1`, `AGENTS.md`, `docs/architecture.md` | L |
 
 Batch 8 conflicts with 3 (headers it includes), 4 (`quickshell_io`) and 5 (`check.ps1`,
 `AGENTS.md`); it runs last. Batches 1 to 7 are disjoint and can start together. A14 is not

@@ -4,7 +4,7 @@
 #include <QFileInfo>
 #include <QSaveFile>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 FileWriteResult writeFileAtomic(const QString& path, const QByteArray& data) {
   QDir().mkpath(QFileInfo(path).absolutePath());
@@ -21,4 +21,4 @@ FileWriteResult writeFileAtomic(const QString& path, const QByteArray& data) {
   return {};
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

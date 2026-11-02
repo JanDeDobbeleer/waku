@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-namespace wabar::apps {
+namespace waku::apps {
 namespace {
 
 bool isWordChar(QChar c) { return c.isLetterOrNumber(); }
@@ -104,4 +104,4 @@ std::vector<int> rankApps(const QString& query, const std::vector<RankCandidate>
   return result;
 }
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

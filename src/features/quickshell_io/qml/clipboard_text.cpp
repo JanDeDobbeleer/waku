@@ -4,7 +4,7 @@
 #include <QGuiApplication>
 #include <atomic>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 namespace {
 
@@ -48,4 +48,4 @@ void ClipboardText::invalidate() {
 
 int ClipboardText::readsForTesting() { return clipboardReads.load(std::memory_order_relaxed); }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

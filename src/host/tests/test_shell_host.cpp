@@ -11,7 +11,7 @@ TEST(ShellRoot, LoadsAndKeepsWhatItDeclaresInOrder) {
   QTemporaryDir dir;
   write(dir.filePath(QStringLiteral("shell.qml")), QStringLiteral(R"(
 import QtQml
-import wabar
+import waku
 ShellRoot {
     QtObject { objectName: "first" }
     Scope { QtObject { objectName: "nested" } }
@@ -35,8 +35,8 @@ ShellRoot {
 TEST(ShellRoot, TheOldNamesAreGone) {
   QQmlEngine engine;
   QTemporaryDir dir;
-  for (const char* text : {"import wabar\nConfig {}\n", "import wabar\nShellRoot { Bar {} }\n",
-                           "import wabar\nShellRoot { Panel { content: BarLayout {} } }\n"}) {
+  for (const char* text : {"import waku\nConfig {}\n", "import waku\nShellRoot { Bar {} }\n",
+                           "import waku\nShellRoot { Panel { content: BarLayout {} } }\n"}) {
     write(dir.filePath(QStringLiteral("shell.qml")), QString::fromLatin1(text));
     engine.clearComponentCache();
     QQmlComponent component(&engine,
@@ -124,7 +124,7 @@ TEST(ShellHostTest, AReloadLeavesNoWindowOfTheOldShellAlive) {
   h.screenCount = 2;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Variants {
         model: ScreenList.screens
@@ -228,7 +228,7 @@ TEST(PanelLayoutTest, AHiddenWidgetTakesNoSpace) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel {
         content: PanelLayout {
@@ -260,7 +260,7 @@ TEST(ShellHostTest, RegistersAnAppBarWithTheEdgeAndThickness) {
   h.start(shellConfig(QStringLiteral("a"), QStringLiteral("thickness: 30; edge: Panel.Bottom")));
   ASSERT_TRUE(h.host->reload());
   ASSERT_EQ(h.native.created.size(), 1u);
-  EXPECT_EQ(h.native.created[0].request.edge, wabar::host::AppBarEdge::Bottom);
+  EXPECT_EQ(h.native.created[0].request.edge, waku::host::AppBarEdge::Bottom);
   EXPECT_EQ(h.native.created[0].request.thickness, 30);
   EXPECT_TRUE(h.native.created[0].request.alwaysOnTop);
   EXPECT_TRUE(h.native.created[0].request.noActivate);
@@ -439,7 +439,7 @@ TEST(ShellHostTest, AnUnknownWidgetTypeIsAnError) {
   h.start(shellConfig(QStringLiteral("good")));
   ASSERT_TRUE(h.host->reload());
   write(h.shellFile(), QStringLiteral(R"(
-import wabar
+import waku
 ShellRoot { Panel { content: PanelLayout { start: [ NoSuchWidget {} ] } } }
 )"));
   EXPECT_FALSE(h.host->reload());
@@ -451,7 +451,7 @@ TEST(ShellHostTest, CheckingAShellCreatesNothing) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     PanelWindow { objectName: "probe"; Text { text: "x" } }
 }
@@ -479,7 +479,7 @@ TEST(ShellHostTest, AFirstLoadWhoseRootIsNotAShellRootCreatesNothingAndShowsTheF
   // The first load skips the probe engine: build() itself refuses the root before creating it.
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 Item { PanelWindow { objectName: "never" } }
 )"));
   const auto before = QGuiApplication::allWindows().size();
@@ -505,7 +505,7 @@ TEST(ShellHostTest, AnOldBarQmlNamesTheRename) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());
   write(h.dir.filePath(QStringLiteral("bar.qml")),
-        QStringLiteral("import wabar\nConfig { Bar {} }\n"));
+        QStringLiteral("import waku\nConfig { Bar {} }\n"));
   h.makeHost();
   EXPECT_FALSE(h.host->reload());
   const QString error = h.host->error();
@@ -525,7 +525,7 @@ TEST(ShellHostTest, AWindowThatFailsToBuildLeavesTheOthersStanding) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel {
         content: Item { objectName: "good" }
@@ -549,7 +549,7 @@ TEST(ShellHostTest, WhenNoWindowBuildsTheFallbackShows) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel { content: Item { objectName: "bad"; required property int notGiven } }
 }
@@ -569,7 +569,7 @@ TEST(ShellHostTest, AReloadThatFailsWhileCreatingShowsTheFallbackWithTheError) {
   // It compiles, so the check passes; the content cannot be created.
   write(h.shellFile(), QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel { content: Item { objectName: "bad"; required property int notGiven } }
 }
@@ -592,7 +592,7 @@ TEST(ShellHostTest, AReloadWhoseVariantsDelegateFailsShowsTheFallback) {
 
   write(h.shellFile(), QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Variants {
         model: 1
@@ -615,7 +615,7 @@ TEST(ShellHostTest, ABrokenFirstLoadThatCompilesStillShowsTheFallback) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel { content: Item { required property int notGiven } }
 }
@@ -650,7 +650,7 @@ TEST(ShellHostTest, ChangingAWidgetFileInASubfolderReloads) {
   const QString widget = h.dir.filePath(QStringLiteral("widgets/Label.qml"));
   write(widget, QStringLiteral("import QtQuick\nText { objectName: \"w\"; text: \"first\" }\n"));
   h.start(QStringLiteral(R"(
-import wabar
+import waku
 import "widgets"
 ShellRoot { Panel { content: PanelLayout { start: [ Label {} ] } } }
 )"));
@@ -755,7 +755,7 @@ QtObject { property Foo state: Foo {} }
 )"));
   write(h.shellFile(), QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     QtObject {
         objectName: "probe"
@@ -847,16 +847,16 @@ QObject* makeTrackedSingleton(QQmlEngine*, QJSEngine*) { return new TrackedSingl
 
 // The Quickshell Mpris pattern: a second name for the same singleton object.
 QObject* makeWrappedSingleton(QQmlEngine* engine, QJSEngine*) {
-  auto* tracked = engine->singletonInstance<QObject*>(QStringLiteral("wabar.test.tracked"),
+  auto* tracked = engine->singletonInstance<QObject*>(QStringLiteral("waku.test.tracked"),
                                                       QStringLiteral("Tracked"));
   return tracked;
 }
 
 void registerTrackedSingleton() {
   static const int id = qmlRegisterSingletonType<TrackedSingleton>(
-      "wabar.test.tracked", 1, 0, "Tracked", &makeTrackedSingleton);
+      "waku.test.tracked", 1, 0, "Tracked", &makeTrackedSingleton);
   static const int wrapped = qmlRegisterSingletonType<TrackedSingleton>(
-      "wabar.test.tracked", 1, 0, "Wrapped", &makeWrappedSingleton);
+      "waku.test.tracked", 1, 0, "Wrapped", &makeWrappedSingleton);
   (void)id;
   (void)wrapped;
 }
@@ -871,8 +871,8 @@ TEST(ShellHostTest, AReloadDestroysTheOldSingletonsBeforeTheNewShellIsBuilt) {
   ASSERT_TRUE(h.dir.isValid());
   write(h.shellFile(), QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.test.tracked
+import waku
+import waku.test.tracked
 ShellRoot {
     QtObject { objectName: "probe"; property string name: Tracked.objectName + Wrapped.objectName }
     Panel { content: PanelLayout { start: [ Text { objectName: "a"; text: "x" } ] } }

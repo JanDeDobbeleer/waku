@@ -17,7 +17,7 @@ namespace {
 // The names the module lists in its qmldir ("Name 1.0 Name.qml" lines).
 QStringList moduleWidgets() {
   QStringList names;
-  QFile qmldir(QStringLiteral(":/qt/qml/wabar/widgets/qmldir"));
+  QFile qmldir(QStringLiteral(":/qt/qml/waku/widgets/qmldir"));
   if (!qmldir.open(QIODevice::ReadOnly)) return names;
   const QStringList lines = QString::fromUtf8(qmldir.readAll()).split(QLatin1Char('\n'));
   for (const QString& line : lines) {
@@ -45,7 +45,7 @@ TEST(BuiltInWidgets, EveryWidgetOfTheModuleCompiles) {
   QQmlEngine engine;
   for (const QString& name : names) {
     QQmlComponent component(&engine,
-                            QUrl(QStringLiteral("qrc:/qt/qml/wabar/widgets/%1.qml").arg(name)));
+                            QUrl(QStringLiteral("qrc:/qt/qml/waku/widgets/%1.qml").arg(name)));
     for (int i = 0; i < 100 && component.isLoading(); ++i) QTest::qWait(50);
     EXPECT_TRUE(component.isReady())
         << qPrintable(name) << ": " << qPrintable(component.errorString());

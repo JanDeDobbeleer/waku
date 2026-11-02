@@ -14,14 +14,14 @@
 #include "features/brightness/brightness.h"
 #include "features/control_center/power.h"
 
-namespace wabar::control_center {
+namespace waku::control_center {
 
 // The system side of the control center as a QML singleton (ControlCenter): Do Not Disturb, the
 // app theme, the touch keyboard, the screenshot overlay, monitor brightness, power plans and modes,
 // the user's name and picture, and the session and power actions. Volume and microphone live in
 // AudioOutput and AudioInput, the player in Media; this object does not repeat them. GUI thread
 // only. The brightness object lives on this object (QObject child) and owns its own worker
-// threads (see wabar::brightness::BrightnessControl); the DND watcher is the platform's WNF
+// threads (see waku::brightness::BrightnessControl); the DND watcher is the platform's WNF
 // subscription. The engine destroys the singleton, which stops both.
 //
 // Every state change a widget can see is announced with the signal of its group (dndChanged,
@@ -93,8 +93,8 @@ class ControlCenter : public QObject {
   // Real system. On the offscreen platform every control is inert and nothing touches the machine.
   explicit ControlCenter(QObject* parent = nullptr);
   // Test seam. `brightness` may be null (no brightness control); it is reparented to this object.
-  ControlCenter(Backend backend, Launcher launcher,
-                wabar::brightness::BrightnessControl* brightness, QObject* parent);
+  ControlCenter(Backend backend, Launcher launcher, waku::brightness::BrightnessControl* brightness,
+                QObject* parent);
   ~ControlCenter() override;
 
   bool available() const { return available_; }
@@ -160,8 +160,8 @@ class ControlCenter : public QObject {
   };
   // Emits the signal of every group in groups, then changed().
   void announce(unsigned groups);
-  ControlCenter(Backend backend, Launcher launcher,
-                wabar::brightness::BrightnessControl* brightness, QObject* parent, bool readLater);
+  ControlCenter(Backend backend, Launcher launcher, waku::brightness::BrightnessControl* brightness,
+                QObject* parent, bool readLater);
   void init();
   // init() on a pool thread for what the backend reads; applied when it arrives, unless a newer
   // read of that part came first.
@@ -174,7 +174,7 @@ class ControlCenter : public QObject {
 
   Backend backend_;
   Launcher launcher_;
-  wabar::brightness::BrightnessControl* brightnessControl_ = nullptr;
+  waku::brightness::BrightnessControl* brightnessControl_ = nullptr;
   QTimer pendingTimer_;
   bool available_ = true;
 
@@ -198,4 +198,4 @@ class ControlCenter : public QObject {
   bool powerRead_ = false;
 };
 
-}  // namespace wabar::control_center
+}  // namespace waku::control_center

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 // Colour arithmetic shared by the HCT solver, the quantizer and the scheme roles. Re-implemented
 // from the public description of material-color-utilities (Apache-2.0, see THIRD_PARTY_NOTICES.md).
@@ -56,4 +56,4 @@ double darker(double tone, double ratio);
 double lighterUnsafe(double tone, double ratio);
 double darkerUnsafe(double tone, double ratio);
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

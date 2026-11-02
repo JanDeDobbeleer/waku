@@ -18,7 +18,7 @@
 #include "features/tray/win32/tray_hook.h"
 #include "features/tray/win32/tray_win.h"
 
-using namespace wabar::tray;
+using namespace waku::tray;
 using namespace std::chrono_literals;
 
 namespace {
@@ -339,8 +339,8 @@ class HookSession : public testing::Test {
  protected:
   SystrayHook::Options options(FakeInjector* injector = nullptr) {
     SystrayHook::Options result;
-    result.pipeName = QStringLiteral("\\\\.\\pipe\\wabar-test-") + uniqueSuffix();
-    result.mutexName = QStringLiteral("Local\\WabarTrayHookTest-") + uniqueSuffix();
+    result.pipeName = QStringLiteral("\\\\.\\pipe\\waku-test-") + uniqueSuffix();
+    result.mutexName = QStringLiteral("Local\\WakuTrayHookTest-") + uniqueSuffix();
     if (injector) {
       injectorPtr_ = injector;
       result.injector = std::unique_ptr<TrayInjector>(new Forward(injector));

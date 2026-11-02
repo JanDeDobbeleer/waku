@@ -15,9 +15,9 @@
 #include "features/workspaces/qml/komorebi_client.h"
 
 using nlohmann::json;
-using namespace wabar::workspaces;
-namespace gw = wabar::workspaces::glazewm;
-namespace kmb = wabar::workspaces::komorebi;
+using namespace waku::workspaces;
+namespace gw = waku::workspaces::glazewm;
+namespace kmb = waku::workspaces::komorebi;
 
 namespace {
 
@@ -116,7 +116,7 @@ struct KomorebiHarness {
     backend.runKomorebic = [](const QStringList&, int, void*) { return kmb::KomorebicResult{}; };
     komorebi = std::make_unique<Komorebi>(
         backend, [this](const std::vector<QStringList>& commands) { runs.push_back(commands); },
-        QStringLiteral("wabar-services-test"), kmb::KomorebiPipeListener::Timing{}, nullptr);
+        QStringLiteral("waku-services-test"), kmb::KomorebiPipeListener::Timing{}, nullptr);
   }
 
   void publish(const QString& kind, const kmb::JsonPtr& state = nullptr) {

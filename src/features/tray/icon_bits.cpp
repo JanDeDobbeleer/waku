@@ -1,6 +1,6 @@
 #include "features/tray/icon_bits.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 namespace {
 
 qsizetype pixelBytes(int width, int height) {
@@ -71,4 +71,4 @@ std::optional<QString> trayIconPixelsProblem(const TrayIconData& data) {
       .arg(data.iconHeight);
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

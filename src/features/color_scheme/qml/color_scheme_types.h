@@ -6,7 +6,7 @@
 #include <QString>
 #include <QVariantMap>
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 // The value `ColorScheme.fromColor()` and friends return, and `fromImageFinished` carries. QML
 // type `scheme`. `colors` maps every Material 3 role to a colour by its plain name
@@ -31,4 +31,4 @@ struct SchemeValue {
   QVariantMap colors;
 };
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

@@ -7,7 +7,7 @@
 
 #include "kernel/qt/file_write.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 namespace {
 
 bool truthy(const nlohmann::json& value) {
@@ -178,4 +178,4 @@ QString cleanScreenId(const QString& manufacturer, const QString& name, const QS
   return id;
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

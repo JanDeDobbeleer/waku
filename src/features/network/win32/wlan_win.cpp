@@ -23,7 +23,7 @@
 #include "kernel/win32/winrt_apartment.h"
 #include "kernel/win32/winrt_strings.h"
 
-namespace wabar::network {
+namespace waku::network {
 namespace {
 
 namespace wifi = winrt::Windows::Devices::WiFi;
@@ -315,7 +315,7 @@ class WlanWorker : public QObject {
   void connectTo(const WifiNetwork& network, const QString& ssid, const QString& password,
                  bool hidden) {
     try {
-      wabar::kernel::ensureWinrtApartment();
+      waku::kernel::ensureWinrtApartment();
       const WifiConnectStatus status = connectAdapter(network, ssid, password, hidden);
       emit connectFinished(static_cast<int>(status), ssid, network);
     } catch (const winrt::hresult_error& error) {
@@ -327,7 +327,7 @@ class WlanWorker : public QObject {
 
   void disconnectCurrent() {
     try {
-      wabar::kernel::ensureWinrtApartment();
+      waku::kernel::ensureWinrtApartment();
       firstAdapter().Disconnect();
     } catch (...) {
     }
@@ -360,9 +360,9 @@ class WlanWorker : public QObject {
   void profileDisconnected(const QString& profile) { emit disconnected(profile); }
 
  signals:
-  void scanCompleted(int status, const QVector<wabar::network::WifiNetwork>& networks);
-  void currentConnection(bool connected, const wabar::network::WifiNetwork& network);
-  void connectFinished(int status, const QString& ssid, const wabar::network::WifiNetwork& network);
+  void scanCompleted(int status, const QVector<waku::network::WifiNetwork>& networks);
+  void currentConnection(bool connected, const waku::network::WifiNetwork& network);
+  void connectFinished(int status, const QString& ssid, const waku::network::WifiNetwork& network);
   void connectFailed(const QString& message);
   void disconnected(const QString& profileName);
 
@@ -554,6 +554,6 @@ std::optional<int> currentSignalQuality() {
   return quality;
 }
 
-}  // namespace wabar::network
+}  // namespace waku::network
 
 #include "wlan_win.moc"

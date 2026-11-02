@@ -6,13 +6,13 @@
 #include <algorithm>
 #include <atomic>
 
-namespace wabar::apps {
+namespace waku::apps {
 namespace {
 
 constexpr int kDefaultIconSize = 64;
 constexpr int kMaxIconSize = 256;
 
-QImage toImage(const wabar::kernel::IconBitmap& bitmap, int size) {
+QImage toImage(const waku::kernel::IconBitmap& bitmap, int size) {
   if (bitmap.isNull() || bitmap.bgra.size() < qsizetype(bitmap.width) * bitmap.height * 4)
     return QImage();
   QImage image(reinterpret_cast<const uchar*>(bitmap.bgra.constData()), bitmap.width, bitmap.height,
@@ -89,7 +89,7 @@ QString appIconUrl(const QString& id) {
 }
 
 IconLoader realIconLoader() {
-  return [](const QString& source, int size) { return wabar::kernel::shellItemIcon(source, size); };
+  return [](const QString& source, int size) { return waku::kernel::shellItemIcon(source, size); };
 }
 
 void IconIndex::replace(QHash<QString, QString> sources) {
@@ -132,6 +132,6 @@ QQuickImageResponse* AppIconProvider::requestImageResponse(const QString& id,
   return response;
 }
 
-}  // namespace wabar::apps
+}  // namespace waku::apps
 
 #include "app_icon_provider.moc"

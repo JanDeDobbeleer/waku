@@ -22,7 +22,7 @@
 #include "kernel/qt/file_write.h"
 #include "kernel/qt/gui_post.h"
 
-namespace wabar::github {
+namespace waku::github {
 namespace {
 
 const QString kApi = QStringLiteral("https://api.github.com");
@@ -40,7 +40,7 @@ class NetworkTransport final : public HttpTransport {
     QNetworkAccessManager& manager = *manager_;
     QNetworkRequest networkRequest{QUrl(request.url)};
     networkRequest.setTransferTimeout(timeoutMs_);
-    networkRequest.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("wabar"));
+    networkRequest.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("waku"));
     for (const auto& [name, value] : request.headers) networkRequest.setRawHeader(name, value);
     QNetworkReply* reply = manager.sendCustomRequest(networkRequest, request.verb, request.body);
     QEventLoop loop;
@@ -411,7 +411,7 @@ HttpRequest githubMarkAllReadRequest(const QString& token, const QDateTime& nowU
 }
 
 QString githubTokenFilePath() {
-  return QDir(wabar::kernel::appDataDir()).filePath(QStringLiteral("github_token"));
+  return QDir(waku::kernel::appDataDir()).filePath(QStringLiteral("github_token"));
 }
 
 QString resolveGithubToken(const QString& configToken, const QString& envToken,
@@ -512,4 +512,4 @@ GithubTokenPoll parseGithubAccessToken(const HttpResponse& response) {
   return {Kind::Pending, {}, {}};
 }
 
-}  // namespace wabar::github
+}  // namespace waku::github

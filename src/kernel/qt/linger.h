@@ -3,7 +3,7 @@
 #include <memory>
 #include <utility>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // Keeps `held` alive for `ms` more milliseconds, then lets it go on the event loop of the
 // application's thread. Without a QCoreApplication, or with `ms` <= 0, it is let go at once. At
@@ -49,4 +49,4 @@ class LingeringHub {
   std::weak_ptr<T> owner_;
 };
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

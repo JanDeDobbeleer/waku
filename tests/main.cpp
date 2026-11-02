@@ -12,10 +12,10 @@ namespace {
 class QtEnvironment final : public testing::Environment {
  public:
   void SetUp() override {
-    // WABAR_TEST_SCREEN_CONFIG: a JSON screen layout for the offscreen platform (the child runs of
+    // WAKU_TEST_SCREEN_CONFIG: a JSON screen layout for the offscreen platform (the child runs of
     // ShellScreenUnits).
     QByteArray platform = "offscreen";
-    const QByteArray layout = qgetenv("WABAR_TEST_SCREEN_CONFIG");
+    const QByteArray layout = qgetenv("WAKU_TEST_SCREEN_CONFIG");
     if (!layout.isEmpty()) platform += ":configfile=" + layout;
     qputenv("QT_QPA_PLATFORM", platform);
     qputenv("QT_QUICK_BACKEND", "software");
@@ -26,7 +26,7 @@ class QtEnvironment final : public testing::Environment {
 
  private:
   int argc_ = 1;
-  char name_[24] = "wabar_tests";
+  char name_[24] = "waku_tests";
   char* argv_[2] = {name_, nullptr};
   std::unique_ptr<QGuiApplication> app_;
 };

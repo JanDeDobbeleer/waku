@@ -4,7 +4,7 @@
 #include <QScreen>
 #include <algorithm>
 
-namespace wabar::host {
+namespace waku::host {
 
 FloatingWindow::FloatingWindow(QObject* parent) : QsWindow(parent) {}
 
@@ -50,4 +50,4 @@ void FloatingWindow::applyGeometry() {
 
 Qt::WindowFlags FloatingWindow::windowFlags() const { return Qt::Window; }
 
-}  // namespace wabar::host
+}  // namespace waku::host

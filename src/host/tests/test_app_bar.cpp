@@ -3,14 +3,14 @@
 #include "host/app_bar.h"
 #include "host/testing/app_bar_fakes.h"
 
-using wabar::host::AppBarEdge;
-using wabar::host::AppBarGrant;
-using wabar::host::AppBarRect;
-using wabar::host::appBarWindowShift;
-using wabar::host::computeAppBarRect;
-using wabar::host::FakeAppBarSystem;
-using wabar::host::negotiateAppBarRect;
-using wabar::host::physicalScreenRect;
+using waku::host::AppBarEdge;
+using waku::host::AppBarGrant;
+using waku::host::AppBarRect;
+using waku::host::appBarWindowShift;
+using waku::host::computeAppBarRect;
+using waku::host::FakeAppBarSystem;
+using waku::host::negotiateAppBarRect;
+using waku::host::physicalScreenRect;
 
 namespace {
 

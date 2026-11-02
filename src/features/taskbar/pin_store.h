@@ -6,7 +6,7 @@
 #include <QStringList>
 #include <map>
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // The data side of PinManager: taskbar_pinned.json ({"pinned_apps": {id: metadata}, "pinned_order":
 // [id]}) and the signal Python's TaskbarSignalBus sends to every taskbar. Pinned apps are global,
@@ -16,7 +16,7 @@ class PinStore : public QObject {
   Q_OBJECT
 
  public:
-  // `filePath` is %LOCALAPPDATA%\wabar\taskbar_pinned.json in production (see defaultFile()).
+  // `filePath` is %LOCALAPPDATA%\waku\taskbar_pinned.json in production (see defaultFile()).
   explicit PinStore(QString filePath, QObject* parent = nullptr);
 
   static QString defaultFile();
@@ -54,4 +54,4 @@ class PinStore : public QObject {
   qint64 stamp_ = -1;
 };
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

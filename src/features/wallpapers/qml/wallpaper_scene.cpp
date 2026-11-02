@@ -14,7 +14,7 @@
 
 #include "features/wallpapers/wallpaper_reveal.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 namespace {
 
 QPolygonF rectPolygon(const QRectF& r) {
@@ -243,4 +243,4 @@ QSGNode* WallpaperScene::updatePaintNode(QSGNode* oldNode, UpdatePaintNodeData*)
   return nullptr;  // root (the old tree or the partial new one) is deleted here
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

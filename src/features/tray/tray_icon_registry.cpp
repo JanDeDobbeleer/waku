@@ -4,7 +4,7 @@
 
 #include "features/tray/tray_state.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 void TrayIconRegistry::setFilter(QSet<QUuid> guids, const QStringList& hiddenExeNames) {
   filteredGuids_ = std::move(guids);
@@ -96,4 +96,4 @@ TrayIconRegistry::Entry* TrayIconRegistry::findEntry(const std::optional<QUuid>&
   return const_cast<Entry*>(std::as_const(*this).findEntry(guid, hwnd, uid));
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

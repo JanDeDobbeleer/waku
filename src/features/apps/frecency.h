@@ -3,10 +3,10 @@
 #include <QHash>
 #include <QString>
 
-namespace wabar::apps {
+namespace waku::apps {
 
 // How often and how recently each app was launched, kept in a JSON file
-// (%LOCALAPPDATA%\wabar\apps_frecency.json). The score is a launch count that halves every
+// (%LOCALAPPDATA%\waku\apps_frecency.json). The score is a launch count that halves every
 // `kHalfLifeDays` days; the ranking uses it only to break ties.
 //
 // Not thread safe: the apps service uses it on the GUI thread. An empty path keeps the data in
@@ -40,4 +40,4 @@ class FrecencyStore {
   QHash<QString, Entry> entries_;
 };
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

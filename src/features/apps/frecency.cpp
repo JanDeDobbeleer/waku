@@ -9,7 +9,7 @@
 
 #include "kernel/qt/file_write.h"
 
-namespace wabar::apps {
+namespace waku::apps {
 
 FrecencyStore::FrecencyStore(QString path) : path_(std::move(path)) {}
 
@@ -76,4 +76,4 @@ double FrecencyStore::score(const QString& id, qint64 nowMs) const {
   return it == entries_.constEnd() ? 0 : decayed(it.value(), nowMs);
 }
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

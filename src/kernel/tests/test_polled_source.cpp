@@ -7,7 +7,7 @@
 
 #include "kernel/qt/polled_source.h"
 
-using wabar::kernel::PolledSource;
+using waku::kernel::PolledSource;
 
 namespace {
 

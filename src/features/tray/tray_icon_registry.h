@@ -10,11 +10,11 @@
 #include "features/tray/tray_host.h"
 #include "features/tray/tray_types.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // The set of tray icons currently announced, without any UI: which notification belongs to which
 // icon, which ones are filtered out, and which owners have gone away. A systray widget (Widgets or
-// wabar) keeps one view object per icon and maps it by id.
+// waku) keeps one view object per icon and maps it by id.
 //
 // Ports of the icon lifecycle in SystrayWidget: findIcon, the filtered-guid and hide_icons checks
 // of onIconModified, onIconDeleted and checkIcons.
@@ -76,4 +76,4 @@ class TrayIconRegistry {
   Id nextId_ = 0;
 };
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

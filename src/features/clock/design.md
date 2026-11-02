@@ -20,7 +20,7 @@ Current design of the capability. QML only: no C++, no service, no thread.
 
 ## Dependencies
 
-`wabar` QML types only (`Pill`, `PopupWindow`, `Theme`). No feature dependency.
+`waku` QML types only (`Pill`, `PopupWindow`, `Theme`). No feature dependency.
 
 ## Tests
 

@@ -2,8 +2,8 @@
 
 #include "kernel/win32/winrt_strings.h"
 
-using wabar::kernel::toHString;
-using wabar::kernel::toQString;
+using waku::kernel::toHString;
+using waku::kernel::toQString;
 
 TEST(WinrtStrings, RoundTripsTextOutsideLatin1) {
   const QString text = QStringLiteral("Café ♫ \U0001F3B5");

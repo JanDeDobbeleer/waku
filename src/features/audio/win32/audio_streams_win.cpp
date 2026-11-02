@@ -20,7 +20,7 @@
 #include "kernel/qt/gui_post.h"
 #include "kernel/win32/com_scope.h"
 
-namespace wabar::audio {
+namespace waku::audio {
 namespace {
 
 // Documented Core Audio only: IAudioSessionManager2, IAudioSessionControl2, ISimpleAudioVolume,
@@ -357,4 +357,4 @@ class SystemStreams final : public AudioStreamSource {
 
 AudioStreamSource* createSystemAudioStreams(QObject* parent) { return new SystemStreams(parent); }
 
-}  // namespace wabar::audio
+}  // namespace waku::audio

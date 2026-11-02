@@ -1,6 +1,6 @@
 ## Notes for shell authors
 
-Short notes on what differs from Quickshell when you write a shell for wabar. The design is in
+Short notes on what differs from Quickshell when you write a shell for waku. The design is in
 `docs/architecture.md`.
 
 ### Input regions (`mask`)
@@ -40,46 +40,46 @@ PanelWindow {
 ### Global shortcuts without keys
 
 A Hyprland-style shortcut has a name and no keys; the compositor binds the key. On Windows nothing
-binds it, so give the shortcut a name and bind a key to `wabarc shortcut <name>` in a hotkey tool
+binds it, so give the shortcut a name and bind a key to `wakuc shortcut <name>` in a hotkey tool
 such as whkd or AutoHotkey:
 
 ```qml
 GlobalShortcut {
-    name: "launcher"            // no `keys`: nothing is registered by wabar
+    name: "launcher"            // no `keys`: nothing is registered by waku
     onPressed: launcher.visible = !launcher.visible
 }
 ```
 
 ```ahk
 ; AutoHotkey v2
-#Space::Run('wabarc shortcut launcher', , 'Hide')
+#Space::Run('wakuc shortcut launcher', , 'Hide')
 ```
 
 ```
 # whkd
-win + space : wabarc shortcut launcher
+win + space : wakuc shortcut launcher
 ```
 
-`wabarc shortcut <name>` fires `onPressed` and then `onReleased` of every shortcut with that name.
-`wabarc shortcut list` prints the names. A shortcut that does set `keys` (`keys: "alt + space"`)
-registers the key itself, unless wabar runs with `--no-hotkeys` or the key is taken; it still
-answers `wabarc shortcut <name>`.
+`wakuc shortcut <name>` fires `onPressed` and then `onReleased` of every shortcut with that name.
+`wakuc shortcut list` prints the names. A shortcut that does set `keys` (`keys: "alt + space"`)
+registers the key itself, unless waku runs with `--no-hotkeys` or the key is taken; it still
+answers `wakuc shortcut <name>`.
 
 ### Hiding the Windows taskbar (`--hide-taskbar`)
 
-A shell that replaces the taskbar (a bar, a dock) starts wabar with `--hide-taskbar`. wabar then
+A shell that replaces the taskbar (a bar, a dock) starts waku with `--hide-taskbar`. waku then
 turns the taskbar's auto-hide on, which releases its work area, and hides its windows on every
 monitor, before the first shell is loaded, so a panel that reserves space (`--register-app-bar`)
-computes it without the taskbar. It restores the taskbar when wabar exits, and the next start
-undoes it if wabar crashed. Without the flag wabar never touches the taskbar. At run time
-`wabarc taskbar hide|show|status` does the same; `show` leaves the taskbar visible until `hide`.
-If another tool already hides the taskbar, wabar leaves that alone: `status` reports what is seen,
-and wabar undoes only what it changed.
+computes it without the taskbar. It restores the taskbar when waku exits, and the next start
+undoes it if waku crashed. Without the flag waku never touches the taskbar. At run time
+`wakuc taskbar hide|show|status` does the same; `show` leaves the taskbar visible until `hide`.
+If another tool already hides the taskbar, waku leaves that alone: `status` reports what is seen,
+and waku undoes only what it changed.
 
 ### Variable fonts (`--font-engine`)
 
-wabar starts with Qt's GDI font engine, which keeps memory low but ignores variable-font axes
-(`font.variableAxes`). A shell that needs axes starts wabar with `--font-engine=directwrite`, at
+waku starts with Qt's GDI font engine, which keeps memory low but ignores variable-font axes
+(`font.variableAxes`). A shell that needs axes starts waku with `--font-engine=directwrite`, at
 the cost of about 2 MB more working set. A `QT_QPA_PLATFORM` set by the caller wins over the flag.
 
 ### Qt Quick Controls
@@ -95,7 +95,7 @@ has `a`, `b`, `commonParent` and a `transform` property whose `transformChanged(
 binding that the transform between the two items changed. `import Quickshell` (and
 `Quickshell.Io`, `.Services.Mpris`, `.Services.Notifications`) shows Quickshell's type names only: a
 `Wallpapers.qml`, `Workspaces.qml`, `Bluetooth.qml` or `Media.qml` next to `shell.qml` is your own
-type, never wabar's service of that name. The shell reloads only when a `.qml` file or a `qmldir`
+type, never waku's service of that name. The shell reloads only when a `.qml` file or a `qmldir`
 under the config home changes; a state or cache file written there does not reload it.
 
 ### Live window previews (`WindowThumbnail`)
@@ -145,7 +145,7 @@ for a model that has one of ours.
 
 ### PopupWindow
 
-`wabar.PopupWindow` is a themed popup: a surface and a column that sizes the window. `Quickshell.PopupWindow` is
+`waku.PopupWindow` is a themed popup: a surface and a column that sizes the window. `Quickshell.PopupWindow` is
 bare, as in Quickshell: no surface, no layout, its children fill it, and its colour is transparent until set.
 Both take `implicitWidth` and `implicitHeight`; unset, the content sizes the window.
 

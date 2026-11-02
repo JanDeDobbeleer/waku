@@ -1,6 +1,6 @@
 import QtQuick
 
-// What wabar adds to every shell window (internal, created by QsWindow): the background, and on a
+// What waku adds to every shell window (internal, created by QsWindow): the background, and on a
 // PanelWindow the error pill of a failed reload. Never written by users.
 Item {
     id: chrome
@@ -15,7 +15,7 @@ Item {
     Rectangle {
         objectName: "background"
         anchors.fill: parent
-        // `color` when set; otherwise the wabar surface. With islands the layout draws its own
+        // `color` when set; otherwise the waku surface. With islands the layout draws its own
         // islands (PanelLayout) and the wallpaper shows between them.
         color: chrome.shellWindow.hasColor ? chrome.shellWindow.color
              : Theme.islands ? "transparent"

@@ -3,7 +3,7 @@
 #include <QString>
 #include <cstdint>
 
-namespace wabar::host {
+namespace waku::host {
 
 // "#RRGGBBAA" -> AABBGGRR as DwmSetWindowAttribute expects. Throws std::invalid_argument on bad
 // input.
@@ -19,4 +19,4 @@ void enableBlur(quintptr hwnd, bool darkMode = false, bool roundCorners = false,
 void enableMica(quintptr hwnd);
 void enableDwmFrame(quintptr hwnd);
 
-}  // namespace wabar::host
+}  // namespace waku::host

@@ -9,7 +9,7 @@
 #include "features/tray/qml/tray_image_provider.h"
 #include "features/tray/tray_icon_registry.h"
 
-using namespace wabar::tray;
+using namespace waku::tray;
 
 namespace {
 

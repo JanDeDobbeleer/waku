@@ -9,7 +9,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 namespace {
 
 // Documented APIs only: the PDH counters "\Thermal Zone Information(*)\High Precision Temperature"
@@ -98,4 +98,4 @@ std::optional<double> PdhThermalReader::cpuTemperature() {
   return selectCpuTemperature(zones());
 }
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

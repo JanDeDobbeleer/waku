@@ -1,10 +1,10 @@
-# Agent guide (wabar)
+# Agent guide (waku)
 
 Read this before changing anything. It applies to every agent session and to humans. It is the
 single source of truth for how to work in this repository. Background: `docs/architecture.md`,
 `docs/building.md`, `SECURITY.md`, `src/app/README.md`.
 
-wabar is a C++20/Qt 6.10 Qt Quick bar for Windows, configured in QML. Python YASB is a reference for
+waku is a C++20/Qt 6.10 Qt Quick bar for Windows, configured in QML. Python YASB is a reference for
 how Windows behaves (undocumented APIs, edge cases), not a behavioural spec: nothing in this
 repository has to match it. The retired Qt Widgets build is the git tag `widgets-main-final`
 (`e2b602f`, the second parent of the merge `ba442f5` that replaced it on `main`); its records are in
@@ -49,11 +49,11 @@ cmd /c "call `"$vc\vcvarsarm64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset
 cmd /c "call `"$vc\vcvarsarm64_amd64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64-release && cmake --build --preset x64-release && ctest --test-dir build\x64-release --output-on-failure --timeout 120 -j"
 ```
 
-Targets: `wabar` (the bar), `wabarc` (its console client), `WabarTrayHook[_arm64]` (the DLL injected
-into Explorer), `wabar_tests` (all tests, defined in `tests/`) and `deploy` (assembles `dist/wabar`;
+Targets: `waku` (the bar), `wakuc` (its console client), `WakuTrayHook[_arm64]` (the DLL injected
+into Explorer), `waku_tests` (all tests, defined in `tests/`) and `deploy` (assembles `dist/waku`;
 see `docs/building.md`). `ctest` needs `QT_QPA_PLATFORM=offscreen`; the CMake test properties set
 it, so `ctest --test-dir` works without the test preset. A ctest test is one gtest suite (one
-process); a single case runs with `wabar_tests --gtest_filter=Suite.Case`. Presets live in `CMakePresets.json`;
+process); a single case runs with `waku_tests --gtest_filter=Suite.Case`. Presets live in `CMakePresets.json`;
 `compile_commands.json` is written to `build\<preset>`.
 
 ## Definition of done
@@ -67,7 +67,7 @@ process); a single case runs with `wabar_tests --gtest_filter=Suite.Case`. Prese
 5. `qmllint`: the `all_qmllint` target over every QML module and the sample shells in `examples/`;
    fails when the warning count rises above `tools/qmllint-baseline.txt` (a ratchet: lower the
    number when it falls, never raise it).
-6. `test`: `ctest` over `wabar_tests`.
+6. `test`: `ctest` over `waku_tests`.
 
 Options: `-Fast` runs steps 1-3 only; `-Staged` checks only the staged files (the pre-commit hook
 uses it); `-Analyze` runs steps 1-3 plus MSVC `/analyze` and clang-tidy in an isolated build
@@ -90,7 +90,7 @@ Layout: `src/{kernel,control,host,ui,features/<f>,quickshell,app/<exe>}`, `tests
 and the cross-feature tests), `examples/config` (the sample config home), `cmake/`, `tools/`,
 `docs/`. Dependencies point one way: `app` -> `quickshell` -> `features` -> (`host`, `control`,
 `ui`) -> `kernel`. The include root is `src/`. Every unit is a static library or QML module; a
-feature is `wabar_<f>`. `src/quickshell/` holds the Quickshell compatibility modules
+feature is `waku_<f>`. `src/quickshell/` holds the Quickshell compatibility modules
 (`Quickshell`, `Quickshell.Io`, ...): registrations and QML over the engine and the features, no
 engine logic; its `README.md` says where each Quickshell type is implemented.
 
@@ -123,15 +123,15 @@ under a licence that is not MIT stays out of this repository entirely.
    types, UI-free logic; Qt Core/Gui only), `win32/` (Windows implementation, `_win` suffix where a
    root header has the same name), `qml/` (QML-facing C++ and the widgets' `.qml`), `testing/`
    (header-only fakes), `tests/` (gtest) and `hook/` only for a separate DLL.
-2. Write `src/features/<f>/CMakeLists.txt` with one `wabar_feature(NAME <f> ...)` call (arguments are
-   in the comment at the top of `cmake/wabar_feature.cmake`). Name every file; the folder name
+2. Write `src/features/<f>/CMakeLists.txt` with one `waku_feature(NAME <f> ...)` call (arguments are
+   in the comment at the top of `cmake/waku_feature.cmake`). Name every file; the folder name
    equals `NAME`.
 3. Add `add_subdirectory(<f>)` to `src/features/CMakeLists.txt`, below every feature in its
    `DEPENDS`.
 4. Declare `DEPENDS` for each feature whose root headers or QML types you use. Add only edges that
    exist; the table in `docs/architecture.md` lists them.
-5. QML contributions go in `QML_SOURCES` (services, compiled into `wabar.services`) and `QML_FILES`
-   (widgets, compiled into `wabar.widgets`). Give each new `.qml` and header a basename that is
+5. QML contributions go in `QML_SOURCES` (services, compiled into `waku.services`) and `QML_FILES`
+   (widgets, compiled into `waku.widgets`). Give each new `.qml` and header a basename that is
    unique in its module. Do not edit `src/modules/`.
 6. Put the interface behind a root header and the real thing in `win32/`, so tests use a fake from
    `testing/`. Tests go in `tests/` (`TESTS`), named after the feature (`TrayModel...`) so
@@ -157,10 +157,10 @@ only under `kernel/win32/`.
   `C:\Program Files\LLVM\bin`.
 - Members use a trailing underscore: `name_`. Do not add new `m_name` members.
 - Includes are rooted at `src/`: `#include "kernel/qt/app_data.h"`, never `"app_data.h"`.
-- C++ namespaces are `wabar::<unit>`: `kernel`, `control`, `host` or the feature name.
+- C++ namespaces are `waku::<unit>`: `kernel`, `control`, `host` or the feature name.
 - Qt string literals: `QStringLiteral("...")`. Do not introduce `u"..."_s` or `QLatin1String` in new
   code except where an API needs a Latin-1 view.
-- `NOMINMAX`, `WIN32_LEAN_AND_MEAN`, `UNICODE` come from the `wabar_options` target; do not redefine
+- `NOMINMAX`, `WIN32_LEAN_AND_MEAN`, `UNICODE` come from the `waku_options` target; do not redefine
   them locally.
 - `.editorconfig` defines whitespace and line endings: CRLF for C++ sources and docs, LF for QML and
   the git hooks.
@@ -177,8 +177,8 @@ fine. Never use the `const` `nlohmann::json::operator[]` on a key that may be mi
 
 ## Live desktop rules
 
-- Tests and tooling always pass `--config-home <dir>` to `wabar.exe`. Never run it against the
-  user's real config (`%USERPROFILE%\.config\wabar`) and never write to that folder.
+- Tests and tooling always pass `--config-home <dir>` to `waku.exe`. Never run it against the
+  user's real config (`%USERPROFILE%\.config\waku`) and never write to that folder.
 - Tests never touch the user's real bar, wallpaper, tray or Explorer. Use `--no-tray` so a test run
   never hooks Explorer, and never change the wallpaper outside a `--dry-run`.
 - Services ask `kernel::liveDesktop()` before touching the machine; it is false on the offscreen

@@ -4,7 +4,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-using namespace wabar::kernel;
+using namespace waku::kernel;
 
 TEST(KernelLiveDesktop, TheTestPlatformIsNotALiveDesktop) {
   ASSERT_EQ(QGuiApplication::platformName(), QStringLiteral("offscreen"));

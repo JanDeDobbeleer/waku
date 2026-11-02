@@ -4,16 +4,16 @@
 
 // Only the paths that touch no real window: empty and unknown inputs fail soft.
 TEST(KernelAppActivation, EmptyAumidActivatesNothing) {
-  EXPECT_FALSE(wabar::kernel::activateAppByAumid(QString()));
+  EXPECT_FALSE(waku::kernel::activateAppByAumid(QString()));
 }
 
 TEST(KernelAppActivation, AnExeAumidIsItsOwnProcessName) {
-  EXPECT_EQ(wabar::kernel::exeNameForAumid(QStringLiteral("C:\\Apps\\player.exe")),
+  EXPECT_EQ(waku::kernel::exeNameForAumid(QStringLiteral("C:\\Apps\\player.exe")),
             QStringLiteral("player.exe"));
-  EXPECT_TRUE(wabar::kernel::exeNameForAumid(QString()).isEmpty());
+  EXPECT_TRUE(waku::kernel::exeNameForAumid(QString()).isEmpty());
 }
 
 TEST(KernelAppActivation, UnknownExeHasNoAppName) {
-  EXPECT_TRUE(wabar::kernel::appNameForExe(QString()).isEmpty());
-  EXPECT_TRUE(wabar::kernel::appNameForWindowAumid(QString()).isEmpty());
+  EXPECT_TRUE(waku::kernel::appNameForExe(QString()).isEmpty());
+  EXPECT_TRUE(waku::kernel::appNameForWindowAumid(QString()).isEmpty());
 }

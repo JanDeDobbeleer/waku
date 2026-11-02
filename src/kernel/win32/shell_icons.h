@@ -3,7 +3,7 @@
 #include <QByteArray>
 #include <QString>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // 32-bit BGRA, straight (not premultiplied) alpha, top-down. The callers turn this into a QImage
 // (Format_ARGB32).
@@ -25,4 +25,4 @@ IconBitmap shellItemIcon(const QString& parsingName, int size);
 // the icon has no alpha information.
 IconBitmap iconBitmapFromHicon(void* hicon);
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

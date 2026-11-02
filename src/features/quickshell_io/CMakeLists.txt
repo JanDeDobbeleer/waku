@@ -1,8 +1,8 @@
 # Processes, files and launches for QML. Quickshell.Io and the Quickshell singleton's window-free
 # members, so QML written for Quickshell loads: Process, StdioCollector, SplitParser, FileView,
-# JsonAdapter, JsonObject, FileViewError, ElapsedTimer and QuickshellSingleton. wabar's own Shell
+# JsonAdapter, JsonObject, FileViewError, ElapsedTimer and QuickshellSingleton. waku's own Shell
 # (start, command, open) and ShellProcess. See design.md.
-wabar_feature(NAME quickshell_io
+waku_feature(NAME quickshell_io
   SOURCES
     command_spec.h
     command_spec.cpp

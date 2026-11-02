@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QVariantMap>
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -165,4 +165,4 @@ void ScriptModel::setValues(const QVariantList& values) {
   emit valuesChanged();
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

@@ -13,7 +13,7 @@
 
 class QQmlEngine;
 
-namespace wabar::host {
+namespace waku::host {
 
 // Quickshell's `PersistentProperties`: properties that survive a reload of the shell.
 //
@@ -74,4 +74,4 @@ class PersistentProperties : public QObject, public QQmlParserStatus {
   QHash<int, QList<int>> notifiedProperties_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

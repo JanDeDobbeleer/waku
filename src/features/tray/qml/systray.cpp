@@ -12,7 +12,7 @@
 #include "features/tray/tray_types.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 namespace {
 
 constexpr int kRefreshDelayMs = 200;    // SystrayWidget's refreshTimer_
@@ -34,7 +34,7 @@ RealHost makeRealHost() {
     result.reason = QStringLiteral("tray unavailable: offscreen platform");
     return result;
   }
-  wabar::tray::TrayHostFactories factories = wabar::tray::realTrayHostFactories();
+  waku::tray::TrayHostFactories factories = waku::tray::realTrayHostFactories();
   QString dllReason;
   bool hookTried = false;
   auto findDll = factories.findHookDll;
@@ -50,7 +50,7 @@ RealHost makeRealHost() {
   };
   try {
     result.host =
-        wabar::tray::createTrayHost(true, QCoreApplication::applicationDirPath(), factories);
+        waku::tray::createTrayHost(true, QCoreApplication::applicationDirPath(), factories);
   } catch (const std::exception& error) {
     qWarning().noquote() << "Tray host failed:" << error.what();
   }
@@ -142,7 +142,7 @@ void Systray::setFilter(bool showSystemIcons, const QStringList& hiddenExeNames)
 void Systray::onIconModified(const TrayIconData& data) {
   try {
     const auto result = registry_.modified(data);
-    if (result.change == wabar::tray::TrayIconRegistry::Change::Ignored) return;
+    if (result.change == waku::tray::TrayIconRegistry::Change::Ignored) return;
     if (const TrayIconData* stored = registry_.data(result.id)) {
       model_.apply(result.id, *stored);
       diagnoseIcon(result.id, data, *stored);
@@ -160,7 +160,7 @@ void Systray::diagnoseIcon(int id, const TrayIconData& incoming, const TrayIconD
     if (!stored.iconRgba.isEmpty()) reason += QStringLiteral(", keeping the previous image");
   } else if (stored.iconRgba.isEmpty()) {
     reason = QStringLiteral("no icon received yet");
-  } else if (const auto problem = wabar::tray::trayIconPixelsProblem(stored)) {
+  } else if (const auto problem = waku::tray::trayIconPixelsProblem(stored)) {
     reason = *problem;
   }
   if (reason.isEmpty()) return;
@@ -170,7 +170,7 @@ void Systray::diagnoseIcon(int id, const TrayIconData& incoming, const TrayIconD
   // Only the program's file name and the run-local id: no tooltip, path or window handle.
   const QString name =
       stored.exe.isEmpty() ? QString::number(id) : QStringLiteral("%1#%2").arg(stored.exe).arg(id);
-  qWarning().noquote() << QStringLiteral("wabar: tray icon %1: %2").arg(name, reason);
+  qWarning().noquote() << QStringLiteral("waku: tray icon %1: %2").arg(name, reason);
 }
 
 void Systray::onIconDeleted(const TrayIconData& data) {
@@ -250,4 +250,4 @@ void Systray::doubleClick(int id) {
   }
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

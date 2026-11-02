@@ -6,7 +6,7 @@
 
 #include "features/taskbar/window_system.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // The App User Model ID of a window: the window's own property first, then the one its process
 // runs under (Store apps). nullopt when neither exists.
@@ -37,4 +37,4 @@ std::optional<QString> hostArguments(const QString& exePath, std::uint32_t pid);
 // The part of a command line after the program: split off the quoted or first token.
 QString commandLineArguments(const QString& commandLine);
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

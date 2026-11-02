@@ -14,14 +14,14 @@
 
 #include "features/github/github_api.h"
 
-namespace wabar::github {
+namespace waku::github {
 
 // The network and token side of the GitHub service, so tests run without GitHub. Callbacks are
 // delivered on the GUI thread (a fake may call them at once).
 class GithubClient {
  public:
   virtual ~GithubClient() = default;
-  // The saved token: WABAR_GITHUB_TOKEN, else the token file; empty when there is none.
+  // The saved token: WAKU_GITHUB_TOKEN, else the token file; empty when there is none.
   virtual QString loadToken() = 0;
   virtual bool saveToken(const QString& token) = 0;
   // `options.token` is set. A failed fetch has `ok == false` and an error text.
@@ -160,4 +160,4 @@ class GitHub : public QObject {
   QTimer signInTimer_;
 };
 
-}  // namespace wabar::github
+}  // namespace waku::github

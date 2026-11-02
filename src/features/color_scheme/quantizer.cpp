@@ -7,7 +7,7 @@
 
 #include "features/color_scheme/hct.h"
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 namespace {
 
@@ -484,4 +484,4 @@ std::vector<Argb> rankedSuggestions(const ColorCounts& colors, const ScoreOption
   return result;
 }
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

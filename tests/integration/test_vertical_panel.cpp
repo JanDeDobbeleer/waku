@@ -12,8 +12,8 @@ namespace {
 QString sidePanel(const QString& edge, const QString& layout, const QString& panelProperties = {}) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.widgets
+import waku
+import waku.widgets
 ShellRoot {
     Panel {
         edge: Panel.%1
@@ -116,7 +116,7 @@ TEST(VerticalPanel, IslandsMeetTheScreenEdgeOnTheirOwnSide) {
     Harness h;
     write(h.dir.filePath(QStringLiteral("theme.qml")),
           QStringLiteral(
-              "import wabar\nThemeSpec { islands: true; groupPadding: 10; islandRadius: 8 }\n"));
+              "import waku\nThemeSpec { islands: true; groupPadding: 10; islandRadius: 8 }\n"));
     h.start(sidePanel(QString::fromLatin1(c.edge), QString::fromLatin1(kThreeBoxes)));
     ASSERT_TRUE(started(h)) << c.edge;
     settle();
@@ -298,7 +298,7 @@ TEST(VerticalPanel, ALeftPanelRegistersALeftAppBarOfItsWidth) {
                     QStringLiteral("exclusive: true")));
   ASSERT_TRUE(started(h));
   ASSERT_EQ(h.native.created.size(), 1u);
-  EXPECT_EQ(h.native.created[0].request.edge, wabar::host::AppBarEdge::Left);
+  EXPECT_EQ(h.native.created[0].request.edge, waku::host::AppBarEdge::Left);
   EXPECT_EQ(h.native.created[0].request.thickness, 56);
   EXPECT_TRUE(h.native.created[0].request.reserveSpace);
 }
@@ -308,7 +308,7 @@ TEST(VerticalPanel, ALeftPanelRegistersALeftAppBarOfItsWidth) {
 namespace {
 
 QString sidebarExample() {
-  QFile file(QStringLiteral(WABAR_EXAMPLES_DIR "/sidebar/shell.qml"));
+  QFile file(QStringLiteral(WAKU_EXAMPLES_DIR "/sidebar/shell.qml"));
   if (!file.open(QIODevice::ReadOnly)) return {};
   return QString::fromUtf8(file.readAll());
 }
@@ -334,7 +334,7 @@ TEST(SidebarExample, LoadsAsALeftDockedVerticalPanelOnEveryScreen) {
   EXPECT_TRUE(h.shellWindow()->property("dockVertical").toBool());
 
   ASSERT_EQ(h.native.created.size(), 2u);
-  EXPECT_EQ(h.native.created[0].request.edge, wabar::host::AppBarEdge::Left);
+  EXPECT_EQ(h.native.created[0].request.edge, waku::host::AppBarEdge::Left);
   EXPECT_EQ(h.native.created[0].request.thickness, 56);
   EXPECT_TRUE(h.native.created[0].request.reserveSpace);
 

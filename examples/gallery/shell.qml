@@ -2,18 +2,18 @@
 // shells: `Thumbnails` (which the wallpaper gallery also uses) and `WindowThumbnail` (which no
 // built-in widget uses). Run it with
 //
-//     wabar --config-home examples/gallery
+//     waku --config-home examples/gallery
 //
 // `Thumbnails.url(path, width)` gives an `image://thumb` URL: a downscaled copy of the file,
-// decoded off the GUI thread and cached in memory (and in %LOCALAPPDATA%\wabar\thumbs on the live
+// decoded off the GUI thread and cached in memory (and in %LOCALAPPDATA%\waku\thumbs on the live
 // desktop). `Thumbnails.prewarm(paths, width)` fills the cache ahead of time.
 //
 // `WindowThumbnail` is a live DWM preview of another window. Set `previewHwnd` to the handle of a
 // top-level window, for example `(Get-Process notepad).MainWindowHandle` in PowerShell. The
 // compositor draws it above the window, so nothing can be drawn on top of it.
 import QtQuick
-import wabar
-import wabar.services
+import waku
+import waku.services
 
 ShellRoot {
     FloatingWindow {
@@ -28,7 +28,7 @@ ShellRoot {
         property real previewHwnd: 0
 
         name: "gallery"
-        title: "wabar gallery"
+        title: "waku gallery"
         implicitWidth: 720
         implicitHeight: 440
         color: "#202020"

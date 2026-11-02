@@ -2,7 +2,7 @@
 
 #include "host/qml/panel_window.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 WlrLayershell::WlrLayershell(QObject* attachee)
     : QObject(attachee), panel_(qobject_cast<PanelWindow*>(attachee)) {
@@ -43,4 +43,4 @@ void WlrLayershell::setExclusionMode(ExclusionMode::Enum mode) {
   if (panel_) panel_->setExclusionMode(mode);
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

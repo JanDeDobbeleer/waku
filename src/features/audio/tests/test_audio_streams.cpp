@@ -10,7 +10,7 @@
 #include "features/audio/qml/audio_streams.h"
 #include "features/audio/testing/fake_audio_streams.h"
 
-using namespace wabar::audio;
+using namespace waku::audio;
 
 namespace {
 
@@ -126,7 +126,7 @@ TEST(AudioStreams, IsUsableFromQmlLikeAPipewireNode) {
   QQmlComponent component(&engine);
   component.setData(R"(
 import QtQml
-import wabar.services
+import waku.services
 QtObject {
     readonly property list<AudioStream> list: streams.streams.values
     property int count: list.length

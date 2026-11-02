@@ -5,7 +5,7 @@
 #include "features/tray/icon_scale.h"
 #include "features/tray/tray_state.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 TrayIconModel::TrayIconModel(QObject* parent) : QAbstractListModel(parent) {}
 
@@ -24,7 +24,7 @@ QVariant TrayIconModel::data(const QModelIndex& index, int role) const {
     case IdRole:
       return row.id;
     case KeyRole:
-      return wabar::tray::iconStateKey(row.data);
+      return waku::tray::iconStateKey(row.data);
     case TooltipRole:
       return row.data.szTip;
     case ExeRole:
@@ -57,7 +57,7 @@ void TrayIconModel::apply(int id, const TrayIconData& data) {
     Row row;
     row.id = id;
     row.data = data;
-    row.image = wabar::tray::trayIconImage(data);
+    row.image = waku::tray::trayIconImage(data);
     row.revision = row.image.isNull() ? 0 : 1;
     store_->set(id, row.image);
     const int pos = static_cast<int>(rows_.size());
@@ -73,7 +73,7 @@ void TrayIconModel::apply(int id, const TrayIconData& data) {
                              row.data.iconRgba != data.iconRgba;
   row.data = data;
   if (pixelsChanged) {
-    row.image = wabar::tray::trayIconImage(data);
+    row.image = waku::tray::trayIconImage(data);
     ++row.revision;
     store_->set(id, row.image);
   }
@@ -113,4 +113,4 @@ int TrayIconModel::revision(int id) const {
   return at < 0 ? 0 : rows_[static_cast<size_t>(at)].revision;
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

@@ -23,7 +23,7 @@
 
 #include "features/workspaces/glazewm.h"
 
-namespace wabar::workspaces::glazewm {
+namespace waku::workspaces::glazewm {
 namespace {
 
 constexpr DWORD kChunkBytes = 64 * 1024;
@@ -344,7 +344,7 @@ bool GlazewmSocket::Worker::connectOnce() {
   const std::wstring host = parsed.host().toStdWString();
   const std::wstring path = target.toStdWString();
 
-  HINTERNET session = WinHttpOpen(L"wabar", WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME,
+  HINTERNET session = WinHttpOpen(L"waku", WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME,
                                   WINHTTP_NO_PROXY_BYPASS, 0);
   if (!session) return false;
   if (!publish(Slot::Session, session)) return false;
@@ -427,4 +427,4 @@ void GlazewmSocket::Worker::receiveLoop(void* webSocket) {
   }
 }
 
-}  // namespace wabar::workspaces::glazewm
+}  // namespace waku::workspaces::glazewm

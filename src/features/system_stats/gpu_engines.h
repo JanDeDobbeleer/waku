@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 
 // One instance of the PDH counter "\GPU Engine(*)\Utilization Percentage". The instance name looks
 // like "pid_1234_luid_0x00000000_0x0000A1B2_phys_0_eng_3_engtype_3D".
@@ -20,4 +20,4 @@ std::string gpuEngineKey(const std::string& instance);
 // engine type of one adapter adds up, and the busiest engine type wins. Clamped to 0..100.
 double gpuUsage(const std::vector<GpuEngineValue>& values);
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

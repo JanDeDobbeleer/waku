@@ -4,7 +4,7 @@
 #include <array>
 #include <cmath>
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 namespace {
 
@@ -379,4 +379,4 @@ void Hct::assign(Argb argb) {
   tone_ = lstarFromArgb(argb);
 }
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

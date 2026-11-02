@@ -4,7 +4,7 @@
 
 #include "features/brightness/brightness_policy.h"
 
-using namespace wabar::brightness;
+using namespace waku::brightness;
 using Clock = PolicyIgnoreWindow::Clock;
 
 TEST(BrightnessPolicy, PayloadIsLittleEndianAndClamped) {

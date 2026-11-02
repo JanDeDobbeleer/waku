@@ -1,4 +1,4 @@
-// `import Quickshell` and `import Quickshell.Wayland`: the Quickshell names of wabar's shell types,
+// `import Quickshell` and `import Quickshell.Wayland`: the Quickshell names of waku's shell types,
 // as a ported shell uses them.
 #include <gtest/gtest.h>
 
@@ -11,7 +11,7 @@ TEST(QuickshellModule, APortedShellLoads) {
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import wabar as W
+import waku as W
 
 ShellRoot {
     Scope {
@@ -64,13 +64,13 @@ ShellRoot {
   EXPECT_GE(popup->y(), h.window()->y() + h.window()->height());  // Edges.Bottom: below
 }
 
-TEST(QuickshellModule, WabarAndQuickshellNamesAreTheSameTypes) {
+TEST(QuickshellModule, WakuAndQuickshellNamesAreTheSameTypes) {
   QQmlEngine engine;
   QQmlComponent component(&engine);
   component.setData(QByteArrayLiteral(R"(
 import QtQml
 import Quickshell
-import wabar
+import waku
 ShellRoot {}
 )"),
                     QUrl(QStringLiteral("file:///both.qml")));
@@ -91,7 +91,7 @@ ShellRoot {
         objectName: "probe"
         readonly property int screenCount: Quickshell.screens.length
         readonly property var path: Quickshell.env("PATH")
-        readonly property var missing: Quickshell.env("WABAR_SURELY_NOT_SET_ANYWHERE")
+        readonly property var missing: Quickshell.env("WAKU_SURELY_NOT_SET_ANYWHERE")
         readonly property string dir: Quickshell.shellDir
         readonly property string statePath: Quickshell.statePath("x.json")
         readonly property bool hasIcon: Quickshell.hasThemeIcon("no-such-icon-anywhere")
@@ -159,8 +159,8 @@ ShellRoot {
 }
 
 // `import Quickshell` exposes Quickshell's own names only: a shell's local Wallpapers.qml,
-// Workspaces.qml and Bluetooth.qml must not lose to wabar's services of the same names.
-TEST(QuickshellModule, LocalTypesAreNotShadowedByWabarServices) {
+// Workspaces.qml and Bluetooth.qml must not lose to waku's services of the same names.
+TEST(QuickshellModule, LocalTypesAreNotShadowedByWakuServices) {
   Harness h;
   ASSERT_TRUE(h.dir.isValid());
   for (const char* name : {"Wallpapers", "Workspaces", "Bluetooth", "Media", "Notifications"}) {

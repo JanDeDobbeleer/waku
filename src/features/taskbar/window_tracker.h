@@ -8,7 +8,7 @@
 
 class QTimer;
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // Shell hook (HSHELL_*) and WinEvent codes the tracker reacts to.
 namespace shell {
@@ -83,12 +83,12 @@ class WindowTracker : public QObject {
   void handleWinEvent(unsigned eventType, WindowHandle hwnd, long idObject, long idChild);
 
  signals:
-  void windowAdded(wabar::taskbar::WindowHandle hwnd, const wabar::taskbar::WindowInfo& info);
-  void windowRemoved(wabar::taskbar::WindowHandle hwnd, const wabar::taskbar::WindowInfo& info);
-  void windowUpdated(wabar::taskbar::WindowHandle hwnd, const wabar::taskbar::WindowInfo& info);
-  void windowMonitorChanged(wabar::taskbar::WindowHandle hwnd,
-                            const wabar::taskbar::WindowInfo& info);
-  void windowMinimizeChanged(wabar::taskbar::WindowHandle hwnd, bool minimized);
+  void windowAdded(waku::taskbar::WindowHandle hwnd, const waku::taskbar::WindowInfo& info);
+  void windowRemoved(waku::taskbar::WindowHandle hwnd, const waku::taskbar::WindowInfo& info);
+  void windowUpdated(waku::taskbar::WindowHandle hwnd, const waku::taskbar::WindowInfo& info);
+  void windowMonitorChanged(waku::taskbar::WindowHandle hwnd,
+                            const waku::taskbar::WindowInfo& info);
+  void windowMinimizeChanged(waku::taskbar::WindowHandle hwnd, bool minimized);
 
  private:
   // ApplicationWindow: the title and class are cached and only refreshed by update().
@@ -135,4 +135,4 @@ class WindowTracker : public QObject {
   bool keepCloaked_ = false;
 };
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

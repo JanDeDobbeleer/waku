@@ -6,7 +6,7 @@
 
 #include "features/color_scheme/tonal_palette.h"
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 // The scheme variants of material-color-utilities (the 2021 colour spec) that caelestia offers.
 enum class Variant {
@@ -113,4 +113,4 @@ Argb roleColor(Role role, const DynamicScheme& scheme);
 // The tone a role resolves to, after the contrast-curve and tone-delta adjustments.
 double roleTone(Role role, const DynamicScheme& scheme);
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

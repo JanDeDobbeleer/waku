@@ -7,8 +7,8 @@
 #include "features/brightness/testing/fake_brightness.h"
 #include "features/control_center/qml/control_center_service.h"
 
-using namespace wabar::control_center;
-using wabar::brightness::FakeBrightness;
+using namespace waku::control_center;
+using waku::brightness::FakeBrightness;
 
 namespace {
 

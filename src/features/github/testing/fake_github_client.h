@@ -7,7 +7,7 @@
 #include "features/github/github_api.h"
 #include "features/github/qml/github_service.h"
 
-namespace wabar::github::testing {
+namespace waku::github::testing {
 
 // A stand-in for the GitHub API server: REST pages, the GraphQL call and nothing else.
 class ScriptTransport final : public HttpTransport {
@@ -56,4 +56,4 @@ class FakeClient final : public GithubClient {
   std::vector<HttpRequest> sent;
 };
 
-}  // namespace wabar::github::testing
+}  // namespace waku::github::testing

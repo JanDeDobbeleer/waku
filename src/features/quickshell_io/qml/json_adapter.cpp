@@ -7,7 +7,7 @@
 #include <QJsonValue>
 #include <QMetaProperty>
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 namespace {
 
@@ -107,4 +107,4 @@ void JsonAdapter::componentComplete() {
   relay_.attach(this, JsonAdapter::staticMetaObject.propertyCount());
 }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

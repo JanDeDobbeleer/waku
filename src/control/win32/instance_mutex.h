@@ -2,7 +2,7 @@
 
 #include <QString>
 
-namespace wabar::control {
+namespace waku::control {
 
 // A named mutex in the session namespace ("Local\<name>") that says whether another bar already
 // owns a control pipe name; the pipe alone cannot tell, because several servers may listen on one
@@ -14,4 +14,4 @@ void* acquireInstanceMutex(const QString& name);
 // Closes a handle from acquireInstanceMutex. Null is fine.
 void releaseInstanceMutex(void* mutex);
 
-}  // namespace wabar::control
+}  // namespace waku::control

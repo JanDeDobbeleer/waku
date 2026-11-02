@@ -1,6 +1,6 @@
 import QtQuick
-import wabar
-import wabar.services as S
+import waku
+import waku.services as S
 
 // The wallpaper changer. A hotkey (default alt+e) or a click on the button opens a gallery of the
 // pictures in `imagePath`; clicking one sets it as the wallpaper on every monitor. A right click

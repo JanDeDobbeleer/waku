@@ -1,5 +1,5 @@
 import QtQml
-import wabar.services as S
+import waku.services as S
 
 // Quickshell.Wayland's IdleMonitor over the idle time Windows reports (DesktopState.idleSeconds,
 // whole seconds since the last keyboard or mouse input).

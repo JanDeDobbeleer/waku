@@ -4,7 +4,7 @@
 #include <QString>
 #include <memory>
 
-namespace wabar::notifications {
+namespace waku::notifications {
 
 class WnfSubscription;
 
@@ -44,4 +44,4 @@ class DndWatcher final : public QObject {
   std::unique_ptr<WnfSubscription> wnf_;  // null when stopped
 };
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

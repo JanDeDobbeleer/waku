@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QString>
 
-// The one type of the test plugin `WabarTestModule` (tests/plugin/CMakeLists.txt): a user-built Qt
+// The one type of the test plugin `WakuTestModule` (tests/plugin/CMakeLists.txt): a user-built Qt
 // QML plugin that the import-path tests load from a temporary modules folder.
 class TestGreeting : public QObject {
   Q_OBJECT

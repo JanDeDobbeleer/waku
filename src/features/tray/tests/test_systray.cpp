@@ -14,8 +14,8 @@
 #include "features/tray/tray_click.h"
 #include "kernel/qt/live_desktop.h"
 
-using namespace wabar::tray;
-namespace plat = wabar::tray;
+using namespace waku::tray;
+namespace plat = waku::tray;
 
 namespace {
 
@@ -194,9 +194,9 @@ TEST(Systray, RealConstructorIsUnavailableOffscreen) {
 }
 
 TEST(Systray, NoTrayKeepsTheRealOneUnavailable) {
-  wabar::kernel::setCapabilityDisabled(QStringLiteral("tray"), true);
+  waku::kernel::setCapabilityDisabled(QStringLiteral("tray"), true);
   Systray systray(nullptr);
-  wabar::kernel::setCapabilityDisabled(QStringLiteral("tray"), false);
+  waku::kernel::setCapabilityDisabled(QStringLiteral("tray"), false);
   EXPECT_FALSE(systray.available());
   EXPECT_EQ(systray.unavailableReason(), QStringLiteral("tray unavailable: disabled by --no-tray"));
 }
@@ -250,14 +250,14 @@ QStringList& trayWarnings() {
 QtMessageHandler g_previousTrayHandler = nullptr;
 
 void collectTrayWarnings(QtMsgType type, const QMessageLogContext& context, const QString& text) {
-  if (text.startsWith(QStringLiteral("wabar: tray icon "))) {
+  if (text.startsWith(QStringLiteral("waku: tray icon "))) {
     trayWarnings().append(text);
     return;
   }
   if (g_previousTrayHandler) g_previousTrayHandler(type, context, text);
 }
 
-// Collects the `wabar: tray icon` lines while it lives.
+// Collects the `waku: tray icon` lines while it lives.
 struct TrayWarningCapture {
   TrayWarningCapture() {
     trayWarnings().clear();
@@ -293,7 +293,7 @@ TEST(TrayIconBlank, IconThatArrivesLaterGetsAUrl) {
   EXPECT_EQ(iconUrlOf(f.systray, 0), QStringLiteral("image://tray/0/1"));
   EXPECT_FALSE(f.systray.icons()->image(0).isNull());
   EXPECT_EQ(trayWarnings(),
-            QStringList{QStringLiteral("wabar: tray icon app.exe#0: no icon received yet")});
+            QStringList{QStringLiteral("waku: tray icon app.exe#0: no icon received yet")});
 }
 
 TEST(TrayIconBlank, TooltipAndSetVersionUpdatesKeepTheIcon) {
@@ -332,7 +332,7 @@ TEST(TrayIconBlank, UnreadableIconKeepsThePreviousImageAndLogsOnce) {
   EXPECT_EQ(iconUrlOf(f.systray, 0), url);
   EXPECT_EQ(trayWarnings(),
             QStringList{QStringLiteral(
-                "wabar: tray icon app.exe#0: GetIconInfo failed, keeping the previous image")});
+                "waku: tray icon app.exe#0: GetIconInfo failed, keeping the previous image")});
 }
 
 TEST(TrayIconBlank, FullyTransparentIconIsLoggedOncePerIcon) {
@@ -341,12 +341,11 @@ TEST(TrayIconBlank, FullyTransparentIconIsLoggedOncePerIcon) {
   f.host->sendModified(withIcon(icon(100, 1), '\0'));
   f.host->sendModified(withIcon(icon(100, 1), '\0'));
   f.host->sendModified(withIcon(icon(200, 1), '\0'));
-  EXPECT_EQ(
-      trayWarnings(),
-      (QStringList{
-          QStringLiteral("wabar: tray icon app.exe#0: all 16x16 pixels are fully transparent"),
-          QStringLiteral("wabar: tray icon app.exe#1: all 16x16 pixels are fully transparent"),
-      }));
+  EXPECT_EQ(trayWarnings(),
+            (QStringList{
+                QStringLiteral("waku: tray icon app.exe#0: all 16x16 pixels are fully transparent"),
+                QStringLiteral("waku: tray icon app.exe#1: all 16x16 pixels are fully transparent"),
+            }));
   // A new icon after the old one was removed is logged again (ids are never reused).
   f.host->sendDeleted(icon(100, 1));
   f.host->sendModified(withIcon(icon(100, 1), '\0'));

@@ -8,7 +8,7 @@
 
 #include "features/taskbar/window_system.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // What taskbar_pinned.json stores per pinned app besides its id (PinManager metadata).
 struct PinMetadata {
@@ -92,4 +92,4 @@ using kernel::iconBitmapFromHicon;
 using kernel::shellItemIcon;
 IconBitmap defaultAppIcon();
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

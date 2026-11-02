@@ -1,5 +1,5 @@
 import QtQuick
-import wabar as W
+import waku as W
 
 // Quickshell.Hyprland's HyprlandWorkspace, so type annotations in a shell resolve. Nothing creates
 // one on Windows: the Hyprland singleton's lists are empty.

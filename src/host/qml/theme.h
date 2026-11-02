@@ -6,7 +6,7 @@
 #include <QObject>
 #include <QString>
 
-namespace wabar::host {
+namespace waku::host {
 
 // The look of every bar and widget: colours, the font and a few sizes. Widgets read it as
 // `Theme.accent`, `Theme.fontSize`, ... and follow a change at once.
@@ -161,7 +161,7 @@ class ThemeValues : public QObject {
 
 // The root of theme.qml:
 //
-//     import wabar
+//     import waku
 //     ThemeSpec { accent: "#ff8800"; fontFamily: "Cascadia Code" }
 class ThemeSpec : public ThemeValues {
   Q_OBJECT
@@ -181,4 +181,4 @@ class Theme : public ThemeValues {
   explicit Theme(QObject* parent = nullptr) : ThemeValues(parent) {}
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

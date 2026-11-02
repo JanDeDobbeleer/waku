@@ -12,7 +12,7 @@
 #include "features/network/throughput.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::network {
+namespace waku::network {
 namespace {
 
 // Frees the table GetIfTable2 allocates.
@@ -57,4 +57,4 @@ std::unique_ptr<ThroughputSource> createSystemThroughputSource() {
   return std::make_unique<IpHelperThroughputSource>();
 }
 
-}  // namespace wabar::network
+}  // namespace waku::network

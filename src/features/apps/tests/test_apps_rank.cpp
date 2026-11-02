@@ -6,7 +6,7 @@
 #include "features/apps/frecency.h"
 #include "features/apps/rank.h"
 
-using namespace wabar::apps;
+using namespace waku::apps;
 
 namespace {
 

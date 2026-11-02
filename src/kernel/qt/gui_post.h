@@ -5,7 +5,7 @@
 #include <QPointer>
 #include <utility>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 // Runs `fn` on the GUI thread if `guard` is still alive then. Any thread; for worker, pool and
 // system callback threads that report back to a QObject that a reload may delete meanwhile.
@@ -26,4 +26,4 @@ void postToGui(const QPointer<Object>& guard, Fn fn) {
       Qt::QueuedConnection);
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

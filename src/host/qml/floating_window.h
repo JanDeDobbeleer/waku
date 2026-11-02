@@ -8,7 +8,7 @@
 
 #include "host/qml/qs_window.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 // A normal decorated window (Quickshell `FloatingWindow`): a title bar, movable and resizable by
 // the user. It opens centred on its screen at its implicit size.
@@ -48,4 +48,4 @@ class FloatingWindow : public QsWindow {
   bool placed_ = false;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

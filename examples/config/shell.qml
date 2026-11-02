@@ -1,7 +1,7 @@
-// The sample wabar shell. Point wabar at another folder with --config-home <dir>.
+// The sample waku shell. Point waku at another folder with --config-home <dir>.
 // Edit and save: the shell reloads. A mistake keeps the previous shell and shows an error pill.
-import wabar
-import wabar.widgets          // the built-in widgets
+import waku
+import waku.widgets          // the built-in widgets
 import "widgets"           // your own, one component per file (see widgets/)
 
 ShellRoot {

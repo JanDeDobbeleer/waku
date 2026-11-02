@@ -13,7 +13,7 @@
 
 #include "host/region_math.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 // The cursor position in physical (native) screen pixels, or nothing when it cannot be read.
 // The real source is GetCursorPos (ShellHost::NativeHooks::win32()); tests pass a fake.
@@ -167,4 +167,4 @@ class MaskPoller : public QObject {
   qreal safeDistance_ = 0;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

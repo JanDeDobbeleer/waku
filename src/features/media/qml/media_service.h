@@ -9,7 +9,7 @@
 
 #include "features/media/media_session.h"
 
-namespace wabar::media {
+namespace waku::media {
 
 // MIME type of encoded image bytes by their magic number; "application/octet-stream" when the
 // format is not recognised.
@@ -84,4 +84,4 @@ class Media : public QObject {
   QString thumbnailUrl_;
 };
 
-}  // namespace wabar::media
+}  // namespace waku::media

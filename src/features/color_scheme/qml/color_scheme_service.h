@@ -12,9 +12,9 @@
 #include "features/color_scheme/image_stats_cache.h"
 #include "features/color_scheme/qml/color_scheme_types.h"
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
-// The `ColorScheme` singleton (wabar.services): Material 3 dynamic colour with no external tool.
+// The `ColorScheme` singleton (waku.services): Material 3 dynamic colour with no external tool.
 // What a shell otherwise gets from an external scheme tool and an image analyser, in process:
 //
 //   ColorScheme.fromColor("#6750A4", "tonalspot", true).colors.primary
@@ -43,10 +43,10 @@ class ColorSchemeService : public QObject {
 
   // Synchronous. `color` is a colour or a "#rrggbb" string. An unknown variant or colour gives a
   // scheme with valid == false.
-  Q_INVOKABLE wabar::color_scheme::SchemeValue fromColor(const QVariant& color,
-                                                         const QString& variant = QString(),
-                                                         bool dark = true,
-                                                         double contrast = 0.0) const;
+  Q_INVOKABLE waku::color_scheme::SchemeValue fromColor(const QVariant& color,
+                                                        const QString& variant = QString(),
+                                                        bool dark = true,
+                                                        double contrast = 0.0) const;
 
   // Asynchronous: seeds the scheme from the image's dominant colour. Emits fromImageFinished or
   // fromImageFailed exactly once. `path` is a file path or a file:/// URL.
@@ -56,9 +56,9 @@ class ColorSchemeService : public QObject {
   // One entry point: a colour (QColor or "#rrggbb") answers synchronously; a path to an existing
   // image file starts fromImage() and returns an invalid scheme. Everything else fails with
   // fromImageFailed.
-  Q_INVOKABLE wabar::color_scheme::SchemeValue generate(const QVariant& source,
-                                                        const QString& variant = QString(),
-                                                        bool dark = true, double contrast = 0.0);
+  Q_INVOKABLE waku::color_scheme::SchemeValue generate(const QVariant& source,
+                                                       const QString& variant = QString(),
+                                                       bool dark = true, double contrast = 0.0);
 
   // Mean luminance of the image, 0 (black) .. 1 (white), on gamma-encoded sRGB with Rec. 709
   // weights; -1 when the file cannot be read. Decodes a reduced copy on the calling thread.
@@ -68,7 +68,7 @@ class ColorSchemeService : public QObject {
   Q_INVOKABLE QColor seedColor(const QString& path) const;
 
  signals:
-  void fromImageFinished(const QString& path, const wabar::color_scheme::SchemeValue& scheme);
+  void fromImageFinished(const QString& path, const waku::color_scheme::SchemeValue& scheme);
   void fromImageFailed(const QString& path, const QString& error);
 
  private:
@@ -76,4 +76,4 @@ class ColorSchemeService : public QObject {
   QString variantOrDefault(const QString& variant) const;
 };
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

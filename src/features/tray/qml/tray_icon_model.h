@@ -12,7 +12,7 @@
 
 #include "features/tray/tray_types.h"
 
-namespace wabar::tray {
+namespace waku::tray {
 
 // The scaled image of every row by id, for TrayImageProvider. The model writes it on the GUI
 // thread; the provider reads it on whatever thread Qt calls it (the pixmap reader thread when the
@@ -106,4 +106,4 @@ class TrayIconModel : public QAbstractListModel {
   std::shared_ptr<TrayImageStore> store_ = std::make_shared<TrayImageStore>();
 };
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

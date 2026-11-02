@@ -6,7 +6,7 @@
 #include <cstring>
 #include <vector>
 
-namespace wabar::tray {
+namespace waku::tray {
 namespace {
 
 constexpr int kPrecisionBits = 32 - 8 - 2;  // Pillow PRECISION_BITS for 8-bit images
@@ -221,4 +221,4 @@ QByteArray scaledTrayIconRgba(const TrayIconData& data) {
   return bytes;
 }
 
-}  // namespace wabar::tray
+}  // namespace waku::tray

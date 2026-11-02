@@ -1,5 +1,5 @@
 // The core types of the `Quickshell` module that exist only for QML written for Quickshell:
-// ScriptModel, SystemClock, PersistentProperties and IpcHandler (with `wabarc call`).
+// ScriptModel, SystemClock, PersistentProperties and IpcHandler (with `wakuc call`).
 #include <gtest/gtest.h>
 
 #include <QAbstractItemModel>
@@ -15,7 +15,7 @@
 #include "host/qml/system_clock.h"
 #include "host/testing/shell_fixtures.h"
 
-using namespace wabar::host;
+using namespace waku::host;
 
 namespace {
 
@@ -181,7 +181,7 @@ TEST(QuickshellPersistentProperties, ValuesSurviveAReload) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 import Quickshell
 
 ShellRoot {
@@ -343,7 +343,7 @@ TEST(QuickshellIpcHandler, ControlHandlerCallVerb) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 import Quickshell
 
 ShellRoot {
@@ -352,7 +352,7 @@ ShellRoot {
 }
 )"));
   ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
-  const wabar::control::ControlHandler handler = makeControlHandler(*h.host, false);
+  const waku::control::ControlHandler handler = makeControlHandler(*h.host, false);
   EXPECT_EQ(handler(QStringLiteral("call bar greet \"big bar\"")), "hi big bar");
   EXPECT_TRUE(handler(QStringLiteral("call bar nope")).startsWith("error:"));
   EXPECT_TRUE(handler(QStringLiteral("call")).contains("greet(string name): string"));

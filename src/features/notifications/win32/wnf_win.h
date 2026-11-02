@@ -4,7 +4,7 @@
 #include <functional>
 #include <memory>
 
-namespace wabar::notifications {
+namespace waku::notifications {
 
 // One subscription to an undocumented WNF state (ntdll!RtlSubscribeWnfStateChangeNotification,
 // docs/architecture.md allowlist), shared by the notification count and DndWatcher.
@@ -57,4 +57,4 @@ class WnfSubscription {
   std::shared_ptr<Slot> slot_;
 };
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

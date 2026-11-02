@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // The desktop wallpaper settings the wallpaper transition mirrors (HKCU\Control Panel\Desktop and
 // HKCU\Control Panel\Colors). Every reader falls back to Windows' own default.
@@ -36,4 +36,4 @@ std::optional<WorkerWAttachment> attachToWorkerW(std::uintptr_t hwnd, QString* f
 // gone (an Explorer restart destroys WorkerW and its children).
 void detachFromWorkerW(std::uintptr_t hwnd);
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

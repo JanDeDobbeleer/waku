@@ -17,7 +17,7 @@
 #include "features/quickshell_io/qml/data_stream_parsers.h"
 #include "features/quickshell_io/qml/quickshell_singleton.h"
 
-using namespace wabar::quickshell_io;
+using namespace waku::quickshell_io;
 
 namespace {
 
@@ -68,22 +68,22 @@ TEST(QuickshellCommandSpec, RejectsEmptyAndWrongShapes) {
 }
 
 TEST(QuickshellCommandSpec, EnvironmentSetsRemovesAndClears) {
-  qputenv("WABAR_QS_KEEP", "1");
+  qputenv("WAKU_QS_KEEP", "1");
   CommandSpec spec;
   spec.command = {QStringLiteral("x")};
-  spec.environment = {{QStringLiteral("WABAR_QS_NEW"), QStringLiteral("v")},
-                      {QStringLiteral("WABAR_QS_KEEP"), QVariant()}};
+  spec.environment = {{QStringLiteral("WAKU_QS_NEW"), QStringLiteral("v")},
+                      {QStringLiteral("WAKU_QS_KEEP"), QVariant()}};
   QProcessEnvironment env = makeEnvironment(spec);
-  EXPECT_EQ(env.value(QStringLiteral("WABAR_QS_NEW")), QStringLiteral("v"));
-  EXPECT_FALSE(env.contains(QStringLiteral("WABAR_QS_KEEP")));
+  EXPECT_EQ(env.value(QStringLiteral("WAKU_QS_NEW")), QStringLiteral("v"));
+  EXPECT_FALSE(env.contains(QStringLiteral("WAKU_QS_KEEP")));
 
   spec.clearEnvironment = true;
   env = makeEnvironment(spec);
-  EXPECT_EQ(env.value(QStringLiteral("WABAR_QS_NEW")), QStringLiteral("v"));
+  EXPECT_EQ(env.value(QStringLiteral("WAKU_QS_NEW")), QStringLiteral("v"));
   // With clearEnvironment a null entry passes the system value through.
-  EXPECT_EQ(env.value(QStringLiteral("WABAR_QS_KEEP")), QStringLiteral("1"));
+  EXPECT_EQ(env.value(QStringLiteral("WAKU_QS_KEEP")), QStringLiteral("1"));
   EXPECT_FALSE(env.contains(QStringLiteral("PATH")));
-  qunsetenv("WABAR_QS_KEEP");
+  qunsetenv("WAKU_QS_KEEP");
 }
 
 TEST(QuickshellParsers, SplitParserJoinsChunksAndFlushesTheTail) {
@@ -172,10 +172,10 @@ TEST(QuickshellParsers, AStreamingCollectorScalesWithTheOutput) {
 
 TEST(QuickshellSingleton, EnvReturnsTheValueOrNull) {
   Fixture f;
-  qputenv("WABAR_QS_ENV", "value");
-  EXPECT_EQ(f.qs->env(QStringLiteral("WABAR_QS_ENV")).toString(), QStringLiteral("value"));
-  qunsetenv("WABAR_QS_ENV");
-  EXPECT_TRUE(f.qs->env(QStringLiteral("WABAR_QS_ENV")).isNull());
+  qputenv("WAKU_QS_ENV", "value");
+  EXPECT_EQ(f.qs->env(QStringLiteral("WAKU_QS_ENV")).toString(), QStringLiteral("value"));
+  qunsetenv("WAKU_QS_ENV");
+  EXPECT_TRUE(f.qs->env(QStringLiteral("WAKU_QS_ENV")).isNull());
 }
 
 TEST(QuickshellSingleton, ExecDetachedPassesTheSpecToTheLauncher) {
@@ -250,8 +250,8 @@ TEST(QuickshellSingleton, VersionChecksEmulateQuickshell03) {
 TEST(QuickshellSingleton, ProcessIdAndClipboardRoundTrip) {
   Fixture f;
   EXPECT_GT(f.qs->processId(), 0);
-  f.qs->setClipboardText(QStringLiteral("wabar clip"));
-  EXPECT_EQ(f.qs->clipboardText(), QStringLiteral("wabar clip"));
+  f.qs->setClipboardText(QStringLiteral("waku clip"));
+  EXPECT_EQ(f.qs->clipboardText(), QStringLiteral("waku clip"));
 }
 
 TEST(QuickshellSingleton, ReadsTheClipboardOnFirstUseAndCachesUntilItChanges) {
@@ -296,12 +296,12 @@ TEST(QuickshellSingleton, IsUsableFromQml) {
   QQmlComponent component(&engine);
   component.setData(R"(
 import QtQml
-import wabar.services
+import waku.services
 QtObject {
     property real seconds: stopwatch.elapsed()
     property var stopwatch: ElapsedTimer {}
     property int pid: QuickshellSingleton.processId
-    property var missing: QuickshellSingleton.env("WABAR_QS_SURELY_UNSET_VARIABLE")
+    property var missing: QuickshellSingleton.env("WAKU_QS_SURELY_UNSET_VARIABLE")
     property bool v: QuickshellSingleton.hasVersion(0, 3)
 }
 )",

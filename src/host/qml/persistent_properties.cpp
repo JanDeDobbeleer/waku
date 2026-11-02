@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <optional>
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -152,4 +152,4 @@ void PersistentProperties::componentComplete() {
   emit loaded();
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

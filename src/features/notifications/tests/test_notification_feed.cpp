@@ -11,7 +11,7 @@
 #include "features/notifications/qml/notification_service.h"
 #include "features/notifications/testing/fake_notification_source.h"
 
-using namespace wabar::notifications;
+using namespace waku::notifications;
 
 namespace {
 

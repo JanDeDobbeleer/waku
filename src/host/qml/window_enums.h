@@ -6,8 +6,8 @@
 
 // The enum types of the shell windows. Names and values follow Quickshell (v0.3) so ported QML
 // loads unchanged; the `Quickshell` and `Quickshell.Wayland` modules register the same types again
-// (src/quickshell/). `Backdrop` is wabar's own.
-namespace wabar::host {
+// (src/quickshell/). `Backdrop` is waku's own.
+namespace waku::host {
 
 // How a PanelWindow takes part in the work area (Quickshell `ExclusionMode`).
 //   Ignore  reserves nothing and ignores what other app bars reserve
@@ -33,7 +33,7 @@ Q_ENUM_NS(Enum)
 // Whether a PanelWindow takes keyboard focus (wlr-layer-shell `keyboard_interactivity`).
 //   None       never activated (WS_EX_NOACTIVATE): clicks do not steal focus
 //   OnDemand   activated when clicked, and when the window is shown at run time (show(), toggle(),
-//              `wabarc surface show`); it releases the focus when it hides
+//              `wakuc surface show`); it releases the focus when it hides
 //   Exclusive  treated as OnDemand: Windows has no exclusive keyboard grab
 namespace WlrKeyboardFocus {
 Q_NAMESPACE
@@ -53,7 +53,7 @@ Q_ENUM_NS(Flag)
 
 // The screen edge a shell window is docked to: `QsWindow.window.dockEdge`. A PanelWindow is docked
 // when it is anchored to one edge and stretched or centred across it (host/panel_geometry.h);
-// every other window has None. wabar's own: Quickshell has no such property.
+// every other window has None. waku's own: Quickshell has no such property.
 namespace DockEdge {
 Q_NAMESPACE
 QML_NAMED_ELEMENT(DockEdge)
@@ -69,4 +69,4 @@ enum Kind { None = 0, Blur = 1, Mica = 2 };
 Q_ENUM_NS(Kind)
 }  // namespace Backdrop
 
-}  // namespace wabar::host
+}  // namespace waku::host

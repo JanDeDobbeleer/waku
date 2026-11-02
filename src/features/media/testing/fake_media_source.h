@@ -5,7 +5,7 @@
 
 #include "features/media/media_session.h"
 
-namespace wabar::media::testing {
+namespace waku::media::testing {
 
 struct Command {
   QString appId;
@@ -24,4 +24,4 @@ class FakeSource final : public MediaSessionSource {
   std::vector<Command> commands;
 };
 
-}  // namespace wabar::media::testing
+}  // namespace waku::media::testing

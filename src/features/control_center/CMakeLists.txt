@@ -2,7 +2,7 @@
 # notifications), the app theme, the touch keyboard, power plans and modes, the user's name and
 # picture, monitor brightness (through brightness) and the session and power actions behind a
 # Launcher seam. Volume, microphone and the player come from audio and media.
-wabar_feature(NAME control_center
+waku_feature(NAME control_center
   DEPENDS audio media notifications brightness
   SOURCES
     app_theme.h

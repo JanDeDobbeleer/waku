@@ -1,6 +1,6 @@
 # The QML module `Quickshell.Services.Pipewire`: Pipewire, PwNode and the trackers over the audio
 # services (default output and input, the per-app sessions).
-wabar_quickshell_qml_module(wabar_quickshell_pipewire Quickshell.Services.Pipewire
+waku_quickshell_qml_module(waku_quickshell_pipewire Quickshell.Services.Pipewire
   QML_FILES
     PwLink.qml
     PwLinkGroup.qml
@@ -10,4 +10,4 @@ wabar_quickshell_qml_module(wabar_quickshell_pipewire Quickshell.Services.Pipewi
     PwObjectTracker.qml
   SINGLETONS
     Pipewire.qml
-  DEPENDENCIES wabar wabar.services)
+  DEPENDENCIES waku waku.services)

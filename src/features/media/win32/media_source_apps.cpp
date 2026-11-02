@@ -12,7 +12,7 @@
 #include "features/media/media_session.h"
 #include "kernel/win32/app_activation.h"
 
-namespace wabar::media {
+namespace waku::media {
 namespace {
 
 QString baseName(const QString& path) {
@@ -37,9 +37,9 @@ QString appInfoName(const QString& aumid) {
 }
 
 QString nameFromProcess(const QString& aumid) {
-  const QString process = wabar::kernel::exeNameForAumid(aumid);
+  const QString process = waku::kernel::exeNameForAumid(aumid);
   if (process.isEmpty()) return {};
-  const QString name = wabar::kernel::appNameForExe(process);
+  const QString name = waku::kernel::appNameForExe(process);
   return name.isEmpty() ? stem(process) : name;
 }
 
@@ -62,9 +62,9 @@ QString resolveSourceAppName(const QString& aumid) {
   }
   QString name = appInfoName(aumid);
   if (name.isEmpty() && !aumid.endsWith(QStringLiteral(".exe"), Qt::CaseInsensitive))
-    name = wabar::kernel::resolveShellAppByAumid(aumid).name;
+    name = waku::kernel::resolveShellAppByAumid(aumid).name;
   if (name.isEmpty()) name = nameFromProcess(aumid);
-  if (name.isEmpty()) name = wabar::kernel::appNameForWindowAumid(aumid);
+  if (name.isEmpty()) name = waku::kernel::appNameForWindowAumid(aumid);
   if (name.isEmpty()) name = humanize(aumid);
   QMutexLocker lock(&mutex);
   cache.insert(aumid, name);
@@ -75,4 +75,4 @@ QString sourceAppClassName(const QString& displayName) {
   return displayName.toLower().replace(u' ', u'-');
 }
 
-}  // namespace wabar::media
+}  // namespace waku::media

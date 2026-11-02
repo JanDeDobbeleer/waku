@@ -4,7 +4,7 @@
 #include <QFileDevice>
 #include <QString>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 struct FileWriteResult {
   QFileDevice::FileError error = QFileDevice::NoError;
@@ -17,4 +17,4 @@ struct FileWriteResult {
 // Creates the folder first. Any thread; two writers of one path must not overlap.
 FileWriteResult writeFileAtomic(const QString& path, const QByteArray& data);
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

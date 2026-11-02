@@ -1,5 +1,5 @@
 import QtQuick
-import wabar
+import waku
 
 // One workspace of the "dots" style of Workspaces: a small circle, or a wide accent pill while it
 // is the focused workspace. A workspace that is shown on another monitor is a brighter circle, one

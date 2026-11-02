@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 
 // One ACPI thermal zone from the PDH set "Thermal Zone Information". The name is the ACPI path
 // ("\_SB.TZ0"); it does not say which part the zone measures. A reading of 0 means the counter
@@ -33,4 +33,4 @@ std::optional<double> selectCpuTemperature(const std::vector<ThermalZone>& zones
 // temperature, so it gives nothing, like an out-of-range value.
 std::optional<double> celsiusFromDeciCelsius(std::uint32_t deciCelsius);
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

@@ -11,13 +11,13 @@
 #include "kernel/qt/app_data.h"
 #include "kernel/qt/file_write.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 PinStore::PinStore(QString filePath, QObject* parent)
     : QObject(parent), filePath_(std::move(filePath)) {}
 
 QString PinStore::defaultFile() {
-  return QDir(wabar::kernel::appDataDir()).filePath(QStringLiteral("taskbar_pinned.json"));
+  return QDir(waku::kernel::appDataDir()).filePath(QStringLiteral("taskbar_pinned.json"));
 }
 
 qint64 PinStore::fileStamp() const {
@@ -104,4 +104,4 @@ void PinStore::updateOrder(const QStringList& newOrder) {
   emit pinnedAppsChanged(QStringLiteral("reorder"), QString());
 }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

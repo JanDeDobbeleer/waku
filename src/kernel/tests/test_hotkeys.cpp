@@ -5,7 +5,7 @@
 #include "kernel/qt/hotkeys.h"
 #include "kernel/testing/hotkeys_fixtures.h"
 
-using namespace wabar::kernel;
+using namespace waku::kernel;
 
 namespace {
 

@@ -6,7 +6,7 @@
 
 #include "features/color_scheme/color_math.h"
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 // Colours found in an image, each with the number of pixels it stands for.
 using ColorCounts = std::map<Argb, std::uint32_t>;
@@ -34,4 +34,4 @@ struct ScoreOptions {
 // `options.desired` colours, best first; the fallback alone when nothing qualifies.
 std::vector<Argb> rankedSuggestions(const ColorCounts& colors, const ScoreOptions& options = {});
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

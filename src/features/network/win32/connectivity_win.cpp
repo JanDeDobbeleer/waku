@@ -9,7 +9,7 @@
 #include "features/network/connectivity.h"
 #include "kernel/win32/winrt_apartment.h"
 
-namespace wabar::network {
+namespace waku::network {
 namespace {
 
 namespace wnc = winrt::Windows::Networking::Connectivity;
@@ -57,7 +57,7 @@ WifiInfo classifyConnections(const std::vector<ConnectionSnapshot>& online,
 
 std::optional<WifiInfo> queryConnectionInfo() {
   try {
-    wabar::kernel::ensureWinrtApartment();
+    waku::kernel::ensureWinrtApartment();
     std::vector<ConnectionSnapshot> online;
     for (const auto& profile : wnc::NetworkInformation::GetConnectionProfiles()) {
       if (profile.GetNetworkConnectivityLevel() == wnc::NetworkConnectivityLevel::InternetAccess)
@@ -109,4 +109,4 @@ ConnectivitySample sampleConnectivity() {
   return sample;
 }
 
-}  // namespace wabar::network
+}  // namespace waku::network

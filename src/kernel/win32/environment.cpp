@@ -4,7 +4,7 @@
 
 #include <vector>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 QString expandEnvironment(const QString& text) {
   if (!text.contains(QLatin1Char('%'))) return text;
@@ -16,4 +16,4 @@ QString expandEnvironment(const QString& text) {
   return QString::fromWCharArray(buffer.data());
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

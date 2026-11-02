@@ -7,7 +7,7 @@
 
 #include "features/color_scheme/quantizer.h"
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 namespace {
 
@@ -79,4 +79,4 @@ double meanLuminance(const QImage& source) {
   return count == 0 ? 0.0 : sum / (static_cast<double>(count) * 255.0);
 }
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

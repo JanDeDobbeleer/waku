@@ -1,7 +1,7 @@
 # system_stats: CPU, memory, battery, GPU and disk samples
 
 Current design of the capability. The widgets are `Cpu`, `Memory` and `Battery` (`qml/*.qml`), built
-on the services of the same names (`wabar.services`, `qml/stat_sources.h`) and the shared
+on the services of the same names (`waku.services`, `qml/stat_sources.h`) and the shared
 `StatGraph` and `StatPopup` components.
 
 ## Layers

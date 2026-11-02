@@ -1,6 +1,6 @@
 # desktop_state: lock keys, keyboard layout and idle time (DesktopState), and IdleInhibitor.
 # user32: GetKeyState, GetKeyboardLayout, GetLastInputInfo; kernel32 holds the rest.
-wabar_feature(NAME desktop_state
+waku_feature(NAME desktop_state
   SOURCES
     desktop_probe.h
   WIN32_SOURCES

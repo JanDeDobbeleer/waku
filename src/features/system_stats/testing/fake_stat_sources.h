@@ -8,7 +8,7 @@
 
 #include "features/system_stats/system_stats.h"
 
-namespace wabar::system_stats::testing {
+namespace waku::system_stats::testing {
 
 // Counts calls and concurrent calls; sample() runs on a QThreadPool thread.
 template <class Base, class Sample>
@@ -113,4 +113,4 @@ class FakeBattery final : public FakeSource<BatteryDataSource, std::optional<Bat
   std::atomic<bool> present{true};
 };
 
-}  // namespace wabar::system_stats::testing
+}  // namespace waku::system_stats::testing

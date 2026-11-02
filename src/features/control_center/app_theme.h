@@ -3,7 +3,7 @@
 #include <QString>
 #include <optional>
 
-namespace wabar::control_center {
+namespace waku::control_center {
 
 // Windows app theme (services/control_center/api/theme.py ThemeService). Modes: "light", "dark".
 
@@ -14,4 +14,4 @@ bool setThemeMode(const QString& mode);
 // The new mode, or nullopt when the write failed.
 std::optional<QString> toggleThemeMode();
 
-}  // namespace wabar::control_center
+}  // namespace waku::control_center

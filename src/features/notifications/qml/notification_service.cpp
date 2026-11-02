@@ -7,7 +7,7 @@
 #include "kernel/qt/linger.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::notifications {
+namespace waku::notifications {
 namespace {
 
 QString timeText(const QDateTime& created) {
@@ -77,4 +77,4 @@ void Notifications::activate(int id) {
   }
 }
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

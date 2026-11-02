@@ -1,9 +1,9 @@
 pragma Singleton
 import QtQuick
-import wabar as W
-import wabar.services as S
+import waku as W
+import waku.services as S
 
-// Quickshell.Bluetooth's `Bluetooth` singleton over wabar's Bluetooth service.
+// Quickshell.Bluetooth's `Bluetooth` singleton over waku's Bluetooth service.
 //
 //   defaultAdapter  the one adapter (the Windows radio), null when the machine has none
 //   adapters        a model (with `values`) of that adapter, empty without one

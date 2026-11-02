@@ -12,7 +12,7 @@
 #include "host/popup_placement.h"
 #include "host/qml/window_enums.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 // The QML face of placePopup(): used by PopupWindow and Tooltip as `PopupPlacement.position(...)`.
 class PopupPlacement : public QObject {
@@ -94,7 +94,7 @@ class PopupPlacement : public QObject {
 //   edges    the side of `rect` it opens on (Edges flags): Top opens above, Bottom below, Left to
 //            the left, Right to the right
 //   gravity  the direction it grows from there; used for the side when `edges` names none
-// wabar keeps its own placement: centred on the anchor, kept on screen, flipped when the side has
+// waku keeps its own placement: centred on the anchor, kept on screen, flipped when the side has
 // no room. Unset edges and gravity: the side away from the panel's edge (below a top panel, above
 // a bottom one, right of a left one, left of a right one), below in a window that is not a panel.
 class PopupAnchor : public QObject {
@@ -158,4 +158,4 @@ class PopupAnchor : public QObject {
   int gravity_ = Edges::None;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

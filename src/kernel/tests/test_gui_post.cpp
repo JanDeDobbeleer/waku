@@ -10,7 +10,7 @@
 
 #include "kernel/qt/gui_post.h"
 
-using wabar::kernel::postToGui;
+using waku::kernel::postToGui;
 
 TEST(GuiPost, RunsOnTheGuiThreadWhileTheGuardLives) {
   QObject guard;

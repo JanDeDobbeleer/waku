@@ -25,7 +25,7 @@ class QFileSystemWatcher;
 class QJSEngine;
 class QQmlEngine;
 
-namespace wabar::apps {
+namespace waku::apps {
 
 // The last complete app catalogue of the process and the watcher on the Start Menu folders, shared
 // by the AppsService of every engine and kept through a reload (acquireAppCatalog, a
@@ -67,10 +67,10 @@ class AppCatalog : public QObject {
 // kernel::kReloadLingerMs.
 std::shared_ptr<AppCatalog> acquireAppCatalog();
 
-// The app catalogue of a `wabar` run, as a QML singleton: Start Menu shortcuts (.lnk files below
+// The app catalogue of a `waku` run, as a QML singleton: Start Menu shortcuts (.lnk files below
 // FOLDERID_Programs and FOLDERID_CommonPrograms) and the Store apps of shell:AppsFolder, as
 // Quickshell-shaped DesktopEntry objects. `import Quickshell` shows it as `DesktopEntries`
-// (src/quickshell/core/qml/DesktopEntries.qml forwards here), wabar shells use it directly as
+// (src/quickshell/core/qml/DesktopEntries.qml forwards here), waku shells use it directly as
 // `AppsService`. Registers image://appicon/<id> (see AppIconProvider).
 //
 // `applications` is a model of DesktopEntry with a `values` array, sorted by name. `ready` turns
@@ -89,7 +89,7 @@ class AppsService : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
-  Q_PROPERTY(wabar::apps::AppsModel* applications READ applications CONSTANT FINAL)
+  Q_PROPERTY(waku::apps::AppsModel* applications READ applications CONSTANT FINAL)
   Q_PROPERTY(bool ready READ ready NOTIFY readyChanged FINAL)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged FINAL)
   Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
@@ -131,10 +131,10 @@ class AppsService : public QObject {
   const IconLoader& iconLoader() const { return deps_.iconLoader; }
 
   // Quickshell's DesktopEntries.byId: the entry with this id (case-insensitive), null when none.
-  Q_INVOKABLE wabar::apps::DesktopEntry* byId(const QString& id) const;
+  Q_INVOKABLE waku::apps::DesktopEntry* byId(const QString& id) const;
   // Quickshell's DesktopEntries.heuristicLookup: the entry a window class or process name most
   // likely belongs to (id, name, executable name, last id segment, AUMID), null when none.
-  Q_INVOKABLE wabar::apps::DesktopEntry* heuristicLookup(const QString& name) const;
+  Q_INVOKABLE waku::apps::DesktopEntry* heuristicLookup(const QString& name) const;
   // The entries matching `query`, best first (see rank.h), at most `limit` (all when <= 0). A
   // blank query lists the most used apps first.
   Q_INVOKABLE QVariantList search(const QString& query, int limit = 0) const;
@@ -193,4 +193,4 @@ class AppsService : public QObject {
   int scanMs_ = 0;
 };
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

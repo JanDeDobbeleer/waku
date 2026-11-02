@@ -11,7 +11,7 @@
 
 #include "features/taskbar/qml/taskbar_service.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 // The buttons of one Taskbar widget: the service's windows filtered for this widget (monitor,
 // strict, hidden, ignore lists) and grouped per app, after the pinned apps. Recomputed from the
@@ -24,7 +24,7 @@ namespace wabar::taskbar {
 class TaskbarModel : public QAbstractListModel {
   Q_OBJECT
   QML_ELEMENT
-  Q_PROPERTY(wabar::taskbar::TaskbarService* service READ service WRITE setService NOTIFY
+  Q_PROPERTY(waku::taskbar::TaskbarService* service READ service WRITE setService NOTIFY
                  serviceChanged FINAL)
   Q_PROPERTY(QWindow* window READ window WRITE setWindow NOTIFY windowChanged FINAL)
   Q_PROPERTY(bool grouping READ grouping WRITE setGrouping NOTIFY filterChanged FINAL)
@@ -151,4 +151,4 @@ class TaskbarModel : public QAbstractListModel {
   bool rebuilding_ = false;
 };
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

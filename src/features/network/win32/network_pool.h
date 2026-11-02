@@ -2,7 +2,7 @@
 
 class QThreadPool;
 
-namespace wabar::network {
+namespace waku::network {
 
 // The pool the radio and VPN backends run their calls on. RasDial blocks a thread for the whole
 // dial (tens of seconds), RasHangUp waits up to 4 s and a radio switch waits for Windows; on the
@@ -15,4 +15,4 @@ namespace wabar::network {
 // their results to qApp and drop them when the backend is gone.
 QThreadPool* networkPool();
 
-}  // namespace wabar::network
+}  // namespace waku::network

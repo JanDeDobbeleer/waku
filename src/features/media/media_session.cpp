@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace wabar::media {
+namespace waku::media {
 
 // Re-posts every source event to the service's thread. Events for a destroyed service are dropped
 // by Qt together with the service's posted events.
@@ -355,4 +355,4 @@ void MediaSessionService::selectSession(const QString& appId) {
   interpolateAndEmit();
 }
 
-}  // namespace wabar::media
+}  // namespace waku::media

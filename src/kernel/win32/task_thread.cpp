@@ -9,7 +9,7 @@
 
 #include "kernel/win32/winrt_strings.h"
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 struct TaskThread::Poster::State {
   std::mutex mutex;
@@ -128,4 +128,4 @@ void TaskThread::run(const Task& setUp, const Task& tearDown) {
   if (apartment) winrt::uninit_apartment();
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

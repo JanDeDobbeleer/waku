@@ -7,7 +7,7 @@
 
 #include "features/wallpapers/desktop_wallpaper.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 // Port of core/widgets/services/wallpapers/images.py (folder scanning half).
 
@@ -32,4 +32,4 @@ QHash<QString, int> findWallpapers(const QStringList& files,
 // os.path.normcase(os.path.normpath(path)).
 QString normalizedPathKey(const QString& path);
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

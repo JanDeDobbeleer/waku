@@ -2,7 +2,7 @@
 
 #include <QDebug>
 
-namespace wabar::workspaces {
+namespace waku::workspaces {
 
 namespace gw = glazewm;
 
@@ -86,4 +86,4 @@ void GlazeWM::toggleTilingDirection() { gw::toggleTilingDirection(bus_); }
 void GlazeWM::enableBindingMode(const QString& name) { gw::enableBindingMode(bus_, name); }
 void GlazeWM::disableBindingMode(const QString& name) { gw::disableBindingMode(bus_, name); }
 
-}  // namespace wabar::workspaces
+}  // namespace waku::workspaces

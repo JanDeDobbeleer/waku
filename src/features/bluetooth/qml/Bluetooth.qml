@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import wabar
-import wabar.services as S
+import waku
+import waku.services as S
 
 // Bluetooth radio and connected devices. A click opens a panel (radio switch, paired devices with
 // connect and disconnect, battery level when known), a middle click opens the Bluetooth settings,

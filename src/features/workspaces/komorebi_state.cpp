@@ -1,6 +1,6 @@
 #include "features/workspaces/komorebi_state.h"
 
-namespace wabar::workspaces::komorebi {
+namespace waku::workspaces::komorebi {
 
 const Json* child(const Json* node, std::string_view key) {
   if (!node || !node->is_object()) return nullptr;
@@ -132,4 +132,4 @@ std::vector<long long> windowHwnds(const Json* workspace, bool hideFloating) {
   return result;
 }
 
-}  // namespace wabar::workspaces::komorebi
+}  // namespace waku::workspaces::komorebi

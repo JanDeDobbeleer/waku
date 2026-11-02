@@ -25,7 +25,7 @@
 #include "kernel/qt/linger.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::system_stats {
+namespace waku::system_stats {
 namespace {
 
 // Documented APIs only: PDH ("GPU Engine" and "GPU Adapter Memory" counters, Windows 10 1709 and
@@ -216,4 +216,4 @@ std::shared_ptr<GpuDataSource> createGpuDataSource() {
   return hub.acquire([] { return std::make_shared<PdhGpuDataSource>(); });
 }
 
-}  // namespace wabar::system_stats
+}  // namespace waku::system_stats

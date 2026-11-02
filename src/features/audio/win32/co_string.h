@@ -5,7 +5,7 @@
 
 #include <QString>
 
-namespace wabar::audio {
+namespace waku::audio {
 
 // The text of a CoTaskMemAlloc'd string that Core Audio hands over; frees it. Null gives "".
 inline QString takeCoString(LPWSTR text) {
@@ -14,4 +14,4 @@ inline QString takeCoString(LPWSTR text) {
   return result;
 }
 
-}  // namespace wabar::audio
+}  // namespace waku::audio

@@ -15,7 +15,7 @@
 #include "features/quickshell_io/file_access.h"
 #include "features/quickshell_io/qml/json_adapter.h"
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // Quickshell.Io FileViewError, as a QML enum namespace.
 namespace FileViewError {
@@ -36,7 +36,7 @@ Q_ENUM_NS(Enum)
 // optionally converts it to QML properties through an adapter (JsonAdapter).
 //
 // Threads: the GUI thread owns everything. Reads and writes run on the global QThreadPool through
-// wabar::quickshell_io::fileAccess() and return through a QFutureWatcher owned by this object, so
+// waku::quickshell_io::fileAccess() and return through a QFutureWatcher owned by this object, so
 // a result that arrives after the object is gone is dropped. Writes run one at a time; a write
 // requested meanwhile replaces the one waiting. blockLoading, blockAllReads and blockWrites make
 // the matching access run on the calling thread instead. Stopped by destroying the object.
@@ -58,7 +58,7 @@ class FileView : public QObject, public QQmlParserStatus {
   Q_PROPERTY(bool printErrors READ printErrors WRITE setPrintErrors NOTIFY printErrorsChanged FINAL)
   Q_PROPERTY(
       bool atomicWrites READ atomicWrites WRITE setAtomicWrites NOTIFY atomicWritesChanged FINAL)
-  Q_PROPERTY(wabar::quickshell_io::FileViewAdapter* adapter READ adapter WRITE setAdapter NOTIFY
+  Q_PROPERTY(waku::quickshell_io::FileViewAdapter* adapter READ adapter WRITE setAdapter NOTIFY
                  adapterChanged FINAL)
 
  public:
@@ -114,10 +114,10 @@ class FileView : public QObject, public QQmlParserStatus {
   void adapterChanged();
   // The file was read (and, with an adapter, applied to it).
   void loaded();
-  void loadFailed(wabar::quickshell_io::FileViewError::Enum error);
+  void loadFailed(waku::quickshell_io::FileViewError::Enum error);
   // A write finished.
   void saved();
-  void saveFailed(wabar::quickshell_io::FileViewError::Enum error);
+  void saveFailed(waku::quickshell_io::FileViewError::Enum error);
   // QML changed an adapter value.
   void adapterUpdated();
   // With watchChanges: the file on disk differs from the loaded content. Call reload().
@@ -157,4 +157,4 @@ class FileView : public QObject, public QQmlParserStatus {
   QTimer debounce_;
 };
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

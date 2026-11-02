@@ -1,7 +1,7 @@
-# wabar systray: plan
+# waku systray: plan
 
 Status: built and run live (phase 5 below). Background: `docs/plans/2026-10-28-qt-quick-bar-config-design.md`
-(the `wabar` modules, `Pill`, `PopupWindow`, `Tooltip`, `Theme`). The systray of the retired Widgets
+(the `waku` modules, `Pill`, `PopupWindow`, `Tooltip`, `Theme`). The systray of the retired Widgets
 build (git tag `widgets-main-final`) is where the code came from; see "History".
 
 ## What the widget does
@@ -12,12 +12,12 @@ the owning program as the mouse messages it expects, hovering shows the program'
 state and order persist per screen, and the icons come back when Explorer restarts.
 
 Not in this plan: balloon notifications (`szInfo`), the Windows 11 hidden-icon flyout, the system
-icons Windows draws itself (battery, volume, network; wabar has widgets for them), and dragging
+icons Windows draws itself (battery, volume, network; waku has widgets for them), and dragging
 (see decision 4).
 
 ## What already exists and what that means
 
-The hard, risky part was done and run live in the Widgets build. Wabar reuses it instead of porting
+The hard, risky part was done and run live in the Widgets build. Waku reuses it instead of porting
 it again. Paths are under `src/features/tray/`.
 
 | Piece | Where | Layer | Reuse |
@@ -29,7 +29,7 @@ it again. Paths are under `src/features/tray/`.
 | `IconStateMap`, `updateCurrentState`, `updateIconData`, `iconStateKey`, `SystrayStateStore` (per-screen JSON), `cleanScreenId` | `tray_state.*` | root (no UI) | as is; the folder is `kernel::appDataDir()` |
 | `scaleTrayIcon` (Lanczos to 32 px plus sharpen) | `icon_scale.*` | root (no UI) | as is |
 | `colorIconToRgba`, `monochromeIconToRgba`, `trayIconPixelsProblem` (the host-side `GetDIBits` conversion and the blank-icon check) | `icon_bits.*` | root (no UI) | new |
-| The hook DLL (`WabarTrayHook[_arm64].dll`) | `hook/trayhook.cpp` | native | copied next to `wabar.exe` |
+| The hook DLL (`WakuTrayHook[_arm64].dll`) | `hook/trayhook.cpp` | native | copied next to `waku.exe` |
 
 Logic that was tangled into Widgets classes and was **extracted**:
 
@@ -44,10 +44,10 @@ Logic that was tangled into Widgets classes and was **extracted**:
 
 ## Decisions
 
-1. **Pin state file: separate.** `%LOCALAPPDATA%\wabar\systray_state_<screen>.json`, same JSON
+1. **Pin state file: separate.** `%LOCALAPPDATA%\waku\systray_state_<screen>.json`, same JSON
    format. The file lives in `kernel::appDataDir()`.
-2. **One hook at a time, so no second DLL.** Wabar builds the hook DLL (`hook/`) next to
-   `wabar.exe`. Safety net: if the pipe or mutex is already held (another tray host, such as Python
+2. **One hook at a time, so no second DLL.** Waku builds the hook DLL (`hook/`) next to
+   `waku.exe`. Safety net: if the pipe or mutex is already held (another tray host, such as Python
    YASB, is running), `SystrayHook::valid()` is false and the widget says "tray unavailable:
    another tray host is running" instead of doing anything to Explorer.
 3. **No legacy mode.** The fallback that replaces `Shell_TrayWnd` with our own window takes over
@@ -82,7 +82,7 @@ a drop would make.
 ### Pieces (QML-facing)
 
 ```
-wabar.services
+waku.services
   Systray            singleton. Owns the shared TrayHost through SystrayService, applies
                      TrayIconRegistry, exposes `available`, `unavailableReason`, `icons`.
   TrayIconModel      QAbstractListModel behind Systray.icons. Roles: key, tooltip, exe, iconUrl,
@@ -93,8 +93,8 @@ wabar.services
                      move(key, pinned, toIndex); loads and saves the per-screen state file.
   image provider     image://tray/<key>/<revision>: the RGBA bytes through scaleTrayIcon, no
                      encoding. Registered by the module (QQmlEngineExtensionPlugin), so any
-                     engine that imports wabar.services has it.
-wabar.widgets
+                     engine that imports waku.services has it.
+waku.widgets
   Tray               the widget: pinned icons, the unpinned group, the chevron button.
   TrayIconButton     one icon: image, tooltip, click handling, modifier-click to pin, its menu.
 ```
@@ -117,7 +117,7 @@ why it failed in `TrayIconData::iconError`. A colour bitmap whose alpha bytes ar
 alpha channel; the AND mask gives its transparency.
 
 `Systray` logs one line per icon and reason when an icon cannot show:
-`wabar: tray icon <exe>#<id>: <reason>`. Reasons: `no icon received yet`, the read failure (with
+`waku: tray icon <exe>#<id>: <reason>`. Reasons: `no icon received yet`, the read failure (with
 `, keeping the previous image` when one is kept), a pixel buffer that does not fill the icon, and
 `all WxH pixels are fully transparent`. The line holds the executable's base name and the run-local
 id only: no tooltip, path or handle.
@@ -154,7 +154,7 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 | 2 | `Systray` and the model | **Done.** `Systray` singleton (`click` and `doubleClick` take the icon `id`, since exe-path keys can repeat), `TrayIconModel`, `TrayImageProvider`; 19 new tests on a fake host and window API. Planned: singleton, `TrayIconModel`, the image provider (with a changing-icon test), "unavailable" states; tests with a fake `TrayHost` and `TrayWindowApi` (add, update, delete, filter, stale, click messages). | no | M |
 | 3 | `TrayPins` | **Done.** `TrayPins` (instantiable, one per Tray widget; `setPinned`, `move`, `moveBy` and `isPinned` take the icon `id`) with `TrayPinList` models for `pinned` and `unpinned`, saved order and per-screen state file in the Widgets build's format. Planned: pinned and unpinned models, order, move, per-screen persistence; tests with a temp state dir and the existing state vectors. | no | S |
 | 4 | `Tray` widget | **Done.** `Tray` and `TrayIconButton` (pinned row, unpinned inline or in a popup grid behind a chevron, tooltips, click, double click, Ctrl-click pin, Ctrl+right-click menu with pin, move and refresh); `TrayPins.window`/`screen`, `hidden` role and `Systray::setFactoryForTests`; 13 widget tests on the fake host. Planned: pinned row, unpinned inline and popup, chevron, tooltips, click, modifier pin, the icon menu (pin, unpin, move, refresh); offscreen tests with the fake host injected through a test seam. | no | L |
-| 5 | Live bring-up | **Done 2026-10-29** on ARM64 Windows 11, Python YASB stopped (its own hook DLL, `YASBTrayHook_arm64.dll`, was loaded in Explorer; ours and the Widgets build's are the same family, Python's is a different one, so it was stopped too). The DLL already sits next to `wabar.exe` (same output folder); `--no-tray` added. Found and fixed live: `Systray` never broadcast `TaskbarCreated` after the hook connected (200 ms after `updateIcons`, as the Widgets build), so no icon appeared. Checked by hand: 14 icons arrive, chevron popup with 5 columns, tooltip, Ctrl+click pins and writes `%LOCALAPPDATA%\wabar\systray_state_<screen>.json`, a right click reaches OneDrive (flyout and menu), Explorer restart brings the hook and the icons back, `wabarc quit` and a forced kill both detach the DLL within 1 s. Not checked: middle and double click on a real program, order moves in the menu, other DPIs. Planned: the hook DLL copied next to `wabar.exe`; `--no-tray` switch; run against the real Explorer with the Widgets build stopped: icons appear, left, right, middle and double click, tooltip, pin, order, Explorer restart, quit leaves the shell tray intact, a forced kill lets the DLL detach. | **yes** | M |
+| 5 | Live bring-up | **Done 2026-10-29** on ARM64 Windows 11, Python YASB stopped (its own hook DLL, `YASBTrayHook_arm64.dll`, was loaded in Explorer; ours and the Widgets build's are the same family, Python's is a different one, so it was stopped too). The DLL already sits next to `waku.exe` (same output folder); `--no-tray` added. Found and fixed live: `Systray` never broadcast `TaskbarCreated` after the hook connected (200 ms after `updateIcons`, as the Widgets build), so no icon appeared. Checked by hand: 14 icons arrive, chevron popup with 5 columns, tooltip, Ctrl+click pins and writes `%LOCALAPPDATA%\waku\systray_state_<screen>.json`, a right click reaches OneDrive (flyout and menu), Explorer restart brings the hook and the icons back, `wakuc quit` and a forced kill both detach the DLL within 1 s. Not checked: middle and double click on a real program, order moves in the menu, other DPIs. Planned: the hook DLL copied next to `waku.exe`; `--no-tray` switch; run against the real Explorer with the Widgets build stopped: icons appear, left, right, middle and double click, tooltip, pin, order, Explorer restart, quit leaves the shell tray intact, a forced kill lets the DLL detach. | **yes** | M |
 | 6 | Polish | **Done.** The icon is drawn from the provider's 32 px image with mipmaps and no `sourceSize`, so it is not shrunk before the device pixel ratio applies (the change itself was not looked at live; this machine has one 200 percent screen, so 100 and 150 percent cannot be run here). `hide` and `showSystemIcons` were done in phase 4. See History below. | no | S |
 
 ## Tests
@@ -170,21 +170,21 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 | Risk | Mitigation |
 |---|---|
 | Injecting into Explorer disrupts the user's session | phases 1 to 4 never touch it; phase 5 only with any other tray host stopped; `--no-tray`; the hook is the one already run daily by the Widgets build; the DLL detaches within 5 s when the host's mutex goes |
-| `wabar.exe` starts while another tray host still holds the pipe and mutex | `valid()` is false, the widget reports it and does nothing to Explorer |
+| `waku.exe` starts while another tray host still holds the pipe and mutex | `valid()` is false, the widget reports it and does nothing to Explorer |
 | Tray icons update very often (progress, media) | model `dataChanged` on one row, image revision bump only when the pixels changed |
 | An icon with a version-4 callback behaves differently | the click function is the single place that encodes it, with tests per version |
-| Undocumented Windows API use grows | none added: all of it is already in the allowlist of `docs/architecture.md`, and wabar adds no call |
+| Undocumented Windows API use grows | none added: all of it is already in the allowlist of `docs/architecture.md`, and waku adds no call |
 
 ## History
 
 The tray came from the Widgets build (`yasb-native`, git tag `widgets-main-final`), which owned the
-hook DLL, the pipe and mutex names and the pin-state file format. Wabar took them over: the DLL and
-its names are now `WabarTrayHook[_arm64].dll`, `wabar_systray_monitor` and `WabarTrayHookAlive`
-(`WABAR_TRAY_PIPE_NAME` and `WABAR_TRAY_MUTEX_NAME` in the root `CMakeLists.txt`), pin state is in
-`%LOCALAPPDATA%\wabar` (the kernel copies the `systray_state_*.json` files from `YASB` once), and
+hook DLL, the pipe and mutex names and the pin-state file format. Waku took them over: the DLL and
+its names are now `WakuTrayHook[_arm64].dll`, `waku_systray_monitor` and `WakuTrayHookAlive`
+(`WAKU_TRAY_PIPE_NAME` and `WAKU_TRAY_MUTEX_NAME` in the root `CMakeLists.txt`), pin state is in
+`%LOCALAPPDATA%\waku` (the kernel copies the `systray_state_*.json` files from `YASB` once), and
 the legacy host that replaced `Shell_TrayWnd` is gone. Python YASB has its own hook DLL
 (`YASBTrayHook_arm64.dll`); stop it before starting the `Tray` widget, because whether the two coexist
-was not tested. A regular `wabar` run reserves no work area; pass `--register-app-bar` (see
+was not tested. A regular `waku` run reserves no work area; pass `--register-app-bar` (see
 `AGENTS.md`).
 
 ## Next step
@@ -196,4 +196,4 @@ were not run live.
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- systray hook thread (`std::thread`) (`SystrayHook` (`src/features/tray/win32/tray_hook.h`), owned by `wabar.services.Systray`, started by the first Tray widget): creates nothing itself: the GUI thread creates the watchdog mutex and the `\\.\pipe\wabar_systray_monitor` pipe in the constructor; the worker injects `WabarTrayHook[_arm64].dll` into Explorer (`SetWindowsHookEx`), owns the OVERLAPPED I/O, read buffer and completion event, parses each pipe message, scales a non-32 px icon to the tray size (Lanczos and sharpen, so not on the GUI thread) and emits queued signals to the GUI thread; retries after Explorer restarts (1 s no Explorer, 5 s failed injection, 3 s after the DLL disconnects); `stop()` (also called by the destructor): sets the stop flag, releases the injection hook, cancels pending I/O, releases and closes the mutex (the DLL's watchdog then detaches and restores Shell_TrayWnd's window procedure within 5 s), `join`
+- systray hook thread (`std::thread`) (`SystrayHook` (`src/features/tray/win32/tray_hook.h`), owned by `waku.services.Systray`, started by the first Tray widget): creates nothing itself: the GUI thread creates the watchdog mutex and the `\\.\pipe\waku_systray_monitor` pipe in the constructor; the worker injects `WakuTrayHook[_arm64].dll` into Explorer (`SetWindowsHookEx`), owns the OVERLAPPED I/O, read buffer and completion event, parses each pipe message, scales a non-32 px icon to the tray size (Lanczos and sharpen, so not on the GUI thread) and emits queued signals to the GUI thread; retries after Explorer restarts (1 s no Explorer, 5 s failed injection, 3 s after the DLL disconnects); `stop()` (also called by the destructor): sets the stop flag, releases the injection hook, cancels pending I/O, releases and closes the mutex (the DLL's watchdog then detaches and restores Shell_TrayWnd's window procedure within 5 s), `join`

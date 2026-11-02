@@ -20,13 +20,13 @@
 
 namespace {
 
-namespace plat = wabar::wallpapers;
-using wabar::kernel::HotkeyCombo;
-using wabar::kernel::parseHotkey;
-using wabar::kernel::ScopedFakeHotkeys;
-using wabar::wallpapers::DesktopState;
-using wabar::wallpapers::FakeBackend;
-using wabar::wallpapers::Wallpapers;
+namespace plat = waku::wallpapers;
+using waku::kernel::HotkeyCombo;
+using waku::kernel::parseHotkey;
+using waku::kernel::ScopedFakeHotkeys;
+using waku::wallpapers::DesktopState;
+using waku::wallpapers::FakeBackend;
+using waku::wallpapers::Wallpapers;
 
 HotkeyCombo combo(const char* keys) { return parseHotkey(QString::fromLatin1(keys)).value(); }
 
@@ -185,13 +185,13 @@ TEST(WallpapersService, ATakenHotkeyOrABadOneDoesNotBreakTheService) {
 TEST(WallpapersWidget, TheHotkeyOpensAGalleryWindowWithOneThumbnailPerFile) {
   Fixture f;
   Fixture* fixture = &f;
-  wabar::kernel::FakeHotkeyBackend* hotkeys = f.hotkeys.backend;
+  waku::kernel::FakeHotkeyBackend* hotkeys = f.hotkeys.backend;
   Wallpapers::setFactoryForTests([fixture]() { return std::move(fixture->service); });
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.widgets
+import waku
+import waku.widgets
 ShellRoot {
     Panel {
         content: PanelLayout {

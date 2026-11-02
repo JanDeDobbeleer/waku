@@ -2,8 +2,8 @@
 # the animated change (a Qt Quick overlay on WorkerW) and the lock screen picture that follows a
 # change. No dependencies on other features; the hotkey is a handle in kernel::Hotkeys.
 # wallpaper_command.h is the `wallpaper` verb of the control pipe and the WallpaperControl
-# interface the service implements; wabar.exe adds the verb to the bar's control handler.
-wabar_feature(
+# interface the service implements; waku.exe adds the verb to the bar's control handler.
+waku_feature(
   NAME wallpapers
   SOURCES
     desktop_wallpaper.h
@@ -61,4 +61,4 @@ wabar_feature(
 )
 
 # wallpaper_files.h names nlohmann::json in its API.
-target_link_libraries(wabar_wallpapers PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(waku_wallpapers PUBLIC nlohmann_json::nlohmann_json)

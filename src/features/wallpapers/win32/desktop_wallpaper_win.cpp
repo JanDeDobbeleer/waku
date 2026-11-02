@@ -11,7 +11,7 @@
 
 #include "kernel/win32/com_scope.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 namespace {
 
 template <typename T>
@@ -124,4 +124,4 @@ int compareLogical(const QString& a, const QString& b) {
   return StrCmpLogicalW(reinterpret_cast<PCWSTR>(a.utf16()), reinterpret_cast<PCWSTR>(b.utf16()));
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

@@ -1,6 +1,6 @@
 import QtQuick
 
-// Quickshell.Services.Pipewire's PwNodeAudio over a wabar audio object (the default output, the
+// Quickshell.Services.Pipewire's PwNodeAudio over a waku audio object (the default output, the
 // default input or one app's audio session). `volume` is 0 to 1 (above 1 is clamped on the way
 // out); writing `volume` or `muted` calls the service's own setter, and a change of the service
 // updates both.
@@ -13,7 +13,7 @@ QtObject {
     property QtObject source: null
     property real scale: 1
 
-    // Per channel; wabar has one volume per node, so every channel reports it.
+    // Per channel; waku has one volume per node, so every channel reports it.
     readonly property var channels: []
     readonly property var volumes: [volume]
     property real volume: 0

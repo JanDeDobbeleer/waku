@@ -5,7 +5,7 @@
 #include <QMutexLocker>
 #include <QSet>
 
-namespace wabar::kernel {
+namespace waku::kernel {
 
 namespace {
 
@@ -44,4 +44,4 @@ bool capabilityDisabled(const QString& capability) {
   return disabled().contains(capability);
 }
 
-}  // namespace wabar::kernel
+}  // namespace waku::kernel

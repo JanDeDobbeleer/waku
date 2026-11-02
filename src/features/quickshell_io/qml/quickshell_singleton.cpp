@@ -8,7 +8,7 @@
 
 #include "kernel/qt/app_data.h"
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 namespace {
 
@@ -19,10 +19,10 @@ constexpr int kEmulatedMinor = 3;
 
 QuickshellSingleton::Dirs QuickshellSingleton::defaultDirs() {
   Dirs dirs;
-  const QString fromEnv = qEnvironmentVariable("WABAR_CONFIG_HOME");
+  const QString fromEnv = qEnvironmentVariable("WAKU_CONFIG_HOME");
   dirs.shell = QDir::cleanPath(
-      fromEnv.isEmpty() ? QDir::homePath() + QStringLiteral("/.config/wabar") : fromEnv);
-  const QString base = kernel::localAppDataBase() + QStringLiteral("/wabar");
+      fromEnv.isEmpty() ? QDir::homePath() + QStringLiteral("/.config/waku") : fromEnv);
+  const QString base = kernel::localAppDataBase() + QStringLiteral("/waku");
   dirs.data = QDir::cleanPath(base + QStringLiteral("/data"));
   dirs.state = QDir::cleanPath(base + QStringLiteral("/state"));
   dirs.cache = QDir::cleanPath(base + QStringLiteral("/cache"));
@@ -134,4 +134,4 @@ double ElapsedTimer::restartNs() {
 double ElapsedTimer::restartMs() { return restartNs() / 1e6; }
 double ElapsedTimer::restart() { return restartNs() / 1e9; }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

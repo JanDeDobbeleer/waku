@@ -1,12 +1,12 @@
 import QtQuick
 
-// Quickshell.Services.Pipewire's PwNode over a wabar audio object. Pipewire creates these; a shell
+// Quickshell.Services.Pipewire's PwNode over a waku audio object. Pipewire creates these; a shell
 // does not declare one.
 //
 //   kind  "sink" (the default output), "source" (the default input) or "stream" (one app's audio
 //         session)
 //
-// `source` is the wabar object behind the node: AudioOutput, AudioInput or an AudioStream.
+// `source` is the waku object behind the node: AudioOutput, AudioInput or an AudioStream.
 // `properties` holds the keys shells read: application.name, application.icon-name, media.class,
 // node.name and node.description. There is no media.title or media.artist.
 QtObject {

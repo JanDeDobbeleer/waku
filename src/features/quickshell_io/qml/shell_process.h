@@ -12,7 +12,7 @@
 
 #include "features/quickshell_io/process_job.h"
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 // Runs a command without a console window and exposes its output to QML. `run()` starts it once;
 // `interval > 0` also reruns it every interval ms (a run still in progress is not restarted).
@@ -88,4 +88,4 @@ class ShellProcess : public QObject, public QQmlParserStatus {
   QTimer timeoutTimer_;
 };
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

@@ -2,7 +2,7 @@
 
 #include "features/quickshell_io/process_job.h"
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 struct ProcessJob::Impl {
   HANDLE job = nullptr;
@@ -45,4 +45,4 @@ void ProcessJob::release() {
   if (impl_->job) impl_->setKillOnClose(false);
 }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

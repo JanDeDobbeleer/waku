@@ -25,7 +25,7 @@
 #include "kernel/win32/com_scope.h"
 #include "kernel/win32/environment.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 namespace {
 
 constexpr const char* kRecycleBinClsid = "645FF040-5081-101B-9F08-00AA002F954E";
@@ -617,4 +617,4 @@ std::optional<ShortcutInfo> readShortcut(const QString& path) {
 
 std::shared_ptr<PinSupport> makeWin32PinSupport() { return std::make_shared<Win32PinSupport>(); }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

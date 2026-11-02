@@ -6,8 +6,8 @@
 
 #include "kernel/win32/com_scope.h"
 
-using wabar::kernel::ComApartment;
-using wabar::kernel::ComScope;
+using waku::kernel::ComApartment;
+using waku::kernel::ComScope;
 
 namespace {
 

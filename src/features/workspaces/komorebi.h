@@ -8,7 +8,7 @@
 #include <optional>
 #include <thread>
 
-namespace wabar::workspaces::komorebi {
+namespace waku::workspaces::komorebi {
 
 struct KomorebicResult {
   bool started = false;
@@ -102,4 +102,4 @@ class KomorebiPipeListener {
   std::thread thread_;
 };
 
-}  // namespace wabar::workspaces::komorebi
+}  // namespace waku::workspaces::komorebi

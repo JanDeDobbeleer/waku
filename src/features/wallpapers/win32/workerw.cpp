@@ -5,7 +5,7 @@
 #include <QByteArray>
 #include <string>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 namespace {
 
 constexpr const wchar_t* kDesktopKey = L"Control Panel\\Desktop";
@@ -199,4 +199,4 @@ void detachFromWorkerW(std::uintptr_t handle) {
   SetWindowLongPtrW(hwnd, GWL_EXSTYLE, exStyle);
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

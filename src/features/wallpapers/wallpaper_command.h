@@ -3,10 +3,10 @@
 #include <QString>
 #include <QStringList>
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
-// What the `wallpaper` commands of `wabarc` ask of the wallpaper service. The command parser
-// below depends on this interface only (so its tests use a fake); wabar::wallpapers::Wallpapers
+// What the `wallpaper` commands of `wakuc` ask of the wallpaper service. The command parser
+// below depends on this interface only (so its tests use a fake); waku::wallpapers::Wallpapers
 // implements it. Every function returns the answer line: "ok: <text>" or "error: <text>".
 // `dryRun` plays the transition but never calls the wallpaper setter.
 class WallpaperControl {
@@ -29,4 +29,4 @@ class WallpaperControl {
 // control handler (host::ControlCommands), so neither `control` nor `host` knows the verb.
 QString answerWallpaperCommand(const QStringList& words, WallpaperControl* wallpapers);
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

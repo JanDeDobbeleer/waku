@@ -12,7 +12,7 @@
 
 #include "kernel/qt/file_write.h"
 
-namespace wabar::color_scheme {
+namespace waku::color_scheme {
 
 ImageStatsCache::ImageStatsCache(QString file) : file_(std::move(file)) { load(); }
 
@@ -99,4 +99,4 @@ void ImageStatsCache::save() {
   kernel::writeFileAtomic(file_, QJsonDocument(root).toJson(QJsonDocument::Compact));
 }
 
-}  // namespace wabar::color_scheme
+}  // namespace waku::color_scheme

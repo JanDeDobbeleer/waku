@@ -10,7 +10,7 @@
 #include "features/workspaces/event_bus.h"
 #include "features/workspaces/komorebi_service.h"
 
-namespace wabar::workspaces {
+namespace waku::workspaces {
 
 // komorebi as a QML singleton, shared by every widget. Wraps komorebi::KomorebiService
 // (the named-pipe listener and `komorebic` commands) behind a private EventBus; the singleton
@@ -67,4 +67,4 @@ class Komorebi : public QObject {
   QVariantList monitors_;
 };
 
-}  // namespace wabar::workspaces
+}  // namespace waku::workspaces

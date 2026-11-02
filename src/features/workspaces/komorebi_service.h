@@ -11,7 +11,7 @@
 
 #include "features/workspaces/komorebi.h"
 
-namespace wabar::workspaces {
+namespace waku::workspaces {
 
 class EventBus;
 
@@ -45,7 +45,7 @@ class KomorebiService : public QObject {
  public:
   using CommandRunner = std::function<void(const std::vector<QStringList>& commands)>;
 
-  // Default: real komorebic backend, unique `wabar-<uuid>` pipe, detached hidden commands. Inert
+  // Default: real komorebic backend, unique `waku-<uuid>` pipe, detached hidden commands. Inert
   // unless kernel::liveDesktop("komorebi"): it never listens and runs no command, so a test or the
   // offscreen platform does not talk to a komorebi that happens to run on the machine.
   explicit KomorebiService(EventBus& bus);
@@ -83,6 +83,6 @@ class KomorebiService : public QObject {
 };
 
 }  // namespace komorebi
-}  // namespace wabar::workspaces
+}  // namespace waku::workspaces
 
-Q_DECLARE_METATYPE(wabar::workspaces::komorebi::JsonPtr)
+Q_DECLARE_METATYPE(waku::workspaces::komorebi::JsonPtr)

@@ -3,7 +3,7 @@
 
 #include "host/region_math.h"
 
-using namespace wabar::host;
+using namespace waku::host;
 
 namespace {
 

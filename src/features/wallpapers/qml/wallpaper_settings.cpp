@@ -7,10 +7,10 @@
 
 #include "features/wallpapers/qml/wallpapers_service.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 namespace {
 
-constexpr auto kGalleryUrl = "qrc:/qt/qml/wabar/widgets/WallpaperGallery.qml";
+constexpr auto kGalleryUrl = "qrc:/qt/qml/waku/widgets/WallpaperGallery.qml";
 
 }  // namespace
 
@@ -41,7 +41,7 @@ void WallpaperSettings::activate() {
       qWarning() << "WallpaperSettings: no QML engine, nothing configured";
       return;
     }
-    service_ = engine->singletonInstance<Wallpapers*>(QStringLiteral("wabar.services"),
+    service_ = engine->singletonInstance<Wallpapers*>(QStringLiteral("waku.services"),
                                                       QStringLiteral("Wallpapers"));
     if (!service_) {
       qWarning() << "WallpaperSettings: the Wallpapers service is not available";
@@ -72,7 +72,7 @@ void WallpaperSettings::apply() {
 }
 
 void WallpaperSettings::createGallery() {
-  // The gallery is QML (wabar.widgets, which depends on this module), so it is loaded by URL.
+  // The gallery is QML (waku.widgets, which depends on this module), so it is loaded by URL.
   QQmlEngine* engine = qmlEngine(this);
   QQmlComponent component(engine, QUrl(QString::fromLatin1(kGalleryUrl)));
   QObject* gallery =
@@ -91,4 +91,4 @@ void WallpaperSettings::createGallery() {
   gallery_ = gallery;
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

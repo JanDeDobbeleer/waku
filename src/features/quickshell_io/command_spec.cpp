@@ -6,7 +6,7 @@
 
 #include "kernel/win32/shell_launch.h"
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 namespace {
 
@@ -71,4 +71,4 @@ bool startDetachedSpec(const CommandSpec& spec) {
   return process.startDetached();
 }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

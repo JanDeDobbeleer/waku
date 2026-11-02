@@ -8,7 +8,7 @@ namespace {
 // (Workspaces and Volume would start komorebi, GlazeWM and audio clients).
 const char* kTinySafe = R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Panel {
         content: PanelLayout {
@@ -53,11 +53,10 @@ TEST(SafeMode, TheThemeFileIsIgnored) {
   ASSERT_TRUE(h.dir.isValid());
   useTinySafeShell(h);
   write(h.dir.filePath(QStringLiteral("theme.qml")),
-        QStringLiteral("import wabar\nThemeSpec { accent: \"#ff0000\"; fontSize: 30 }\n"));
+        QStringLiteral("import waku\nThemeSpec { accent: \"#ff0000\"; fontSize: 30 }\n"));
   h.makeHost();
   ASSERT_TRUE(h.host->reload());
-  auto* theme =
-      h.engine.singletonInstance<Theme*>(QStringLiteral("wabar"), QStringLiteral("Theme"));
+  auto* theme = h.engine.singletonInstance<Theme*>(QStringLiteral("waku"), QStringLiteral("Theme"));
   ASSERT_NE(theme, nullptr);
   EXPECT_EQ(theme->property("accent").value<QColor>(), QColor(0x5b, 0x8d, 0xef));
   EXPECT_EQ(theme->property("fontSize").toInt(), 13);
@@ -118,7 +117,7 @@ TEST(SafeMode, TheBuiltInSafeShellIsAValidShell) {
   ASSERT_TRUE(h.dir.isValid());
   h.makeHost();
   EXPECT_EQ(ShellHost::safeShellUrl().toString(),
-            QStringLiteral("qrc:/qt/qml/wabar/widgets/SafeShell.qml"));
+            QStringLiteral("qrc:/qt/qml/waku/widgets/SafeShell.qml"));
   QString error;
   // Checking creates nothing: no widget is built and no service starts.
   EXPECT_TRUE(h.host->checkShell(ShellHost::safeShellUrl(), &error)) << qPrintable(error);

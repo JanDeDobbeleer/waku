@@ -5,7 +5,7 @@
 
 #include "features/wallpapers/wallpaper_layout.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 QSize decodeSize(QSize image, const DecodeBudget& budget) {
   if (image.width() <= 0 || image.height() <= 0) return image;
@@ -32,4 +32,4 @@ QImage decodeWallpaper(const QString& path, const DecodeBudget& budget, bool aut
   return reader.read();
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

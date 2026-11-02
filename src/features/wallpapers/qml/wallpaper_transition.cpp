@@ -15,7 +15,7 @@
 
 #include "kernel/qt/gui_post.h"
 
-namespace wabar::wallpapers {
+namespace waku::wallpapers {
 
 void paintWallpaperFrame(QPainter& painter, const std::vector<ScreenArea>& areas,
                          const std::vector<ScaledImage>& oldImages,
@@ -59,11 +59,11 @@ void paintWallpaperFrame(QPainter& painter, const std::vector<ScreenArea>& areas
 WallpaperTransition::Platform WallpaperTransition::systemPlatform() {
   Platform platform;
   platform.readSettings = [] { return readDesktopSettings(); };
-  platform.oldImagePath = [] { return wabar::wallpapers::transcodedWallpaperPath(); };
+  platform.oldImagePath = [] { return waku::wallpapers::transcodedWallpaperPath(); };
   platform.attach = [](std::uintptr_t hwnd, QString* failure) {
-    return wabar::wallpapers::attachToWorkerW(hwnd, failure);
+    return waku::wallpapers::attachToWorkerW(hwnd, failure);
   };
-  platform.detach = [](std::uintptr_t hwnd) { wabar::wallpapers::detachFromWorkerW(hwnd); };
+  platform.detach = [](std::uintptr_t hwnd) { waku::wallpapers::detachFromWorkerW(hwnd); };
   platform.desktopSize = [] {
     QRect desktop;
     for (const QScreen* screen : QGuiApplication::screens()) {
@@ -278,4 +278,4 @@ QImage WallpaperTransition::renderFrame() const {
   return image;
 }
 
-}  // namespace wabar::wallpapers
+}  // namespace waku::wallpapers

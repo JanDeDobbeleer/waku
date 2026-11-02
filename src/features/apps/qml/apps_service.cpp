@@ -13,7 +13,7 @@
 #include "kernel/qt/linger.h"
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::apps {
+namespace waku::apps {
 
 AppCatalog::AppCatalog(QObject* parent) : QObject(parent) {
   watcher_ = new QFileSystemWatcher(this);
@@ -59,13 +59,13 @@ std::function<std::unique_ptr<AppsService>()>& testFactory() {
 
 AppsService::Deps realDeps() {
   AppsService::Deps deps;
-  if (!wabar::kernel::liveDesktop(QStringLiteral("apps"))) return deps;
+  if (!waku::kernel::liveDesktop(QStringLiteral("apps"))) return deps;
   deps.folders = startMenuFolders();
   deps.resolver = makeWin32ShortcutResolver();
   deps.appsFolder = makeWin32AppsFolderEnumerator();
   deps.launcher = makeWin32Launcher();
   deps.iconLoader = realIconLoader();
-  deps.frecencyPath = wabar::kernel::appDataDir() + QStringLiteral("/apps_frecency.json");
+  deps.frecencyPath = waku::kernel::appDataDir() + QStringLiteral("/apps_frecency.json");
   deps.watch = true;
   deps.catalog = acquireAppCatalog();
   return deps;
@@ -337,4 +337,4 @@ void AppsService::watchFolders() {
   if (!directories.isEmpty()) watcher_->addPaths(directories);
 }
 
-}  // namespace wabar::apps
+}  // namespace waku::apps

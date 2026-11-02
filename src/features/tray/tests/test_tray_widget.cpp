@@ -19,10 +19,10 @@
 
 namespace {
 
-namespace plat = wabar::tray;
-using wabar::tray::FakeApi;
-using wabar::tray::FakeHost;
-using wabar::tray::Systray;
+namespace plat = waku::tray;
+using waku::tray::FakeApi;
+using waku::tray::FakeHost;
+using waku::tray::Systray;
 
 constexpr std::uint32_t kCallback = 0x8001;
 
@@ -84,23 +84,23 @@ class TrayWidgetTest : public testing::Test {
   static QString screenId() {
     QScreen* screen = QGuiApplication::primaryScreen();
     const QString id =
-        wabar::tray::cleanScreenId(screen->manufacturer(), screen->name(), screen->serialNumber());
+        waku::tray::cleanScreenId(screen->manufacturer(), screen->name(), screen->serialNumber());
     return id.isEmpty() ? QStringLiteral("None") : id;
   }
   // Writes the saved state before the bar exists.
   void saveState(const QStringList& entries) {
-    write(wabar::tray::SystrayStateStore(state_.path(), screenId()).path(),
+    write(waku::tray::SystrayStateStore(state_.path(), screenId()).path(),
           QStringLiteral("{") + entries.join(QLatin1Char(',')) + QStringLiteral("}"));
   }
-  wabar::tray::IconStateMap loadState() const {
-    return wabar::tray::SystrayStateStore(state_.path(), screenId()).load();
+  waku::tray::IconStateMap loadState() const {
+    return waku::tray::SystrayStateStore(state_.path(), screenId()).load();
   }
 
   QString trayConfig(const QString& props = QString()) const {
     return QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.widgets
+import waku
+import waku.widgets
 ShellRoot {
     Panel {
         content: PanelLayout {

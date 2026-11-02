@@ -9,7 +9,7 @@
 
 #include "host/thumbnail.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 class FakeThumbnailBackend : public ThumbnailBackend {
  public:
@@ -54,4 +54,4 @@ class FakeThumbnailBackend : public ThumbnailBackend {
   quintptr nextHandle_ = 100;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

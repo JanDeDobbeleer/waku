@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <exception>
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 namespace {
 
 // Runs `fn`, logging instead of letting anything escape into Qt (slots, timers, hook callbacks).
@@ -420,4 +420,4 @@ void WindowTracker::rescanWindows() {
   enumerateExisting();
 }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

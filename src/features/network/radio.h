@@ -4,7 +4,7 @@
 #include <QString>
 #include <memory>
 
-namespace wabar::network {
+namespace waku::network {
 
 // The Wi-Fi radio switch, asynchronous. Every method returns at once; the work runs off the GUI
 // thread and the results arrive as queued signals. Tests substitute a fake; the real backend
@@ -30,4 +30,4 @@ class WifiRadioBackend : public QObject {
 // The real backend; null off the live desktop.
 std::unique_ptr<WifiRadioBackend> createSystemWifiRadio();
 
-}  // namespace wabar::network
+}  // namespace waku::network

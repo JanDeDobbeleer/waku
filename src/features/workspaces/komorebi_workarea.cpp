@@ -9,7 +9,7 @@
 
 #include "kernel/qt/live_desktop.h"
 
-namespace wabar::workspaces::komorebi {
+namespace waku::workspaces::komorebi {
 namespace {
 
 // ERROR_ACCESS_DENIED: UIPI refuses a message to a process of a higher integrity level.
@@ -115,7 +115,7 @@ void KomorebiWorkAreaGuard::notifyOnce() {
     qWarning().noquote() << QStringLiteral("komorebi work area nudge refused (error %1)%2")
                                 .arg(result.error)
                                 .arg(result.error == kAccessDenied
-                                         ? QStringLiteral(": komorebi runs elevated, wabar not")
+                                         ? QStringLiteral(": komorebi runs elevated, waku not")
                                          : QString());
   } catch (const std::exception& error) {
     qWarning().noquote() << "komorebi work area nudge failed:" << error.what();
@@ -131,4 +131,4 @@ std::unique_ptr<KomorebiWorkAreaGuard> makeKomorebiWorkAreaGuard(QObject* parent
                                                  KomorebiWorkAreaGuard::Timing{}, parent);
 }
 
-}  // namespace wabar::workspaces::komorebi
+}  // namespace waku::workspaces::komorebi

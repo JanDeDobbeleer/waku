@@ -1,4 +1,4 @@
-// The wallpapers service behind `wabarc wallpaper ...`: which file a target means and whether it
+// The wallpapers service behind `wakuc wallpaper ...`: which file a target means and whether it
 // is set (on a fake IDesktopWallpaper and temporary folders, so the real wallpaper setter never
 // runs), and WallpaperSettings.
 #include <gtest/gtest.h>
@@ -20,16 +20,16 @@
 
 namespace {
 
-namespace plat = wabar::wallpapers;
-using wabar::kernel::HotkeyCombo;
-using wabar::kernel::Hotkeys;
-using wabar::kernel::parseHotkey;
-using wabar::kernel::ScopedFakeHotkeys;
-using wabar::wallpapers::DesktopState;
-using wabar::wallpapers::FakeBackend;
-using wabar::wallpapers::resolveWallpaperTarget;
-using wabar::wallpapers::Wallpapers;
-using wabar::wallpapers::WallpaperTransition;
+namespace plat = waku::wallpapers;
+using waku::kernel::HotkeyCombo;
+using waku::kernel::Hotkeys;
+using waku::kernel::parseHotkey;
+using waku::kernel::ScopedFakeHotkeys;
+using waku::wallpapers::DesktopState;
+using waku::wallpapers::FakeBackend;
+using waku::wallpapers::resolveWallpaperTarget;
+using waku::wallpapers::Wallpapers;
+using waku::wallpapers::WallpaperTransition;
 
 void makeImage(const QString& path, const QColor& color) {
   QImage image(QSize(40, 20), QImage::Format_RGB32);
@@ -59,13 +59,13 @@ std::unique_ptr<WallpaperTransition> fakeTransition(const std::shared_ptr<Transi
                                                     const QString& path, const QString& animation) {
   log->played << path + QLatin1Char('|') + animation;
   WallpaperTransition::Platform platform;
-  platform.readSettings = [] { return wabar::wallpapers::DesktopSettings{}; };
+  platform.readSettings = [] { return waku::wallpapers::DesktopSettings{}; };
   platform.oldImagePath = [] { return QStringLiteral("old"); };
   platform.attach = [](std::uintptr_t, QString* failure) -> std::optional<plat::WorkerWAttachment> {
     if (failure) *failure = QStringLiteral("no WorkerW");
     return std::nullopt;
   };
-  platform.decode = [](const QString&, const QString&, const wabar::wallpapers::DecodeBudget&) {
+  platform.decode = [](const QString&, const QString&, const waku::wallpapers::DecodeBudget&) {
     QImage image(QSize(8, 8), QImage::Format_RGB32);
     image.fill(Qt::blue);
     return std::make_pair(image, image);
@@ -384,8 +384,8 @@ namespace {
 QString settingsConfig(const QString& folder, const QString& extra = QString()) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.services
+import waku
+import waku.services
 
 ShellRoot {
     WallpaperSettings { objectName: "settings"; imagePath: "%1"; hotkey: "ctrl+shift+f5"; engine: true; animation: "fade"; %2 }
@@ -400,7 +400,7 @@ ShellRoot {
 TEST(WallpaperSettingsTest, ConfiguresAndCreatesTheServiceWithoutAWidget) {
   Fixture f;
   Fixture* fixture = &f;
-  wabar::kernel::FakeHotkeyBackend* hotkeys = f.hotkeys.backend;
+  waku::kernel::FakeHotkeyBackend* hotkeys = f.hotkeys.backend;
   const HotkeyCombo ctrlShiftF5 = parseHotkey(QStringLiteral("ctrl+shift+f5")).value();
   int created = 0;
   Wallpapers::setFactoryForTests([fixture, &created]() {
@@ -412,7 +412,7 @@ TEST(WallpaperSettingsTest, ConfiguresAndCreatesTheServiceWithoutAWidget) {
   const bool loaded = h.host->reload();
   Wallpapers* service = nullptr;
   if (loaded) {
-    service = h.engine.singletonInstance<Wallpapers*>(QStringLiteral("wabar.services"),
+    service = h.engine.singletonInstance<Wallpapers*>(QStringLiteral("waku.services"),
                                                       QStringLiteral("Wallpapers"));
   }
   Wallpapers::setFactoryForTests({});
@@ -479,7 +479,7 @@ TEST(WallpaperSettingsTest, AReloadReplacesTheServiceAndConfiguresTheNewOne) {
   h.start(settingsConfig(f.folder.path()));
   ASSERT_TRUE(h.host->reload());
   auto current = [&] {
-    return h.engine.singletonInstance<Wallpapers*>(QStringLiteral("wabar.services"),
+    return h.engine.singletonInstance<Wallpapers*>(QStringLiteral("waku.services"),
                                                    QStringLiteral("Wallpapers"));
   };
   QPointer<Wallpapers> first = current();
@@ -516,8 +516,8 @@ TEST(WallpaperSettingsTest, AShellWithoutWindowsLoadsToo) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
-import wabar.services
+import waku
+import waku.services
 ShellRoot { WallpaperSettings { imagePath: "%1" } }
 )")
               .arg(QDir::fromNativeSeparators(f.folder.path())));

@@ -11,7 +11,7 @@
 namespace {
 
 QString galleryExample() {
-  QFile file(QStringLiteral(WABAR_EXAMPLES_DIR "/gallery/shell.qml"));
+  QFile file(QStringLiteral(WAKU_EXAMPLES_DIR "/gallery/shell.qml"));
   if (!file.open(QIODevice::ReadOnly)) return {};
   return QString::fromUtf8(file.readAll());
 }
@@ -26,7 +26,7 @@ TEST(GalleryExample, LoadsAFloatingWindowWithThumbnailsAndAWindowPreview) {
   ASSERT_TRUE(h.host->reload());
   EXPECT_TRUE(h.host->error().isEmpty()) << h.host->error().toStdString();
   ASSERT_EQ(h.host->windows().size(), 1);
-  EXPECT_NE(qobject_cast<wabar::host::FloatingWindow*>(h.shellWindow()), nullptr);
+  EXPECT_NE(qobject_cast<waku::host::FloatingWindow*>(h.shellWindow()), nullptr);
 
   QQuickItem* thumb = item(h, QStringLiteral("thumb"));
   ASSERT_NE(thumb, nullptr);

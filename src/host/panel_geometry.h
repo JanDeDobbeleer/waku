@@ -7,7 +7,7 @@
 
 #include "host/app_bar.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 // The edges a PanelWindow is anchored to (Quickshell `anchors`).
 struct PanelAnchorSet {
@@ -43,4 +43,4 @@ int panelThickness(AppBarEdge edge, const QSize& size);
 int panelReservedZone(const PanelAnchorSet& anchors, const QMargins& margins, int mode,
                       int exclusiveZone, const QSize& size);
 
-}  // namespace wabar::host
+}  // namespace waku::host

@@ -23,7 +23,7 @@
 
 namespace {
 
-using wabar::host::ScreenList;
+using waku::host::ScreenList;
 
 // The layout a child process runs on, from the environment the parent sets.
 struct Layout {
@@ -34,7 +34,7 @@ struct Layout {
   int logicalHeight = 0;
 };
 
-constexpr const char* kLayoutVar = "WABAR_TEST_SCREEN_LAYOUT";
+constexpr const char* kLayoutVar = "WAKU_TEST_SCREEN_LAYOUT";
 
 QString encode(const Layout& l) {
   return QStringLiteral("%1,%2,%3,%4,%5")
@@ -82,7 +82,7 @@ QString runChild(const Layout& layout, QTemporaryDir& dir) {
 
   QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
   // The platform string splits at ':', so a drive letter breaks the path: pass a relative one.
-  env.insert(QStringLiteral("WABAR_TEST_SCREEN_CONFIG"), QStringLiteral("screens.json"));
+  env.insert(QStringLiteral("WAKU_TEST_SCREEN_CONFIG"), QStringLiteral("screens.json"));
   env.insert(QString::fromLatin1(kLayoutVar), encode(layout));
   QProcess child;
   child.setWorkingDirectory(dir.path());
@@ -124,7 +124,7 @@ TEST(ShellScreenUnitsChild, MatchesQScreenUnits) {
 
   ScreenList list;
   ASSERT_EQ(list.list().size(), 1);
-  const wabar::host::ShellScreen* screen = list.list().first();
+  const waku::host::ShellScreen* screen = list.list().first();
   const QScreen* qscreen = screen->qscreen();
   ASSERT_NE(qscreen, nullptr);
 

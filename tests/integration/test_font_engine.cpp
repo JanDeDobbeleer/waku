@@ -1,9 +1,9 @@
-// Parsing of wabar.exe's --font-engine option (pure; nothing starts).
+// Parsing of waku.exe's --font-engine option (pure; nothing starts).
 #include <gtest/gtest.h>
 
-#include "app/wabar/font_engine.h"
+#include "app/waku/font_engine.h"
 
-using namespace wabar::app;
+using namespace waku::app;
 
 TEST(FontEngineTest, TheDefaultIsGdi) {
   const FontEngineChoice choice = parseFontEngine({});

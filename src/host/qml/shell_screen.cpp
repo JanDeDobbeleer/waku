@@ -6,7 +6,7 @@
 
 #include "host/screen_match.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 ShellScreen::ShellScreen(QScreen* screen, bool primary, QObject* parent)
     : QObject(parent),
@@ -25,7 +25,7 @@ ScreenList::ScreenList(QObject* parent) : QObject(parent) {
 
 ScreenList* ScreenList::of(QQmlEngine* engine) {
   if (!engine) return nullptr;
-  return engine->singletonInstance<ScreenList*>(QStringLiteral("wabar"),
+  return engine->singletonInstance<ScreenList*>(QStringLiteral("waku"),
                                                 QStringLiteral("ScreenList"));
 }
 
@@ -93,4 +93,4 @@ QQmlListProperty<ShellScreen> ScreenList::screensProperty() {
       });
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

@@ -4,7 +4,7 @@
 #include <QString>
 #include <QStringList>
 
-namespace wabar::host {
+namespace waku::host {
 
 // Guards the QML plugins a user builds into `<config home>/modules` or an `--import-path` folder.
 // A plugin built against another Qt version, in the other debug/release flavour, or for another
@@ -61,4 +61,4 @@ QStringList importRoots(const QString& configHome, const QStringList& extra);
 // and the reason, and its root is left out.
 QStringList usableImportRoots(const QStringList& roots);
 
-}  // namespace wabar::host
+}  // namespace waku::host

@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Window
-import wabar
-import wabar.services as S
+import waku
+import waku.services as S
 
 // The workspaces of this bar's monitor, from whichever tiling window manager is running (komorebi
 // or GlazeWM). A click shows a workspace, the wheel steps through them. Hidden when neither runs.

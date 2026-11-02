@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import wabar
-import wabar.services as S
+import waku
+import waku.services as S
 
 // The Action Center toasts. A click opens a list (app, title, body, time; click a toast to open
 // it, the cross dismisses it, "Clear all" empties the list), a right click clears everything.

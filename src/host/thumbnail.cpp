@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace wabar::host {
+namespace waku::host {
 
 QRect thumbnailDestination(const QRectF& sceneRect, qreal devicePixelRatio, const QSize& source,
                            bool preserveAspect) {
@@ -24,4 +24,4 @@ QRect thumbnailDestination(const QRectF& sceneRect, qreal devicePixelRatio, cons
                fittedHeight);
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

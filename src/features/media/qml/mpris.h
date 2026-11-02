@@ -12,7 +12,7 @@
 
 #include "features/media/media_session.h"
 
-namespace wabar::media {
+namespace waku::media {
 
 // Enum holders for QML (`MprisLoopState.Track`, `MprisPlaybackState.Playing`), as in
 // Quickshell.Services.Mpris.
@@ -57,7 +57,7 @@ class MprisPlayer : public QObject {
   Q_PROPERTY(bool positionSupported READ positionSupported NOTIFY canSeekChanged FINAL)
   Q_PROPERTY(bool lengthSupported READ lengthSupported NOTIFY canSeekChanged FINAL)
   Q_PROPERTY(bool isPlaying READ isPlaying NOTIFY isPlayingChanged FINAL)
-  Q_PROPERTY(wabar::media::MprisPlaybackState::Enum playbackState READ playbackState NOTIFY
+  Q_PROPERTY(waku::media::MprisPlaybackState::Enum playbackState READ playbackState NOTIFY
                  playbackStateChanged FINAL)
   Q_PROPERTY(bool canControl READ canControl CONSTANT FINAL)
   Q_PROPERTY(bool canPlay READ canPlay NOTIFY canPlayChanged FINAL)
@@ -69,7 +69,7 @@ class MprisPlayer : public QObject {
   Q_PROPERTY(bool shuffleSupported READ shuffleSupported NOTIFY shuffleSupportedChanged FINAL)
   Q_PROPERTY(bool shuffle READ shuffle WRITE setShuffle NOTIFY shuffleChanged)
   Q_PROPERTY(bool loopSupported READ loopSupported NOTIFY loopSupportedChanged FINAL)
-  Q_PROPERTY(wabar::media::MprisLoopState::Enum loopState READ loopState WRITE setLoopState NOTIFY
+  Q_PROPERTY(waku::media::MprisLoopState::Enum loopState READ loopState WRITE setLoopState NOTIFY
                  loopStateChanged)
 
  public:
@@ -168,7 +168,7 @@ class MprisPlayer : public QObject {
 class MprisPlayerModel : public QAbstractListModel {
   Q_OBJECT
   QML_ANONYMOUS
-  Q_PROPERTY(QList<wabar::media::MprisPlayer*> values READ values NOTIFY valuesChanged FINAL)
+  Q_PROPERTY(QList<waku::media::MprisPlayer*> values READ values NOTIFY valuesChanged FINAL)
   Q_PROPERTY(int count READ count NOTIFY valuesChanged FINAL)
 
  public:
@@ -192,14 +192,14 @@ class MprisPlayerModel : public QAbstractListModel {
 };
 
 // Quickshell.Services.Mpris' `Mpris` singleton over the GSMTC sessions. `players` is every media
-// session; `activePlayer` is the one wabar follows (the system's current session; assigning a
+// session; `activePlayer` is the one waku follows (the system's current session; assigning a
 // player selects it). Shares the process's MediaSessionService with `Media`.
 class Mpris : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
-  Q_PROPERTY(wabar::media::MprisPlayerModel* players READ players CONSTANT FINAL)
-  Q_PROPERTY(wabar::media::MprisPlayer* activePlayer READ activePlayer WRITE setActivePlayer NOTIFY
+  Q_PROPERTY(waku::media::MprisPlayerModel* players READ players CONSTANT FINAL)
+  Q_PROPERTY(waku::media::MprisPlayer* activePlayer READ activePlayer WRITE setActivePlayer NOTIFY
                  activePlayerChanged)
 
  public:
@@ -224,4 +224,4 @@ class Mpris : public QObject {
   int nextSerial_ = 1;
 };
 
-}  // namespace wabar::media
+}  // namespace waku::media

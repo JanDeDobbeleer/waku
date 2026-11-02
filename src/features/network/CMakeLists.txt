@@ -1,7 +1,7 @@
 # Wi-Fi, Ethernet and VPN state, Wi-Fi scan and connect, the Wi-Fi radio switch, VPN control,
 # interface throughput, and the Wifi widget. The Wifi widget opens
 # the Windows network settings through Shell (QML only). StatSource comes from kernel/qml.
-wabar_feature(NAME network
+waku_feature(NAME network
   DEPENDS quickshell_io
   SOURCES
     connectivity.h

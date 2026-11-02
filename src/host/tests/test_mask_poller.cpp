@@ -9,7 +9,7 @@
 
 #include "host/mask_poller.h"
 
-using namespace wabar::host;
+using namespace waku::host;
 
 namespace {
 

@@ -1,11 +1,11 @@
 pragma Singleton
 import QtQml
-import wabar.services as S
+import waku.services as S
 
 // Quickshell's `DesktopEntries` singleton: the app catalogue as DesktopEntry objects (Start Menu
 // shortcuts and Store apps, see src/features/apps/design.md). A QML file because the host unit
-// cannot include a feature's headers. The DesktopEntry and DesktopAction types are wabar.services
-// types that `import Quickshell` re-exports (the qmldir `import wabar.services` line).
+// cannot include a feature's headers. The DesktopEntry and DesktopAction types are waku.services
+// types that `import Quickshell` re-exports (the qmldir `import waku.services` line).
 QtObject {
     // A model of DesktopEntry (role modelData) with a `values` array, sorted by name.
     readonly property var applications: S.AppsService.applications

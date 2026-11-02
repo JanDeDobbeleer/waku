@@ -33,7 +33,7 @@
 #include "kernel/win32/winrt_apartment.h"
 #include "kernel/win32/winrt_strings.h"
 
-namespace wabar::bluetooth {
+namespace waku::bluetooth {
 
 // --- Windows access --------------------------------------------------------------------------
 
@@ -223,9 +223,9 @@ std::optional<int> readBattery(quint64 address) {
   return hfpPresent ? hfpLevel : fallback;
 }
 
-// WABAR_BT_DEBUG=1 logs every refresh decision (radio result, counts, branch, thread).
+// WAKU_BT_DEBUG=1 logs every refresh decision (radio result, counts, branch, thread).
 bool btDebug() {
-  static const bool on = qEnvironmentVariableIntValue("WABAR_BT_DEBUG") != 0;
+  static const bool on = qEnvironmentVariableIntValue("WAKU_BT_DEBUG") != 0;
   return on;
 }
 
@@ -452,7 +452,7 @@ QString pairingFailure(enumeration::DevicePairingResultStatus status) {
     case Status::AuthenticationNotAllowed:
     case Status::InvalidCeremonyData:
     case Status::ProtectionLevelCouldNotBeMet:
-      return wabar::bluetooth::pairNeedsSettingsMessage();
+      return waku::bluetooth::pairNeedsSettingsMessage();
     case Status::PairingCanceled:
       return QStringLiteral("Pairing cancelled");
     case Status::AuthenticationTimeout:
@@ -471,7 +471,7 @@ QString pairingFailure(enumeration::DevicePairingResultStatus status) {
 }
 
 // The DeviceInformation of a device by address (documented WinRT), or an empty object.
-enumeration::DeviceInformation deviceInformationFor(const wabar::bluetooth::BluetoothDevice& d) {
+enumeration::DeviceInformation deviceInformationFor(const waku::bluetooth::BluetoothDevice& d) {
   if (d.isLe) {
     const auto le = bt::BluetoothLEDevice::FromBluetoothAddressAsync(d.addressInt).get();
     return le ? le.DeviceInformation() : nullptr;
@@ -525,7 +525,7 @@ class BluetoothWorker : public QObject {
 
  public slots:
   void start() {
-    wabar::kernel::ensureWinrtApartment();
+    waku::kernel::ensureWinrtApartment();
     // stopSoon() may run on the GUI thread at any point; it sets stopping_ before it clears
     // started_, so either this sees stopping_ or stopSoon's clear comes after this store.
     started_ = true;
@@ -569,7 +569,7 @@ class BluetoothWorker : public QObject {
 
   void refresh() {
     if (!started_) return;
-    wabar::kernel::ensureWinrtApartment();
+    waku::kernel::ensureWinrtApartment();
     const bool refreshLe = refreshLePending_ || leCache_.empty();
     refreshLePending_ = false;
     try {
@@ -647,7 +647,7 @@ class BluetoothWorker : public QObject {
 
   void scan() {
     if (!started_) return;
-    wabar::kernel::ensureWinrtApartment();
+    waku::kernel::ensureWinrtApartment();
     emit scanStarted();
     try {
       const std::optional<bool> radio = radioIsOn();
@@ -696,7 +696,7 @@ class BluetoothWorker : public QObject {
   }
 
   void setRadio(bool on) {
-    wabar::kernel::ensureWinrtApartment();
+    waku::kernel::ensureWinrtApartment();
     const bool ok = setRadioPower(on);
     if (!started_) {
       radioRunning_->store(false);
@@ -724,7 +724,7 @@ class BluetoothWorker : public QObject {
   // Settings" message. Blocks this thread until the operation ends, is cancelled
   // (cancelPairing) or runs out of time; the busy flag is cleared on every path.
   void pairDevice(const QString& address, bool pair) {
-    wabar::kernel::ensureWinrtApartment();
+    waku::kernel::ensureWinrtApartment();
     pairCancel_ = false;
     BluetoothDevice device;
     device.address = address;
@@ -777,7 +777,7 @@ class BluetoothWorker : public QObject {
         return;
       }
       if (!pairing.CanPair()) {
-        finishPairing(false, wabar::bluetooth::pairNeedsSettingsMessage(), device);
+        finishPairing(false, waku::bluetooth::pairNeedsSettingsMessage(), device);
         return;
       }
       auto operation = pairing.PairAsync();
@@ -807,7 +807,7 @@ class BluetoothWorker : public QObject {
   }
 
   void connectDevice(const QString& address, bool connect) {
-    wabar::kernel::ensureWinrtApartment();
+    waku::kernel::ensureWinrtApartment();
     const QString action = connect ? QStringLiteral("connect") : QStringLiteral("disconnect");
     const auto found = devices_.find(address);
     if (found == devices_.end()) {
@@ -864,7 +864,7 @@ class BluetoothWorker : public QObject {
 
   void onAdapterChanged(const QString& kind) {
     if (!started_) return;
-    wabar::kernel::ensureWinrtApartment();
+    waku::kernel::ensureWinrtApartment();
     if (kind.startsWith(QLatin1String("Device"))) {
       refreshLePending_ = true;
       scheduleRefresh();
@@ -889,7 +889,7 @@ class BluetoothWorker : public QObject {
 
   void onDeviceConnectionChanged(quint64 address, bool connected) {
     if (!started_ || connectRunning_->load()) return;
-    wabar::kernel::ensureWinrtApartment();
+    waku::kernel::ensureWinrtApartment();
     const QString text = formatBtAddress(address);
     const auto found = devices_.find(text);
     if (found == devices_.end()) {
@@ -919,14 +919,14 @@ class BluetoothWorker : public QObject {
   }
 
  signals:
-  void statusReady(const wabar::bluetooth::BluetoothStatus& status);
+  void statusReady(const waku::bluetooth::BluetoothStatus& status);
   void refreshFailed(const QString& message);
   void scanStarted();
-  void scanCompleted(int status, const QVector<wabar::bluetooth::BluetoothDevice>& devices);
+  void scanCompleted(int status, const QVector<waku::bluetooth::BluetoothDevice>& devices);
   void connectionFinished(bool success, const QString& message,
-                          const wabar::bluetooth::BluetoothDevice& device);
+                          const waku::bluetooth::BluetoothDevice& device);
   void pairingFinished(bool success, const QString& message,
-                       const wabar::bluetooth::BluetoothDevice& device);
+                       const waku::bluetooth::BluetoothDevice& device);
 
  private:
   // Waits for a pairing operation in short steps so a cancel or the timeout is honoured. Returns
@@ -1343,6 +1343,6 @@ bool hasBluetoothAdapter() {
   return true;
 }
 
-}  // namespace wabar::bluetooth
+}  // namespace waku::bluetooth
 
 #include "bluetooth_win.moc"

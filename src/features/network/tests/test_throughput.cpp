@@ -4,7 +4,7 @@
 
 #include "features/network/throughput.h"
 
-using namespace wabar::network;
+using namespace waku::network;
 
 namespace {
 

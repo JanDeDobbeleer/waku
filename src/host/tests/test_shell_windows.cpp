@@ -15,7 +15,7 @@ namespace {
 QString panelShell(const QString& properties) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     PanelWindow {
         objectName: "panel"
@@ -163,10 +163,10 @@ TEST(ShellWindowsTest, AutoReservesTheThicknessAndIgnoreNothing) {
 TEST(ShellWindowsTest, ASidePanelIsAnAppBarOnItsOwnEdgeWithItsWidthAsThickness) {
   const struct {
     const char* anchors;
-    wabar::host::AppBarEdge edge;
+    waku::host::AppBarEdge edge;
   } cases[] = {
-      {"anchors { left: true; top: true; bottom: true }", wabar::host::AppBarEdge::Left},
-      {"anchors { right: true; top: true; bottom: true }", wabar::host::AppBarEdge::Right},
+      {"anchors { left: true; top: true; bottom: true }", waku::host::AppBarEdge::Left},
+      {"anchors { right: true; top: true; bottom: true }", waku::host::AppBarEdge::Right},
   };
   for (const auto& c : cases) {
     Harness h;
@@ -220,13 +220,13 @@ TEST(ShellWindowsTest, WlrLayershellAttachedPropertiesWriteThePanelState) {
   startPanel(h, QStringLiteral("anchors.top: true\n"
                                "WlrLayershell.layer: WlrLayer.Overlay\n"
                                "WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand\n"
-                               "WlrLayershell.namespace: \"wabar-test\"\n"
+                               "WlrLayershell.namespace: \"waku-test\"\n"
                                "WlrLayershell.exclusionMode: ExclusionMode.Ignore"));
   auto* panel = qobject_cast<PanelWindow*>(h.shellWindow());
   ASSERT_NE(panel, nullptr);
   EXPECT_EQ(panel->layer(), WlrLayer::Overlay);
   EXPECT_EQ(panel->keyboardFocus(), WlrKeyboardFocus::OnDemand);
-  EXPECT_EQ(panel->layerNamespace(), QStringLiteral("wabar-test"));
+  EXPECT_EQ(panel->layerNamespace(), QStringLiteral("waku-test"));
   EXPECT_EQ(panel->exclusionMode(), ExclusionMode::Ignore);
 }
 
@@ -249,7 +249,7 @@ TEST(ShellWindowsTest, QsWindowAttachedFindsTheWindowOfAnItem) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     PanelWindow {
         objectName: "panel"
@@ -285,7 +285,7 @@ TEST(ShellWindowsTest, VariantsBuildsAWindowPerScreen) {
   h.screenCount = 3;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     Variants {
         objectName: "variants"
@@ -315,7 +315,7 @@ TEST(ShellWindowsTest, ScreenListDescribesTheScreens) {
   h.screenCount = 2;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     PanelWindow {
         anchors.top: true
@@ -339,7 +339,7 @@ TEST(ShellWindowsTest, SurfaceFormatIsAcceptedAndIgnored) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     PanelWindow {
         objectName: "panel"
@@ -368,7 +368,7 @@ TEST(ShellWindowsTest, ALazyLoaderBuildsNothingUntilActivated) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     LazyLoader {
         objectName: "loader"
@@ -404,7 +404,7 @@ TEST(ShellWindowsTest, ALazyLoaderLoadsInTheBackground) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     LazyLoader {
         objectName: "loader"
@@ -426,7 +426,7 @@ TEST(ShellWindowsTest, ALazyLoaderActiveAsyncStartsABackgroundBuildAndFalseDestr
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     LazyLoader {
         objectName: "loader"
@@ -464,7 +464,7 @@ namespace {
 QString selfClosingLoader(const QString& windowProperties) {
   return QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     LazyLoader {
         id: loader
@@ -552,7 +552,7 @@ TEST(ShellWindowsTest, AnActiveLazyLoaderBuildsWithTheShell) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     LazyLoader { active: true; PanelWindow { anchors.top: true } }
 }
@@ -567,7 +567,7 @@ TEST(ShellWindowsTest, AFloatingWindowIsANormalWindowAtItsSize) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     FloatingWindow {
         title: "hello"
@@ -595,7 +595,7 @@ TEST(ShellWindowsTest, PartsInScopesAreActivatedOnceTheShellIsInstalled) {
   Harness h;
   h.start(QStringLiteral(R"(
 import QtQuick
-import wabar
+import waku
 ShellRoot {
     QtObject { objectName: "top"; property int started: 0; function activate() { started++ } }
     Scope {
@@ -623,7 +623,7 @@ TEST(ShellWindowsTest, BindingsWokenByTheTeardownOfAWindowSeeNoWindow) {
   QQmlComponent component(&engine);
   component.setData(QByteArrayLiteral(R"(
 import QtQuick
-import wabar
+import waku
 FloatingWindow {
     id: w
     visible: false

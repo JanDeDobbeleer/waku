@@ -37,7 +37,7 @@ returns every GATT service interface (1896 objects, 10 s on a Surface Pro 11) an
 When the radio state cannot be read and nothing is listed, the snapshot carries `radioUnknown`. The
 service keeps the last state, asks again after 1, 3, 8 and 20 s, and shows "off" only if all fail.
 A radio reported Off clears the devices at once. While `changed` is observed, a 60 s timer reloads
-the list as a safety net; unobserved, nothing polls. `WABAR_BT_DEBUG=1` logs each refresh (radio
+the list as a safety net; unobserved, nothing polls. `WAKU_BT_DEBUG=1` logs each refresh (radio
 result, counts, timings) to stderr.
 
 ## One row per physical device
@@ -55,7 +55,7 @@ entries, or two entries with different container ids, never merge.
 The row keeps the classic entry (address, name, type), `connected`, `paired` and `remembered` are
 true if any entry is, the battery is the first known one (dropped when not connected), and the other
 addresses go to `otherAddresses`. The device watchers still cover every address; a connection change
-on a merged row triggers a refresh instead of an in-place edit. `WABAR_BT_DEBUG=1` logs each entry
+on a merged row triggers a refresh instead of an in-place edit. `WAKU_BT_DEBUG=1` logs each entry
 with its container id.
 
 ## Scan and pairing
@@ -83,4 +83,4 @@ kernel in C++ (`ensureWinrtApartment`); `quickshell_io` for the QML `S.Shell.ope
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `wabar.services.Bluetooth` (`src/features/bluetooth/qml/bluetooth_service.{h,cpp}`): the one Bluetooth backend of a `wabar` run (radio, paired devices, battery, connect/disconnect, scan, nearby devices, pair and forget on the `RealBluetoothBackend` thread), shared by every Bluetooth widget; created by the QML engine on first use and owned by it, destroyed with it, which stops the backend thread without waiting for it. Never creates a backend when `kernel::liveDesktop("bluetooth")` is false or without an adapter (`bluetooth::hasBluetoothAdapter`). Two GUI-thread `QTimer`s: a single-shot retry (1, 3, 8, 20 s) while the backend reports an unknown radio, and a 60 s safety-net refresh that runs only while a binding or connection observes `changed` (`connectNotify`/`disconnectNotify`).
+- `waku.services.Bluetooth` (`src/features/bluetooth/qml/bluetooth_service.{h,cpp}`): the one Bluetooth backend of a `waku` run (radio, paired devices, battery, connect/disconnect, scan, nearby devices, pair and forget on the `RealBluetoothBackend` thread), shared by every Bluetooth widget; created by the QML engine on first use and owned by it, destroyed with it, which stops the backend thread without waiting for it. Never creates a backend when `kernel::liveDesktop("bluetooth")` is false or without an adapter (`bluetooth::hasBluetoothAdapter`). Two GUI-thread `QTimer`s: a single-shot retry (1, 3, 8, 20 s) while the backend reports an unknown radio, and a 60 s safety-net refresh that runs only while a binding or connection observes `changed` (`connectNotify`/`disconnectNotify`).

@@ -6,7 +6,7 @@
 #include <map>
 #include <set>
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 
 TaskbarModel::TaskbarModel(QObject* parent) : QAbstractListModel(parent) {}
 
@@ -377,4 +377,4 @@ void TaskbarModel::launch(int row) {
   if (r && service_ && !r->uniqueId.isEmpty() && r->pinned) service_->launchPinned(r->uniqueId);
 }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar

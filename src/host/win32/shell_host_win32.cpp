@@ -5,18 +5,18 @@
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/window_focus.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 ShellHost::NativeHooks ShellHost::NativeHooks::win32() {
   NativeHooks hooks;
-  hooks.makeAppBar = [] { return wabar::host::makeWin32AppBar(); };
+  hooks.makeAppBar = [] { return waku::host::makeWin32AppBar(); };
   hooks.applyBackdrop = [](quintptr hwnd, Backdrop::Kind backdrop) {
     switch (backdrop) {
       case Backdrop::Blur:
-        wabar::host::enableBlur(hwnd, true, true);
+        waku::host::enableBlur(hwnd, true, true);
         break;
       case Backdrop::Mica:
-        wabar::host::enableMica(hwnd);
+        waku::host::enableMica(hwnd);
         break;
       case Backdrop::None:
         break;
@@ -28,7 +28,7 @@ ShellHost::NativeHooks ShellHost::NativeHooks::win32() {
         MonitorFromWindow(reinterpret_cast<HWND>(hwnd), MONITOR_DEFAULTTONEAREST)));
   };
   // Masks need the real cursor; without a live desktop (offscreen) they stay inert.
-  if (wabar::kernel::liveDesktop()) {
+  if (waku::kernel::liveDesktop()) {
     hooks.cursorPosition = []() -> std::optional<QPoint> {
       POINT point;
       if (!GetCursorPos(&point)) return std::nullopt;
@@ -45,8 +45,8 @@ ShellHost::NativeHooks ShellHost::NativeHooks::win32() {
     const LONG_PTR wanted = noActivate ? (style | WS_EX_NOACTIVATE) : (style & ~WS_EX_NOACTIVATE);
     if (wanted != style) SetWindowLongPtrW(window, GWL_EXSTYLE, wanted);
   };
-  hooks.forceForeground = [](quintptr hwnd) { wabar::kernel::forceForegroundFocus(hwnd); };
+  hooks.forceForeground = [](quintptr hwnd) { waku::kernel::forceForegroundFocus(hwnd); };
   return hooks;
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

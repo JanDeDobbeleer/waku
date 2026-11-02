@@ -5,7 +5,7 @@
 #include "host/qml/qs_window.h"
 #include "host/qml/shell_host.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 namespace {
 
@@ -82,4 +82,4 @@ QString answerSurfaceCommand(const QStringList& words, ShellHost* host) {
   return answer;
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

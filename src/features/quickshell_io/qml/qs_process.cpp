@@ -5,7 +5,7 @@
 #include "features/quickshell_io/command_spec.h"
 #include "kernel/win32/shell_launch.h"
 
-namespace wabar::quickshell_io {
+namespace waku::quickshell_io {
 
 QsProcess::QsProcess(QObject* parent) : QObject(parent) {}
 
@@ -239,4 +239,4 @@ void QsProcess::write(const QString& data) {
   process_->write(data.toUtf8());
 }
 
-}  // namespace wabar::quickshell_io
+}  // namespace waku::quickshell_io

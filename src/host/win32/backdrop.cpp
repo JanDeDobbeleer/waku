@@ -10,7 +10,7 @@
 
 #pragma comment(lib, "dwmapi.lib")
 
-namespace wabar::host {
+namespace waku::host {
 namespace {
 
 constexpr DWORD kUseImmersiveDarkMode = 20;
@@ -85,14 +85,14 @@ std::uint32_t hexToRgbaInt(const QString& hex) {
   return v;
 }
 
-bool isMicaSupported() { return wabar::kernel::windowsBuild() >= 22000; }
+bool isMicaSupported() { return waku::kernel::windowsBuild() >= 22000; }
 
 void enableBlur(quintptr hwndValue, bool darkMode, bool roundCorners,
                 const QString& roundCornersType, const QString& borderColor) {
   const HWND hwnd = toHwnd(hwndValue);
   if (!IsWindow(hwnd)) return;
   try {
-    if (wabar::kernel::windowsBuild() >= 22000) {
+    if (waku::kernel::windowsBuild() >= 22000) {
       setAccentPolicy(hwnd, kAccentBlurBehind, 0x01202020);
       if (darkMode) {
         const int one = 1;
@@ -117,7 +117,7 @@ void enableMica(quintptr hwndValue) {
   try {
     const MARGINS margins{-1, -1, -1, -1};
     DwmExtendFrameIntoClientArea(hwnd, &margins);
-    if (wabar::kernel::windowsBuild() >= 22621) {
+    if (waku::kernel::windowsBuild() >= 22621) {
       const int v = kBackdropMainWindow;
       DwmSetWindowAttribute(hwnd, kSystemBackdropType, &v, sizeof(v));
     } else {
@@ -135,11 +135,11 @@ void enableDwmFrame(quintptr hwndValue) {
   try {
     const MARGINS margins{1, 1, 1, 1};
     DwmExtendFrameIntoClientArea(hwnd, &margins);
-    if (wabar::kernel::windowsBuild() >= 22000)
+    if (waku::kernel::windowsBuild() >= 22000)
       setCornerPreference(hwnd, kCornerRound, QStringLiteral("System"));
   } catch (const std::exception& e) {
     qDebug() << "Failed to apply DWM frame:" << e.what();
   }
 }
 
-}  // namespace wabar::host
+}  // namespace waku::host

@@ -9,7 +9,7 @@
 #include <QString>
 #include <vector>
 
-namespace wabar::control_center {
+namespace waku::control_center {
 namespace {
 
 QString currentUserSid() {
@@ -96,4 +96,4 @@ QString userAvatarPath() {
   return path;
 }
 
-}  // namespace wabar::control_center
+}  // namespace waku::control_center

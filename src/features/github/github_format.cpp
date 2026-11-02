@@ -4,7 +4,7 @@
 #include <QRegularExpression>
 #include <algorithm>
 
-namespace wabar::github {
+namespace waku::github {
 namespace {
 
 QString plural(long long value, const char* unit) {
@@ -122,4 +122,4 @@ QStringList orderedCategories(const std::vector<GithubNotification>& notificatio
   return ordered;
 }
 
-}  // namespace wabar::github
+}  // namespace waku::github

@@ -11,7 +11,7 @@
 
 #include "host/region_math.h"
 
-namespace wabar::host {
+namespace waku::host {
 
 // How a Region combines with its parent (Quickshell `Intersection`).
 namespace Intersection {
@@ -50,11 +50,11 @@ class Region : public QObject {
   Q_PROPERTY(qreal y MEMBER y_ NOTIFY yChanged FINAL)
   Q_PROPERTY(qreal width MEMBER width_ NOTIFY widthChanged FINAL)
   Q_PROPERTY(qreal height MEMBER height_ NOTIFY heightChanged FINAL)
-  Q_PROPERTY(wabar::host::RegionShape::Enum shape MEMBER shape_ NOTIFY shapeChanged FINAL)
+  Q_PROPERTY(waku::host::RegionShape::Enum shape MEMBER shape_ NOTIFY shapeChanged FINAL)
   Q_PROPERTY(QQuickItem* item READ item WRITE setItem NOTIFY itemChanged FINAL)
-  Q_PROPERTY(wabar::host::Intersection::Enum intersection MEMBER intersection_ NOTIFY
+  Q_PROPERTY(waku::host::Intersection::Enum intersection MEMBER intersection_ NOTIFY
                  intersectionChanged FINAL)
-  Q_PROPERTY(QQmlListProperty<wabar::host::Region> regions READ regions FINAL)
+  Q_PROPERTY(QQmlListProperty<waku::host::Region> regions READ regions FINAL)
 
  public:
   explicit Region(QObject* parent = nullptr) : QObject(parent) {
@@ -108,4 +108,4 @@ class Region : public QObject {
   QList<QPointer<Region>> regions_;
 };
 
-}  // namespace wabar::host
+}  // namespace waku::host

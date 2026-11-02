@@ -22,7 +22,7 @@
 #include "features/quickshell_io/qml/file_view.h"
 #include "features/quickshell_io/qml/json_adapter.h"
 
-using namespace wabar::quickshell_io;
+using namespace waku::quickshell_io;
 
 namespace {
 
@@ -300,7 +300,7 @@ struct QmlFile {
     QQmlComponent component(&engine);
     component.setData(QStringLiteral(R"(
 import QtQml
-import wabar.services
+import waku.services
 QtObject {
     id: root
     property var view: v
@@ -417,7 +417,7 @@ TEST(QuickshellJsonAdapter, FileViewErrorEnumIsAvailableInQml) {
   QQmlComponent component(&engine);
   component.setData(R"(
 import QtQml
-import wabar.services
+import waku.services
 QtObject {
     property int notFound: FileViewError.FileNotFound
     property int denied: FileViewError.PermissionDenied

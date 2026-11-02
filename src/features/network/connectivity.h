@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace wabar::network {
+namespace waku::network {
 
 // IANA interface types VPN adapters use: PPP, proprietary virtual (WireGuard, OpenVPN DCO...) and
 // tunnel.
@@ -56,6 +56,6 @@ std::optional<std::string> localIpAddress();
 // Info + IP in one call for the polling worker. `exactQuality` is filled by the caller.
 ConnectivitySample sampleConnectivity();
 
-}  // namespace wabar::network
+}  // namespace waku::network
 
-Q_DECLARE_METATYPE(wabar::network::ConnectivitySample)
+Q_DECLARE_METATYPE(waku::network::ConnectivitySample)

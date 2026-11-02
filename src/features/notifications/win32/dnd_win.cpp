@@ -9,7 +9,7 @@
 #include "features/notifications/win32/wnf_win.h"
 #include "kernel/win32/com_scope.h"
 
-namespace wabar::notifications {
+namespace waku::notifications {
 namespace {
 
 // Undocumented shell interface (docs/architecture.md allowlist). Only the two profile accessors
@@ -119,4 +119,4 @@ void DndWatcher::stop() { wnf_.reset(); }
 
 void DndWatcher::deliver(const QString& status) { emit statusChanged(status); }
 
-}  // namespace wabar::notifications
+}  // namespace waku::notifications

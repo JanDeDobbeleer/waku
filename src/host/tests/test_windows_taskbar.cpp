@@ -9,7 +9,7 @@
 #include "host/testing/windows_taskbar_fakes.h"
 #include "host/windows_taskbar.h"
 
-using namespace wabar::host;
+using namespace waku::host;
 
 namespace {
 
@@ -74,7 +74,7 @@ TEST(WindowsTaskbarTest, DoesNotFightAnotherToolThatAlreadyHidesTheWindows) {
   f.system.autoHide_ = true;
   f.taskbar.hide();
   EXPECT_TRUE(f.system.calls.isEmpty());
-  EXPECT_FALSE(f.store.marker.has_value());            // wabar changed nothing, owns nothing
+  EXPECT_FALSE(f.store.marker.has_value());            // waku changed nothing, owns nothing
   EXPECT_EQ(f.taskbar.state(), TaskbarState::Hidden);  // reports what is seen
   f.taskbar.restore();
   EXPECT_TRUE(f.system.calls.isEmpty());
@@ -127,7 +127,7 @@ TEST(WindowsTaskbarTest, AStaleMarkerWithADeadPidIsUndoneBeforeAnythingElse) {
   EXPECT_FALSE(f.store.marker.has_value());
 }
 
-TEST(WindowsTaskbarTest, AMarkerOfALiveWabarIsLeftAlone) {
+TEST(WindowsTaskbarTest, AMarkerOfALiveWakuIsLeftAlone) {
   Fixture f;
   f.system.alive.insert(kOtherPid);
   f.system.windowsVisible_ = false;
@@ -164,11 +164,11 @@ TEST(WindowsTaskbarTest, WithoutTheFlagNothingIsHidden) {
 TEST(WindowsTaskbarTest, TheMarkerTextRoundTripsAndRejectsOtherText) {
   const TaskbarMarker marker{4242, true, false};
   const QString text = formatTaskbarMarker(marker);
-  EXPECT_TRUE(text.startsWith(QStringLiteral("taskbar hidden by wabar")));
+  EXPECT_TRUE(text.startsWith(QStringLiteral("taskbar hidden by waku")));
   EXPECT_TRUE(text.contains(QStringLiteral("previous_autohide=0")));
   EXPECT_EQ(parseTaskbarMarker(text), marker);
   EXPECT_FALSE(parseTaskbarMarker(QStringLiteral("hello")).has_value());
-  EXPECT_FALSE(parseTaskbarMarker(QStringLiteral("taskbar hidden by wabar\n")).has_value());
+  EXPECT_FALSE(parseTaskbarMarker(QStringLiteral("taskbar hidden by waku\n")).has_value());
 }
 
 TEST(WindowsTaskbarTest, TheFileMarkerStoreWritesReadsAndDeletes) {
@@ -222,7 +222,7 @@ TEST(WindowsTaskbarCommandTest, TheControlHandlerRoutesTheVerbToTheTaskbar) {
   Harness h;
   h.start(shellConfig());
   FakeWindowsTaskbar taskbar;
-  const wabar::control::ControlHandler handler =
+  const waku::control::ControlHandler handler =
       makeControlHandler(*h.host, false, {}, {}, &taskbar);
   EXPECT_EQ(handler(QStringLiteral("taskbar hide")), QStringLiteral("ok: taskbar: hidden"));
   EXPECT_EQ(handler(QStringLiteral("taskbar status")), QStringLiteral("ok: taskbar: hidden"));
@@ -230,7 +230,7 @@ TEST(WindowsTaskbarCommandTest, TheControlHandlerRoutesTheVerbToTheTaskbar) {
   EXPECT_EQ(taskbar.hides, 1);
   EXPECT_EQ(taskbar.restores, 1);
   // Without a taskbar (offscreen platform) the verb is an error, not a crash.
-  const wabar::control::ControlHandler bare = makeControlHandler(*h.host, false);
+  const waku::control::ControlHandler bare = makeControlHandler(*h.host, false);
   EXPECT_EQ(bare(QStringLiteral("taskbar hide")),
             QStringLiteral("error: the taskbar is not available"));
 }

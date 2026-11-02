@@ -26,7 +26,7 @@
 
 #include "kernel/win32/com_scope.h"
 
-namespace wabar::taskbar {
+namespace waku::taskbar {
 namespace {
 
 HWND toHwnd(WindowHandle hwnd) { return reinterpret_cast<HWND>(hwnd); }
@@ -239,4 +239,4 @@ std::optional<QString> appUniqueId(WindowHandle hwnd, const QString& exePath, st
   return QStringLiteral("path:") + stable;
 }
 
-}  // namespace wabar::taskbar
+}  // namespace waku::taskbar
