@@ -173,6 +173,31 @@ the config home's `widgets/` folder to change it, and lint it with
 running copy. Note that a copy of `waku.exe` outside the checkout has no sample config to fall back
 on: pass `--config-home`.
 
+## Release and MSIX
+
+`.github/workflows/release.yml` builds, tests and packages a release. Push a tag `vX.Y.Z` to run it
+for real; run it by hand (`workflow_dispatch`, with a version) to dry-run the packaging. Jobs:
+
+1. `build` (x64 on `windows-latest`, ARM64 on `windows-11-arm`): `release` preset, `ctest`, the
+   `deploy` target, then the C++ runtime DLLs from `VCToolsRedistDir` into `dist/waku`
+   (a package cannot run `vc_redist`).
+2. `package` (both architectures): `packaging/msix/build.ps1` makes `waku-<arch>.msix` and
+   `waku-<arch>.appinstaller`. A tag build, or a manual run with `sign`, signs the MSIX with Azure
+   Trusted Signing.
+3. `release` (tags only): a GitHub release with both MSIX files, both App Installer files and
+   `checksums.txt`.
+
+Repository secrets for signing: `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`. The
+account and certificate profile are in `packaging/msix/signing.json`; the certificate subject must
+equal `Publisher` in `packaging/msix/appxmanifest.xml`. Details: `packaging/msix/README.md`.
+
+To build a package by hand, run `deploy` for the architecture and then
+`packaging\msix\build.ps1 -Architecture <x64|arm64> -Version X.Y.Z`. The package holds the whole
+portable folder. Open point: `WAKU_SAMPLE_CONFIG_DIR` is the checkout's `examples/config` at build
+time, so an installed `waku.exe` has no working default config home. Users must pass
+`--config-home` or set `WAKU_CONFIG_HOME` until the default changes. The packaged behaviour that
+tests cannot see is in `docs/release-checklist.md`.
+
 ## Checks
 
 `tools\check.ps1` is the definition of done: clang-format check, structure check

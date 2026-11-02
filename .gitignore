@@ -5,3 +5,6 @@
 /.vs/
 CMakeUserPresets.json
 /.claude/
+/packaging/msix/out/
+/packaging/msix/stage-*/
+/packaging/msix/signing-tools/

@@ -31,7 +31,7 @@ jobs:
             vcvars_arch: arm64
             qt_arch: win64_msvc2022_arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # The manifest baseline needs the vcpkg git history, so check out the pinned commit.
       - name: Read vcpkg baseline
@@ -41,7 +41,7 @@ jobs:
           $b = (Get-Content vcpkg.json | ConvertFrom-Json).'builtin-baseline'
           "sha=$b" >> $env:GITHUB_OUTPUT
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: microsoft/vcpkg
           ref: ${{ steps.baseline.outputs.sha }}
@@ -51,23 +51,23 @@ jobs:
         shell: cmd
         run: vcpkg\bootstrap-vcpkg.bat -disableMetrics
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .vcpkg-cache
           key: vcpkg-${{ matrix.preset }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: vcpkg-${{ matrix.preset }}-
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
 
       - name: Install Qt ${{ env.QT_VERSION }}
         shell: pwsh
         run: |
-          python -m pip install aqtinstall
+          python -m pip install -r .github/requirements-ci.txt
           python -m aqt install-qt windows desktop $env:QT_VERSION ${{ matrix.qt_arch }} -O C:/Qt
 
-      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         with:
           arch: ${{ matrix.vcvars_arch }}
 
@@ -85,7 +85,7 @@ jobs:
         if: matrix.preset != 'arm64-debug'
         run: cmake --build --preset ${{ matrix.preset }} --target deploy
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: matrix.preset != 'arm64-debug'
         with:
           name: waku-${{ matrix.preset }}

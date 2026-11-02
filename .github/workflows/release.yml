@@ -1,0 +1,200 @@
+name: release
+
+# Push a tag v<major>.<minor>.<patch> to build, package and publish a release. Run the workflow by
+# hand to dry-run the packaging: it uploads the MSIX files as artifacts and publishes nothing.
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to package, without v (for example 0.1.0)"
+        required: true
+      sign:
+        description: "Sign the packages with Azure Trusted Signing"
+        type: boolean
+        default: false
+
+env:
+  QT_VERSION: "6.10.2"
+  QT_ROOT: C:/Qt/6.10.2
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+  VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - id: v
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then v="${GITHUB_REF_NAME#v}"; else v="$INPUT_VERSION"; fi
+          if ! printf '%s' "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "version '$v' is not <major>.<minor>.<patch>" >&2
+            exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: build ${{ matrix.arch }}
+    needs: version
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-latest
+            preset: x64-release
+            vcvars_arch: x64
+            qt_arch: win64_msvc2022_64
+          - arch: arm64
+            runner: windows-11-arm
+            preset: arm64-release
+            vcvars_arch: arm64
+            qt_arch: win64_msvc2022_arm64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The manifest baseline needs the vcpkg git history, so check out the pinned commit.
+      - name: Read vcpkg baseline
+        id: baseline
+        shell: pwsh
+        run: |
+          $b = (Get-Content vcpkg.json | ConvertFrom-Json).'builtin-baseline'
+          "sha=$b" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: microsoft/vcpkg
+          ref: ${{ steps.baseline.outputs.sha }}
+          path: vcpkg
+
+      - name: Bootstrap vcpkg
+        shell: cmd
+        run: vcpkg\bootstrap-vcpkg.bat -disableMetrics
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .vcpkg-cache
+          key: vcpkg-${{ matrix.preset }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: vcpkg-${{ matrix.preset }}-
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Qt ${{ env.QT_VERSION }}
+        shell: pwsh
+        run: |
+          python -m pip install -r .github/requirements-ci.txt
+          python -m aqt install-qt windows desktop $env:QT_VERSION ${{ matrix.qt_arch }} -O C:/Qt
+
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: ${{ matrix.vcvars_arch }}
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }}
+
+      - name: Test
+        run: ctest --preset ${{ matrix.preset }}
+
+      - name: Deploy
+        run: cmake --build --preset ${{ matrix.preset }} --target deploy
+
+      # Qt and waku use the dynamic CRT. A package cannot run vc_redist, so ship the CRT next to
+      # waku.exe (app-local deployment).
+      - name: Bundle the C++ runtime
+        shell: pwsh
+        run: |
+          $crt = Get-ChildItem -Path (Join-Path $env:VCToolsRedistDir '${{ matrix.arch }}') -Directory -Filter 'Microsoft.VC*.CRT' | Select-Object -First 1
+          if (-not $crt) { throw "no CRT redistributable for ${{ matrix.arch }} under $env:VCToolsRedistDir" }
+          Copy-Item -Path (Join-Path $crt.FullName '*.dll') -Destination dist/waku
+          Remove-Item -Path dist/waku/vc_redist.*.exe -ErrorAction SilentlyContinue
+          Get-ChildItem dist/waku/*.dll | Where-Object Name -Like 'vcruntime*' | ForEach-Object Name
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-${{ matrix.arch }}
+          path: dist/waku
+          if-no-files-found: error
+
+  package:
+    name: package ${{ matrix.arch }}
+    needs: [version, build]
+    runs-on: windows-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        arch: [x64, arm64]
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist-${{ matrix.arch }}
+          path: dist/waku
+
+      # Sign tagged releases. A manual run signs only when asked.
+      - name: Build the MSIX
+        working-directory: packaging/msix
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          SIGN: ${{ github.ref_type == 'tag' || inputs.sign }}
+        run: |
+          $params = @{
+              Architecture = '${{ matrix.arch }}'
+              Version      = '${{ needs.version.outputs.version }}'
+              Source       = '../../dist/waku'
+          }
+          if ($env:SIGN -eq 'true') { $params.Sign = $true }
+          ./build.ps1 @params
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: msix-${{ matrix.arch }}
+          path: |
+            packaging/msix/out/waku-${{ matrix.arch }}.msix
+            packaging/msix/out/waku-${{ matrix.arch }}.appinstaller
+          if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: [version, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: msix-*
+          merge-multiple: true
+          path: release
+
+      - name: Checksums
+        working-directory: release
+        run: sha256sum waku-* > checksums.txt
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "waku ${{ needs.version.outputs.version }}" \
+            --generate-notes \
+            --verify-tag
