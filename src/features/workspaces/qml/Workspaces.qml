@@ -84,8 +84,17 @@ Strip {
         }
     }
 
+    // Rows are matched by `id`, so a change updates the delegates in place (and the colour
+    // animation runs) instead of rebuilding every workspace.
+    ScriptModel {
+        id: rows
+
+        objectProp: "id"
+        values: root.monitor ? root.monitor.workspaces : []
+    }
+
     Repeater {
-        model: root.monitor ? root.monitor.workspaces : []
+        model: rows
         delegate: root.style === "dots" ? dotsDelegate : namesDelegate
     }
 

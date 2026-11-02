@@ -106,13 +106,18 @@ void Komorebi::onEvent(const QString& name, const QVariantMap& payload) {
   try {
     const QString kind = payload.value(QStringLiteral("kind")).toString();
     if (kind == QStringLiteral("disconnect")) {
+      if (!connected_ && monitors_.isEmpty()) return;
       connected_ = false;
       monitors_.clear();
     } else if (kind == QStringLiteral("connect") || kind == QStringLiteral("update")) {
       const kmb::JsonPtr state = kmb::jsonFromPayload(payload, QStringLiteral("state"));
       if (!state) return;
+      // Most events (a window moved, a title changed) leave what the bar shows as it was: say
+      // nothing then, so no binding re-runs and no delegate is touched.
+      QVariantList monitors = toVariant(*state);
+      if (connected_ && monitors == monitors_) return;
       connected_ = true;
-      monitors_ = toVariant(*state);
+      monitors_ = std::move(monitors);
     } else {
       return;
     }

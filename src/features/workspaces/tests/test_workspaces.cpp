@@ -218,7 +218,10 @@ TEST(WorkspacesModel, ChangedIsEmittedWhenABackendChanges) {
   h.komorebiConnect();
   const int afterKomorebi = changed.count();
   EXPECT_GE(afterKomorebi, 1);
+  // komorebi is preferred, so a second manager changes nothing on screen.
   h.glazeConnect();
+  EXPECT_EQ(changed.count(), afterKomorebi);
+  h.workspaces->setPrefer(QStringLiteral("glazewm"));
   EXPECT_GT(changed.count(), afterKomorebi);
 }
 
@@ -264,4 +267,38 @@ TEST(WorkspacesModel, KomorebiWorkspacesListTheirWindowHandles) {
   EXPECT_EQ(second.at(0).toLongLong(), 100);
   EXPECT_EQ(second.at(1).toLongLong(), 101);
   EXPECT_EQ(list(workspaceAt(*h.workspaces, 0, 2).value(QStringLiteral("windows"))).size(), 1);
+}
+
+// The widgets rebuild their workspace rows when `changed` fires, so it fires only for a change
+// of the model.
+TEST(WorkspacesModel, AnEventThatChangesNothingTheBarShowsDoesNotEmit) {
+  Harness h;
+  h.komorebiConnect(1, 0);
+  QSignalSpy changed(h.workspaces.get(), &Workspaces::changed);
+  QSignalSpy komorebiChanged(h.komorebi.get(), &Komorebi::changed);
+
+  h.komorebiConnect(1, 0);
+  json noisy = *komorebiState(1, 0);
+  noisy["unrelated"] = "a window title changed";
+  QVariantMap payload{
+      {QStringLiteral("kind"), QStringLiteral("update")},
+      {QStringLiteral("state"), QVariant::fromValue(std::make_shared<const json>(noisy))}};
+  emit h.komorebi->bus().event(kmb::kStateEvent, payload);
+  EXPECT_EQ(komorebiChanged.count(), 0);
+  EXPECT_EQ(changed.count(), 0);
+
+  h.komorebiConnect(0, 0);
+  EXPECT_EQ(changed.count(), 1);
+}
+
+TEST(WorkspacesModel, PreferEmitsOnceWhenItChangesAndNotWhenItDoesNot) {
+  Harness h;
+  h.komorebiConnect();
+  h.glazeConnect();
+  QSignalSpy changed(h.workspaces.get(), &Workspaces::changed);
+  h.workspaces->setPrefer(QStringLiteral("glazewm"));
+  EXPECT_EQ(changed.count(), 1);
+  EXPECT_EQ(h.workspaces->provider(), QStringLiteral("glazewm"));
+  h.workspaces->setPrefer(QStringLiteral("glazewm"));
+  EXPECT_EQ(changed.count(), 1);
 }

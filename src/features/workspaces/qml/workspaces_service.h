@@ -66,6 +66,8 @@ class Workspaces : public QObject {
 
  private:
   void rebuild();
+  // Recomputes the provider and the model; true when either changed.
+  bool update();
   void step(qlonglong monitorHandle, int direction);
 
   QPointer<Komorebi> komorebi_;

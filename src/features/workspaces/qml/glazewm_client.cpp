@@ -55,25 +55,37 @@ void GlazeWM::onEvent(const QString& name, const QVariantMap& payload) {
   if (name != gw::kStateEvent) return;
   try {
     const QString kind = payload.value(QStringLiteral("kind")).toString();
+    // Each branch sets `dirty` only when the value differs, so an event that repeats the
+    // current state does not wake the bindings.
+    bool dirty = false;
     if (kind == QStringLiteral("connection")) {
-      connected_ = payload.value(QStringLiteral("connected")).toBool();
+      const bool connected = payload.value(QStringLiteral("connected")).toBool();
+      dirty = connected != connected_;
+      connected_ = connected;
     } else if (kind == QStringLiteral("workspaces")) {
       if (const gw::MonitorsPtr monitors = gw::monitorsFromPayload(payload)) {
-        monitors_ = toVariant(*monitors);
+        QVariantList list = toVariant(*monitors);
+        dirty = list != monitors_;
+        if (dirty) monitors_ = std::move(list);
       }
     } else if (kind == QStringLiteral("tiling_direction")) {
       const auto direction =
           static_cast<gw::TilingDirection>(payload.value(QStringLiteral("direction")).toInt());
-      tilingDirection_ = direction == gw::TilingDirection::Vertical ? QStringLiteral("vertical")
-                                                                    : QStringLiteral("horizontal");
+      const QString value = direction == gw::TilingDirection::Vertical
+                                ? QStringLiteral("vertical")
+                                : QStringLiteral("horizontal");
+      dirty = value != tilingDirection_;
+      tilingDirection_ = value;
     } else if (kind == QStringLiteral("binding_mode")) {
       if (const gw::BindingModePtr mode = gw::bindingModeFromPayload(payload)) {
-        bindingMode_ = mode->displayName.value_or(mode->name.value_or(QString()));
+        const QString value = mode->displayName.value_or(mode->name.value_or(QString()));
+        dirty = value != bindingMode_;
+        bindingMode_ = value;
       }
     } else {
       return;
     }
-    emit changed();
+    if (dirty) emit changed();
   } catch (const std::exception& e) {
     qWarning().noquote() << "glazewm: bad state event:" << e.what();
   }

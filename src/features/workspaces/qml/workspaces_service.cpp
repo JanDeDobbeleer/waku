@@ -72,7 +72,7 @@ Workspaces::Workspaces(Komorebi* komorebi, GlazeWM* glazewm, QObject* parent)
     : QObject(parent), komorebi_(komorebi), glazewm_(glazewm) {
   if (komorebi) connect(komorebi, &Komorebi::changed, this, &Workspaces::rebuild);
   if (glazewm) connect(glazewm, &GlazeWM::changed, this, &Workspaces::rebuild);
-  rebuild();
+  update();
 }
 
 Workspaces* Workspaces::create(QQmlEngine* engine, QJSEngine*) {
@@ -84,31 +84,38 @@ Workspaces* Workspaces::create(QQmlEngine* engine, QJSEngine*) {
 void Workspaces::setPrefer(const QString& prefer) {
   if (prefer == prefer_) return;
   prefer_ = prefer;
-  rebuild();
+  update();
+  emit changed();  // `prefer` notifies through changed()
 }
 
 void Workspaces::rebuild() {
+  if (update()) emit changed();
+}
+
+bool Workspaces::update() {
   const bool komorebiUp = komorebi_ && komorebi_->connected();
   const bool glazewmUp = glazewm_ && glazewm_->connected();
+  QString provider;
   if (komorebiUp && glazewmUp) {
-    provider_ = prefer_ == QStringLiteral("glazewm") ? QStringLiteral("glazewm")
-                                                     : QStringLiteral("komorebi");
+    provider = prefer_ == QStringLiteral("glazewm") ? QStringLiteral("glazewm")
+                                                    : QStringLiteral("komorebi");
   } else if (komorebiUp) {
-    provider_ = QStringLiteral("komorebi");
+    provider = QStringLiteral("komorebi");
   } else if (glazewmUp) {
-    provider_ = QStringLiteral("glazewm");
-  } else {
-    provider_.clear();
+    provider = QStringLiteral("glazewm");
   }
 
-  if (provider_ == QStringLiteral("komorebi")) {
-    monitors_ = fromKomorebi(komorebi_->monitors());
-  } else if (provider_ == QStringLiteral("glazewm")) {
-    monitors_ = fromGlazeWM(glazewm_->monitors());
-  } else {
-    monitors_.clear();
+  QVariantList monitors;
+  if (provider == QStringLiteral("komorebi")) {
+    monitors = fromKomorebi(komorebi_->monitors());
+  } else if (provider == QStringLiteral("glazewm")) {
+    monitors = fromGlazeWM(glazewm_->monitors());
   }
-  emit changed();
+  // Nothing moved on screen when the model is as it was; the widgets then keep their delegates.
+  if (provider == provider_ && monitors == monitors_) return false;
+  provider_ = provider;
+  monitors_ = std::move(monitors);
+  return true;
 }
 
 void Workspaces::focus(qlonglong monitorHandle, const QString& id) {

@@ -191,3 +191,45 @@ TEST(KomorebiClient, FocusWorkspaceRunsKomorebic) {
   ASSERT_EQ(h.runs[0].size(), 1u);
   EXPECT_EQ(h.runs[0][0].join(' '), QStringLiteral("focus-monitor-workspace 1 3"));
 }
+
+// A state event that leaves what the bar shows as it was (komorebi sends one for every window
+// move and title change) must not emit: the bindings and the workspace delegates would re-run.
+TEST(KomorebiClient, AnEventThatChangesNothingTheBarShowsDoesNotEmit) {
+  KomorebiHarness h;
+  h.publish(QStringLiteral("connect"), komorebiState());
+  QSignalSpy changed(h.komorebi.get(), &Komorebi::changed);
+
+  h.publish(QStringLiteral("update"), komorebiState());
+  json noisy = *komorebiState();
+  noisy["unrelated"] = "a window title changed";
+  h.publish(QStringLiteral("update"), std::make_shared<const json>(noisy));
+  EXPECT_EQ(changed.count(), 0);
+
+  h.publish(QStringLiteral("update"), komorebiState(0));  // another workspace is shown
+  EXPECT_EQ(changed.count(), 1);
+}
+
+TEST(KomorebiClient, ASecondDisconnectDoesNotEmit) {
+  KomorebiHarness h;
+  QSignalSpy changed(h.komorebi.get(), &Komorebi::changed);
+  h.publish(QStringLiteral("disconnect"));  // never connected
+  EXPECT_EQ(changed.count(), 0);
+  h.publish(QStringLiteral("connect"), komorebiState());
+  h.publish(QStringLiteral("disconnect"));
+  h.publish(QStringLiteral("disconnect"));
+  EXPECT_EQ(changed.count(), 2);
+}
+
+TEST(GlazeWMClient, RepeatingTheCurrentStateDoesNotEmit) {
+  GlazeHarness h;
+  h.glaze->service().handleConnected(true);
+  h.message(response("query monitors", monitorsData()));
+  h.message(response("query tiling-direction", json{{"tilingDirection", "vertical"}}));
+  QSignalSpy changed(h.glaze.get(), &GlazeWM::changed);
+  h.glaze->service().handleConnected(true);
+  h.message(response("query monitors", monitorsData()));
+  h.message(response("query tiling-direction", json{{"tilingDirection", "vertical"}}));
+  EXPECT_EQ(changed.count(), 0);
+  h.message(response("query tiling-direction", json{{"tilingDirection", "horizontal"}}));
+  EXPECT_EQ(changed.count(), 1);
+}
