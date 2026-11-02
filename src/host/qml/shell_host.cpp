@@ -199,7 +199,8 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
   });
   watchScreens();
   connect(&watcher_, &QFileSystemWatcher::directoryChanged, this, [this] { configHomeChanged(); });
-  connect(&watcher_, &QFileSystemWatcher::fileChanged, this, [this] { configHomeChanged(); });
+  connect(&watcher_, &QFileSystemWatcher::fileChanged, this,
+          [this](const QString& file) { configHomeChanged(file); });
 }
 
 ShellHost::~ShellHost() {
@@ -812,6 +813,7 @@ void ShellHost::watch() {
 }
 
 ShellHost::FileStamps ShellHost::scanQmlFiles(QStringList* paths) const {
+  ++configWalks_;
   FileStamps stamps;
   QDir::Filters filters = QDir::Files;
   if (paths) {
@@ -832,10 +834,23 @@ ShellHost::FileStamps ShellHost::scanQmlFiles(QStringList* paths) const {
   return stamps;
 }
 
-void ShellHost::configHomeChanged() {
+void ShellHost::configHomeChanged(const QString& file) {
   // Any write in a watched folder lands here (a shell saving its state, a cache). Only a change
   // to a QML file or a qmldir, including theme.qml, rebuilds the shell.
   ++configChanges_;
+  if (!file.isEmpty()) {
+    // A watched file changed: one stat against the snapshot answers, no walk. A file the snapshot
+    // does not know is not a QML file we watch, so the walk decides.
+    const auto known = snapshot_.constFind(file);
+    if (known != snapshot_.constEnd()) {
+      const QFileInfo info(file);
+      const bool same = info.isFile() && std::pair<qint64, qint64>{
+                                             info.lastModified().toMSecsSinceEpoch(),
+                                             static_cast<qint64>(info.size())} == known.value();
+      if (!same) debounce_.start();
+      return;
+    }
+  }
   if (scanQmlFiles() != snapshot_) debounce_.start();
 }
 

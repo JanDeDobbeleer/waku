@@ -705,6 +705,36 @@ TEST(ShellHostTest, ANewQmlFileInTheConfigHomeReloads) {
   ASSERT_TRUE(QTest::qWaitFor([&] { return reloaded.count() >= 1; }, 5000));
 }
 
+TEST(ShellHostTest, AChangedQmlFileIsComparedByOneStatNotAWalk) {
+  Harness h;
+  h.start(shellConfig(QStringLiteral("before")));
+  ASSERT_TRUE(h.host->reload());
+  h.host->watch();
+  const int walks = h.host->configWalkCount();
+
+  // The watcher reports the file but it did not change: no walk, no reload.
+  h.host->configHomeChanged(h.shellFile());
+  EXPECT_EQ(h.host->configWalkCount(), walks);
+  EXPECT_FALSE(h.host->configReloadPending());
+
+  // It changed (the size differs): still no walk, a reload is pending.
+  write(h.shellFile(), shellConfig(QStringLiteral("after, and longer")));
+  h.host->configHomeChanged(h.shellFile());
+  EXPECT_EQ(h.host->configWalkCount(), walks);
+  EXPECT_TRUE(h.host->configReloadPending());
+}
+
+TEST(ShellHostTest, AChangedFolderWalksTheConfigHome) {
+  Harness h;
+  h.start(shellConfig(QStringLiteral("before")));
+  ASSERT_TRUE(h.host->reload());
+  h.host->watch();
+  const int walks = h.host->configWalkCount();
+  h.host->configHomeChanged();
+  EXPECT_EQ(h.host->configWalkCount(), walks + 1);
+  EXPECT_FALSE(h.host->configReloadPending());
+}
+
 // ---- singletons across a reload ----
 
 namespace {

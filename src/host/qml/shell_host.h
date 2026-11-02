@@ -158,6 +158,12 @@ class ShellHost : public QObject {
   bool screenReloadPending() const { return screenDebounce_.isActive(); }
   int screenReloadRemainingMs() const { return screenDebounce_.remainingTime(); }
   int configChangeCount() const { return configChanges_; }
+  // How many times the config home was walked (scan and watch included).
+  int configWalkCount() const { return configWalks_; }
+  // What the config home watcher calls. A watched `file` that changed is compared with the
+  // snapshot by one stat; without `file` (a folder changed) the whole config home is walked.
+  // Public for tests.
+  void configHomeChanged(const QString& file = {});
   // What watch() watches: the config home, its folders, its .qml files and qmldirs.
   QStringList watchedPaths() const { return watcher_.files() + watcher_.directories(); }
 
@@ -242,7 +248,6 @@ class ShellHost : public QObject {
   // and every .qml file and qmldir.
   using FileStamps = QHash<QString, std::pair<qint64, qint64>>;
   FileStamps scanQmlFiles(QStringList* paths = nullptr) const;
-  void configHomeChanged();
   QString entryPath() const;
   QString themePath() const;
   // The windows of `loaded` that failed to build, as "N windows failed: <first error>".
@@ -271,6 +276,7 @@ class ShellHost : public QObject {
   QTimer screenDebounce_;
   FileStamps snapshot_;
   int configChanges_ = 0;
+  mutable int configWalks_ = 0;
   bool watching_ = false;
 };
 
