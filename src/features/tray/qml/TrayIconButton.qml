@@ -115,56 +115,73 @@ Item {
     TapHandler {
         acceptedButtons: Qt.RightButton
         acceptedModifiers: root.pinModifier
-        onTapped: menu.toggle()
+        onTapped: root.toggleMenu()
     }
 
-    PopupWindow {
-        id: menu
-        objectName: "trayMenu"
-        anchor.item: root
-        spacing: 4
+    // The menu is created on the first pin-modifier right click: a popup window with four Pills
+    // costs memory even while hidden, and most icons never open it.
+    Loader {
+        id: menuLoader
+        active: false
+        sourceComponent: menuComponent
+    }
 
-        onOpened: root.pinnedNow = root.pins ? root.pins.isPinned(root.model.id) : false
+    function toggleMenu() {
+        menuLoader.active = true;
+        (menuLoader.item as PopupWindow).toggle();
+    }
 
-        Pill {
-            objectName: "trayMenuPin"
-            width: 140
-            text: root.pinnedNow ? "Unpin" : "Pin to bar"
-            onClicked: {
-                menu.close();
-                root.togglePin();
+    Component {
+        id: menuComponent
+
+        PopupWindow {
+            id: menu
+            objectName: "trayMenu"
+            anchor.item: root
+            spacing: 4
+
+            onOpened: root.pinnedNow = root.pins ? root.pins.isPinned(root.model.id) : false
+
+            Pill {
+                objectName: "trayMenuPin"
+                width: 140
+                text: root.pinnedNow ? "Unpin" : "Pin to bar"
+                onClicked: {
+                    menu.close();
+                    root.togglePin();
+                }
             }
-        }
 
-        Pill {
-            objectName: "trayMenuLeft"
-            width: 140
-            text: "Move left"
-            onClicked: {
-                menu.close();
-                if (root.pins)
-                    root.pins.moveBy(root.model.id, -1);
+            Pill {
+                objectName: "trayMenuLeft"
+                width: 140
+                text: "Move left"
+                onClicked: {
+                    menu.close();
+                    if (root.pins)
+                        root.pins.moveBy(root.model.id, -1);
+                }
             }
-        }
 
-        Pill {
-            objectName: "trayMenuRight"
-            width: 140
-            text: "Move right"
-            onClicked: {
-                menu.close();
-                if (root.pins)
-                    root.pins.moveBy(root.model.id, 1);
+            Pill {
+                objectName: "trayMenuRight"
+                width: 140
+                text: "Move right"
+                onClicked: {
+                    menu.close();
+                    if (root.pins)
+                        root.pins.moveBy(root.model.id, 1);
+                }
             }
-        }
 
-        Pill {
-            objectName: "trayMenuRefresh"
-            width: 140
-            text: "Refresh"
-            onClicked: {
-                menu.close();
-                S.Systray.refresh();
+            Pill {
+                objectName: "trayMenuRefresh"
+                width: 140
+                text: "Refresh"
+                onClicked: {
+                    menu.close();
+                    S.Systray.refresh();
+                }
             }
         }
     }

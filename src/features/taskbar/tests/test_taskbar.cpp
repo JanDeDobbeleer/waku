@@ -572,6 +572,23 @@ TEST_F(TaskbarWidgetTest, TheMenuPinsTheAppIntoTheSharedFile) {
   EXPECT_TRUE(system_->log.isEmpty());
 }
 
+TEST_F(TaskbarWidgetTest, ButtonsCreateNoWindowsUntilTheyAreUsed) {
+  constexpr int kButtons = 20;
+  for (int i = 0; i < kButtons; ++i) {
+    system_->add(static_cast<plat::WindowHandle>(200 + i), QStringLiteral("Window %1").arg(i),
+                 QStringLiteral("app%1").arg(i));
+  }
+  Harness h;
+  ASSERT_TRUE(start(h, QStringLiteral("tooltip: true")));
+  ASSERT_TRUE(waitFor(h, QStringLiteral("taskbarButton-w:219")));
+  // The bar window is the only window: each button's tooltip and menu are created on first use.
+  EXPECT_EQ(QGuiApplication::allWindows().size(), 1);
+  QTest::mouseClick(h.window(), Qt::RightButton, Qt::NoModifier,
+                    centerIn(h.window(), QStringLiteral("taskbarButton-w:205")));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return visibleWindow(QStringLiteral("taskbarMenu")); }, 2000));
+  EXPECT_EQ(QGuiApplication::allWindows().size(), 2);  // the bar and the one menu
+}
+
 TEST_F(TaskbarWidgetTest, TheMenuClosesTheWindow) {
   system_->add(kFirst, QStringLiteral("One"), QStringLiteral("a"));
   Harness h;

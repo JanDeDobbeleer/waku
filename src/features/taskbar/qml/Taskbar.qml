@@ -180,55 +180,72 @@ Strip {
 
             TapHandler {
                 acceptedButtons: Qt.RightButton
-                onTapped: menu.toggle()
+                onTapped: button.toggleMenu()
             }
 
-            PopupWindow {
-                id: menu
-                objectName: "taskbarMenu"
-                anchor.item: button
-                spacing: 4
+            // The menu is created on the first right click: a popup window with four Pills costs
+            // memory even while hidden, and most buttons are never right clicked.
+            Loader {
+                id: menuLoader
+                active: false
+                sourceComponent: menuComponent
+            }
 
-                Pill {
-                    objectName: "taskbarMenuOpen"
-                    visible: !button.model.running
-                    width: 170
-                    text: "Open app"
-                    onClicked: {
-                        menu.close();
-                        buttons.launch(button.model.index);
+            function toggleMenu() {
+                menuLoader.active = true;
+                (menuLoader.item as PopupWindow).toggle();
+            }
+
+            Component {
+                id: menuComponent
+
+                PopupWindow {
+                    id: menu
+                    objectName: "taskbarMenu"
+                    anchor.item: button
+                    spacing: 4
+
+                    Pill {
+                        objectName: "taskbarMenuOpen"
+                        visible: !button.model.running
+                        width: 170
+                        text: "Open app"
+                        onClicked: {
+                            menu.close();
+                            buttons.launch(button.model.index);
+                        }
                     }
-                }
 
-                Pill {
-                    objectName: "taskbarMenuPin"
-                    width: 170
-                    text: button.model.pinned ? "Unpin from taskbar" : "Pin to taskbar"
-                    onClicked: {
-                        menu.close();
-                        buttons.togglePin(button.model.index);
+                    Pill {
+                        objectName: "taskbarMenuPin"
+                        width: 170
+                        text: button.model.pinned ? "Unpin from taskbar" : "Pin to taskbar"
+                        onClicked: {
+                            menu.close();
+                            buttons.togglePin(button.model.index);
+                        }
                     }
-                }
 
-                Pill {
-                    objectName: "taskbarMenuClose"
-                    visible: button.model.running
-                    width: 170
-                    text: "Close window"
-                    onClicked: {
-                        menu.close();
-                        buttons.closeWindow(button.model.index);
+                    Pill {
+                        objectName: "taskbarMenuClose"
+                        visible: button.model.running
+                        width: 170
+                        text: "Close window"
+                        onClicked: {
+                            menu.close();
+                            buttons.closeWindow(button.model.index);
+                        }
                     }
-                }
 
-                Pill {
-                    objectName: "taskbarMenuCloseAll"
-                    visible: button.model.running && button.model.windowCount > 1
-                    width: 170
-                    text: "Close all windows"
-                    onClicked: {
-                        menu.close();
-                        buttons.closeAll(button.model.index);
+                    Pill {
+                        objectName: "taskbarMenuCloseAll"
+                        visible: button.model.running && button.model.windowCount > 1
+                        width: 170
+                        text: "Close all windows"
+                        onClicked: {
+                            menu.close();
+                            buttons.closeAll(button.model.index);
+                        }
                     }
                 }
             }

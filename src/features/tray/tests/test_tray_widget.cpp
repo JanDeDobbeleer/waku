@@ -156,6 +156,14 @@ QQuickWindow* visibleWindow(const QString& name) {
   return nullptr;
 }
 
+int windowsNamed(const QString& name) {
+  int count = 0;
+  for (QWindow* window : QGuiApplication::allWindows()) {
+    if (window->objectName() == name) ++count;
+  }
+  return count;
+}
+
 QPoint centerIn(QQuickWindow* window, const QString& name) {
   QQuickItem* item = findItem(window, name);
   return item ? item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint()
@@ -316,11 +324,13 @@ TEST_F(TrayWidgetTest, TheMenuMovesAnIconLeftAndSavesTheOrder) {
   EXPECT_LT(positionIn(h.window(), QStringLiteral("trayIcon-0")).x(),
             positionIn(h.window(), QStringLiteral("trayIcon-1")).x());
 
+  EXPECT_EQ(windowsNamed(QStringLiteral("trayMenu")), 0);  // created on the first use
   QTest::mouseClick(h.window(), Qt::RightButton, Qt::ControlModifier,
                     centerIn(h.window(), QStringLiteral("trayIcon-1")));
   // The tap opens the menu inside the click.
   QQuickWindow* menu = visibleWindow(QStringLiteral("trayMenu"));
   ASSERT_NE(menu, nullptr);
+  EXPECT_EQ(windowsNamed(QStringLiteral("trayMenu")), 1);  // one icon's menu, not one per icon
   ASSERT_TRUE(QTest::qWaitForWindowExposed(menu));
   EXPECT_TRUE(log_->events.empty());  // the menu click does not reach the program
   EXPECT_EQ(findItem(menu, QStringLiteral("trayMenuPin"))->property("text").toString(),
