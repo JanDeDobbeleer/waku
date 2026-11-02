@@ -22,9 +22,6 @@ wabar_contribute(
     test_github.cpp
     test_wallpapers.cpp
     test_wallpaper_control.cpp
-    test_glazewm_socket.cpp
-    test_glazewm_state.cpp
-    test_komorebi_service.cpp
     test_brightness_policy.cpp
     test_github_api.cpp
     test_platform.cpp

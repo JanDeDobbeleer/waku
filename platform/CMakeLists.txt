@@ -21,8 +21,6 @@ add_library(yasb_platform STATIC
   toast_activation.cpp
   toast_xml.h
   toast_xml.cpp
-  pdh.h
-  pdh.cpp
   wlan.h
   wlan.cpp
   dnd.h
@@ -35,7 +33,6 @@ add_library(yasb_platform STATIC
   touch_keyboard.cpp
   user_info.h
   user_info.cpp
-  system_stats.h
 )
 target_include_directories(yasb_platform PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(yasb_platform

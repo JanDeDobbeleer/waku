@@ -13,8 +13,6 @@ wabar_contribute(
     services/media_service.cpp
     services/shell_service.h
     services/shell_service.cpp
-    services/workspaces_service.h
-    services/workspaces_service.cpp
     services/bluetooth_service.h
     services/bluetooth_service.cpp
     services/network_service.h
