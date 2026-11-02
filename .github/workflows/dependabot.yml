@@ -1,0 +1,15 @@
+name: dependabot
+
+# Enables auto-merge on Dependabot pull requests. GitHub merges them only when the required
+# checks pass: protect main and require the "build" jobs (they run ctest on pull requests).
+on:
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    uses: jandedobbeleer/workflows/.github/workflows/dependabot.yml@4283b810c2c10ec0a7184c1c2eb96481704dcacf # main
