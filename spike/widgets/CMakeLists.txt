@@ -4,9 +4,6 @@
 # The module target is defined in src/modules/ from these and the src/features/ contributions.
 wabar_contribute(
   WIDGETS_QML_FILES
-    Volume.qml
-    Bluetooth.qml
-    Notifications.qml
     ControlCenter.qml
     SafeConfig.qml
 )
