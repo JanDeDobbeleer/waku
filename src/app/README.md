@@ -26,8 +26,10 @@ written in lower case and plain ASCII in code and paths.
   widgets, so import them under an alias) or from a `Wallpapers` widget.
 - Config home: a folder with `shell.qml`, optionally `theme.qml` and your own widgets in `widgets/`.
   Select it with `--config-home <dir>` or `WAKU_CONFIG_HOME`; without either, `waku` and `wakuc`
-  use the `examples/config` of the checkout they were built from. A personal config
-  conventionally lives in `%USERPROFILE%\.config\waku`; pass that folder with `--config-home`.
+  use `%USERPROFILE%\.config\waku` (also when it does not exist, so both agree on the control
+  pipe). While that implicit folder has no `shell.qml`, `waku` shows the built-in bar
+  (`DefaultShell.qml`) with the default theme and switches to `shell.qml` when it appears. A chosen
+  config home without `shell.qml` is an error. Copy `examples/config` to start a config.
   Edit and save: the shell reloads. A 1.x `bar.qml` without a `shell.qml` shows an error that
   names the rename (`docs/building.md`).
 - QML modules: `waku` 2.0 (ShellRoot, Scope, PanelWindow, FloatingWindow, Panel, PanelLayout,

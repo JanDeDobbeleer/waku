@@ -940,3 +940,90 @@ ShellRoot {
     EXPECT_EQ(TrackedSingleton::live, 1) << "reload " << i;
   }
 }
+
+// ---- the built-in default shell ----
+
+namespace {
+
+// A tiny stand-in for DefaultShell.qml, so the tests start none of the real services.
+void useTinyDefaultShell(Harness& h) {
+  const QString path = h.dir.filePath(QStringLiteral("default-shell.qml"));
+  write(path, shellConfig(QStringLiteral("default")));
+  h.defaultUrl = QUrl::fromLocalFile(path);
+}
+
+}  // namespace
+
+TEST(ShellHostDefault, AnImplicitConfigHomeWithoutShellQmlShowsTheDefaultShellWithoutAnError) {
+  Harness h;
+  ASSERT_TRUE(h.dir.isValid());
+  useTinyDefaultShell(h);
+  h.implicitConfigHome = true;
+  h.makeHost();
+  QSignalSpy errorChanged(h.host.get(), &ShellHost::errorChanged);
+  ASSERT_TRUE(h.host->reload());
+  EXPECT_TRUE(h.host->error().isEmpty());
+  EXPECT_EQ(errorChanged.count(), 0);
+  ASSERT_EQ(h.host->windows().size(), 1);
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("default"));
+}
+
+TEST(ShellHostDefault, AnExplicitConfigHomeWithoutShellQmlStaysAnError) {
+  Harness h;
+  ASSERT_TRUE(h.dir.isValid());
+  useTinyDefaultShell(h);
+  h.implicitConfigHome = false;
+  h.makeHost();
+  EXPECT_FALSE(h.host->reload());
+  EXPECT_TRUE(h.host->error().contains(QStringLiteral("shell.qml not found")))
+      << qPrintable(h.host->error());
+  EXPECT_NE(h.text(QStringLiteral("a")), QStringLiteral("default"));  // the fallback shell
+}
+
+TEST(ShellHostDefault, AnImplicitConfigHomeWithShellQmlLoadsIt) {
+  Harness h;
+  useTinyDefaultShell(h);
+  h.implicitConfigHome = true;
+  h.start(shellConfig(QStringLiteral("mine")));
+  ASSERT_TRUE(h.host->reload());
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("mine"));
+}
+
+TEST(ShellHostDefault, CreatingShellQmlSwitchesFromTheDefaultShell) {
+  Harness h;
+  ASSERT_TRUE(h.dir.isValid());
+  useTinyDefaultShell(h);
+  h.implicitConfigHome = true;
+  h.makeHost();
+  ASSERT_TRUE(h.host->reload());
+  h.host->watch();
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("default"));
+  QSignalSpy reloaded(h.host.get(), &ShellHost::reloaded);
+
+  write(h.shellFile(), shellConfig(QStringLiteral("mine")));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return reloaded.count() >= 1; }, 5000));
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("mine"));
+  EXPECT_TRUE(h.host->error().isEmpty());
+}
+
+TEST(ShellHostDefault, ACreatedConfigHomeFolderIsWatchedAfterItAppears) {
+  Harness h;
+  ASSERT_TRUE(h.dir.isValid());
+  useTinyDefaultShell(h);
+  const QString home = h.dir.filePath(QStringLiteral("missing/waku"));
+  h.configHomeOverride = home;
+  h.implicitConfigHome = true;
+  h.makeHost();
+  ASSERT_TRUE(h.host->reload());  // the folder does not exist: no crash, the default shell
+  EXPECT_TRUE(h.host->error().isEmpty());
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("default"));
+  h.host->watch();
+  QSignalSpy reloaded(h.host.get(), &ShellHost::reloaded);
+
+  // Created in two steps, as a user would: the folder first, then the file.
+  ASSERT_TRUE(QDir().mkpath(home));
+  QTest::qWait(300);
+  write(QDir(home).filePath(QStringLiteral("shell.qml")), shellConfig(QStringLiteral("mine")));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return reloaded.count() >= 1; }, 5000));
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("mine"));
+}

@@ -5,7 +5,7 @@
 # the kernel, control and host; quickshell (the Quickshell compatibility modules) builds on host and
 # the features. Every unit that contributes to the aggregated QML modules or to the test binary
 # (waku_feature(), waku_contribute()) runs before modules/qml_modules.cmake, which reads the
-# contributions; app contributes SafeShell.qml. The modules are included from here and not added
+# contributions; app contributes SafeShell.qml and DefaultShell.qml. The modules are included from here and not added
 # as a subdirectory: see src/modules/qml_modules.cmake for why.
 #
 # Every QML module of src/ writes its build-directory copy (qmldir, .qmltypes, the .qml files) to

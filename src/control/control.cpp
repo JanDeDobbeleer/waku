@@ -69,12 +69,12 @@ bool splitCommand(const QString& line, QStringList* words) {
   return true;
 }
 
-QString resolveConfigHome(const QString& optionValue, const QString& fallback) {
-  if (!optionValue.isEmpty()) return optionValue;
+ConfigHome resolveConfigHome(const QString& optionValue, const QString& userHome) {
+  if (!optionValue.isEmpty()) return {optionValue, false};
   if (const QString fromEnv = qEnvironmentVariable("WAKU_CONFIG_HOME"); !fromEnv.isEmpty()) {
-    return fromEnv;
+    return {fromEnv, false};
   }
-  return fallback;
+  return {QDir::cleanPath(userHome + QStringLiteral("/.config/waku")), true};
 }
 
 ControlServer::ControlServer(QString name, ControlHandler handler, QObject* parent,

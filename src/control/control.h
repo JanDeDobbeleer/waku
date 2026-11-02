@@ -19,8 +19,14 @@ namespace waku::control {
 QString controlPipeName(const QString& configHome);
 
 // The config home to use: the command-line value if given, else $WAKU_CONFIG_HOME, else
-// `fallback`.
-QString resolveConfigHome(const QString& optionValue, const QString& fallback);
+// `<userHome>/.config/waku`. The last is returned even when the folder does not exist, so `waku`
+// and `wakuc` agree on the control pipe. `implicit` is true for that last case only. `userHome` is
+// a parameter so tests never read the real profile; the executables pass QDir::homePath().
+struct ConfigHome {
+  QString path;
+  bool implicit = false;
+};
+ConfigHome resolveConfigHome(const QString& optionValue, const QString& userHome);
 
 // A command line is one string: words separated by spaces, a word with spaces or quotes is written
 // in double quotes and a quote inside is doubled ("My ""best"" pic.jpg"). There are no backslash

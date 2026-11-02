@@ -161,8 +161,8 @@ int main(int argc, char* argv[]) {
   }
 
   // The same default as the bar, so that the two meet without any option.
-  const QString configHome = waku::control::resolveConfigHome(
-      parser.value(configHomeOpt), QStringLiteral(WAKU_SAMPLE_CONFIG_DIR));
+  const QString configHome =
+      waku::control::resolveConfigHome(parser.value(configHomeOpt), QDir::homePath()).path;
   const QString pipeName = waku::control::controlPipeName(configHome);
   if (command == QLatin1String("surface") && (positional.value(1) == QLatin1String("show") ||
                                               positional.value(1) == QLatin1String("toggle"))) {

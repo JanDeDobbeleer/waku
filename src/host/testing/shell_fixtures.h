@@ -162,6 +162,9 @@ struct Harness {
   bool allowReserve = false;
   bool safe = false;
   QUrl safeUrl;
+  bool implicitConfigHome = false;
+  QUrl defaultUrl;
+  QString configHomeOverride;  // when set, the config home instead of `dir`
   int screenSettleMs = ShellHost::Options().screenSettleMs;
   int trimDelayMs = ShellHost::Options().trimDelayMs;
 
@@ -175,7 +178,9 @@ struct Harness {
 
   void makeHost() {
     ShellHost::Options options;
-    options.configHome = dir.path();
+    options.configHome = configHomeOverride.isEmpty() ? dir.path() : configHomeOverride;
+    options.implicitConfigHome = implicitConfigHome;
+    options.defaultUrl = defaultUrl;
     options.allowReserve = allowReserve;
     options.safe = safe;
     options.safeUrl = safeUrl;

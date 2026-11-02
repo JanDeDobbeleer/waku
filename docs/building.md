@@ -44,8 +44,11 @@ folder: it loads its modules from the static plugins and the resources (`qrc:/qt
 
 ## Run
 
-Run `waku` from the build folder. It needs a config home: a folder with `shell.qml` (and optionally
-`theme.qml` and `widgets/`). The repository has a sample in `examples/config`.
+Run `waku` from the build folder. The config home is a folder with `shell.qml` (and optionally
+`theme.qml` and `widgets/`). The repository has a sample in `examples/config`. Without a config
+home, waku uses `%USERPROFILE%\.config\waku`; while that folder has no `shell.qml` it shows the
+built-in bar (`src/app/waku/DefaultShell.qml`) and switches to your `shell.qml` as soon as you
+create it.
 
 ```powershell
 build\arm64-debug\waku.exe --config-home examples\config
@@ -56,7 +59,7 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 
 | Flag | Effect |
 |---|---|
-| `--config-home <dir>` | The config home. Default: `$WAKU_CONFIG_HOME`, else the `examples/config` of the checkout the build came from. |
+| `--config-home <dir>` | The config home. Default: `$WAKU_CONFIG_HOME`, else `%USERPROFILE%\.config\waku`. Only the default is implicit: a missing `shell.qml` there shows the built-in bar, in a config home you chose it is an error. |
 | `--register-app-bar` | Let windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve screen work area. Without it no window reserves space. |
 | `--safe` | Start the built-in shell with the default theme and ignore the config home. |
 | `--import-path <dir>` | Add a folder of QML modules to the import path. Repeatable. See "User-built QML plugins". |
@@ -193,10 +196,9 @@ equal `Publisher` in `packaging/msix/appxmanifest.xml`. Details: `packaging/msix
 
 To build a package by hand, run `deploy` for the architecture and then
 `packaging\msix\build.ps1 -Architecture <x64|arm64> -Version X.Y.Z`. The package holds the whole
-portable folder. Open point: `WAKU_SAMPLE_CONFIG_DIR` is the checkout's `examples/config` at build
-time, so an installed `waku.exe` has no working default config home. Users must pass
-`--config-home` or set `WAKU_CONFIG_HOME` until the default changes. The packaged behaviour that
-tests cannot see is in `docs/release-checklist.md`.
+portable folder. An installed `waku.exe` with no config shows the built-in bar; `examples/config` is
+shipped in the folder as the starting point to copy. The packaged behaviour that tests cannot see is
+in `docs/release-checklist.md`.
 
 ## Checks
 

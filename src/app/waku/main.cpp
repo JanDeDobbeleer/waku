@@ -121,8 +121,9 @@ int main(int argc, char* argv[]) {
   waku::kernel::setCapabilityDisabled(QStringLiteral("workarea_sync"),
                                       parser.isSet(noWorkAreaSyncOpt));
 
-  const QString configHome = waku::control::resolveConfigHome(
-      parser.value(configHomeOpt), QStringLiteral(WAKU_SAMPLE_CONFIG_DIR));
+  const waku::control::ConfigHome resolvedHome =
+      waku::control::resolveConfigHome(parser.value(configHomeOpt), QDir::homePath());
+  const QString configHome = resolvedHome.path;
 
   QQmlEngine engine;
   // User-built QML plugins. A folder whose plugin was built for another Qt, flavour or processor
@@ -137,6 +138,7 @@ int main(int argc, char* argv[]) {
   waku::host::traceStep("engine built, import roots checked");
   waku::host::ShellHost::Options options;
   options.configHome = configHome;
+  options.implicitConfigHome = resolvedHome.implicit;
   options.allowReserve = parser.isSet(appBarOpt);
   options.safe = parser.isSet(safeOpt);
   options.hooks = waku::host::ShellHost::NativeHooks::win32();

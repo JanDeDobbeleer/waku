@@ -33,6 +33,7 @@ namespace {
 
 constexpr auto kFallbackUrl = "qrc:/qt/qml/waku/FallbackShell.qml";
 constexpr auto kSafeUrl = "qrc:/qt/qml/waku/widgets/SafeShell.qml";
+constexpr auto kDefaultUrl = "qrc:/qt/qml/waku/widgets/DefaultShell.qml";
 // Loaded once so the waku types are registered before the host asks for its singletons.
 constexpr auto kChromeUrl = "qrc:/qt/qml/waku/WindowChrome.qml";
 constexpr auto kHostProperty = "ShellHost";
@@ -307,11 +308,11 @@ bool ShellHost::validateTheme(QString* error) {
   return validate(QUrl::fromLocalFile(themePath()), ThemeSpec::staticMetaObject, true, error);
 }
 
-void ShellHost::applyTheme() {
+void ShellHost::applyTheme(bool defaultsOnly) {
   auto* theme = engine_->singletonInstance<Theme*>(QStringLiteral("waku"), QStringLiteral("Theme"));
   if (!theme) return;
   const ThemeSpec defaults;
-  if (options_.safe || !QFileInfo::exists(themePath())) {
+  if (options_.safe || defaultsOnly || !QFileInfo::exists(themePath())) {
     theme->assignFrom(defaults);
     return;
   }
@@ -326,6 +327,8 @@ void ShellHost::applyTheme() {
 }
 
 QUrl ShellHost::safeShellUrl() { return QUrl(QString::fromLatin1(kSafeUrl)); }
+
+QUrl ShellHost::defaultShellUrl() { return QUrl(QString::fromLatin1(kDefaultUrl)); }
 
 bool ShellHost::checkShell(const QUrl& url, QString* error) {
   return validate(url, ShellRoot::staticMetaObject, false, error);
@@ -365,11 +368,14 @@ bool ShellHost::hasWindows(const Loaded& loaded) {
 
 bool ShellHost::reloadSafe() {
   // Nothing in the config home is read: the built-in shell and the default theme, always.
+  return reloadBuiltIn(options_.safeUrl.isValid() ? options_.safeUrl : safeShellUrl());
+}
+
+bool ShellHost::reloadBuiltIn(const QUrl& url) {
   resetEngine();
-  applyTheme();
+  applyTheme(true);
   QString error;
-  std::unique_ptr<Loaded> next =
-      build(options_.safeUrl.isValid() ? options_.safeUrl : safeShellUrl(), &error);
+  std::unique_ptr<Loaded> next = build(url, &error);
   if (!next) {
     setError(error);
     buildFallback();
@@ -416,8 +422,17 @@ bool ShellHost::reload() {
   const bool hadWindows = loaded_ && hasWindows(*loaded_);
   WarningCapture warnings;
   const QString legacyPath = QDir(options_.configHome).filePath(options_.legacyEntryFile);
+  const bool legacyEntry = !options_.legacyEntryFile.isEmpty() && QFileInfo::exists(legacyPath);
+  if (options_.implicitConfigHome && !QFileInfo::exists(entryPath()) && !legacyEntry) {
+    // Nothing was configured and nothing is there yet: the built-in bar is the product, not an
+    // error. The watcher switches to shell.qml when it appears.
+    qInfo().noquote() << "waku: no" << options_.entryFile << "in"
+                      << QDir::toNativeSeparators(options_.configHome)
+                      << "- showing the built-in bar";
+    return reloadBuiltIn(options_.defaultUrl.isValid() ? options_.defaultUrl : defaultShellUrl());
+  }
   if (!QFileInfo::exists(entryPath())) {
-    if (!options_.legacyEntryFile.isEmpty() && QFileInfo::exists(legacyPath)) {
+    if (legacyEntry) {
       error = QStringLiteral(
                   "%1 is the waku 1 format: rename it to %2 and its Config to ShellRoot, Bar to "
                   "Panel, BarLayout to PanelLayout (see docs/building.md)")
@@ -837,6 +852,23 @@ void ShellHost::watch() {
 ShellHost::FileStamps ShellHost::scanQmlFiles(QStringList* paths) const {
   ++configWalks_;
   FileStamps stamps;
+  if (!QFileInfo(options_.configHome).isDir()) {
+    // An implicit config home may not exist yet. Watch the nearest folder that does, so creating
+    // the config home (and shell.qml in it) is seen.
+    if (paths) {
+      QString parent = QDir::cleanPath(QDir(options_.configHome).absolutePath());
+      for (;;) {
+        const int cut = parent.lastIndexOf(QLatin1Char('/'));
+        if (cut <= 0) break;
+        parent.truncate(cut);
+        if (QFileInfo(parent).isDir()) {
+          *paths = QStringList{parent};
+          break;
+        }
+      }
+    }
+    return stamps;
+  }
   QDir::Filters filters = QDir::Files;
   if (paths) {
     *paths = QStringList{options_.configHome};
@@ -860,6 +892,16 @@ void ShellHost::configHomeChanged(const QString& file) {
   // Any write in a watched folder lands here (a shell saving its state, a cache). Only a change
   // to a QML file or a qmldir, including theme.qml, rebuilds the shell.
   ++configChanges_;
+  // The config home appeared after watch() ran: watch it now, then compare, so a shell.qml
+  // written between the two is not missed.
+  if (watching_ && QFileInfo(options_.configHome).isDir()) {
+    const QString home = QDir::cleanPath(options_.configHome);
+    bool watched = false;
+    for (const QString& dir : watcher_.directories()) {
+      if (QDir::cleanPath(dir) == home) watched = true;
+    }
+    if (!watched) refreshWatches();
+  }
   if (!file.isEmpty()) {
     // A watched file changed: one stat against the snapshot answers, no walk. A file the snapshot
     // does not know is not a QML file we watch, so the walk decides.

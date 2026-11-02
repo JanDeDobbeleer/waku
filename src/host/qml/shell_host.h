@@ -111,6 +111,12 @@ class ShellHost : public QObject {
     bool safe = false;
     // The shell safe mode builds; default: the built-in one (safeShellUrl()).
     QUrl safeUrl;
+    // True when the config home was not chosen (no --config-home, no WAKU_CONFIG_HOME). A missing
+    // shell.qml is then not an error: the built-in default shell (defaultShellUrl()) is shown with
+    // the default theme until the file appears.
+    bool implicitConfigHome = false;
+    // The shell built for an implicit config home without shell.qml; default: the built-in one.
+    QUrl defaultUrl;
     // How long screen changes must stop before the one reload (tests shorten it).
     int screenSettleMs = 1500;
     // How long after install() the shell must sit with no extra window on screen (a popup) before
@@ -120,6 +126,8 @@ class ShellHost : public QObject {
 
   // The built-in shell of safe mode: Clock, Workspaces, Volume, Battery, Cpu and Memory.
   static QUrl safeShellUrl();
+  // The built-in bar shown when an implicit config home has no shell.qml.
+  static QUrl defaultShellUrl();
   // The host of `engine`, or null.
   static ShellHost* of(QQmlEngine* engine);
 
@@ -226,8 +234,11 @@ class ShellHost : public QObject {
   // theme.qml, when there is one, passes the same check (as a ThemeSpec).
   bool validateTheme(QString* error);
   // Copies theme.qml (or the defaults, when there is none) into the Theme singleton.
-  void applyTheme();
+  void applyTheme(bool defaultsOnly = false);
   bool reloadSafe();
+  // Builds `url` as the built-in shell with the default theme; the config home is not read.
+  // A failure of the built-in shell shows the fallback and reports the error.
+  bool reloadBuiltIn(const QUrl& url);
   // Reloads when the screens change, so a docked monitor gets its bar and a DPI change its layout.
   void watchScreens();
   void watchScreen(QScreen* screen);

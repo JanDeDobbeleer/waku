@@ -62,13 +62,19 @@ TEST(ControlNames, DifferentConfigHomesGetDifferentPipes) {
   EXPECT_NE(controlPipeName(QStringLiteral("C:\\a")), controlPipeName(QStringLiteral("C:\\b")));
 }
 
-TEST(ControlNames, TheConfigHomeIsTheOptionThenTheEnvironmentThenTheFallback) {
+TEST(ControlNames, TheConfigHomeIsTheOptionThenTheEnvironmentThenTheUserHome) {
+  const QString home = QStringLiteral("C:/Users/test");
   qunsetenv("WAKU_CONFIG_HOME");
-  EXPECT_EQ(resolveConfigHome(QString(), QStringLiteral("fallback")), QStringLiteral("fallback"));
+  const ConfigHome implicitHome = resolveConfigHome(QString(), home);
+  EXPECT_EQ(implicitHome.path, QStringLiteral("C:/Users/test/.config/waku"));  // need not exist
+  EXPECT_TRUE(implicitHome.implicit);
   qputenv("WAKU_CONFIG_HOME", "from-env");
-  EXPECT_EQ(resolveConfigHome(QString(), QStringLiteral("fallback")), QStringLiteral("from-env"));
-  EXPECT_EQ(resolveConfigHome(QStringLiteral("from-option"), QStringLiteral("fallback")),
-            QStringLiteral("from-option"));
+  const ConfigHome fromEnv = resolveConfigHome(QString(), home);
+  EXPECT_EQ(fromEnv.path, QStringLiteral("from-env"));
+  EXPECT_FALSE(fromEnv.implicit);
+  const ConfigHome fromOption = resolveConfigHome(QStringLiteral("from-option"), home);
+  EXPECT_EQ(fromOption.path, QStringLiteral("from-option"));
+  EXPECT_FALSE(fromOption.implicit);
   qunsetenv("WAKU_CONFIG_HOME");
 }
 

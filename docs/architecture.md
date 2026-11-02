@@ -27,7 +27,7 @@ S1-S8; the table at the top of that step is the exact text). Every own target, t
 | `waku_test_module` (shared plugin) | `tests/plugin/` | the QML module `WakuTestModule`, built only for `waku_tests`: it stands for a plugin a user drops into `<config home>/modules` | Qt Quick | `waku_options` |
 | `waku_<f>` | `src/features/<f>/` | one feature (`waku_feature()`) | `waku_kernel`, the `DEPENDS` features | `waku_options`, the feature's system libraries |
 | `waku_services`, `waku_widgets` | `src/modules/qml_modules.cmake` | QML modules `waku.services` and `waku.widgets`, assembled from contributions (below) | the feature libraries, Qt Quick | `waku_options` |
-| `waku` (exe), `wakuc` (exe) | `src/app/waku/`, `src/app/wakuc/` | `main.cpp` of each; `SafeShell.qml` joins `waku.widgets` | | `waku_options`, the modules / `waku_control` |
+| `waku` (exe), `wakuc` (exe) | `src/app/waku/`, `src/app/wakuc/` | `main.cpp` of each; `SafeShell.qml` and `DefaultShell.qml` join `waku.widgets` | | `waku_options`, the modules / `waku_control` |
 | `WakuTrayHook[_arm64]` (DLL) | `src/features/tray/hook/` | `trayhook.cpp` | | static CRT, `/W4 /WX` set by hand, built next to `waku.exe` |
 | `waku_tests` (exe) | `tests/` | `tests/main.cpp`, `tests/integration/` and every `TESTS` contribution (`src/**/tests/`) | | `waku_options`, `GTest`, `Qt6::Test` |
 
@@ -160,7 +160,7 @@ Quickshell compatibility modules: `Quickshell`, `Quickshell.Wayland`, `Quickshel
 | `Quickshell.Services.Pipewire` | `src/quickshell/services/pipewire/` | `Pipewire` (`defaultAudioSink`, `defaultAudioSource`, `nodes`, `ready`, `preferredDefaultAudioSink/Source`, empty `links` and `linkGroups`), `PwNode` (`audio.volume` 0..1 and `audio.muted`, writable through the audio service; `properties`, `name`, `description`, `isSink`, `isStream`), `PwNodeAudio`, `PwObjectTracker`, `PwNodeLinkTracker` (no-ops), `PwLink`, `PwLinkGroup`. The nodes are the default output and input and one per app audio session. `PwNode.id` is missing: QML cannot declare it |
 | `Quickshell.Services.SystemTray` | `src/quickshell/services/systemtray/` | `SystemTray.items` (a model with `values`) of `SystemTrayItem` (C++, `id` is the executable name; `title`, `tooltipTitle`, `icon`, `status` Active, `hasMenu` false, `menu` null; `activate()` left click, `secondaryActivate()` middle click, `display()` right click, `scroll()` nothing) and `Status` |
 | `Quickshell.Bluetooth` | `src/quickshell/bluetooth/` | `Bluetooth` (`defaultAdapter`, `adapters`, `devices`), `BluetoothAdapter` (`enabled` switches the radio; `discovering` starts one scan and turns false when it ends; `devices` include the nearby unpaired ones after a scan), `BluetoothDevice` (`connected` connects and disconnects; `battery`; `pair`, `cancelPair` and `forget` call the service; `pairing`) and the state enums |
-| `waku.widgets` | every feature's `qml/*.qml`, `src/ui/*.qml`, `src/app/waku/SafeShell.qml` | the built-in widgets and the shared look |
+| `waku.widgets` | every feature's `qml/*.qml`, `src/ui/*.qml`, `src/app/waku/SafeShell.qml`, `src/app/waku/DefaultShell.qml` | the built-in widgets and the shared look |
 | `waku.services` | every feature's `qml/*.{h,cpp}`, `src/kernel/qml/` | the C++ data sources and actions |
 
 - Some engine types exist for ported shells, not for the built-in widgets: `WindowThumbnail`,
