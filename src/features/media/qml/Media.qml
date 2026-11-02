@@ -204,11 +204,13 @@ Pill {
             height: 20 + 12
 
             Text {
+                objectName: "mediaPosition"
                 y: 16
                 color: Qt.alpha(Theme.text, 0.55)
                 font.family: Theme.fontFamily
                 font.pixelSize: 12
-                text: root.clock(S.Media.position)
+                // The position ticks once a second while a track plays; a hidden panel does not follow it.
+                text: panel.visible ? root.clock(S.Media.position) : ""
             }
 
             Text {
@@ -232,7 +234,7 @@ Pill {
             grooveColor: Qt.alpha(Theme.text, 0.15)
             from: 0
             to: Math.max(1, S.Media.duration)
-            value: S.Media.position
+            value: panel.visible ? S.Media.position : 0
             enabled: S.Media.duration > 0
             onMoved: v => S.Media.seek(v)
         }

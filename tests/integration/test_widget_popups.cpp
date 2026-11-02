@@ -38,7 +38,12 @@ ShellRoot {
 
   QQuickWindow* media = findWindow(QStringLiteral("mediaPopup"));
   ASSERT_NE(media, nullptr);
+  // A hidden panel does not follow the playback position.
+  EXPECT_EQ(findItem(media, QStringLiteral("mediaPosition"))->property("text").toString(),
+            QString());
   invoke(media, "open");
   EXPECT_TRUE(QTest::qWaitFor([&] { return media->width() == 400; }, 2000));
   EXPECT_EQ(media->width(), 400);
+  EXPECT_EQ(findItem(media, QStringLiteral("mediaPosition"))->property("text").toString(),
+            QStringLiteral("0:00"));
 }
