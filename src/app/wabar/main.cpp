@@ -54,7 +54,17 @@ int main(int argc, char* argv[]) {
       QStringLiteral("gdi (default, small) or directwrite (honours variable-font axes, about 2 MB "
                      "more memory). QT_QPA_PLATFORM wins when set."),
       QStringLiteral("engine"));
+  QCommandLineOption noHotkeysOpt(
+      QStringLiteral("no-hotkeys"),
+      QStringLiteral("Register no global hotkey; GlobalShortcut fires only through wabarc."));
+  QCommandLineOption importPathOpt(
+      QStringLiteral("import-path"),
+      QStringLiteral("Add a folder of QML modules (user-built plugins) to the import path. May be "
+                     "repeated. <config home>/modules is always added when it exists."),
+      QStringLiteral("dir"));
   parser.addOption(configHomeOpt);
+  parser.addOption(importPathOpt);
+  parser.addOption(noHotkeysOpt);
   parser.addOption(fontEngineOpt);
   parser.addOption(noTrayOpt);
   parser.addOption(appBarOpt);

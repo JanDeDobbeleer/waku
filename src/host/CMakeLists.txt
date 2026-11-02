@@ -18,6 +18,8 @@
 add_library(wabar_host_base STATIC
   app_bar.h
   app_bar.cpp
+  hotkeys.h
+  hotkeys.cpp
   mask_poller.h
   mask_poller.cpp
   panel_geometry.h
