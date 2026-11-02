@@ -70,6 +70,7 @@ hand results back with queued signals or `QMetaObject::invokeMethod` on `qApp`.
 |---|---|---|---|
 | GUI | `QApplication` / `Runtime` | widgets, bars, CSS engine, file watcher, tray | `Runtime::stop()` and then `exec()` returns |
 | `PollingWorker` (`QThread`) | `Runtime`'s polling-worker registry, keyed by source and `update_interval` | runs the platform `sample()` at its configured interval, emits `dataReady` to the GUI thread | `Runtime::stop()` calls `stopAll()` before widgets are destroyed |
+| `QThreadPool` threads (github) | `platform::sendHttpAsync` (github mark-as-read, device-flow login, post-login fetch) | one blocking QtNetwork request each with its own `QNetworkAccessManager`; the result is posted back to the GUI thread and dropped if its context object is gone | finishes on its own (15 s transfer timeout); no join needed |
 | media session thread (`std::thread`, MTA) | `MediaSessionService`'s `SystemMediaSource` (`platform/media_session_winrt.cpp`), created on first use by the media widget through the polling-worker registry's shared-service map | owns every GSMTC WinRT object; WinRT handlers only enqueue a task, the thread sleeps on a condition variable (no polling) and posts plain snapshots to the GUI thread; position interpolation is a GUI-thread `QTimer` active only while the current session plays | `stopAll()` calls the service's `stop()`: revokes handlers, wakes the queue, `join` |
 | hotkey thread (`std::thread`) | `HotkeyService` | `RegisterHotKey` message loop; dispatches to the GUI thread | `stop()`: `PostThreadMessageW(WM_QUIT)` then `join` |
 | CLI command threads (`std::thread`) | `CliServer` | `\\.\pipe\yasb_pipe_cli` accept/read/reply | `stop()`: sets `stopping_`, unblocks, `join` |
@@ -90,6 +91,7 @@ No new singleton without a row here and a reason.
 | log file, observer, debug flag | `app/log.cpp` | process-global by nature; guarded by a `QMutex` |
 | `tooltipOptions()`, `CustomToolTip::active_` | `core/widgets/tooltip.{cpp,h}` | legacy process-wide tooltip settings and active-tooltip guard |
 | `processLauncher()`, `systemFunctions()` | `core/widgets/callbacks.cpp` | mutable from anywhere (test seam) |
+| `ClockSharedState::instance()` | `widgets/clock/clock_state.cpp` | alarms, snoozes and the countdown timer that every clock widget shows; one `alarms.json` per config folder, as in Python's `ClockWidgetSharedState`. Parented to `qApp`, GUI thread only, replaceable in tests via `resetInstance` |
 | media source-app name cache, shell-app cache | `platform/media_source_apps.cpp` | AUMID to display name; `QMutex`-guarded, written from the media session thread only |
 | shared services map | `core/widgets/polling_worker_registry.h` (`service<T>(key, make)`) | not process-global: owned by the runtime's registry; the media widget and the next-wave control center share one `MediaSessionService` under key `media` |
 | cached Windows build number | `core/widgets/backdrop.cpp` (`windowsBuild()`) | immutable |

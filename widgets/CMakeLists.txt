@@ -24,6 +24,16 @@ add_library(yasb_widgets STATIC
   github/github_widget.cpp
   memory/memory_widget.h
   memory/memory_widget.cpp
+  komorebi/active_layout_widget.h
+  komorebi/active_layout_widget.cpp
+  komorebi/komorebi_service.h
+  komorebi/komorebi_service.cpp
+  komorebi/komorebi_state.h
+  komorebi/komorebi_state.cpp
+  komorebi/komorebi_widgets.h
+  komorebi/komorebi_widgets.cpp
+  komorebi/workspaces_widget.h
+  komorebi/workspaces_widget.cpp
   media/media_widget.h
   media/media_widget.cpp
   media/media.qrc
