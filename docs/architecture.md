@@ -46,7 +46,7 @@ their `win32/` or `qml/` C++ headers, and `testing/` only from tests. The graph 
 | every feature | `kernel`; its QML also uses the `host` QML types and `ui` |
 | `audio`, `bluetooth`, `network`, `github` | `shell` (the "open settings" and "open URL" clicks use the `Shell` service) |
 | `control_center` | `audio`, `media`, `notifications`, `brightness` |
-| `brightness`, `clock`, `color_scheme`, `desktop_state`, `media`, `notifications`, `quickshell_io`, `shell`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces` | no other feature |
+| `apps`, `brightness`, `clock`, `color_scheme`, `desktop_state`, `media`, `notifications`, `quickshell_io`, `shell`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces` | no other feature |
 | `app`, `tests/` | everything |
 
 A feature also includes the root headers of `control/` (such as `WallpaperControl`): they are a
