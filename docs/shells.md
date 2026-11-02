@@ -80,7 +80,7 @@ and waku undoes only what it changed.
 
 waku starts with Qt's GDI font engine, which keeps memory low but ignores variable-font axes
 (`font.variableAxes`). A shell that needs axes starts waku with `--font-engine=directwrite`, at
-the cost of about 2 MB more working set. A `QT_QPA_PLATFORM` set by the caller wins over the flag.
+the cost of tens of MB more working set (20-120 MB measured) and about 1,000 more handles. A `QT_QPA_PLATFORM` set by the caller wins over the flag.
 
 ### Qt Quick Controls
 

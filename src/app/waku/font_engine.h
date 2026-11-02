@@ -10,8 +10,9 @@
 // gdi (default): the lean choice. Qt's GDI font database loads fonts on demand and keeps the
 //   working set small. It ignores variable-font axes (`font.variableAxes`), so a variable font
 //   renders at its default instance.
-// directwrite: Qt's default engine. It honours variable-font axes and costs about 2 MB more
-//   working set (it maps every installed font at start-up). A shell that needs axes opts in.
+// directwrite: Qt's default engine. It honours variable-font axes and costs 20-120 MB more
+//   working set and 1,000-1,700 more handles (it maps every installed font; measured idle after 50
+//   s against the default 114 MB and 724 handles). A shell that needs axes opts in.
 namespace waku::app {
 
 enum class FontEngine { Gdi, DirectWrite };

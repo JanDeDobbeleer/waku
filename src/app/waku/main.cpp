@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
   }
 
   // As app/main.cpp setFontEngine(): Qt's DirectWrite font database maps every installed font
-  // (about 1.7k handles and 100 MiB working set). Respect a platform the caller chose.
+  // (20-120 MiB more working set and 1,000-1,700 more handles). Respect a platform the caller
+  // chose.
   // `--font-engine=directwrite` opts back in for a shell that needs variable-font axes, which the
   // GDI engine ignores (app/waku/font_engine.h).
   QStringList rawArguments;
@@ -85,8 +86,8 @@ int main(int argc, char* argv[]) {
   // the parser accepts it.
   QCommandLineOption fontEngineOpt(
       QStringLiteral("font-engine"),
-      QStringLiteral("gdi (default, small) or directwrite (honours variable-font axes, about 2 MB "
-                     "more memory). QT_QPA_PLATFORM wins when set."),
+      QStringLiteral("gdi (default, small) or directwrite (honours variable-font axes, tens of MB "
+                     "more memory and about 1,000 more handles). QT_QPA_PLATFORM wins when set."),
       QStringLiteral("engine"));
   QCommandLineOption noHotkeysOpt(
       QStringLiteral("no-hotkeys"),
