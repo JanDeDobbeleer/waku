@@ -12,13 +12,19 @@ DesktopState::DesktopState(QObject* parent)
 
 DesktopState::DesktopState(std::unique_ptr<DesktopProbe> probe, QObject* parent)
     : QObject(parent), probe_(std::move(probe)) {
-  timer_.setInterval(kPollIntervalMs);
+  timer_.setInterval(kIdlePollIntervalMs);
   // A destroyed QML binding does not call disconnectNotify, so the tick also checks that a signal
   // is still connected. QML keeps a conservative per-signal mask, so once a binding has observed a
   // signal the timer runs until the singleton is destroyed; C++ connections stop it precisely.
+  // The tick also drops back to the slow interval when only the idle time is still observed.
   connect(&timer_, &QTimer::timeout, this, [this] {
     poll(true);
-    if (!observed()) timer_.stop();
+    if (!observed()) {
+      timer_.stop();
+      return;
+    }
+    const int interval = wantedIntervalMs();
+    if (timer_.interval() != interval) timer_.setInterval(interval);
   });
   poll(false);
 }
@@ -85,14 +91,25 @@ void DesktopState::poll(bool emitSignals) {
 }
 
 bool DesktopState::observed() const {
-  for (const QMetaMethod& signal : {QMetaMethod::fromSignal(&DesktopState::capsLockChanged),
-                                    QMetaMethod::fromSignal(&DesktopState::numLockChanged),
-                                    QMetaMethod::fromSignal(&DesktopState::scrollLockChanged),
-                                    QMetaMethod::fromSignal(&DesktopState::keyboardLayoutChanged),
-                                    QMetaMethod::fromSignal(&DesktopState::idleSecondsChanged)}) {
+  return fastObserved() ||
+         isSignalConnected(QMetaMethod::fromSignal(&DesktopState::idleSecondsChanged));
+}
+
+// Lock keys and the layout can change at any moment, so they need the fast poll. The idle time
+// changes at most once per second.
+bool DesktopState::fastObserved() const {
+  for (const QMetaMethod& signal :
+       {QMetaMethod::fromSignal(&DesktopState::capsLockChanged),
+        QMetaMethod::fromSignal(&DesktopState::numLockChanged),
+        QMetaMethod::fromSignal(&DesktopState::scrollLockChanged),
+        QMetaMethod::fromSignal(&DesktopState::keyboardLayoutChanged)}) {
     if (isSignalConnected(signal)) return true;
   }
   return false;
+}
+
+int DesktopState::wantedIntervalMs() const {
+  return fastObserved() ? kPollIntervalMs : kIdlePollIntervalMs;
 }
 
 // connectNotify and disconnectNotify run on the thread that connects or disconnects, so the work
@@ -110,9 +127,11 @@ void DesktopState::updatePolling() {
   const bool watch = observed();
   if (watch && !timer_.isActive()) {
     poll(true);
-    timer_.start();
+    timer_.start(wantedIntervalMs());
   } else if (!watch && timer_.isActive()) {
     timer_.stop();
+  } else if (watch && timer_.interval() != wantedIntervalMs()) {
+    timer_.setInterval(wantedIntervalMs());
   }
 }
 

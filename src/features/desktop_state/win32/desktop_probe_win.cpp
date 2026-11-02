@@ -36,6 +36,8 @@ class SystemProbe final : public DesktopProbe {
     }
     const HKL layout = GetKeyboardLayout(thread);  // thread 0 is the calling thread
     if (!layout) return {};
+    // The names depend on the handle alone, so the locale lookups run only when it changes.
+    if (layout == cachedHandle_) return cachedInfo_;
     const LANGID language = LOWORD(reinterpret_cast<UINT_PTR>(layout));
     wchar_t name[LOCALE_NAME_MAX_LENGTH];
     if (LCIDToLocaleName(MAKELCID(language, SORT_DEFAULT), name, static_cast<int>(std::size(name)),
@@ -47,6 +49,8 @@ class SystemProbe final : public DesktopProbe {
     info.displayName = localeInfo(name, LOCALE_SLOCALIZEDDISPLAYNAME);
     info.id = QStringLiteral("%1").arg(static_cast<quint32>(reinterpret_cast<UINT_PTR>(layout)), 8,
                                        16, QLatin1Char('0'));
+    cachedHandle_ = layout;
+    cachedInfo_ = info;
     return info;
   }
 
@@ -66,6 +70,10 @@ class SystemProbe final : public DesktopProbe {
       // Nothing to do: the machine just keeps its normal sleep rules.
     }
   }
+
+ private:
+  HKL cachedHandle_ = nullptr;
+  KeyboardLayoutInfo cachedInfo_;
 };
 
 }  // namespace

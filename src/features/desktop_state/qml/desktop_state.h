@@ -15,9 +15,10 @@ namespace waku::desktop_state {
 // Lock keys, keyboard layout and idle time as a QML singleton.
 //
 // Windows has no change notification for these that is both documented and cheap, so the
-// singleton polls every 200 ms, and only while something observes it: a binding or a connection
-// on one of the change signals starts the timer, the last one going away stops it. A read from
-// script without a binding refreshes the value on the spot, so it is never stale. GUI thread
+// singleton polls, and only while something observes it: a binding or a connection on one of the
+// change signals starts the timer, the last one going away stops it. The poll runs every 200 ms
+// while a lock key or the layout is observed and every second when only `idleSeconds` is. A read
+// from script without a binding refreshes the value on the spot, so it is never stale. GUI thread
 // only; no worker thread.
 //
 // `idleSeconds` counts whole seconds since the last keyboard or mouse input and changes at most
@@ -39,7 +40,9 @@ class DesktopState : public QObject {
   Q_PROPERTY(int idleSeconds READ idleSeconds NOTIFY idleSecondsChanged FINAL)
 
  public:
+  // Poll interval while a lock key or the layout is observed, and while only the idle time is.
   static constexpr int kPollIntervalMs = 200;
+  static constexpr int kIdlePollIntervalMs = 1000;
 
   explicit DesktopState(QObject* parent = nullptr);
   // Test seam: a fake probe; null means no probe.
@@ -57,6 +60,7 @@ class DesktopState : public QObject {
 
   // True while the poll timer runs.
   bool polling() const { return timer_.isActive(); }
+  int pollIntervalMs() const { return timer_.interval(); }
   // Reads the machine now and emits the change signals for what differs.
   Q_INVOKABLE void refresh();
 
@@ -73,6 +77,8 @@ class DesktopState : public QObject {
 
  private:
   bool observed() const;
+  bool fastObserved() const;
+  int wantedIntervalMs() const;
   void updatePolling();
   // Without a running timer a read from script refreshes first, without emitting.
   void freshen();

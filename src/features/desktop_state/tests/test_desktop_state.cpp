@@ -67,6 +67,36 @@ TEST(DesktopState, PollsOnlyWhileSomethingObserves) {
   EXPECT_FALSE(h.state->polling());
 }
 
+TEST(DesktopState, PollsSlowlyWhenOnlyTheIdleTimeIsObserved) {
+  Harness h;
+  auto idle = std::make_unique<QMetaObject::Connection>(
+      QObject::connect(h.state.get(), &DesktopState::idleSecondsChanged, h.state.get(), [] {}));
+  QCoreApplication::processEvents();
+  ASSERT_TRUE(h.state->polling());
+  EXPECT_EQ(h.state->pollIntervalMs(), DesktopState::kIdlePollIntervalMs);
+  auto caps = std::make_unique<QMetaObject::Connection>(
+      QObject::connect(h.state.get(), &DesktopState::capsLockChanged, h.state.get(), [] {}));
+  QCoreApplication::processEvents();
+  EXPECT_EQ(h.state->pollIntervalMs(), DesktopState::kPollIntervalMs);
+  QObject::disconnect(*caps);
+  QCoreApplication::processEvents();
+  EXPECT_EQ(h.state->pollIntervalMs(), DesktopState::kIdlePollIntervalMs);
+  QObject::disconnect(*idle);
+  QCoreApplication::processEvents();
+  EXPECT_FALSE(h.state->polling());
+}
+
+TEST(DesktopState, IdleOnlyObserverReadsTheProbeOncePerSecond) {
+  Harness h;
+  QSignalSpy idle(h.state.get(), &DesktopState::idleSecondsChanged);
+  QCoreApplication::processEvents();
+  ASSERT_TRUE(h.state->polling());
+  const int before = h.probe->reads;
+  QTest::qWait(1300);
+  // One tick at 1 s; the 200 ms interval would have made six.
+  EXPECT_LE(h.probe->reads - before, 2);
+}
+
 TEST(DesktopState, EmitsChangeSignalsOncePerChange) {
   Harness h;
   QSignalSpy caps(h.state.get(), &DesktopState::capsLockChanged);

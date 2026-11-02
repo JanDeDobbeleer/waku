@@ -26,7 +26,9 @@ bar, so this costs nothing in practice). A read from script with nothing observi
 level keyboard hook was left out: it is a system-wide hook for three bits.
 
 `idleSeconds` is an integer and changes at most once per second, so a binding re-evaluates once
-per second, not five times.
+per second, not five times. When only `idleSecondsChanged` is observed the timer runs every second
+(`kIdlePollIntervalMs`); a lock key or layout observer moves it to 200 ms. The Win32 probe caches
+the layout names per `HKL`, so a tick that sees the same handle makes two calls, not six.
 
 ## Windows APIs
 
