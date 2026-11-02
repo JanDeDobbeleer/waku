@@ -26,7 +26,7 @@ on the services of the same names (`waku.services`, `qml/stat_sources.h`) and th
 The factories (`create*DataSource()`) hand out one process-wide source per kind through a
 `kernel::LingeringHub`: every widget of every engine shares it, and it outlives its last holder by
 30 s, so a reload neither closes nor opens a PDH query or a GPU adapter. A source holds no QML
-object. The rate sources (CPU, GPU) return the previous sample to a caller that comes less than
+object. The rate sources (CPU, GPU) and the battery source return the previous sample to a caller that comes less than
 1 s after it, so two widgets polling the shared query never rate a few milliseconds. The GPU source
 opens its adapters for the temperature once and keeps them until it goes.
 
@@ -60,7 +60,9 @@ offscreen platform touch no counter and no adapter. Pure conversion and selectio
 - CPU: the PDH set `\Thermal Zone Information(*)` (ACPI thermal zones, admin-free). Per zone,
   `High Precision Temperature` (tenths of a Kelvin) wins; `Temperature` (whole Kelvin) is the
   fallback. Readings outside 0 C (exclusive) to 150 C are dropped: sensorless zones report 0 or
-  placeholders. `Cpu.temperature` is the hottest remaining zone.
+  placeholders. `Cpu.temperature` is the hottest remaining zone. The CPU source reads the zones on
+  every 5th sample and carries the last reading between: the wildcard counter arrays cost more than
+  the CPU counters, and a zone moves by a degree in seconds.
 - Why the hottest zone: ACPI zone names are paths (`\_SB.TZ0`), not labels, so no zone can be tied
   to the CPU by name. The hottest zone is the SoC/package proxy, not a per-core die sensor. It is
   not WMI `MSAcpi_ThermalZoneTemperature` (needs admin) and uses no driver.

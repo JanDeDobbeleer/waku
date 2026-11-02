@@ -11,6 +11,7 @@
 #include <winioctl.h>
 
 #include <cmath>
+#include <mutex>
 #include <vector>
 
 namespace waku::system_stats {
@@ -56,6 +57,16 @@ std::optional<std::wstring> firstBatteryPath() {
 }  // namespace
 
 std::optional<BatterySample> WindowsBatteryDataSource::sample() {
+  std::lock_guard lock(mutex_);
+  const auto now = std::chrono::steady_clock::now();
+  if (hasLast_ && now - lastAt_ < std::chrono::milliseconds(1000)) return last_;
+  last_ = read();
+  hasLast_ = true;
+  lastAt_ = now;
+  return last_;
+}
+
+std::optional<BatterySample> WindowsBatteryDataSource::read() {
   SYSTEM_POWER_STATUS power{};
   if (!GetSystemPowerStatus(&power) || (power.BatteryFlag & 0x80) ||
       power.BatteryLifePercent == 255) {

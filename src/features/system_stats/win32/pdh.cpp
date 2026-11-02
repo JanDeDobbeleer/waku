@@ -19,6 +19,10 @@ namespace {
 constexpr DWORD kWin1124H2Build = 26100;
 // Below this, a second sample returns the previous one (the widgets sample every 2 s or slower).
 constexpr std::chrono::milliseconds kMinInterval(1000);
+// The thermal zones are read on the first sample and then on every Nth one; the samples between
+// carry the last reading. A zone moves by a degree in seconds, and the wildcard counter arrays
+// cost more than the CPU counters themselves.
+constexpr int kThermalEvery = 5;
 
 int logicalCores() {
   SYSTEM_INFO info{};
@@ -71,6 +75,8 @@ struct PdhCpuDataSource::Impl {
   bool failed = false;
   bool logged = false;
   PdhThermalReader thermal;
+  std::optional<double> temperature;
+  int sinceThermal = kThermalEvery;
   std::mutex mutex;
   // The last sample, handed to callers that come within kMinIntervalMs of it.
   std::optional<CpuSample> last;
@@ -168,7 +174,12 @@ CpuSample PdhCpuDataSource::collect() {
   result.frequencyMax = impl_->maxFrequency;
   result.frequencyCurrent = impl_->maxFrequency;
   if (!impl_->initialize()) return result;
-  result.temperature = impl_->thermal.cpuTemperature();
+  if (impl_->sinceThermal >= kThermalEvery) {
+    impl_->temperature = impl_->thermal.cpuTemperature();
+    impl_->sinceThermal = 0;
+  }
+  ++impl_->sinceThermal;
+  result.temperature = impl_->temperature;
   if (PdhCollectQueryData(impl_->query) != ERROR_SUCCESS) return result;
   result.percent = std::clamp(roundOne(readDouble(impl_->total)), 0.0, 100.0);
   const double performance = readDouble(impl_->performance);
