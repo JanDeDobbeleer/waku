@@ -170,8 +170,9 @@ class ShellHost : public QObject {
   // A window just appeared on the screen: stack it, set whether it takes clicks as activation and,
   // with `activate`, give it the keyboard focus.
   void windowShown(QsWindow* window, bool activate);
-  // The layer or the keyboard focus of a window on the screen changed.
-  void windowStackingChanged(QsWindow* window);
+  // The layer or the keyboard focus of a window on the screen changed. With `activate` the window
+  // also takes the foreground (it just gained keyboard focus).
+  void windowStackingChanged(QsWindow* window, bool activate = false);
   // A named window was shown or hidden at run time; kept across reloads (see `present`).
   void noteVisibility(const QString& name, bool visible);
 

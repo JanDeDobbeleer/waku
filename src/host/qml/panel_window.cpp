@@ -79,11 +79,14 @@ void PanelWindow::setLayer(WlrLayer::Enum layer) {
 
 void PanelWindow::setKeyboardFocus(WlrKeyboardFocus::Enum focus) {
   if (keyboardFocus_ == focus) return;
+  const bool gained = keyboardFocus_ == WlrKeyboardFocus::None;
   keyboardFocus_ = focus;
   emit keyboardFocusChanged();
   if (complete()) {
     updateFlags();
-    stackingChanged();
+    // A window that starts to take the keyboard while it is on the screen (a launcher that opens
+    // by flipping this property) takes the foreground too, as a window shown with it does.
+    stackingChanged(gained);
   }
 }
 

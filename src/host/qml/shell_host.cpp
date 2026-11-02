@@ -672,7 +672,9 @@ void ShellHost::windowShown(QsWindow* window, bool activate) {
   }
 }
 
-void ShellHost::windowStackingChanged(QsWindow* window) { windowShown(window, false); }
+void ShellHost::windowStackingChanged(QsWindow* window, bool activate) {
+  windowShown(window, activate);
+}
 
 void ShellHost::present(Entry& entry) {
   QsWindow* window = entry.window;

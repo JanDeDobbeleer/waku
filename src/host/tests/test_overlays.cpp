@@ -181,6 +181,22 @@ TEST(Overlays, ChangingTheLayerOfAShownWindowStacksItAgain) {
   EXPECT_EQ(h.native.noActivate.back().second, false);
 }
 
+TEST(Overlays, GainingTheKeyboardOnAShownWindowTakesTheForeground) {
+  Harness h;
+  ASSERT_TRUE(started(h, overlayShell(QStringLiteral("layer: WlrLayer.Top"))));
+  QsWindow* window = named(h);
+  ASSERT_NE(window, nullptr);
+  window->show();
+  h.native.foregrounded.clear();
+  window->setProperty("keyboardFocus", WlrKeyboardFocus::OnDemand);
+  ASSERT_EQ(h.native.foregrounded.size(), 1u);
+  EXPECT_EQ(h.native.foregrounded.back(), hwndOf(window));
+  // Moving between two focus modes keeps the foreground it has; losing the keyboard leaves it.
+  window->setProperty("keyboardFocus", WlrKeyboardFocus::Exclusive);
+  window->setProperty("keyboardFocus", WlrKeyboardFocus::None);
+  EXPECT_EQ(h.native.foregrounded.size(), 1u);
+}
+
 // ---- hideDelay ----
 
 TEST(Overlays, HideDelayKeepsTheWindowUpWhileTheContentAnimatesOut) {

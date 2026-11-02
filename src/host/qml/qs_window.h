@@ -277,8 +277,9 @@ class QsWindow : public QObject, public QQmlParserStatus {
   // Called right after the backing window is shown.
   virtual void afterShow() {}
   void updateFlags();
-  // The layer or the keyboard focus changed: apply it to a window that is on the screen.
-  void stackingChanged();
+  // The layer or the keyboard focus changed: apply it to a window that is on the screen. With
+  // `activate` the window also takes the foreground.
+  void stackingChanged(bool activate = false);
   void updateVisibility();
   void updateMaskPoller();
   void connectMask();

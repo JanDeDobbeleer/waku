@@ -341,8 +341,8 @@ void QsWindow::updateFlags() {
   window_->setFlags(flags);
 }
 
-void QsWindow::stackingChanged() {
-  if (host_ && window_ && window_->isVisible()) host_->windowStackingChanged(this);
+void QsWindow::stackingChanged(bool activate) {
+  if (host_ && window_ && window_->isVisible()) host_->windowStackingChanged(this, activate);
 }
 
 void QsWindow::hideNow() {
