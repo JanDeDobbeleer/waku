@@ -6,7 +6,12 @@
     "label_scenarios": {
       "battery": 9,
       "bluetooth": 7,
+      "clock": 37,
       "cpu": 6,
+      "github": 7,
+      "komorebi_active_layout": 8,
+      "komorebi_workspaces": 14,
+      "media": 17,
       "memory": 5,
       "wifi": 9
     }

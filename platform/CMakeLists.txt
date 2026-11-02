@@ -6,6 +6,14 @@ add_library(yasb_platform STATIC
   bluetooth.cpp
   connectivity.h
   connectivity.cpp
+  github_api.h
+  github_api.cpp
+  komorebi.h
+  komorebi.cpp
+  media_session.h
+  media_session.cpp
+  media_session_winrt.cpp
+  media_source_apps.cpp
   memory.h
   memory.cpp
   pdh.h
@@ -14,9 +22,15 @@ add_library(yasb_platform STATIC
   winrt_apartment.cpp
   wlan.h
   wlan.cpp
+  sound.h
+  sound.cpp
   system_stats.h
 )
 target_include_directories(yasb_platform PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(yasb_platform
   PUBLIC Qt6::Core
-  PRIVATE yasb_options pdh setupapi psapi wlanapi ws2_32 bthprops cfgmgr32 ole32 windowsapp runtimeobject)
+  PRIVATE yasb_options pdh setupapi psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32
+          wlanapi ws2_32 bthprops cfgmgr32)
+# GitHub widget HTTPS (github_api.cpp); headers stay QtCore-only.
+find_package(Qt6 REQUIRED COMPONENTS Network)
+target_link_libraries(yasb_platform PRIVATE Qt6::Network)

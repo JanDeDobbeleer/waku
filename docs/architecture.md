@@ -77,6 +77,7 @@ hand results back with queued signals or `QMetaObject::invokeMethod` on `qApp`.
 | CLI log thread (`std::thread`) | `CliServer` | `\\.\pipe\yasb_pipe_log` frames | `stop()`: `CancelSynchronousIo`, `join` |
 | `WlanBackend` (`QThread`) | `WifiMenu` (created on first menu open) | wlanapi scan, connection query, profile edits, `Windows.Devices.WiFi` connect and disconnect; results return as queued signals | `~WlanBackend`: unregister notifications, `quit`, `wait` |
 | `RealBluetoothBackend` (`QThread`) | shared by the Bluetooth widgets (see singletons) | BluetoothAPIs and WinRT enumeration, battery reads, radio power, device watchers, audio connect/disconnect; results return as queued signals | destructor: cancel connect, `shutdown`, `quit`, `wait` |
+| komorebi pipe thread (`std::thread`) | `KomorebiService` (member of `Runtime`) via `platform::KomorebiPipeListener` | owns the `\\.\pipe\yasb-native-<uuid>` handle, runs `komorebic subscribe-pipe` and `state`, reads one JSON message per pipe message, reconnects; hands parsed state to the GUI thread with queued calls | `stop()`: sets the stop event (cancels waits and overlapped I/O), `join`, then `komorebic unsubscribe-pipe`; started lazily by the first widget subscription; `Runtime::stop()` calls it |
 
 Platform data sources (`platform/`) are called from `PollingWorker` threads; anything they cache
 globally must be locked.

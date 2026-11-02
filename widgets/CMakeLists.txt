@@ -40,6 +40,19 @@ add_library(yasb_widgets STATIC
   bluetooth/bluetooth_menu.cpp
   bluetooth/bluetooth_widget.h
   bluetooth/bluetooth_widget.cpp
+  komorebi/active_layout_widget.h
+  komorebi/active_layout_widget.cpp
+  komorebi/komorebi_service.h
+  komorebi/komorebi_service.cpp
+  komorebi/komorebi_state.h
+  komorebi/komorebi_state.cpp
+  komorebi/komorebi_widgets.h
+  komorebi/komorebi_widgets.cpp
+  komorebi/workspaces_widget.h
+  komorebi/workspaces_widget.cpp
+  media/media_widget.h
+  media/media_widget.cpp
+  media/media.qrc
 )
 set_target_properties(yasb_widgets PROPERTIES AUTORCC ON)
 target_include_directories(yasb_widgets PUBLIC ${CMAKE_SOURCE_DIR})
