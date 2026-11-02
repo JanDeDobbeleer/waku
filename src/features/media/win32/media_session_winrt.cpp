@@ -73,6 +73,7 @@ class SystemMediaSource final : public MediaSessionSource {
     winrt::event_token propertiesToken;
     winrt::event_token timelineToken;
     winrt::event_token playbackToken;
+    bool complete = false;  // every part was read; false retries on the next refresh
   };
 
   // Worker thread, first: the manager, its handlers and one full read.
@@ -212,7 +213,7 @@ class SystemMediaSource final : public MediaSessionSource {
     }
   }
 
-  // Python _refresh_sessions: rebuild trackers, then read every session in full.
+  // Python _refresh_sessions: rebuild trackers, then read each new session in full.
   void refresh(bool followSystem) {
     if (!manager_ || !sink_) return;
     std::vector<MediaSessionData> data;
@@ -240,19 +241,27 @@ class SystemMediaSource final : public MediaSessionSource {
       // stop() does not wait for every session of a refresh (each read can block on a frozen
       // player).
       if (worker_.stopRequested()) return;
-      if (tracked_.count(appId) == 0) {
+      MediaSessionData entry;
+      entry.appId = appId;
+      // A session that was read in full keeps its state: its own handlers deliver every change,
+      // so the list only names it. Reading it again would download every thumbnail per event.
+      auto found = tracked_.find(appId);
+      if (found != tracked_.end() && found->second.complete) {
+        data.push_back(std::move(entry));
+        continue;
+      }
+      if (found == tracked_.end()) {
         Tracked tracked;
         tracked.session = live.at(appId);
         bind(appId, tracked);
-        tracked_.emplace(appId, std::move(tracked));
+        found = tracked_.emplace(appId, std::move(tracked)).first;
       }
-      const auto& session = tracked_.at(appId).session;
-      MediaSessionData entry;
-      entry.appId = appId;
+      const auto& session = found->second.session;
       entry.sourceName = resolveSourceAppName(appId);
       entry.properties = readProperties(session);
       entry.timeline = readTimeline(session);
       entry.playback = readPlayback(session);
+      found->second.complete = entry.properties && entry.timeline && entry.playback;
       data.push_back(std::move(entry));
     }
     sink_->sessionsChanged(std::move(data), currentId, followSystem);
