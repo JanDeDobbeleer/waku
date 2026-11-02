@@ -211,6 +211,7 @@ bool AppsService::launchMode(const QString& id, LaunchMode mode) {
 }
 
 bool AppsService::launch(const QString& id) { return launchMode(id, LaunchMode::Normal); }
+bool AppsService::launchNew(const QString& id) { return launchMode(id, LaunchMode::NewInstance); }
 bool AppsService::launchAsAdmin(const QString& id) { return launchMode(id, LaunchMode::Admin); }
 bool AppsService::openLocation(const QString& id) {
   return launchMode(id, LaunchMode::OpenLocation);

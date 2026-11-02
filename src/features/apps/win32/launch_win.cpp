@@ -36,6 +36,14 @@ bool launch(const AppRecord& app, LaunchMode mode) {
         return shellExecute(QStringLiteral("shell:AppsFolder\\") + app.aumid, QString(), nullptr);
       }
       return !app.path.isEmpty() && shellExecute(app.path, QString(), nullptr);
+    case LaunchMode::NewInstance:
+      // No activateAppByAumid: the shell is asked to start the app and the app decides whether that
+      // opens a window. A shortcut always starts a new process.
+      if (app.kind == AppKind::Store) {
+        if (app.aumid.isEmpty()) return false;
+        return shellExecute(QStringLiteral("shell:AppsFolder\\") + app.aumid, QString(), nullptr);
+      }
+      return !app.path.isEmpty() && shellExecute(app.path, QString(), nullptr);
     case LaunchMode::Admin:
       // A packaged app starts elevated only through its execution alias.
       if (app.kind == AppKind::Store)

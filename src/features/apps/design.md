@@ -50,7 +50,9 @@ no window answers. Admin for a Store app goes through its execution alias: the o
 `%LOCALAPPDATA%\Microsoft\WindowsApps\<PackageFamilyName>` (`findExecutionAlias`, read when the
 Store apps are listed and kept in `AppRecord::elevationAlias`), started with `runas`. A package
 with no alias or several has none, so `launchAsAdmin` returns false and the entry has no admin
-action. `openLocation` runs `explorer.exe /select,<target>`; false for Store apps. `execute()` on
+action. `openLocation` runs `explorer.exe /select,<target>`; false for Store apps. `launchNew(id)` and `DesktopEntry.executeNew()`
+(waku extensions) skip the activation, so a running Store app is started again; whether that opens a
+second window is up to the app. `execute()` on
 an entry and its actions ("Run as administrator": shortcuts and Store apps with an alias; "Open
 file location": shortcuts only) go through the same path.
 `runInTerminal` is always false: a console program opens its own window.

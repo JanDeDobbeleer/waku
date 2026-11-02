@@ -61,4 +61,8 @@ void DesktopEntry::execute() {
   if (launch_) launch_(record_.id, LaunchMode::Normal);
 }
 
+void DesktopEntry::executeNew() {
+  if (launch_) launch_(record_.id, LaunchMode::NewInstance);
+}
+
 }  // namespace waku::apps

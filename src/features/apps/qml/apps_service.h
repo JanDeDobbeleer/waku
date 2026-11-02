@@ -141,7 +141,11 @@ class AppsService : public QObject {
   // Start the app, or raise it. True when the shell accepted the request; records the launch for
   // the ranking.
   Q_INVOKABLE bool launch(const QString& id);
-  // Start a shortcut elevated (UAC prompt). False for Store apps and unknown ids.
+  // Start the app again even when it already runs (a new window, not elevated); never raises the
+  // running one. True when the shell accepted the request; records the launch for the ranking.
+  Q_INVOKABLE bool launchNew(const QString& id);
+  // Start the app elevated (UAC prompt): a shortcut, or a Store app with an execution alias. Always
+  // a new process. False otherwise and for unknown ids.
   Q_INVOKABLE bool launchAsAdmin(const QString& id);
   // Show the shortcut's target in Explorer. False for Store apps and unknown ids.
   Q_INVOKABLE bool openLocation(const QString& id);

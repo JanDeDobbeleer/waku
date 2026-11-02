@@ -103,6 +103,8 @@ class DesktopEntry : public QObject {
 
   // Starts the app (raises it when a Store app already runs).
   Q_INVOKABLE void execute();
+  // waku extension: starts the app again, as a new window, even when it runs.
+  Q_INVOKABLE void executeNew();
 
  signals:
   void changed();

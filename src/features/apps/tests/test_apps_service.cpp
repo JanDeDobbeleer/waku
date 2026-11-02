@@ -216,6 +216,20 @@ TEST(AppsService, LaunchRecordsFrecencyAndPersistsIt) {
   EXPECT_EQ(idsOf(again.search(QString(), 0)).last(), s("Visual Studio Code"));
 }
 
+TEST(AppsService, LaunchNewStartsAgainWithoutRaising) {
+  Fixture fixture;
+  AppsService service(fixture.deps());
+  EXPECT_TRUE(service.launchNew(s("Alpha")));
+  EXPECT_FALSE(service.launchNew(s("unknown")));
+  DesktopEntry* beta = service.byId(s("Dev Tools/Beta"));
+  ASSERT_TRUE(beta);
+  beta->executeNew();
+  ASSERT_EQ(fixture.launched.size(), 2u);
+  EXPECT_EQ(fixture.launched[0].mode, LaunchMode::NewInstance);
+  EXPECT_EQ(fixture.launched[1].mode, LaunchMode::NewInstance);
+  EXPECT_EQ(fixture.launched[1].id, s("Dev Tools/Beta"));
+}
+
 TEST(AppsService, EntryExecuteAndActionsLaunch) {
   Fixture fixture;
   AppsService service(fixture.deps());
