@@ -163,9 +163,16 @@ void WindowTracker::handleWinEvent(unsigned eventType, WindowHandle hwnd, long i
                          [this, hwnd] { guarded("cloak", [&] { onWindowCloaked(hwnd); }); });
       break;
     case shell::kEventObjectShow:
+      // The system raises this for every tooltip, menu and child control. Post a task only for a
+      // tracked window, a possible taskbar window or a UWP frame, which addWindow retries.
+      if (!isTracked(hwnd) && !system_->mayBeTaskbarWindow(hwnd) &&
+          !isUwpClass(system_->className(hwnd))) {
+        break;
+      }
       QTimer::singleShot(0, this, [this, hwnd] { guarded("show", [&] { onWindowShow(hwnd); }); });
       break;
     case shell::kEventObjectHide:
+      if (!isTracked(hwnd)) break;  // onWindowHide ignores an untracked window
       QTimer::singleShot(0, this, [this, hwnd] { guarded("hide", [&] { onWindowHide(hwnd); }); });
       break;
     case shell::kEventSystemMinimizeStart:

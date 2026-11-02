@@ -84,10 +84,19 @@ struct Fixture {
     service = std::make_unique<TaskbarService>(makeDeps(system, pins, dir));
     model.setService(service.get());
     ASSERT_TRUE(service->tracker()->start(1));
+    QCoreApplication::processEvents();
   }
 
-  int rows() const { return model.rowCount(); }
-  QVariant at(int row, int role) const { return model.data(model.index(row), role); }
+  // The service coalesces its changes to one per loop turn: the accessors let that turn run, so a
+  // test reads the rows the way QML does after the event.
+  int rows() const {
+    QCoreApplication::processEvents();
+    return model.rowCount();
+  }
+  QVariant at(int row, int role) const {
+    QCoreApplication::processEvents();
+    return model.data(model.index(row), role);
+  }
   QString key(int row) const { return at(row, TaskbarModel::KeyRole).toString(); }
   QString title(int row) const { return at(row, TaskbarModel::TitleRole).toString(); }
   QStringList keys() const {
@@ -116,6 +125,24 @@ TEST(TaskbarModel, ShowsTheOpenWindowsInArrivalOrder) {
   EXPECT_EQ(f.title(2), QStringLiteral("Third"));
 }
 
+TEST(TaskbarModel, AnActivationRebuildsTheRowsOnce) {
+  Fixture f;
+  f.system->add(kFirst, QStringLiteral("First"), QStringLiteral("a"));
+  f.system->add(kSecond, QStringLiteral("Second"), QStringLiteral("b"));
+  f.start();
+  QCoreApplication::processEvents();
+  f.hook(plat::shell::kWindowActivated, kFirst);
+
+  QSignalSpy changed(f.service.get(), &TaskbarService::changed);
+  // Old window deactivated and new one activated: two tracker updates, one change.
+  f.service->tracker()->handleShellHook(plat::shell::kWindowActivated, kSecond);
+  EXPECT_EQ(changed.count(), 0);
+  QCoreApplication::processEvents();
+  EXPECT_EQ(changed.count(), 1);
+  EXPECT_FALSE(f.at(0, TaskbarModel::ActiveRole).toBool());
+  EXPECT_TRUE(f.at(1, TaskbarModel::ActiveRole).toBool());
+}
+
 TEST(TaskbarModel, RemovesAClosedWindowAndAnnouncesTheTitleChange) {
   Fixture f;
   f.system->add(kFirst, QStringLiteral("First"), QStringLiteral("a"));
@@ -132,6 +159,7 @@ TEST(TaskbarModel, RemovesAClosedWindowAndAnnouncesTheTitleChange) {
   QSignalSpy removed(&f.model, &QAbstractItemModel::rowsRemoved);
   f.system->rows.erase(kFirst);
   f.hook(plat::shell::kWindowDestroyed, kFirst);
+  QCoreApplication::processEvents();
   EXPECT_EQ(removed.count(), 1);
   EXPECT_EQ(f.keys(), (QStringList{QStringLiteral("w:102")}));
 }

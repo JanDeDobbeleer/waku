@@ -69,7 +69,8 @@ void TaskbarService::init(Deps deps) {
   icons_ = new waku::taskbar::TaskbarIcons(system_, deps.asyncIcons, this);
   connect(icons_, &waku::taskbar::TaskbarIcons::iconsChanged, this,
           [this] { guarded("icons", [&] { onIconsChanged(); }); });
-  connect(pinStore_, &waku::taskbar::PinStore::pinnedAppsChanged, this, [this] { emit changed(); });
+  connect(pinStore_, &waku::taskbar::PinStore::pinnedAppsChanged, this,
+          [this] { scheduleChanged(); });
 
   if (!deps.trackerAvailable) return;
   tracker_ = new WindowTracker(system_, std::move(deps.hooks), this);
@@ -141,7 +142,7 @@ TaskbarWindow* TaskbarService::find(WindowHandle hwnd) {
 void TaskbarService::onAdded(WindowHandle hwnd, const WindowInfo& info) {
   if (TaskbarWindow* existing = find(hwnd)) {
     existing->info = info;
-    emit changed();
+    scheduleChanged();
     return;
   }
   // For Explorer windows appUniqueId makes out-of-process COM calls, and the GUI thread's STA
@@ -159,7 +160,7 @@ void TaskbarService::onAdded(WindowHandle hwnd, const WindowInfo& info) {
     w.minimized = minimized;
     windows_.push_back(std::move(w));
   }
-  emit changed();
+  scheduleChanged();
 }
 
 void TaskbarService::onRemoved(WindowHandle hwnd) {
@@ -170,7 +171,7 @@ void TaskbarService::onRemoved(WindowHandle hwnd) {
   iconCache_.erase(hwnd);
   iconStore_->remove(hwnd);
   icons_->forget(hwnd);  // the handle may be reused
-  emit changed();
+  scheduleChanged();
 }
 
 void TaskbarService::onUpdated(WindowHandle hwnd, const WindowInfo& info) {
@@ -182,14 +183,25 @@ void TaskbarService::onUpdated(WindowHandle hwnd, const WindowInfo& info) {
   w->info = info;
   // A focused window is not minimised.
   if (info.isActive) w->minimized = false;
-  emit changed();
+  scheduleChanged();
 }
 
 void TaskbarService::onMinimizeChanged(WindowHandle hwnd, bool minimized) {
   TaskbarWindow* w = find(hwnd);
   if (!w || w->minimized == minimized) return;
   w->minimized = minimized;
-  emit changed();
+  scheduleChanged();
+}
+
+// One changed() per event-loop turn: an activation updates the old and the new window, and the
+// models rebuild every row on each emission.
+void TaskbarService::scheduleChanged() {
+  if (changePending_) return;
+  changePending_ = true;
+  QTimer::singleShot(0, this, [this] {
+    changePending_ = false;
+    emit changed();
+  });
 }
 
 // --- icons
@@ -237,7 +249,7 @@ void TaskbarService::onIconsChanged() {
     iconImage(key);
     any = any || entry.revision != before;
   }
-  if (any) emit changed();
+  if (any) scheduleChanged();
 }
 
 WindowHandle TaskbarService::pseudoFor(const QString& uniqueId) {

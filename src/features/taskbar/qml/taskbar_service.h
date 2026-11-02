@@ -147,7 +147,8 @@ class TaskbarService : public QObject {
   WindowTracker* tracker() const { return tracker_; }
 
  signals:
-  // Windows, activity, minimise state, pins or icons changed: models recompute.
+  // Windows, activity, minimise state, pins or icons changed: models recompute. Emitted once per
+  // event-loop turn, however many updates came in.
   void changed();
 
  private:
@@ -157,6 +158,7 @@ class TaskbarService : public QObject {
   void onUpdated(WindowHandle hwnd, const WindowInfo& info);
   void onMinimizeChanged(WindowHandle hwnd, bool minimized);
   void onIconsChanged();
+  void scheduleChanged();
   TaskbarWindow* find(WindowHandle hwnd);
   void bringToForeground(WindowHandle hwnd);
 
@@ -171,6 +173,7 @@ class TaskbarService : public QObject {
   waku::taskbar::PinStore* pinStore_ = nullptr;
   waku::taskbar::TaskbarIcons* icons_ = nullptr;
   QString reason_;
+  bool changePending_ = false;
   std::vector<TaskbarWindow> windows_;  // in the order the windows first appeared
   std::map<WindowHandle, IconEntry> iconCache_;
   std::shared_ptr<WindowIconStore> iconStore_ = std::make_shared<WindowIconStore>();
