@@ -25,7 +25,10 @@ struct AppRecord {
   QString target;
   QString arguments;
   QString workingDirectory;
-  QString aumid;       // Store apps
+  QString aumid;  // Store apps
+  // Store apps: the package's only execution alias (an .exe under WindowsApps), the one way to
+  // start a packaged app elevated. Empty when the package has none or several.
+  QString elevationAlias;
   QString iconSource;  // what the shell icon is read from: the .lnk, or shell:AppsFolder\<aumid>
   QStringList categories;
   QStringList keywords;
@@ -66,6 +69,11 @@ std::vector<AppRecord> buildCatalog(std::vector<AppRecord> shortcuts,
 
 // `folders` and every folder below them: the folders a watcher needs to see a new shortcut.
 QStringList watchedDirectories(const QStringList& folders);
+
+// The only .exe in `<windowsAppsDir>/<PackageFamilyName>/` for the package of `aumid` (the part
+// before "!"), or "" when there is none or more than one. `windowsAppsDir` is
+// %LOCALAPPDATA%\Microsoft\WindowsApps.
+QString findExecutionAlias(const QString& windowsAppsDir, const QString& aumid);
 
 // `"target" arguments` for a shortcut, `shell:AppsFolder\<aumid>` for a Store app.
 QString execStringFor(const AppRecord& record);

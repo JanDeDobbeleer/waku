@@ -148,6 +148,16 @@ QStringList commandFor(const AppRecord& record) {
   return command;
 }
 
+QString findExecutionAlias(const QString& windowsAppsDir, const QString& aumid) {
+  const QString family = aumid.section(QLatin1Char('!'), 0, 0);
+  if (windowsAppsDir.isEmpty() || family.isEmpty()) return QString();
+  // The aliases are reparse points: System makes the listing include them.
+  const QDir dir(windowsAppsDir + QLatin1Char('/') + family);
+  const QFileInfoList aliases = dir.entryInfoList(
+      {QStringLiteral("*.exe")}, QDir::Files | QDir::System | QDir::NoDotAndDotDot);
+  return aliases.size() == 1 ? aliases.first().absoluteFilePath() : QString();
+}
+
 QString startupClassFor(const AppRecord& record) {
   if (record.target.isEmpty()) return QString();
   return QFileInfo(record.target).completeBaseName();

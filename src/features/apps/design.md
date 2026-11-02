@@ -46,9 +46,13 @@ resolver rejects hidden shortcuts.
 
 `win32/launch_win.cpp`. Shortcuts: `ShellExecuteEx` on the `.lnk` (verb `runas` for admin).
 Store apps: `kernel::activateAppByAumid`, then `ShellExecuteEx` on `shell:AppsFolder\<aumid>` when
-no window answers; there is no admin path, so `launchAsAdmin` returns false. `openLocation` runs
-`explorer.exe /select,<target>`; false for Store apps. `execute()` on an entry and its two
-actions ("Run as administrator", "Open file location", shortcuts only) go through the same path.
+no window answers. Admin for a Store app goes through its execution alias: the only `.exe` in
+`%LOCALAPPDATA%\Microsoft\WindowsApps\<PackageFamilyName>` (`findExecutionAlias`, read when the
+Store apps are listed and kept in `AppRecord::elevationAlias`), started with `runas`. A package
+with no alias or several has none, so `launchAsAdmin` returns false and the entry has no admin
+action. `openLocation` runs `explorer.exe /select,<target>`; false for Store apps. `execute()` on
+an entry and its actions ("Run as administrator": shortcuts and Store apps with an alias; "Open
+file location": shortcuts only) go through the same path.
 `runInTerminal` is always false: a console program opens its own window.
 
 `launch` and `launchAsAdmin` record a launch in the frecency file.

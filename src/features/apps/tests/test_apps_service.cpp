@@ -469,3 +469,28 @@ QtObject {
   }
   AppsService::setFactoryForTests({});
 }
+
+TEST(AppsService, StoreAppGetsTheAdminActionOnlyWithAnExecutionAlias) {
+  Fixture fixture;
+  AppRecord terminal;
+  terminal.id = s("Microsoft.WindowsTerminal_8wekyb3d8bbwe!App");
+  terminal.name = s("Terminal");
+  terminal.kind = AppKind::Store;
+  terminal.aumid = terminal.id;
+  terminal.elevationAlias = s("C:\\alias\\wt.exe");
+  fixture.storeApps.push_back(terminal);
+  AppsService service(fixture.deps());
+
+  DesktopEntry* photos = service.byId(s("Microsoft.Photos_8wekyb3d8bbwe!App"));
+  ASSERT_TRUE(photos);
+  EXPECT_EQ(actionCount(photos), 0);
+
+  DesktopEntry* entry = service.byId(terminal.id);
+  ASSERT_TRUE(entry);
+  auto actions = entry->actions();
+  ASSERT_EQ(actions.count(&actions), 1);  // no "Open file location" for a Store app
+  EXPECT_EQ(actions.at(&actions, 0)->id(), s("admin"));
+  actions.at(&actions, 0)->execute();
+  ASSERT_EQ(fixture.launched.size(), 1u);
+  EXPECT_EQ(fixture.launched[0].mode, LaunchMode::Admin);
+}

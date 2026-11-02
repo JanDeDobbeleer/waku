@@ -190,3 +190,18 @@ TEST(AppsCatalog, RealResolverReadsAShortcutFile) {
   EXPECT_FALSE(makeWin32ShortcutResolver()(lnk).ok);
   EXPECT_TRUE(scanShortcuts({dir.path()}, makeWin32ShortcutResolver()).empty());
 }
+
+TEST(AppsCatalog, ExecutionAliasIsTheOnlyExeOfThePackageFolder) {
+  QTemporaryDir dir;
+  const QString family = s("Microsoft.WindowsTerminal_8wekyb3d8bbwe");
+  QDir(dir.path()).mkpath(family);
+  const QString aumid = family + s("!App");
+
+  EXPECT_EQ(findExecutionAlias(dir.path(), aumid), QString());  // no alias
+  touch(dir.filePath(family + s("/wt.exe")));
+  EXPECT_EQ(findExecutionAlias(dir.path(), aumid), dir.filePath(family + s("/wt.exe")));
+  touch(dir.filePath(family + s("/wtd.exe")));
+  EXPECT_EQ(findExecutionAlias(dir.path(), aumid), QString());  // ambiguous
+  EXPECT_EQ(findExecutionAlias(dir.path(), s("Unknown_1234!App")), QString());
+  EXPECT_EQ(findExecutionAlias(QString(), aumid), QString());
+}

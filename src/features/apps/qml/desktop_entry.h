@@ -15,7 +15,8 @@
 namespace waku::apps {
 
 // Quickshell's DesktopAction: one extra command of an entry. waku entries have "Run as
-// administrator" (shortcuts) and "Open file location" (shortcuts).
+// administrator" (shortcuts, and Store apps with an execution alias) and "Open file location"
+// (shortcuts).
 class DesktopAction : public QObject {
   Q_OBJECT
   QML_ELEMENT

@@ -37,8 +37,11 @@ bool launch(const AppRecord& app, LaunchMode mode) {
       }
       return !app.path.isEmpty() && shellExecute(app.path, QString(), nullptr);
     case LaunchMode::Admin:
-      // The runas verb has no Store app equivalent.
-      if (app.kind == AppKind::Store || app.path.isEmpty()) return false;
+      // A packaged app starts elevated only through its execution alias.
+      if (app.kind == AppKind::Store)
+        return !app.elevationAlias.isEmpty() &&
+               shellExecute(app.elevationAlias, QString(), L"runas");
+      if (app.path.isEmpty()) return false;
       return shellExecute(app.path, QString(), L"runas");
     case LaunchMode::OpenLocation: {
       if (app.kind == AppKind::Store) return false;

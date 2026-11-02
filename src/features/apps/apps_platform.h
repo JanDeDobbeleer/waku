@@ -11,7 +11,7 @@ namespace waku::apps {
 // What a launch does.
 enum class LaunchMode {
   Normal,        // start the app, or raise its window
-  Admin,         // start a shortcut elevated; Store apps have no such path
+  Admin,         // start elevated: a shortcut, or a Store app with an execution alias
   OpenLocation,  // show the shortcut's target in Explorer; Store apps have no file
 };
 

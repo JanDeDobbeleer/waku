@@ -28,7 +28,8 @@ void DesktopEntry::setRecord(AppRecord record) {
 void DesktopEntry::rebuildActions() {
   qDeleteAll(actions_);
   actions_.clear();
-  if (record_.kind != AppKind::Shortcut) return;
+  const bool shortcut = record_.kind == AppKind::Shortcut;
+  if (!shortcut && record_.elevationAlias.isEmpty()) return;
   const QString id = record_.id;
   actions_.append(new DesktopAction(
       QStringLiteral("admin"), QStringLiteral("Run as administrator"),
@@ -36,6 +37,7 @@ void DesktopEntry::rebuildActions() {
         if (launch_) launch_(id, LaunchMode::Admin);
       },
       this));
+  if (!shortcut) return;
   actions_.append(new DesktopAction(
       QStringLiteral("location"), QStringLiteral("Open file location"),
       [this, id]() {

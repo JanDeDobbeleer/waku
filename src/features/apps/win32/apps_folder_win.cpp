@@ -22,6 +22,8 @@ QString displayName(IShellItem* item, SIGDN kind) {
 // packaged app is "<PackageFamilyName>!<AppId>", so only names with a "!" are kept.
 std::vector<AppRecord> enumerateAppsFolder() {
   std::vector<AppRecord> apps;
+  const QString windowsApps =
+      qEnvironmentVariable("LOCALAPPDATA") + QStringLiteral("/Microsoft/WindowsApps");
   const kernel::ComScope com(kernel::ComApartment::MultiThreaded);
   IShellItem* folder = nullptr;
   if (FAILED(SHGetKnownFolderItem(FOLDERID_AppsFolder, KF_FLAG_DEFAULT, nullptr,
@@ -45,6 +47,7 @@ std::vector<AppRecord> enumerateAppsFolder() {
       record.kind = AppKind::Store;
       record.aumid = aumid;
       record.iconSource = QStringLiteral("shell:AppsFolder\\") + aumid;
+      record.elevationAlias = findExecutionAlias(windowsApps, aumid);
       apps.push_back(std::move(record));
     }
     items->Release();
