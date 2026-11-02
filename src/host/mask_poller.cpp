@@ -65,7 +65,7 @@ void MaskPollerHub::tick() {
   // A poller may leave the hub while it runs (its window hid): walk a copy.
   const QList<QPointer<MaskPoller>> pollers = pollers_;
   for (const QPointer<MaskPoller>& poller : pollers) {
-    if (poller) poller->tick(cursor, moved || recheck, recheck);
+    if (poller) poller->tick(cursor, moved || recheck);
   }
   if (pollers_.isEmpty()) {
     timer_.stop();
@@ -138,7 +138,7 @@ bool MaskPoller::poll() {
   return passThrough_;
 }
 
-void MaskPoller::tick(const std::optional<QPoint>& cursor, bool force, bool rebuild) {
+void MaskPoller::tick(const std::optional<QPoint>& cursor, bool force) {
   if (!window_ || !window_->isVisible()) {
     refresh();
     return;
@@ -146,7 +146,9 @@ void MaskPoller::tick(const std::optional<QPoint>& cursor, bool force, bool rebu
   if (!cursor) return;
   const bool changed = dirty_ || window_->geometry() != lastGeometry_;
   if (!force && !changed) return;
-  evaluate(cursor, rebuild || changed);
+  // A cursor that moved, or the recheck, tests the mask of the last build again. Only a poller that
+  // was told (markDirty: a frame, a region change) or whose window moved builds it again.
+  evaluate(cursor, changed);
 }
 
 void MaskPoller::evaluate(const std::optional<QPoint>& physical, bool rebuild) {

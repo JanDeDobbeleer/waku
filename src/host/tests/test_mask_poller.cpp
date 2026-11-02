@@ -381,7 +381,8 @@ TEST(MaskPollerTest, AMovingCursorReusesTheMask) {
   }
   EXPECT_EQ(f.hub->evaluations(), evaluations + 20);  // every move is tested
   EXPECT_EQ(f.poller->maskBuilds(), builds);          // against the same mask
-  // A change builds it again: a dirty poller, a moved window, the once-a-second recheck.
+  // A change builds it again: a dirty poller or a moved window. The once-a-second recheck tests
+  // the cursor against the last mask but does not build it again.
   f.mask = rect(0, 0, 400, 300);
   f.poller->markDirty();
   f.now = 300;
@@ -392,9 +393,16 @@ TEST(MaskPollerTest, AMovingCursorReusesTheMask) {
   f.now = 340;
   f.hub->tick();
   EXPECT_EQ(f.poller->maskBuilds(), builds + 2);
+  const int evaluationsBefore = f.hub->evaluations();
   f.now = 340 + MaskPollerHub::kRecheckMs;
   f.hub->tick();
-  EXPECT_EQ(f.poller->maskBuilds(), builds + 3);
+  EXPECT_EQ(f.hub->evaluations(), evaluationsBefore + 1);  // tested again
+  EXPECT_EQ(f.poller->maskBuilds(), builds + 2);           // not built again
+  for (int i = 1; i <= 5; ++i) {
+    f.now = 340 + (i + 1) * MaskPollerHub::kRecheckMs;
+    f.hub->tick();
+  }
+  EXPECT_EQ(f.poller->maskBuilds(), builds + 2);
 }
 
 // A cursor that comes from far away at the top speed, with the hub ticking at the intervals it

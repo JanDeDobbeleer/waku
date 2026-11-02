@@ -297,8 +297,8 @@ alone does not click through, but `WS_EX_LAYERED | WS_EX_TRANSPARENT` does, and
   (`Region::treeChanged`), the window asked for a frame (`QQuickWindow::afterAnimating`, on the GUI
   thread, which every moving item causes) or the window moved or resized. A dirty window also
   brings the next tick forward to the rate above. Every window is tested at least once a second
-  anyway. The mask (a region tree built from QML) is built again only for a dirty or moved window
-  and on that once-a-second check; a moving cursor is tested against the last one. So a resting
+  anyway, against the last mask. The mask (a region tree built from QML) is built again only for a
+  dirty or moved window; a moving cursor and the once-a-second check test the last one. So a resting
   cursor over an idle bar costs a cursor read at up to 30 Hz and nothing else. The timer stops
   when no window is masked and visible.
 - The poll stops when the window hides or the mask goes, and the flag is cleared then. A cursor

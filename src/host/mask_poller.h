@@ -32,7 +32,8 @@ class MaskPoller;
 // what the two rates give (MaskPoller::safeDistance). A tick where the cursor did not move
 // evaluates only the pollers whose window moved, rendered a frame or whose region changed since
 // their last evaluation (MaskPoller::markDirty, which also brings the next tick forward to the rate
-// above), plus every poller once per kRecheckMs as a safety net. With no registered poller the
+// above), plus every poller once per kRecheckMs as a safety net (that test reuses the last mask; a
+// frame or a region change is what builds it again). With no registered poller the
 // timer is stopped.
 //
 // The known race: a click in the gap between the cursor entering a region and the next tick (up to
@@ -145,9 +146,9 @@ class MaskPoller : public QObject {
  private:
   friend class MaskPollerHub;
   // The hub's per-tick call: evaluates when `force`, when dirty or when the window moved, and
-  // builds the mask again only when `rebuild`, dirty or the window moved (the cursor alone moving
-  // reuses the last one).
-  void tick(const std::optional<QPoint>& cursor, bool force, bool rebuild);
+  // builds the mask again only when dirty or the window moved (the cursor alone moving, or the
+  // once-a-second recheck, reuses the last one).
+  void tick(const std::optional<QPoint>& cursor, bool force);
   void evaluate(const std::optional<QPoint>& cursor, bool rebuild);
   void leave();
   void setPassThrough(bool passThrough);
