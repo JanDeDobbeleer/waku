@@ -3,3 +3,6 @@
 
 # style: apply clang-format to the tree
 ec10da792cf3b1d64e3bbc616659372761f12ab6
+
+# chore: rename wabar to waku
+f65e3e7d00a6a0e74b68092a30cb3465a3ae2d5c
