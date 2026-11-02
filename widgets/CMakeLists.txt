@@ -61,6 +61,8 @@ add_library(yasb_widgets STATIC
   glazewm/glazewm_state.cpp
   glazewm/glazewm_widgets.h
   glazewm/glazewm_widgets.cpp
+  glazewm/tiling_direction_widget.h
+  glazewm/tiling_direction_widget.cpp
   glazewm/workspaces_widget.h
   glazewm/workspaces_widget.cpp
   komorebi/active_layout_widget.h
