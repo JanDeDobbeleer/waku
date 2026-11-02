@@ -86,8 +86,9 @@ class ShellHost : public QObject {
     // time.
     std::function<void(quintptr hwnd)> forceForeground;
     // Hands the process's idle working set pages back to the system
-    // (SetProcessWorkingSetSizeEx(-1, -1)). Called once the shell has settled after install();
-    // the pages it needs come back on use. Null: nothing is trimmed.
+    // (SetProcessWorkingSetSizeEx(-1, -1)). Called once the number of windows has
+    // stopped growing for a full `trimDelayMs` after install(); the pages it needs come back on
+    // use. Null: nothing is trimmed.
     std::function<void()> trimWorkingSet;
 
     static NativeHooks win32();
@@ -119,7 +120,7 @@ class ShellHost : public QObject {
     QUrl defaultUrl;
     // How long screen changes must stop before the one reload (tests shorten it).
     int screenSettleMs = 1500;
-    // How long after install() the shell must sit with no extra window on screen (a popup) before
+    // How long the number of windows on screen must stop growing, counted from install(), before
     // the working set is trimmed (hooks.trimWorkingSet). Tests shorten it.
     int trimDelayMs = 5000;
   };
@@ -293,9 +294,10 @@ class ShellHost : public QObject {
   QTimer debounce_;
   // A screen added or removed, a new primary screen or a DPI change: one reload after they settle.
   QTimer screenDebounce_;
-  // Single shot, started by install(): trims the working set when the shell has settled.
+  // Single shot, started by install(): trims the working set once the window count stops growing.
   QTimer trimTimer_;
-  int windowsAtInstall_ = 0;
+  // The window count at the last look (install() or the previous timer tick).
+  int windowsSeen_ = 0;
   FileStamps snapshot_;
   int configChanges_ = 0;
   mutable int configWalks_ = 0;

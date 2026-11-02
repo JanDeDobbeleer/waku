@@ -612,16 +612,20 @@ void ShellHost::install(std::unique_ptr<Loaded> loaded) {
   }
   traceStep("shell parts activated");
   if (options_.hooks.trimWorkingSet) {
-    windowsAtInstall_ = static_cast<int>(this->windows().size());
+    windowsSeen_ = static_cast<int>(this->windows().size());
     trimTimer_.start(options_.trimDelayMs);
   }
 }
 
 void ShellHost::trimIfSettled() {
   if (!options_.hooks.trimWorkingSet) return;
-  // A popup (a window on screen beyond those of the shell) is open: the pages it touches should
-  // stay. Look again later.
-  if (windows().size() > windowsAtInstall_) {
+  // Windows are still appearing (a shell shows them after install, a popup just opened): the
+  // pages they touch should stay. Look again later; trim once a full delay brings no new window.
+  const int count = static_cast<int>(windows().size());
+  const bool grew = count > windowsSeen_;
+  windowsSeen_ = count;
+  if (grew) {
+    traceStep("working set trim deferred: windows still appearing");
     trimTimer_.start(options_.trimDelayMs);
     return;
   }

@@ -749,6 +749,66 @@ TEST(ShellHostTest, TheWorkingSetIsTrimmedOnceAfterEachInstall) {
   ASSERT_TRUE(QTest::qWaitFor([&] { return h.native.trims == 2; }, 2000));
 }
 
+namespace {
+
+// A shell with no window at install and a loader per window that the test activates later.
+QString lateWindowsShell() {
+  return QStringLiteral(R"(
+import QtQuick
+import waku
+ShellRoot {
+    LazyLoader {
+        objectName: "late1"
+        FloatingWindow { implicitWidth: 100; implicitHeight: 80; Text { text: "one" } }
+    }
+    LazyLoader {
+        objectName: "late2"
+        FloatingWindow { implicitWidth: 100; implicitHeight: 80; Text { text: "two" } }
+    }
+}
+)");
+}
+
+void showLate(Harness& h, const char* name) {
+  auto* loader = h.host->shell()->findChild<QObject*>(QString::fromLatin1(name));
+  ASSERT_NE(loader, nullptr);
+  loader->setProperty("active", true);
+  settle();
+}
+
+}  // namespace
+
+TEST(ShellHostTest, WindowsThatAppearAfterInstallAreTrimmedOnceTheyStayStable) {
+  Harness h;
+  h.native.trimHook = true;
+  h.trimDelayMs = 60;
+  h.start(lateWindowsShell());
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  ASSERT_EQ(h.host->windows().size(), 0);
+  showLate(h, "late1");
+  ASSERT_EQ(h.host->windows().size(), 1);
+  EXPECT_EQ(h.native.trims, 0);  // the first look sees a new window and waits
+  ASSERT_TRUE(QTest::qWaitFor([&] { return h.native.trims == 1; }, 2000));
+  QTest::qWait(200);
+  EXPECT_EQ(h.native.trims, 1);
+}
+
+TEST(ShellHostTest, NoTrimWhileWindowsKeepAppearing) {
+  Harness h;
+  h.native.trimHook = true;
+  h.trimDelayMs = 150;
+  h.start(lateWindowsShell());
+  ASSERT_TRUE(h.host->reload()) << qPrintable(h.host->error());
+  showLate(h, "late1");  // seen at the first tick
+  QTest::qWait(h.trimDelayMs + 60);
+  EXPECT_EQ(h.native.trims, 0);
+  showLate(h, "late2");  // grows again before the second tick
+  ASSERT_EQ(h.host->windows().size(), 2);
+  QTest::qWait(h.trimDelayMs);
+  EXPECT_EQ(h.native.trims, 0);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return h.native.trims == 1; }, 2000));
+}
+
 TEST(ShellHostTest, NoTrimHookMeansNoTrim) {
   Harness h;
   h.trimDelayMs = 20;
