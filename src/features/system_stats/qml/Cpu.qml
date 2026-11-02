@@ -59,7 +59,7 @@ Pill {
         anchor.item: root
         boldTitle: "CPU"
         title: "Usage"
-        history: root.source.history
+        history: panel.visible ? root.source.history : []
         graph: root.graph
         graphGrid: root.graphGrid
         graphColor: Theme.accent

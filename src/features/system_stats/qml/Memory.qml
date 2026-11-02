@@ -73,7 +73,7 @@ Swap " + Math.round(source.swapPercent) + "%"
         anchor.item: root
         boldTitle: "Memory"
         title: "Usage"
-        history: root.source.history
+        history: panel.visible ? root.source.history : []
         graph: root.graph
         graphGrid: root.graphGrid
         graphColor: "#ca9ee6"

@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import waku
 
@@ -96,11 +97,15 @@ PopupWindow {
             rowSpacing: 16
 
             Repeater {
-                model: root.stats
+                // Cards by count: a new `stats` array (every sample) updates the texts in place
+                // instead of recreating every card.
+                model: root.stats.length
 
                 Rectangle {
+                    id: card
+
                     required property int index
-                    required property var modelData
+                    readonly property var stat: root.stats[card.index]
                     width: 168
                     height: 82
                     radius: 8
@@ -118,22 +123,22 @@ PopupWindow {
                             width: parent.width
                             topPadding: 6
                             bottomPadding: 2
-                            horizontalAlignment: index % 2 ? Text.AlignRight : Text.AlignLeft
+                            horizontalAlignment: card.index % 2 ? Text.AlignRight : Text.AlignLeft
                             color: root.muted
                             font.family: Theme.fontFamily
                             font.pixelSize: 13
-                            text: modelData.label
+                            text: card.stat ? card.stat.label : ""
                         }
 
                         Text {
-                            objectName: "statValue" + index
+                            objectName: "statValue" + card.index
                             width: parent.width
-                            horizontalAlignment: index % 2 ? Text.AlignRight : Text.AlignLeft
+                            horizontalAlignment: card.index % 2 ? Text.AlignRight : Text.AlignLeft
                             color: Theme.text
                             font.family: Theme.fontFamily
                             font.pixelSize: 20
                             font.weight: Font.Bold
-                            text: modelData.value
+                            text: card.stat ? card.stat.value : ""
                         }
                     }
                 }

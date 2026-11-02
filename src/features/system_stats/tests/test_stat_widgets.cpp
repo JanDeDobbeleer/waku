@@ -50,6 +50,28 @@ TEST(CpuWidget, AClickOpensThePopupWithGraphAndCards) {
   EXPECT_EQ(findItem(popup, QStringLiteral("statValue4")), nullptr);
 }
 
+TEST(CpuWidget, AHiddenPopupKeepsNoGraphAndFillsItWhenOpened) {
+  Harness h;
+  h.start(
+      widgetConfig(QStringLiteral(R"(Cpu { objectName: "cpu"; interval: 200; format: "%1%" })")));
+  ASSERT_TRUE(started(h));
+  QQuickWindow* popup = findWindow(QStringLiteral("cpuPopup"));
+  ASSERT_NE(popup, nullptr);
+  QQuickItem* cpu = item(h, QStringLiteral("cpu"));
+  ASSERT_TRUE(
+      QTest::qWaitFor([&] { return !cpu->property("text").toString().contains(u'…'); }, 5000));
+  // Several samples in: the history holds points, the closed popup has none to draw.
+  QTest::qWait(900);
+  QQuickItem* graph = findItem(popup, QStringLiteral("statGraph"));
+  ASSERT_NE(graph, nullptr);
+  EXPECT_FALSE(popup->isVisible());
+  EXPECT_EQ(graph->property("points").toList().size(), 0);
+  QTest::mouseClick(h.window(), Qt::LeftButton, Qt::NoModifier, centerOf(h, QStringLiteral("cpu")));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return popup->isVisible(); }, 2000));
+  // Filled at once, not on the next sample.
+  EXPECT_GE(graph->property("points").toList().size(), 2);
+}
+
 TEST(CpuWidget, ARightClickTogglesTheAlternativeLabel) {
   Harness h;
   h.start(widgetConfig(QStringLiteral(
