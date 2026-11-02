@@ -135,6 +135,12 @@ struct SystrayHook::Io {
 
 SystrayHook::SystrayHook(Options options, QObject* parent)
     : TrayHost(parent), options_(std::move(options)) {
+  // Manual reset, signalled once by stop(): the worker's I/O waits end on it instead of polling.
+  stopEvent_ = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+  if (!stopEvent_) {
+    qWarning() << "Tray hook: failed to create the stop event, error" << GetLastError()
+               << "- the worker will poll the stop flag";
+  }
   if (options_.injector) options_.injector->setStopCheck([this] { return stopping_.load(); });
   // The watchdog mutex is held for the whole life of the host; the DLL waits on it and detaches
   // itself when it is released or abandoned.
@@ -155,7 +161,10 @@ SystrayHook::SystrayHook(Options options, QObject* parent)
   }
 }
 
-SystrayHook::~SystrayHook() { stop(); }
+SystrayHook::~SystrayHook() {
+  stop();
+  if (stopEvent_) CloseHandle(asHandle(stopEvent_));
+}
 
 bool SystrayHook::valid() const { return mutex_ != nullptr && pipe_ != nullptr; }
 
@@ -181,6 +190,7 @@ void SystrayHook::stop() {
     std::lock_guard lock(state_);
     stopRequested_ = true;
     running_ = false;
+    if (stopEvent_) SetEvent(asHandle(stopEvent_));
     unhookLocked();
     if (pipe_) {
       if (workerActive_) {
@@ -378,12 +388,18 @@ SystrayHook::Read SystrayHook::readMessage(Io& io, QByteArray& message) {
 bool SystrayHook::waitForIo(Io& io, void* overlappedPtr) {
   auto* overlapped = static_cast<OVERLAPPED*>(overlappedPtr);
   bool completed = false;
+  // Ends on the I/O completing or on stop(). Without a stop event it wakes every 500 ms to check
+  // the flag. stop() sets the flag before the event, so a set event always means "stopping".
+  const HANDLE handles[2] = {overlapped->hEvent, asHandle(stopEvent_)};
+  const DWORD count = stopEvent_ ? 2 : 1;
+  const DWORD timeout = stopEvent_ ? INFINITE : 500;
   while (running_) {
-    const DWORD result = WaitForSingleObject(overlapped->hEvent, 500);
+    const DWORD result = WaitForMultipleObjects(count, handles, FALSE, timeout);
     if (result == WAIT_OBJECT_0) {
       completed = true;
       break;
     }
+    if (result == WAIT_OBJECT_0 + 1) break;  // stop() was called
     if (result == WAIT_FAILED) {
       io.lastError = GetLastError();
       break;

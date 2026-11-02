@@ -64,8 +64,10 @@ QString findTrayHookDll(const QString& appDir, QString* reason = nullptr);
 //
 // Threads: the constructor and stop() run on the creating (GUI) thread, run() on one worker
 // thread (started by start(), or by a test). The worker owns the OVERLAPPED structures, the read
-// buffer and the completion event; stop() only cancels I/O, sets the stop flag and, when no worker
-// is active, closes the pipe itself. stop() joins the worker started by start().
+// buffer and the completion event; stop() only cancels I/O, sets the stop flag and the stop event
+// and, when no worker is active, closes the pipe itself. The worker's I/O waits block on the
+// completion event and the stop event, so an idle pipe costs no wakeups. The stop event is closed
+// by the destructor. stop() joins the worker started by start().
 class SystrayHook : public TrayHost {
   Q_OBJECT
  public:
@@ -120,6 +122,7 @@ class SystrayHook : public TrayHost {
   bool workerActive_ = false;
   void* mutex_ = nullptr;
   void* pipe_ = nullptr;
+  void* stopEvent_ = nullptr;  // manual-reset; set by stop(), closed by the destructor
   std::uintptr_t hook_ = 0;
   std::thread thread_;
 };
