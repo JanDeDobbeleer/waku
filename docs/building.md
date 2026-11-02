@@ -40,76 +40,130 @@ Run `wabar` from the build folder. It needs a config home: a folder with `shell.
 `theme.qml` and `widgets/`). The repository has a sample in `examples/config`.
 
 ```powershell
-dist\msvc2022_arm64\wabar.exe --version   # prints "wabar 0.1.0"
-dist\msvc2022_arm64\wabar.exe --smoke     # builds QApplication, exits 0
+build\arm64-debug\wabar.exe --config-home examples\config
+build\arm64-debug\wabarc.exe --config-home examples\config status
 ```
 
 `wabar.exe` flags:
 
-Normal startup owns the `wabar` single-instance mutex, watches `config.yaml` and `styles.css`
-when their `watch_config` / `watch_stylesheet` settings are enabled, and starts the tray and named
-pipes. A config change restarts with `--restart-wait`; a stylesheet change applies without restarting.
-Logs go to `wabar.log` in the selected config directory.
+| Flag | Effect |
+|---|---|
+| `--config-home <dir>` | The config home. Default: `$WABAR_CONFIG_HOME`, else the `examples/config` of the checkout the build came from. |
+| `--register-app-bar` | Let windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve screen work area. Without it no window reserves space. |
+| `--safe` | Start the built-in shell with the default theme and ignore the config home. |
+| `--import-path <dir>` | Add a folder of QML modules to the import path. Repeatable. See "User-built QML plugins". |
+| `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
+| `--hide-taskbar` | Hide the Windows taskbar (all monitors) while wabar runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
+| `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wabarc shortcut`. |
+| `--no-workarea-sync` | Never tell komorebi that the work area changed. By default wabar sends `WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window 0.5 s after a screen or work area change and again 5 s later, so windows do not tile under the bar. See "komorebi's work area" in `docs/architecture.md`. |
+| `--font-engine <engine>` | `gdi` (default, small) or `directwrite` (honours variable-font axes, about 2 MB more memory). A shell that uses variable fonts needs `directwrite`. `QT_QPA_PLATFORM` wins when it is set. |
+| `--help` | Print the options. |
 
-### Config and data folders
+`wabarc.exe` talks to the bar that runs for the same config home (`--config-home <dir>` or
+`WABAR_CONFIG_HOME`):
 
-The default config home is `%USERPROFILE%\.config\wabar`; `--config-home` or `WABAR_CONFIG_HOME`
-overrides it. The data folder is `%LOCALAPPDATA%\wabar` (pinned apps, GitHub token, tray state,
-wallpaper thumbnails). Both moved from the Python YASB names. The path logic is in
-`platform/app_data.h`; its tests use temp folders only.
-
-On a regular start (no `--config-home`), wabar copies the old files once and logs one line naming
-what it copied. It never writes to, moves or deletes anything in the old folders.
-
-- Config: if `.config\wabar\config.yaml` is missing and `.config\yasb\config.yaml` exists, it
-  copies `config.yaml` and `styles.css` (only those two, when present). Skipped when
-  `WABAR_CONFIG_HOME` is set.
-- Data: unless `%LOCALAPPDATA%\wabar\migrated_from_yasb` exists, it copies the files directly
-  inside `%LOCALAPPDATA%\YASB` that the new folder lacks, then writes that marker file. Delete
-  the marker to copy again. Thumbnail caches are not copied.
-
-`wabarc.exe` sends plain-text commands to `\\.\pipe\yasb_pipe_cli`:
-
-```powershell
-build\arm64-debug\wabarc.exe reload
-build\arm64-debug\wabarc.exe show-bar --screen DISPLAY1
-build\arm64-debug\wabarc.exe stop
-```
+| Command | Effect |
+|---|---|
+| `wabarc reload` | Reload the config of the running bar. |
+| `wabarc status` | Print what the shell is doing: `running; pid=P; windows=N; safe=yes|no; error=...`. |
+| `wabarc surface list` | List the windows that have a `name`: `ok: launcher=hidden, osd=shown`. |
+| `wabarc surface show`, `hide`, `toggle`, `status <name>` | Show, hide, flip or report the windows with that `name` (all screens). `show` and `toggle` first allow the bar to take the keyboard focus (`AllowSetForegroundWindow`). Example: `examples/launcher`. |
+| `wabarc call` | List the `IpcHandler` targets and their functions. |
+| `wabarc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
+| `wabarc taskbar hide`, `show`, `status` | Hide the Windows taskbar, restore what wabar changed (it stays shown until `hide`), or print `ok: taskbar: hidden|visible|autohide-was-on`. |
+| `wabarc quit` | Stop the bar. |
+| `wabarc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
+| `wabarc wallpaper random`, `next`, `previous` | Pick from the wallpaper folder; `next` and `previous` wrap. |
+| `wabarc wallpaper gallery` | Open or close the wallpaper picker. |
+| `wabarc shortcut <name>` | Fire the `GlobalShortcut` with that name (its `onPressed`, then `onReleased`). Bind a key to this command in whkd or AutoHotkey for a shortcut with no `keys`. |
+| `wabarc shortcut list` | Print the names of the shortcuts the shell declares. A shortcut named `list` cannot be fired. |
 
 `--dry-run` after `wallpaper` (not `gallery`) plays the animation without setting the wallpaper.
 
 ### Moving a wabar 1 config to wabar 2
 
-```powershell
-$t = "$PWD\build\arm64-debug\tests"
-$env:PATH = "$t;$env:PATH"; $env:QT_PLUGIN_PATH = $t; $env:QT_QPA_PLATFORM = 'offscreen'
-build\arm64-debug\wabar.exe --config-home "$PWD\build\cfg" --screenshot "$PWD\build\bar.png"
-```
+wabar 2 uses Quickshell's names (`docs/plans/2026-10-29-wabar-extensibility-proposal.md`, section
+11). A config home with a `bar.qml` and no `shell.qml` loads the fallback shell, whose error pill
+names the rename. There are no aliases; edit the file:
 
-Stat widget factories (CPU, memory, battery) are exposed through
-`wabar::widgets::registerStatWidgets()` in `widgets\stat_widgets.h`. `app\main.cpp` calls it once
-during startup, before `WidgetBuilder` constructs the configured widgets; repeated calls are no-ops.
+| wabar 1 | wabar 2 |
+|---|---|
+| file `bar.qml` | file `shell.qml` |
+| `Config` | `ShellRoot` (`Scope` groups objects inside it) |
+| `Bar` | `Panel` (a preset: one `PanelWindow` per matching screen) |
+| `position: Bar.Top` | `edge: Panel.Top` |
+| `height` | `thickness` |
+| `reserveSpace` | `exclusive` |
+| `backdrop: Bar.Blur` | `backdrop: Backdrop.Blur` |
+| `layout: BarLayout {}` | `content: PanelLayout {}` |
+| `PopupWindow { anchorItem: x }` | `PopupWindow { anchor.item: x }` |
+| `Window.window.spec`, `Window.window.monitorHandle` | `QsWindow.window`, `QsWindow.window.monitorHandle` |
+| `Process` from `wabar.services` (a command run on an interval: `program`, `arguments`, `interval`) | `ShellProcess`, same properties. `Process` is now Quickshell's (`import Quickshell.Io`: `command`, `running`, `stdout`) |
+| `wabarc status`: `bars=N` | `windows=N` |
 
-## Native taskbar
+The Quickshell form of a panel is a `PanelWindow` (`anchors`, `margins`, `implicitHeight`,
+`exclusiveZone`, `exclusionMode`, `layer`, `keyboardFocus`), one per screen through
+`Variants { model: ScreenList.screens }`. `import Quickshell` and `import Quickshell.Wayland` give
+the same types under Quickshell's module names.
+Exit codes: 0 ok, 1 the bar answered an error, 2 no bar is running, 3 usage error. More on running
+the bar: `src/app/README.md`.
 
-By default wabar hides the Windows taskbar at start and restores it at exit (config key
-`hide_windows_taskbar`, default `true`, wabar only). `--keep-taskbar` turns it off for one run.
-The offscreen platform, `--screenshot` and `--config-home` never hide it; `--hide-taskbar` allows it
-with `--config-home`. Details: [taskbar-hiding.md](taskbar-hiding.md).
+## User-built QML plugins
+
+`<config home>\modules` and every `--import-path <dir>` are added to the QML import path, so a shell
+can `import MyModule` for a Qt QML plugin built outside this repository. A folder follows the Qt
+layout: `modules\MyModule\qmldir`, the plugin DLL named in `qmldir`, and optionally a
+`.qmltypes` file. (The `dist\wabar\modules` folder that `deploy` writes is a different thing: a
+read-only copy of the built-in widgets.)
+
+Build the plugin with the same Qt (major.minor), the same debug or release flavour and the same
+processor as the `wabar.exe` that loads it. Before a folder is added, wabar reads the metadata of
+each plugin in it; one built for another Qt, flavour or processor is refused, one line is logged
+(`wabar: plugin refused: <file> - <reason>`) and the whole folder is left out, so an import from it
+then fails with the usual "module is not installed" error. `--safe` adds no folder. Qt's own `Qt6::Qml`
+documents how to write a plugin; `tests/plugin/` is a minimal one. A plugin runs as native code:
+see `SECURITY.md`.
 
 ## Tray hook DLL
 
-`wabar.exe` ships `WabarTrayHook.dll` (x64) or `WabarTrayHook_arm64.dll` next to
-it; the systray widget injects it into Explorer to see tray icons. `hook/` builds it with a static
-CRT, and each preset builds the DLL for its own architecture, so an ARM64 host runs the ARM64
-preset's build. The DLL must match Explorer's architecture: an x64 build running under emulation
-on ARM64 cannot use it and falls back to the legacy tray window, as Python YASB does. The pipe and
-watchdog mutex names are set once in the root `CMakeLists.txt` (`WABAR_TRAY_PIPE_NAME`,
-`WABAR_TRAY_MUTEX_NAME`) and passed to both the DLL and `platform/`. The DLL detaches from Explorer
-by itself (up to 5 s) after the host exits, so wait for it to unload before starting another build
-that hooks the tray (the A/B harness does). Automated tests never inject it: they use a private
-pipe and fake injector, and the production systray widget creates no tray client on the
-`offscreen` platform.
+`wabar.exe` ships `WabarTrayHook.dll` (x64) or `WabarTrayHook_arm64.dll` next to it; the
+Tray widget injects it into Explorer to see tray icons. `src/features/tray/hook/` builds it with a static CRT, and
+each preset builds the DLL for its own architecture, so an ARM64 host runs the ARM64 preset's build.
+The DLL must match Explorer's architecture: an x64 build running under emulation on ARM64 cannot use
+it and has no tray host (the tray stays empty). The pipe and watchdog mutex names are set once in
+the root `CMakeLists.txt` (`WABAR_TRAY_PIPE_NAME`, `WABAR_TRAY_MUTEX_NAME`) and passed to both the DLL
+and `wabar_tray`. The DLL detaches from Explorer by itself (up to 5 s) after the host exits, so wait
+for it to unload before starting another run that hooks the tray. Automated tests never inject it:
+they use a private pipe and fake injector, and the tray host is not created on the `offscreen`
+platform. Pass `--no-tray` to `wabar.exe` for runs that must not hook Explorer.
+
+## Deploy
+
+`cmake --build --preset <preset> --target deploy` assembles a portable folder, `dist/wabar` by
+default (`-DWABAR_DIST_DIR=...` changes it; `dist/` is not tracked):
+
+```
+dist/wabar/
+  wabar.exe, wabarc.exe, WabarTrayHook[_arm64].dll
+  <Qt runtime>                  from windeployqt, scanning src/ and cmake/deploy_imports/ for QML imports
+                                (the latter lists QtQuick.Layouts, QtQuick.Effects, Qt.labs.folderlistmodel,
+                                QtQuick.Templates and QtQuick.Controls.Basic, which shells written for
+                                Quickshell import. Controls.Basic is the only Controls style deployed;
+                                a release build adds about 4.2 MB of DLLs and 0.6 MB of QML)
+  imageformats/                 qgif, qico, qjpeg, qsvg and qwebp (about 0.35 MB for qwebp). qwebp comes
+                                from the Qt Image Formats module (qtimageformats); `deploy` warns at
+                                configure time when it is missing
+  examples/config/              the sample config home
+  modules/wabar/                the host QML files, qmldir and .qmltypes (module `wabar`)
+  modules/wabar/widgets/        the built-in widget .qml files, qmldir, .qmltypes (`wabar.widgets`)
+  modules/wabar/services/       qmldir and .qmltypes of the C++ services (`wabar.services`)
+```
+
+The widgets stay compiled into `wabar.exe`; `modules/` is a read-only reference. Copy a widget into
+the config home's `widgets/` folder to change it, and lint it with
+`qmllint -I <dist>/wabar/modules widgets/Clock.qml`. The target never touches an installed or
+running copy. Note that a copy of `wabar.exe` outside the checkout has no sample config to fall back
+on: pass `--config-home`.
 
 ## Checks
 
@@ -148,17 +202,17 @@ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 `-Analyze` requires PowerShell 7, the build prerequisites above and LLVM `clang-tidy` on `PATH`
 or in `C:\Program Files\LLVM\bin`. It runs the fast checks, then a clean MSVC `/analyze` build
-and clang-tidy over production compilation units in `app`, `core`, `platform`, `widgets` and
-`tools\wabarc`. It does not run tests, launch the bar or register an app-bar.
-`-Fast` and `-Staged` cannot be combined with `-Analyze`; hooks still run only fast checks.
+and clang-tidy over production compilation units under `src`. It does not
+run tests, launch the bar or register an app-bar. `-Fast` and `-Staged` cannot be combined with
+`-Analyze`; hooks still run only fast checks.
 
 Analysis uses `build\<preset>-analyze` with `BUILD_TESTING=OFF` and `WABAR_ANALYZE=ON`.
 The default `WABAR_ANALYZE` is `OFF`; ordinary checks explicitly reset it to `OFF`.
 The option applies `/analyze /analyze:external-` only through our `wabar_options` target.
-Generated option headers are external for MSVC and excluded by clang-tidy, as are Qt and
-third-party headers. Generated MOC units are built by MSVC but are not clang-tidy entry points.
-Logs and diagnostic counts appear in the analysis directory and the check summary. Missing tools,
-compiler errors and analyzer findings fail the command; an incremental no-op cannot count as analysis.
+Qt and third-party headers are external for MSVC and excluded by clang-tidy. Generated MOC units
+are built by MSVC but are not clang-tidy entry points. Logs and diagnostic counts appear in the
+analysis directory and the check summary. Missing tools, compiler errors and analyzer findings fail
+the command; an incremental no-op cannot count as analysis.
 
 `.clang-tidy` selects explicit checks rather than wildcard families: suspicious assertions, dangling
 handles, erase/size/integer mistakes, invalid forwarding and use-after-move; unsafe C library/thread

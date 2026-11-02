@@ -1,30 +1,47 @@
 # wabar
 
-Pronounced /wab-bar/: "Windows, actually. With a bar."
+wabar (/ˈwæbɑːr/, "wab-bar") stands for "Windows, actually. With a bar." It is a top bar for
+Windows, written in C++20 and Qt 6.10 (Qt Quick) and configured in QML. The name nods to
+[Waybar](https://github.com/Alexays/Waybar), the bar for Wayland.
 
-wabar is a native C++20/Qt 6.10 Windows bar, a port of [YASB](https://github.com/amnweb/yasb), scoped to the widgets in one config.
-The Python build (`D:\yasb`, branch `local/build`) is the behavioral reference.
+The bar is a set of QML files. `shell.qml` says which bars to show and which widgets go where;
+`theme.qml` sets the look. Save either file and the bars reload. Built-in widgets cover the clock,
+workspaces (komorebi and GlazeWM), media, volume, Bluetooth, Wi-Fi, battery, CPU, memory, the tray,
+the taskbar, notifications, GitHub, wallpapers and a control center. You can copy any of them into
+your config and change it.
 
-## Features
+## Quick start
 
-- Hides the native Windows taskbar while it runs and restores it at exit (`hide_windows_taskbar`,
-  `--keep-taskbar`; see [docs/taskbar-hiding.md](docs/taskbar-hiding.md)).
+Build and test with the steps in [docs/building.md](docs/building.md), then run the bar with the
+sample config:
+
+```powershell
+build\arm64-debug\wabar.exe --config-home examples\config
+build\arm64-debug\wabarc.exe --config-home examples\config status
+```
+
+`wabarc` talks to the running bar. Its commands are `reload`, `status`, `quit`,
+`wallpaper set|random|next|previous|gallery`, `surface list|show|hide|toggle|status <name>`,
+`call [<target> <function> [args...]]`, `shortcut <name>|list` and `taskbar hide|show|status`.
+Details and flags: [src/app/README.md](src/app/README.md) and [docs/building.md](docs/building.md).
+
+Use `--config-home <dir>` (or `WABAR_CONFIG_HOME`) to point wabar at your own folder, and
+`--no-tray` if you do not want it to hook Explorer. `cmake --build --preset arm64-debug --target
+deploy` assembles a portable folder in `dist/wabar`.
 
 ## Documentation
 
 | Document | What it covers |
 | --- | --- |
-| [AGENTS.md](AGENTS.md) | Rules for agents and contributors: commands, layering, style, commits, definition of done |
-| [docs/building.md](docs/building.md) | Prerequisites, build/test commands, CLI, `tools\check.ps1` |
-| [docs/taskbar-hiding.md](docs/taskbar-hiding.md) | Hiding the native taskbar: mechanism, work area, crash handling |
-| [docs/architecture.md](docs/architecture.md) | Layering, ownership and threading, singletons, error policy, undocumented-API allowlist |
-| [tools/parity/README.md](tools/parity/README.md) | Exporting parity vectors from Python YASB |
-| [docs/parity-checklist.md](docs/parity-checklist.md) | Per-widget parity status |
-| [docs/baseline.md](docs/baseline.md) | Python vs native resource baseline and A/B numbers |
-| [docs/plans/2026-10-27-001-feat-cpp-qt-port-plan.md](docs/plans/2026-10-27-001-feat-cpp-qt-port-plan.md) | Port plan (architectural record) |
-| [docs/plans/2026-10-27-002-refactor-design-review-remediation-plan.md](docs/plans/2026-10-27-002-refactor-design-review-remediation-plan.md) | Design review remediation plan |
-| [DESIGN_REVIEW.md](DESIGN_REVIEW.md) | Design review findings |
-| [SECURITY.md](SECURITY.md) | Threat model |
+| [AGENTS.md](AGENTS.md) | Rules for contributors and agents: commands, structure rules, adding a feature, style, commits |
+| [docs/building.md](docs/building.md) | Prerequisites, presets, deploy, command-line flags, `tools\check.ps1`, hooks |
+| [docs/architecture.md](docs/architecture.md) | Units and layering, threads, singletons, error policy, undocumented-API allowlist |
+| [docs/shells.md](docs/shells.md) | Notes for shell authors: what differs from Quickshell (input masks, shortcuts) |
+| [src/app/README.md](src/app/README.md) | Running `wabar` and `wabarc`, config home, QML modules |
+| `src/features/<f>/design.md` | The design note of each feature |
+| [docs/plans](docs/plans/README.md) | Dated design notes and plans, with their status |
+| [docs/archive](docs/archive/README.md) | Records of the retired Qt Widgets build |
+| [SECURITY.md](SECURITY.md) | Threat model and how to report a problem |
 
 ## Licence and credits
 
