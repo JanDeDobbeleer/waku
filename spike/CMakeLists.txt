@@ -5,35 +5,6 @@
 # module target itself is defined in src/modules/ from these and the src/features/ contributions.
 wabar_contribute(
   SERVICES_SOURCES
-    services/stat_source.h
-    services/system_stats.h
-    services/system_stats.cpp
-    services/child_process.h
-    services/child_process.cpp
-    services/media_service.h
-    services/media_service.cpp
-    services/glazewm_client.h
-    services/glazewm_client.cpp
-    services/komorebi_client.h
-    services/komorebi_client.cpp
-    services/shell_service.h
-    services/shell_service.cpp
-    services/workspaces_service.h
-    services/workspaces_service.cpp
-    services/tray_icon_model.h
-    services/tray_icon_model.cpp
-    services/tray_image_provider.h
-    services/tray_image_provider.cpp
-    services/systray.h
-    services/systray.cpp
-    services/tray_pins.h
-    services/tray_pins.cpp
-    services/network_service.h
-    services/network_service.cpp
-    services/taskbar_service.h
-    services/taskbar_service.cpp
-    services/taskbar_model.h
-    services/taskbar_model.cpp
     services/control_center_service.h
     services/control_center_service.cpp
   # The generated type registration includes headers by name.

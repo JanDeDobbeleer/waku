@@ -28,12 +28,6 @@
 #include "kernel/win32/app_activation.h"
 #include "kernel/win32/shell_launch.h"
 
-// TEMPORARY (move step): defined in platform/media_source_apps.cpp until the kernel app
-// activation helper replaces it at merge; declared here so no legacy header is included.
-namespace yasb::platform {
-bool activateAppByAumid(const QString& aumid);
-}
-
 namespace wabar::notifications {
 namespace {
 
@@ -221,7 +215,7 @@ bool activateToast(const QString& aumid, const QString& launch, const QString& a
 
 bool showApp(const QString& aumid) {
   if (aumid.isEmpty()) return false;
-  if (yasb::platform::activateAppByAumid(aumid)) return true;
+  if (wabar::kernel::activateAppByAumid(aumid)) return true;
   if (!hasShellApp(aumid)) return false;
   wabar::kernel::shellOpen(QStringLiteral("shell:AppsFolder\\") + aumid);
   return true;

@@ -1,6 +1,6 @@
 # bluetooth: radio, paired devices, battery, connect; the Bluetooth widget.
-# The merge adds `DEPENDS shell` (Bluetooth.qml calls S.Shell.open).
 wabar_feature(NAME bluetooth
+  DEPENDS shell
   SOURCES
     bluetooth.h
   WIN32_SOURCES

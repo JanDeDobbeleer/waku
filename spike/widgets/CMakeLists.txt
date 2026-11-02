@@ -8,19 +8,6 @@ wabar_contribute(
     DeviceMenu.qml
     DeviceRow.qml
     Slider.qml
-    Calendar.qml
-    Clock.qml
-    Cpu.qml
-    Memory.qml
-    Battery.qml
-    Media.qml
-    Workspaces.qml
-    WorkspaceDot.qml
-    TrayIconButton.qml
-    Tray.qml
-    ActiveLayout.qml
-    Wifi.qml
-    Taskbar.qml
     ControlCenter.qml
     SafeConfig.qml
 )

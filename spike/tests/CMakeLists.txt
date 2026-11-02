@@ -2,12 +2,6 @@
 # to the one test binary wabar_tests that tests/CMakeLists.txt defines.
 wabar_contribute(
   TESTS
-    test_stat_sources.cpp
-    test_process.cpp
-    test_media.cpp
-    test_wm_clients.cpp
-    test_shell.cpp
-    test_workspaces.cpp
     test_screen_match.cpp
     test_bar_host.cpp
     test_builtin_widgets.cpp
@@ -16,24 +10,10 @@ wabar_contribute(
     test_control.cpp
     test_safe_mode.cpp
     test_tray_widget.cpp
-    test_active_layout.cpp
-    test_network.cpp
     test_taskbar.cpp
     test_control_center.cpp
     test_github.cpp
     test_wallpapers.cpp
     test_wallpaper_control.cpp
-    test_wallpaper_manager.cpp
-    test_glazewm_socket.cpp
-    test_glazewm_state.cpp
-    test_komorebi_service.cpp
-    test_systray_click.cpp
-    test_systray_pipe.cpp
-    test_tray_icon_registry.cpp
-    test_systray_icon_scale.cpp
-    test_systray_state.cpp
-    test_github_api.cpp
-    test_taskbar_platform.cpp
-    test_platform.cpp
   TEST_LIBS nlohmann_json::nlohmann_json
 )

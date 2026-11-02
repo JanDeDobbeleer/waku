@@ -1,42 +1,5 @@
 # platform: Win32 wrappers. Depends on nothing of ours; Qt Core only for QMetaType in headers.
 add_library(yasb_platform STATIC
-  app_identity.h
-  app_identity.cpp
-  pin_support.h
-  pin_support.cpp
-  window_system.h
-  window_system_win32.cpp
-  window_tracker.h
-  window_tracker.cpp
-  window_tracker_hooks_win32.cpp
-  battery.h
-  battery.cpp
-  command_line.h
-  command_line.cpp
-  connectivity.h
-  connectivity.cpp
-  desktop_wallpaper.h
-  desktop_wallpaper.cpp
-  github_api.h
-  github_api.cpp
-  glazewm.h
-  glazewm.cpp
-  komorebi.h
-  komorebi.cpp
-  media_session.h
-  media_session.cpp
-  media_session_winrt.cpp
-  media_source_apps.cpp
-  memory.h
-  memory.cpp
-  pdh.h
-  pdh.cpp
-  window_focus.h
-  window_focus.cpp
-  workerw.h
-  workerw.cpp
-  wlan.h
-  wlan.cpp
   power.h
   power.cpp
   theme.h

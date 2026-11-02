@@ -404,7 +404,9 @@ foreach ($f in $checkFiles) {
         if (-not $feature) { continue }
         $allowed = @($feature) + @($features[$feature].Depends)
         for ($i = 0; $i -lt $lines.Count; $i++) {
-            $code = ("$($lines[$i])" -replace '//.*$', '')
+            # Comments and string literals are text, not type uses (a label "Notifications {data}").
+            $code = ("$($lines[$i])" -replace '"(?:[^"\\]|\\.)*"', '""')
+            $code = ($code -replace '//.*$', '')
             foreach ($m in [regex]::Matches($code, '\bS\.([A-Z]\w*)')) {
                 $owner = $serviceOwner[$m.Groups[1].Value]
                 if ($owner -and $allowed -notcontains $owner) {

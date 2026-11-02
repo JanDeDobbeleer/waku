@@ -1,6 +1,6 @@
 # audio: output and input volume, mute, default device; the Volume widget.
-# TODO(merge): add `DEPENDS shell` once src/features/shell exists (Volume.qml calls S.Shell.open).
 wabar_feature(NAME audio
+  DEPENDS shell
   SOURCES
     audio_endpoints.h
   WIN32_SOURCES
