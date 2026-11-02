@@ -17,6 +17,7 @@
 # Include root is src/ (#include "host/qml/shell_host.h"), carried by wabar_kernel.
 add_library(wabar_host_base STATIC
   app_bar.h
+  app_bar.cpp
   hotkeys.h
   hotkeys.cpp
   panel_geometry.h

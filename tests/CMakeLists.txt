@@ -23,6 +23,8 @@ add_executable(wabar_tests main.cpp
 # The control tests run wabarc.exe. The plugin tests load a plugin built here (tests/plugin).
 add_subdirectory(plugin)
 add_dependencies(wabar_tests wabarc wabar_test_module)
+# The sample shells the integration tests load.
+target_compile_definitions(wabar_tests PRIVATE WABAR_EXAMPLES_DIR="${PROJECT_SOURCE_DIR}/examples")
 # The static QML plugins are linked so `import wabar` and `import Quickshell` resolve in the test
 # engines.
 target_link_libraries(wabar_tests PRIVATE
