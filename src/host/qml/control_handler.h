@@ -18,6 +18,9 @@ class ShellHost;
 //   wallpaper set [--dry-run] <file-or-path> | random | next | previous [--dry-run] | gallery
 //           answered by the wallpaper service: "ok: <text>" or "error: <text>". The words follow
 //           the quoting of splitCommand (control.h). Without a service: "error: ..."
+//   shortcut <name>  fires the GlobalShortcut with that name: "ok", or "error: no shortcut named
+//           '<name>'"; `shortcut list` answers "ok: <names>" (quoted as joinCommand does)
+//   other   "error: unknown command '...' (try: reload, status, quit, wallpaper, shortcut)"
 //   surface list | show|hide|toggle|status <name>
 //           the named windows of the shell (surface_control.h): "ok: <text>" or "error: <text>"
 //   other   "error: unknown command '...' (try: reload, status, quit, wallpaper, surface)"

@@ -10,6 +10,11 @@
 //                       a random wallpaper of the folder, the one after or before the current
 //     wabarc wallpaper gallery
 //                       open or close the picker
+//     wabarc shortcut <name>
+//                       fire the GlobalShortcut with that name (bind a key to this command in
+//                       whkd or AutoHotkey)
+//     wabarc shortcut list
+//                       the names of the shortcuts the bar has
 //     wabarc surface list
 //     wabarc surface show|hide|toggle|status <name>
 //                       the windows of the shell that have a `name`: a launcher, an OSD, a menu.
@@ -78,6 +83,8 @@ int main(int argc, char* argv[]) {
       "  wallpaper set <file-or-path>   a full path, or a file name in the wallpaper folder\n"
       "  wallpaper random | next | previous\n"
       "  wallpaper gallery              open or close the picker\n"
+      "  shortcut <name>                fire the GlobalShortcut with that name\n"
+      "  shortcut list                  the names of the shortcuts\n"
       "  surface list                   the named windows of the shell and their state\n"
       "  surface show | hide | toggle | status <name>\n"
       "Add --dry-run to set, random, next or previous to play the animation without "
@@ -90,14 +97,15 @@ int main(int argc, char* argv[]) {
   QCommandLineOption dryRunOpt(QStringLiteral("dry-run"),
                                QStringLiteral("wallpaper: play the animation, do not set it."));
   parser.addOption(dryRunOpt);
-  parser.addPositionalArgument(QStringLiteral("command"),
-                               QStringLiteral("reload, status, quit, wallpaper or surface"));
+  parser.addPositionalArgument(
+      QStringLiteral("command"),
+      QStringLiteral("reload, status, quit, wallpaper, shortcut or surface"));
   parser.process(app);
 
   const QStringList positional = parser.positionalArguments();
   const QString usage = QStringLiteral(
       "usage: wabarc [--config-home <dir>] reload|status|quit|wallpaper "
-      "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|surface "
+      "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|shortcut <name>|list|surface "
       "(list|show|hide|toggle|status <name>)");
   if (positional.isEmpty()) {
     print(stderr, usage);

@@ -61,6 +61,7 @@ QsWindow::QsWindow(QObject* parent)
   connect(window_.get(), &QWindow::widthChanged, this, &QsWindow::widthChanged);
   connect(window_.get(), &QWindow::heightChanged, this, &QsWindow::heightChanged);
   connect(window_.get(), &QWindow::visibleChanged, this, &QsWindow::backingWindowVisibleChanged);
+  connect(window_.get(), &QWindow::visibleChanged, this, [this] { updateMaskPoller(); });
   connect(window_.get(), &QWindow::activeChanged, this, &QsWindow::onActiveChanged);
   hideTimer_.setSingleShot(true);
   connect(&hideTimer_, &QTimer::timeout, this, [this] {
@@ -70,6 +71,7 @@ QsWindow::QsWindow(QObject* parent)
 
 QsWindow::~QsWindow() {
   if (host_) host_->release(this);
+  poller_.reset();
   // Hiding the window must not run dismissOnBlur or the visibility bookkeeping of a dying window.
   disconnect(window_.get(), nullptr, this, nullptr);
   hideTimer_.stop();

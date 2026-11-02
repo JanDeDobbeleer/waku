@@ -87,6 +87,13 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
       words.removeFirst();
       return answerWallpaperCommand(words, wallpapers ? wallpapers() : nullptr);
     }
+    if (command == QLatin1String("shortcut") || command.startsWith(QLatin1String("shortcut "))) {
+      QStringList words;
+      if (!control::splitCommand(command, &words))
+        return QStringLiteral("error: unterminated quote");
+      words.removeFirst();
+      return answerShortcutCommand(words);
+    }
     if (command == QLatin1String("surface") || command.startsWith(QLatin1String("surface "))) {
       QStringList words;
       if (!control::splitCommand(command, &words))
@@ -95,7 +102,8 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
       return answerSurfaceCommand(words, guard.data());
     }
     return QStringLiteral(
-               "error: unknown command '%1' (try: reload, status, quit, wallpaper, surface)")
+               "error: unknown command '%1' (try: reload, status, quit, wallpaper, shortcut, "
+               "surface)")
         .arg(command.left(40));
   };
 }

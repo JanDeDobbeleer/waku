@@ -62,6 +62,9 @@ class ShellHost : public QObject {
     std::function<void(quintptr hwnd, Backdrop::Kind backdrop)> applyBackdrop;
     // HMONITOR of the monitor the window is on.
     std::function<qlonglong(quintptr hwnd)> monitorHandle;
+    // The cursor in physical screen pixels, for window masks (MaskPoller). Null: masks are inert.
+    // win32() sets it only on a live desktop.
+    CursorSource cursorPosition;
     // Keeps the window above the others (SetWindowPos HWND_TOPMOST, no activation): called each
     // time a window of the Top or Overlay layer is shown.
     std::function<void(quintptr hwnd)> raiseTopmost;

@@ -2,6 +2,7 @@
 
 #include "host/qml/shell_host.h"
 #include "host/win32/backdrop.h"
+#include "kernel/qt/live_desktop.h"
 #include "kernel/win32/window_focus.h"
 
 namespace wabar::host {
@@ -26,6 +27,14 @@ ShellHost::NativeHooks ShellHost::NativeHooks::win32() {
     return static_cast<qlonglong>(reinterpret_cast<quintptr>(
         MonitorFromWindow(reinterpret_cast<HWND>(hwnd), MONITOR_DEFAULTTONEAREST)));
   };
+  // Masks need the real cursor; without a live desktop (offscreen) they stay inert.
+  if (wabar::kernel::liveDesktop()) {
+    hooks.cursorPosition = []() -> std::optional<QPoint> {
+      POINT point;
+      if (!GetCursorPos(&point)) return std::nullopt;
+      return QPoint(point.x, point.y);
+    };
+  }
   hooks.raiseTopmost = [](quintptr hwnd) {
     SetWindowPos(reinterpret_cast<HWND>(hwnd), HWND_TOPMOST, 0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);

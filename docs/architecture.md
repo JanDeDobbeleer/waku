@@ -202,6 +202,34 @@ and its size times the device pixel ratio (`computeAppBarRect`). `negotiateAppBa
 `ABM_QUERYPOS`, re-applies the thickness to the adjusted rect, then `ABM_SETPOS`, and the window
 moves inward by what the shell granted (another app bar or the Windows taskbar on the same edge).
 
+### Input masks
+
+A window's `mask` (`Region`, `src/host/qml/region.*`) restricts where it takes input; the rest
+clicks through to the window below. Windows has no region-based hit test for a Qt window, so the
+host polls (`MaskPoller`, `src/host/mask_poller.*`). The measured facts behind it: `WS_EX_TRANSPARENT`
+alone does not click through, but `WS_EX_LAYERED | WS_EX_TRANSPARENT` does, and
+`Qt::WindowTransparentForInput` set at run time through `QWindow::setFlag` produces exactly that
+(2 to 4 ms per call). The DWM backdrop is not affected by the flip.
+
+- While a window is visible and has a mask, a `Qt::PreciseTimer` at 8 ms (120 Hz) reads the cursor
+  (`GetCursorPos`, physical pixels; documented, so no allowlist row), converts it to the window's
+  logical coordinates (`cursorInWindow`: screen origin, device pixel ratio, window position) and
+  tests it against the mask grown by 6 px (`regionContainsPadded`: the point and eight points 6 px
+  away). The flag is set only when the answer changes. The poll costs about 0.16% of a core.
+- The poll stops when the window hides or the mask goes, and the flag is cleared then. A cursor
+  outside the window is simply outside the region.
+- Region math is a pure function over `RegionNode` (`src/host/region_math.*`): the shape (a
+  rectangle or an ellipse, or the bounds of `item` mapped to the window), then each child folded in
+  order by its `Intersection` (Combine = union, Intersect, Xor, Subtract). An empty `Region {}`
+  contains nothing, so the window is fully click-through; no `mask` means the whole window takes
+  input.
+- The cursor comes from `ShellHost::NativeHooks::cursorPosition`. `win32()` sets it only when
+  `kernel::liveDesktop()`; tests and the offscreen platform have none (or a fake), so masks are
+  inert there and no test reads the real cursor or flips a real window.
+- Known race: a click in the gap between the cursor reaching a region and the next poll (up to
+  8 ms) goes to the window below. The 6 px pad makes the flip happen before a normal approach
+  arrives. A click that starts on a click-through spot and drags into a region is not seen by the
+  window.
 Overlays (a launcher, an OSD, a power menu): any window can be shown on demand. A window with
 `visible: false` makes no native window and no swap chain until it is first shown (a `QQuickWindow`
 creates both at `show()`); a hidden overlay's content can be built lazily with a `LazyLoader`.

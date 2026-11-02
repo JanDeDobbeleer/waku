@@ -105,6 +105,7 @@ wabar_contribute(
   TESTS
     tests/test_app_bar.cpp
     tests/test_control_handler.cpp
+    tests/test_global_shortcut.cpp
     tests/test_overlays.cpp
     tests/test_panel_geometry.cpp
     tests/test_mask_poller.cpp
