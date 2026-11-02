@@ -5,7 +5,7 @@ namespace wabar::system_stats {
 Memory::Memory(QObject* parent) : Memory(createMemoryDataSource(), parent) {}
 
 Memory::Memory(std::shared_ptr<MemoryDataSource> source, QObject* parent)
-    : StatSource(parent), source_(std::move(source)) {}
+    : kernel::StatSource(parent), source_(std::move(source)) {}
 
 void Memory::sample() {
   sampleAsync(source_, [this](MemorySample s) {
@@ -17,7 +17,7 @@ void Memory::sample() {
 Cpu::Cpu(QObject* parent) : Cpu(createCpuDataSource(), parent) {}
 
 Cpu::Cpu(std::shared_ptr<CpuDataSource> source, QObject* parent)
-    : StatSource(parent), source_(std::move(source)) {}
+    : kernel::StatSource(parent), source_(std::move(source)) {}
 
 QVariantList Cpu::perCore() const {
   QVariantList list;
@@ -35,7 +35,7 @@ void Cpu::sample() {
 Battery::Battery(QObject* parent) : Battery(createBatteryDataSource(), parent) {}
 
 Battery::Battery(std::shared_ptr<BatteryDataSource> source, QObject* parent)
-    : StatSource(parent), source_(std::move(source)) {}
+    : kernel::StatSource(parent), source_(std::move(source)) {}
 
 void Battery::sample() {
   sampleAsync(source_, [this](std::optional<BatterySample> s) {

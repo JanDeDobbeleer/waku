@@ -55,7 +55,7 @@ Network::Network(QObject* parent) : Network(createSystemNetworkSource(), parent)
 }
 
 Network::Network(std::shared_ptr<NetworkSource> source, QObject* parent)
-    : system_stats::StatSource(parent), source_(std::move(source)) {}
+    : kernel::StatSource(parent), source_(std::move(source)) {}
 
 Network::~Network() = default;
 

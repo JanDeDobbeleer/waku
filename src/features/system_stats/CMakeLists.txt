@@ -11,7 +11,6 @@ wabar_feature(NAME system_stats
     win32/pdh.h
     win32/pdh.cpp
   QML_SOURCES
-    qml/stat_source.h
     qml/stat_sources.h
     qml/stat_sources.cpp
   QML_FILES

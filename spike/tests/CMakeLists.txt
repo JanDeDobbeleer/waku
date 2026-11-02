@@ -2,10 +2,7 @@
 # to the one test binary wabar_tests that tests/CMakeLists.txt defines.
 wabar_contribute(
   TESTS
-    test_stat_sources.cpp
     test_audio.cpp
-    test_wm_clients.cpp
-    test_workspaces.cpp
     test_screen_match.cpp
     test_bar_host.cpp
     test_builtin_widgets.cpp
@@ -22,7 +19,6 @@ wabar_contribute(
     test_wallpapers.cpp
     test_wallpaper_control.cpp
     test_brightness_policy.cpp
-    test_taskbar_platform.cpp
     test_platform.cpp
   TEST_LIBS nlohmann_json::nlohmann_json
 )

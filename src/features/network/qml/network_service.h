@@ -56,7 +56,7 @@ std::shared_ptr<NetworkSource> createSystemNetworkSource();
 // signal; it is filled by `refresh()` and stays empty until then. The Wi-Fi backend (and its
 // thread) is created by the first refresh or connect and destroyed with this object, which stops
 // it. GUI thread only.
-class Network : public system_stats::StatSource {
+class Network : public kernel::StatSource {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON

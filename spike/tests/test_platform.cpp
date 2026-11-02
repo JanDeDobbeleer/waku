@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "platform/bluetooth.h"
-#include "platform/command_line.h"
 #include "platform/toast_activation.h"
 #include "platform/toast_xml.h"
 

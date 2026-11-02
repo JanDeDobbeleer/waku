@@ -5,12 +5,12 @@
 #include <QVariantList>
 #include <memory>
 
-#include "features/system_stats/qml/stat_source.h"
 #include "features/system_stats/system_stats.h"
+#include "kernel/qml/stat_source.h"
 
 namespace wabar::system_stats {
 
-class Memory : public StatSource {
+class Memory : public kernel::StatSource {
   Q_OBJECT
   QML_ELEMENT
   Q_PROPERTY(double percent READ percent NOTIFY updated)
@@ -43,7 +43,7 @@ class Memory : public StatSource {
   MemorySample sample_;
 };
 
-class Cpu : public StatSource {
+class Cpu : public kernel::StatSource {
   Q_OBJECT
   QML_ELEMENT
   Q_PROPERTY(double percent READ percent NOTIFY updated)
@@ -72,7 +72,7 @@ class Cpu : public StatSource {
   CpuSample sample_;
 };
 
-class Battery : public StatSource {
+class Battery : public kernel::StatSource {
   Q_OBJECT
   QML_ELEMENT
   Q_PROPERTY(bool available READ available NOTIFY updated)

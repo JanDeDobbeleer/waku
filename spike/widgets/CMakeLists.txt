@@ -9,15 +9,8 @@ wabar_contribute(
     DeviceRow.qml
     Slider.qml
     Volume.qml
-    Workspaces.qml
-    WorkspaceDot.qml
-    TrayIconButton.qml
-    Tray.qml
-    ActiveLayout.qml
     Bluetooth.qml
     Notifications.qml
     ControlCenter.qml
-    Wallpapers.qml
-    WallpaperGallery.qml
     SafeConfig.qml
 )

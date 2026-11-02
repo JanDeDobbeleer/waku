@@ -1,6 +1,7 @@
 # wabar_kernel: helpers with no domain knowledge that two or more units use (proposal, section 6).
-#   win32/  Windows build number, WinRT apartment, hidden process launch and shell open
+#   win32/  Windows build number, WinRT apartment, hidden process launch, shell open, app activation
 #   qt/     live-desktop gate, polled-source base class, the one app data folder
+#   qml/    the QML face of the polled source (compiled into wabar.services, not into this library)
 # Include root is src/ (#include "kernel/qt/app_data.h"). Qt Core and Gui only; the Windows SDK
 # only under win32/ (rule S3). Everything links this library through wabar_feature() or by name.
 add_library(wabar_kernel STATIC
@@ -24,7 +25,11 @@ target_link_libraries(wabar_kernel
   PUBLIC Qt6::Core Qt6::Gui
   PRIVATE wabar_options shell32 ole32 windowsapp propsys user32 version)
 
+# qml/ is the QML face of the polled source. It is not part of wabar_kernel (wabarc links the kernel
+# without QtQml); the header is compiled into the wabar.services module like a feature's qml/.
 wabar_contribute(
+  SERVICES_SOURCES qml/stat_source.h
+  SERVICES_INCLUDE_DIRS qml
   TESTS
     tests/test_app_activation.cpp
     tests/test_app_data.cpp
