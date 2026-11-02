@@ -1,5 +1,7 @@
 # platform: Win32 wrappers. Depends on nothing of ours; Qt Core only for QMetaType in headers.
 add_library(yasb_platform STATIC
+  accent_color.h
+  accent_color.cpp
   app_identity.h
   app_identity.cpp
   dwm_thumbnail.h
@@ -48,7 +50,7 @@ target_include_directories(yasb_platform PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(yasb_platform
   PUBLIC Qt6::Core
   PRIVATE yasb_options pdh setupapi psapi winmm windowsapp runtimeobject shell32 ole32 propsys version user32
-          wlanapi ws2_32 bthprops cfgmgr32 dwmapi oleaut32 uuid)
+          wlanapi ws2_32 bthprops cfgmgr32 shlwapi dwmapi oleaut32 uuid)
 # GitHub widget HTTPS (github_api.cpp); headers stay QtCore-only.
 find_package(Qt6 REQUIRED COMPONENTS Network)
 target_link_libraries(yasb_platform PRIVATE Qt6::Network)
