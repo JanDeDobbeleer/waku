@@ -11,6 +11,13 @@ namespace waku::kernel {
 // blocks the GUI thread. Returns at once; failures are logged.
 void shellOpen(const QString& file, const QString& parameters = QString());
 
+// ShellExecuteEx with the "runas" verb (UAC prompt) on a detached thread. Returns at once: the call
+// blocks until the prompt is answered and pumps window messages meanwhile, which on the GUI thread
+// lets the caller's own windows close under it. Failures (including a declined prompt) are logged.
+// `parameters` is a Windows command line tail. waku extension for apps and `execDetached`.
+void shellRunElevated(const QString& file, const QString& parameters = QString(),
+                      const QString& workingDirectory = QString());
+
 // Makes `process` start without a console window (CREATE_NO_WINDOW). Call before start().
 void hideConsole(QProcess& process);
 

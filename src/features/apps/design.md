@@ -48,7 +48,7 @@ resolver rejects hidden shortcuts.
 Store apps: `kernel::activateAppByAumid`, then `ShellExecuteEx` on `shell:AppsFolder\<aumid>` when
 no window answers. Admin for a Store app goes through its execution alias: the only `.exe` in
 `%LOCALAPPDATA%\Microsoft\WindowsApps\<PackageFamilyName>` (`findExecutionAlias`, read when the
-Store apps are listed and kept in `AppRecord::elevationAlias`), started with `runas`. A package
+Store apps are listed and kept in `AppRecord::elevationAlias`), started with `runas` on a worker thread (`kernel::shellRunElevated`: the UAC prompt must not block the GUI thread); `launchAsAdmin` is true once the request is handed over and a declined prompt is only logged. A package
 with no alias or several has none, so `launchAsAdmin` returns false and the entry has no admin
 action. `openLocation` runs `explorer.exe /select,<target>`; false for Store apps. `launchNew(id)` and `DesktopEntry.executeNew()`
 (waku extensions) skip the activation, so a running Store app is started again; whether that opens a

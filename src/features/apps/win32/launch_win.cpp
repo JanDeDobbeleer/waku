@@ -6,6 +6,7 @@
 
 #include "features/apps/apps_platform.h"
 #include "kernel/win32/app_activation.h"
+#include "kernel/win32/shell_launch.h"
 
 namespace waku::apps {
 namespace {
@@ -46,11 +47,16 @@ bool launch(const AppRecord& app, LaunchMode mode) {
       return !app.path.isEmpty() && shellExecute(app.path, QString(), nullptr);
     case LaunchMode::Admin:
       // A packaged app starts elevated only through its execution alias.
-      if (app.kind == AppKind::Store)
-        return !app.elevationAlias.isEmpty() &&
-               shellExecute(app.elevationAlias, QString(), L"runas");
+      // On a worker thread (kernel::shellRunElevated): true means the request was handed over, a
+      // declined UAC prompt is only logged.
+      if (app.kind == AppKind::Store) {
+        if (app.elevationAlias.isEmpty()) return false;
+        waku::kernel::shellRunElevated(app.elevationAlias);
+        return true;
+      }
       if (app.path.isEmpty()) return false;
-      return shellExecute(app.path, QString(), L"runas");
+      waku::kernel::shellRunElevated(app.path);
+      return true;
     case LaunchMode::OpenLocation: {
       if (app.kind == AppKind::Store) return false;
       const QString file =

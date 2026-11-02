@@ -35,8 +35,8 @@ QProcessEnvironment makeEnvironment(const CommandSpec& spec);
 // space (the CommandLineToArgvW rules).
 QString windowsArguments(const QStringList& arguments);
 
-// ShellExecuteEx with the "runas" verb for `spec.command`. False when the user declines the UAC
-// prompt or the program cannot start. Real: win32/elevated_launch_win.cpp.
+// Starts `spec.command` with the "runas" verb (UAC prompt) on a worker thread. True when the
+// request was handed over; a declined prompt is only logged. Real: win32/elevated_launch_win.cpp.
 bool startElevated(const CommandSpec& spec);
 
 // Starts the command detached and hidden (no console window), elevated when `spec.elevated`.

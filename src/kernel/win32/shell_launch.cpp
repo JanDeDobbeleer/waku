@@ -4,6 +4,7 @@
 #include <shellapi.h>
 
 #include <QDebug>
+#include <QDir>
 #include <QProcess>
 #include <string>
 #include <thread>
@@ -22,6 +23,27 @@ void shellOpen(const QString& file, const QString& parameters) {
                       nullptr, SW_SHOWNORMAL));
     if (result <= 32)
       qWarning().noquote() << "ShellExecute failed for" << QString::fromStdWString(target);
+  }).detach();
+}
+
+void shellRunElevated(const QString& file, const QString& parameters,
+                      const QString& workingDirectory) {
+  const std::wstring target = QDir::toNativeSeparators(file).toStdWString();
+  const std::wstring args = parameters.toStdWString();
+  const std::wstring directory = QDir::toNativeSeparators(workingDirectory).toStdWString();
+  std::thread([target, args, directory] {
+    const ComScope com(ComApartment::SingleThreaded, true);
+    SHELLEXECUTEINFOW info = {};
+    info.cbSize = sizeof(info);
+    info.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NOASYNC;
+    info.lpVerb = L"runas";
+    info.lpFile = target.c_str();
+    info.lpParameters = args.empty() ? nullptr : args.c_str();
+    info.lpDirectory = directory.empty() ? nullptr : directory.c_str();
+    info.nShow = SW_SHOWNORMAL;
+    if (!ShellExecuteExW(&info))
+      qWarning().noquote() << "Elevated start failed or declined for"
+                           << QString::fromStdWString(target) << "error" << GetLastError();
   }).detach();
 }
 
