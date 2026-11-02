@@ -16,6 +16,9 @@ Runtime::Runtime() {
   widgets::registerNetworkWidgets(widgetRegistry_);
   widgets::registerKomorebiWidgets(widgetRegistry_);
   widgets::registerMediaWidgets(widgetRegistry_);
+  widgets::registerNotificationsWidgets(widgetRegistry_);
+  widgets::registerWallpaperWidgets(widgetRegistry_);
+  widgets::registerTaskbarWidget(widgetRegistry_);
   widgets::registerControlCenterWidgets(widgetRegistry_);
 }
 

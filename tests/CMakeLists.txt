@@ -45,8 +45,11 @@ target_sources(yasb_tests PRIVATE
   widgets/test_github.cpp
   widgets/test_komorebi.cpp
   widgets/test_clock.cpp
-  widgets/test_control_center.cpp
-  widgets/test_media.cpp)
+  widgets/test_media.cpp
+  widgets/test_notifications.cpp
+  widgets/test_wallpapers.cpp
+  widgets/test_taskbar.cpp
+  widgets/test_control_center.cpp)
 
 # --- U7: app services and CLI protocol ---
 target_sources(yasb_tests PRIVATE

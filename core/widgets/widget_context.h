@@ -35,7 +35,8 @@ using TypedWidgetOptions =
                  config::options::KomorebiWorkspacesConfig, config::options::ActiveLayoutConfig,
                  config::options::ClockConfig, config::options::MediaWidgetConfig,
                  config::options::WifiConfig, config::options::BluetoothConfig,
-                 config::options::ControlCenterConfig>;
+                 config::options::NotificationsConfig, config::options::WallpapersConfig,
+                 config::options::TaskbarConfig, config::options::ControlCenterConfig>;
 
 struct WidgetContext {
   std::string name;
