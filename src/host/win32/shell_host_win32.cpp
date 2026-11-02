@@ -46,6 +46,13 @@ ShellHost::NativeHooks ShellHost::NativeHooks::win32() {
     if (wanted != style) SetWindowLongPtrW(window, GWL_EXSTYLE, wanted);
   };
   hooks.forceForeground = [](quintptr hwnd) { waku::kernel::forceForegroundFocus(hwnd); };
+  // Fails soft: a refused call leaves the working set as it is. Not on the offscreen platform, so
+  // a test run never trims the test process.
+  if (waku::kernel::liveDesktop()) {
+    hooks.trimWorkingSet = [] {
+      SetProcessWorkingSetSizeEx(GetCurrentProcess(), SIZE_T(-1), SIZE_T(-1), 0);
+    };
+  }
   return hooks;
 }
 

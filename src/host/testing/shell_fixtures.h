@@ -111,6 +111,9 @@ struct Native {
   std::vector<quintptr> raised;
   std::vector<std::pair<quintptr, bool>> noActivate;
   std::vector<quintptr> foregrounded;
+  // True: the working set hook exists and counts its calls in `trims`.
+  bool trimHook = false;
+  int trims = 0;
 
   ShellHost::NativeHooks hooks() {
     class Recording final : public waku::host::IAppBar {
@@ -143,6 +146,7 @@ struct Native {
       noActivate.emplace_back(hwnd, value);
     };
     hooks.forceForeground = [this](quintptr hwnd) { foregrounded.push_back(hwnd); };
+    if (trimHook) hooks.trimWorkingSet = [this] { ++trims; };
     return hooks;
   }
 };
@@ -159,6 +163,7 @@ struct Harness {
   bool safe = false;
   QUrl safeUrl;
   int screenSettleMs = ShellHost::Options().screenSettleMs;
+  int trimDelayMs = ShellHost::Options().trimDelayMs;
 
   QString shellFile() const { return dir.filePath(QStringLiteral("shell.qml")); }
 
@@ -175,6 +180,7 @@ struct Harness {
     options.safe = safe;
     options.safeUrl = safeUrl;
     options.screenSettleMs = screenSettleMs;
+    options.trimDelayMs = trimDelayMs;
     options.hooks = native.hooks();
     const int count = screenCount;
     options.screens = [count] {

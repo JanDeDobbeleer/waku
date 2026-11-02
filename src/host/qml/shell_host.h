@@ -85,6 +85,10 @@ class ShellHost : public QObject {
     // (kernel::forceForegroundFocus). Called when a window with keyboard focus is shown at run
     // time.
     std::function<void(quintptr hwnd)> forceForeground;
+    // Hands the process's idle working set pages back to the system
+    // (SetProcessWorkingSetSizeEx(-1, -1)). Called once the shell has settled after install();
+    // the pages it needs come back on use. Null: nothing is trimmed.
+    std::function<void()> trimWorkingSet;
 
     static NativeHooks win32();
   };
@@ -109,6 +113,9 @@ class ShellHost : public QObject {
     QUrl safeUrl;
     // How long screen changes must stop before the one reload (tests shorten it).
     int screenSettleMs = 1500;
+    // How long after install() the shell must sit with no extra window on screen (a popup) before
+    // the working set is trimmed (hooks.trimWorkingSet). Tests shorten it.
+    int trimDelayMs = 5000;
   };
 
   // The built-in shell of safe mode: Clock, Workspaces, Volume, Battery, Cpu and Memory.
@@ -238,6 +245,7 @@ class ShellHost : public QObject {
   void syncAppBar(Entry& entry);
   void panelLayoutChanged(PanelWindow* panel);
   void setError(const QString& error);
+  void trimIfSettled();
   // Walks the config home again and watches what it finds.
   void refreshWatches();
   // Replaces the watched paths with `paths`.
@@ -274,6 +282,9 @@ class ShellHost : public QObject {
   QTimer debounce_;
   // A screen added or removed, a new primary screen or a DPI change: one reload after they settle.
   QTimer screenDebounce_;
+  // Single shot, started by install(): trims the working set when the shell has settled.
+  QTimer trimTimer_;
+  int windowsAtInstall_ = 0;
   FileStamps snapshot_;
   int configChanges_ = 0;
   mutable int configWalks_ = 0;

@@ -197,6 +197,8 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
     reload();
     refreshWatches();
   });
+  trimTimer_.setSingleShot(true);
+  connect(&trimTimer_, &QTimer::timeout, this, [this] { trimIfSettled(); });
   watchScreens();
   connect(&watcher_, &QFileSystemWatcher::directoryChanged, this, [this] { configHomeChanged(); });
   connect(&watcher_, &QFileSystemWatcher::fileChanged, this,
@@ -594,6 +596,26 @@ void ShellHost::install(std::unique_ptr<Loaded> loaded) {
     }
   }
   traceStep("shell parts activated");
+  if (options_.hooks.trimWorkingSet) {
+    windowsAtInstall_ = static_cast<int>(this->windows().size());
+    trimTimer_.start(options_.trimDelayMs);
+  }
+}
+
+void ShellHost::trimIfSettled() {
+  if (!options_.hooks.trimWorkingSet) return;
+  // A popup (a window on screen beyond those of the shell) is open: the pages it touches should
+  // stay. Look again later.
+  if (windows().size() > windowsAtInstall_) {
+    trimTimer_.start(options_.trimDelayMs);
+    return;
+  }
+  try {
+    options_.hooks.trimWorkingSet();
+  } catch (...) {
+    qWarning() << "waku: trimming the working set failed";
+  }
+  traceStep("working set trimmed");
 }
 
 void ShellHost::adopt(QsWindow* window) {

@@ -735,6 +735,29 @@ TEST(ShellHostTest, AChangedFolderWalksTheConfigHome) {
   EXPECT_FALSE(h.host->configReloadPending());
 }
 
+TEST(ShellHostTest, TheWorkingSetIsTrimmedOnceAfterEachInstall) {
+  Harness h;
+  h.native.trimHook = true;
+  h.trimDelayMs = 20;
+  h.start(shellConfig(QStringLiteral("a")));
+  ASSERT_TRUE(h.host->reload());
+  EXPECT_EQ(h.native.trims, 0);  // not at install: the shell settles first
+  ASSERT_TRUE(QTest::qWaitFor([&] { return h.native.trims == 1; }, 2000));
+  QTest::qWait(100);
+  EXPECT_EQ(h.native.trims, 1);  // a single shot, not a loop
+  ASSERT_TRUE(h.host->reload());
+  ASSERT_TRUE(QTest::qWaitFor([&] { return h.native.trims == 2; }, 2000));
+}
+
+TEST(ShellHostTest, NoTrimHookMeansNoTrim) {
+  Harness h;
+  h.trimDelayMs = 20;
+  h.start(shellConfig(QStringLiteral("a")));
+  ASSERT_TRUE(h.host->reload());
+  QTest::qWait(100);
+  EXPECT_EQ(h.native.trims, 0);
+}
+
 // ---- singletons across a reload ----
 
 namespace {
