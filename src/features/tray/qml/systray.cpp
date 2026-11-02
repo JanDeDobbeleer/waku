@@ -15,8 +15,8 @@
 namespace waku::tray {
 namespace {
 
-constexpr int kRefreshDelayMs = 200;    // SystrayWidget's refreshTimer_
-constexpr int kSweepIntervalMs = 5000;  // SystrayWidget's iconCheckTimer_
+constexpr int kRefreshDelayMs = 200;     // SystrayWidget's refreshTimer_
+constexpr int kSweepIntervalMs = 30000;  // SystrayWidget checked every 5 s
 
 struct RealHost {
   std::unique_ptr<TrayHost> host;
@@ -113,7 +113,6 @@ void Systray::connectHost() {
   connect(host_.get(), &TrayHost::updateIcons, this, [this] { refreshTimer_.start(); });
   connect(&refreshTimer_, &QTimer::timeout, this, [this] { refresh(); });
   connect(&sweepTimer_, &QTimer::timeout, this, [this] { sweep(); });
-  sweepTimer_.start(kSweepIntervalMs);
   host_->start();
 }
 
@@ -146,6 +145,7 @@ void Systray::onIconModified(const TrayIconData& data) {
     if (const TrayIconData* stored = registry_.data(result.id)) {
       model_.apply(result.id, *stored);
       diagnoseIcon(result.id, data, *stored);
+      updateSweepTimer();
     }
   } catch (const std::exception& error) {
     qWarning().noquote() << "Tray icon update failed:" << error.what();
@@ -180,8 +180,19 @@ void Systray::onIconDeleted(const TrayIconData& data) {
       swallowRelease_.remove(*id);
       loggedIconProblems_.remove(*id);
     }
+    updateSweepTimer();
   } catch (const std::exception& error) {
     qWarning().noquote() << "Tray icon removal failed:" << error.what();
+  }
+}
+
+// The sweep only has something to check while the registry holds an icon.
+void Systray::updateSweepTimer() {
+  const bool needed = !registry_.ids().empty();
+  if (needed && !sweepTimer_.isActive()) {
+    sweepTimer_.start(kSweepIntervalMs);
+  } else if (!needed && sweepTimer_.isActive()) {
+    sweepTimer_.stop();
   }
 }
 
@@ -193,6 +204,7 @@ void Systray::sweep() {
       swallowRelease_.remove(id);
       loggedIconProblems_.remove(id);
     }
+    updateSweepTimer();
   } catch (const std::exception& error) {
     qWarning().noquote() << "Tray sweep failed:" << error.what();
   }

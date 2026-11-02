@@ -58,6 +58,8 @@ class Systray : public QObject {
   waku::tray::TrayIconRegistry& registry() { return registry_; }
   // Whether the refresh after the hook asked for icons is still to come (tests).
   bool refreshPending() const { return refreshTimer_.isActive(); }
+  // True while the stale-icon sweep timer runs (only while an icon exists).
+  bool sweeping() const { return sweepTimer_.isActive(); }
 
   // Windows' own battery, volume and network icons (hidden by default) and icons of these
   // executables are not admitted. Icons already on screen are not re-filtered.
@@ -81,6 +83,7 @@ class Systray : public QObject {
   // pixels, fully transparent), once per icon and reason.
   void diagnoseIcon(int id, const TrayIconData& incoming, const TrayIconData& stored);
   void sweep();
+  void updateSweepTimer();
   void connectHost();
 
   std::unique_ptr<TrayHost> host_;
@@ -94,7 +97,8 @@ class Systray : public QObject {
   // The icon problems already logged, per id; dropped with the icon.
   QHash<int, QSet<QString>> loggedIconProblems_;
   QTimer refreshTimer_;  // 200 ms single shot after the hook asks for icons: TaskbarCreated
-  QTimer sweepTimer_;    // 5 s, as the Widgets build: drops icons whose owner window is gone
+  // 30 s, only while an icon exists: drops icons whose owner window is gone.
+  QTimer sweepTimer_;
 };
 
 }  // namespace waku::tray

@@ -117,6 +117,27 @@ TEST(Systray, StaleSweepRemovesIconsWhoseWindowIsGone) {
   EXPECT_EQ(f.systray.icons()->iconData(0)->hWnd, 100u);
 }
 
+TEST(Systray, SweepsOnlyWhileAnIconExists) {
+  Fixture f;
+  EXPECT_FALSE(f.systray.sweeping());
+  f.host->sendModified(icon(100, 1));
+  EXPECT_TRUE(f.systray.sweeping());
+  f.host->sendModified(icon(100, 2));
+  f.host->sendDeleted(icon(100, 1));
+  QCoreApplication::processEvents();
+  EXPECT_TRUE(f.systray.sweeping());
+  f.host->sendDeleted(icon(100, 2));
+  QCoreApplication::processEvents();
+  EXPECT_FALSE(f.systray.sweeping());
+  // The last icon going stale also stops it.
+  f.host->sendModified(icon(300, 1));
+  ASSERT_TRUE(f.systray.sweeping());
+  f.api->windows.erase(300);
+  f.systray.refresh();
+  EXPECT_EQ(f.rows(), 0);
+  EXPECT_FALSE(f.systray.sweeping());
+}
+
 TEST(Systray, ClickSendsDownAndUpForEachButton) {
   Fixture f;
   f.host->sendModified(icon(100, 1));
