@@ -15,7 +15,10 @@
 #include "core/config/options/komorebi_workspaces.h"
 #include "core/config/options/media.h"
 #include "core/config/options/memory.h"
+#include "core/config/options/notifications.h"
 #include "core/config/options/systray.h"
+#include "core/config/options/taskbar.h"
+#include "core/config/options/wallpapers.h"
 #include "core/config/options/wifi.h"
 
 namespace yasb::bar {
@@ -33,6 +36,8 @@ using TypedWidgetOptions =
                  config::options::KomorebiWorkspacesConfig, config::options::ActiveLayoutConfig,
                  config::options::ClockConfig, config::options::MediaWidgetConfig,
                  config::options::WifiConfig, config::options::BluetoothConfig,
+                 config::options::NotificationsConfig, config::options::WallpapersConfig,
+                 config::options::TaskbarConfig, config::options::ControlCenterConfig,
                  config::options::SystrayWidgetConfig>;
 
 struct WidgetContext {

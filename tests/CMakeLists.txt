@@ -46,6 +46,10 @@ target_sources(yasb_tests PRIVATE
   widgets/test_komorebi.cpp
   widgets/test_clock.cpp
   widgets/test_media.cpp
+  widgets/test_notifications.cpp
+  widgets/test_wallpapers.cpp
+  widgets/test_taskbar.cpp
+  widgets/test_control_center.cpp
   widgets/test_systray.cpp
   widgets/test_systray_pipe.cpp)
 
