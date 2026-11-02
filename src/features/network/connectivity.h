@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QMetaType>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -50,7 +51,21 @@ WifiInfo classifyConnections(const std::vector<ConnectionSnapshot>& online,
 // Returns nullopt when the query throws (Python emits WiFiInfo(0, "Error", -1) then).
 std::optional<WifiInfo> queryConnectionInfo();
 
-// First IPv4 address of the local host name (socket.gethostbyname(socket.gethostname())).
+// One IPv4 address of a network adapter that is up, for choosing the address the bar shows.
+struct AdapterAddress {
+  std::string address;
+  // The adapter has a default gateway: it carries traffic off the local network.
+  bool hasGateway = false;
+  // The adapter's IPv4 interface metric; lower is preferred.
+  std::uint32_t metric = 0;
+};
+
+// The address of the adapter Windows prefers for outgoing traffic: gateway adapters first, then the
+// lowest metric, then the order given. Link-local (169.254.x.x) and unspecified addresses never win
+// over a routable one and are used only when nothing else exists. Nullopt for an empty list.
+std::optional<std::string> pickLocalAddress(const std::vector<AdapterAddress>& adapters);
+
+// The IPv4 address of the primary adapter (GetAdaptersAddresses; no name lookup, no network I/O).
 std::optional<std::string> localIpAddress();
 
 // Info + IP in one call for the polling worker. `exactQuality` is filled by the caller.

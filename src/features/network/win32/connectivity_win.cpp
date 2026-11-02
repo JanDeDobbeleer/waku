@@ -2,9 +2,12 @@
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Networking.Connectivity.h>
 #include <winsock2.h>
-#include <ws2tcpip.h>
+// iphlpapi.h needs the socket address types first (types only; no Winsock call is made).
+#include <iphlpapi.h>
 
 #include <algorithm>
+#include <cstdio>
+#include <tuple>
 
 #include "features/network/connectivity.h"
 #include "kernel/win32/winrt_apartment.h"
@@ -73,28 +76,59 @@ std::optional<WifiInfo> queryConnectionInfo() {
   }
 }
 
+std::optional<std::string> pickLocalAddress(const std::vector<AdapterAddress>& adapters) {
+  const auto linkLocal = [](const std::string& address) {
+    return address.empty() || address.starts_with("169.254.") || address == "0.0.0.0";
+  };
+  const AdapterAddress* best = nullptr;
+  for (const AdapterAddress& adapter : adapters) {
+    if (adapter.address.empty()) continue;
+    if (!best) {
+      best = &adapter;
+      continue;
+    }
+    const auto key = [&](const AdapterAddress& a) {
+      return std::tuple(linkLocal(a.address), !a.hasGateway, a.metric);
+    };
+    if (key(adapter) < key(*best)) best = &adapter;
+  }
+  if (!best) return std::nullopt;
+  return best->address;
+}
+
 std::optional<std::string> localIpAddress() {
-  // Winsock is started once for the process and left running (it is reference counted, and Qt
-  // Network starts it too), not started and cleaned up around every poll.
-  static const bool winsock = [] {
-    WSADATA data{};
-    return WSAStartup(MAKEWORD(2, 2), &data) == 0;
-  }();
-  if (!winsock) return std::nullopt;
-  std::optional<std::string> result;
-  char host[256] = {};
-  if (gethostname(host, sizeof(host)) == 0) {
-    addrinfo hints{};
-    hints.ai_family = AF_INET;
-    addrinfo* found = nullptr;
-    if (getaddrinfo(host, nullptr, &hints, &found) == 0 && found) {
-      char text[INET_ADDRSTRLEN] = {};
-      const auto* address = reinterpret_cast<const sockaddr_in*>(found->ai_addr);
-      if (inet_ntop(AF_INET, &address->sin_addr, text, sizeof(text))) result = std::string(text);
-      freeaddrinfo(found);
+  // A documented IP helper call over the adapter table: no name resolution and no network I/O, so
+  // a poll never waits on DNS or the LLMNR/NetBIOS fallbacks that gethostbyname can fall into.
+  constexpr ULONG flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
+                          GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_FRIENDLY_NAME;
+  std::vector<unsigned char> buffer(16 * 1024);
+  ULONG size = static_cast<ULONG>(buffer.size());
+  ULONG status = ERROR_BUFFER_OVERFLOW;
+  for (int attempt = 0; attempt < 3 && status == ERROR_BUFFER_OVERFLOW; ++attempt) {
+    buffer.resize(size);
+    status = GetAdaptersAddresses(AF_INET, flags, nullptr,
+                                  reinterpret_cast<PIP_ADAPTER_ADDRESSES>(buffer.data()), &size);
+  }
+  if (status != NO_ERROR) return std::nullopt;
+  std::vector<AdapterAddress> adapters;
+  for (const IP_ADAPTER_ADDRESSES* adapter = reinterpret_cast<PIP_ADAPTER_ADDRESSES>(buffer.data());
+       adapter; adapter = adapter->Next) {
+    if (adapter->OperStatus != IfOperStatusUp || adapter->IfType == IF_TYPE_SOFTWARE_LOOPBACK)
+      continue;
+    for (const IP_ADAPTER_UNICAST_ADDRESS* unicast = adapter->FirstUnicastAddress; unicast;
+         unicast = unicast->Next) {
+      if (!unicast->Address.lpSockaddr || unicast->Address.lpSockaddr->sa_family != AF_INET)
+        continue;
+      const auto* address = reinterpret_cast<const sockaddr_in*>(unicast->Address.lpSockaddr);
+      char text[16] = {};
+      std::snprintf(text, sizeof(text), "%u.%u.%u.%u", address->sin_addr.S_un.S_un_b.s_b1,
+                    address->sin_addr.S_un.S_un_b.s_b2, address->sin_addr.S_un.S_un_b.s_b3,
+                    address->sin_addr.S_un.S_un_b.s_b4);
+      adapters.push_back({text, adapter->FirstGatewayAddress != nullptr, adapter->Ipv4Metric});
+      break;
     }
   }
-  return result;
+  return pickLocalAddress(adapters);
 }
 
 ConnectivitySample sampleConnectivity() {
