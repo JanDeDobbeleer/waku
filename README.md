@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/waku-logo-dark.svg">
+    <img src="docs/assets/waku-logo.svg" alt="waku, the Windows shell bar" width="360">
+  </picture>
+</p>
+
 # waku
 
 waku (枠, "frame", say "wah-koo") is a top bar for Windows, written in C++20 and Qt 6.10
