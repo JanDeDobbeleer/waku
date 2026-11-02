@@ -46,12 +46,7 @@ Media::Media(std::unique_ptr<MediaSessionSource> source, QObject* parent)
 
 Media::Media(std::shared_ptr<MediaSessionService> service, QObject* parent)
     : QObject(parent), service_(std::move(service)) {
-  for (auto signal :
-       {&MediaSessionService::mediaDataChanged, &MediaSessionService::currentSessionChanged,
-        &MediaSessionService::mediaPropertiesChanged, &MediaSessionService::timelineInfoChanged,
-        &MediaSessionService::playbackInfoChanged}) {
-    connect(service_.get(), signal, this, &Media::onServiceChanged);
-  }
+  connect(service_.get(), &MediaSessionService::stateChanged, this, &Media::onServiceChanged);
   connect(service_.get(), &MediaSessionService::positionTicked, this, &Media::positionChanged);
   service_->start();
 }
@@ -74,7 +69,7 @@ QString Media::artist() const { return current() ? current()->artist : QString()
 QString Media::album() const { return current() ? current()->albumTitle : QString(); }
 QString Media::sourceName() const { return current() ? current()->sourceName : QString(); }
 bool Media::playing() const { return current() && current()->isPlaying; }
-double Media::position() const { return current() ? current()->currentPos : 0; }
+double Media::position() const { return current() ? service_->livePosition(*current()) : 0; }
 double Media::duration() const { return current() ? current()->duration : 0; }
 bool Media::canPrevious() const { return current() && current()->prevEnabled; }
 bool Media::canPlayPause() const { return current() && current()->playEnabled; }

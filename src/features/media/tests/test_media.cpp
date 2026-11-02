@@ -136,15 +136,31 @@ TEST(MediaService, ASessionListIsOneRoundOfSignalsAndTicksMoveOnlyThePosition) {
   }
   h.source->sink_->sessionsChanged(sessions, sessions.front().appId, true);
   QCoreApplication::processEvents();
-  // Each kind of change once for the list, not once per session (about 16 before).
-  EXPECT_LE(changed.count(), 7);
+  // One `changed` for the whole list (up to 7 before).
+  EXPECT_EQ(changed.count(), 1);
   ASSERT_TRUE(h.media->playing());
 
-  // The 100 ms tick while playing moves the position only.
+  // The tick while playing moves the position only.
   const int before = changed.count();
   const int ticks = position.count();
-  ASSERT_TRUE(QTest::qWaitFor([&] { return position.count() >= ticks + 2; }, 5000));
+  ASSERT_TRUE(QTest::qWaitFor([&] { return position.count() >= ticks + 1; }, 5000));
   EXPECT_EQ(changed.count(), before);
+}
+
+TEST(MediaService, TicksOnceASecondAndReadsThePositionLive) {
+  EXPECT_EQ(MediaSessionService::kRefreshIntervalMs, 1000);
+  double now = 1000;
+  auto fake = std::make_unique<FakeSource>();
+  FakeSource* source = fake.get();
+  Media media(
+      std::make_shared<MediaSessionService>(std::move(fake), nullptr, [&now] { return now; }),
+      nullptr);
+  source->sink_->sessionsChanged({session(QStringLiteral("Song"))},
+                                 QStringLiteral("Fake.Player.App"), true);
+  QCoreApplication::processEvents();
+  EXPECT_DOUBLE_EQ(media.position(), 10);
+  now = 1003.5;  // between ticks, a read still sees the clock
+  EXPECT_DOUBLE_EQ(media.position(), 13.5);
 }
 
 TEST(MediaService, UnsetTimelineIsIgnored) {

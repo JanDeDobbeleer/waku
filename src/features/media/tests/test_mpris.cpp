@@ -246,3 +246,18 @@ QtObject {
   EXPECT_EQ(root->property("playlist").toInt(), 2);
   EXPECT_EQ(root->property("playing").toInt(), 1);
 }
+
+TEST(MprisTick, MovesOnlyThePositionOfAPlayingPlayer) {
+  Harness h;
+  h.publish({player(QStringLiteral("a.exe"), QStringLiteral("One"))});
+  MprisPlayer* p = h.mpris->players()->values().first();
+  ASSERT_TRUE(p->isPlaying());
+  QSignalSpy position(p, &MprisPlayer::positionChanged);
+  QSignalSpy metadata(p, &MprisPlayer::metadataChanged);
+  QSignalSpy title(p, &MprisPlayer::trackTitleChanged);
+  const double before = p->position();
+  ASSERT_TRUE(QTest::qWaitFor([&] { return position.count() >= 1; }, 5000));
+  EXPECT_GT(p->position(), before);
+  EXPECT_EQ(metadata.count(), 0);
+  EXPECT_EQ(title.count(), 0);
+}

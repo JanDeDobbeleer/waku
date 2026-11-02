@@ -39,7 +39,7 @@ class Media : public QObject {
   Q_PROPERTY(QString sourceName READ sourceName NOTIFY changed FINAL)
   Q_PROPERTY(QString thumbnailUrl READ thumbnailUrl NOTIFY changed FINAL)
   Q_PROPERTY(bool playing READ playing NOTIFY changed FINAL)
-  // Its own signal: the 100 ms tick while playing must not re-evaluate every other binding.
+  // Its own signal: the tick while playing must not re-evaluate every other binding. Read live.
   Q_PROPERTY(double position READ position NOTIFY positionChanged FINAL)
   Q_PROPERTY(double duration READ duration NOTIFY changed FINAL)
   Q_PROPERTY(bool canPrevious READ canPrevious NOTIFY changed FINAL)

@@ -99,6 +99,16 @@ MprisPlaybackState::Enum MprisPlayer::playbackState() const {
   return MprisPlaybackState::Stopped;
 }
 
+double MprisPlayer::position() const {
+  const MediaSessionState* state = service_->findSession(appId_);
+  return state ? service_->livePosition(*state) : position_;
+}
+
+void MprisPlayer::tickPosition() {
+  position_ = position();
+  emit positionChanged();
+}
+
 void MprisPlayer::setPosition(double seconds) {
   if (!canSeek_) return;
   service_->seekSession(appId_, seconds < 0 ? 0 : seconds);
@@ -120,7 +130,7 @@ void MprisPlayer::togglePlaying() { service_->sendTo(appId_, MediaCommand::PlayP
 void MprisPlayer::stop() { service_->sendTo(appId_, MediaCommand::Stop); }
 void MprisPlayer::next() { service_->sendTo(appId_, MediaCommand::Next); }
 void MprisPlayer::previous() { service_->sendTo(appId_, MediaCommand::Previous); }
-void MprisPlayer::seek(double offset) { setPosition(position_ + offset); }
+void MprisPlayer::seek(double offset) { setPosition(position() + offset); }
 
 int MprisPlayerModel::rowCount(const QModelIndex& parent) const {
   return parent.isValid() ? 0 : static_cast<int>(players_.size());
@@ -166,12 +176,8 @@ Mpris::Mpris(QObject* parent) : Mpris(acquireMediaService(), parent) {}
 
 Mpris::Mpris(std::shared_ptr<MediaSessionService> service, QObject* parent)
     : QObject(parent), service_(std::move(service)), players_(this) {
-  for (auto signal :
-       {&MediaSessionService::mediaDataChanged, &MediaSessionService::currentSessionChanged,
-        &MediaSessionService::mediaPropertiesChanged, &MediaSessionService::timelineInfoChanged,
-        &MediaSessionService::playbackInfoChanged, &MediaSessionService::positionTicked}) {
-    connect(service_.get(), signal, this, &Mpris::sync);
-  }
+  connect(service_.get(), &MediaSessionService::stateChanged, this, &Mpris::sync);
+  connect(service_.get(), &MediaSessionService::positionTicked, this, &Mpris::onPositionTick);
   service_->start();
   sync();
 }
@@ -183,6 +189,14 @@ Mpris::~Mpris() = default;
 void Mpris::setActivePlayer(MprisPlayer* player) {
   if (!player || player == active_) return;
   service_->selectSession(player->appId());
+}
+
+// A tick moves only the position: no player is compared field by field.
+void Mpris::onPositionTick() {
+  for (MprisPlayer* player : players_.values()) {
+    const MediaSessionState* state = service_->findSession(player->appId());
+    if (state && state->isPlaying) player->tickPosition();
+  }
 }
 
 void Mpris::sync() {

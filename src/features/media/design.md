@@ -34,8 +34,10 @@ art, and the transport commands. One QML singleton (`Media`) and one widget (`Me
 - Signals: one `<property>Changed` per property, and `postTrackChanged()` after the title, artist or
   album changed.
 - `canPlay`, `canPause` and `canTogglePlaying` all follow GSMTC's `IsPlayEnabled`.
-- Position interpolation (100 ms timer) runs while the current session plays; other sessions get a
-  fresh position on each of their events.
+- Position interpolation (1 s timer) runs while the current session plays; other sessions get a
+  fresh position on each of their events. `position` reads the clock on every read, so a shell that
+  polls `positionChanged()` by hand sees the live value; the tick only notifies, and updates the
+  position alone (no `sync()` of every player).
 - The `Quickshell.Services.Mpris` module registers these types again under the same names
   (`src/quickshell/services/mpris/qml/quickshell_types_mpris.h`; `Mpris` is the same singleton object).
 
@@ -46,8 +48,7 @@ task; the thread sleeps between tasks (no polling) and posts plain snapshots to 
 thread. `stop()` revokes the handlers, wakes the queue and joins; a refresh in progress checks the
 stop flag between sessions, so the join waits for one WinRT read at most. The thread starts only
 on a live desktop (`kernel::liveDesktop("media")`): tests and the offscreen platform get a service
-without a source and `Media.available` false. The service emits each change signal once per
-session list, and the 100 ms position tick has its own `positionTicked()`, which `Media` turns into
+without a source and `Media.available` false. The service emits one `stateChanged()` per source event or command, and the 1 s position tick has its own `positionTicked()`, which `Media` turns into
 `positionChanged` so the other bindings stay still while a track plays. The source-app name cache in
 `media_source_apps.cpp` is `QMutex`-guarded and written from that thread only.
 

@@ -124,7 +124,7 @@ class MediaSessionService final : public QObject {
 
  public:
   using Clock = std::function<double()>;  // unix seconds
-  static constexpr int kRefreshIntervalMs = 100;
+  static constexpr int kRefreshIntervalMs = 1000;
   static constexpr const char* kServiceKey = "media";
 
   explicit MediaSessionService(std::unique_ptr<MediaSessionSource> source,
@@ -137,6 +137,9 @@ class MediaSessionService final : public QObject {
   const std::vector<MediaSessionState>& sessions() const { return sessions_; }
   const MediaSessionState* currentSession() const;
   bool isInterpolating() const { return timer_.isActive(); }
+  // The position of `state` now, in seconds, from the last snapshot and the clock. `currentPos` is
+  // that value as of the last tick or event.
+  double livePosition(const MediaSessionState& state) const;
 
   void playPause();
   void next();
@@ -162,20 +165,17 @@ class MediaSessionService final : public QObject {
   void applyPlayback(const QString& appId, const MediaPlayback& playback);
 
  signals:
-  void mediaDataChanged();
-  void currentSessionChanged();
-  void mediaPropertiesChanged();
-  void timelineInfoChanged();
-  void playbackInfoChanged();
-  // The 100 ms tick while a session plays: only `currentPos` moved.
+  // One emission per source event or command, whatever parts of the state it changed.
+  void stateChanged();
+  // The tick while a session plays (every kRefreshIntervalMs): only `currentPos` moved.
   void positionTicked();
 
  private:
   class Sink;
   MediaSessionState* find(const QString& appId);
-  bool applyTimelineSnapshot(MediaSessionState& state, const MediaTimeline& timeline);
+  void applyTimelineSnapshot(MediaSessionState& state, const MediaTimeline& timeline);
   void applyPlaybackSnapshot(MediaSessionState& state, const MediaPlayback& playback);
-  bool applyCurrentSelection(const QString& systemId, bool followSystem);
+  void applyCurrentSelection(const QString& systemId, bool followSystem);
   void interpolate();
   void interpolateAndEmit();
   void updateTimer();

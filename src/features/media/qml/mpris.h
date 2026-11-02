@@ -88,7 +88,11 @@ class MprisPlayer : public QObject {
   QString trackAlbum() const { return album_; }
   QString trackArtUrl() const { return artUrl_; }
   QVariantMap metadata() const;
-  double position() const { return position_; }
+  // Live: the service interpolates it on every read, so a shell that polls `positionChanged()`
+  // by hand sees the current value.
+  double position() const;
+  // The service tick: refresh the cached position and notify.
+  void tickPosition();
   void setPosition(double seconds);
   double length() const { return length_; }
   bool positionSupported() const { return canSeek_; }
@@ -217,6 +221,7 @@ class Mpris : public QObject {
 
  private:
   void sync();
+  void onPositionTick();
 
   std::shared_ptr<MediaSessionService> service_;
   MprisPlayerModel players_;
