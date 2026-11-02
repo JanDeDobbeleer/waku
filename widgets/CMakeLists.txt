@@ -55,6 +55,146 @@ add_library(yasb_widgets STATIC
   bluetooth/bluetooth_menu.cpp
   bluetooth/bluetooth_widget.h
   bluetooth/bluetooth_widget.cpp
+  glazewm/glazewm_service.h
+  glazewm/glazewm_service.cpp
+  glazewm/glazewm_state.h
+  glazewm/glazewm_state.cpp
+  glazewm/glazewm_widgets.h
+  glazewm/glazewm_widgets.cpp
+  glazewm/tiling_direction_widget.h
+  glazewm/tiling_direction_widget.cpp
+  glazewm/workspaces_widget.h
+  glazewm/workspaces_widget.cpp
+  komorebi/active_layout_widget.h
+  komorebi/active_layout_widget.cpp
+  komorebi/komorebi_service.h
+  komorebi/komorebi_service.cpp
+  komorebi/komorebi_state.h
+  komorebi/komorebi_state.cpp
+  komorebi/komorebi_widgets.h
+  komorebi/komorebi_widgets.cpp
+  komorebi/workspaces_widget.h
+  komorebi/workspaces_widget.cpp
+  media/lanczos.h
+  media/lanczos.cpp
+  media/media_widget.h
+  media/media_widget.cpp
+  media/media.qrc
+  notifications/notification_widgets.h
+  notifications/notification_widgets.cpp
+  notifications/notifications_menu.h
+  notifications/notifications_menu.cpp
+  notifications/notifications_widget.h
+  notifications/notifications_widget.cpp
+  wallpapers/gallery.h
+  wallpapers/gallery.cpp
+  wallpapers/gallery_layout.h
+  wallpapers/gallery_layout.cpp
+  wallpapers/thumbnail_cache.h
+  wallpapers/thumbnail_cache.cpp
+  wallpapers/wallpaper_engine.h
+  wallpapers/wallpaper_engine.cpp
+  wallpapers/wallpaper_files.h
+  wallpapers/wallpaper_files.cpp
+  wallpapers/wallpaper_layout.h
+  wallpapers/wallpaper_layout.cpp
+  wallpapers/wallpaper_manager.h
+  wallpapers/wallpaper_manager.cpp
+  wallpapers/wallpapers_widget.h
+  wallpapers/wallpapers_widget.cpp
+  taskbar/pin_store.h
+  taskbar/pin_store.cpp
+  taskbar/recycle_bin_monitor.h
+  taskbar/recycle_bin_monitor.cpp
+  taskbar/taskbar_drop.h
+  taskbar/taskbar_drop.cpp
+  taskbar/taskbar_menu.h
+  taskbar/taskbar_menu.cpp
+  taskbar/taskbar_icons.h
+  taskbar/taskbar_icons.cpp
+  taskbar/taskbar_preview.h
+  taskbar/taskbar_preview.cpp
+  taskbar/taskbar_widget.h
+  taskbar/taskbar_widget.cpp
+  systray/icon_scale.h
+  systray/icon_scale.cpp
+  systray/systray_popup.h
+  systray/systray_popup.cpp
+  systray/systray_service.h
+  systray/systray_service.cpp
+  systray/systray_state.h
+  systray/systray_state.cpp
+  systray/systray_widget.h
+  systray/systray_widget.cpp
+  systray/systray_widgets.h
+  systray/systray_widgets.cpp
+  systray/tray_drop_widget.h
+  systray/tray_drop_widget.cpp
+  systray/tray_icon_button.h
+  systray/tray_icon_button.cpp
+)
+set_target_properties(yasb_widgets PROPERTIES AUTORCC ON)
+target_include_directories(yasb_widgets PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(yasb_widgets
+  PUBLIC yasb_ui yasb_platform
+  PRIVATE yasb_options)
+# widgets: concrete widgets and their registration (registerStatWidgets, called from app/main.cpp).
+add_library(yasb_widgets STATIC
+  network_widgets.h
+  network_widgets.cpp
+  stat_widgets.h
+  stat_widgets.cpp
+  system_widget_helpers.h
+  battery/battery_widget.h
+  battery/battery_widget.cpp
+  cpu/cpu_widget.h
+  clock/clock_dialogs.cpp
+  clock/clock_state.cpp
+  clock/clock_state.h
+  clock/clock_widget.cpp
+  clock/clock_widget.h
+  clock/py_strftime.cpp
+  clock/py_strftime.h
+  clock/tz_abbreviation.cpp
+  clock/tz_abbreviation.h
+  control_center/control_center_sections.cpp
+  control_center/control_center_sections.h
+  control_center/control_center_system.cpp
+  control_center/control_center_system.h
+  control_center/control_center_widget.cpp
+  control_center/control_center_widget.h
+  control_center/media_section.cpp
+  control_center/power_section.cpp
+  control_center/sliders_section.cpp
+  cpu/cpu_widget.cpp
+  fluent/fluent_button.h
+  fluent/fluent_button.cpp
+  fluent/fluent_theme.h
+  fluent/fluent_theme.cpp
+  github/github_auth_dialog.h
+  github/github_auth_dialog.cpp
+  github/github_data_store.h
+  github/github_data_store.cpp
+  github/github_format.h
+  github/github_format.cpp
+  github/github_widget.h
+  github/github_widget.cpp
+  memory/memory_widget.h
+  memory/memory_widget.cpp
+  menu_support/elided_label.h
+  menu_support/label_parts.h
+  menu_support/loader_line.h
+  menu_support/loader_line.cpp
+  menu_support/menu_popup.h
+  menu_support/menu_popup.cpp
+  wifi/wifi_menu.h
+  wifi/wifi_menu.cpp
+  wifi/wifi_widget.h
+  wifi/wifi_widget.cpp
+  bluetooth/bluetooth_menu.h
+  bluetooth/bluetooth_menu.cpp
+  bluetooth/bluetooth_widget.h
+  bluetooth/bluetooth_widget.cpp
   glazewm/binding_mode_widget.h
   glazewm/binding_mode_widget.cpp
   glazewm/glazewm_service.h
