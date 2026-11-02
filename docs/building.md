@@ -83,6 +83,7 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `wakuc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
 | `wakuc taskbar hide`, `show`, `status` | Hide the Windows taskbar, restore what waku changed (it stays shown until `hide`), or print `ok: taskbar: hidden|visible|autohide-was-on`. |
 | `wakuc quit` | Stop the bar. |
+| `wakuc config init [--force]` | Write a starter `shell.qml` (the built-in bar) into the config home. Needs no running bar. Exit 1 if `shell.qml` exists, unless `--force`. |
 | `wakuc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
 | `wakuc wallpaper random`, `next`, `previous` | Pick from the wallpaper folder; `next` and `previous` wrap. |
 | `wakuc wallpaper gallery` | Open or close the wallpaper picker. |

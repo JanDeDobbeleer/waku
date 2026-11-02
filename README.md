@@ -29,7 +29,8 @@ waku reads its config from a folder, the config home: `--config-home <dir>`, the
 a built-in bar.
 
 `shell.qml` says which bars to show and which widgets go where; `theme.qml` sets the look. Save
-either file and the bar reloads. Start from [examples/config](examples/config).
+either file and the bar reloads. Run `wakuc config init` to write a starter `shell.qml` into the
+config home; [examples/config](examples/config) has a fuller sample.
 
 ```qml
 import waku

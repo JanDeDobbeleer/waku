@@ -79,18 +79,17 @@ If the folder has no `shell.qml` (or does not exist) and you did not set the hom
 shows the built-in bar. When you create `%USERPROFILE%\.config\waku\shell.qml`, the running bar
 switches to it on save.
 
-The package ships a sample config in `examples\config` under the package folder. Copy it as a
-starting point:
+Write a starter `shell.qml` into the config home:
 
 ```powershell
-$pkg = (Get-AppxPackage JanDeDobbeleer.Waku).InstallLocation
-$cfg = Join-Path $env:USERPROFILE '.config\waku'
-New-Item -ItemType Directory -Force -Path $cfg | Out-Null
-Copy-Item -Path (Join-Path $pkg 'examples\config\*') -Destination $cfg -Recurse
+wakuc config init
 ```
 
-If Windows denies access to the package folder, copy
-[examples/config](../examples/config) from the repository instead.
+This creates the folder if it is missing and writes the built-in bar as `shell.qml`, so you can
+edit it. It does not need a running bar. If a `shell.qml` exists, the command stops with exit code 1
+and changes nothing; add `--force` to replace it. The package also ships a fuller sample in
+`examples\config` under the package folder (or see [examples/config](../examples/config) in the
+repository).
 
 The config home holds:
 

@@ -27,6 +27,10 @@
 //     wakuc call [<target> <function> [args...]]
 //                       run a function of an IpcHandler; the answer is its return value on one
 //                       line ("ok" for void). Without arguments: the handlers and their functions
+//     wakuc config init [--force]
+//                       write a starter shell.qml (the built-in bar) into the config home so
+//                       you can edit it. Works without a running bar; refuses to replace an
+//                       existing shell.qml unless --force
 //
 // `--dry-run` plays the animation but does not set the wallpaper. A command is sent as one line;
 // arguments with spaces are quoted (control.h, joinCommand).
@@ -40,9 +44,11 @@
 #include <QCommandLineParser>
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QRegularExpression>
 #include <cstdio>
 
+#include "control/config_init.h"
 #include "control/control.h"
 
 #ifdef Q_OS_WIN
@@ -77,6 +83,12 @@ constexpr int kUsage = 3;
 constexpr int kTimeoutMs = 15000;
 constexpr int kReloadTimeoutMs = 60000;
 
+// The starter shell is the built-in bar: waku's DefaultShell.qml, embedded (CMakeLists.txt).
+QString readStarterTemplate() {
+  QFile file(QStringLiteral(":/waku/DefaultShell.qml"));
+  return file.open(QIODevice::ReadOnly) ? QString::fromUtf8(file.readAll()) : QString();
+}
+
 void print(FILE* stream, const QString& text) {
   std::fputs(text.toLocal8Bit().constData(), stream);
   std::fputc('\n', stream);
@@ -100,6 +112,7 @@ int main(int argc, char* argv[]) {
       "  surface list                   the named windows of the shell and their state\n"
       "  surface show | hide | toggle | status <name>\n"
       "  taskbar hide | show | status   hide or restore the Windows taskbar\n"
+      "  config init [--force]          write a starter shell.qml into the config home\n"
       "  call <target> <function> [args...]  run a function of an IpcHandler; call alone lists\n"
       "Add --dry-run to set, random, next or previous to play the animation without "
       "changing the wallpaper."));
@@ -111,16 +124,21 @@ int main(int argc, char* argv[]) {
   QCommandLineOption dryRunOpt(QStringLiteral("dry-run"),
                                QStringLiteral("wallpaper: play the animation, do not set it."));
   parser.addOption(dryRunOpt);
+  QCommandLineOption forceOpt(QStringLiteral("force"),
+                              QStringLiteral("config init: replace an existing shell.qml."));
+  parser.addOption(forceOpt);
   parser.addPositionalArgument(
       QStringLiteral("command"),
-      QStringLiteral("reload, status, quit, wallpaper, shortcut, surface, taskbar or call"));
+      QStringLiteral(
+          "reload, status, quit, wallpaper, shortcut, surface, taskbar, config or call"));
   parser.process(app);
 
   const QStringList positional = parser.positionalArguments();
   const QString usage = QStringLiteral(
       "usage: wakuc [--config-home <dir>] reload|status|quit|wallpaper "
       "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|shortcut <name>|list|surface "
-      "(list|show|hide|toggle|status <name>)|taskbar (hide|show|status)|call <target> <function> "
+      "(list|show|hide|toggle|status <name>)|taskbar (hide|show|status)|config init [--force]|call "
+      "<target> <function> "
       "[args...]");
   if (positional.isEmpty()) {
     print(stderr, usage);
@@ -128,6 +146,33 @@ int main(int argc, char* argv[]) {
   }
   const QString command = positional.first();
   QString line = command;
+  if (command == QLatin1String("config")) {
+    // Client side: no bar, no pipe.
+    if (positional.size() != 2 || positional.at(1) != QLatin1String("init") ||
+        parser.isSet(dryRunOpt)) {
+      print(stderr, usage);
+      return kUsage;
+    }
+    const QString configHome =
+        waku::control::resolveConfigHome(parser.value(configHomeOpt), QDir::homePath()).path;
+    const QString text = waku::control::starterShellText(readStarterTemplate());
+    if (text.isEmpty()) {
+      print(stderr, QStringLiteral("wakuc: the starter shell is missing from this build"));
+      return kBarError;
+    }
+    const waku::control::ConfigInitResult result =
+        waku::control::initConfigHome(configHome, text, parser.isSet(forceOpt));
+    if (result.status != waku::control::ConfigInitResult::Written) {
+      print(stderr, result.message);
+      return kBarError;
+    }
+    print(stdout, result.path);
+    return kOk;
+  }
+  if (parser.isSet(forceOpt)) {
+    print(stderr, usage);
+    return kUsage;
+  }
   if (command == QLatin1String("wallpaper")) {
     const QString verb = positional.value(1);
     const bool known = verb == QLatin1String("set") || verb == QLatin1String("random") ||

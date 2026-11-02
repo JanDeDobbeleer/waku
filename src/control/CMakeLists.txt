@@ -6,6 +6,8 @@
 add_library(waku_control STATIC
   control.h
   control.cpp
+  config_init.h
+  config_init.cpp
   win32/instance_mutex.h
   win32/instance_mutex.cpp
 )
@@ -15,6 +17,7 @@ target_link_libraries(waku_control
 
 waku_contribute(
   TESTS
+    tests/test_config_init.cpp
     tests/test_control.cpp
     tests/test_wallpaper_quoting.cpp
   TEST_LIBS waku_control

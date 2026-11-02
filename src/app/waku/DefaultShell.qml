@@ -1,6 +1,6 @@
-// The built-in bar: waku shows it when the config home has no shell.qml. Copy examples/config to
-// your config home (%USERPROFILE%\.config\waku) to customise; once a shell.qml is there, it
-// replaces this bar.
+// The built-in bar: waku shows it when the config home has no shell.qml. `wakuc config init`
+// writes this file as your shell.qml (the comment block above `import` is replaced there); once a
+// shell.qml exists, it replaces this bar.
 import waku
 
 ShellRoot {

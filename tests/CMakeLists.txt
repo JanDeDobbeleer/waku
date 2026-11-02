@@ -29,7 +29,8 @@ add_executable(waku_tests main.cpp
 add_subdirectory(plugin)
 add_dependencies(waku_tests wakuc waku_test_module)
 # The sample shells the integration tests load.
-target_compile_definitions(waku_tests PRIVATE WAKU_EXAMPLES_DIR="${PROJECT_SOURCE_DIR}/examples")
+target_compile_definitions(waku_tests PRIVATE WAKU_EXAMPLES_DIR="${PROJECT_SOURCE_DIR}/examples"
+  WAKU_DEFAULT_SHELL_QML="${PROJECT_SOURCE_DIR}/src/app/waku/DefaultShell.qml")
 # The static QML plugins are linked so `import waku` and `import Quickshell` resolve in the test
 # engines.
 target_link_libraries(waku_tests PRIVATE
