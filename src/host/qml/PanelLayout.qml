@@ -157,6 +157,16 @@ Item {
                     transformOrigin: Item.TopLeft
                     transform: Matrix4x4 { matrix: shape.mapping }
 
+                    // A resize moves only the end points of the gradient. The stops are rebuilt
+                    // when they change, not on every resize (that compiles a QML snippet).
+                    function updateGradientSpan() {
+                        const g = body.fillGradient as LinearGradient
+                        if (g) {
+                            g.x1 = x0
+                            g.x2 = x1
+                        }
+                    }
+
                     function applyFill() {
                         const stops = island.stops
                         if (stops && stops.length > 1) {
@@ -174,8 +184,8 @@ Item {
                         }
                     }
                     Component.onCompleted: applyFill()
-                    onX0Changed: applyFill()
-                    onX1Changed: applyFill()
+                    onX0Changed: updateGradientSpan()
+                    onX1Changed: updateGradientSpan()
                     Connections {
                         target: island
                         function onFillColorChanged() { shape.applyFill() }

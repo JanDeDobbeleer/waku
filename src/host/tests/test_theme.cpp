@@ -466,6 +466,31 @@ TEST(ThemeHost, BadGradientValuesFallBackToFlat) {
   EXPECT_TRUE(shown(h, "island-end"));
 }
 
+TEST(ThemeHost, AResizeMovesTheGradientEndPointsWithoutRebuildingIt) {
+  Harness h;
+  writeTheme(h, themeText(QStringLiteral("islands: true; groupPadding: 10; islandRadius: 8")));
+  h.start(gradientConfig(QStringLiteral(R"(startFill: ["#ff0000", "#0000ff"])")));
+  ASSERT_TRUE(h.host->reload());
+  settle();
+  QQuickItem* start = findItem(h.window(), QStringLiteral("island-start"));
+  ASSERT_NE(start, nullptr);
+  QObject* path = nullptr;
+  for (QObject* child : start->findChildren<QObject*>()) {
+    if (child->property("fillGradient").isValid()) path = child;
+  }
+  ASSERT_NE(path, nullptr);
+  QObject* gradient = path->property("fillGradient").value<QObject*>();
+  ASSERT_NE(gradient, nullptr);
+  const double before = gradient->property("x2").toDouble();
+
+  QQuickItem* a = findItem(h.window(), QStringLiteral("a"));
+  ASSERT_NE(a, nullptr);
+  a->setWidth(160);
+  settle();
+  EXPECT_EQ(path->property("fillGradient").value<QObject*>(), gradient);  // the same object
+  EXPECT_DOUBLE_EQ(gradient->property("x2").toDouble(), before + 100);    // 160 - 60
+}
+
 TEST(ThemeHost, IslandGradientPaintsLeftAndRightDifferently) {
   Harness h;
   writeTheme(h, themeText(QStringLiteral("islands: true; groupPadding: 10; islandRadius: 8")));
