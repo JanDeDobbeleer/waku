@@ -28,6 +28,7 @@ it again. Paths are under `src/features/tray/`.
 | `SystrayService` / `createTrayHost` (one host per run) | `tray_service.*` | root (no UI) | as is, without the legacy factory |
 | `IconStateMap`, `updateCurrentState`, `updateIconData`, `iconStateKey`, `SystrayStateStore` (per-screen JSON), `cleanScreenId` | `tray_state.*` | root (no UI) | as is; the folder is `kernel::appDataDir()` |
 | `scaleTrayIcon` (Lanczos to 32 px plus sharpen) | `icon_scale.*` | root (no UI) | as is |
+| `colorIconToRgba`, `monochromeIconToRgba`, `trayIconPixelsProblem` (the host-side `GetDIBits` conversion and the blank-icon check) | `icon_bits.*` | root (no UI) | new |
 | The hook DLL (`WabarTrayHook[_arm64].dll`) | `hook/trayhook.cpp` | native | copied next to `wabar.exe` |
 
 Logic that was tangled into Widgets classes and was **extracted**:
@@ -101,6 +102,25 @@ wabar.widgets
 The raw RGBA icon cannot go through a `data:` URL the way album art does (it is not an encoded
 image, and tray icons can change every second), hence the image provider. The revision in the URL
 makes the `Image` reload when the icon changes.
+
+### Pixels and blank icons
+
+Only a message with `NIF_ICON` changes the stored pixels (`updateIconData`). `NIM_SETVERSION` and
+`NIM_MODIFY` with only `NIF_TIP` or `NIF_STATE` carry no pixels; many programs send them right after
+`NIM_ADD` and on every status or unread-count change. Copying their empty
+pixels used to blank the icon (empty `iconUrl`). `NIF_ICON` whose handle cannot be read keeps the
+last good image; `NIF_ICON` with no handle clears it.
+
+The DLL converts the icon inside Explorer. When it sends `NIF_ICON` without pixels, the host
+retries with `extractIconRgba`, which also reads monochrome icons (no colour bitmap) and records
+why it failed in `TrayIconData::iconError`. A colour bitmap whose alpha bytes are all 0 has no
+alpha channel; the AND mask gives its transparency.
+
+`Systray` logs one line per icon and reason when an icon cannot show:
+`wabar: tray icon <exe>#<id>: <reason>`. Reasons: `no icon received yet`, the read failure (with
+`, keeping the previous image` when one is kept), a pixel buffer that does not fill the icon, and
+`all WxH pixels are fully transparent`. The line holds the executable's base name and the run-local
+id only: no tooltip, path or handle.
 
 ### Options of the `Tray` widget
 
