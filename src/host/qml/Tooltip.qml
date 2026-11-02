@@ -22,21 +22,30 @@ Item {
     readonly property Item target: parent
     readonly property var bar: target ? target.Window.window : null
     readonly property var shellWindow: target ? target.QsWindow.window : null
-    readonly property bool shown: tip.visible
+    readonly property bool shown: tip !== null && tip.visible
+
+    // The tip window. It is created on the first show, not with the Tooltip: a window object costs
+    // memory even while hidden, and a bar has dozens of Tooltips that are never hovered.
+    property var tip: null
 
     function show() {
         if (!hover.hovered || text === "" || !bar)
             return;
+        if (!tip)
+            tip = tipComponent.createObject(root);
         reposition();
         tip.visible = true;
     }
 
     function hide() {
         timer.stop();
-        tip.visible = false;
+        if (tip)
+            tip.visible = false;
     }
 
     function reposition() {
+        if (!tip)
+            return;
         const origin = target.mapToGlobal(0, 0);
         const screenInfo = target.Screen;
         const w = shellWindow;
@@ -57,7 +66,7 @@ Item {
     onTextChanged: {
         if (text === "")
             hide();
-        else if (tip.visible)
+        else if (shown)
             reposition();
     }
 
@@ -88,59 +97,63 @@ Item {
         onTriggered: root.show()
     }
 
-    Window {
-        id: tip
+    Component {
+        id: tipComponent
 
-        objectName: "tooltipWindow"
-        flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowDoesNotAcceptFocus | Qt.WindowTransparentForInput
-        color: "transparent"
-        screen: {
-            if (!root.target || !root.bar)
-                return null;
-            const name = root.target.Screen.name;
-            const list = Qt.application.screens;
-            for (let i = 0; i < list.length; ++i) {
-                if (list[i].name === name)
-                    return list[i];
-            }
-            return null;
-        }
-        width: box.implicitWidth
-        height: box.implicitHeight
-        visible: false
+        Window {
+            id: tip
 
-        onVisibleChanged: {
-            if (visible && root.shellWindow && root.shellWindow.host)
-                root.shellWindow.host.decorate(tip, root.shellWindow.backdrop);
-        }
-
-        Rectangle {
-            id: box
-
-            implicitWidth: label.implicitWidth + 20
-            implicitHeight: label.implicitHeight + 10
-            width: tip.width
-            height: tip.height
-            color: Theme.popupSurface
-            border.color: Theme.popupBorder
-            border.width: 1
-            radius: 4  // Python YASB .tooltip
-            opacity: tip.visible ? 1 : 0
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 100
+            objectName: "tooltipWindow"
+            flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowDoesNotAcceptFocus | Qt.WindowTransparentForInput
+            color: "transparent"
+            screen: {
+                if (!root.target || !root.bar)
+                    return null;
+                const name = root.target.Screen.name;
+                const list = Qt.application.screens;
+                for (let i = 0; i < list.length; ++i) {
+                    if (list[i].name === name)
+                        return list[i];
                 }
+                return null;
+            }
+            width: box.implicitWidth
+            height: box.implicitHeight
+            visible: false
+
+            onVisibleChanged: {
+                if (visible && root.shellWindow && root.shellWindow.host)
+                    root.shellWindow.host.decorate(tip, root.shellWindow.backdrop);
             }
 
-            Text {
-                id: label
-                anchors.centerIn: parent
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 12
-                font.weight: Font.DemiBold
-                text: root.text
+            Rectangle {
+                id: box
+
+                implicitWidth: label.implicitWidth + 20
+                implicitHeight: label.implicitHeight + 10
+                width: tip.width
+                height: tip.height
+                color: Theme.popupSurface
+                border.color: Theme.popupBorder
+                border.width: 1
+                radius: 4  // Python YASB .tooltip
+                opacity: tip.visible ? 1 : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 100
+                    }
+                }
+
+                Text {
+                    id: label
+                    anchors.centerIn: parent
+                    color: Theme.text
+                    font.family: Theme.fontFamily
+                    font.pixelSize: 12
+                    font.weight: Font.DemiBold
+                    text: root.text
+                }
             }
         }
     }

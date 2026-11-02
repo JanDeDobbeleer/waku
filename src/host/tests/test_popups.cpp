@@ -85,6 +85,20 @@ void invoke(QObject* object, const char* method) {
   ASSERT_TRUE(QMetaObject::invokeMethod(object, method));
 }
 
+// A Tooltip creates its window on the first show, so wait for it after the hover.
+QQuickWindow* waitForTooltipWindow() {
+  QQuickWindow* tip = nullptr;
+  if (!QTest::qWaitFor(
+          [&] {
+            tip = findWindow(QStringLiteral("tooltipWindow"));
+            return tip != nullptr;
+          },
+          2000)) {
+    return nullptr;
+  }
+  return tip;
+}
+
 const QRectF kScreen(0, 0, 1000, 800);
 const QRectF kAnchor(400, 0, 100, 40);
 const QSizeF kSize(200, 100);
@@ -450,13 +464,13 @@ TEST(TooltipTest, AppearsAfterTheDelayOfHoveringAndGoesWhenThePointerLeaves) {
   Harness h;
   h.start(tooltipConfig());
   ASSERT_TRUE(started(h));
-  QQuickWindow* tip = findWindow(QStringLiteral("tooltipWindow"));
-  ASSERT_NE(tip, nullptr);
-  EXPECT_FALSE(tip->isVisible());
+  EXPECT_EQ(findWindow(QStringLiteral("tooltipWindow")), nullptr);  // created on the first show
 
   hoverOver(h, QStringLiteral("target"));
-  EXPECT_FALSE(tip->isVisible());                         // not yet: the delay
-  EXPECT_TRUE(tooltipPending(h, QStringLiteral("tip")));  // the hover registered at once
+  EXPECT_EQ(findWindow(QStringLiteral("tooltipWindow")), nullptr);  // not yet: the delay
+  EXPECT_TRUE(tooltipPending(h, QStringLiteral("tip")));            // the hover registered at once
+  QQuickWindow* tip = waitForTooltipWindow();
+  ASSERT_NE(tip, nullptr);
   ASSERT_TRUE(QTest::qWaitFor([&] { return tip->isVisible(); }, 2000));
 
   QTest::mouseMove(h.window(), QPoint(h.window()->width() - 10, 30));
@@ -467,8 +481,9 @@ TEST(TooltipTest, ShowsBelowTheBarAndSizesToItsText) {
   Harness h;
   h.start(tooltipConfig());
   ASSERT_TRUE(started(h));
-  QQuickWindow* tip = findWindow(QStringLiteral("tooltipWindow"));
   hoverOver(h, QStringLiteral("target"));
+  QQuickWindow* tip = waitForTooltipWindow();
+  ASSERT_NE(tip, nullptr);
   ASSERT_TRUE(QTest::qWaitFor([&] { return tip->isVisible(); }, 2000));
   // The platform reports the new geometry asynchronously.
   EXPECT_TRUE(QTest::qWaitFor(
@@ -483,9 +498,10 @@ TEST(TooltipTest, APressHidesIt) {
   Harness h;
   h.start(tooltipConfig());
   ASSERT_TRUE(started(h));
-  QQuickWindow* tip = findWindow(QStringLiteral("tooltipWindow"));
   const QPoint at = centerOf(h.window(), QStringLiteral("target"));
   hoverOver(h, QStringLiteral("target"));
+  QQuickWindow* tip = waitForTooltipWindow();
+  ASSERT_NE(tip, nullptr);
   ASSERT_TRUE(QTest::qWaitFor([&] { return tip->isVisible(); }, 2000));
   QTest::mousePress(h.window(), Qt::LeftButton, Qt::NoModifier, at);
   EXPECT_TRUE(QTest::qWaitFor([&] { return !tip->isVisible(); }, 2000));
@@ -496,12 +512,11 @@ TEST(TooltipTest, EmptyTextNeverShows) {
   Harness h;
   h.start(tooltipConfig(QString()));
   ASSERT_TRUE(started(h));
-  QQuickWindow* tip = findWindow(QStringLiteral("tooltipWindow"));
   hoverOver(h, QStringLiteral("target"));
   // With text the hover starts the delay at once (AppearsAfterTheDelay...); without, nothing is
   // waiting to show the tip.
   EXPECT_FALSE(tooltipPending(h, QStringLiteral("tip")));
-  EXPECT_FALSE(tip->isVisible());
+  EXPECT_EQ(findWindow(QStringLiteral("tooltipWindow")), nullptr);
 }
 
 TEST(TooltipTest, ItGetsTheBackdropOfItsBar) {
@@ -509,8 +524,9 @@ TEST(TooltipTest, ItGetsTheBackdropOfItsBar) {
   h.start(tooltipConfig());
   ASSERT_TRUE(started(h));
   const size_t before = h.native.backdrops.size();
-  QQuickWindow* tip = findWindow(QStringLiteral("tooltipWindow"));
   hoverOver(h, QStringLiteral("target"));
+  QQuickWindow* tip = waitForTooltipWindow();
+  ASSERT_NE(tip, nullptr);
   ASSERT_TRUE(QTest::qWaitFor([&] { return tip->isVisible(); }, 2000));
   EXPECT_GT(h.native.backdrops.size(), before);
 }
