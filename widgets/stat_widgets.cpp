@@ -16,6 +16,8 @@ void registerStatWidgets(WidgetRegistry& registry) {
                [](const WidgetContext& context) { return new MemoryWidget(context); });
   registry.add("yasb.battery.BatteryWidget",
                [](const WidgetContext& context) { return new BatteryWidget(context); });
+  registry.add("yasb.github.GithubWidget",
+               [](const WidgetContext& context) { return new GithubWidget(context); });
   registry.add("yasb.clock.ClockWidget",
                [](const WidgetContext& context) { return new ClockWidget(context); });
 }

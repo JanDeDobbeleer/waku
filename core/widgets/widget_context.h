@@ -24,7 +24,9 @@ class PollingWorkerRegistry;
 
 using TypedWidgetOptions =
     std::variant<std::monostate, config::options::CpuConfig, config::options::MemoryConfig,
-                 config::options::BatteryConfig, config::options::ClockConfig>;
+                 config::options::BatteryConfig, config::options::GithubConfig,
+                 config::options::KomorebiWorkspacesConfig, config::options::ActiveLayoutConfig,
+                 config::options::ClockConfig>;
 
 struct WidgetContext {
   std::string name;
