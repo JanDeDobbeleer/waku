@@ -65,6 +65,9 @@ class KomorebiPipeListener {
     int reconnectMs = 3000;
     int stateTimeoutMs = 2000;
     int subscribeTimeoutMs = 10000;
+    // While komorebi.exe is not running the wait between checks doubles from `subscribeRetryMs`
+    // up to this, and starts over once komorebi runs.
+    int subscribeRetryMaxMs = 30000;
   };
 
   KomorebiPipeListener(KomorebiBackend backend, Callbacks callbacks, QString pipeName,

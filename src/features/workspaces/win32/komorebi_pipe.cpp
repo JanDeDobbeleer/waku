@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "features/workspaces/backoff.h"
 #include "features/workspaces/komorebi.h"
 #include "kernel/win32/shell_launch.h"
 
@@ -264,9 +265,12 @@ void KomorebiPipeListener::run() {
 
 bool KomorebiPipeListener::waitUntilSubscribed() {
   bool warned = false;
+  int absentWaitMs = timing_.subscribeRetryMs;
   while (!stopping_) {
     QString error = QStringLiteral("Komorebi is not running, please start Komorebi.");
-    if (backend_.isKomorebiRunning && backend_.isKomorebiRunning()) {
+    const bool running = backend_.isKomorebiRunning && backend_.isKomorebiRunning();
+    if (running) {
+      absentWaitMs = timing_.subscribeRetryMs;
       const KomorebicResult result = backend_.runKomorebic(
           {QStringLiteral("subscribe-pipe"), pipeName_}, timing_.subscribeTimeoutMs, stopEvent_);
       if (result.started && !result.timedOut && result.exitCode == 0) {
@@ -280,7 +284,8 @@ bool KomorebiPipeListener::waitUntilSubscribed() {
       qWarning().noquote() << "Komorebi failed to subscribe named pipe." << error;
       warned = true;
     }
-    if (!sleep(timing_.subscribeRetryMs)) return false;
+    if (!sleep(running ? timing_.subscribeRetryMs : absentWaitMs)) return false;
+    if (!running) absentWaitMs = nextBackoffMs(absentWaitMs, timing_.subscribeRetryMaxMs);
   }
   return false;
 }

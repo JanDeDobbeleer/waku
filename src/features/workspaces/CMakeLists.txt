@@ -3,6 +3,7 @@
 # port listens (GetExtendedTcpTable).
 waku_feature(NAME workspaces
   SOURCES
+    backoff.h
     command_line.h
     command_line.cpp
     event_bus.h
@@ -35,6 +36,7 @@ waku_feature(NAME workspaces
     qml/Workspaces.qml
   TESTS
     tests/test_active_layout.cpp
+    tests/test_backoff.cpp
     tests/test_command_line.cpp
     tests/test_glazewm_socket.cpp
     tests/test_glazewm_state.cpp

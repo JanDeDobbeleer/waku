@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "features/workspaces/backoff.h"
 #include "features/workspaces/glazewm.h"
 
 namespace waku::workspaces::glazewm {
@@ -293,13 +294,16 @@ void GlazewmSocket::Worker::run() {
   const bool probe = isLoopbackHost(parsed.host());
   const auto port =
       static_cast<unsigned short>(parsed.port(parsed.scheme().toLower() == "wss" ? 443 : 80));
+  int waitMs = timing.reconnectMs;
   while (!stopping) {
+    bool failed = true;
     try {
       // Nothing listens on a localhost port while GlazeWM is not running: a connect would only
       // wait out Windows' retries on the refused port (about 2 s), every reconnect.
       const bool ok = (!probe || somethingListensOn(port)) && connectOnce();
       if (ok) {
         warned = false;
+        failed = false;
         void* webSocket = nullptr;
         {
           std::lock_guard<std::mutex> lock(mutex);
@@ -323,7 +327,9 @@ void GlazewmSocket::Worker::run() {
     }
     closeAll();
     if (stopping) break;
-    if (!sleep(timing.reconnectMs)) break;
+    if (!failed) waitMs = timing.reconnectMs;
+    if (!sleep(waitMs)) break;
+    if (failed) waitMs = nextBackoffMs(waitMs, timing.reconnectMaxMs);
   }
   closeAll();
 }

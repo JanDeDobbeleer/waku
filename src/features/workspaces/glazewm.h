@@ -33,6 +33,9 @@ class GlazewmSocket : public QObject {
     int reconnectMs = 4000;
     // Bounds stop() while connecting; GlazeWM listens on localhost.
     int connectTimeoutMs = 2000;
+    // A failed attempt (GlazeWM not running) doubles the wait up to this; a connection that was
+    // made starts it over at `reconnectMs`.
+    int reconnectMaxMs = 30000;
   };
 
   explicit GlazewmSocket(QObject* parent = nullptr);

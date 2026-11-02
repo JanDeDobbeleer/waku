@@ -316,3 +316,34 @@ TEST(KomorebiServiceTest, TheDefaultServiceIsInertOffTheLiveDesktop) {
   EXPECT_FALSE(service.isListening());
   EXPECT_FALSE(service.isConnected());
 }
+
+// With no komorebi.exe the listener checks for it less and less often (it used to walk the
+// process list every 5 s for as long as the bar ran), and still subscribes once it appears.
+TEST(KomorebiServiceTest, AbsentKomorebiIsCheckedWithGrowingWaits) {
+  EventBus bus;
+  std::atomic<int> runningChecks{0};
+  std::atomic<bool> running{false};
+  std::atomic<int> subscribes{0};
+  komo::KomorebiBackend backend;
+  backend.isKomorebiRunning = [&] {
+    ++runningChecks;
+    return running.load();
+  };
+  backend.runKomorebic = [&](const QStringList& args, int, void*) {
+    if (args.value(0) == QStringLiteral("subscribe-pipe")) ++subscribes;
+    return komo::KomorebicResult{};
+  };
+  komo::KomorebiPipeListener::Timing timing;
+  timing.subscribeRetryMs = 10;
+  timing.subscribeRetryMaxMs = 80;
+  komo::KomorebiService service(bus, backend, nullptr, QStringLiteral("waku-test-backoff"), timing);
+  emit bus.event(komo::kSubscribeEvent, {});
+  QTest::qWait(600);
+  // Waits of 10, 20, 40, 80, 80 ... ms: about ten checks in 600 ms; a fixed 10 ms wait makes 60.
+  EXPECT_GE(runningChecks.load(), 5);
+  EXPECT_LE(runningChecks.load(), 16);
+  running = true;
+  // komorebi appears: found within the longest wait.
+  ASSERT_TRUE(QTest::qWaitFor([&] { return subscribes.load() >= 1; }, 2000));
+  service.stop();
+}
