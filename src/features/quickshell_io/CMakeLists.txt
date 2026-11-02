@@ -10,6 +10,7 @@ waku_feature(NAME quickshell_io
     file_access.cpp
     process_job.h
   WIN32_SOURCES
+    win32/elevated_launch_win.cpp
     win32/process_job_win.cpp
   QML_SOURCES
     qml/clipboard_text.h

@@ -67,6 +67,35 @@ TEST(QuickshellCommandSpec, RejectsEmptyAndWrongShapes) {
   EXPECT_FALSE(commandSpecFrom(QVariantMap{}));
 }
 
+TEST(QuickshellCommandSpec, ElevatedIsOptInAndOnlyFromAnObject) {
+  const auto list = commandSpecFrom(QVariant(QStringList{QStringLiteral("wt.exe")}));
+  ASSERT_TRUE(list);
+  EXPECT_FALSE(list->elevated);
+
+  QVariantMap map;
+  map.insert(QStringLiteral("command"), QVariantList{QStringLiteral("wt.exe")});
+  const auto plain = commandSpecFrom(map);
+  ASSERT_TRUE(plain);
+  EXPECT_FALSE(plain->elevated);
+
+  map.insert(QStringLiteral("elevated"), true);
+  const auto elevated = commandSpecFrom(map);
+  ASSERT_TRUE(elevated);
+  EXPECT_TRUE(elevated->elevated);
+}
+
+TEST(QuickshellCommandSpec, WindowsArgumentsQuoteWhatNeedsIt) {
+  EXPECT_EQ(windowsArguments({}), QString());
+  EXPECT_EQ(windowsArguments({QStringLiteral("-d"), QStringLiteral("C:\\x")}),
+            QStringLiteral("-d C:\\x"));
+  EXPECT_EQ(windowsArguments({QStringLiteral("two words"), QString()}),
+            QStringLiteral("\"two words\" \"\""));
+  // A quote is escaped, and backslashes before it or before the closing quote are doubled.
+  EXPECT_EQ(windowsArguments({QStringLiteral("say \"hi\"")}), QStringLiteral("\"say \\\"hi\\\"\""));
+  EXPECT_EQ(windowsArguments({QStringLiteral("C:\\My Dir\\")}),
+            QStringLiteral("\"C:\\My Dir\\\\\""));
+}
+
 TEST(QuickshellCommandSpec, EnvironmentSetsRemovesAndClears) {
   qputenv("WAKU_QS_KEEP", "1");
   CommandSpec spec;

@@ -16,7 +16,7 @@ All C++ types are compiled into the QML module `waku.services` (the feature uses
 
 | QML name | Class | Notes |
 |---|---|---|
-| `Process` | `QsProcess` | `command`, `running` (true starts, false kills the tree), `environment`, `clearEnvironment`, `workingDirectory`, `stdinEnabled`, `processId` (and `pid`), `stdout`/`stderr`, `exec()`, `startDetached()`, `signal()`, `write()`, `started()`, `exited(exitCode, exitStatus)` |
+| `Process` | `QsProcess` | `command`, `running` (true starts, false kills the tree), `environment`, `clearEnvironment`, `workingDirectory`, `elevated` (waku extension, `startDetached()` only), `stdinEnabled`, `processId` (and `pid`), `stdout`/`stderr`, `exec()`, `startDetached()`, `signal()`, `write()`, `started()`, `exited(exitCode, exitStatus)` |
 | `StdioCollector` | same | `text`, `data`, `waitForEnd` (default true), `streamFinished()` |
 | `SplitParser` | same | `splitMarker` (default `\n`), `read(data)` |
 | `DataStreamParser` | same | uncreatable base with `read(data)` |
@@ -66,7 +66,8 @@ and github features declare `DEPENDS quickshell_io` for their `Shell` clicks ("o
 
 ## Quickshell singleton: members and the wrapper
 
-Implemented: `env`, `execDetached` (list or object), `processId`, `clipboardText`, `shellDir`,
+Implemented: `env`, `execDetached` (list or object; the object takes the waku key `elevated: true`
+for a `runas` start with a UAC prompt, no environment, no pipes), `processId`, `clipboardText`, `shellDir`,
 `shellPath`, `configPath`, `configDir`, `shellRoot`, `dataDir`/`dataPath`, `stateDir`/`statePath`,
 `cacheDir`/`cachePath`, `workingDirectory`, `watchFiles` (stored only), `hasThemeIcon`,
 `hasVersion` (emulates 0.3), `hasQtVersion`, `inhibitReloadPopup` (no-op), `reload(hard)` and the

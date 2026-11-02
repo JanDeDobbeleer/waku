@@ -44,6 +44,12 @@ void QsProcess::setWorkingDirectory(const QString& directory) {
   emit workingDirectoryChanged();
 }
 
+void QsProcess::setElevated(bool elevated) {
+  if (elevated == elevated_) return;
+  elevated_ = elevated;
+  emit elevatedChanged();
+}
+
 void QsProcess::setStdinEnabled(bool enabled) {
   if (enabled == stdinEnabled_) return;
   stdinEnabled_ = enabled;
@@ -82,6 +88,10 @@ void QsProcess::startIfReady() {
 void QsProcess::start() {
   if (process_) return;
   wantRunning_ = false;
+  if (elevated_) {
+    qWarning() << "Process: an elevated process cannot be piped; use startDetached()" << command_;
+    return;
+  }
   killSignal_ = 0;
   auto* process = new QProcess(this);
   CommandSpec spec;
@@ -202,6 +212,7 @@ void QsProcess::exec(const QVariant& context) {
   if (context.metaType().id() == QMetaType::QVariantMap) {
     const QVariantMap map = context.toMap();
     if (map.contains(QStringLiteral("environment"))) setEnvironment(spec->environment);
+    if (map.contains(QStringLiteral("elevated"))) setElevated(spec->elevated);
     if (map.contains(QStringLiteral("clearEnvironment")))
       setClearEnvironment(spec->clearEnvironment);
     if (map.contains(QStringLiteral("workingDirectory")))
@@ -217,6 +228,7 @@ void QsProcess::startDetached() {
   spec.environment = environment_;
   spec.clearEnvironment = clearEnvironment_;
   spec.workingDirectory = workingDirectory_;
+  spec.elevated = elevated_;
   if (!startDetachedSpec(spec)) qWarning() << "Process.startDetached: could not start" << command_;
 }
 

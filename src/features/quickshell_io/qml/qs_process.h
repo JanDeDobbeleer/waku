@@ -39,6 +39,9 @@ class QsProcess : public QObject {
                  clearEnvironmentChanged FINAL)
   Q_PROPERTY(QString workingDirectory READ workingDirectory WRITE setWorkingDirectory NOTIFY
                  workingDirectoryChanged FINAL)
+  // waku extension: startDetached() runs the command with the "runas" verb (UAC prompt). A
+  // running (piped) process is never elevated.
+  Q_PROPERTY(bool elevated READ elevated WRITE setElevated NOTIFY elevatedChanged FINAL)
   Q_PROPERTY(bool running READ running WRITE setRunning NOTIFY runningChanged FINAL)
   Q_PROPERTY(
       bool stdinEnabled READ stdinEnabled WRITE setStdinEnabled NOTIFY stdinEnabledChanged FINAL)
@@ -64,6 +67,8 @@ class QsProcess : public QObject {
   void setClearEnvironment(bool clear);
   QString workingDirectory() const { return workingDirectory_; }
   void setWorkingDirectory(const QString& directory);
+  bool elevated() const { return elevated_; }
+  void setElevated(bool elevated);
   bool running() const { return process_ != nullptr; }
   void setRunning(bool running);
   bool stdinEnabled() const { return stdinEnabled_; }
@@ -88,6 +93,7 @@ class QsProcess : public QObject {
   void environmentChanged();
   void clearEnvironmentChanged();
   void workingDirectoryChanged();
+  void elevatedChanged();
   void runningChanged();
   void stdinEnabledChanged();
   void processIdChanged();
@@ -110,6 +116,7 @@ class QsProcess : public QObject {
   QVariantMap environment_;
   bool clearEnvironment_ = false;
   QString workingDirectory_;
+  bool elevated_ = false;
   bool stdinEnabled_ = false;
   QPointer<DataStreamParser> stdout_;
   QPointer<DataStreamParser> stderr_;

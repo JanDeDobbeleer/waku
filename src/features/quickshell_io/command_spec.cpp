@@ -34,6 +34,7 @@ std::optional<CommandSpec> commandSpecFrom(const QVariant& value) {
     }
     spec.clearEnvironment = map.value(QStringLiteral("clearEnvironment")).toBool();
     spec.workingDirectory = map.value(QStringLiteral("workingDirectory")).toString();
+    spec.elevated = map.value(QStringLiteral("elevated")).toBool();
   } else if (value.metaType().id() != QMetaType::QString && value.canConvert<QVariantList>()) {
     spec.command = toStrings(value);
   } else {
@@ -60,8 +61,42 @@ QProcessEnvironment makeEnvironment(const CommandSpec& spec) {
   return env;
 }
 
+QString windowsArguments(const QStringList& arguments) {
+  QString line;
+  for (const QString& argument : arguments) {
+    if (!line.isEmpty()) line += QLatin1Char(' ');
+    const bool plain = !argument.isEmpty() && !argument.contains(QLatin1Char(' ')) &&
+                       !argument.contains(QLatin1Char('\t')) &&
+                       !argument.contains(QLatin1Char('"'));
+    if (plain) {
+      line += argument;
+      continue;
+    }
+    line += QLatin1Char('"');
+    qsizetype backslashes = 0;
+    for (const QChar c : argument) {
+      if (c == QLatin1Char('\\')) {
+        ++backslashes;
+        continue;
+      }
+      // Backslashes before a quote are doubled, and the quote is escaped.
+      if (c == QLatin1Char('"'))
+        line += QString(backslashes * 2 + 1, QLatin1Char('\\'));
+      else
+        line += QString(backslashes, QLatin1Char('\\'));
+      backslashes = 0;
+      line += c;
+    }
+    // Backslashes before the closing quote are doubled.
+    line += QString(backslashes * 2, QLatin1Char('\\'));
+    line += QLatin1Char('"');
+  }
+  return line;
+}
+
 bool startDetachedSpec(const CommandSpec& spec) {
   if (spec.command.isEmpty()) return false;
+  if (spec.elevated) return startElevated(spec);
   QProcess process;
   process.setProgram(spec.command.first());
   process.setArguments(spec.command.mid(1));
