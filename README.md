@@ -51,6 +51,19 @@ ShellRoot {
 `wakuc` controls the running bar (`reload`, `status`, `quit` and more). See
 [src/app/README.md](src/app/README.md) for its commands.
 
+## Optional companions
+
+waku runs on its own. Two things need a helper:
+
+- **Workspaces.** The Workspaces widget reads [komorebi](https://github.com/LGUG2234/komorebi) or
+  [GlazeWM](https://github.com/glzr-io/glazewm). waku has no native Windows virtual desktop support
+  yet, so without one of them the widget has nothing to show.
+- **Keybinds.** waku does not bind keys for a shell's shortcuts by default. Bind a key to
+  `wakuc shortcut <name>` in [whkd](https://github.com/LGUG2234/whkd) or
+  [AutoHotkey](https://www.autohotkey.com/), for example `win + space : wakuc shortcut launcher`.
+  A `GlobalShortcut` that sets `keys` registers its own key. See
+  [docs/shells.md](docs/shells.md#global-shortcuts-without-keys).
+
 ## Build from source
 
 Install Visual Studio Build Tools, Qt 6.10 and vcpkg, then:
