@@ -179,8 +179,10 @@ on: pass `--config-home`.
 
 ## Release and MSIX
 
-`.github/workflows/release.yml` builds, tests and packages a release. Push a tag `vX.Y.Z` to run it
-for real; run it by hand (`workflow_dispatch`, with a version) to dry-run the packaging. Jobs:
+`.github/workflows/release.yml` builds and packages a release. Push a tag `vX.Y.Z` to run it for
+real; run it by hand (`workflow_dispatch`, with a version) to dry-run the packaging. The tag is the
+only version input: the workflow passes it to CMake as `-DWAKU_VERSION` (the default in
+`CMakeLists.txt` is for local builds) and to `packaging/msix/build.ps1`. Jobs:
 
 1. `build` (x64 on `windows-latest`, ARM64 on `windows-11-arm`): `release` preset (no tests: `build.yml` runs them on every push and pull request), the
    `deploy` target, then the C++ runtime DLLs from `VCToolsRedistDir` into `dist/waku`

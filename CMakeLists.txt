@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(waku VERSION 0.1.0 LANGUAGES CXX)
+# The release workflow passes -DWAKU_VERSION=<tag version>; the default is for local builds.
+set(WAKU_VERSION "0.1.0" CACHE STRING "Product version, major.minor.patch")
+project(waku VERSION ${WAKU_VERSION} LANGUAGES CXX)
 
 if(NOT MSVC)
   message(FATAL_ERROR "waku builds with MSVC only (see docs/building.md)")

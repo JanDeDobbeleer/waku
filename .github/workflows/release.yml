@@ -102,7 +102,7 @@ jobs:
           arch: ${{ matrix.vcvars_arch }}
 
       - name: Configure
-        run: cmake --preset ${{ matrix.preset }}
+        run: cmake --preset ${{ matrix.preset }} -DWAKU_VERSION=${{ needs.version.outputs.version }}
 
       - name: Build
         run: cmake --build --preset ${{ matrix.preset }}
