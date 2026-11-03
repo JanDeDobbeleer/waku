@@ -28,10 +28,17 @@ foreach ($line in $dump) {
   if ($before[$name] -eq $value) { continue }
   if ($name -eq 'Path') {
     $known = @($before['Path'] -split ';')
-    foreach ($dir in ($value -split ';')) {
-      if ($dir -and ($known -notcontains $dir)) { $dir >> $env:GITHUB_PATH }
-    }
-  } else {
+    # GITHUB_PATH prepends each line in turn, so write the new entries last to first to keep
+    # the order vcvars chose (the MSVC bin folder before the bundled LLVM).
+    $new = @($value -split ';' | Where-Object { $_ -and ($known -notcontains $_) })
+    [array]::Reverse($new)
+    $new | ForEach-Object { $_ >> $env:GITHUB_PATH }
+  } elseif ($name -ne 'VCPKG_ROOT') {
+    # VCPKG_ROOT stays what the workflow sets: the vcpkg checked out at the manifest baseline.
     "$name=$value" >> $env:GITHUB_ENV
   }
 }
+
+# Visual Studio 2026 also puts clang on PATH. waku builds with MSVC only.
+"CC=cl" >> $env:GITHUB_ENV
+"CXX=cl" >> $env:GITHUB_ENV
