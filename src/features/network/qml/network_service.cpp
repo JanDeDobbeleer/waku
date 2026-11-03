@@ -351,8 +351,16 @@ void Network::refresh() {
 
 void Network::onScanCompleted(int status, const QVector<WifiNetwork>& networks) {
   scanning_ = false;
+  const auto result = static_cast<WifiScanStatus>(status);
+  // A scan that fails because the radio is busy (a connect is re-associating it) says nothing about
+  // which networks exist: keep the last list. Only a failure that will not clear by itself empties
+  // it.
+  if (result == WifiScanStatus::Error || result == WifiScanStatus::PowerStateInvalid) {
+    emit networksChanged();
+    return;
+  }
   scanned_.clear();
-  if (static_cast<WifiScanStatus>(status) == WifiScanStatus::Success) {
+  if (result == WifiScanStatus::Success) {
     for (const WifiNetwork& network : networks) {
       if (network.ssid.isEmpty()) continue;
       auto same = std::find_if(scanned_.begin(), scanned_.end(),

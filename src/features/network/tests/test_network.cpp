@@ -206,6 +206,22 @@ TEST(Network, AFailedScanEmptiesTheList) {
   EXPECT_FALSE(network.scanning());
 }
 
+TEST(Network, ATransientScanFailureKeepsTheList) {
+  auto fake = std::make_shared<FakeSource>();
+  Network network(fake, nullptr);
+  network.refresh();
+  emit fake->backend->scanCompleted(static_cast<int>(WifiScanStatus::Success),
+                                    {scanned(QStringLiteral("Work"), 60, true, true)});
+  ASSERT_EQ(network.networks().size(), 1);
+  for (const auto status : {WifiScanStatus::Error, WifiScanStatus::PowerStateInvalid}) {
+    network.refresh();
+    emit fake->backend->scanCompleted(static_cast<int>(status), {});
+    EXPECT_EQ(network.networks().size(), 1);
+    EXPECT_FALSE(network.scanning());
+  }
+  EXPECT_TRUE(network.connectTo(QStringLiteral("Work")));  // still in the scan
+}
+
 TEST(Network, ConnectsOnlyToKnownScannedNetworks) {
   auto fake = std::make_shared<FakeSource>();
   Network network(fake, nullptr);
