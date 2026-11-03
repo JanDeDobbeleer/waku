@@ -4,12 +4,10 @@ Read this before changing anything. It applies to every agent session and to hum
 single source of truth for how to work in this repository. Background: `docs/architecture.md`,
 `docs/building.md`, `SECURITY.md`, `src/app/README.md`.
 
-waku is a C++20/Qt 6.10 Qt Quick bar for Windows, configured in QML. Python YASB is a reference for
-how Windows behaves (undocumented APIs, edge cases), not a behavioural spec: nothing in this
-repository has to match it. The retired Qt Widgets build is the git tag `widgets-main-final`
-(`e2b602f`, the second parent of the merge `ba442f5` that replaced it on `main`); its records are in
-`docs/archive/`. The older tag `yasb-native-final` (`58fd9ac`) is a point on the Qt Quick line
-before the restructure, not the last Widgets build.
+waku is a C++20/Qt 6.10 Qt Quick desktop shell runtime for Windows, configured in QML, with
+Quickshell-compatible modules. Python YASB is a reference for how Windows behaves (undocumented
+APIs, edge cases), not a behavioural spec: nothing in this repository has to match it. Records of
+the earlier Qt Widgets build and the port plans are in `docs/archive/`.
 
 ## Build and test
 
@@ -26,7 +24,7 @@ commands). Do not mix Bash and PowerShell for the same task.
   then run. Do not paste long one-liners.
 - Python from a shell uses raw strings (`r'...'`) or reads its arguments from a file; a backslash
   path in a normal string is a bug (`\w`, `\.`).
-- Bash, where it exists, only gets forward-slash paths (`/d/yasb-native`) and simple git or file
+- Bash, where it exists, only gets forward-slash paths (`/<drive>/<dir>`) and simple git or file
   commands.
 - Do not chain a delete or overwrite with a `Start-Process` of a path with spaces in one command;
   run them as separate calls.

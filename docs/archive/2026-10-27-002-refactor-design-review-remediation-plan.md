@@ -13,7 +13,7 @@ corrections change the plan:
 | Review assumption | Reality | Effect on plan |
 |---|---|---|
 | Repo is (or will soon be) public on GitHub with hosted runners | `git remote -v` is empty; the repo is local only | CI hardening (SEC-3, CI-1..12, CODEOWNERS, Dependabot, branch protection) is **deferred** until a remote exists. Local enforcement (`tools/check.ps1` + git hooks) carries the load now. |
-| Only qt-css-engine needs an MIT notice | The whole port derives from amnweb/yasb (MIT, `D:\yasb\LICENSE`) | `THIRD_PARTY_NOTICES.md` must include the YASB notice as well as qt-css-engine. |
+| Only qt-css-engine needs an MIT notice | The whole port derives from amnweb/yasb (MIT, the YASB `LICENSE`) | `THIRD_PARTY_NOTICES.md` must include the YASB notice as well as qt-css-engine. |
 | Agents are Claude Code (`CLAUDE.md`, `.claude/settings.json` hooks) | Agents run in GitHub Copilot CLI | Use `AGENTS.md` + `.github/copilot-instructions.md` and git hooks (`core.hooksPath tools/hooks`) instead of Claude hooks. |
 | Runtime findings are complete | A/B run found Qt defaulting to DirectWrite, mapping all 1,067 fonts (2,105 handles, 206 MiB WS) | Already fixed in `app/main.cpp` (`setFontEngine`, mirrors `src/env.py`). Commit it and add a rule: every Python env/startup side effect must be ported. |
 

@@ -43,8 +43,8 @@ Effort: S (under a day), M (days), L (a week or more).
 ### Crash risk and heap corruption
 
 #### C1 crash-risk, critical, S
-`D:\waku\src\host\qml\lazy_loader.cpp:172` (`destroyItem`), `:41`, `:49-50`, `:60-61`, reaching
-`D:\waku\src\host\qml\shell_window.cpp:84`.
+`src/host/qml/lazy_loader.cpp:172` (`destroyItem`), `:41`, `:49-50`, `:60-61`, reaching
+`src/host/qml/shell_window.cpp:84`.
 Problem: `destroyItem()` does `delete item`. The item is usually a `QsWindow`; `~QsWindow` runs
 `window_.reset()`, which deletes the `QQuickWindow` synchronously. The documented pattern
 (`launcher.active = false` from a handler inside the loaded window, or from `onHidden`,
@@ -62,7 +62,7 @@ does) so bindings stop before deletion. Same in `~LazyLoader` (`:41`).
 Gain: removes the most direct heap-corruption path in the repository.
 
 #### C2 crash-risk, high, S
-`D:\waku\src\host\qml\shell_window.cpp:84` with unguarded getters at `:127`, `:258-259`, `:266`,
+`src/host/qml/shell_window.cpp:84` with unguarded getters at `:127`, `:258-259`, `:266`,
 `:294-305`.
 Problem: `std::unique_ptr::reset()` nulls `window_` before `~QQuickWindow` runs. `~QQuickWindow`
 destroys the chrome and content items; `~QQuickItem` calls `setParentItem(nullptr)` on each child,
@@ -76,9 +76,9 @@ Also clear `ProxiedWindow::proxy_` before the delete so `keyPressEvent` (`:44-52
 dying proxy.
 
 #### C3 crash-risk, high, S
-`D:\waku\src\host\qml\shell_host.cpp:465-473` (`resetEngine`) against `:161-169` (`~Loaded`).
+`src/host/qml/shell_host.cpp:465-473` (`resetEngine`) against `:161-169` (`~Loaded`).
 Problem: `loaded_.reset()` deletes the root synchronously, but every window made by `Variants`
-(an `Instantiator`, `D:\waku\src\host\qml\Variants.qml:19`) is released with `deleteLater()` by
+(an `Instantiator`, `src/host/qml/Variants.qml:19`) is released with `deleteLater()` by
 `QQmlDelegateModel`. Those windows, their items, bindings and `QQuickWindow`s live through
 `clearSingletons()`, `clearComponentCache()`, `applyTheme()`, `build()` and `install()`, binding
 against deleted `Theme`, `ScreenList`, `Quickshell` and every feature singleton, and die one event
@@ -86,7 +86,7 @@ loop pass later while the new shell is presenting. The Qt documentation for both
 that no object created from the components is alive. This is the only moment two generations
 coexist, and every other crash candidate in this section fires inside it. The comments at
 `shell_host.cpp:427-428` ("the old shell stays alive while the new one is built") and
-`D:\waku\src\host\qml\shell_screen.cpp:34-35` describe the opposite of what `:430` does.
+`src/host/qml/shell_screen.cpp:34-35` describe the opposite of what `:430` does.
 Fix: after `loaded_.reset()` call `QCoreApplication::sendPostedEvents(nullptr,
 QEvent::DeferredDelete)` (the documented way to flush deferred deletes from inside a slot), then
 `clearSingletons()`. Rewrite the two comments. Re-check that `reload()` is never entered from a
@@ -100,33 +100,33 @@ between the check and `postEvent`, the GUI thread can finish `~QObject`; `postEv
 `receiver->d_func()->threadData` and writes `postedEvents` into freed memory. The window is
 microseconds, but a hot reload deletes every one of these objects while their workers are busy.
 Sites:
-- `D:\waku\src\features\github\qml\github_service.cpp:52-63` (`fetch`; a fetch takes up to 15 s
+- `src/features/github/qml/github_service.cpp:52-63` (`fetch`; a fetch takes up to 15 s
   per request, so a reload while GitHub is slow lands inside it).
-- `D:\waku\src\features\bluetooth\win32\bluetooth_win.cpp:1357-1361`, `:1385-1394`,
+- `src/features/bluetooth/win32/bluetooth_win.cpp:1357-1361`, `:1385-1394`,
   `:1466-1489`, `:1496-1505` (WinRT `Radio.StateChanged`, `DeviceWatcher.Added/Updated/Removed`,
   `ConnectionStatusChanged` on WinRT pool threads; revoking a token does not stop a delegate already
   running, and `watcher_.Stop()` at `:1437` is asynchronous; the unfiltered watcher of C32 keeps
   thousands of `Updated` callbacks in flight at reload time).
-- `D:\waku\src\features\audio\win32\audio_endpoints_win.cpp:133-144`, `:274-284`;
-  `D:\waku\src\features\audio\win32\audio_streams_win.cpp:200-212` (Core Audio callback threads;
+- `src/features/audio/win32/audio_endpoints_win.cpp:133-144`, `:274-284`;
+  `src/features/audio/win32/audio_streams_win.cpp:200-212` (Core Audio callback threads;
   mitigated by the blocking `Unregister*` calls in `stop()`, except when an `Unregister` fails with
   `AUDCLNT_E_DEVICE_INVALIDATED`, which is exactly when events fire).
-- `D:\waku\src\features\color_scheme\qml\color_scheme_service.cpp:158-174` (`fromImage` pool task,
+- `src/features/color_scheme/qml/color_scheme_service.cpp:158-174` (`fromImage` pool task,
   50-300 ms after shell start, so a quick second reload lands inside it).
-- `D:\waku\src\features\taskbar\taskbar_icons.cpp:81-96` (safe only because `~TaskbarIcons` calls
+- `src/features/taskbar/taskbar_icons.cpp:81-96` (safe only because `~TaskbarIcons` calls
   `waitForDone()` first; document or convert).
 Fix: post to `QCoreApplication::instance()` and dereference the `QPointer` only inside the
 GUI-thread lambda. The repository already does this correctly in
-`D:\waku\src\features\network\win32\radio_win.cpp:105-113`, `vpn_win.cpp:140-148`,
-`D:\waku\src\kernel\qt\polled_source.h:73-81` and
-`D:\waku\src\features\wallpapers\qml\wallpaper_transition.cpp:137-141`; or use the mutex-guarded
-owner pointer of `D:\waku\src\features\apps\qml\apps_service.cpp:55-59, 186-201`. Put the helper
+`src/features/network/win32/radio_win.cpp:105-113`, `vpn_win.cpp:140-148`,
+`src/kernel/qt/polled_source.h:73-81` and
+`src/features/wallpapers/qml/wallpaper_transition.cpp:137-141`; or use the mutex-guarded
+owner pointer of `src/features/apps/qml/apps_service.cpp:55-59, 186-201`. Put the helper
 in the kernel task thread of C58 so the next worker gets it for free.
 Gain: removes four reload-time use-after-free windows.
 
 #### C5 crash-risk, high, M
-`D:\waku\src\features\notifications\win32\notifications_system.cpp:186-196`, `:213-225`,
-`:258-262`; `D:\waku\src\features\notifications\win32\dnd_win.cpp:102-113`, `:147-152`.
+`src/features/notifications/win32/notifications_system.cpp:186-196`, `:213-225`,
+`:258-262`; `src/features/notifications/win32/dnd_win.cpp:102-113`, `:147-152`.
 Problem: both WNF callbacks run on a system thread with a raw `this`. `stop()` calls
 `RtlUnsubscribeWnfStateChangeNotification`, then frees the object. The code and
 `docs/architecture.md:345` claim the unsubscribe waits for a running callback; nothing verifies
@@ -144,7 +144,7 @@ and use it. One `kernel/win32/wnf.h` for both (see C65). Correct `architecture.m
 `notifications_system.cpp:7-8`, `dnd.h:19-20`.
 
 #### C6 crash-risk, high, S
-`D:\waku\src\features\workspaces\win32\glazewm_socket.cpp:45-55` with `:238`, and `:57-73` against
+`src/features/workspaces/win32/glazewm_socket.cpp:45-55` with `:238`, and `:57-73` against
 `:118-138`.
 Problem: `stop()` (GUI thread, from `~GlazewmService` on every reload) calls `closeAll()` before
 `thread_.join()`, so `WinHttpCloseHandle` runs on the session, connect, request and websocket
@@ -158,14 +158,14 @@ Fix: keep the receive timeout finite (the loop already handles `ERROR_WINHTTP_TI
 loop. Hold `mutex_` around `WinHttpWebSocketSend`. Proper fix: WinHTTP async mode.
 
 #### C7 crash-risk, high (conditional on the shell), M
-`D:\waku\src\features\taskbar\qml\taskbar_service.cpp:330-341` with `:187` and
-`D:\waku\src\features\taskbar\taskbar_icons.cpp:71-98`;
-`D:\waku\src\features\tray\qml\tray_image_provider.cpp:8-19` with
-`D:\waku\src\features\tray\qml\tray_icon_model.cpp:119-122` against `:79-81`, `:101-103`.
+`src/features/taskbar/qml/taskbar_service.cpp:330-341` with `:187` and
+`src/features/taskbar/taskbar_icons.cpp:71-98`;
+`src/features/tray/qml/tray_image_provider.cpp:8-19` with
+`src/features/tray/qml/tray_icon_model.cpp:119-122` against `:79-81`, `:101-103`.
 Problem: both providers are `QQuickImageProvider::Image`. Their headers (`taskbar_service.h:149`,
 `tray_image_provider.h:12-13`) say they run on the GUI thread. That holds only while the requesting
 `Image` has `asynchronous: false`; with `asynchronous: true` (which
-`D:\waku\src\host\quickshell\widgets\IconImage.qml:18,44` forwards, and which Quickshell shells set
+`src/host/quickshell/widgets/IconImage.qml:18,44` forwards, and which Quickshell shells set
 on tray and launcher icons) Qt calls `requestImage` on the pixmap reader thread. There
 `WindowIconProvider::requestImage` calls `iconImage()`, which inserts into `iconCache_`
 (`std::map::operator[]`), starts loads (`loaders_`, `pending_`, `pool_.start`,
@@ -180,12 +180,12 @@ from the provider (the model's `compute()` already does). Verify first: grep the
 `asynchronous: true`.
 
 #### C8 crash-risk, high, S
-`D:\waku\src\kernel\win32\shell_icons.cpp:16-27`, `:132`;
-`D:\waku\src\features\apps\qml\app_icon_provider.cpp:79-81`;
-`D:\waku\src\features\taskbar\win32\window_system_win.cpp:261`;
-`D:\waku\src\features\taskbar\win32\pin_support_win.cpp:232`;
-`D:\waku\src\features\apps\win32\start_menu_win.cpp:46`;
-`D:\waku\src\features\apps\win32\apps_folder_win.cpp:37`.
+`src/kernel/win32/shell_icons.cpp:16-27`, `:132`;
+`src/features/apps/qml/app_icon_provider.cpp:79-81`;
+`src/features/taskbar/win32/window_system_win.cpp:261`;
+`src/features/taskbar/win32/pin_support_win.cpp:232`;
+`src/features/apps/win32/start_menu_win.cpp:46`;
+`src/features/apps/win32/apps_folder_win.cpp:37`.
 Problem: every icon or `.lnk` read does `CoInitializeEx(MTA)` ... `CoUninitialize()` per call on
 pool threads (four appicon threads, one taskbar thread, the global-pool scan thread, which exits
 after 30 s idle). When the last MTA thread uninitialises, COM tears the MTA down: in-process shell
@@ -198,7 +198,7 @@ per-call scopes become `S_FALSE` no-ops. Fold into the single `ComScope` of C57.
 Gain: a plausible corruption source gone; the Start Menu scan tens to hundreds of ms faster.
 
 #### C9 crash-risk, medium, S
-`D:\waku\src\features\tray\hook\trayhook.cpp:184-199`, callers `:216`, `:264`.
+`src/features/tray/hook/trayhook.cpp:184-199`, callers `:216`, `:264`.
 Problem: inside Explorer, the DLL writes with a stack `OVERLAPPED`; on the 500 ms timeout it calls
 `CancelIo`, `CloseHandle` and returns, and the caller frees `buffer`. Cancellation completes
 asynchronously, so the IRP can still write `Internal/InternalHigh` into the dead stack frame and
@@ -209,7 +209,7 @@ Fix: after `CancelIo` call `GetOverlappedResult(h, &ov, &n, TRUE)` before `Close
 pipe buffers to 512 KB.
 
 #### C10 crash-risk, medium, S
-`D:\waku\src\host\qml\persistent_properties.cpp:17-34`, `:46-56`.
+`src/host/qml/persistent_properties.cpp:17-34`, `:46-56`.
 Problem: the process-wide store keeps `QVariant`s that, for `property var`, wrap `QJSValue`s
 (persistent V4 values rooted in the engine heap). They are freed in the engine's `destroyed` lambda,
 after `~QJSEngine` destroyed the V4 engine, so each `QJSValue` destructor touches freed memory at
@@ -217,7 +217,7 @@ shutdown. Between reloads they pin old JS objects as GC roots.
 Fix: store `value.value<QJSValue>().toVariant()` and skip anything still a `QJSValue` or `QObject*`.
 
 #### C11 crash-risk, medium, S
-`D:\waku\src\host\qml\ipc_handler.cpp:229-231`, `:238-243`.
+`src/host/qml/ipc_handler.cpp:229-231`, `:238-243`.
 Problem: for "untyped" parameters a `QVariant*` is passed, but `isUntyped()` also matches
 `QMetaType::fromType<QJSValue>()`. If Qt reports a QML `var` parameter or return as `QJSValue`,
 the callee reinterprets a `QVariant` as a `QJSValue` and destructs it: a bogus free.
@@ -225,8 +225,8 @@ Fix: build every buffer with `QVariant(type)` and pass `.data()`; special-case o
 `QMetaType::QVariant`.
 
 #### C12 crash-risk, medium, M
-`D:\waku\src\features\taskbar\qml\taskbar_service.cpp:141-153`;
-`D:\waku\src\features\taskbar\win32\app_identity_win.cpp:125-168`.
+`src/features/taskbar/qml/taskbar_service.cpp:141-153`;
+`src/features/taskbar/win32/app_identity_win.cpp:125-168`.
 Problem: `onAdded` calls `appUniqueId` on the GUI thread; for Explorer windows that is
 `CoCreateInstance(ShellWindows)` plus out-of-process calls. An STA pumps messages during the RPC,
 so a SHELLHOOK message or WinEvent is dispatched re-entrantly: a nested `onAdded(hwnd)` pushes the
@@ -237,8 +237,8 @@ Fix: resolve `uniqueId` on the icon worker and apply with a queued call; re-chec
 after any pumping call.
 
 #### C13 crash-risk, medium, S
-`D:\waku\src\features\wallpapers\qml\wallpapers_service.cpp:249-252`, `:274-276`;
-`D:\waku\src\features\wallpapers\qml\wallpaper_transition.cpp:148-153`, `:238-247`.
+`src/features/wallpapers/qml/wallpapers_service.cpp:249-252`, `:274-276`;
+`src/features/wallpapers/qml/wallpaper_transition.cpp:148-153`, `:238-247`.
 Problem: the `finished` lambda runs synchronously inside the transition's own signal emission
 (`skip()` emits from `onImagesLoaded`; the animation's `finished` emits too) and calls
 `commitWallpaper` -> `refresh()` -> `filesChanged`/`currentChanged`. A handler that re-enters
@@ -248,7 +248,7 @@ deleting the emitter mid-emission and the `QQuickWindow` from inside its own
 Fix: `transition_.release()->deleteLater()` and connect `finished` with `Qt::QueuedConnection`.
 
 #### C14 crash-risk, medium, M
-`D:\waku\src\features\workspaces\win32\komorebi_pipe.cpp:31-53` (from `:150`, `:200`).
+`src/features/workspaces/win32/komorebi_pipe.cpp:31-53` (from `:150`, `:200`).
 Problem: `QProcess` is created, started and waited on from a plain `std::thread`. On Windows
 `QProcess` needs an event dispatcher (it warns "Can only be used with threads started with
 QThread"), and the adopted thread's `QThreadData` is torn down later by Qt's adopted-thread watcher.
@@ -258,7 +258,7 @@ Fix: `CreateProcessW` with anonymous pipes in `win32/`, waiting on `{process, st
 `QThread` with an event loop.
 
 #### C15 crash-risk, medium, M
-`D:\waku\src\host\qml\shell_host.cpp:374-394`.
+`src/host/qml/shell_host.cpp:374-394`.
 Problem: a dock or undock fires `screenAdded/Removed`, `primaryScreenChanged` and
 `logicalDotsPerInchChanged` several times over 1-3 s; with a 600 ms debounce that is two or three
 full reloads back to back, each tearing down and recreating five swap chains while Qt relocates
@@ -268,7 +268,7 @@ Fix: 1.5-2 s debounce; for DPI and geometry changes call `ScreenList::setScreens
 `applyGeometry` instead of a full rebuild.
 
 #### C16 crash-risk, low, S
-`D:\waku\src\host\qml\shell_host.cpp:513` (`install`), `:164-167` (`~Loaded`), `:546-556`
+`src/host/qml/shell_host.cpp:513` (`install`), `:164-167` (`~Loaded`), `:546-556`
 (`release`).
 Problem: `install()` range-fors `loaded_->entries` (a `std::list`) while `present()` shows
 windows; a `shown`/`firstShown` handler that destroys another window (`LazyLoader.active = false`,
@@ -277,8 +277,8 @@ the range-for. Safe after C1 (deferred), fragile before.
 Fix: iterate a snapshot of `QPointer<QsWindow>`.
 
 #### C17 crash-risk, low, S
-`D:\waku\src\features\wallpapers\qml\wallpaper_transition.cpp:130-146`, `:264-273`;
-`D:\waku\src\features\wallpapers\win32\workerw.cpp:153-187`.
+`src/features/wallpapers/qml/wallpaper_transition.cpp:130-146`, `:264-273`;
+`src/features/wallpapers/win32/workerw.cpp:153-187`.
 Problem: the decoder `QThread` is never waited for; a thread still decoding a 4K PNG at exit
 outlives `QCoreApplication`. The overlay HWND is a `WS_CHILD` of Explorer's WorkerW for about 2 s
 per change; an Explorer restart in that window kills the HWND under Qt.
@@ -287,20 +287,20 @@ Fix: keep the thread and `wait()` in `cancel()`/the destructor (or use the pool 
 
 #### C18 crash-risk, low, S
 Raw pointers that are correct today only because of the current destruction order:
-`D:\waku\src\features\workspaces\qml\workspaces_service.h:65-66` (sibling singletons destroyed in
-unspecified order by `clearSingletons`); `D:\waku\src\features\tray\qml\tray_pins.h:50`, `:126`
-(`Systray.icons`); `D:\waku\src\features\media\qml\mpris.h:144` (`MprisPlayer::service_` released
-before the player children die); `D:\waku\src\features\brightness\win32\brightness_win.cpp:451-453`,
+`src/features/workspaces/qml/workspaces_service.h:65-66` (sibling singletons destroyed in
+unspecified order by `clearSingletons`); `src/features/tray/qml/tray_pins.h:50`, `:126`
+(`Systray.icons`); `src/features/media/qml/mpris.h:144` (`MprisPlayer::service_` released
+before the player children die); `src/features/brightness/win32/brightness_win.cpp:451-453`,
 `:585-589`, `:744` (`post()` with raw `this` from the worker and `std::async` jobs; relies on
-`stop()` at `:261-270`); `D:\waku\src\host\qml\window_thumbnail.cpp:35` (`release()` emits from
-the destructor); `D:\waku\src\host\app_bar.h:27` (raw `QScreen*` in `appBarRequest`, compared at
+`stop()` at `:261-270`); `src/host/qml/window_thumbnail.cpp:35` (`release()` emits from
+the destructor); `src/host/app_bar.h:27` (raw `QScreen*` in `appBarRequest`, compared at
 `shell_host.cpp:685-687` across screen removal).
 Fix: `QPointer` or `weak_ptr`, null checks, no emits from destructors.
 
 ### Thread safety and reload stalls
 
 #### C19 thread-safety, high, S
-`D:\waku\src\features\bluetooth\win32\bluetooth_win.cpp:1567-1575` with `:1272-1282`,
+`src/features/bluetooth/win32/bluetooth_win.cpp:1567-1575` with `:1272-1282`,
 `:1061-1142`, `:571-623`, `:890-896`.
 Problem: the destructor runs `invokeMethod(worker_, shutdown, BlockingQueuedConnection)`. If the
 worker is inside `pairDevice` the GUI thread blocks up to 60 s: `waitForPairing` checks
@@ -313,8 +313,8 @@ blocking call and test it inside the `enrichDevices` and `listLeDevices` loops.
 Gain: reload stall bounded to one WinRT call.
 
 #### C20 thread-safety, medium, S
-`D:\waku\src\features\network\win32\wlan_win.cpp:411-418`, `:334-362`, `:233-271`;
-`D:\waku\src\features\network\qml\network_service.cpp:265-272`.
+`src/features/network/win32/wlan_win.cpp:411-418`, `:334-362`, `:233-271`;
+`src/features/network/qml/network_service.cpp:265-272`.
 Problem: shutdown blocks while `connectTo` sits in `ConnectAsync().get()` (up to about 30 s).
 `scanning_` is reset only by the ACM notification; if neither `scan_complete` nor `scan_fail`
 arrives, `scan()` returns at once forever and `Network::scanning_` stays true.
@@ -322,8 +322,8 @@ Fix: `wait_for` in steps against an atomic stop flag set by the destructor; a 10
 scan timeout on the worker.
 
 #### C21 thread-safety, medium, M
-`D:\waku\src\features\workspaces\win32\komorebi_pipe.cpp:103-115`;
-`D:\waku\src\features\workspaces\qml\komorebi_client.cpp:94`; `komorebi.h:62`.
+`src/features/workspaces/win32/komorebi_pipe.cpp:103-115`;
+`src/features/workspaces/qml/komorebi_client.cpp:94`; `komorebi.h:62`.
 Problem: `~Komorebi` -> `stop()` -> `thread_.join()` on the GUI thread while the worker may be in
 `runKomorebic("subscribe-pipe")` with a 10 s timeout or `state` with 2 s; then `unsubscribe-pipe`
 runs synchronously on the GUI thread with a 2 s timeout. A reload can freeze the bar for 10 s.
@@ -332,9 +332,9 @@ Fix: abortable spawn (C14), `unsubscribe-pipe` detached through `startDetachedHi
 a pool task.
 
 #### C22 thread-safety, medium, S
-`D:\waku\src\features\apps\qml\app_icon_provider.cpp:101`;
-`D:\waku\src\features\taskbar\taskbar_icons.cpp:18`; `D:\waku\src\host\qml\thumbnails.cpp:109`,
-`:145-148`; `D:\waku\src\host\qml\thumbnails.h:20-22`.
+`src/features/apps/qml/app_icon_provider.cpp:101`;
+`src/features/taskbar/taskbar_icons.cpp:18`; `src/host/qml/thumbnails.cpp:109`,
+`:145-148`; `src/host/qml/thumbnails.h:20-22`.
 Problem: the destructors call `waitForDone()` without `clear()`, so every queued runnable runs
 first: a launcher page that just asked for 100 icons, N window icons at up to 400 ms of
 `SendMessageTimeout` each, or a 4K PNG decode (no scaled read for PNG,
@@ -347,9 +347,9 @@ Fix: `pool_.clear(); pool_.waitForDone();` in all three, a cancel flag checked b
 Gain: reload stalls of seconds down to one task.
 
 #### C23 thread-safety, medium, S-M
-`D:\waku\src\features\tray\win32\tray_hook.cpp:196`, `:66-69`, `:250`, `:320-338`, `:370-391`,
-`:140-143`; `D:\waku\src\features\tray\win32\tray_win.cpp:111-112`;
-`D:\waku\src\features\tray\hook\trayhook.cpp:387-409`.
+`src/features/tray/win32/tray_hook.cpp:196`, `:66-69`, `:250`, `:320-338`, `:370-391`,
+`:140-143`; `src/features/tray/win32/tray_win.cpp:111-112`;
+`src/features/tray/hook/trayhook.cpp:387-409`.
 Problem: `stop()` joins while the worker may be inside `inject()` (60 x 50 ms looking for
 `Shell_TrayWnd`) or `explorerPid()` (10 x 50 ms): up to 3.5 s GUI freeze on reload or exit while
 Explorer restarts. After `stop()` releases the watchdog mutex the DLL still needs Explorer's tray
@@ -362,9 +362,9 @@ Fix: `waitStop()`-based loops; bound the connect wait (5 s) and loop back to `en
 create the pipe in the worker with retry or `PIPE_UNLIMITED_INSTANCES`.
 
 #### C24 thread-safety, medium, S
-`D:\waku\src\features\network\win32\vpn_win.cpp:76`, `:91-94`;
-`D:\waku\src\features\network\win32\connectivity_win.cpp:85`;
-`D:\waku\src\features\network\win32\radio_win.cpp:62`; `D:\waku\src\kernel\qt\polled_source.h:65`.
+`src/features/network/win32/vpn_win.cpp:76`, `:91-94`;
+`src/features/network/win32/connectivity_win.cpp:85`;
+`src/features/network/win32/radio_win.cpp:62`; `src/kernel/qt/polled_source.h:65`.
 Problem: all network work runs on the global `QThreadPool`: `RasDialW` blocks for the whole dial
 (tens of seconds), `hangUp` sleeps up to 4 s, `getaddrinfo` can block on DNS for seconds when a VPN
 comes up. The pool is shared with thumbnails, apps, color_scheme and github; one blocked task
@@ -373,8 +373,8 @@ Fix: a dedicated one or two thread pool for network; `GetAdaptersAddresses` or t
 profile instead of `getaddrinfo`.
 
 #### C25 thread-safety, low-medium, S-M
-`D:\waku\src\features\notifications\win32\toast_activation_win.cpp:76-110`,
-`notifications_system.cpp:186-196`; `D:\waku\src\features\media\win32\media_session_winrt.cpp:54-68`,
+`src/features/notifications/win32/toast_activation_win.cpp:76-110`,
+`notifications_system.cpp:186-196`; `src/features/media/win32/media_session_winrt.cpp:54-68`,
 `:80-89`, `:155-176`, `:181-199`, `:277`.
 Problem: toast activation walks every Start Menu `.lnk` and then `CoCreateInstance(CLSCTX_LOCAL_SERVER)`
 + `Activate` (seconds while the app launches); `stop()` joins on the GUI thread at reload, so a
@@ -386,7 +386,7 @@ Fix: a stop flag checked between steps, or detach at reload and join at exit (th
 `shared_ptr<Queue>` design allows it); reset `stopping` in `start()`; try/catch around `unbind`.
 
 #### C26 thread-safety, medium, S
-`D:\waku\src\features\media\qml\media_service.cpp:22-28`; `D:\waku\src\features\media\qml\mpris.cpp:165`.
+`src/features/media/qml/media_service.cpp:22-28`; `src/features/media/qml/mpris.cpp:165`.
 Problem: no `kernel::liveDesktop()` check: the GSMTC worker, `RequestAsync()` and the source-app
 resolver start on the offscreen platform and in every test, unlike notifications
 (`notification_service.cpp:19-24`). This breaks the live-desktop rule of `AGENTS.md`.
@@ -395,8 +395,8 @@ Fix: a `systemSource()` that returns null off the live desktop; `Media.available
 ### Memory
 
 #### C27 memory, high, S (knobs) / M (measurement and shells)
-`D:\waku\src\host\qml\shell_window.cpp:56-60` (a `QQuickWindow` per `QsWindow`);
-`D:\waku\src\app\waku\main.cpp:36` (`setDefaultAlphaBuffer(true)`; no graphics configuration,
+`src/host/qml/shell_window.cpp:56-60` (a `QQuickWindow` per `QsWindow`);
+`src/app/waku/main.cpp:36` (`setDefaultAlphaBuffer(true)`; no graphics configuration,
 no render loop choice).
 Problem: five visible full-screen transparent windows. With Qt's default threaded render loop on
 Windows each window owns its own render thread and its own `QRhi` (a D3D11 device, pipeline cache,
@@ -418,9 +418,9 @@ Gain: depth buffer off saves 37 MB per window at 4K; basic loop removes four dev
 caches (estimated 20-60 MB plus four threads); a hidden overlay saves about 100 MB each.
 
 #### C28 memory, high, S (retention) / M (peak)
-`D:\waku\src\features\wallpapers\qml\wallpaper_transition.h:131-132`;
-`D:\waku\src\features\wallpapers\qml\wallpapers_service.h:166`;
-`D:\waku\src\features\wallpapers\qml\wallpaper_transition.cpp:99-105`, `:130-143`, `:162-163`,
+`src/features/wallpapers/qml/wallpaper_transition.h:131-132`;
+`src/features/wallpapers/qml/wallpapers_service.h:166`;
+`src/features/wallpapers/qml/wallpaper_transition.cpp:99-105`, `:130-143`, `:162-163`,
 `:213-214`.
 Problem: after a transition the `WallpaperTransition` stays in `transition_` until the next change,
 and `destroyWindow()` frees the window but not `scaledNew_`/`scaledOld_`: two laid-out screen-size
@@ -436,9 +436,9 @@ instead of copy; drop the `QPixmap` stage (paint `QImage`s or build `QSGTexture`
 Gain: 66-132 MB retained; 130-200 MB peak; 100-300 ms less GUI stall per change.
 
 #### C29 memory, medium, S (store) / M (gallery)
-`D:\waku\src\host\qml\thumbnails.cpp:150-156`; `D:\waku\src\host\thumbnail_store.h:34`
-(`kMemoryBytes` 64 MB); `D:\waku\src\features\wallpapers\thumbnail_cache.cpp:41-57`;
-`D:\waku\src\features\wallpapers\qml\wallpapers_service.cpp:449-479`.
+`src/host/qml/thumbnails.cpp:150-156`; `src/host/thumbnail_store.h:34`
+(`kMemoryBytes` 64 MB); `src/features/wallpapers/thumbnail_cache.cpp:41-57`;
+`src/features/wallpapers/qml/wallpapers_service.cpp:449-479`.
 Problem: each `Thumbnails::create` makes a new 64 MB LRU and a new provider; the previous provider
 holds the previous store until the engine drops it, so two 64 MB caches coexist after a reload,
 plus `QQuickPixmapCache` copies of what is on screen and the GPU textures. The wallpapers feature
@@ -452,8 +452,8 @@ the memory cap to 16-24 MB (the WebP disk cache is cheap to re-read); delete
 Gain: up to 64-100 MB after a reload; the gallery's first open seconds faster.
 
 #### C30 memory and perf, medium, S
-`D:\waku\src\host\quickshell\widgets\ClippingRectangle.qml:39-72`;
-`D:\waku\src\host\qml\WindowChrome.qml:15-23`.
+`src/host/quickshell/widgets/ClippingRectangle.qml:39-72`;
+`src/host/qml/WindowChrome.qml:15-23`.
 Problem: every `ClippingRectangle` allocates two layer textures of its own size (the clipped
 content layer and the mask layer) plus the `MultiEffect` pass. A shell that wraps panels or a
 full-screen container in one pays full-screen BGRA8 textures per instance (37 MB each at 4K).
@@ -465,7 +465,7 @@ but a single `layer.effect` on the content with the mask drawn by a shader avoid
 layer); `visible: color.a > 0` on the chrome background.
 
 #### C31 memory, medium, S
-`D:\waku\src\host\qml\shell_host.cpp:143-159` (`GenerationInterceptor`), `:470-471`.
+`src/host/qml/shell_host.cpp:143-159` (`GenerationInterceptor`), `:470-471`.
 Problem: the generation query makes every config-home QML file a new URL and therefore a new
 composite type per reload. `clearComponentCache()` runs while the old windows (C3) still reference
 generation N-1, so that generation's compilation units, property caches and `QQmlMetaType` URL
@@ -476,7 +476,7 @@ the profiling plan: the working set must plateau after the second reload.
 Gain: a few to tens of MB per reload, depending on shell size.
 
 #### C32 memory and perf, medium, M
-`D:\waku\src\features\bluetooth\win32\bluetooth_win.cpp:1384`, `:1397-1421`.
+`src/features/bluetooth/win32/bluetooth_win.cpp:1384`, `:1397-1421`.
 Problem: `DeviceInformation::CreateWatcher()` with no selector watches every device interface in
 the PnP tree (1,500-4,000 objects): a full enumeration at every creation (1-3 s of WinRT thread
 CPU), an in-process snapshot of all entries kept for diffing (several MB), and an `Updated`
@@ -487,9 +487,9 @@ Fix: `CreateWatcher(BluetoothAdapter::GetDeviceSelector())` for the adapter and
 Gain: 5-20 MB, most of the background callback CPU, faster first snapshot.
 
 #### C33 memory and perf, medium, M
-`D:\waku\src\features\system_stats\qml\stat_sources.cpp:8`, `:20`, `:42`, `:54`, `:76`;
-`D:\waku\src\features\system_stats\win32\pdh.cpp:57-69`, `:103-114`;
-`D:\waku\src\features\system_stats\win32\gpu.cpp:47-59`, `:63-78`, `:95-108`, `:112-115`,
+`src/features/system_stats/qml/stat_sources.cpp:8`, `:20`, `:42`, `:54`, `:76`;
+`src/features/system_stats/win32/pdh.cpp:57-69`, `:103-114`;
+`src/features/system_stats/win32/gpu.cpp:47-59`, `:63-78`, `:95-108`, `:112-115`,
 `:150-172`.
 Problem: every QML `Cpu {}`/`Gpu {}`/`Memory {}` owns its own data source, so a three-monitor shell
 holds three PDH CPU queries (N per-core counters each plus a thermal query) and three GPU wildcard
@@ -502,25 +502,25 @@ Fix: one process-wide source per kind through a `weak_ptr` cache; keep the engin
 Gain: 1-4 MB per extra widget and a few ms of pool CPU per 2 s.
 
 #### C34 memory, low, S each
-- `D:\waku\src\features\tray\tray_icon_registry.h:64-67`, `tray_state.cpp:100`,
+- `src/features/tray/tray_icon_registry.h:64-67`, `tray_state.cpp:100`,
   `tray_icon_model.h:61-66`: each tray icon's raw RGBA (up to 256 KB) is stored twice; the registry
   copy is never used for pixels. Keep a hash for the "pixels changed" test (`tray_icon_model.cpp:86-88`).
   Typical 3-5 MB, up to 15 MB.
-- `D:\waku\src\features\taskbar\qml\taskbar_service.cpp:186-212`, `taskbar_icons.h:48-51`: the same
+- `src/features/taskbar/qml/taskbar_service.cpp:186-212`, `taskbar_icons.h:48-51`: the same
   32x32 icon cached twice and round-tripped `QImage` -> `QPixmap` -> `QImage`.
-- `D:\waku\src\features\media\qml\media_service.cpp:16-20`, `:49-56`, `mpris.cpp:58-61`: album art
+- `src/features/media/qml/media_service.cpp:16-20`, `:49-56`, `mpris.cpp:58-61`: album art
   as bytes in the session state, in `Media`, in each `MprisPlayer`, plus a base64 `QString` per
   holder (2.7x in UTF-16). An `image://mediaart/` provider removes the copies.
-- `D:\waku\src\features\quickshell_io\qml\data_stream_parsers.cpp:13-16`, `:28-38`: `StdioCollector`
+- `src/features/quickshell_io/qml/data_stream_parsers.cpp:13-16`, `:28-38`: `StdioCollector`
   with `waitForEnd: false` appends to an unbounded buffer and re-decodes the whole buffer on every
   chunk (quadratic); a chatty long-lived process grows without bound. Decode incrementally
   (`QStringDecoder`) and cap.
-- `D:\waku\src\features\quickshell_io\qml\file_view.h:156`, `file_view.cpp:322-330`: a
+- `src/features/quickshell_io/qml/file_view.h:156`, `file_view.cpp:322-330`: a
   `QFileSystemWatcher` (and on Windows a watcher thread per 63 handles) per `FileView`; one shared
   watcher (two users with `ShellHost`, kernel candidate).
-- `D:\waku\src\features\workspaces\komorebi.h:77-78`, `komorebi_pipe.cpp:216`, `:124-127`: a 512 KB
+- `src/features/workspaces/komorebi.h:77-78`, `komorebi_pipe.cpp:216`, `:124-127`: a 512 KB
   zero-filled chunk per connection and a 64 MB message cap; 64 KB with `ERROR_MORE_DATA` suffices.
-- `D:\waku\src\features\color_scheme\image_source.cpp:21-40`,
+- `src/features/color_scheme/image_source.cpp:21-40`,
   `color_scheme_service.cpp:191-202`: PNG/BMP/WebP are decoded at full size (33 MB at 4K) and then
   scaled; `luminance()` does it synchronously on the GUI thread (150-400 ms on first run) and
   `seedOfFile` decodes the same file a second time. Compute both from one decode in the pool task.
@@ -528,7 +528,7 @@ Gain: 1-4 MB per extra widget and a few ms of pool CPU per 2 s.
 ### Performance: startup
 
 #### C35 perf, high, S
-`D:\waku\src\host\qml\shell_host.cpp:264-296` (`validate`), called at `:424-426`; `:298-301`
+`src/host/qml/shell_host.cpp:264-296` (`validate`), called at `:424-426`; `:298-301`
 (`validateTheme`, with `create`); `:303-320` (`applyTheme`).
 Problem: every reload and the first start builds a throwaway `QQmlEngine` (import database scan of
 every import path, V4 engine) and compiles the entire shell tree; `validateTheme` does it again
@@ -540,8 +540,8 @@ long-lived probe engine and `clearComponentCache()` it between checks.
 Gain: estimated 0.3-0.8 s of the 2.5 s start; about 0.5 s per reload.
 
 #### C36 perf, medium, S
-`D:\waku\src\host\plugin_guard.cpp:137-153`, `:165-178`, `:193-208`;
-`D:\waku\src\host\qml\shell_host.cpp:709-744`, `:728-732`; `D:\waku\src\app\waku\main.cpp:93-98`.
+`src/host/plugin_guard.cpp:137-153`, `:165-178`, `:193-208`;
+`src/host/qml/shell_host.cpp:709-744`, `:728-732`; `src/app/waku/main.cpp:93-98`.
 Problem: three recursive walks of the config home at start (`usableImportRoots`,
 `configPluginFailures` to depth 8 reading every qmldir and every plugin DLL's metadata,
 `scanQmlFiles`, then `refreshWatches` which removes and re-adds every path), one plugin walk per
@@ -555,26 +555,26 @@ Gain: tens of ms per event; 50-150 ms at start with a large shell.
 
 #### C37 perf, medium, S-M per feature
 Singleton constructors that run synchronously inside the first `build()` and every reload:
-- `D:\waku\src\features\control_center\qml\control_center_service.cpp:67-80`, `:107-114`,
+- `src/features/control_center/qml/control_center_service.cpp:67-80`, `:107-114`,
   `:204-221`; `dnd_win.cpp:57-71`; `user_info_win.cpp:78-85`; `brightness_win.cpp:658-663`:
   `dndStatus()` (CoInitialize plus an out-of-process `CoCreateInstance`, 10-100 ms, more when the
   server must start), `GetUserNameExW(NameDisplay)` (hundreds of ms cold), the avatar registry walk
   with a `QFileInfo` per value, `powerPlans()` per scheme, `startPolicyWatcher()` waiting for its
   window thread; `toggleDnd`/`cycleDnd` re-query `dndStatus()` although `dnd_` is current.
-- `D:\waku\src\features\bluetooth\win32\bluetooth_win.cpp:1636`: `hasBluetoothAdapter()` is an RPC
+- `src/features/bluetooth/win32/bluetooth_win.cpp:1636`: `hasBluetoothAdapter()` is an RPC
   into bthserv on the GUI thread.
-- `D:\waku\src\features\github\qml\github_service.cpp:81-101`: `loadToken()` (`appDataDir()` ->
+- `src/features/github/qml/github_service.cpp:81-101`: `loadToken()` (`appDataDir()` ->
   `mkpath` + first-time migration + file read).
-- `D:\waku\src\features\apps\qml\apps_service.cpp:52`, `:272-278`;
+- `src/features/apps/qml/apps_service.cpp:52`, `:272-278`;
   `apps_folder_win.cpp:35-66`; `catalog.cpp:106-118`; `apps_model.cpp:16-22`: every reload does a
   full rescan (every `.lnk` through `IShellLink`, full `shell:AppsFolder`, 0.5-3 s of COM on the
   pool), re-registers a `QFileSystemWatcher` on every Start Menu subfolder, and resets every
   launcher list twice per scan.
-- `D:\waku\src\features\wallpapers\qml\wallpapers_service.cpp:212`, `:298`;
+- `src/features/wallpapers/qml/wallpapers_service.cpp:212`, `:298`;
   `wallpaper_manager.cpp:116`; `wallpaper_files.cpp:13-31`, `:59-69`: one wallpaper change lists the
   folder recursively two or three times on the GUI thread with a `StrCmpLogicalW` sort and a stat
   per file; `WallpaperSettings::activate()` lists at start.
-- `D:\waku\src\features\taskbar\qml\taskbar_service.cpp` `enumerateExisting` + `appUniqueId` per
+- `src/features/taskbar/qml/taskbar_service.cpp` `enumerateExisting` + `appUniqueId` per
   window (C12, C42): 0.15-0.5 s.
 Fix: do the reads on a pool task and publish through `changed`; hold the app catalogue in a
 process-wide `weak_ptr` hub so a reload reuses it; list the wallpaper folder once per change behind
@@ -582,8 +582,8 @@ a watcher; read the token in the first `refresh()`.
 Gain: 150-400 ms off first paint and off every reload.
 
 #### C38 perf, medium, S
-`D:\waku\src\host\win32\taskbar_control.cpp:105-113`, `:127`, `:136-138`;
-`D:\waku\src\host\taskbar_control.cpp:144-151`.
+`src/host/win32/taskbar_control.cpp:105-113`, `:127`, `:136-138`;
+`src/host/taskbar_control.cpp:144-151`.
 Problem: with `--hide-taskbar`, `waitForFullWorkArea` busy-waits `Sleep(20)` x 25 (0.5 s) on the
 GUI thread before the first reload, and a 1 s `WM_TIMER` then does `ABM_GETSTATE` (a
 `SendMessage` into Explorer; a hung Explorer blocks our GUI thread), `FindWindowW` and
@@ -594,7 +594,7 @@ register app bars first and re-query from the recheck.
 Gain: up to 0.5 s at start when the flag is used; one wake per second removed.
 
 #### C39 perf, medium, S-M
-`D:\waku\src\features\workspaces\qml\workspaces_service.cpp:76-80`;
+`src/features/workspaces/qml/workspaces_service.cpp:76-80`;
 `komorebi_pipe.cpp:17-29`, `:145-166`; `glazewm_socket.cpp:148-180`.
 Problem: `Workspaces::create` instantiates both `Komorebi` and `GlazeWM`, so every shell with a
 `Workspaces` widget starts two listener threads that run forever on a machine running neither: a
@@ -603,21 +603,21 @@ Fix: probe once (process present, port listening) before starting a listener, ba
 exponentially, or let the shell name its window manager.
 
 #### C40 perf, low, S each
-- `D:\waku\src\features\clock\qml\Clock.qml:57-127`: every `Clock` instantiates its
+- `src/features/clock/qml/Clock.qml:57-127`: every `Clock` instantiates its
   `PopupWindow` with the full `Calendar` grid (42 day cells) eagerly, per bar. Wrap in `LazyLoader`.
-- `D:\waku\src\kernel\qt\app_data.cpp:65-77`: `appDataDir()` runs `mkpath` under a mutex on every
+- `src/kernel/qt/app_data.cpp:65-77`: `appDataDir()` runs `mkpath` under a mutex on every
   call (13 call sites, several per sample). `std::call_once`.
-- `D:\waku\src\host\qml\shell_host.cpp:199`: an event filter on `QCoreApplication` sees every
+- `src/host/qml/shell_host.cpp:199`: an event filter on `QCoreApplication` sees every
   event in the process to catch presses on shell windows. Install it on the backing windows when
   they are presented.
-- `D:\waku\src\host\qml\shell_host.cpp:183`: the chrome component compile in the constructor is
+- `src/host/qml/shell_host.cpp:183`: the chrome component compile in the constructor is
   needed for type registration; fine, but note it in the startup trace.
 
 ### Performance: steady state on the GUI thread
 
 #### C41 perf, medium, S (cache) / M (raw input)
-`D:\waku\src\host\mask_poller.cpp:47-74`, `:92`, `:122-139`; `D:\waku\src\host\qml\region.cpp:38-65`;
-`D:\waku\src\host\qml\shell_window.cpp:144-153`, `:178`.
+`src/host/mask_poller.cpp:47-74`, `:92`, `:122-139`; `src/host/qml/region.cpp:38-65`;
+`src/host/qml/shell_window.cpp:144-153`, `:178`.
 Problem: while the cursor moves anywhere on the desktop the hub ticks at 120 Hz and every
 registered poller calls `mask_()`, which rebuilds the whole `RegionNode` tree (`QList`
 allocations per child, `mapRectToScene` per `item` region) on every tick: five masked windows at
@@ -633,7 +633,7 @@ system-wide hook latency; keep the 1 s safety recheck.
 Gain: measurable CPU while the mouse moves (600 allocations/s removed); zero wakeups at rest.
 
 #### C42 perf, medium, S-M
-`D:\waku\src\features\taskbar\window_tracker.cpp:162-167`, `:312-331`, `:360-378`, `:200-237`,
+`src/features/taskbar/window_tracker.cpp:162-167`, `:312-331`, `:360-378`, `:200-237`,
 `:380-395`; `window_tracker_hooks_win.cpp:78`; `window_system_win.cpp:174-206`, `:113-129`;
 `taskbar_service.cpp:152`, `:162`, `:174`, `:181`, `:227`, `:307`; `taskbar_model.cpp:167-247`;
 `taskbar_icons.cpp:100-109`; `pin_support_win.cpp:455-483`, `:504-513`, `:520-527`, `:589-623`.
@@ -653,8 +653,8 @@ exponential back-off for icons; resolve pin metadata on the worker or from `Apps
 Gain: about ten times fewer queries on the GUI thread; fewer `dataChanged` bursts.
 
 #### C43 perf, medium, S-M
-`D:\waku\src\features\tray\qml\tray_icon_model.cpp:13-24`, `:70-96`;
-`D:\waku\src\features\tray\icon_scale.cpp:135-172`; `D:\waku\src\features\tray\qml\systray.cpp:176-183`;
+`src/features/tray/qml/tray_icon_model.cpp:13-24`, `:70-96`;
+`src/features/tray/icon_scale.cpp:135-172`; `src/features/tray/qml/systray.cpp:176-183`;
 `tray_win.cpp:47-50`; `tray_hook.cpp:293`.
 Problem: Lanczos-3 resample plus sharpen runs on the GUI thread for every `NIM_MODIFY`; animated
 icons (Teams, Slack, VPN activity) modify several times a second with up to 256 px bitmaps (1-3 ms
@@ -665,9 +665,9 @@ Fix: scale on the hook worker in `handleMessage` and ship the 32 px image; skip 
 the registry is populated and only the DLL reconnected (same Explorer PID).
 
 #### C44 perf, medium, M
-`D:\waku\src\features\audio\win32\audio_streams_win.cpp:265-322`, `:235-263`;
-`D:\waku\src\features\audio\qml\audio_streams.cpp:101-119`;
-`D:\waku\src\features\audio\win32\audio_endpoints_win.cpp:164`, `:257-260`, `:95-98`, `:294-311`.
+`src/features/audio/win32/audio_streams_win.cpp:265-322`, `:235-263`;
+`src/features/audio/qml/audio_streams.cpp:101-119`;
+`src/features/audio/win32/audio_endpoints_win.cpp:164`, `:257-260`, `:95-98`, `:294-311`.
 Problem: `rebuild()` unregisters and re-registers every session's `IAudioSessionEvents` on any
 structural event; `OnStateChanged` fires whenever any session goes active or inactive (every
 notification sound), so this runs constantly on the GUI thread, about six COM round trips per
@@ -681,7 +681,7 @@ by `flow_` and the default id.
 Gain: 20-60 COM calls per event down to 2-5.
 
 #### C45 perf, medium, S-M
-`D:\waku\src\features\network\qml\network_service.cpp:71-76`, `:78-87`, `:139-147`;
+`src/features/network/qml/network_service.cpp:71-76`, `:78-87`, `:139-147`;
 `wlan_win.cpp:165-191`, `:461-467`; `radio_win.cpp:27-33`; `vpn_win.cpp:43-64`;
 `connectivity_win.cpp:76-94`; `throughput_win.cpp:29-47`.
 Problem: every poll (2 s default) launches three pool tasks: `GetConnectionProfiles` +
@@ -698,8 +698,8 @@ tenth of the rate or on events (`Radio.StateChanged`, `RasConnectionNotification
 Gain: 5-15 ms CPU and hundreds of allocations per poll.
 
 #### C46 perf, medium, S
-`D:\waku\src\features\bluetooth\win32\bluetooth_win.cpp:1582-1585`, `:1220-1224`, `:378-429`;
-`D:\waku\src\features\bluetooth\qml\bluetooth_service.cpp:43`, `:49`, `:112`, `:135`.
+`src/features/bluetooth/win32/bluetooth_win.cpp:1582-1585`, `:1220-1224`, `:378-429`;
+`src/features/bluetooth/qml/bluetooth_service.cpp:43`, `:49`, `:112`, `:135`.
 Problem: `RealBluetoothBackend::refresh()` calls `onRadioChanged`, which sets `refreshLePending_`,
 so every service-initiated refresh (the 60 s safety timer, every connect, disconnect and pairing
 end, every start-up retry at 1/3/8/20 s) is a full one: `FromIdAsync` per LE device,
@@ -709,7 +709,7 @@ Fix: a `refreshPaired()` that leaves `refreshLePending_` alone; relist LE only o
 `DeviceAdded/Removed`.
 
 #### C47 perf, medium, M
-`D:\waku\src\features\workspaces\qml\komorebi_client.cpp:45-76`, `:107`;
+`src/features/workspaces/qml/komorebi_client.cpp:45-76`, `:107`;
 `workspaces_service.cpp:88-110`; `Workspaces.qml:29-33`, `:86-89`; `glazewm_state.cpp:41-60`, `:70`.
 Problem: every komorebi event (each focus change) builds a `QVariantList` of maps,
 `Workspaces::rebuild` converts it into a second `QVariantList`, QML deep-copies that into JS arrays
@@ -720,9 +720,9 @@ Fix: per-monitor change signals and a `QAbstractListModel` (or a diff into a `Li
 the intermediate copy and the dead window parsing.
 
 #### C48 perf, medium, S
-`D:\waku\src\features\media\media_session.cpp:103-135`;
-`D:\waku\src\features\media\win32\media_session_winrt.cpp:116-117`;
-`D:\waku\src\features\notifications\win32\notifications_system.cpp:363-365`;
+`src/features/media/media_session.cpp:103-135`;
+`src/features/media/win32/media_session_winrt.cpp:116-117`;
+`src/features/notifications/win32/notifications_system.cpp:363-365`;
 `toast_xml.cpp:224-260`.
 Problem: `applySessions` emits `mediaDataChanged` once per session inside the loop and again after
 it; each emission runs `Mpris::sync()` (every player's `update()`, up to 19 signals each) and
@@ -735,7 +735,7 @@ Fix: emit once after the loop; a separate `positionChanged`; `sync()` skips non-
 ticks; one `refresh(true)`; decorate-sort and cache the lookups.
 
 #### C49 perf, medium, M
-`D:\waku\src\features\wallpapers\win32\desktop_wallpaper_win.cpp:54-71`, `:73-106`;
+`src/features/wallpapers/win32/desktop_wallpaper_win.cpp:54-71`, `:73-106`;
 `wallpaper_transition.cpp:58-88`, `:162-163`, `:213-214`; `WallpaperGallery.qml:146`;
 `wallpapers_service.cpp:206-230`.
 Problem: `IDesktopWallpaper::SetWallpaper` runs on the GUI thread and Windows transcodes the image
@@ -750,27 +750,27 @@ items and a shader so only uniforms change per frame; a `QAbstractListModel` wit
 `dataChanged` for `current`.
 
 #### C50 perf, low, S each
-- `D:\waku\src\features\control_center\qml\control_center_service.cpp:94-98`, `:244-249`,
+- `src/features/control_center/qml/control_center_service.cpp:94-98`, `:244-249`,
   `:151-161`: a slider move emits `changed` twice and `changed` is the NOTIFY of 15 properties, so
   QML rebuilds `powerPlans`, `powerModes` and `brightnessSources` (locking the brightness mutex per
   monitor) twice per tick. Per-group signals.
-- `D:\waku\src\features\desktop_state\qml\desktop_state.cpp:19-24`, `:69-96`;
+- `src/features/desktop_state/qml/desktop_state.cpp:19-24`, `:69-96`;
   `desktop_probe_win.cpp:32-51`: the gating works, but QML bindings keep the connection alive, so
   the 200 ms tick runs until the next reload, doing `LCIDToLocaleName` + 2 x `GetLocaleInfoEx` + 3
   `QString` allocations per tick. Cache by `HKL`; poll idle seconds at 1 s.
-- `D:\waku\src\host\qml\persistent_properties.cpp:89-95`, `:68-71`: a full snapshot per notify of
+- `src/host/qml/persistent_properties.cpp:89-95`, `:68-71`: a full snapshot per notify of
   any declared property; an animated value churns at frame rate. Coalesce with a zero-timer.
-- `D:\waku\src\host\qml\script_model.cpp:67-101`: `setValues` is quadratic and copies every
+- `src/host/qml/script_model.cpp:67-101`: `setValues` is quadratic and copies every
   `QVariant` twice; bad for a 1000-entry launcher list. Index keys in a `QHash`.
-- `D:\waku\src\features\github\github_api.cpp:36-54`: a fresh `QNetworkAccessManager` (own HTTP
+- `src/features/github/github_api.cpp:36-54`: a fresh `QNetworkAccessManager` (own HTTP
   thread, TLS context) and a nested `QEventLoop` per `send()`, 2-3 per poll, full TLS handshake
   each time. One manager per transport.
-- `D:\waku\src\features\control_center\win32\touch_keyboard_win.cpp:43-60`:
+- `src/features/control_center/win32/touch_keyboard_win.cpp:43-60`:
   `WaitForInputIdle(..., 5000)` on the GUI thread when TabTip must be launched.
-- `D:\waku\src\features\quickshell_io\qml\qs_process.cpp:12-20`;
-  `D:\waku\src\features\shell\qml\child_process.cpp:17-23`: destructors `waitForFinished(500)` on
+- `src/features/quickshell_io/qml/qs_process.cpp:12-20`;
+  `src/features/shell/qml/child_process.cpp:17-23`: destructors `waitForFinished(500)` on
   the GUI thread per process object at reload. Reparent to `qApp`, `finished` -> `deleteLater`.
-- `D:\waku\src\features\control_center\win32\power_win.cpp:42-45`: `LoadLibraryW("powrprof.dll")`
+- `src/features/control_center/win32/power_win.cpp:42-45`: `LoadLibraryW("powrprof.dll")`
   for a module already linked; `GetModuleHandleW`.
 
 ### Style and consistency against AGENTS.md
@@ -778,10 +778,10 @@ items and a shader so only uniforms change per frame; a `QAbstractListModel` wit
 #### C51 style, low, S
 `QLatin1String(` appears 219 times in product code (no `u""_s`, no `m_` members, no include that
 is not rooted at `src/`, no const `json::operator[]` were found). Heaviest files:
-`D:\waku\src\app\wakuc\main.cpp:126-178`, `D:\waku\src\features\github\github_api.cpp:80-497`,
-`github_format.cpp:59-86`, `D:\waku\src\features\notifications\toast_xml.cpp` (12),
-`toast_activation_win.cpp` (8), `D:\waku\src\host\qml\control_handler.cpp` (19),
-`surface_control.cpp` (8), `D:\waku\src\host\hotkeys.cpp` (6), `bluetooth_win.cpp:482-1478`,
+`src/app/wakuc/main.cpp:126-178`, `src/features/github/github_api.cpp:80-497`,
+`github_format.cpp:59-86`, `src/features/notifications/toast_xml.cpp` (12),
+`toast_activation_win.cpp` (8), `src/host/qml/control_handler.cpp` (19),
+`surface_control.cpp` (8), `src/host/hotkeys.cpp` (6), `bluetooth_win.cpp:482-1478`,
 `control_center_service.cpp:98-305`, `wlan_win.cpp:114`, `dnd_win.cpp:76`,
 `taskbar/window_tracker.cpp:98-100`, `app_identity_win.cpp`, `pin_support_win.cpp`,
 `wallpaper_layout.cpp`, `wallpaper_transition.cpp:23-25`, `wallpapers_service.cpp:402-404`.
@@ -791,12 +791,12 @@ Latin-1 literal, or switch to `QStringLiteral` constants. Do not do it file by f
 
 #### C52 style, low, S
 Mixed line endings (`git ls-files --eol` reports `i/mixed`) against `.editorconfig`:
-`D:\waku\src\features\audio\tests\test_audio_streams.cpp`,
-`D:\waku\src\features\audio\win32\audio_streams_win.cpp`,
-`D:\waku\src\features\desktop_state\tests\test_desktop_state.cpp`,
-`D:\waku\src\features\notifications\tests\test_notification_feed.cpp`,
-`D:\waku\src\host\testing\widget_fixtures.h`, `D:\waku\src\host\tests\test_global_shortcut.cpp`,
-`D:\waku\src\host\tests\test_region_mask.cpp`. Normalise in one commit listed in
+`src/features/audio/tests/test_audio_streams.cpp`,
+`src/features/audio/win32/audio_streams_win.cpp`,
+`src/features/desktop_state/tests/test_desktop_state.cpp`,
+`src/features/notifications/tests/test_notification_feed.cpp`,
+`src/host/testing/widget_fixtures.h`, `src/host/tests/test_global_shortcut.cpp`,
+`src/host/tests/test_region_mask.cpp`. Normalise in one commit listed in
 `.git-blame-ignore-revs`; have `tools\check.ps1` fail on `i/mixed`.
 
 #### C53 style, low, S each
@@ -819,7 +819,7 @@ Mixed line endings (`git ls-files --eol` reports `i/mixed`) against `.editorconf
   stop()` on non-QML interfaces with a comment about a retired registry.
 - `workerw.cpp:147-151`: `qgetenv("APPDATA")` + `fromLocal8Bit` breaks for user names outside the
   ANSI code page; `qEnvironmentVariable`.
-- `D:\waku\src\features\color_scheme\dynamic_scheme.cpp:33`: `breakpoints.size() - 1` underflows
+- `src/features/color_scheme/dynamic_scheme.cpp:33`: `breakpoints.size() - 1` underflows
   for an empty vector (all callers pass 9; add a guard).
 
 #### C54 style, low (dead code), S
@@ -845,7 +845,7 @@ cache (`bluetooth_win.cpp:268-302`) in the singleton table;
 `RtlUnsubscribeWnfNotificationWaitForCompletion` if C5 uses it.
 
 #### C56 test, low, S
-Fixed sleeps around debounce timers: `D:\waku\src\host\tests\test_shell_host.cpp:68` (900 ms),
+Fixed sleeps around debounce timers: `src/host/tests/test_shell_host.cpp:68` (900 ms),
 `:563`, `:565` (700 ms); `shell_fixtures.h:197` `settle()` = `qWait(60)` used 26 times;
 `test_quickshell_core.cpp:119-147` sets the process-global `SystemClock::setTimeSource` and resets
 it at the end of the body, so an early `ASSERT` leaks the fake clock into later tests. Use
@@ -983,8 +983,8 @@ median.
 ### Memory per phase
 
 ```powershell
-$exe    = Join-Path 'D:\waku' 'dist\waku\waku.exe'
-$wakuc = Join-Path 'D:\waku' 'dist\waku\wakuc.exe'
+$exe    = Join-Path $PWD 'dist\waku\waku.exe'
+$wakuc = Join-Path $PWD 'dist\waku\wakuc.exe'
 $cfg    = Join-Path $env:LOCALAPPDATA 'waku-profile-config'
 $real   = Join-Path $env:USERPROFILE '.config\waku'
 if (-not (Test-Path -LiteralPath $cfg)) { Copy-Item -LiteralPath $real -Destination $cfg -Recurse }
@@ -1119,7 +1119,7 @@ QML profiler (creation, binding and signal-handler times per file). Needs a buil
 PRIVATE $<$<CONFIG:Debug>:QT_QML_DEBUG>)` if it is not there):
 
 ```powershell
-$dbg = Join-Path 'D:\waku' 'build\arm64-debug\src\app\waku\waku.exe'
+$dbg = Join-Path $PWD 'build\arm64-debug\src\app\waku\waku.exe'
 $p = Start-Process -FilePath $dbg -ArgumentList '-qmljsdebugger=port:3768,block','--config-home',$cfg -PassThru
 $qmlprofiler = Join-Path (Split-Path (Get-Command qmake -ErrorAction SilentlyContinue).Source -ErrorAction SilentlyContinue) 'qmlprofiler.exe'
 & $qmlprofiler --attach 127.0.0.1 --port 3768 --output (Join-Path $out 'startup.qtd') --record-duration 15000

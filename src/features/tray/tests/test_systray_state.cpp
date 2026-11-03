@@ -41,7 +41,7 @@ TEST(SystrayStateStore, WritesPythonJsonDumpsFormat) {
   ASSERT_TRUE(dir.isValid());
   SystrayStateStore store(dir.path(), "S1");
   IconStateMap state;
-  state.set("C:\\Users\\jande\\caf\u00E9.exe", IconState{true, 0});
+  state.set("C:\\Users\\me\\caf\u00E9.exe", IconState{true, 0});
   state.set("7820ae75-23e3-4229-82c1-e41cb67d5b9c", IconState{false, 1});
   ASSERT_TRUE(store.save(state));
   QFile file(store.path());
@@ -49,14 +49,14 @@ TEST(SystrayStateStore, WritesPythonJsonDumpsFormat) {
   // json.dumps(indent=2) in text mode on Windows: ASCII only (\u escapes), CRLF, no final newline.
   EXPECT_EQ(file.readAll(),
             "{\r\n"
-            "  \"C:\\\\Users\\\\jande\\\\caf\\u00e9.exe\": {\r\n    \"is_pinned\": true,\r\n"
+            "  \"C:\\\\Users\\\\me\\\\caf\\u00e9.exe\": {\r\n    \"is_pinned\": true,\r\n"
             "    \"index\": 0\r\n  },\r\n"
             "  \"7820ae75-23e3-4229-82c1-e41cb67d5b9c\": {\r\n    \"is_pinned\": false,\r\n"
             "    \"index\": 1\r\n  }\r\n"
             "}");
   const IconStateMap loaded = store.load();
   ASSERT_EQ(loaded.size(), 2u);
-  EXPECT_EQ(loaded.entries().front().first, "C:\\Users\\jande\\caf\u00E9.exe");
+  EXPECT_EQ(loaded.entries().front().first, "C:\\Users\\me\\caf\u00E9.exe");
   EXPECT_TRUE(loaded.entries().front().second.isPinned);
 }
 

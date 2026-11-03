@@ -164,7 +164,7 @@ Delete them yourself for a clean slate. Remove the Startup shortcut too if you a
 - **Stop the bar.** `wakuc quit`.
 - **`wakuc` exit codes.** 0 ok, 1 the bar answered an error, 2 no bar is running, 3 usage error.
 - **Try a config safely.** Pass a scratch folder, for example
-  `waku --config-home D:\scratch\waku`. Your real config stays untouched.
+  `waku --config-home <scratch>\waku`. Your real config stays untouched.
 
 All `waku` flags are in [docs/building.md](building.md). Security notes are in
 [SECURITY.md](../SECURITY.md).
@@ -183,11 +183,11 @@ Build a waku shell for me.
 
 - waku is a Windows top bar configured in QML, and it is Quickshell-compatible. Read
   docs/shells.md in https://github.com/JanDeDobbeleer/waku first.
-- Write the shell into a scratch folder, [D:\scratch\my-shell], with shell.qml (and theme.qml if
-  needed). Run it with: waku --config-home [D:\scratch\my-shell]
+- Write the shell into a scratch folder, [<scratch>\my-shell], with shell.qml (and theme.qml if
+  needed). Run it with: waku --config-home [<scratch>\my-shell]
 - The bar hot reloads when a file is saved. Edit, save, look at the result, repeat. A mistake shows
   an error pill and keeps the previous shell.
-- Use wakuc --config-home [D:\scratch\my-shell] status|reload|call to talk to that bar.
+- Use wakuc --config-home [<scratch>\my-shell] status|reload|call to talk to that bar.
 - The target look is in the attached screenshots: [describe or attach them].
 - Do not touch %USERPROFILE%\.config\waku until I say the shell is done. Then copy the folder
   there.

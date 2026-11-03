@@ -541,7 +541,7 @@ change; rename only what the row says", and `tools\check.ps1` green.
    longer detected as "another tray host"; both would then subclass `Shell_TrayWnd`. Acceptable only
    if yasb-native is no longer run on this machine.
 5. **Repository and product rename.** Does the repository become `wabar` (GitHub rename, CI badge,
-   `vcpkg.json` name, `D:\yasb-native` working folder), and when: with step 10 or after the merge?
+   `vcpkg.json` name, `yasb-native` working folder), and when: with step 10 or after the merge?
 6. **Python YASB as reference.** `AGENTS.md` makes Python YASB the behavioural reference and requires
    porting every Python startup side effect. Proposal: keep it as a reference for OS behaviour only;
    drop the label-parity and startup-parity rules.

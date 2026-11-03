@@ -33,7 +33,7 @@ Lane 1a result, release build: idle private bytes 390 -> 336 MB, with the panels
 - Engine: a copy of the deployed `dist\waku` (`cdcc88a`) for the baseline experiments; for the
   code changes, a release build of the review worktree (`arm64-release`, waku and wakuc only)
   copied over the same deployment, so only `waku.exe` differs between before and after.
-- Shell: a worktree of the caelestia port (`D:\waku-ports\wt\memprobe`, branch `memprobe` at
+- Shell: a worktree of the caelestia port (`<ports>\wt\memprobe`, branch `memprobe` at
   `3e90c0d`), never the production config home.
 - Private instances only: `--config-home <copy> --import-path <copy>\modules --no-tray
   --font-engine=directwrite`, no `--register-app-bar` and no `--hide-taskbar`;
