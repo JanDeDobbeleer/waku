@@ -188,8 +188,8 @@ only version input: the workflow passes it to CMake as `-DWAKU_VERSION` (the def
    `deploy` target, then the C++ runtime DLLs from `VCToolsRedistDir` into `dist/waku`
    (a package cannot run `vc_redist`).
 2. `package` (both architectures): `packaging/msix/build.ps1` makes `waku-<arch>.msix` and
-   `waku-<arch>.appinstaller`. A tag build, or a manual run with `sign`, signs the MSIX with Azure
-   Trusted Signing.
+   `waku-<arch>.appinstaller`. A tag build, or a manual run with `sign`, signs `waku.exe`, `wakuc.exe`,
+   the tray hook DLLs and then the MSIX with Azure Trusted Signing.
 3. `release` (tags only): a GitHub release with both MSIX files, both App Installer files and
    `checksums.txt`.
 
