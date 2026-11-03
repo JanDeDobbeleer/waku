@@ -51,6 +51,13 @@ ShellRoot {
 `wakuc` controls the running bar (`reload`, `status`, `quit` and more). See
 [src/app/README.md](src/app/README.md) for its commands.
 
+## Shells
+
+waku is Quickshell-compatible, so shells written for Quickshell run with few changes. Ready-made
+shells ported to Windows (Caelestia, Noctalia, Omarchy) are in
+[waku-ports](https://github.com/JanDeDobbeleer/waku-ports). Copy one into your config home. What
+differs from Quickshell is in [docs/shells.md](docs/shells.md).
+
 ## Optional companions
 
 waku runs on its own. Two things need a helper:
