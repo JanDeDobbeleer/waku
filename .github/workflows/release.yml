@@ -97,9 +97,20 @@ jobs:
           python -m pip install -r .github/requirements-ci.txt
           python -m aqt install-qt ${{ matrix.qt_host }} desktop $env:QT_VERSION ${{ matrix.qt_arch }} -m qtimageformats -O C:/Qt
 
-      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+      - name: Set up the MSVC environment
+        shell: pwsh
+        run: .github/scripts/msvc-env.ps1 -Arch ${{ matrix.vcvars_arch }}
+
+      # Compiler cache: an unchanged translation unit is not compiled again.
+      - name: Install ccache
+        shell: pwsh
+        run: .github/scripts/install-ccache.ps1 -Arch ${{ matrix.vcvars_arch }}
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          arch: ${{ matrix.vcvars_arch }}
+          path: .ccache
+          key: ccache-${{ matrix.preset }}-${{ github.sha }}
+          restore-keys: ccache-${{ matrix.preset }}-
 
       - name: Configure
         run: cmake --preset ${{ matrix.preset }} -DWAKU_VERSION=${{ needs.version.outputs.version }}
