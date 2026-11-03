@@ -6,8 +6,7 @@ single source of truth for how to work in this repository. Background: `docs/arc
 
 waku is a C++20/Qt 6.10 Qt Quick desktop shell runtime for Windows, configured in QML, with
 Quickshell-compatible modules. Python YASB is a reference for how Windows behaves (undocumented
-APIs, edge cases), not a behavioural spec: nothing in this repository has to match it. Records of
-the earlier Qt Widgets build and the port plans are in `docs/archive/`.
+APIs, edge cases), not a behavioural spec: nothing in this repository has to match it.
 
 ## Build and test
 

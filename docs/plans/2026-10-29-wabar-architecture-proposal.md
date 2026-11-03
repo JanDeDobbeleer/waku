@@ -496,7 +496,7 @@ structure or layering, json-subscript, build `arm64-debug`, `ctest`).
 
 | # | Step | Content | Size | Parallel |
 |---|---|---|---|---|
-| 0 | Tag | tag `yasb-native-final` at the tip before step 3; note it in `README.md` | XS | no |
+| 0 | Tag | tag the tip before step 3; note it in `README.md` | XS | no |
 | 1 | Salvage tests | copy the suites of 2.4 into `spike/tests/` (they compile against `yasb_widgets`/`yasb_platform` as they are) | M | no |
 | 2 | Cut loose | replace `core/config/options/github.h` with a hand-written `widgets/github/github_icons.h`; drop the stale `callbacks.h` include; apply decisions 1 and 3 (wallpaper engine, systray legacy) | S | no |
 | 3 | Delete the Widgets build | delete 2.3; shrink `yasb_ui` to `app_bar`, `backdrop`, `event_bus` and `yasb_widgets` to the 32 kept files; drop `yaml-cpp`, the `generated` step, `tests/CMakeLists.txt` `yasb_tests`, the old `deploy`; trim `AGENTS.md` to the rules that still apply | L (deletion) | no |

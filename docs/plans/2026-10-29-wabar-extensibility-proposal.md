@@ -4,7 +4,7 @@ Status: proposal, 2026-10-29. Nothing here is implemented. Branch `restructure/w
 Companion documents: `2026-10-29-wabar-architecture-proposal.md` (the units and rules S1-S8) and
 `2026-10-29-wabar-styling-proposal.md` (tokens, style bundles, the shadowing finding).
 Revised 2026-10-30: section 11 adopts Quickshell's exact vocabulary and adds what porting
-caelestia needs (`2026-10-30-caelestia-port-assessment.md`). Section 11 wins where it conflicts.
+caelestia needs. Section 11 wins where it conflicts.
 
 The owner's goal: users write their whole shell in QML. Not only a top bar: bars on any of the
 four edges, a launcher, a dock, an OSD, notification popups, menus, a clipboard history, widget
@@ -829,9 +829,8 @@ waits for its parent to show; `null` overrides), `Window.screen` assignable from
 ## 11. Revision 2026-10-30: Quickshell-exact vocabulary and the caelestia port
 
 The owner added a goal: users port the supported functionality and styling of existing Quickshell
-shells to Windows. The first reference is https://github.com/caelestia-dots/shell. The assessment,
-with the feature table and the evidence, is `2026-10-30-caelestia-port-assessment.md`. This section
-records what it changes in this proposal. Where it conflicts with sections 4 to 7, this section
+shells to Windows. The first reference is https://github.com/caelestia-dots/shell. This section
+records what that changes in this proposal. Where it conflicts with sections 4 to 7, this section
 wins. Nothing here is decided until the owner answers questions 12 to 15.
 
 ### 11.1 What changes

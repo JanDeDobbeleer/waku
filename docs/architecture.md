@@ -554,7 +554,7 @@ SDK headers instead of spelling them out.
 ## History
 
 waku began as a C++ port of Python YASB. That port, built on Qt Widgets with YAML and CSS config,
-was retired; its records are in `docs/archive/`. waku replaced it with a Qt Quick shell runtime
+was retired. waku replaced it with a Qt Quick shell runtime
 configured in QML, and in October 2026 the code was reorganised by capability
 into the units above (`docs/plans/2026-10-29-waku-architecture-proposal.md`). Python YASB remains a
 reference for how Windows behaves, not for how waku must behave.
