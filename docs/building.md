@@ -179,19 +179,27 @@ on: pass `--config-home`.
 
 ## Release and MSIX
 
-`.github/workflows/release.yml` builds and packages a release. Push a tag `vX.Y.Z` to run it for
-real; run it by hand (`workflow_dispatch`, with a version) to dry-run the packaging. The tag is the
-only version input: the workflow passes it to CMake as `-DWAKU_VERSION` (the default in
-`CMakeLists.txt` is for local builds) and to `packaging/msix/build.ps1`. Jobs:
+`.github/workflows/release.yml` releases from conventional commits, the way oh-my-posh does. A push
+to `main` that changes shipped files (`src/`, `cmake/`, `examples/`, `packaging/`, the CMake and
+vcpkg files, the release workflow and its scripts) runs it. The `changelog` job reads the commits
+since the last `vX.Y.Z` tag: `feat` bumps the minor version, `fix` and `perf` the patch version,
+and a `BREAKING CHANGE` footer or `!` the major version. Other types (`ci`, `build`, `docs`,
+`chore`, `refactor`, `test`, `style`) release nothing, and a run with no `feat`, `fix`, `perf` or
+breaking commit stops there. The new version is the only version input: the workflow passes it to
+CMake as `-DWAKU_VERSION` (the default in `CMakeLists.txt` is for local builds) and to
+`packaging/msix/build.ps1`. The release notes are the generated changelog. Run the workflow by
+hand (`workflow_dispatch`, optionally with a version) to dry-run the packaging: it publishes
+nothing. Jobs:
 
-1. `build` (x64 on `windows-latest`, ARM64 on `windows-11-arm`): `release` preset (no tests: `build.yml` runs them on every push and pull request), the
-   `deploy` target, then the C++ runtime DLLs from `VCToolsRedistDir` into `dist/waku`
-   (a package cannot run `vc_redist`).
-2. `package` (both architectures): `packaging/msix/build.ps1` makes `waku-<arch>.msix` and
-   `waku-<arch>.appinstaller`. A tag build, or a manual run with `sign`, signs `waku.exe`, `wakuc.exe`,
-   the tray hook DLLs and then the MSIX with Azure Trusted Signing.
-3. `release` (tags only): a GitHub release with both MSIX files, both App Installer files and
-   `checksums.txt`.
+1. `changelog`: the next version, the tag and the notes.
+2. `build` (x64 on `windows-latest`, ARM64 on `windows-11-arm`): `release` preset (no tests:
+   `build.yml` runs them on every pull request), the `deploy` target, then the C++ runtime DLLs
+   from `VCToolsRedistDir` into `dist/waku` (a package cannot run `vc_redist`).
+3. `package` (both architectures): `packaging/msix/build.ps1` makes `waku-<arch>.msix` and
+   `waku-<arch>.appinstaller`. A release, or a manual run with `sign`, signs `waku.exe`,
+   `wakuc.exe`, the tray hook DLLs and then the MSIX with Azure Trusted Signing.
+4. `release` (pushes only): creates the tag on the built commit and a GitHub release with both
+   MSIX files, both App Installer files, `checksums.txt` and the changelog as notes.
 
 Repository secrets for signing: `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`. The
 account and certificate profile are in `packaging/msix/signing.json`; the certificate subject must

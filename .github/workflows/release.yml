@@ -1,20 +1,37 @@
 name: release
 
-# Push a tag v<major>.<minor>.<patch> to build, package and publish a release. Run the workflow by
-# hand to dry-run the packaging: it uploads the MSIX files as artifacts and publishes nothing.
+# A push to main that changes shipped files computes the next version from the conventional
+# commits since the last tag (feat: minor, fix and perf: patch, breaking change: major). With
+# nothing to release the run stops after the changelog job. Otherwise it builds, signs and
+# packages both architectures, tags the commit and publishes a release with the changelog as
+# its notes. Run the workflow by hand to dry-run the packaging: it uploads the MSIX files as
+# artifacts and publishes nothing.
 on:
   push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "cmake/**"
+      - "examples/**"
+      - "packaging/**"
+      - "CMakeLists.txt"
+      - "CMakePresets.json"
+      - "vcpkg.json"
+      - ".github/workflows/release.yml"
+      - ".github/scripts/**"
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to package, without v (for example 0.1.0)"
-        required: true
+        description: "Version to package, without v (for example 0.1.0). Empty uses the next version from the commits."
+        required: false
       sign:
         description: "Sign the packages with Azure Trusted Signing"
         type: boolean
         default: false
+
+concurrency:
+  group: ${{ github.workflow }}
 
 env:
   QT_VERSION: "6.10.2"
@@ -23,26 +40,66 @@ env:
   VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
 
 jobs:
-  version:
+  changelog:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.v.outputs.version }}
+      version: ${{ steps.version.outputs.version }}
+      body: ${{ steps.changelog.outputs.clean_changelog }}
+      tag: ${{ steps.version.outputs.tag }}
+      release: ${{ steps.version.outputs.release }}
     steps:
-      - id: v
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # Reads the commits since the last tag. It writes no file, makes no commit and no tag.
+      - name: Create changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@469f0e5e35831fbd1962706f29f65daf0a5723f2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          skip-version-file: "true"
+          output-file: "false"
+          skip-commit: "true"
+          skip-on-empty: "true"
+          skip-tag: "true"
+
+      - id: version
         shell: bash
         env:
+          COMMITS_VERSION: ${{ steps.changelog.outputs.version }}
+          COMMITS_TAG: ${{ steps.changelog.outputs.tag }}
+          COMMITS_SKIPPED: ${{ steps.changelog.outputs.skipped }}
           INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if [ "$GITHUB_REF_TYPE" = "tag" ]; then v="${GITHUB_REF_NAME#v}"; else v="$INPUT_VERSION"; fi
-          if ! printf '%s' "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "version '$v' is not <major>.<minor>.<patch>" >&2
+          release=false
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            if [ "$COMMITS_SKIPPED" = "false" ]; then
+              release=true; v="${COMMITS_VERSION#v}"
+            fi
+          elif [ -n "$INPUT_VERSION" ]; then
+            v="$INPUT_VERSION"
+          elif [ "$COMMITS_SKIPPED" = "false" ]; then
+            v="${COMMITS_VERSION#v}"
+          else
+            echo "no releasable commits since the last tag and no version input" >&2
             exit 1
           fi
-          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if [ "$release" = "true" ] || [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if ! printf '%s' "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "version '$v' is not <major>.<minor>.<patch>" >&2
+              exit 1
+            fi
+            echo "version=$v" >> "$GITHUB_OUTPUT"
+            echo "tag=v$v" >> "$GITHUB_OUTPUT"
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "next version: ${v:-none} (publish: $release)"
 
   build:
     name: build ${{ matrix.arch }}
-    needs: version
+    needs: changelog
+    if: ${{ needs.changelog.outputs.version != '' }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: true
@@ -114,7 +171,7 @@ jobs:
 
       - name: Configure
         # Quoted: PowerShell splits an unquoted -DNAME=0.1.0 at the first dot.
-        run: cmake --preset ${{ matrix.preset }} "-DWAKU_VERSION=${{ needs.version.outputs.version }}"
+        run: cmake --preset ${{ matrix.preset }} "-DWAKU_VERSION=${{ needs.changelog.outputs.version }}"
 
       - name: Build
         run: cmake --build --preset ${{ matrix.preset }}
@@ -141,7 +198,7 @@ jobs:
 
   package:
     name: package ${{ matrix.arch }}
-    needs: [version, build]
+    needs: [changelog, build]
     runs-on: windows-latest
     strategy:
       fail-fast: true
@@ -165,11 +222,11 @@ jobs:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          SIGN: ${{ github.ref_type == 'tag' || inputs.sign }}
+          SIGN: ${{ needs.changelog.outputs.release == 'true' || inputs.sign }}
         run: |
           $params = @{
               Architecture = '${{ matrix.arch }}'
-              Version      = '${{ needs.version.outputs.version }}'
+              Version      = '${{ needs.changelog.outputs.version }}'
               Source       = '../../dist/waku'
           }
           if ($env:SIGN -eq 'true') { $params.Sign = $true }
@@ -184,8 +241,8 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: github.ref_type == 'tag'
-    needs: [version, package]
+    if: ${{ needs.changelog.outputs.release == 'true' }}
+    needs: [changelog, package]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -200,12 +257,15 @@ jobs:
         working-directory: release
         run: sha256sum waku-* > checksums.txt
 
+      # gh creates the tag on the commit that was built.
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ needs.changelog.outputs.body }}
         run: |
-          gh release create "$GITHUB_REF_NAME" release/* \
+          printf '%s\n' "$NOTES" > notes.md
+          gh release create "${{ needs.changelog.outputs.tag }}" release/* \
             --repo "$GITHUB_REPOSITORY" \
-            --title "waku ${{ needs.version.outputs.version }}" \
-            --generate-notes \
-            --verify-tag
+            --target "$GITHUB_SHA" \
+            --title "waku ${{ needs.changelog.outputs.version }}" \
+            --notes-file notes.md
