@@ -53,11 +53,13 @@ jobs:
             preset: x64-release
             vcvars_arch: x64
             qt_arch: win64_msvc2022_64
+            qt_host: windows
           - arch: arm64
             runner: windows-11-arm
             preset: arm64-release
             vcvars_arch: arm64
             qt_arch: win64_msvc2022_arm64
+            qt_host: windows_arm64
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -93,7 +95,7 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install -r .github/requirements-ci.txt
-          python -m aqt install-qt windows desktop $env:QT_VERSION ${{ matrix.qt_arch }} -O C:/Qt
+          python -m aqt install-qt ${{ matrix.qt_host }} desktop $env:QT_VERSION ${{ matrix.qt_arch }} -O C:/Qt
 
       - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         with:
