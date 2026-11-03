@@ -182,7 +182,7 @@ on: pass `--config-home`.
 `.github/workflows/release.yml` builds, tests and packages a release. Push a tag `vX.Y.Z` to run it
 for real; run it by hand (`workflow_dispatch`, with a version) to dry-run the packaging. Jobs:
 
-1. `build` (x64 on `windows-latest`, ARM64 on `windows-11-arm`): `release` preset, `ctest`, the
+1. `build` (x64 on `windows-latest`, ARM64 on `windows-11-arm`): `release` preset (no tests: `build.yml` runs them on every push and pull request), the
    `deploy` target, then the C++ runtime DLLs from `VCToolsRedistDir` into `dist/waku`
    (a package cannot run `vc_redist`).
 2. `package` (both architectures): `packaging/msix/build.ps1` makes `waku-<arch>.msix` and

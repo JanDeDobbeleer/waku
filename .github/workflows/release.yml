@@ -107,9 +107,6 @@ jobs:
       - name: Build
         run: cmake --build --preset ${{ matrix.preset }}
 
-      - name: Test
-        run: ctest --preset ${{ matrix.preset }}
-
       - name: Deploy
         run: cmake --build --preset ${{ matrix.preset }} --target deploy
 
