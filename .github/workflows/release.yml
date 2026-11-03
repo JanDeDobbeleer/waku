@@ -113,7 +113,8 @@ jobs:
           restore-keys: ccache-${{ matrix.preset }}-
 
       - name: Configure
-        run: cmake --preset ${{ matrix.preset }} -DWAKU_VERSION=${{ needs.version.outputs.version }}
+        # Quoted: PowerShell splits an unquoted -DNAME=0.1.0 at the first dot.
+        run: cmake --preset ${{ matrix.preset }} "-DWAKU_VERSION=${{ needs.version.outputs.version }}"
 
       - name: Build
         run: cmake --build --preset ${{ matrix.preset }}
