@@ -1,0 +1,3 @@
+# Windows runners check out text files with CRLF. QML stays LF (see .editorconfig); the
+# ConfigInit test looks for an LF-terminated "import waku" line in DefaultShell.qml.
+*.qml text eol=lf
