@@ -99,21 +99,28 @@ $writer.Formatting = 'Indented'
 $manifest.Save($writer)
 $writer.Close()
 
-$msix = Join-Path $out $msixName
-& (Find-SdkTool 'makeappx.exe') pack /d $stage /p $msix /o /nv
-if (-not (Test-Path $msix)) { throw "MSIX was not created: $msix" }
-Remove-Item -LiteralPath $stage -Recurse -Force
-
+# Sign our own binaries first so the signature travels inside the package. The Qt and CRT DLLs
+# keep their vendors' signatures. The MSIX itself is signed last.
 if ($Sign) {
     $signtool = Find-SdkTool 'signtool.exe'
     $work = Join-Path $PSScriptRoot 'signing-tools'
     nuget.exe install Microsoft.Trusted.Signing.Client -Version $SigningToolsVersion -OutputDirectory $work -ExcludeVersion | Out-Null
     $dlib = Join-Path $work 'Microsoft.Trusted.Signing.Client/bin/x64/Azure.CodeSigning.Dlib.dll'
     if (-not (Test-Path $dlib)) { throw "Azure.CodeSigning.Dlib.dll not found at $dlib" }
+    $signArgs = @('sign', '/v', '/d', 'waku', '/fd', 'SHA256', '/tr', 'http://timestamp.acs.microsoft.com',
+        '/td', 'SHA256', '/dlib', $dlib, '/dmdf', (Join-Path $PSScriptRoot 'signing.json'))
 
-    & $signtool sign /v /d 'waku' /fd SHA256 /tr 'http://timestamp.acs.microsoft.com' /td SHA256 `
-        /dlib $dlib /dmdf (Join-Path $PSScriptRoot 'signing.json') $msix
+    $binaries = @('waku.exe', 'wakuc.exe') | ForEach-Object { Join-Path $stage $_ }
+    $binaries += Get-ChildItem -Path $stage -Filter 'WakuTrayHook*.dll' | ForEach-Object FullName
+    & $signtool @signArgs @binaries
 }
+
+$msix = Join-Path $out $msixName
+& (Find-SdkTool 'makeappx.exe') pack /d $stage /p $msix /o /nv
+if (-not (Test-Path $msix)) { throw "MSIX was not created: $msix" }
+Remove-Item -LiteralPath $stage -Recurse -Force
+
+if ($Sign) { & $signtool @signArgs $msix }
 
 $state = if ($Sign) { 'signed' } else { 'unsigned' }
 Write-Host "Built $msix ($state)"
