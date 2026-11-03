@@ -46,6 +46,10 @@ env:
 jobs:
   changelog:
     runs-on: ubuntu-latest
+    # The changelog action runs `git push --follow-tags` even with commit and tag skipped. It has
+    # nothing to push, but a read-only token fails it with a 403.
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.version.outputs.version }}
       body: ${{ steps.changelog.outputs.clean_changelog }}
