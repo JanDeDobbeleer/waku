@@ -29,6 +29,10 @@ on:
         description: "Sign the packages with Azure Trusted Signing"
         type: boolean
         default: false
+      publish:
+        description: "Tag the commit and publish a release with this version (needs the version). Used for the first release."
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}
@@ -71,14 +75,20 @@ jobs:
           COMMITS_TAG: ${{ steps.changelog.outputs.tag }}
           COMMITS_SKIPPED: ${{ steps.changelog.outputs.skipped }}
           INPUT_VERSION: ${{ inputs.version }}
+          INPUT_PUBLISH: ${{ inputs.publish }}
         run: |
           release=false
           if [ "$GITHUB_EVENT_NAME" = "push" ]; then
-            if [ "$COMMITS_SKIPPED" = "false" ]; then
+            # Without a tag the changelog would span the whole history. Cut the first release by
+            # hand (publish input), then pushes release from that tag.
+            if [ -z "$(git tag -l 'v*')" ]; then
+              echo "no v* tag yet: not releasing from a push"
+            elif [ "$COMMITS_SKIPPED" = "false" ]; then
               release=true; v="${COMMITS_VERSION#v}"
             fi
           elif [ -n "$INPUT_VERSION" ]; then
             v="$INPUT_VERSION"
+            [ "$INPUT_PUBLISH" = "true" ] && release=true
           elif [ "$COMMITS_SKIPPED" = "false" ]; then
             v="${COMMITS_VERSION#v}"
           else
@@ -261,7 +271,7 @@ jobs:
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
-          NOTES: ${{ needs.changelog.outputs.body }}
+          NOTES: ${{ inputs.publish && 'First public release of waku.' || needs.changelog.outputs.body }}
         run: |
           printf '%s\n' "$NOTES" > notes.md
           gh release create "${{ needs.changelog.outputs.tag }}" release/* \
