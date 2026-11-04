@@ -4,26 +4,14 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <exception>
+#include <utility>
 #include <vector>
 
 #include "features/taskbar/window_tracker.h"
+#include "kernel/win32/winevent_hook.h"
 
 namespace waku::taskbar {
 namespace {
-
-// The WinEvent callback is a bare function pointer, so it reaches the tracker through this. Only
-// one Win32 hook set exists at a time (the tracker is a shared service).
-WindowTracker* g_tracker = nullptr;
-
-void CALLBACK winEventProc(HWINEVENTHOOK, DWORD event, HWND hwnd, LONG idObject, LONG idChild,
-                           DWORD, DWORD) {
-  try {
-    if (g_tracker && hwnd)
-      g_tracker->handleWinEvent(event, reinterpret_cast<WindowHandle>(hwnd), idObject, idChild);
-  } catch (...) {
-    // Never unwind into the system.
-  }
-}
 
 // Forwards SHELLHOOK window messages (delivered to the registered Qt window) to the tracker.
 class ShellHookFilter final : public QAbstractNativeEventFilter {
@@ -64,12 +52,16 @@ class Win32TrackerHooks final : public TrackerHooks {
     if (QCoreApplication* app = QCoreApplication::instance())
       app->installNativeEventFilter(filter_);
 
-    g_tracker = &tracker;
-    const DWORD flags = WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS;
-    const auto hook = [&](DWORD low, DWORD high, const char* what) {
-      HWINEVENTHOOK handle = SetWinEventHook(low, high, nullptr, winEventProc, 0, 0, flags);
-      if (handle)
-        hooks_.push_back(handle);
+    // One range hook per event group; the tracker filters the object and child ids itself.
+    const auto hook = [&](unsigned low, unsigned high, const char* what) {
+      kernel::WinEventHook handle;
+      const bool ok = handle.install(
+          low, high, [&tracker](unsigned event, std::uintptr_t hwnd, long idObject, long idChild) {
+            if (hwnd)
+              tracker.handleWinEvent(event, static_cast<WindowHandle>(hwnd), idObject, idChild);
+          });
+      if (ok)
+        hooks_.push_back(std::move(handle));
       else
         qWarning() << "Failed to set the" << what << "event hooks";
     };
@@ -80,9 +72,7 @@ class Win32TrackerHooks final : public TrackerHooks {
   }
 
   void uninstall() override {
-    for (HWINEVENTHOOK handle : hooks_) UnhookWinEvent(handle);
     hooks_.clear();
-    g_tracker = nullptr;
     if (filter_) {
       if (QCoreApplication* app = QCoreApplication::instance())
         app->removeNativeEventFilter(filter_);
@@ -98,7 +88,7 @@ class Win32TrackerHooks final : public TrackerHooks {
  private:
   HWND shellWindow_ = nullptr;
   ShellHookFilter* filter_ = nullptr;
-  std::vector<HWINEVENTHOOK> hooks_;
+  std::vector<kernel::WinEventHook> hooks_;
 };
 
 }  // namespace

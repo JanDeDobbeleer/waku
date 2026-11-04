@@ -12,6 +12,8 @@
 #include "app/waku/font_engine.h"
 #include "app/waku/quickshell_glue.h"
 #include "control/control.h"
+#include "features/tiling/qml/tiling_service.h"
+#include "features/tiling/tiling_command.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/wallpaper_command.h"
 #include "features/workspaces/komorebi_workarea.h"
@@ -111,6 +113,9 @@ int main(int argc, char* argv[]) {
       QStringLiteral("Never use the undocumented shell interface behind Task View for virtual "
                      "desktops (close, create without a keystroke, animated switch, "
                      "notifications). The registry and the documented calls remain."));
+  QCommandLineOption noTilingOpt(
+      QStringLiteral("no-tiling"),
+      QStringLiteral("Never start the built-in tiler, even when the shell sets Tiling.enabled."));
   QCommandLineOption manageKomorebiOpt(
       QStringLiteral("manage-komorebi"),
       QStringLiteral("After a screen or scale change, run `komorebic replace-configuration` so "
@@ -126,6 +131,7 @@ int main(int argc, char* argv[]) {
   parser.addOption(logFileOpt);
   parser.addOption(noWorkAreaSyncOpt);
   parser.addOption(noShellDesktopsOpt);
+  parser.addOption(noTilingOpt);
   parser.addOption(manageKomorebiOpt);
   parser.addOption(hideTaskbarOpt);
   parser.addOption(noHotkeysOpt);
@@ -141,6 +147,7 @@ int main(int argc, char* argv[]) {
                                       parser.isSet(noWorkAreaSyncOpt));
   waku::kernel::setCapabilityDisabled(QStringLiteral("shell_desktops"),
                                       parser.isSet(noShellDesktopsOpt));
+  waku::kernel::setCapabilityDisabled(QStringLiteral("tiling"), parser.isSet(noTilingOpt));
   waku::kernel::setCapabilityDisabled(QStringLiteral("manage_komorebi"),
                                       !parser.isSet(manageKomorebiOpt));
 
@@ -206,6 +213,14 @@ int main(int argc, char* argv[]) {
               return waku::wallpapers::answerWallpaperCommand(
                   words, engine.singletonInstance<waku::wallpapers::Wallpapers*>(
                              QStringLiteral("waku.services"), QStringLiteral("Wallpapers")));
+            }},
+           {QStringLiteral("tile"),
+            [&engine](const QStringList& words) {
+              // Built on the first `tile` command if no config did; inert unless the shell sets
+              // Tiling.enabled.
+              return waku::tiling::answerTileCommand(
+                  words, engine.singletonInstance<waku::tiling::Tiling*>(
+                             QStringLiteral("waku.services"), QStringLiteral("Tiling")));
             }}},
           taskbar.get())));
   if (!control.listen()) {

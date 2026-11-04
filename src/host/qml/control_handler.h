@@ -35,7 +35,8 @@ using ControlCommands = std::map<QString, ControlCommand>;
 //           runs a function of an IpcHandler (ipc_handler.h): the return value as one line, "ok"
 //           for void, "error: <text>"; without words the handlers and their functions
 //   <verb> [words...]
-//           a verb of `commands`, which gets the words after it (waku.exe adds `wallpaper`);
+//           a verb of `commands`, which gets the words after it (waku.exe adds `wallpaper`,
+//           `tile`);
 //           a built-in verb above wins over a command of the same name
 //   other   "error: unknown command '...' (try: reload, status, quit, shortcut, surface, taskbar,
 //           call, <the verbs of commands>)"

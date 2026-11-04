@@ -9,7 +9,7 @@ case "$subject" in
   "Merge "* | "Revert \""* | "fixup! "* | "squash! "* | "amend! "*) exit 0 ;;
 esac
 
-scopes='kernel|control|host|ui|quickshell|app|apps|desktop_state|audio|bluetooth|brightness|clock|color_scheme|control_center|github|keymap|media|network|notifications|quickshell_io|startup|system_stats|taskbar|tray|wallpapers|workspaces|build|docs|test|style|chore'
+scopes='kernel|control|host|ui|quickshell|app|apps|desktop_state|audio|bluetooth|brightness|clock|color_scheme|control_center|github|keymap|media|network|notifications|quickshell_io|startup|system_stats|taskbar|tiling|tray|wallpapers|workspaces|build|docs|test|style|chore'
 pattern="^(feat|fix|refactor|perf|test|docs|build|ci|chore|style|revert)(\(($scopes)\))?!?: .+"
 if printf '%s\n' "$subject" | grep -Eq "$pattern"; then
   exit 0

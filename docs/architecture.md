@@ -52,6 +52,7 @@ their `win32/` or `qml/` C++ headers, and `testing/` only from tests. The graph 
 | `quickshell` | `kernel`, `control`, `host/qml/`, the root and `qml/` headers and the QML types of any feature, Qt Quick. Only `app` and tests include it. Layout and the type table: `src/quickshell/README.md` |
 | `audio`, `bluetooth`, `network`, `github` | `quickshell_io` (the "open settings" and "open URL" clicks use the `Shell` service) |
 | `control_center` | `audio`, `media`, `notifications`, `brightness` |
+| `tiling` | `workspaces` (the shown virtual desktop in `virtual_desktops.h`, the komorebi process check in `komorebi.h`; the Komorebi and GlazeWM singletons are read by name at run time, no header) |
 | `apps`, `brightness`, `clock`, `color_scheme`, `desktop_state`, `keymap`, `media`, `notifications`, `quickshell_io`, `startup`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces` | no other feature |
 | `app`, `tests/` | everything |
 
@@ -112,6 +113,7 @@ Namespace `waku::kernel`, include `"kernel/<qt|win32>/<file>.h"`.
 |---|---|---|
 | `win32/windows_build.*` | `windowsBuild()`, cached `RtlGetVersion` (allowlist row below) | host backdrop, `src/features/system_stats/win32/pdh.cpp`, `src/features/control_center/win32/power_win.cpp` |
 | `win32/window_focus.*` | `forceForegroundFocus(hwnd)`: `SetForegroundWindow` and `SetFocus` with the documented `AttachThreadInput` workaround, so a window shown from a hotkey or from `wakuc` gets the keyboard focus | host (`NativeHooks::forceForeground` for windows with `keyboardFocus` not None), wallpapers (`Wallpapers::focusWindow`, the gallery), taskbar (`WindowControl::activate`) |
+| `win32/winevent_hook.*` | `WinEventHook`: one out-of-context `SetWinEventHook` range, unhooked by the destructor; the callback runs on the GUI thread and never throws into the system | taskbar (`window_tracker_hooks_win.cpp`, three hooks), tiling (`tiling_hooks_win.cpp`, six hooks) |
 | `win32/winrt_apartment.*` | `ensureWinrtApartment()` | bluetooth, brightness, network (`connectivity_win`, `wlan_win`) |
 | `win32/com_scope.*` | `ComScope(ComApartment[, disableOle1Dde])`: `CoInitializeEx` for one scope, balanced on destruction (S_OK and S_FALSE counted, `RPC_E_CHANGED_MODE` keeps the thread's apartment) | kernel (`shell_icons`, `shell_launch`), apps, taskbar, wallpapers, notifications (`dnd_win`), control_center (touch keyboard), audio |
 | `win32/environment.*` | `expandEnvironment(text)`: `%VARIABLE%` expansion (`ExpandEnvironmentStringsW`) | apps (Start Menu shortcuts), taskbar (pinned shortcuts) |
@@ -407,6 +409,19 @@ settle also starts `komorebic replace-configuration` after a display change, onl
 `komorebi.exe` and `komorebi-bar.exe` run, at most once per 30 s (`CreateToolhelp32Snapshot`, no
 allowlist row). Details: `src/features/workspaces/design.md`.
 
+### The built-in tiler
+
+`src/features/tiling/` (design: `design.md` there) places a window that opens in the slot of its
+layout, per monitor and virtual desktop. It is opt-in: the shell sets `Tiling.enabled`. Events
+come from out-of-context `SetWinEventHook`s (`kernel::WinEventHook`, shared with the taskbar
+tracker): destroy, show and hide; name change; cloak and uncloak; minimize start and end; move
+and size start and end; foreground. `EVENT_OBJECT_LOCATIONCHANGE` is never hooked. A window is
+placed with `SetWindowPos` (`SWP_NOACTIVATE`, `SWP_ASYNCWINDOWPOS`, never `DeferWindowPos`), with
+the invisible frame border added per edge. No thread, no polling, no injected DLL, no undocumented
+API of its own (the shown desktop reads the registry value that has a row in the allowlist
+below). `--no-tiling` disables the capability `tiling`. The tiler does nothing while komorebi or
+GlazeWM runs.
+
 ## Threading
 
 Everything that touches Qt Quick objects runs on the GUI thread. Worker threads never touch them; they
@@ -485,6 +500,7 @@ No new singleton without a row here and a reason.
 | `waku.services.VirtualDesktops` | `src/features/workspaces/qml/virtual_desktops_service.{h,cpp}` | the Windows virtual desktops (list, shown desktop, windows per desktop as HWNDs, switch, close, rename), shared by `Workspaces` and any widget. Reads come from the registry; the system's change hook (the shell's desktop notifications and a `RegNotifyChangeKeyValue` watch) schedules a read after 40 ms, coalesced, and a 5 s `QTimer` poll stays as the safety net and for the window lists (500 ms where no hook is active). `changed()` fires only when the model differs (window lists are sorted so focus changes do not count). `refresh()` is invokable so a shell can read early. Close, create without a keystroke and the animated switch go through the undocumented shell interface (`win32/shell_desktops_win.*`, allowlist rows below) when it opens; otherwise a switch moves an off-screen window of waku to the target desktop (documented `IVirtualDesktopManager`), creating sends Win+Ctrl+D with `SendInput`, and closing is unavailable. GUI thread only (the shell interface is an STA proxy to explorer.exe: no new thread); the notification sink only posts a queued call to the GUI thread. No system unless `kernel::liveDesktop("virtual_desktops")`; the shell interface additionally needs `kernel::liveDesktop("shell_desktops")` (`--no-shell-desktops`) |
 | `waku.services.Komorebi` | `src/features/workspaces/qml/komorebi_client.{h,cpp}` | the one komorebi state of a `waku` run, shared by every widget and by `Workspaces`; created by the QML engine on first use. Owns a `KomorebiService`, which starts the pipe listener thread (see threads) at construction; the destructor calls `stop()`, which joins it. Commands run as hidden processes. Inert unless `kernel::liveDesktop("komorebi")` (no listener, no command); `connected` stays false while komorebi is not running |
 | `waku.services.GlazeWM` | `src/features/workspaces/qml/glazewm_client.{h,cpp}` | the one GlazeWM state of a `waku` run, shared by every widget and by `Workspaces`; created by the QML engine on first use. Owns a `GlazewmService` that subscribes to three topics at construction and starts the WebSocket thread (see threads); the destructor calls `stop()`, which does not wait for it. Inert unless `kernel::liveDesktop("glazewm")` (no socket); `connected` stays false while GlazeWM is not running |
+| `waku.services.Tiling` | `src/features/tiling/qml/tiling_service.{h,cpp}` | the built-in tiler of a `waku` run: one `TilingEngine` over a `WindowPlacer`, six `kernel::WinEventHook`s and the settings (`enabled`, `layout`, `gap`, `ratio`, `rules`). One tiler per run: two would fight over every window. Created on first use (a shell property or a `wakuc tile` command); inert and hook-free until `enabled` is set, and always inert when `kernel::liveDesktop("tiling")` is false (offscreen platform, `--no-tiling`) and while `komorebi.exe` runs or the Komorebi or GlazeWM singleton is connected. Placement uses documented Win32 only (see "The built-in tiler"). GUI thread only; no thread, a 400 ms single-shot timer for screen changes. The destructor unhooks and leaves windows where they are |
 | `waku.services.Media` | `src/features/media/qml/media_service.{h,cpp}` | the current GSMTC session for every Media widget, created by the QML engine on first use. Holds the process's one `MediaSessionService` from `acquireMediaService()`, shared with `Mpris` (see that row); it re-emits the service's signals as `changed`. GUI thread only; the session thread is in the threads table and is joined 30 s after the last holder is destroyed unless a new one comes (a reload). No GSMTC source unless `kernel::liveDesktop("media")`: `available` stays false |
 | `waku.services.AudioOutput`, `waku.services.AudioInput` | `src/features/audio/qml/audio_service.{h,cpp}` | the default render and capture endpoint (volume, mute, devices, default device), one singleton each, created by the QML engine on first use. Each owns one `AudioEndpoints` (`createSystemAudio`); its Core Audio callbacks only re-post to the GUI thread. The destructor calls `stop()`, which releases the callbacks. No thread of its own. No endpoint unless `kernel::liveDesktop("audio")`: nothing available, writes ignored |
 | `waku.services.Shell` | `src/features/quickshell_io/qml/shell_service.{h,cpp}` | what a widget does on click: `start`, `command`, `open`, `env`, `homeDir`, `configHome`. Stateless apart from the config home and an injectable `Launcher` (tests replace it, so no test starts a program). GUI thread only; `open()` goes to `kernel::shellOpen`, which uses a detached thread (see threads). Does not ask `kernel::liveDesktop()` |

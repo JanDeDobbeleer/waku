@@ -392,6 +392,14 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
 
 }  // namespace
 
+std::optional<QString> currentDesktopId() {
+  const std::optional<QByteArray> current = readVirtualDesktopsValue(L"CurrentVirtualDesktop");
+  if (!current) return std::nullopt;
+  const QStringList ids = parseDesktopIds(*current);
+  if (ids.isEmpty()) return std::nullopt;
+  return ids.first();
+}
+
 std::unique_ptr<VirtualDesktopSystem> makeWin32VirtualDesktopSystem() {
   return std::make_unique<Win32VirtualDesktopSystem>();
 }
