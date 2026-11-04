@@ -171,6 +171,14 @@ class Win32WindowPlacer final : public WindowPlacer {
 
   void activate(WindowId id) override { kernel::forceForegroundFocus(id); }
 
+  // PostMessage and ShowWindowAsync do not wait for the window, so a hung one cannot block us.
+  bool close(WindowId id) override {
+    return PostMessageW(reinterpret_cast<HWND>(id), WM_CLOSE, 0, 0) != FALSE;
+  }
+  bool minimize(WindowId id) override {
+    return ShowWindowAsync(reinterpret_cast<HWND>(id), SW_MINIMIZE) != FALSE;
+  }
+
  private:
   QString desktopOf(HWND hwnd) {
     if (!manager_ && !managerFailed_) {

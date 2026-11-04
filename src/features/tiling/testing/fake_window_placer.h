@@ -136,6 +136,15 @@ class FakeWindowPlacer final : public WindowPlacer {
     front = hwnd;
   }
 
+  bool close(WindowId hwnd) override {
+    closed.push_back(hwnd);
+    return windows.count(hwnd) != 0;
+  }
+  bool minimize(WindowId hwnd) override {
+    minimized.push_back(hwnd);
+    return windows.count(hwnd) != 0;
+  }
+
   // The slots given to `hwnd`, oldest first.
   std::vector<QRect> slotsOf(WindowId hwnd) const {
     std::vector<QRect> out;
@@ -158,6 +167,8 @@ class FakeWindowPlacer final : public WindowPlacer {
   std::vector<Placement> placements;
   std::vector<WindowId> cloakedPlacements;
   std::vector<WindowId> activated;
+  std::vector<WindowId> closed;
+  std::vector<WindowId> minimized;
   int queries = 0;
 };
 

@@ -108,3 +108,45 @@ TEST(TilingLayouts, OuterRectIsTheSlotWhenThereIsNoBorder) {
   const QRect rect(50, 50, 300, 200);
   EXPECT_EQ(outerRect(QRect(0, 0, 10, 10), rect, rect), QRect(0, 0, 10, 10));
 }
+
+TEST(TilingLayouts, FlipMirrorsTheSlotsInsideTheArea) {
+  const QRect area(0, 0, 1000, 600);
+  const auto rects = layoutSlots(QStringLiteral("mainStack"), area, 3, 10, 0.5);
+  const auto flipped = waku::tiling::flipSlots(rects, area, true, false);
+  ASSERT_EQ(flipped.size(), 3u);
+  EXPECT_LT(flipped[1].left(), flipped[0].left());  // the main window is on the right now
+  EXPECT_EQ(flipped[0].width(), rects[0].width());
+  EXPECT_EQ(flipped[0].top(), rects[0].top());
+  const auto twice = waku::tiling::flipSlots(flipped, area, true, false);
+  EXPECT_EQ(twice, rects);
+  const auto upside = waku::tiling::flipSlots(rects, area, false, true);
+  EXPECT_GT(upside[1].top(), upside[2].top());  // the stack runs bottom to top
+  expectDisjointInside(flipped, area);
+  expectDisjointInside(upside, area);
+}
+
+TEST(TilingLayouts, WeightsSizeTheStackedWindowsByHeight) {
+  const QRect area(0, 0, 1000, 900);
+  const auto rects = layoutSlots(QStringLiteral("mainStack"), area, 3, 10, 0.5, {1.0, 2.0, 1.0});
+  ASSERT_EQ(rects.size(), 3u);
+  EXPECT_GT(rects[1].height(), rects[2].height());
+  EXPECT_EQ(rects[2].bottom(), 889);
+  expectDisjointInside(rects, area);
+  // Equal weights are the plain layout.
+  EXPECT_EQ(layoutSlots(QStringLiteral("mainStack"), area, 3, 10, 0.5, {1.0, 1.0, 1.0}),
+            layoutSlots(QStringLiteral("mainStack"), area, 3, 10, 0.5));
+}
+
+TEST(TilingLayouts, NeighbourSlotFindsTheNearestSlotInADirection) {
+  const QRect area(0, 0, 1000, 900);
+  const auto rects = layoutSlots(QStringLiteral("mainStack"), area, 4, 10, 0.5);
+  using waku::tiling::Direction;
+  using waku::tiling::neighbourSlot;
+  EXPECT_EQ(neighbourSlot(rects, 0, Direction::Right), 2u);  // the middle of the stack
+  EXPECT_EQ(neighbourSlot(rects, 1, Direction::Left), 0u);
+  EXPECT_EQ(neighbourSlot(rects, 1, Direction::Down), 2u);
+  EXPECT_EQ(neighbourSlot(rects, 3, Direction::Up), 2u);
+  EXPECT_FALSE(neighbourSlot(rects, 0, Direction::Left).has_value());
+  EXPECT_FALSE(neighbourSlot(rects, 1, Direction::Up).has_value());
+  EXPECT_FALSE(neighbourSlot(rects, 9, Direction::Up).has_value());
+}

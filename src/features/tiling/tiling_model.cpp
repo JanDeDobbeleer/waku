@@ -21,6 +21,11 @@ std::optional<WorkspaceKey> TilingModel::remove(WindowId hwnd) {
     std::erase(stack->second, hwnd);
     if (stack->second.empty()) stacks_.erase(stack);
   }
+  const auto view = views_.find(key);
+  if (view != views_.end()) {
+    view->second.weights.erase(hwnd);
+    if (view->second.monocle == hwnd) view->second.monocle = 0;
+  }
   return key;
 }
 
@@ -64,7 +69,37 @@ QString TilingModel::layout(const WorkspaceKey& key, const QString& fallback) co
 
 void TilingModel::setLayout(const WorkspaceKey& key, const QString& name) { layouts_[key] = name; }
 
+const WorkspaceView& TilingModel::view(const WorkspaceKey& key) const {
+  static const WorkspaceView defaults;
+  const auto found = views_.find(key);
+  return found == views_.end() ? defaults : found->second;
+}
+
+void TilingModel::clearRatios() {
+  for (auto& entry : views_) entry.second.ratio.reset();
+}
+
+bool TilingModel::swap(WindowId a, WindowId b) {
+  const std::optional<WorkspaceKey> key = keyOf(a);
+  if (!key || key != keyOf(b) || a == b) return false;
+  std::vector<WindowId>& stack = stacks_[*key];
+  std::iter_swap(std::find(stack.begin(), stack.end(), a),
+                 std::find(stack.begin(), stack.end(), b));
+  return true;
+}
+
+bool TilingModel::promote(WindowId hwnd) {
+  const std::optional<WorkspaceKey> key = keyOf(hwnd);
+  if (!key) return false;
+  std::vector<WindowId>& stack = stacks_[*key];
+  if (stack.front() == hwnd) return false;
+  std::erase(stack, hwnd);
+  stack.insert(stack.begin(), hwnd);
+  return true;
+}
+
 void TilingModel::clear() {
+  views_.clear();
   stacks_.clear();
   owner_.clear();
   layouts_.clear();

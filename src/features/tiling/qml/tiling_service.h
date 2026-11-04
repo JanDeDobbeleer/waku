@@ -113,6 +113,15 @@ class Tiling : public QObject, public TilingControl {
   QString controlRetile() override;
   QString controlFocus(int direction) override;
   QString controlStatus() override;
+  QString controlFocusDirection(Direction direction) override;
+  QString controlMove(Direction direction) override;
+  QString controlPromote() override;
+  QString controlResize(Axis axis, int sign) override;
+  QString controlFlip(Axis axis) override;
+  QString controlMonocle() override;
+  QString controlPause() override;
+  QString controlClose() override;
+  QString controlMinimize() override;
 
  public slots:
   // Re-reads whether the tiler may run: after `enabled` changes and when the Komorebi or GlazeWM
@@ -136,6 +145,8 @@ class Tiling : public QObject, public TilingControl {
   void watchScreen(QScreen* screen);
   void watchSingletons();
   QString notActive() const;
+  // Runs an engine command when the tiler is active; the answer line.
+  QString run(const std::function<CommandResult(TilingEngine&)>& command);
 
   std::unique_ptr<WindowPlacer> placer_;
   std::unique_ptr<TilingHooks> hooks_;

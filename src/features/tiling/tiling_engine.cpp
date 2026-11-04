@@ -7,6 +7,7 @@
 #include <exception>
 
 #include "features/tiling/layouts.h"
+#include "features/tiling/tiling_rules.h"
 
 namespace waku::tiling {
 namespace {
@@ -57,9 +58,11 @@ void TilingEngine::defer(int ms, std::function<void()> task) {
 
 void TilingEngine::setSettings(const TilingSettings& settings) {
   const bool layoutChanged = settings.layout != settings_.layout;
+  const bool ratioChanged = settings.ratio != settings_.ratio;
   settings_ = settings;
   if (!running_) return;
   if (layoutChanged) model_.clearLayouts();
+  if (ratioChanged) model_.clearRatios();
   retileAll();
 }
 
@@ -73,6 +76,7 @@ void TilingEngine::start() {
 
 void TilingEngine::stop() {
   running_ = false;
+  paused_ = false;
   model_.clear();
   ignored_.clear();
   pending_.clear();
@@ -167,6 +171,7 @@ void TilingEngine::onMoveSizeStart(WindowId hwnd) {
 
 void TilingEngine::onMoveSizeEnd(WindowId hwnd) {
   if (moving_.erase(hwnd) == 0 || !model_.contains(hwnd)) return;
+  if (paused_) return;  // nothing was placed, so there is nothing to compare with
   const std::optional<WindowFacts> facts = placer_.query(hwnd);
   const std::optional<WorkspaceKey> key = model_.keyOf(hwnd);
   if (!facts) {
@@ -274,7 +279,7 @@ void TilingEngine::flushRetiles() {
 }
 
 void TilingEngine::retile(const WorkspaceKey& key) {
-  if (!running_) return;
+  if (!running_ || paused_) return;
   // Never place a window of a desktop that is not shown: it is cloaked.
   if (!currentDesktop_.isEmpty() && key.desktop != currentDesktop_) return;
   const std::vector<WindowId> stack = model_.stack(key);
@@ -309,9 +314,13 @@ void TilingEngine::retile(const WorkspaceKey& key) {
     current[hwnd] = facts->rect;
   }
 
-  const std::vector<QRect> rects =
-      layoutSlots(model_.layout(key, settings_.layout), area, static_cast<int>(active.size()),
-                  settings_.gap, settings_.ratio);
+  std::vector<QRect> rects = slotsFor(key, area, active);
+  const WindowId monocle = model_.view(key).monocle;
+  if (monocle != 0 && std::find(active.begin(), active.end(), monocle) != active.end()) {
+    // The monocle window fills the area; the others stay where they are.
+    rects = {layoutSlots(settings_.layout, area, 1, settings_.gap, settings_.ratio).front()};
+    active = {monocle};
+  }
   std::vector<std::pair<WindowId, QRect>> placedNow;
   for (size_t i = 0; i < active.size() && i < rects.size(); ++i) {
     const WindowId hwnd = active[i];
@@ -351,6 +360,24 @@ void TilingEngine::verifyPlacements(const std::vector<std::pair<WindowId, QRect>
       clamped_.erase(hwnd);
     }
   }
+}
+
+std::vector<QRect> TilingEngine::slotsFor(const WorkspaceKey& key, const QRect& area,
+                                          const std::vector<WindowId>& active) const {
+  const WorkspaceView& view = model_.view(key);
+  std::vector<double> weights;
+  weights.reserve(active.size());
+  for (const WindowId hwnd : active) {
+    const auto found = view.weights.find(hwnd);
+    weights.push_back(found == view.weights.end() ? 1.0 : found->second);
+  }
+  std::vector<QRect> rects =
+      layoutSlots(model_.layout(key, settings_.layout), area, static_cast<int>(active.size()),
+                  settings_.gap, view.ratio.value_or(settings_.ratio), weights);
+  if (view.flipHorizontal || view.flipVertical) {
+    rects = flipSlots(std::move(rects), area, view.flipHorizontal, view.flipVertical);
+  }
+  return rects;
 }
 
 // --- commands
@@ -423,6 +450,186 @@ bool TilingEngine::focusStep(int direction) {
   return true;
 }
 
+namespace {
+
+CommandResult ok(const QString& message) { return {true, message}; }
+CommandResult fail(const QString& message) { return {false, message}; }
+
+QString directionName(Direction direction) {
+  switch (direction) {
+    case Direction::Left:
+      return QStringLiteral("left");
+    case Direction::Right:
+      return QStringLiteral("right");
+    case Direction::Up:
+      return QStringLiteral("up");
+    case Direction::Down:
+      return QStringLiteral("down");
+  }
+  return {};
+}
+
+}  // namespace
+
+std::optional<TilingEngine::Focused> TilingEngine::focusedManaged() const {
+  if (const std::optional<WindowId> front = placer_.foreground()) {
+    if (const auto key = model_.keyOf(*front)) return Focused{*key, *front};
+  }
+  return std::nullopt;
+}
+
+std::vector<WindowId> TilingEngine::activeWindows(const WorkspaceKey& key) {
+  std::vector<WindowId> active;
+  for (const WindowId hwnd : model_.stack(key)) {
+    const std::optional<WindowFacts> facts = placer_.query(hwnd);
+    if (!facts || !facts->visible || facts->iconic || facts->zoomed || facts->cloaked) continue;
+    active.push_back(hwnd);
+  }
+  return active;
+}
+
+CommandResult TilingEngine::focusDirection(Direction direction) {
+  if (!running_) return fail(QStringLiteral("the tiler is not running"));
+  const std::optional<Focused> focused = focusedManaged();
+  if (!focused) return fail(QStringLiteral("the focused window is not tiled"));
+  const QRect area = placer_.workArea(focused->key.monitor);
+  const std::vector<WindowId> active = activeWindows(focused->key);
+  const auto at = std::find(active.begin(), active.end(), focused->hwnd);
+  if (area.isEmpty() || at == active.end()) {
+    return fail(QStringLiteral("the focused window has no slot"));
+  }
+  const std::vector<QRect> rects = slotsFor(focused->key, area, active);
+  const std::optional<size_t> next =
+      neighbourSlot(rects, static_cast<size_t>(at - active.begin()), direction);
+  if (!next) return fail(QStringLiteral("no window to the %1").arg(directionName(direction)));
+  placer_.activate(active[*next]);
+  return ok(QStringLiteral("focused"));
+}
+
+CommandResult TilingEngine::moveDirection(Direction direction) {
+  if (!running_) return fail(QStringLiteral("the tiler is not running"));
+  const std::optional<Focused> focused = focusedManaged();
+  if (!focused) return fail(QStringLiteral("the focused window is not tiled"));
+  const QRect area = placer_.workArea(focused->key.monitor);
+  const std::vector<WindowId> active = activeWindows(focused->key);
+  const auto at = std::find(active.begin(), active.end(), focused->hwnd);
+  if (area.isEmpty() || at == active.end()) {
+    return fail(QStringLiteral("the focused window has no slot"));
+  }
+  const std::vector<QRect> rects = slotsFor(focused->key, area, active);
+  const std::optional<size_t> next =
+      neighbourSlot(rects, static_cast<size_t>(at - active.begin()), direction);
+  if (!next) return fail(QStringLiteral("no window to the %1").arg(directionName(direction)));
+  model_.swap(focused->hwnd, active[*next]);
+  requestRetile(focused->key);
+  return ok(QStringLiteral("moved"));
+}
+
+CommandResult TilingEngine::promote() {
+  if (!running_) return fail(QStringLiteral("the tiler is not running"));
+  const std::optional<Focused> focused = focusedManaged();
+  if (!focused) return fail(QStringLiteral("the focused window is not tiled"));
+  if (!model_.promote(focused->hwnd)) return ok(QStringLiteral("already the main window"));
+  requestRetile(focused->key);
+  return ok(QStringLiteral("promoted"));
+}
+
+CommandResult TilingEngine::resize(Axis axis, int sign) {
+  if (!running_) return fail(QStringLiteral("the tiler is not running"));
+  if (sign == 0) return fail(QStringLiteral("no direction"));
+  const std::optional<Focused> focused = focusedManaged();
+  if (!focused) return fail(QStringLiteral("the focused window is not tiled"));
+  const WorkspaceKey& key = focused->key;
+  if (canonicalLayout(model_.layout(key, settings_.layout)) != QLatin1String("mainStack")) {
+    return fail(QStringLiteral("only the mainStack layout resizes"));
+  }
+  const std::vector<WindowId> active = activeWindows(key);
+  const auto at = std::find(active.begin(), active.end(), focused->hwnd);
+  if (at == active.end() || active.size() < 2) return ok(QStringLiteral("unchanged"));
+  const bool isMain = at == active.begin();
+  WorkspaceView& view = model_.edit(key);
+  if (axis == Axis::Horizontal) {
+    // A window of the stack grows by taking width from the main window, and the other way round.
+    const double delta = (isMain ? 1 : -1) * (sign > 0 ? 1 : -1) * kRatioStep;
+    const double current = view.ratio.value_or(settings_.ratio);
+    const double next = std::clamp(current + delta, 0.1, 0.9);
+    if (next == current) return ok(QStringLiteral("unchanged"));
+    view.ratio = next;
+  } else {
+    if (isMain || active.size() < 3) return ok(QStringLiteral("unchanged"));
+    const auto found = view.weights.find(focused->hwnd);
+    const double current = found == view.weights.end() ? 1.0 : found->second;
+    const double next =
+        std::clamp(current + (sign > 0 ? kWeightStep : -kWeightStep), kMinWeight, kMaxWeight);
+    if (next == current) return ok(QStringLiteral("unchanged"));
+    view.weights[focused->hwnd] = next;
+  }
+  requestRetile(key);
+  return ok(QStringLiteral("resized"));
+}
+
+CommandResult TilingEngine::flip(Axis axis) {
+  if (!running_) return fail(QStringLiteral("the tiler is not running"));
+  const std::optional<Focused> focused = focusedManaged();
+  if (!focused) return fail(QStringLiteral("the focused window is not tiled"));
+  WorkspaceView& view = model_.edit(focused->key);
+  bool& flag = axis == Axis::Horizontal ? view.flipHorizontal : view.flipVertical;
+  flag = !flag;
+  requestRetile(focused->key);
+  return ok(
+      QStringLiteral("flip %1 %2")
+          .arg(axis == Axis::Horizontal ? QStringLiteral("horizontal") : QStringLiteral("vertical"),
+               flag ? QStringLiteral("on") : QStringLiteral("off")));
+}
+
+CommandResult TilingEngine::monocle() {
+  if (!running_) return fail(QStringLiteral("the tiler is not running"));
+  const std::optional<Focused> focused = focusedManaged();
+  if (!focused) return fail(QStringLiteral("the focused window is not tiled"));
+  WorkspaceView& view = model_.edit(focused->key);
+  const bool off = view.monocle == focused->hwnd;
+  view.monocle = off ? 0 : focused->hwnd;
+  requestRetile(focused->key);
+  return ok(off ? QStringLiteral("monocle off") : QStringLiteral("monocle on"));
+}
+
+CommandResult TilingEngine::togglePause() {
+  if (!running_) return fail(QStringLiteral("the tiler is not running"));
+  paused_ = !paused_;
+  if (!paused_) retileAll();
+  return ok(paused_ ? QStringLiteral("paused") : QStringLiteral("resumed"));
+}
+
+std::optional<WindowId> TilingEngine::actionableForeground(QString* error) {
+  const std::optional<WindowId> front = placer_.foreground();
+  const std::optional<WindowFacts> facts = front ? placer_.query(*front) : std::nullopt;
+  if (!facts || !facts->visible) {
+    *error = QStringLiteral("no focused window");
+    return std::nullopt;
+  }
+  if (facts->ownProcess || isBuiltinIgnoredClass(facts->className)) {
+    *error = QStringLiteral("the focused window is not an application window");
+    return std::nullopt;
+  }
+  return front;
+}
+
+CommandResult TilingEngine::closeForeground() {
+  QString error;
+  const std::optional<WindowId> hwnd = actionableForeground(&error);
+  if (!hwnd) return fail(error);
+  return placer_.close(*hwnd) ? ok(QStringLiteral("closing"))
+                              : fail(QStringLiteral("close failed"));
+}
+
+CommandResult TilingEngine::minimizeForeground() {
+  QString error;
+  const std::optional<WindowId> hwnd = actionableForeground(&error);
+  if (!hwnd) return fail(error);
+  return placer_.minimize(*hwnd) ? ok(QStringLiteral("minimized"))
+                                 : fail(QStringLiteral("minimize failed"));
+}
+
 TilingStatus TilingEngine::status() const {
   TilingStatus out;
   out.running = running_;
@@ -432,6 +639,7 @@ TilingStatus TilingEngine::status() const {
   out.workspaces = static_cast<int>(model_.keys().size());
   out.clamped = static_cast<int>(clamped_.size());
   out.layout = settings_.layout;
+  out.paused = paused_;
   return out;
 }
 

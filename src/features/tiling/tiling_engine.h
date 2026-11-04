@@ -8,6 +8,7 @@
 #include <set>
 #include <vector>
 
+#include "features/tiling/layouts.h"
 #include "features/tiling/tiling_events.h"
 #include "features/tiling/tiling_model.h"
 #include "features/tiling/tiling_rules.h"
@@ -41,6 +42,13 @@ struct TilingStatus {
   int workspaces = 0;
   int clamped = 0;  // placed windows whose bounds differ from their slot (a minimum size)
   QString layout;
+  bool paused = false;
+};
+
+// The answer of a command: `message` is the text after "ok: " or "error: ".
+struct CommandResult {
+  bool ok = false;
+  QString message;
 };
 
 enum class FloatOutcome { NoWindow, Floated, Tiled, Unchanged, Ineligible };
@@ -97,6 +105,37 @@ class TilingEngine {
   // Activates the next or previous window of the foreground window's workspace, wrapping.
   bool focusStep(int direction);
 
+  // The commands on the focused (foreground) window. All but pause, close and minimize need it to
+  // be managed (tiled); only `focusDirection` activates a window.
+  //
+  // Activates the nearest tiled window of the workspace in `direction`, by slot position.
+  CommandResult focusDirection(Direction direction);
+  // Swaps the focused window with its neighbour in `direction` and retiles.
+  CommandResult moveDirection(Direction direction);
+  // Gives the focused window the main slot (the front of the stack).
+  CommandResult promote();
+  // Grows (`sign` > 0) or shrinks the focused window along `axis` by one step. Horizontal moves
+  // the main/stack boundary of mainStack (kRatioStep); vertical changes the height share of a
+  // stacked window (kWeightStep). Per workspace; clamped.
+  CommandResult resize(Axis axis, int sign);
+  // Mirrors the layout of the focused window's workspace; again undoes it.
+  CommandResult flip(Axis axis);
+  // The focused window fills the work area of its monitor; the others stay where they are. Again
+  // tiles it back.
+  CommandResult monocle();
+  // Stops placing windows (they are still tracked) and starts again; the second call retiles.
+  CommandResult togglePause();
+  // Politely closes or minimizes the foreground window, tiled or not (never one of waku, the
+  // desktop or the shell).
+  CommandResult closeForeground();
+  CommandResult minimizeForeground();
+  bool paused() const { return paused_; }
+
+  static constexpr double kRatioStep = 0.05;
+  static constexpr double kWeightStep = 0.1;
+  static constexpr double kMinWeight = 0.3;
+  static constexpr double kMaxWeight = 3.0;
+
   TilingStatus status() const;
   const TilingModel& model() const { return model_; }
 
@@ -115,12 +154,25 @@ class TilingEngine {
   void verifyPlacements(const std::vector<std::pair<WindowId, QRect>>& placed);
   WorkspaceKey keyFor(const WindowFacts& facts) const;
   std::optional<WorkspaceKey> foregroundKey() const;
+  struct Focused {
+    WorkspaceKey key;
+    WindowId hwnd = 0;
+  };
+  std::optional<Focused> focusedManaged() const;
+  // The windows of the stack that take a slot now, in order (no one is forgotten here).
+  std::vector<WindowId> activeWindows(const WorkspaceKey& key);
+  // The slots of `active` (the layout with the workspace's ratio, weights and flips).
+  std::vector<QRect> slotsFor(const WorkspaceKey& key, const QRect& area,
+                              const std::vector<WindowId>& active) const;
+  // The foreground window when a command may close or minimize it.
+  std::optional<WindowId> actionableForeground(QString* error);
 
   WindowPlacer& placer_;
   Scheduler& scheduler_;
   TilingSettings settings_;
   TilingModel model_;
   bool running_ = false;
+  bool paused_ = false;
   QString currentDesktop_;
   // Windows that were looked at and rejected; the value is true when the reason was a missing
   // title, so a title change looks again.

@@ -24,6 +24,16 @@ struct WorkspaceKey {
   }
 };
 
+// The per-workspace adjustments the `tile` commands make, on top of the layout. A workspace with
+// none has the defaults.
+struct WorkspaceView {
+  std::optional<double> ratio;         // overrides the default main share of mainStack
+  bool flipHorizontal = false;         // mirror left to right
+  bool flipVertical = false;           // mirror top to bottom
+  WindowId monocle = 0;                // the window that fills the work area; 0 for none
+  std::map<WindowId, double> weights;  // height weights of the stacked windows (default 1)
+};
+
 // What the tiler remembers: per workspace an ordered stack (the first window is the main one), a
 // layout name that overrides the default, and one set of floating windows (never placed). In
 // memory only. GUI thread only.
@@ -54,12 +64,25 @@ class TilingModel {
   void setLayout(const WorkspaceKey& key, const QString& name);
   void clearLayouts() { layouts_.clear(); }
 
+  // The adjustments of a workspace (the defaults for an unknown one) and a way to change them.
+  const WorkspaceView& view(const WorkspaceKey& key) const;
+  WorkspaceView& edit(const WorkspaceKey& key) { return views_[key]; }
+  // Forgets every ratio override (the default ratio changed).
+  void clearRatios();
+
+  // Exchanges the places of two windows of one stack; false when they are not in the same one.
+  bool swap(WindowId a, WindowId b);
+  // Moves the window to the front of its stack (the main slot); false when it is there already or
+  // is in no stack.
+  bool promote(WindowId hwnd);
+
   void clear();
 
  private:
   std::map<WorkspaceKey, std::vector<WindowId>> stacks_;
   std::map<WindowId, WorkspaceKey> owner_;
   std::map<WorkspaceKey, QString> layouts_;
+  std::map<WorkspaceKey, WorkspaceView> views_;
   std::set<WindowId> floating_;
 };
 

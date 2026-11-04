@@ -272,11 +272,57 @@ QString Tiling::controlFocus(int direction) {
                                        : QStringLiteral("error: no window to focus");
 }
 
+QString Tiling::run(const std::function<CommandResult(TilingEngine&)>& command) {
+  if (!active_ || !engine_) return notActive();
+  try {
+    const CommandResult result = command(*engine_);
+    return (result.ok ? QStringLiteral("ok: ") : QStringLiteral("error: ")) + result.message;
+  } catch (const std::exception& e) {
+    return QStringLiteral("error: %1").arg(QString::fromUtf8(e.what()));
+  }
+}
+
+QString Tiling::controlFocusDirection(Direction direction) {
+  return run([direction](TilingEngine& e) { return e.focusDirection(direction); });
+}
+
+QString Tiling::controlMove(Direction direction) {
+  return run([direction](TilingEngine& e) { return e.moveDirection(direction); });
+}
+
+QString Tiling::controlPromote() {
+  return run([](TilingEngine& e) { return e.promote(); });
+}
+
+QString Tiling::controlResize(Axis axis, int sign) {
+  return run([axis, sign](TilingEngine& e) { return e.resize(axis, sign); });
+}
+
+QString Tiling::controlFlip(Axis axis) {
+  return run([axis](TilingEngine& e) { return e.flip(axis); });
+}
+
+QString Tiling::controlMonocle() {
+  return run([](TilingEngine& e) { return e.monocle(); });
+}
+
+QString Tiling::controlPause() {
+  return run([](TilingEngine& e) { return e.togglePause(); });
+}
+
+QString Tiling::controlClose() {
+  return run([](TilingEngine& e) { return e.closeForeground(); });
+}
+
+QString Tiling::controlMinimize() {
+  return run([](TilingEngine& e) { return e.minimizeForeground(); });
+}
+
 QString Tiling::controlStatus() {
   const TilingStatus status = engine_ ? engine_->status() : TilingStatus();
   return QStringLiteral(
              "ok: enabled=%1; active=%2; blocked=%3; layout=%4; gap=%5; ratio=%6; managed=%7; "
-             "floating=%8; workspaces=%9; clamped=%10; desktop=%11")
+             "floating=%8; workspaces=%9; clamped=%10; paused=%11; desktop=%12")
       .arg(yesNo(enabled_), yesNo(active_),
            blockedBy().isEmpty() ? QStringLiteral("no") : blockedBy(), settings_.layout,
            QString::number(settings_.gap), QString::number(settings_.ratio))
@@ -284,6 +330,7 @@ QString Tiling::controlStatus() {
       .arg(status.floating)
       .arg(status.workspaces)
       .arg(status.clamped)
+      .arg(yesNo(status.paused))
       .arg(status.desktop.isEmpty() ? QStringLiteral("unknown") : status.desktop);
 }
 
