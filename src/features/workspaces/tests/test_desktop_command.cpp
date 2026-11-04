@@ -54,8 +54,13 @@ class FakeSystem final : public vdesk::VirtualDesktopSystem {
     moves.push_back(index);
     return moveResult;
   }
+  MoveResult moveWindow(quint64 hwnd, int index) override {
+    windowMoves.emplace_back(hwnd, index);
+    return moveResult;
+  }
 
   std::optional<vdesk::State> state;
+  std::vector<std::pair<quint64, int>> windowMoves;
   std::vector<int> jumps;
   std::vector<int> moves;
   int created = 0;
@@ -165,6 +170,32 @@ TEST(DesktopCommandService, MoveSaysWhyItFailed) {
   EXPECT_TRUE(h.desktops->controlMove(2).startsWith(QLatin1String("error:")));
   h.system->moveResult = Result::Unsupported;
   EXPECT_TRUE(h.desktops->controlMove(2).startsWith(QLatin1String("error:")));
+}
+
+namespace {
+// Only read() and jumpTo() and create() are implemented: the rest is the interface's default.
+class BareSystem final : public vdesk::VirtualDesktopSystem {
+ public:
+  std::optional<vdesk::State> read() override { return std::nullopt; }
+  bool jumpTo(int) override { return false; }
+  int create() override { return -1; }
+};
+}  // namespace
+
+TEST(DesktopCommandService, ASystemWithoutMoveSupportAnswersUnsupported) {
+  BareSystem bare;
+  EXPECT_EQ(bare.moveWindow(0x1234, 1), vdesk::VirtualDesktopSystem::MoveResult::Unsupported);
+  EXPECT_EQ(bare.moveForegroundWindow(1), vdesk::VirtualDesktopSystem::MoveResult::Unsupported);
+}
+
+TEST(DesktopCommandService, AFakeRecordsTheWindowAndTheDesktopOfAMove) {
+  Harness h(0);
+  EXPECT_EQ(h.system->moveWindow(0x1234, 2), vdesk::VirtualDesktopSystem::MoveResult::Moved);
+  h.system->moveResult = vdesk::VirtualDesktopSystem::MoveResult::Refused;
+  EXPECT_EQ(h.system->moveWindow(0x99, 1), vdesk::VirtualDesktopSystem::MoveResult::Refused);
+  ASSERT_EQ(h.system->windowMoves.size(), 2u);
+  EXPECT_EQ(h.system->windowMoves[0], (std::pair<quint64, int>(0x1234, 2)));
+  EXPECT_EQ(h.system->windowMoves[1], (std::pair<quint64, int>(0x99, 1)));
 }
 
 TEST(DesktopCommandService, StatusNamesTheShownDesktopAndTheCount) {

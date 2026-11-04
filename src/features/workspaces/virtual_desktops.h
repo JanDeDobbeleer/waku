@@ -59,9 +59,18 @@ class VirtualDesktopSystem {
     Refused,      // Windows refused, or the desktop does not exist
     Unsupported,  // this system cannot move windows
   };
-  // Moves the foreground window to the desktop at `index` without showing that desktop (documented
-  // IVirtualDesktopManager::MoveWindowToDesktop). Creates nothing. If `index` is not the shown
-  // desktop the window leaves this one.
+  // Moves the top-level window `hwnd` to the desktop at `index` without showing that desktop.
+  // The real system asks the shell (the move Task View's "Move to" makes, which works for windows
+  // of any process) and falls back to the documented IVirtualDesktopManager::MoveWindowToDesktop
+  // (which Windows refuses for windows of other processes). Creates nothing. Refused when the
+  // window or the desktop does not exist, or when both routes fail.
+  virtual MoveResult moveWindow(quint64 hwnd, int index) {
+    Q_UNUSED(hwnd);
+    Q_UNUSED(index);
+    return MoveResult::Unsupported;
+  }
+  // Moves the foreground window to the desktop at `index` without showing that desktop, by way of
+  // moveWindow(). Creates nothing. If `index` is not the shown desktop the window leaves this one.
   virtual MoveResult moveForegroundWindow(int index) {
     Q_UNUSED(index);
     return MoveResult::Unsupported;

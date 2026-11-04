@@ -113,11 +113,27 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
     DWORD pid = 0;
     GetWindowThreadProcessId(hwnd, &pid);
     if (pid == GetCurrentProcessId()) return MoveResult::OwnWindow;
+    return moveWindow(static_cast<quint64>(reinterpret_cast<quintptr>(hwnd)), index);
+  }
+
+  // The shell's move first: it works for windows of other processes. The documented call is the
+  // fallback (and works for this process's own windows); when both fail the window stays.
+  MoveResult moveWindow(quint64 hwnd, int index) override {
+    const HWND window = reinterpret_cast<HWND>(static_cast<quintptr>(hwnd));
+    if (!IsWindow(window)) return MoveResult::Refused;
+    const QStringList registry = registryIds();
+    if (index < 0 || index >= registry.size()) return MoveResult::Refused;
+    const QString& target = registry.at(index);
+    if (ShellDesktopApi* api = shellApi()) {
+      const bool moved = api->moveWindow(hwnd, target);
+      checkLost();
+      if (moved) return MoveResult::Moved;
+    }
     IVirtualDesktopManager* mgr = manager();
     if (!mgr) return MoveResult::Unsupported;
     const std::vector<GUID> ids = desktopGuids();
-    if (index < 0 || index >= static_cast<int>(ids.size())) return MoveResult::Refused;
-    const HRESULT hr = mgr->MoveWindowToDesktop(hwnd, ids[static_cast<size_t>(index)]);
+    if (index >= static_cast<int>(ids.size())) return MoveResult::Refused;
+    const HRESULT hr = mgr->MoveWindowToDesktop(window, ids[static_cast<size_t>(index)]);
     if (FAILED(hr)) {
       qWarning().noquote() << "virtual desktops: MoveWindowToDesktop failed, hr ="
                            << QString::number(static_cast<quint32>(hr), 16);

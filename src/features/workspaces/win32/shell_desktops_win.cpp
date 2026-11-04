@@ -116,6 +116,13 @@ constexpr GUID kIidNotificationService = {
     0x0CD45E71, 0xD927, 0x4F15, {0x8B, 0x0A, 0x8F, 0xEF, 0x52, 0x53, 0x37, 0xBF}};
 constexpr GUID kIidNotification = {
     0xB9E5E94D, 0x233E, 0x49AB, {0xAF, 0x5C, 0x2B, 0x45, 0x41, 0xC3, 0xAA, 0xDE}};
+// IApplicationViewCollection: both the service id and the interface id.
+constexpr GUID kIidViewCollection = {
+    0x1841C6D7, 0x4F9D, 0x42C0, {0xAF, 0x41, 0x87, 0x47, 0x53, 0x8F, 0x10, 0xE5}};
+// IApplicationView (an IInspectable). Only registered here to check the build knows it; the view
+// is held as an IUnknown and handed back to MoveViewToDesktop untouched.
+constexpr GUID kIidView = {
+    0x372E1D3B, 0x38D3, 0x42E4, {0xA1, 0x5B, 0x8A, 0xB2, 0xB1, 0x78, 0xF5, 0x13}};
 
 // IVirtualDesktop on build 26100 and later has these four methods and no more (a fifth, IsRemote,
 // is not there and calling it crashes). Slots count from 3, after IUnknown.
@@ -152,6 +159,15 @@ struct IShellDesktopManager : IUnknown {
   virtual HRESULT STDMETHODCALLTYPE CreateRemoteDesktop(HSTRING, IShellDesktop**) = 0;         // 20
   virtual HRESULT STDMETHODCALLTYPE SwitchRemoteDesktop(IShellDesktop*, void*) = 0;            // 21
   virtual HRESULT STDMETHODCALLTYPE SwitchDesktopWithAnimation(IShellDesktop* desktop) = 0;    // 22
+};
+
+// IApplicationViewCollection, IID 1841C6D7. Only GetViewForHwnd is called; the three before it keep
+// their place.
+struct IShellViewCollection : IUnknown {
+  virtual HRESULT STDMETHODCALLTYPE GetViews(void**) = 0;                            // 3
+  virtual HRESULT STDMETHODCALLTYPE GetViewsByZOrder(void**) = 0;                    // 4
+  virtual HRESULT STDMETHODCALLTYPE GetViewsByAppUserModelId(PCWSTR, void**) = 0;    // 5
+  virtual HRESULT STDMETHODCALLTYPE GetViewForHwnd(HWND hwnd, IUnknown** view) = 0;  // 6
 };
 
 // IVirtualDesktopNotificationService, IID 0CD45E71.
@@ -355,6 +371,8 @@ struct ShellDesktopApi::Impl {
   kernel::ComScope com{kernel::ComApartment::SingleThreaded};
   ComPtr<IServiceProvider> provider;
   ComPtr<IShellDesktopManager> manager;
+  ComPtr<IShellViewCollection> views;  // opened on the first moveWindow
+  bool viewsFailed = false;
   ComPtr<IShellDesktopNotificationService> notifications;
   ComPtr<Sink> sink;
   DWORD cookie = 0;
@@ -448,6 +466,38 @@ struct ShellDesktopApi::Impl {
       return std::nullopt;
     }
     return idString(guid);
+  }
+
+  // The view service, or null (logged once) when this build does not have it.
+  IShellViewCollection* viewCollection() {
+    if (views) return views.Get();
+    if (viewsFailed) return nullptr;
+    viewsFailed = true;
+    if (!interfaceRegistered(kIidViewCollection) || !interfaceRegistered(kIidView)) {
+      qWarning() << "virtual desktops: the view interfaces are not registered on this build";
+      return nullptr;
+    }
+    ComPtr<IUnknown> unknown;
+    if (FAILED(call("QueryService(views)",
+                    [&] {
+                      return provider->QueryService(
+                          kIidViewCollection, IID_IUnknown,
+                          reinterpret_cast<void**>(unknown.GetAddressOf()));
+                    })) ||
+        !unknown) {
+      return nullptr;
+    }
+    if (FAILED(call("QueryInterface(views)",
+                    [&] {
+                      return unknown->QueryInterface(
+                          kIidViewCollection, reinterpret_cast<void**>(views.GetAddressOf()));
+                    })) ||
+        !views) {
+      views.Reset();
+      return nullptr;
+    }
+    viewsFailed = false;
+    return views.Get();
   }
 
   // Read-only comparison with the registry. Empty on success, else the first difference.
@@ -594,6 +644,24 @@ bool ShellDesktopApi::rename(const QString& id, const QString& name) {
       "SetDesktopName", [&] { return impl_->manager->SetDesktopName(desktop.Get(), text); }));
   if (text) WindowsDeleteString(text);
   return ok;
+}
+
+bool ShellDesktopApi::moveWindow(quint64 hwnd, const QString& id) {
+  if (hwnd == 0 || !impl_->verifiedForMutation()) return false;
+  IShellViewCollection* views = impl_->viewCollection();
+  if (!views) return false;
+  const ComPtr<IShellDesktop> desktop = impl_->find(id);
+  if (!desktop) return false;
+  ComPtr<IUnknown> view;
+  const HWND window = reinterpret_cast<HWND>(static_cast<quintptr>(hwnd));
+  if (FAILED(impl_->call("GetViewForHwnd",
+                         [&] { return views->GetViewForHwnd(window, view.GetAddressOf()); })) ||
+      !view) {
+    return false;
+  }
+  return SUCCEEDED(impl_->call("MoveViewToDesktop", [&] {
+    return impl_->manager->MoveViewToDesktop(view.Get(), desktop.Get());
+  }));
 }
 
 bool ShellDesktopApi::registerNotifications(std::function<void()> changed,

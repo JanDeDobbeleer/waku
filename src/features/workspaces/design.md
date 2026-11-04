@@ -132,7 +132,22 @@ fails soft. The GUIDs, slots and what was verified are in the allowlist rows of
 - **Tests.** The COM glue has no unit test; the rules around it do (`removalFallbackIndex`, remove
   guards, change-hook coalescing) on a fake `VirtualDesktopSystem`. No test calls the shell.
 
+### Moving a window
+
+`ShellDesktopApi::moveWindow(hwnd, desktopId)` does what Task View's "Move to" does:
+`IApplicationViewCollection::GetViewForHwnd(hwnd)` (a service of ImmersiveShell, same GUID as its
+interface) gives the window's `IApplicationView`, and `IVirtualDesktopManagerInternal::MoveViewToDesktop(view,
+desktop)` (slot 4) moves it. The documented `IVirtualDesktopManager::MoveWindowToDesktop` is refused for
+windows of other processes. The view is never called into; it is only handed back, so no
+`IApplicationView` slot layout is declared. Verified on build 26300: a window of another process
+moved to the other desktop and back, `GetWindowDesktopId` confirmed it, and the shown desktop did not
+change. The fail-soft chain is: shell route, documented call, `Refused`. The first change of a run
+re-verifies the manager against the registry as for switch and close.
+
 ### Open points
+
+- A view exists only for a window the shell tracks. A window without a view (some tool windows)
+  falls through to the documented call, which refuses it.
 
 - Focus after `SwitchDesktop` is not guaranteed; the animated call is the default for that reason
   and for parity with the keyboard.
@@ -152,10 +167,9 @@ implements `DesktopControl`). Numbers count from 1. Each command reads the regis
 - `move <n>` sends the foreground window to desktop `n` with the documented
   `IVirtualDesktopManager::MoveWindowToDesktop`, using the GUID from the registry list. Nothing is
   created and the view does not follow. A window of waku, the desktop and the taskbar are refused.
-  Open point: the documented call is meant for windows of the calling process, so Windows may
-  refuse a window of another process (it answers `error: Windows refused ...` and logs the
-  `HRESULT`). The move through `IVirtualDesktopManagerInternal::MoveViewToDesktop` needs an
-  `IApplicationView` for the window and is not built; see the shell interface section.
+  The shell route comes first (see "Moving a window"); the documented call is the fallback and
+  only works for windows of the calling process. When both fail it answers `error: Windows refused
+  ...` and logs the `HRESULT`.
 
 ## komorebi's work area
 

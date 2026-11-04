@@ -71,6 +71,11 @@ class ShellDesktopApi {
   // call of a run re-verifies the desktop list against the registry and refuses when they differ.
   bool remove(const QString& id, const QString& fallbackId);
   bool rename(const QString& id, const QString& name);
+  // Moves the top-level window `hwnd` (of any process) to desktop `id` without showing that
+  // desktop, like Task View's "Move to". Goes through IApplicationViewCollection::GetViewForHwnd
+  // and MoveViewToDesktop. Same first-mutation re-verification as the calls above. False when the
+  // view service is missing, the window has no view, or the shell refuses.
+  bool moveWindow(quint64 hwnd, const QString& id);
 
   // Registers for the shell's desktop notifications. `changed` runs, on the GUI thread, after any
   // desktop event; `destroyBegin` runs after a desktop is closed with the ids of the closed desktop
