@@ -1,4 +1,4 @@
-// The pure geometry of the tiler: slots, border compensation, layout names.
+// The pure geometry of the tiler: rects, border compensation, layout names.
 #include <gtest/gtest.h>
 
 #include "features/tiling/layouts.h"
@@ -9,12 +9,12 @@ using waku::tiling::outerRect;
 
 namespace {
 
-void expectDisjointInside(const std::vector<QRect>& slots, const QRect& area) {
-  for (size_t i = 0; i < slots.size(); ++i) {
-    EXPECT_TRUE(area.contains(slots[i])) << i;
-    EXPECT_GT(slots[i].width(), 0) << i;
-    EXPECT_GT(slots[i].height(), 0) << i;
-    for (size_t j = i + 1; j < slots.size(); ++j) EXPECT_FALSE(slots[i].intersects(slots[j]));
+void expectDisjointInside(const std::vector<QRect>& rects, const QRect& area) {
+  for (size_t i = 0; i < rects.size(); ++i) {
+    EXPECT_TRUE(area.contains(rects[i])) << i;
+    EXPECT_GT(rects[i].width(), 0) << i;
+    EXPECT_GT(rects[i].height(), 0) << i;
+    for (size_t j = i + 1; j < rects.size(); ++j) EXPECT_FALSE(rects[i].intersects(rects[j]));
   }
 }
 
@@ -22,24 +22,24 @@ void expectDisjointInside(const std::vector<QRect>& slots, const QRect& area) {
 
 TEST(TilingLayouts, OneWindowFillsTheAreaMinusTheGap) {
   const QRect area(0, 0, 1000, 600);
-  const auto slots = layoutSlots(QStringLiteral("mainStack"), area, 1, 10, 0.5);
-  ASSERT_EQ(slots.size(), 1u);
-  EXPECT_EQ(slots[0], QRect(10, 10, 980, 580));
+  const auto rects = layoutSlots(QStringLiteral("mainStack"), area, 1, 10, 0.5);
+  ASSERT_EQ(rects.size(), 1u);
+  EXPECT_EQ(rects[0], QRect(10, 10, 980, 580));
 }
 
 TEST(TilingLayouts, MainStackPutsTheMainWindowLeftAndStacksTheRest) {
   const QRect area(0, 0, 1000, 600);
-  const auto slots = layoutSlots(QStringLiteral("mainStack"), area, 3, 10, 0.5);
-  ASSERT_EQ(slots.size(), 3u);
+  const auto rects = layoutSlots(QStringLiteral("mainStack"), area, 3, 10, 0.5);
+  ASSERT_EQ(rects.size(), 3u);
   // Inner area 980x580 at (10,10); width without the middle gap 970, main 485.
-  EXPECT_EQ(slots[0], QRect(10, 10, 485, 580));
-  EXPECT_EQ(slots[1].x(), 505);
-  EXPECT_EQ(slots[2].x(), 505);
-  EXPECT_EQ(slots[1].width(), 485);
-  EXPECT_EQ(slots[1].y(), 10);
-  EXPECT_EQ(slots[2].y(), slots[1].y() + slots[1].height() + 10);
-  EXPECT_EQ(slots[2].y() + slots[2].height(), 590);  // the last absorbs the remainder
-  expectDisjointInside(slots, area);
+  EXPECT_EQ(rects[0], QRect(10, 10, 485, 580));
+  EXPECT_EQ(rects[1].x(), 505);
+  EXPECT_EQ(rects[2].x(), 505);
+  EXPECT_EQ(rects[1].width(), 485);
+  EXPECT_EQ(rects[1].y(), 10);
+  EXPECT_EQ(rects[2].y(), rects[1].y() + rects[1].height() + 10);
+  EXPECT_EQ(rects[2].y() + rects[2].height(), 590);  // the last absorbs the remainder
+  expectDisjointInside(rects, area);
 }
 
 TEST(TilingLayouts, RatioMovesTheSplitAndIsClamped) {
@@ -53,13 +53,13 @@ TEST(TilingLayouts, RatioMovesTheSplitAndIsClamped) {
 
 TEST(TilingLayouts, ColumnsAreEqualAndAbsorbTheRemainder) {
   const QRect area(0, 0, 1000, 600);
-  const auto slots = layoutSlots(QStringLiteral("columns"), area, 3, 8, 0.5);
-  ASSERT_EQ(slots.size(), 3u);
-  expectDisjointInside(slots, area);
-  EXPECT_EQ(slots[0].y(), 8);
-  EXPECT_EQ(slots[0].height(), 584);
-  EXPECT_EQ(slots[2].x() + slots[2].width(), 992);
-  EXPECT_NEAR(slots[0].width(), slots[1].width(), 1);
+  const auto rects = layoutSlots(QStringLiteral("columns"), area, 3, 8, 0.5);
+  ASSERT_EQ(rects.size(), 3u);
+  expectDisjointInside(rects, area);
+  EXPECT_EQ(rects[0].y(), 8);
+  EXPECT_EQ(rects[0].height(), 584);
+  EXPECT_EQ(rects[2].x() + rects[2].width(), 992);
+  EXPECT_NEAR(rects[0].width(), rects[1].width(), 1);
 }
 
 TEST(TilingLayouts, ManyWindowsStayInsideAndDisjoint) {
@@ -78,9 +78,9 @@ TEST(TilingLayouts, ZeroWindowsOrAnEmptyAreaGiveNothing) {
 
 TEST(TilingLayouts, AHugeGapStillGivesPositiveSlots) {
   const QRect area(0, 0, 100, 100);
-  const auto slots = layoutSlots(QStringLiteral("mainStack"), area, 4, 500, 0.5);
-  ASSERT_EQ(slots.size(), 4u);
-  expectDisjointInside(slots, area);
+  const auto rects = layoutSlots(QStringLiteral("mainStack"), area, 4, 500, 0.5);
+  ASSERT_EQ(rects.size(), 4u);
+  expectDisjointInside(rects, area);
 }
 
 TEST(TilingLayouts, AnUnknownLayoutIsMainStack) {

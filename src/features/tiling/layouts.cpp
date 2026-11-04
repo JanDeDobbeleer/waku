@@ -39,8 +39,8 @@ QString canonicalLayout(const QString& name) {
 
 std::vector<QRect> layoutSlots(const QString& layout, const QRect& area, int count, int gap,
                                double ratio) {
-  std::vector<QRect> slots;
-  if (count <= 0 || area.isEmpty()) return slots;
+  std::vector<QRect> rects;
+  if (count <= 0 || area.isEmpty()) return rects;
   // A gap the area cannot hold shrinks, so every slot stays positive and inside the area.
   gap = std::clamp(gap, 0, std::min(area.width(), area.height()) / (2 * (count + 1)));
   ratio = std::clamp(ratio, 0.1, 0.9);
@@ -49,24 +49,24 @@ std::vector<QRect> layoutSlots(const QString& layout, const QRect& area, int cou
 
   if (canonicalLayout(layout) == kColumns) {
     for (const auto& [x, w] : spans(inner.x(), inner.width(), count, gap)) {
-      slots.emplace_back(x, inner.y(), w, inner.height());
+      rects.emplace_back(x, inner.y(), w, inner.height());
     }
-    return slots;
+    return rects;
   }
 
   if (count == 1) {
-    slots.push_back(inner);
-    return slots;
+    rects.push_back(inner);
+    return rects;
   }
   const int usableWidth = std::max(2, inner.width() - gap);
   const int mainWidth = std::clamp(static_cast<int>(usableWidth * ratio + 0.5), 1, usableWidth - 1);
-  slots.emplace_back(inner.x(), inner.y(), mainWidth, inner.height());
+  rects.emplace_back(inner.x(), inner.y(), mainWidth, inner.height());
   const int stackX = inner.x() + mainWidth + gap;
   const int stackWidth = std::max(1, inner.x() + inner.width() - stackX);
   for (const auto& [y, h] : spans(inner.y(), inner.height(), count - 1, gap)) {
-    slots.emplace_back(stackX, y, stackWidth, h);
+    rects.emplace_back(stackX, y, stackWidth, h);
   }
-  return slots;
+  return rects;
 }
 
 QRect outerRect(const QRect& slot, const QRect& windowRect, const QRect& visibleRect) {

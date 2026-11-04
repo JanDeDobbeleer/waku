@@ -309,19 +309,19 @@ void TilingEngine::retile(const WorkspaceKey& key) {
     current[hwnd] = facts->rect;
   }
 
-  const std::vector<QRect> slots =
+  const std::vector<QRect> rects =
       layoutSlots(model_.layout(key, settings_.layout), area, static_cast<int>(active.size()),
                   settings_.gap, settings_.ratio);
   std::vector<std::pair<WindowId, QRect>> placedNow;
-  for (size_t i = 0; i < active.size() && i < slots.size(); ++i) {
+  for (size_t i = 0; i < active.size() && i < rects.size(); ++i) {
     const WindowId hwnd = active[i];
     if (moving_.count(hwnd)) continue;  // the user holds it: its slot stays empty
-    if (current[hwnd] == slots[i]) {
-      placed_[hwnd] = slots[i];
+    if (current[hwnd] == rects[i]) {
+      placed_[hwnd] = rects[i];
       clamped_.erase(hwnd);
       continue;
     }
-    const PlaceResult result = placer_.place(hwnd, slots[i]);
+    const PlaceResult result = placer_.place(hwnd, rects[i]);
     if (!result.ok) {
       // It refused (elevated, gone): leave it alone from now on.
       forget(hwnd, false);
@@ -331,7 +331,7 @@ void TilingEngine::retile(const WorkspaceKey& key) {
     // A window that clamped keeps its slot and leaves a gap; its achieved bounds are what the
     // next MoveSizeEnd is compared with.
     placed_[hwnd] = result.achieved;
-    placedNow.emplace_back(hwnd, slots[i]);
+    placedNow.emplace_back(hwnd, rects[i]);
   }
   if (!placedNow.empty()) {
     defer(kVerifyMs, [this, placedNow] { verifyPlacements(placedNow); });
