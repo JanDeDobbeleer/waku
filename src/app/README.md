@@ -50,7 +50,9 @@ written in lower case and plain ASCII in code and paths.
 - `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
   the built-in shell and ignores the config; `--font-engine=directwrite` honours variable-font axes.
 - komorebi's work area follows the OS after every screen or work area change (the engine nudges
-  komorebi's hidden window); `--no-workarea-sync` turns that off.
+  komorebi's hidden window); `--no-workarea-sync` turns that off. `--manage-komorebi` also runs
+  `komorebic replace-configuration` after a screen or scale change while komorebi and
+  komorebi-bar run, so the bar follows the new scale; it is off by default.
 
 The architecture is in [docs/architecture.md](../../docs/architecture.md), the build and every flag
 in [docs/building.md](../../docs/building.md), notes for shell authors in

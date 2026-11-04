@@ -22,6 +22,7 @@ waku_feature(NAME workspaces
   WIN32_SOURCES
     win32/glazewm_socket.cpp
     win32/komorebi_pipe.cpp
+    win32/komorebi_manage_win.cpp
     win32/komorebi_workarea_win.cpp
   QML_SOURCES
     qml/glazewm_client.h
@@ -40,6 +41,7 @@ waku_feature(NAME workspaces
     tests/test_command_line.cpp
     tests/test_glazewm_socket.cpp
     tests/test_glazewm_state.cpp
+    tests/test_komorebi_manage.cpp
     tests/test_komorebi_service.cpp
     tests/test_komorebi_workarea.cpp
     tests/test_wm_clients.cpp

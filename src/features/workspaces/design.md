@@ -90,6 +90,38 @@ windows then tile under the bar. Analysis: `docs/plans/2026-10-31-workarea-sync.
 - **Verified on.** Windows 10.0.26300, komorebi 0.1.41: to be filled in by the live check (plan
   section 6).
 
+## Managing komorebi
+
+`--manage-komorebi` (off by default; the capability `manage_komorebi`) lets waku reload a running
+komorebi after a display change. komorebi-bar is per-monitor DPI aware but handles no
+`WM_DPICHANGED` or `WM_DISPLAYCHANGE` (v0.1.41 source), so after a dock or a scaling change the bar
+can keep its old size. That is the observed symptom; the cause is not proven.
+
+- **Command.** `komorebic replace-configuration <komorebi.json>`, the path from `komorebic
+  configuration`. From komorebi's source (v0.1.41, `process_command.rs`): it rebuilds the window
+  manager from the file and kills and respawns `komorebi-bar` once per `bar_configurations` entry,
+  only when a bar already runs. `komorebic reload-configuration` is not used: it reloads legacy
+  `.ahk` and `.ps1` files only. komorebic has no bar-only restart, and `stop --bar` stops komorebi
+  too.
+- **Run chain.** `cmd /c for /f "usebackq delims=" %i in (`komorebic.exe configuration`) do
+  komorebic.exe replace-configuration "%i"` through `kernel::launchHiddenShell`: fire and forget, so
+  a slow komorebic never blocks the GUI thread. No path is built in waku.
+- **Condition.** Both `komorebi.exe` and `komorebi-bar.exe` run (`CreateToolhelp32Snapshot`). Without
+  a bar the reload gains nothing and may move windows, so nothing is sent.
+- **Trigger.** The settle of `KomorebiWorkAreaGuard` after a display change: `screenAdded`,
+  `screenRemoved`, `primaryScreenChanged`, `geometryChanged`, `logicalDotsPerInchChanged`. A change
+  of the available work area alone (waku's own bar registering) does not reload: it would run on
+  every start. The work area nudge still follows, as before.
+- **Cooldown.** After a reload no other one starts for 30 s, because the reload moves windows and
+  the bar and so raises screen signals itself. A refused or failed start sets no cooldown.
+- **Logs.** `qInfo` per reload (`komorebi manage: komorebic replace-configuration started`),
+  `qDebug` once each time komorebi or its bar is missing, `qWarning` when komorebic cannot start.
+- **Limits.** The config path is the one `komorebic configuration` prints (`KOMOREBI_CONFIG_HOME`
+  or the home folder). A komorebi started with another `--config` is reloaded from that default
+  file instead. replace-configuration pauses komorebi and restores every window before it rebuilds,
+  so windows may visibly move. Not yet verified live with a bar running (open point).
+- **Tests.** `tests/test_komorebi_manage.cpp` on `testing/fake_workarea.h`; no test starts komorebic.
+
 ## Windows APIs
 
 Documented only: named pipes, `CreateToolhelp32Snapshot` for the process check, `MonitorFromWindow`,
