@@ -56,7 +56,7 @@ TEST(StartupServiceEnable, RegistersTheDefaults) {
   ASSERT_EQ(system.registeredArguments.size(), 1);
   EXPECT_EQ(system.registeredArguments.first(),
             QStringLiteral("--register-app-bar --hide-taskbar"));
-  EXPECT_EQ(result.lines.last(),
+  EXPECT_EQ(result.lines.first(),
             QStringLiteral("startup: enabled, waku.exe --register-app-bar --hide-taskbar"));
 }
 
@@ -99,7 +99,7 @@ TEST(StartupServiceEnable, SameFolderDifferingInCaseDoesNotWarn) {
   system.pathResult = QStringLiteral("c:/apps/WAKU/waku.exe");
   const StartupResult result = enableStartup(system, StartupOptions{});
   EXPECT_TRUE(result.ok);
-  EXPECT_EQ(result.lines.size(), 1);
+  EXPECT_FALSE(result.lines.first().startsWith(QStringLiteral("warning:")));
 }
 
 TEST(StartupServiceEnable, RegisterErrorPropagates) {
@@ -117,7 +117,7 @@ TEST(StartupServiceEnable, ShortcutIsDeletedWithoutBackup) {
   const StartupResult enabled = enableStartup(system, StartupOptions{});
   EXPECT_TRUE(enabled.ok);
   EXPECT_FALSE(system.shortcutPresent);
-  EXPECT_EQ(enabled.lines.size(), 2);
+  EXPECT_EQ(enabled.lines.size(), 3);  // shortcut, bar, keys note
   const StartupResult disabled = disableStartup(system);
   EXPECT_TRUE(disabled.ok);
   EXPECT_EQ(disabled.lines.size(), 1);
@@ -163,17 +163,19 @@ TEST(StartupServiceStatus, NotRegistered) {
   FakeStartupSystem system;
   const StartupResult result = startupStatus(system);
   EXPECT_TRUE(result.ok);
-  EXPECT_EQ(result.lines, (QStringList{QStringLiteral("startup: not registered"),
-                                       QStringLiteral("waku.exe: C:\\Apps\\waku\\waku.exe")}));
+  EXPECT_EQ(result.lines.mid(0, 2),
+            (QStringList{QStringLiteral("startup: not registered"),
+                         QStringLiteral("waku.exe: C:\\Apps\\waku\\waku.exe")}));
 }
 
 TEST(StartupServiceStatus, Enabled) {
   FakeStartupSystem system;
   system.task = {true, true, QStringLiteral("--hide-taskbar")};
   const StartupResult result = startupStatus(system);
-  EXPECT_EQ(result.lines, (QStringList{QStringLiteral("startup: enabled"),
-                                       QStringLiteral("command: waku.exe --hide-taskbar"),
-                                       QStringLiteral("waku.exe: C:\\Apps\\waku\\waku.exe")}));
+  EXPECT_EQ(result.lines.mid(0, 3),
+            (QStringList{QStringLiteral("startup: enabled"),
+                         QStringLiteral("command: waku.exe --hide-taskbar"),
+                         QStringLiteral("waku.exe: C:\\Apps\\waku\\waku.exe")}));
 }
 
 TEST(StartupServiceStatus, DisabledAndNotOnPath) {
@@ -181,7 +183,78 @@ TEST(StartupServiceStatus, DisabledAndNotOnPath) {
   system.pathResult.clear();
   system.task = {true, false, QString()};
   const StartupResult result = startupStatus(system);
-  EXPECT_EQ(result.lines,
+  EXPECT_EQ(result.lines.mid(0, 3),
             (QStringList{QStringLiteral("startup: disabled"), QStringLiteral("command: waku.exe"),
                          QStringLiteral("waku.exe: not on PATH (add C:\\Apps\\waku)")}));
+}
+
+TEST(StartupServiceStatus, ReportsTheKeysDaemon) {
+  FakeStartupSystem system;
+  EXPECT_EQ(startupStatus(system).lines.mid(2),
+            (QStringList{
+                QStringLiteral("keys startup: not registered"),
+                QStringLiteral("wakukeys.exe: C:\\Apps\\waku\\wakukeys.exe"),
+                QStringLiteral("keys file: C:\\Users\\me\\.config\\waku\\keys.conf (missing)")}));
+  system.keysConfigPresent = true;
+  system.keysTask = {true, true, QStringLiteral("--config k.conf")};
+  EXPECT_EQ(
+      startupStatus(system).lines.mid(2),
+      (QStringList{QStringLiteral("keys startup: enabled"),
+                   QStringLiteral("keys command: wakukeys.exe --config k.conf"),
+                   QStringLiteral("wakukeys.exe: C:\\Apps\\waku\\wakukeys.exe"),
+                   QStringLiteral("keys file: C:\\Users\\me\\.config\\waku\\keys.conf (found)")}));
+}
+
+TEST(StartupServiceKeys, RegisteredWhenTheFileExists) {
+  FakeStartupSystem system;
+  system.keysConfigPresent = true;
+  StartupOptions options;
+  options.configHome = QStringLiteral("D:\\cfg");
+  const StartupResult result = enableStartup(system, options);
+  EXPECT_TRUE(result.ok);
+  ASSERT_EQ(system.keysRegisteredArguments.size(), 1);
+  EXPECT_EQ(
+      system.keysRegisteredArguments.first(),
+      QStringLiteral("--config C:\\Users\\me\\.config\\waku\\keys.conf --config-home D:\\cfg"));
+  EXPECT_TRUE(result.lines.last().startsWith(QStringLiteral("startup: keys daemon enabled")));
+}
+
+TEST(StartupServiceKeys, SkippedWithANoteWhenTheFileIsMissing) {
+  FakeStartupSystem system;
+  const StartupResult result = enableStartup(system, StartupOptions{});
+  EXPECT_TRUE(result.ok);
+  EXPECT_TRUE(system.keysRegisteredArguments.isEmpty());
+  EXPECT_TRUE(result.lines.last().contains(QStringLiteral("no keys file")));
+}
+
+TEST(StartupServiceKeys, SkippedWithAWarningWhenNotOnPath) {
+  FakeStartupSystem system;
+  system.keysConfigPresent = true;
+  system.keysPathResult.clear();
+  const StartupResult result = enableStartup(system, StartupOptions{});
+  EXPECT_TRUE(result.ok);
+  EXPECT_TRUE(system.keysRegisteredArguments.isEmpty());
+  EXPECT_TRUE(result.lines.last().startsWith(QStringLiteral("warning:")));
+}
+
+TEST(StartupServiceKeys, RegisterErrorFailsTheCommand) {
+  FakeStartupSystem system;
+  system.keysConfigPresent = true;
+  system.keysRegisterError = QStringLiteral("denied");
+  const StartupResult result = enableStartup(system, StartupOptions{});
+  EXPECT_FALSE(result.ok);
+  EXPECT_EQ(result.lines.last(), QStringLiteral("keys daemon: denied"));
+  EXPECT_TRUE(system.task.registered);
+}
+
+TEST(StartupServiceKeys, DisableRemovesBothTasks) {
+  FakeStartupSystem system;
+  system.keysConfigPresent = true;
+  ASSERT_TRUE(enableStartup(system, StartupOptions{}).ok);
+  const StartupResult result = disableStartup(system);
+  EXPECT_TRUE(result.ok);
+  EXPECT_EQ(result.lines, (QStringList{QStringLiteral("startup: disabled"),
+                                       QStringLiteral("startup: keys daemon disabled")}));
+  EXPECT_FALSE(system.task.registered);
+  EXPECT_FALSE(system.keysTask.registered);
 }

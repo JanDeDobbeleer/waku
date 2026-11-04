@@ -13,31 +13,46 @@ class FakeStartupSystem final : public StartupSystem {
  public:
   QString pathResult = QStringLiteral("C:\\Apps\\waku\\waku.exe");
   QString own = QStringLiteral("C:\\Apps\\waku");
-  TaskInfo task;
+  QString keysPathResult = QStringLiteral("C:\\Apps\\waku\\wakukeys.exe");
+  QString keysConfig = QStringLiteral("C:\\Users\\me\\.config\\waku\\keys.conf");
+  bool keysConfigPresent = false;
+  TaskInfo task;      // the bar task
+  TaskInfo keysTask;  // the keys daemon task
   bool shortcutPresent = false;
   QString registerError;
+  QString keysRegisterError;
   QString removeError;
 
-  QStringList registeredArguments;  // one entry per registerTask call
+  QStringList registeredArguments;      // one entry per bar registerTask call
+  QStringList keysRegisteredArguments;  // one entry per keys registerTask call
   int removeCalls = 0;
+  int keysRemoveCalls = 0;
   int removeShortcutCalls = 0;
 
-  QString findOnPath(const QString&) const override { return pathResult; }
+  QString findOnPath(const QString& exeName) const override {
+    return exeName == QStringLiteral("wakukeys.exe") ? keysPathResult : pathResult;
+  }
   QString ownFolder() const override { return own; }
-  TaskInfo queryTask() const override { return task; }
+  QString keysConfigPath() const override { return keysConfig; }
+  bool keysConfigExists() const override { return keysConfigPresent; }
+  TaskInfo queryTask(Task which) const override { return which == Task::Keys ? keysTask : task; }
 
-  QString registerTask(const QString& arguments) override {
-    registeredArguments << arguments;
-    if (!registerError.isEmpty()) return registerError;
-    task.registered = true;
-    task.enabled = true;
-    task.arguments = arguments;
+  QString registerTask(Task which, const QString& arguments) override {
+    const bool keys = which == Task::Keys;
+    (keys ? keysRegisteredArguments : registeredArguments) << arguments;
+    const QString& error = keys ? keysRegisterError : registerError;
+    if (!error.isEmpty()) return error;
+    TaskInfo& target = keys ? keysTask : task;
+    target.registered = true;
+    target.enabled = true;
+    target.arguments = arguments;
     return {};
   }
-  QString removeTask() override {
-    ++removeCalls;
+  QString removeTask(Task which) override {
+    const bool keys = which == Task::Keys;
+    ++(keys ? keysRemoveCalls : removeCalls);
     if (!removeError.isEmpty()) return removeError;
-    task = TaskInfo{};
+    (keys ? keysTask : task) = TaskInfo{};
     return {};
   }
   bool removeShortcut() override {

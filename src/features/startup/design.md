@@ -1,6 +1,7 @@
 # startup
 
-`wakuc startup enable|disable|status` starts waku at sign-in through a per-user Scheduled Task.
+`wakuc startup enable|disable|status` starts waku at sign-in through a per-user Scheduled Task. A
+second task (`waku keys`) starts the keys daemon `wakukeys.exe`.
 
 ## Decisions
 
@@ -25,6 +26,14 @@
   execution time limit, one instance, runs on battery. `enable` twice replaces the task.
 - An old `waku.lnk` in the Startup folder would start a second waku. `enable` deletes it and keeps
   no backup: a backup file in the Startup folder makes Windows ask which app opens it at sign-in.
+- The keys daemon task. `enable` registers it after the bar task, with the same trigger and
+  settings. The action is the bare `wakukeys.exe` (PATH, like `waku.exe`; the MSIX has an alias)
+  with `--config <%USERPROFILE%\.config\waku\keys.conf>` and the `--config-home` the user gave.
+  It is registered only when that file exists: a user without a keys file gets one line saying so
+  and no task. When `wakukeys.exe` is not on the PATH the command warns and skips the task; the bar
+  task stays registered and the exit code stays 0. A registration error of the keys task fails the
+  command. `disable` removes both tasks, `status` reports both. There is no flag to leave the
+  keys task out: delete or never create `keys.conf`.
 - The logic (`startup_service.*`) runs against the `StartupSystem` interface. The Windows
   implementation (`win32/startup_system_win.*`) uses the documented Task Scheduler COM API. Tests
   use `testing/fake_startup_system.h`.

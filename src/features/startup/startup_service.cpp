@@ -8,6 +8,7 @@ namespace waku::startup {
 namespace {
 
 QString exeName() { return QStringLiteral("waku.exe"); }
+QString keysExeName() { return QStringLiteral("wakukeys.exe"); }
 
 // A folder compared case-insensitively with native separators and no trailing separator.
 QString normalizedFolder(const QString& folder) {
@@ -40,8 +41,51 @@ QString quoteArgument(const QString& argument) {
   return out;
 }
 
+QString programWithArguments(const QString& program, const QString& arguments) {
+  return arguments.isEmpty() ? program : program + QLatin1Char(' ') + arguments;
+}
+
 QString programWithArguments(const QString& arguments) {
-  return arguments.isEmpty() ? exeName() : exeName() + QLatin1Char(' ') + arguments;
+  return programWithArguments(exeName(), arguments);
+}
+
+using Task = StartupSystem::Task;
+
+// Registers the keys daemon task. Adds its lines to `result`; false on a registration error.
+bool enableKeys(StartupSystem& system, const StartupOptions& options, StartupResult& result) {
+  if (!system.keysConfigExists()) {
+    result.lines << QStringLiteral(
+                        "startup: keys daemon not registered, no keys file at %1 (create it and "
+                        "run this command again)")
+                        .arg(QDir::toNativeSeparators(system.keysConfigPath()));
+    return true;
+  }
+  const QString found = system.findOnPath(keysExeName());
+  if (found.isEmpty()) {
+    result.lines << QStringLiteral(
+                        "warning: wakukeys.exe is not on your PATH, so the keys daemon is not "
+                        "registered; add %1 to your user PATH, sign out and in again, then run "
+                        "this command again")
+                        .arg(QDir::toNativeSeparators(system.ownFolder()));
+    return true;
+  }
+  if (normalizedFolder(QFileInfo(found).path()) != normalizedFolder(system.ownFolder())) {
+    result.lines << QStringLiteral(
+                        "warning: wakukeys.exe on your PATH is %1, not the one next to wakuc in "
+                        "%2; the task starts the one on the PATH")
+                        .arg(QDir::toNativeSeparators(found),
+                             QDir::toNativeSeparators(system.ownFolder()));
+  }
+  const QString arguments = commandLine(
+      keysArguments(QDir::toNativeSeparators(system.keysConfigPath()), options.configHome));
+  const QString error = system.registerTask(Task::Keys, arguments);
+  if (!error.isEmpty()) {
+    result.lines << QStringLiteral("keys daemon: %1").arg(error);
+    return false;
+  }
+  result.lines << QStringLiteral("startup: keys daemon enabled, %1")
+                      .arg(programWithArguments(keysExeName(), arguments));
+  return true;
 }
 
 }  // namespace
@@ -56,6 +100,12 @@ QStringList wakuArguments(const StartupOptions& options) {
     if (extra.startsWith(QLatin1Char('-')) && present.contains(extra)) continue;
     out << extra;
   }
+  return out;
+}
+
+QStringList keysArguments(const QString& keysFile, const QString& configHome) {
+  QStringList out{QStringLiteral("--config"), keysFile};
+  if (!configHome.isEmpty()) out << QStringLiteral("--config-home") << configHome;
   return out;
 }
 
@@ -83,7 +133,7 @@ StartupResult enableStartup(StartupSystem& system, const StartupOptions& options
                         .arg(QDir::toNativeSeparators(found), own);
   }
   const QString arguments = commandLine(wakuArguments(options));
-  const QString error = system.registerTask(arguments);
+  const QString error = system.registerTask(Task::Bar, arguments);
   if (!error.isEmpty()) {
     result.lines << error;
     result.ok = false;
@@ -93,20 +143,23 @@ StartupResult enableStartup(StartupSystem& system, const StartupOptions& options
     result.lines << QStringLiteral("startup: deleted waku.lnk from your Startup folder");
   }
   result.lines << QStringLiteral("startup: enabled, %1").arg(programWithArguments(arguments));
-  result.ok = true;
+  result.ok = enableKeys(system, options, result);
   return result;
 }
 
 StartupResult disableStartup(StartupSystem& system) {
   StartupResult result;
-  const bool wasRegistered = system.queryTask().registered;
-  const QString error = system.removeTask();
+  const bool wasRegistered = system.queryTask(Task::Bar).registered;
+  const bool keysWasRegistered = system.queryTask(Task::Keys).registered;
+  QString error = system.removeTask(Task::Bar);
+  if (error.isEmpty()) error = system.removeTask(Task::Keys);
   if (!error.isEmpty()) {
     result.lines << error;
     return result;
   }
   result.lines << (wasRegistered ? QStringLiteral("startup: disabled")
                                  : QStringLiteral("startup: not enabled"));
+  if (keysWasRegistered) result.lines << QStringLiteral("startup: keys daemon disabled");
   result.ok = true;
   return result;
 }
@@ -114,7 +167,7 @@ StartupResult disableStartup(StartupSystem& system) {
 StartupResult startupStatus(StartupSystem& system) {
   StartupResult result;
   result.ok = true;
-  const StartupSystem::TaskInfo task = system.queryTask();
+  const StartupSystem::TaskInfo task = system.queryTask(Task::Bar);
   if (!task.registered) {
     result.lines << QStringLiteral("startup: not registered");
   } else {
@@ -129,6 +182,25 @@ StartupResult startupStatus(StartupSystem& system) {
   } else {
     result.lines << QStringLiteral("waku.exe: %1").arg(QDir::toNativeSeparators(found));
   }
+  const StartupSystem::TaskInfo keys = system.queryTask(Task::Keys);
+  if (!keys.registered) {
+    result.lines << QStringLiteral("keys startup: not registered");
+  } else {
+    result.lines << (keys.enabled ? QStringLiteral("keys startup: enabled")
+                                  : QStringLiteral("keys startup: disabled"));
+    result.lines << QStringLiteral("keys command: %1")
+                        .arg(programWithArguments(keysExeName(), keys.arguments));
+  }
+  const QString keysFound = system.findOnPath(keysExeName());
+  result.lines
+      << (keysFound.isEmpty()
+              ? QStringLiteral("wakukeys.exe: not on PATH (add %1)")
+                    .arg(QDir::toNativeSeparators(system.ownFolder()))
+              : QStringLiteral("wakukeys.exe: %1").arg(QDir::toNativeSeparators(keysFound)));
+  result.lines << QStringLiteral("keys file: %1 (%2)")
+                      .arg(QDir::toNativeSeparators(system.keysConfigPath()),
+                           system.keysConfigExists() ? QStringLiteral("found")
+                                                     : QStringLiteral("missing"));
   return result;
 }
 

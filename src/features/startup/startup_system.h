@@ -15,24 +15,32 @@ class StartupSystem {
   // user, the way the logon task will find it. Empty when it is not on the PATH.
   virtual QString findOnPath(const QString& exeName) const = 0;
 
-  // The folder of the running wakuc.exe. waku.exe sits next to it.
+  // The folder of the running wakuc.exe. waku.exe and wakukeys.exe sit next to it.
   virtual QString ownFolder() const = 0;
+
+  // The default keys file of the user (%USERPROFILE%\.config\waku\keys.conf) and whether it
+  // exists. `wakuc startup enable` registers the keys daemon only when it does.
+  virtual QString keysConfigPath() const = 0;
+  virtual bool keysConfigExists() const = 0;
+
+  // The two logon tasks: the bar (waku.exe) and the keys daemon (wakukeys.exe).
+  enum class Task { Bar, Keys };
 
   struct TaskInfo {
     bool registered = false;
     bool enabled = false;
     QString arguments;  // the command line of the task action, without the program name
   };
-  virtual TaskInfo queryTask() const = 0;
+  virtual TaskInfo queryTask(Task task) const = 0;
 
   // Replaces the logon task of the current user: trigger at logon with no delay, Limited run
   // level, priority 4, no execution time limit, one instance, runs on battery. The action is the
-  // bare `waku.exe` (resolved through the PATH at logon) with `arguments` as its command line.
-  // Returns an empty string on success, else a one-line reason.
-  virtual QString registerTask(const QString& arguments) = 0;
+  // bare `waku.exe` or `wakukeys.exe` (resolved through the PATH at logon) with `arguments` as its
+  // command line. Returns an empty string on success, else a one-line reason.
+  virtual QString registerTask(Task task, const QString& arguments) = 0;
 
-  // Removes the logon task. Succeeds when there is none. Same return value as registerTask.
-  virtual QString removeTask() = 0;
+  // Removes a logon task. Succeeds when there is none. Same return value as registerTask.
+  virtual QString removeTask(Task task) = 0;
 
   // The old way: a waku.lnk in the Startup folder. Deletes it and returns true when there was one.
   // Nothing is kept: a backup file left in the Startup folder makes Windows ask which app opens it.
