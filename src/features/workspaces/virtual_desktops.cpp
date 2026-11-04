@@ -25,4 +25,9 @@ QStringList parseDesktopIds(const QByteArray& bytes) {
   return ids;
 }
 
+int removalFallbackIndex(int count, int index) {
+  if (count < 2 || index < 0 || index >= count) return -1;
+  return index == 0 ? 1 : index - 1;
+}
+
 }  // namespace waku::workspaces::vdesk

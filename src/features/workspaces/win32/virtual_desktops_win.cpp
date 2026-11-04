@@ -5,7 +5,9 @@
 // there with IVirtualDesktopManager::MoveWindowToDesktop and activates it, which makes Windows
 // switch (verified on build 26300; a WS_EX_TOOLWINDOW or layered window is not tracked by the
 // desktop service and does not work). Creating a desktop sends Win+Ctrl+D with SendInput, the
-// documented keyboard shortcut. No undocumented COM interface is involved.
+// documented keyboard shortcut. Where the shell interface behind Task View is open
+// (shell_desktops_win.h), a switch, a create and a remove go through it instead; the anchor window
+// and the keystroke stay as the fallback for switch and create, and remove has none.
 #include <Windows.h>
 #include <ShObjIdl.h>
 
@@ -13,36 +15,21 @@
 #include <QDebug>
 #include <algorithm>
 #include <cstring>
+#include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "features/workspaces/virtual_desktops.h"
+#include "features/workspaces/win32/shell_desktops_win.h"
+#include "kernel/qt/live_desktop.h"
 #include "kernel/win32/com_scope.h"
 
 namespace waku::workspaces::vdesk {
 namespace {
 
-constexpr wchar_t kKey[] =
-    L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VirtualDesktops";
-
-std::optional<QByteArray> readBinary(HKEY key, const wchar_t* name) {
-  DWORD type = 0;
-  DWORD size = 0;
-  if (RegQueryValueExW(key, name, nullptr, &type, nullptr, &size) != ERROR_SUCCESS ||
-      type != REG_BINARY || size == 0 || size > 64 * 1024) {
-    return std::nullopt;
-  }
-  QByteArray bytes(static_cast<qsizetype>(size), Qt::Uninitialized);
-  if (RegQueryValueExW(key, name, nullptr, &type, reinterpret_cast<BYTE*>(bytes.data()), &size) !=
-      ERROR_SUCCESS) {
-    return std::nullopt;
-  }
-  bytes.resize(static_cast<qsizetype>(size));
-  return bytes;
-}
-
 QString readDesktopName(const QString& id) {
-  const std::wstring path = std::wstring(kKey) + L"\\Desktops\\" + id.toStdWString();
+  const std::wstring path = std::wstring(kVirtualDesktopsKey) + L"\\Desktops\\" + id.toStdWString();
   HKEY key = nullptr;
   if (RegOpenKeyExW(HKEY_CURRENT_USER, path.c_str(), 0, KEY_QUERY_VALUE, &key) != ERROR_SUCCESS) {
     return {};
@@ -101,6 +88,78 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
   }
 
   bool jumpTo(int index) override {
+    if (ShellDesktopApi* api = shellApi()) {
+      QStringList ids = registryIds();
+      // A desktop that was just created may not be in the registry yet; the shell knows it.
+      if (index >= ids.size()) ids = api->desktopIds().value_or(ids);
+      const bool known = index >= 0 && index < ids.size();
+      if (known && api->switchTo(ids.at(index), animate_)) return true;
+      checkLost();
+      // Falls through to the anchor window: the shell refused or is not there.
+    }
+    return jumpWithAnchor(index);
+  }
+
+  std::optional<State> read() override {
+    // Explorer restarted: the next read opens the interface again (throttled).
+    if (hook_ && !api_ && apiState_ == ApiState::Lost) shellApi();
+    return readRegistry();
+  }
+
+  int create() override {
+    if (ShellDesktopApi* api = shellApi()) {
+      const std::optional<QString> id = api->create();
+      if (id) {
+        const std::optional<QStringList> ids = api->desktopIds();
+        checkLost();
+        // The desktop exists but is not shown; the caller shows it.
+        return ids ? static_cast<int>(ids->indexOf(*id)) : -1;
+      }
+      checkLost();
+    }
+    sendCreateKeys();  // Windows shows the new desktop
+    return -1;
+  }
+
+  bool canRemove() const override { return apiState_ == ApiState::Open; }
+
+  bool remove(int index) override {
+    ShellDesktopApi* api = shellApi();
+    if (!api) return false;
+    const QStringList ids = registryIds();
+    const int fallback = removalFallbackIndex(static_cast<int>(ids.size()), index);
+    if (fallback < 0) return false;
+    qDebug().noquote() << "virtual desktops: closing desktop" << index << ids.at(index)
+                       << "windows go to" << fallback << ids.at(fallback);
+    const bool ok = api->remove(ids.at(index), ids.at(fallback));
+    checkLost();
+    return ok;
+  }
+
+  bool rename(int index, const QString& name) override {
+    ShellDesktopApi* api = shellApi();
+    const QStringList ids = registryIds();
+    if (!api || index < 0 || index >= ids.size()) return false;
+    const bool ok = api->rename(ids.at(index), name);
+    checkLost();
+    return ok;
+  }
+
+  void setAnimate(bool animate) override { animate_ = animate; }
+
+  bool setChangedHook(std::function<void()> hook) override {
+    hook_ = std::move(hook);
+    bool active = false;
+    if (!watcher_) {
+      watcher_ = std::make_unique<RegistryChangeWatcher>();
+      if (!watcher_->start([this] { fire(); })) watcher_.reset();
+    }
+    if (watcher_) active = true;
+    if (shellApi() && registerNotifications()) active = true;
+    return active;
+  }
+
+  bool jumpWithAnchor(int index) {
     IVirtualDesktopManager* mgr = manager();
     if (!mgr || index < 0) return failed("no IVirtualDesktopManager");
     const std::vector<GUID> ids = desktopGuids();
@@ -120,14 +179,9 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
     return true;
   }
 
-  std::optional<State> read() override {
-    HKEY key = nullptr;
-    if (RegOpenKeyExW(HKEY_CURRENT_USER, kKey, 0, KEY_QUERY_VALUE, &key) != ERROR_SUCCESS) {
-      return std::nullopt;
-    }
-    const std::optional<QByteArray> all = readBinary(key, L"VirtualDesktopIDs");
-    const std::optional<QByteArray> current = readBinary(key, L"CurrentVirtualDesktop");
-    RegCloseKey(key);
+  std::optional<State> readRegistry() {
+    const std::optional<QByteArray> all = readVirtualDesktopsValue(L"VirtualDesktopIDs");
+    const std::optional<QByteArray> current = readVirtualDesktopsValue(L"CurrentVirtualDesktop");
     // Explorer has not written the list yet on a profile that never opened Task View: one
     // desktop, and the shown one is that desktop.
     const QStringList ids = all ? parseDesktopIds(*all) : QStringList();
@@ -145,11 +199,12 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
       const qsizetype at = ids.indexOf(shown.first());
       if (at >= 0) state.current = static_cast<int>(at);
     }
+    lastIds_ = ids;
     collectWindows(state);
     return state;
   }
 
-  void create() override {
+  void sendCreateKeys() {
     std::vector<INPUT> input;
     auto add = [&input](WORD vk, bool up) {
       INPUT in = {};
@@ -168,6 +223,67 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
   }
 
  private:
+  enum class ApiState { Untried, Open, Lost, Unavailable };
+
+  static QStringList registryIds() {
+    const std::optional<QByteArray> all = readVirtualDesktopsValue(L"VirtualDesktopIDs");
+    return all ? parseDesktopIds(*all) : QStringList();
+  }
+
+  void fire() {
+    if (hook_) hook_();
+  }
+
+  // The shell interface, opened on first use. A failed first open is final for the run (logged
+  // once); after Explorer went away it is retried at most every 10 s.
+  ShellDesktopApi* shellApi() {
+    if (api_) return api_.get();
+    if (apiState_ == ApiState::Unavailable ||
+        !kernel::liveDesktop(QStringLiteral("shell_desktops"))) {
+      return nullptr;
+    }
+    const ULONGLONG now = GetTickCount64();
+    if (apiState_ == ApiState::Lost && now < nextOpenAt_) return nullptr;
+    QString reason;
+    api_ = ShellDesktopApi::open(&reason);
+    if (!api_) {
+      if (apiState_ == ApiState::Untried) {
+        qInfo().noquote() << "virtual desktops: shell api unavailable:" << reason;
+        apiState_ = ApiState::Unavailable;
+      } else {
+        qDebug().noquote() << "virtual desktops: shell api still unavailable:" << reason;
+        nextOpenAt_ = now + 10000;
+      }
+      return nullptr;
+    }
+    qInfo() << "virtual desktops: shell api open";
+    apiState_ = ApiState::Open;
+    if (hook_) registerNotifications();
+    return api_.get();
+  }
+
+  // Drops the interface after a call showed Explorer is gone; shellApi() reopens it later.
+  void checkLost() {
+    if (!api_ || !api_->lost()) return;
+    qWarning() << "virtual desktops: shell api lost (Explorer restarted?); it reopens later";
+    api_.reset();
+    apiState_ = ApiState::Lost;
+    nextOpenAt_ = GetTickCount64() + 2000;
+  }
+
+  bool registerNotifications() {
+    return api_ && api_->registerNotifications(
+                       [this] { fire(); },
+                       [this](const QString& destroyed, const QString& fallback) {
+                         // What Task View used for its close button, for comparison with
+                         // removalFallbackIndex().
+                         qDebug().noquote()
+                             << "virtual desktops: DestroyBegin" << destroyed << "index"
+                             << lastIds_.indexOf(destroyed) << "windows go to" << fallback
+                             << "index" << lastIds_.indexOf(fallback);
+                       });
+  }
+
   static bool failed(const char* reason) {
     qWarning().noquote() << "virtual desktops: jump failed:" << reason;
     return false;
@@ -175,12 +291,7 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
 
   static std::vector<GUID> desktopGuids() {
     std::vector<GUID> guids;
-    HKEY key = nullptr;
-    if (RegOpenKeyExW(HKEY_CURRENT_USER, kKey, 0, KEY_QUERY_VALUE, &key) != ERROR_SUCCESS) {
-      return guids;
-    }
-    const std::optional<QByteArray> all = readBinary(key, L"VirtualDesktopIDs");
-    RegCloseKey(key);
+    const std::optional<QByteArray> all = readVirtualDesktopsValue(L"VirtualDesktopIDs");
     if (!all) return guids;
     for (qsizetype offset = 0; offset + 16 <= all->size(); offset += 16) {
       GUID guid;
@@ -270,6 +381,13 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
   IVirtualDesktopManager* manager_ = nullptr;
   bool failed_ = false;
   HWND anchor_ = nullptr;
+  std::unique_ptr<ShellDesktopApi> api_;
+  ApiState apiState_ = ApiState::Untried;
+  ULONGLONG nextOpenAt_ = 0;
+  bool animate_ = true;
+  std::function<void()> hook_;
+  std::unique_ptr<RegistryChangeWatcher> watcher_;
+  QStringList lastIds_;  // the registry list of the last read, for the DestroyBegin log
 };
 
 }  // namespace

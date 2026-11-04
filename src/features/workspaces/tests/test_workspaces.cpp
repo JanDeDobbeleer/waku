@@ -302,3 +302,17 @@ TEST(WorkspacesModel, PreferEmitsOnceWhenItChangesAndNotWhenItDoesNot) {
   h.workspaces->setPrefer(QStringLiteral("glazewm"));
   EXPECT_EQ(changed.count(), 1);
 }
+
+TEST(WorkspacesModel, RemoveIsIgnoredOutsideTheWindowsProvider) {
+  Harness h;
+  h.komorebiConnect();
+  h.runs.clear();
+  EXPECT_FALSE(h.workspaces->canRemove());
+  h.workspaces->remove(0, QStringLiteral("1"));
+  EXPECT_TRUE(h.runs.empty());
+  h.komorebiDisconnect();
+  h.glazeConnect();
+  EXPECT_FALSE(h.workspaces->canRemove());
+  h.workspaces->remove(0, QStringLiteral("1"));
+  EXPECT_TRUE(h.sent.empty());
+}

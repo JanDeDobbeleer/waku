@@ -18,6 +18,7 @@ directly.
 | `qml/komorebi_client.*`, `qml/glazewm_client.*` | The `Komorebi` and `GlazeWM` QML singletons: a private `EventBus` plus the service, state exposed as properties. |
 | `qml/workspaces_service.*` | The `Workspaces` singleton: one `monitors` model of either manager; `prefer` decides when both run. |
 | `komorebi_workarea.*`, `win32/komorebi_workarea_win.cpp` | `KomorebiWorkAreaGuard`: tells komorebi that the work area changed (see "komorebi's work area"). |
+| `win32/shell_desktops_win.*` | `ShellDesktopApi`: the undocumented Task View interface (see "Shell interface"), and `RegistryChangeWatcher`. |
 | `testing/wm_fixtures.h` | Sample window-manager state and harnesses on the services' test seams. |
 | `testing/fake_workarea.h` | A recording `WorkAreaNotifier` and a fake clock for the guard. |
 
@@ -54,7 +55,8 @@ manager; `Workspaces` maps it to `provider: "windows"`.
 
 - **Read.** Explorer keeps the desktop list, the shown desktop and the names in the registry
   (`win32/virtual_desktops_win.cpp`, allowlist row in `docs/architecture.md`). A 500 ms `QTimer`
-  polls it; there is no documented notification. The windows per desktop come from the documented
+  polls it every 5 s as a safety net (500 ms where no change hook is active); changes arrive
+  sooner from the hook (see "Shell interface"). The windows per desktop come from the documented
   `IVirtualDesktopManager::GetWindowDesktopId` over top-level, titled, unowned windows. Each
   desktop carries `windows`, the HWNDs ascending (EnumWindows order follows focus, so an unsorted
   list would fire `changed()` on every focus change), and `windowCount` (its size). Windows of
@@ -66,8 +68,11 @@ manager; `Workspaces` maps it to `provider: "windows"`.
   `IsWindowOnCurrentVirtualDesktop` says so; which of the three Windows returns for a pinned window
   is not verified live yet, the fallback covers all of them. `refresh()` is invokable so a shell can
   look sooner than the poll.
-- **Switch.** One jump to any desktop. A small off-screen window of waku's own is moved to the
-  target desktop with the documented `IVirtualDesktopManager::MoveWindowToDesktop` (while it is
+- **Switch.** One jump to any desktop. With the shell interface open the call is
+  `SwitchDesktopWithAnimation`, the one Win+Ctrl+Arrow makes (animated; `VirtualDesktops.animate`
+  false uses the unanimated `SwitchDesktop`). Without it, or when it fails, a small off-screen
+  window of waku's own is moved to the target desktop with the documented
+  `IVirtualDesktopManager::MoveWindowToDesktop` (while it is
   hidden; the desktop service only reports a window it has seen shown) and activated;
   Windows then switches to the desktop of the active window. The window must be a plain popup: the
   desktop service does not track tool or layered windows (`GetWindowDesktopId` fails and the move
@@ -80,11 +85,61 @@ manager; `Workspaces` maps it to `provider: "windows"`.
 - **Monitors.** Desktops are not per monitor, so the model has one entry with handle 0 that every
   bar shows (`Workspaces.qml` accepts handle 0).
 - **Priority.** A connected komorebi or GlazeWM wins; `prefer = "windows"` forces the desktops.
-- **Create.** `switchTo` with the index just past the last desktop (below 20) sends one Win+Ctrl+D,
-  the only call Windows offers; the new desktop is shown. A shell draws one spare dot for it
-  (Caelestia).
-- **Open.** Removing, renaming and moving windows between desktops. They need the undocumented
-  interface or more shortcuts (Win+Ctrl+F4).
+- **Create.** `switchTo` with the index just past the last desktop (below 20) creates the next
+  one and shows it. With the shell interface, `CreateDesktop` makes it without showing it and the
+  service then jumps to it; without, one Win+Ctrl+D (the only call Windows documents) does both. A
+  shell draws one spare dot for it (Caelestia).
+- **Close.** `remove(index)` (`Workspaces.remove(monitor, id)` for a shell): `RemoveDesktop(desktop,
+  fallback)`, no visible switch. The windows go to `removalFallbackIndex(count, index)`: the left
+  neighbour, the first desktop's to the right one; the last desktop is never closed. If the closed
+  desktop was shown, Windows lands on the fallback. There is no keystroke fallback (Win+Ctrl+F4
+  shows the desktop first), so without the shell interface `canRemove` is false.
+- **Rename.** `rename(index, name)` calls `SetDesktopName`; the same rules as close.
+
+## Shell interface
+
+`win32/shell_desktops_win.*` talks to the interface behind Task View (`IVirtualDesktopManagerInternal`
+in explorer.exe). It is undocumented and changes between builds, so it is optional and every step
+fails soft. The GUIDs, slots and what was verified are in the allowlist rows of
+`docs/architecture.md`; the declarations here are written from those facts.
+
+- **Fail-soft chain.** `ShellDesktopApi::open` checks, in order: `kernel::liveDesktop("shell_desktops")`
+  (false on the offscreen platform and with `--no-shell-desktops`), Windows build 26100 or later (older
+  layouts are not declared), both interface keys under `HKCR\Interface`, `CoCreateInstance`
+  (ImmersiveShell, `CLSCTX_LOCAL_SERVER`), `QueryService`, `QueryInterface`, and a read-only
+  self-test against the registry: `GetCount`, `GetDesktops` ids in order, `GetCurrentDesktop`,
+  and a `FindDesktop` round trip. Any failure logs one line, `virtual desktops: shell api unavailable:
+  <reason>`, and the system works as before (anchor window, Win+Ctrl+D, polling). Slots are never
+  scanned at run time.
+- **Ids, not indexes.** The calls take desktop GUIDs from the registry list the model shows
+  and resolve them with `FindDesktop`, so a lag between the registry and the shell cannot close
+  another desktop than the one clicked.
+- **Explorer restarts.** The proxy fails with 0x800706BA (also RPC call failed and disconnected). The
+  object is dropped (`virtual desktops: shell api lost`) and reopened at most every 10 s from the next
+  read, which also registers the notifications again. A hung Explorer blocks the GUI thread for
+  the length of a call; there is no timeout on a COM call.
+- **Change source.** The shell's notification sink and a `RegNotifyChangeKeyValue` watch on the
+  VirtualDesktops key. The sink handlers only post a queued call to the GUI thread (Windows runs
+  them inside outbound calls; calling the manager there would re-enter the STA). `DestroyBegin` also
+  posts the ids of the closed desktop and of the one that gets its windows; they are logged at
+  debug level, to compare with `removalFallbackIndex` against what Task View really uses.
+- **Kill switch.** `--no-shell-desktops` (docs/building.md).
+- **Risk.** The real hazard is a slot shift inside an unchanged IID (it happened on 22621.2215,
+  22631.3085 and 26100). The self-test cannot catch a same-arity swap of two change methods. So
+  the first change of a run (switch, create, close, rename) compares count, ids and the shown
+  desktop with the registry again, logs at debug level, and refuses on a difference. Slots 9, 11, 13,
+  16 and 22 were never executed on the machine where the layout was checked.
+- **Tests.** The COM glue has no unit test; the rules around it do (`removalFallbackIndex`, remove
+  guards, change-hook coalescing) on a fake `VirtualDesktopSystem`. No test calls the shell.
+
+### Open points
+
+- Focus after `SwitchDesktop` is not guaranteed; the animated call is the default for that reason
+  and for parity with the keyboard.
+- Whether `GetDesktops` order equals the registry order is verified only for the count and for
+  one desktop on the build above; the self-test refuses to open the interface otherwise.
+- Notification delivery was not observed on the research machine; the registry watch covers it.
+- The window lists are not covered by any notification; the 5 s poll (and `refresh()`) updates them.
 
 ## komorebi's work area
 

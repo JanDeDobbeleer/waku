@@ -1,7 +1,7 @@
 # workspaces: komorebi and GlazeWM clients, the Windows virtual desktops and the shared Workspaces
 # model.
 # winhttp: the GlazeWM WebSocket client (win32/glazewm_socket.cpp); iphlpapi: its check that the
-# port listens (GetExtendedTcpTable).
+# port listens (GetExtendedTcpTable); runtimeobject: HSTRING for the shell desktop interface.
 waku_feature(NAME workspaces
   SOURCES
     backoff.h
@@ -27,6 +27,8 @@ waku_feature(NAME workspaces
     win32/komorebi_pipe.cpp
     win32/komorebi_manage_win.cpp
     win32/komorebi_workarea_win.cpp
+    win32/shell_desktops_win.h
+    win32/shell_desktops_win.cpp
     win32/virtual_desktops_win.cpp
   QML_SOURCES
     qml/glazewm_client.h
@@ -54,6 +56,6 @@ waku_feature(NAME workspaces
     tests/test_wm_clients.cpp
     tests/test_workspace_dot.cpp
     tests/test_workspaces.cpp
-  SYSTEM_LIBS winhttp iphlpapi)
+  SYSTEM_LIBS winhttp iphlpapi runtimeobject)
 # The komorebi state is parsed JSON (komorebi_service.h, komorebi_state.h).
 target_link_libraries(waku_workspaces PUBLIC nlohmann_json::nlohmann_json)

@@ -106,6 +106,11 @@ int main(int argc, char* argv[]) {
       QStringLiteral("no-workarea-sync"),
       QStringLiteral(
           "Never nudge a tiling window manager (komorebi) after the work area changed."));
+  QCommandLineOption noShellDesktopsOpt(
+      QStringLiteral("no-shell-desktops"),
+      QStringLiteral("Never use the undocumented shell interface behind Task View for virtual "
+                     "desktops (close, create without a keystroke, animated switch, "
+                     "notifications). The registry and the documented calls remain."));
   QCommandLineOption manageKomorebiOpt(
       QStringLiteral("manage-komorebi"),
       QStringLiteral("After a screen or scale change, run `komorebic replace-configuration` so "
@@ -120,6 +125,7 @@ int main(int argc, char* argv[]) {
   parser.addOption(importPathOpt);
   parser.addOption(logFileOpt);
   parser.addOption(noWorkAreaSyncOpt);
+  parser.addOption(noShellDesktopsOpt);
   parser.addOption(manageKomorebiOpt);
   parser.addOption(hideTaskbarOpt);
   parser.addOption(noHotkeysOpt);
@@ -133,6 +139,8 @@ int main(int argc, char* argv[]) {
   waku::kernel::setCapabilityDisabled(QStringLiteral("hotkeys"), parser.isSet(noHotkeysOpt));
   waku::kernel::setCapabilityDisabled(QStringLiteral("workarea_sync"),
                                       parser.isSet(noWorkAreaSyncOpt));
+  waku::kernel::setCapabilityDisabled(QStringLiteral("shell_desktops"),
+                                      parser.isSet(noShellDesktopsOpt));
   waku::kernel::setCapabilityDisabled(QStringLiteral("manage_komorebi"),
                                       !parser.isSet(manageKomorebiOpt));
 

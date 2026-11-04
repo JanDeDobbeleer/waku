@@ -11,8 +11,11 @@ VirtualDesktops::VirtualDesktops(QObject* parent) : QObject(parent) {
     system_ = vdesk::makeWin32VirtualDesktopSystem();
   }
   timer_.setInterval(kPollIntervalMs);
+  refreshTimer_.setSingleShot(true);
   connect(&timer_, &QTimer::timeout, this, [this] { refresh(); });
+  connect(&refreshTimer_, &QTimer::timeout, this, [this] { refresh(); });
   if (system_) {
+    installHook();
     refresh();
     timer_.start();
   }
@@ -21,10 +24,31 @@ VirtualDesktops::VirtualDesktops(QObject* parent) : QObject(parent) {
 VirtualDesktops::VirtualDesktops(std::unique_ptr<vdesk::VirtualDesktopSystem> system,
                                  QObject* parent)
     : QObject(parent), system_(std::move(system)) {
+  refreshTimer_.setSingleShot(true);
+  connect(&refreshTimer_, &QTimer::timeout, this, [this] { refresh(); });
+  if (system_) installHook();
   refresh();
 }
 
 VirtualDesktops::~VirtualDesktops() = default;
+
+void VirtualDesktops::installHook() {
+  // The hook runs on the GUI thread and only schedules a read.
+  const bool active = system_->setChangedHook([this] { scheduleRefresh(kCoalesceMs); });
+  timer_.setInterval(active ? kSafetyPollIntervalMs : kPollIntervalMs);
+}
+
+void VirtualDesktops::scheduleRefresh(int ms) {
+  if (refreshTimer_.isActive() && refreshTimer_.remainingTime() <= ms) return;
+  refreshTimer_.start(ms);
+}
+
+void VirtualDesktops::setAnimate(bool animate) {
+  if (animate == animate_) return;
+  animate_ = animate;
+  if (system_) system_->setAnimate(animate);
+  emit animateChanged();
+}
 
 bool VirtualDesktops::refresh() {
   bool available = false;
@@ -51,8 +75,11 @@ bool VirtualDesktops::refresh() {
       }
     }
   }
-  const bool differs = available != available_ || current != current_ || desktops != desktops_;
+  const bool canRemove = available && desktops.size() > 1 && system_ && system_->canRemove();
+  const bool differs = available != available_ || current != current_ || canRemove != canRemove_ ||
+                       desktops != desktops_;
   available_ = available;
+  canRemove_ = canRemove;
   current_ = current;
   desktops_ = std::move(desktops);
   if (differs) emit changed();
@@ -65,12 +92,27 @@ void VirtualDesktops::switchTo(int index) {
   if (index < count) {
     if (!system_->jumpTo(index)) return;
   } else if (index == count && count < kMaxDesktops) {
-    system_->create();  // Windows shows the new desktop
+    // A system that makes the desktop without showing it names its index; show it, so a new
+    // desktop appears as it does from the keyboard. The others (Win+Ctrl+D) show it themselves.
+    const int created = system_->create();
+    if (created >= 0) system_->jumpTo(created);
   } else {
     return;
   }
   // The switch animates; look again soon instead of waiting for the poll.
-  QTimer::singleShot(150, this, [this] { refresh(); });
+  scheduleRefresh(150);
+}
+
+void VirtualDesktops::remove(int index) {
+  const int count = static_cast<int>(desktops_.size());
+  if (!system_ || !canRemove_ || index < 0 || index >= count || count < 2) return;
+  if (!system_->remove(index)) return;
+  scheduleRefresh(150);  // the notifications and the registry watch usually come first
+}
+
+void VirtualDesktops::rename(int index, const QString& name) {
+  if (!system_ || index < 0 || index >= static_cast<int>(desktops_.size())) return;
+  if (system_->rename(index, name)) scheduleRefresh(150);
 }
 
 void VirtualDesktops::stepBy(int direction) {

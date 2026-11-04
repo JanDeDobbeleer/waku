@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <QSignalSpy>
+#include <QTest>
+#include <functional>
 #include <memory>
 
 #include "features/workspaces/qml/virtual_desktops_service.h"
@@ -14,17 +16,46 @@ namespace {
 // A system whose state and recorded switches the test controls.
 class FakeSystem final : public vdesk::VirtualDesktopSystem {
  public:
-  std::optional<vdesk::State> read() override { return state; }
+  std::optional<vdesk::State> read() override {
+    ++reads;
+    return state;
+  }
   bool jumpTo(int index) override {
     jumps.push_back(index);
     return jumpWorks;
   }
-  void create() override { ++created; }
+  int create() override {
+    ++created;
+    return createdIndex;
+  }
+  bool canRemove() const override { return supportsRemove; }
+  bool remove(int index) override {
+    removed.push_back(index);
+    return removeWorks;
+  }
+  bool rename(int index, const QString& name) override {
+    renamed.push_back({index, name});
+    return true;
+  }
+  void setAnimate(bool animate) override { animateValue = animate; }
+  bool setChangedHook(std::function<void()> h) override {
+    hook = std::move(h);
+    return hasHook;
+  }
 
   std::optional<vdesk::State> state;
   std::vector<int> jumps;
   int created = 0;
+  int createdIndex = -1;  // -1: the system showed the desktop itself
   bool jumpWorks = true;
+  bool supportsRemove = true;
+  bool removeWorks = true;
+  bool hasHook = true;
+  bool animateValue = true;
+  std::vector<int> removed;
+  std::vector<std::pair<int, QString>> renamed;
+  std::function<void()> hook;
+  int reads = 0;
 };
 
 vdesk::State threeDesktops(int current) {
@@ -227,4 +258,142 @@ TEST(WorkspacesWindowsProvider, FollowsTheDesktops) {
   h.desktops->refresh();
   EXPECT_EQ(workspaces.provider(), QString());
   EXPECT_FALSE(workspaces.connected());
+}
+
+TEST(RemovalFallback, FollowsTaskViewsRule) {
+  EXPECT_EQ(vdesk::removalFallbackIndex(3, 0), 1);  // the first gives its windows to the right
+  EXPECT_EQ(vdesk::removalFallbackIndex(3, 1), 0);  // the others to the left neighbour
+  EXPECT_EQ(vdesk::removalFallbackIndex(3, 2), 1);
+  EXPECT_EQ(vdesk::removalFallbackIndex(2, 0), 1);
+  EXPECT_EQ(vdesk::removalFallbackIndex(2, 1), 0);
+  EXPECT_EQ(vdesk::removalFallbackIndex(1, 0), -1);  // the last desktop is never closed
+  EXPECT_EQ(vdesk::removalFallbackIndex(0, 0), -1);
+  EXPECT_EQ(vdesk::removalFallbackIndex(3, 3), -1);
+  EXPECT_EQ(vdesk::removalFallbackIndex(3, -1), -1);
+}
+
+TEST(VirtualDesktopsRemove, ForwardsTheIndexAndRefreshes) {
+  Harness h;
+  QSignalSpy spy(h.desktops.get(), &VirtualDesktops::changed);
+  h.desktops->remove(1);
+  EXPECT_EQ(h.system->removed, (std::vector<int>{1}));
+  vdesk::State after = threeDesktops(0);
+  after.desktops.erase(after.desktops.begin() + 1);
+  h.system->state = after;
+  ASSERT_TRUE(QTest::qWaitFor([&] { return spy.count() > 0; }, 2000));
+  EXPECT_EQ(h.desktops->desktops().size(), 2);
+}
+
+TEST(VirtualDesktopsRemove, RefusesABadIndex) {
+  Harness h;
+  h.desktops->remove(-1);
+  h.desktops->remove(3);
+  h.desktops->remove(99);
+  EXPECT_TRUE(h.system->removed.empty());
+}
+
+TEST(VirtualDesktopsRemove, RefusesTheLastDesktop) {
+  Harness h;
+  vdesk::State one;
+  one.desktops = {{QStringLiteral("{A}"), QString(), {}}};
+  one.current = 0;
+  h.system->state = one;
+  h.desktops->refresh();
+  EXPECT_FALSE(h.desktops->canRemove());
+  h.desktops->remove(0);
+  EXPECT_TRUE(h.system->removed.empty());
+}
+
+TEST(VirtualDesktopsRemove, CanRemoveFollowsSupportAndCount) {
+  Harness h;
+  EXPECT_TRUE(h.desktops->canRemove());
+  h.system->supportsRemove = false;
+  h.desktops->refresh();
+  EXPECT_FALSE(h.desktops->canRemove());
+  h.desktops->remove(1);  // no route without the shell interface
+  EXPECT_TRUE(h.system->removed.empty());
+  h.system->supportsRemove = true;
+  EXPECT_TRUE(h.desktops->refresh());  // canRemove is part of the model
+  EXPECT_TRUE(h.desktops->canRemove());
+}
+
+TEST(VirtualDesktopsRemove, ARefusedRemoveChangesNothing) {
+  Harness h;
+  h.system->removeWorks = false;
+  const int reads = h.system->reads;
+  h.desktops->remove(0);
+  EXPECT_EQ(h.system->removed, (std::vector<int>{0}));
+  QTest::qWait(250);
+  EXPECT_EQ(h.system->reads, reads);  // no refresh was scheduled
+}
+
+TEST(VirtualDesktopsRename, ForwardsAndIgnoresBadIndexes) {
+  Harness h;
+  h.desktops->rename(1, QStringLiteral("Work"));
+  h.desktops->rename(7, QStringLiteral("x"));
+  ASSERT_EQ(h.system->renamed.size(), 1u);
+  EXPECT_EQ(h.system->renamed[0].first, 1);
+  EXPECT_EQ(h.system->renamed[0].second, QStringLiteral("Work"));
+}
+
+TEST(VirtualDesktopsCreate, ShowsADesktopTheSystemMadeWithoutShowingIt) {
+  Harness h;
+  h.system->createdIndex = 3;
+  h.desktops->switchTo(3);
+  EXPECT_EQ(h.system->created, 1);
+  EXPECT_EQ(h.system->jumps, (std::vector<int>{3}));
+}
+
+TEST(VirtualDesktopsCreate, DoesNotJumpWhenWindowsShowedIt) {
+  Harness h;  // createdIndex -1: the keystroke route shows the new desktop itself
+  h.desktops->switchTo(3);
+  EXPECT_EQ(h.system->created, 1);
+  EXPECT_TRUE(h.system->jumps.empty());
+}
+
+TEST(VirtualDesktopsHook, CoalescesBurstsIntoOneRead) {
+  Harness h;
+  ASSERT_TRUE(static_cast<bool>(h.system->hook));
+  const int reads = h.system->reads;
+  for (int i = 0; i < 5; ++i) h.system->hook();
+  EXPECT_EQ(h.system->reads, reads);  // nothing at once
+  ASSERT_TRUE(QTest::qWaitFor([&] { return h.system->reads > reads; }, 2000));
+  QTest::qWait(150);
+  EXPECT_EQ(h.system->reads, reads + 1);
+}
+
+TEST(VirtualDesktopsHook, ANotificationRefreshesTheModel) {
+  Harness h;
+  QSignalSpy spy(h.desktops.get(), &VirtualDesktops::changed);
+  h.system->state = threeDesktops(2);  // the user switched in Task View
+  h.system->hook();
+  ASSERT_TRUE(QTest::qWaitFor([&] { return spy.count() > 0; }, 2000));
+  EXPECT_EQ(h.desktops->current(), 2);
+}
+
+TEST(VirtualDesktopsAnimate, ReachesTheSystem) {
+  Harness h;
+  EXPECT_TRUE(h.desktops->animate());
+  h.desktops->setAnimate(false);
+  EXPECT_FALSE(h.system->animateValue);
+  EXPECT_FALSE(h.desktops->animate());
+}
+
+TEST(WorkspacesWindowsProvider, RemoveClosesTheDesktopOnAnyMonitor) {
+  Harness h;
+  Workspaces workspaces(nullptr, nullptr, h.desktops.get());
+  EXPECT_TRUE(workspaces.canRemove());
+  workspaces.remove(12345, QStringLiteral("2"));
+  workspaces.remove(0, QStringLiteral("not a number"));
+  EXPECT_EQ(h.system->removed, (std::vector<int>{2}));
+}
+
+TEST(WorkspacesWindowsProvider, CanRemoveFollowsTheDesktops) {
+  Harness h;
+  Workspaces workspaces(nullptr, nullptr, h.desktops.get());
+  QSignalSpy spy(&workspaces, &Workspaces::changed);
+  h.system->supportsRemove = false;
+  h.desktops->refresh();
+  EXPECT_FALSE(workspaces.canRemove());
+  EXPECT_EQ(spy.count(), 1);
 }

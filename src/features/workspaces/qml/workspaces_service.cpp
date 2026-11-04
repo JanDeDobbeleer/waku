@@ -134,10 +134,22 @@ bool Workspaces::update() {
     monitors = fromWindows(desktops_->desktops());
   }
   // Nothing moved on screen when the model is as it was; the widgets then keep their delegates.
-  if (provider == provider_ && monitors == monitors_) return false;
+  const bool canRemove =
+      provider == QStringLiteral("windows") && desktops_ && desktops_->canRemove();
+  if (provider == provider_ && monitors == monitors_ && canRemove == canRemove_) return false;
+  canRemove_ = canRemove;
   provider_ = provider;
   monitors_ = std::move(monitors);
   return true;
+}
+
+bool Workspaces::canRemove() const { return canRemove_; }
+
+void Workspaces::remove(qlonglong, const QString& id) {
+  if (provider_ != QStringLiteral("windows") || !desktops_) return;
+  bool ok = false;
+  const int index = id.toInt(&ok);
+  if (ok) desktops_->remove(index);
 }
 
 void Workspaces::focus(qlonglong monitorHandle, const QString& id) {
