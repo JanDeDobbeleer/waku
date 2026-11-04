@@ -117,6 +117,27 @@ TEST(WindowsTaskbarTest, ExplorerRestartHidesTheNewWindowsAgain) {
   EXPECT_TRUE(f.system.windowsVisible_);
 }
 
+TEST(WindowsTaskbarTest, ATaskbarCreatedAfterTheHideIsHiddenWhenItAppears) {
+  Fixture f;
+  // waku started at sign-in, before Explorer created the taskbar.
+  f.system.windowsPresent_ = false;
+  f.system.windowsVisible_ = false;
+  f.taskbar.hide();
+  ASSERT_TRUE(f.store.marker.has_value());
+  EXPECT_FALSE(f.store.marker->changedWindows);
+
+  f.system.windowsPresent_ = true;
+  f.system.windowsVisible_ = true;
+  f.system.restartCallback();  // the recheck or TaskbarCreated
+  EXPECT_FALSE(f.system.windowsVisible_);
+  ASSERT_TRUE(f.store.marker.has_value());
+  EXPECT_TRUE(f.store.marker->changedWindows);
+
+  f.taskbar.restore();
+  EXPECT_TRUE(f.system.windowsVisible_);
+  EXPECT_FALSE(f.store.marker.has_value());
+}
+
 TEST(WindowsTaskbarTest, AStaleMarkerWithADeadPidIsUndoneBeforeAnythingElse) {
   Fixture f;
   f.system.autoHide_ = true;

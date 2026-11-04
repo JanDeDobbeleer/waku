@@ -40,6 +40,9 @@ class TaskbarSystem {
   virtual void setAutoHide(bool on) = 0;
   // True when at least one taskbar window (Shell_TrayWnd, Shell_SecondaryTrayWnd) is visible.
   virtual bool windowsVisible() const = 0;
+  // True when at least one taskbar window exists, visible or not. False early at sign-in, before
+  // Explorer has created the taskbar.
+  virtual bool windowsPresent() const = 0;
   // SW_HIDE or SW_SHOWNA on every taskbar window.
   virtual void setWindowsHidden(bool hidden) = 0;
   // True when `pid` is a running waku process.
@@ -107,6 +110,9 @@ class WindowsTaskbarHider : public WindowsTaskbar {
   bool hiding_ = false;
   bool changedAutoHide_ = false;
   bool changedWindows_ = false;
+  // hide() ran before the taskbar existed (waku starts at sign-in before Explorer): hide its
+  // windows as soon as they appear.
+  bool windowsPending_ = false;
 };
 
 }  // namespace waku::host

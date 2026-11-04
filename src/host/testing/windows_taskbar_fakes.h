@@ -20,6 +20,7 @@ class FakeTaskbarSystem : public TaskbarSystem {
     calls << (on ? QStringLiteral("autohide-on") : QStringLiteral("autohide-off"));
   }
   bool windowsVisible() const override { return windowsVisible_; }
+  bool windowsPresent() const override { return windowsPresent_; }
   void setWindowsHidden(bool hidden) override {
     windowsVisible_ = !hidden;
     calls << (hidden ? QStringLiteral("hide-windows") : QStringLiteral("show-windows"));
@@ -31,12 +32,14 @@ class FakeTaskbarSystem : public TaskbarSystem {
 
   // What Explorer does when it restarts: new windows, visible.
   void restartExplorer() {
+    windowsPresent_ = true;
     windowsVisible_ = true;
     if (restartCallback) restartCallback();
   }
 
   bool autoHide_ = false;
   bool windowsVisible_ = true;
+  bool windowsPresent_ = true;
   QSet<qint64> alive;
   QStringList calls;  // the mutating calls, in order
   std::function<void()> restartCallback;

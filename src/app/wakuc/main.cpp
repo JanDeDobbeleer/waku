@@ -31,6 +31,13 @@
 //                       write a starter shell.qml (the built-in bar) into the config home so
 //                       you can edit it. Works without a running bar; refuses to replace an
 //                       existing shell.qml unless --force
+//     wakuc [--config-home <dir>] [--no-app-bar] [--keep-taskbar] startup enable [-- <waku flags>]
+//     wakuc startup disable|status
+//                       register, remove or report the Scheduled Task that starts `waku.exe` at
+//                       sign-in. Works without a running bar. `waku.exe` must be on your PATH.
+//                       The task runs `waku.exe --register-app-bar --hide-taskbar`;
+//                       `--config-home` is passed to waku only when given here, `--no-app-bar`
+//                       and `--keep-taskbar` drop the other two, flags after `--` are added
 //
 // `--dry-run` plays the animation but does not set the wallpaper. A command is sent as one line;
 // arguments with spaces are quoted (control.h, joinCommand).
@@ -47,9 +54,12 @@
 #include <QFile>
 #include <QRegularExpression>
 #include <cstdio>
+#include <memory>
 
 #include "control/config_init.h"
 #include "control/control.h"
+#include "features/startup/startup_service.h"
+#include "features/startup/win32/startup_system_win.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -113,6 +123,8 @@ int main(int argc, char* argv[]) {
       "  surface show | hide | toggle | status <name>\n"
       "  taskbar hide | show | status   hide or restore the Windows taskbar\n"
       "  config init [--force]          write a starter shell.qml into the config home\n"
+      "  startup enable [--config-home <dir>] [--no-app-bar] [--keep-taskbar] [-- <waku flags>]\n"
+      "  startup disable | status       start waku at sign-in through a Scheduled Task\n"
       "  call <target> <function> [args...]  run a function of an IpcHandler; call alone lists\n"
       "Add --dry-run to set, random, next or previous to play the animation without "
       "changing the wallpaper."));
@@ -127,19 +139,25 @@ int main(int argc, char* argv[]) {
   QCommandLineOption forceOpt(QStringLiteral("force"),
                               QStringLiteral("config init: replace an existing shell.qml."));
   parser.addOption(forceOpt);
+  QCommandLineOption noAppBarOpt(QStringLiteral("no-app-bar"),
+                                 QStringLiteral("startup enable: leave out --register-app-bar."));
+  parser.addOption(noAppBarOpt);
+  QCommandLineOption keepTaskbarOpt(QStringLiteral("keep-taskbar"),
+                                    QStringLiteral("startup enable: leave out --hide-taskbar."));
+  parser.addOption(keepTaskbarOpt);
   parser.addPositionalArgument(
       QStringLiteral("command"),
       QStringLiteral(
-          "reload, status, quit, wallpaper, shortcut, surface, taskbar, config or call"));
+          "reload, status, quit, wallpaper, shortcut, surface, taskbar, config, startup or call"));
   parser.process(app);
 
   const QStringList positional = parser.positionalArguments();
   const QString usage = QStringLiteral(
       "usage: wakuc [--config-home <dir>] reload|status|quit|wallpaper "
       "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|shortcut <name>|list|surface "
-      "(list|show|hide|toggle|status <name>)|taskbar (hide|show|status)|config init [--force]|call "
-      "<target> <function> "
-      "[args...]");
+      "(list|show|hide|toggle|status <name>)|taskbar (hide|show|status)|config init [--force]|"
+      "startup (enable [--no-app-bar] [--keep-taskbar] [-- <waku flags>]|disable|status)|call "
+      "<target> <function> [args...]");
   if (positional.isEmpty()) {
     print(stderr, usage);
     return kUsage;
@@ -169,7 +187,41 @@ int main(int argc, char* argv[]) {
     print(stdout, result.path);
     return kOk;
   }
-  if (parser.isSet(forceOpt)) {
+  if (command == QLatin1String("startup")) {
+    // Client side: no bar, no pipe.
+    const QString verb = positional.value(1);
+    const bool enable = verb == QLatin1String("enable");
+    const bool known =
+        enable || verb == QLatin1String("disable") || verb == QLatin1String("status");
+    if (!known || parser.isSet(forceOpt) || parser.isSet(dryRunOpt) ||
+        (!enable &&
+         (positional.size() != 2 || parser.isSet(noAppBarOpt) || parser.isSet(keepTaskbarOpt)))) {
+      print(stderr, usage);
+      return kUsage;
+    }
+    std::unique_ptr<waku::startup::StartupSystem> system = waku::startup::makeWin32StartupSystem();
+    waku::startup::StartupResult result;
+    if (enable) {
+      waku::startup::StartupOptions options;
+      if (parser.isSet(configHomeOpt)) {
+        options.configHome =
+            QDir::toNativeSeparators(QDir::current().absoluteFilePath(parser.value(configHomeOpt)));
+      }
+      options.registerAppBar = !parser.isSet(noAppBarOpt);
+      options.hideTaskbar = !parser.isSet(keepTaskbarOpt);
+      options.extraArguments = positional.mid(2);
+      result = waku::startup::enableStartup(*system, options);
+    } else if (verb == QLatin1String("disable")) {
+      result = waku::startup::disableStartup(*system);
+    } else {
+      result = waku::startup::startupStatus(*system);
+    }
+    for (const QString& text : result.lines) {
+      print(!result.ok || text.startsWith(QLatin1String("warning:")) ? stderr : stdout, text);
+    }
+    return result.ok ? kOk : kBarError;
+  }
+  if (parser.isSet(forceOpt) || parser.isSet(noAppBarOpt) || parser.isSet(keepTaskbarOpt)) {
     print(stderr, usage);
     return kUsage;
   }

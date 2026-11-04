@@ -59,6 +59,8 @@ class Win32TaskbarSystem final : public TaskbarSystem {
     return false;
   }
 
+  bool windowsPresent() const override { return !taskbarWindows().empty(); }
+
   void setWindowsHidden(bool hidden) override {
     for (HWND hwnd : taskbarWindows()) ShowWindow(hwnd, hidden ? SW_HIDE : SW_SHOWNA);
   }
