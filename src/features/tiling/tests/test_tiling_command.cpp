@@ -43,6 +43,18 @@ class FakeControl final : public TilingControl {
     calls << QStringLiteral("promote");
     return QStringLiteral("ok: fake");
   }
+  QString controlStack(waku::tiling::Direction direction) override {
+    calls << QStringLiteral("stack|%1").arg(static_cast<int>(direction));
+    return QStringLiteral("ok: fake");
+  }
+  QString controlUnstack() override {
+    calls << QStringLiteral("unstack");
+    return QStringLiteral("ok: fake");
+  }
+  QString controlCycleStack(int step) override {
+    calls << QStringLiteral("cycle|%1").arg(step);
+    return QStringLiteral("ok: fake");
+  }
   QString controlResize(waku::tiling::Axis axis, int sign) override {
     calls << QStringLiteral("resize|%1|%2").arg(static_cast<int>(axis)).arg(sign);
     return QStringLiteral("ok: fake");
@@ -102,6 +114,11 @@ TEST(TilingCommand, BadUsageAnswersAnErrorAndCallsNothing) {
         QStringList{QStringLiteral("flip")},
         QStringList{QStringLiteral("flip"), QStringLiteral("up")},
         QStringList{QStringLiteral("close"), QStringLiteral("now")},
+        QStringList{QStringLiteral("stack")},
+        QStringList{QStringLiteral("stack"), QStringLiteral("in")},
+        QStringList{QStringLiteral("unstack"), QStringLiteral("all")},
+        QStringList{QStringLiteral("cycle-stack")},
+        QStringList{QStringLiteral("cycle-stack"), QStringLiteral("left")},
         QStringList{QStringLiteral("explode")}}) {
     const QString answer = answerTileCommand(words, &control);
     EXPECT_TRUE(answer.startsWith(QLatin1String("error: usage:"))) << answer.toStdString();
@@ -132,6 +149,10 @@ TEST(TilingCommand, TheWindowCommandsReachTheRightFunction) {
   run({"move", "right"});
   run({"move", "up"});
   run({"promote"});
+  run({"stack", "left"});
+  run({"unstack"});
+  run({"cycle-stack", "previous"});
+  run({"cycle-stack", "NEXT"});
   run({"resize", "horizontal", "increase"});
   run({"resize", "vertical", "decrease"});
   run({"flip", "horizontal"});
@@ -142,16 +163,19 @@ TEST(TilingCommand, TheWindowCommandsReachTheRightFunction) {
   run({"minimize"});
   using waku::tiling::Axis;
   using waku::tiling::Direction;
-  EXPECT_EQ(control.calls,
-            (QStringList{QStringLiteral("focusdir|%1").arg(static_cast<int>(Direction::Left)),
-                         QStringLiteral("focusdir|%1").arg(static_cast<int>(Direction::Down)),
-                         QStringLiteral("move|%1").arg(static_cast<int>(Direction::Right)),
-                         QStringLiteral("move|%1").arg(static_cast<int>(Direction::Up)),
-                         QStringLiteral("promote"),
-                         QStringLiteral("resize|%1|1").arg(static_cast<int>(Axis::Horizontal)),
-                         QStringLiteral("resize|%1|-1").arg(static_cast<int>(Axis::Vertical)),
-                         QStringLiteral("flip|%1").arg(static_cast<int>(Axis::Horizontal)),
-                         QStringLiteral("flip|%1").arg(static_cast<int>(Axis::Vertical)),
-                         QStringLiteral("monocle"), QStringLiteral("pause"),
-                         QStringLiteral("close"), QStringLiteral("minimize")}));
+  EXPECT_EQ(
+      control.calls,
+      (QStringList{QStringLiteral("focusdir|%1").arg(static_cast<int>(Direction::Left)),
+                   QStringLiteral("focusdir|%1").arg(static_cast<int>(Direction::Down)),
+                   QStringLiteral("move|%1").arg(static_cast<int>(Direction::Right)),
+                   QStringLiteral("move|%1").arg(static_cast<int>(Direction::Up)),
+                   QStringLiteral("promote"),
+                   QStringLiteral("stack|%1").arg(static_cast<int>(Direction::Left)),
+                   QStringLiteral("unstack"), QStringLiteral("cycle|-1"), QStringLiteral("cycle|1"),
+                   QStringLiteral("resize|%1|1").arg(static_cast<int>(Axis::Horizontal)),
+                   QStringLiteral("resize|%1|-1").arg(static_cast<int>(Axis::Vertical)),
+                   QStringLiteral("flip|%1").arg(static_cast<int>(Axis::Horizontal)),
+                   QStringLiteral("flip|%1").arg(static_cast<int>(Axis::Vertical)),
+                   QStringLiteral("monocle"), QStringLiteral("pause"), QStringLiteral("close"),
+                   QStringLiteral("minimize")}));
 }

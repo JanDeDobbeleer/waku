@@ -420,9 +420,9 @@ placed with `SetWindowPos` (`SWP_NOACTIVATE`, `SWP_ASYNCWINDOWPOS`, never `Defer
 the invisible frame border added per edge. No thread, no polling, no injected DLL, no undocumented
 API of its own (the shown desktop reads the registry value that has a row in the allowlist
 below). `--no-tiling` disables the capability `tiling`. The tiler does nothing while komorebi or
-GlazeWM runs. The `tile` verb of `wakuc` adds focus by direction, swap, promote, resize, flip,
-monocle, pause, close and minimize; close posts `WM_CLOSE` and minimize calls `ShowWindowAsync`
-(both documented, so no allowlist row). The `desktop` verb moves a window with the documented
+GlazeWM runs. The `tile` verb of `wakuc` adds focus by direction, swap, promote, stacking (windows share a slot; the top one is raised with
+`SetWindowPos(HWND_TOP, SWP_NOACTIVATE)`), resize, flip, monocle, pause, close and minimize; close
+posts `WM_CLOSE` and minimize calls `ShowWindowAsync` (all documented, so no allowlist row). The `desktop` verb moves a window with the documented
 `IVirtualDesktopManager::MoveWindowToDesktop`.
 
 ## Threading

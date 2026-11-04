@@ -86,10 +86,11 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `wakuc call` | List the `IpcHandler` targets and their functions. |
 | `wakuc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
 | `wakuc taskbar hide`, `show`, `status` | Hide the Windows taskbar, restore what waku changed (it stays shown until `hide`), or print `ok: taskbar: hidden|visible|autohide-was-on`. |
-| `wakuc tile toggle`, `float`, `retile`, `status` | The built-in tiler (off unless the shell sets `Tiling.enabled`): float the focused window, or tile it again; float it only; place every window of the shown desktop again; print `ok: enabled=...; active=...; managed=...`. |
+| `wakuc tile toggle`, `float`, `retile`, `status` | The built-in tiler (off unless the shell sets `Tiling.enabled`): float the focused window, or tile it again; float it only; place every window of the shown desktop again; print `ok: enabled=...; active=...; managed=...; ...; stacks=N; ...`. |
 | `wakuc tile layout <name>` | Set the layout (`mainStack`, `columns`) of the focused window's workspace. |
 | `wakuc tile focus next\|previous\|left\|right\|up\|down` | Focus the next or previous window of the workspace (wrapping), or the nearest tiled window in a direction. |
 | `wakuc tile move left\|right\|up\|down`, `promote` | Swap the focused window with its neighbour in that direction; give it the main slot. |
+| `wakuc tile stack left\|right\|up\|down`, `unstack`, `cycle-stack next\|previous` | Stacking: put the focused window on the stack of the slot in that direction (windows of a stack share one slot, the top one shows); take it out into its own slot; bring the next or previous window of its stack to the top. |
 | `wakuc tile resize horizontal\|vertical increase\|decrease` | Grow or shrink the focused window by one step: horizontal moves the main/stack boundary (5% of the width), vertical changes the height of a stacked window. Per workspace, clamped. |
 | `wakuc tile flip horizontal\|vertical`, `monocle`, `pause` | Mirror the layout (again undoes it); the focused window fills the work area, the others stay put (again tiles it back); stop and resume placing windows. |
 | `wakuc tile close`, `minimize` | Close (`WM_CLOSE`) or minimize the focused window. |

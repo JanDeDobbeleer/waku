@@ -20,9 +20,9 @@ Component.onCompleted: {
 | File | Role |
 |---|---|
 | `layouts.*` | pure geometry: `layoutSlots`, `outerRect` (border compensation), names |
-| `tiling_model.*` | per `(HMONITOR, desktop GUID)` ordered stack, layout override, float set |
+| `tiling_model.*` | per `(HMONITOR, desktop GUID)` ordered slots (a slot is one window or a stack of windows), layout override, float set |
 | `tiling_rules.*` | user rules (`process`, `class`, `title` regex -> `ignore` or `float`) and `classify`, the eligibility function |
-| `window_placer.h` | the interface to the machine: enumerate, query facts, work area, shown desktop, `place`, `activate` |
+| `window_placer.h` | the interface to the machine: enumerate, query facts, work area, shown desktop, `place`, `raise`, `activate` |
 | `tiling_engine.*` | the behaviour: events in, placements out |
 | `tiling_events.h` | event kinds, WinEvent codes, the `TilingHooks` interface |
 | `tiling_command.*` | the `tile` verb of `wakuc` over `TilingControl` |
@@ -117,8 +117,33 @@ answers `ok: ...` or `error: ...`). The pure logic is in `layouts.cpp` (`flipSlo
   desktop and taskbar classes. `close` posts `WM_CLOSE` (a window may ask to save), `minimize`
   uses `ShowWindowAsync`; neither blocks on a hung window.
 
-Not implemented: stacking (komorebic `stack`, `unstack`, `cycle-stack`). A workspace is one flat
-list; stacks would need a second level in the model, the layouts and every command.
+## Stacking
+
+Several windows can share one slot of the layout, like komorebi's stacks. A workspace is an
+ordered list of slots (`Slot` in `tiling_model.h`); a slot holds an ordered list of windows and
+the index of the top one. A workspace with no stacks is a list of one-window slots, so it behaves
+as before. The layout counts slots, not windows.
+
+- `stack left|right|up|down`: the focused window leaves its slot and joins the stack of the
+  slot nearest in that direction (the same geometry as `focus`). It becomes the top there. The
+  slot it left is dropped when it was alone; else the window under it shows.
+- `unstack`: the focused window leaves its stack and gets a slot of its own right after the
+  stack's slot. A stack of one dissolves by itself.
+- `cycle-stack next|previous`: the next or previous window of the focused window's stack (wrapping)
+  becomes the top and takes the focus.
+- Only the top window is a layout slot. The windows under it are placed at the same rectangle
+  (`place`, no activation) and stay managed: they are not minimized or hidden. A window that
+  becomes the top of a stack with two windows or more is raised with `SetWindowPos(HWND_TOP,
+  SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE)` (`WindowPlacer::raise`); nothing else is raised, so
+  floating windows keep their order.
+- A window under the top that takes the foreground (alt-tab, the taskbar) becomes the top.
+- A window that closes, hides, minimizes, floats, or leaves the desktop leaves its stack. When it
+  was the top, the next window down the list shows. The height weight and the monocle mark
+  follow the top of a slot.
+- `focus left|right|up|down`, `move`, `promote`, `resize`, `flip` and `monocle` act on slots: focus
+  goes to the top of the neighbouring slot, `move` and `promote` move the whole stack, `resize` and
+  `monocle` size the slot. `focus next|previous` visit slots.
+- `status` prints `stacks=N`, the number of slots with more than one window.
 
 ## Decisions
 
@@ -136,7 +161,7 @@ list; stacks would need a second level in the model, the layouts and every comma
 - Keyboard Snap (Win+Arrow) and a maximize emit no event the tiler hooks, so a snapped window is
   noticed at the next retile; a window maximized or restored by the user takes or frees its slot
   only then. `retile` fixes it by hand.
-- No stacking, no per-monitor gap and no persistence. Flips, ratio, weights and monocle live in
+- No per-monitor gap and no persistence. Flips, ratio, weights and monocle live in
   memory per workspace.
 - Exclusive-fullscreen games are detected only by their bounds.
 - UWP frames (`ApplicationFrameWindow`) that animate their size can clamp for a moment.

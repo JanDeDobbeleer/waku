@@ -81,3 +81,88 @@ TEST(TilingModel, ForgetClearsStackAndFloat) {
   EXPECT_EQ(model.managedCount(), 0);
   EXPECT_EQ(model.floatingCount(), 0);
 }
+
+TEST(TilingModel, StackingShareASlotAndTheTopShows) {
+  TilingModel model;
+  for (WindowId id : {1, 2, 3}) model.add(kA, id);
+  EXPECT_TRUE(model.stackOnto(3, 2));
+  EXPECT_EQ(model.stack(kA), (std::vector<WindowId>{1, 3}));  // slot tops
+  EXPECT_EQ(model.members(kA), (std::vector<WindowId>{1, 2, 3}));
+  EXPECT_EQ(model.stackOf(2), (std::vector<WindowId>{2, 3}));
+  EXPECT_EQ(model.stackCount(), 1);
+  EXPECT_TRUE(model.isTop(3));
+  EXPECT_FALSE(model.isTop(2));
+  EXPECT_EQ(model.managedCount(), 3);
+  EXPECT_FALSE(model.stackOnto(3, 2));  // already share a slot
+  EXPECT_FALSE(model.stackOnto(1, 1));
+}
+
+TEST(TilingModel, TheStackOfOneDissolves) {
+  TilingModel model;
+  for (WindowId id : {1, 2, 3}) model.add(kA, id);
+  model.stackOnto(3, 2);
+  model.remove(3);
+  EXPECT_EQ(model.stack(kA), (std::vector<WindowId>{1, 2}));
+  EXPECT_EQ(model.stackCount(), 0);
+}
+
+TEST(TilingModel, RemovingTheTopShowsTheNextWindow) {
+  TilingModel model;
+  for (WindowId id : {1, 2, 3, 4}) model.add(kA, id);
+  model.stackOnto(2, 1);
+  model.stackOnto(3, 1);  // slot: 1 2 3, top 3
+  model.raiseInStack(2);
+  model.remove(2);  // the top goes: the next one down the list (3) shows
+  EXPECT_EQ(model.stack(kA), (std::vector<WindowId>{3, 4}));
+  EXPECT_EQ(model.stackOf(1), (std::vector<WindowId>{1, 3}));
+  model.remove(1);  // not the top: 3 stays
+  EXPECT_EQ(model.stack(kA), (std::vector<WindowId>{3, 4}));
+  EXPECT_EQ(model.stackCount(), 0);
+}
+
+TEST(TilingModel, UnstackPutsTheWindowRightAfterTheStack) {
+  TilingModel model;
+  for (WindowId id : {1, 2, 3}) model.add(kA, id);
+  model.stackOnto(2, 1);
+  EXPECT_TRUE(model.unstack(2));
+  EXPECT_EQ(model.stack(kA), (std::vector<WindowId>{1, 2, 3}));
+  EXPECT_FALSE(model.unstack(2));  // alone in its slot
+  EXPECT_FALSE(model.unstack(99));
+}
+
+TEST(TilingModel, CycleWrapsAndMovesTheTop) {
+  TilingModel model;
+  for (WindowId id : {1, 2, 3}) model.add(kA, id);
+  model.stackOnto(2, 1);
+  model.stackOnto(3, 1);  // 1 2 3, top 3
+  EXPECT_EQ(model.cycle(3, 1), 1u);
+  EXPECT_EQ(model.cycle(1, -1), 3u);
+  EXPECT_EQ(model.cycle(3, -1), 2u);
+  EXPECT_EQ(model.stack(kA), std::vector<WindowId>{2});
+  model.add(kA, 9);
+  EXPECT_EQ(model.cycle(9, 1), 0u);  // alone
+}
+
+TEST(TilingModel, SwapAndPromoteMoveWholeStacks) {
+  TilingModel model;
+  for (WindowId id : {1, 2, 3, 4}) model.add(kA, id);
+  model.stackOnto(4, 3);  // slots: [1] [2] [3 4]
+  EXPECT_TRUE(model.promote(3));
+  EXPECT_EQ(model.stack(kA), (std::vector<WindowId>{4, 1, 2}));
+  EXPECT_TRUE(model.swap(2, 4));
+  EXPECT_EQ(model.stack(kA), (std::vector<WindowId>{2, 1, 4}));
+  EXPECT_EQ(model.stackOf(4), (std::vector<WindowId>{3, 4}));
+  EXPECT_FALSE(model.swap(3, 4));  // one slot
+}
+
+TEST(TilingModel, TheHeightWeightAndMonocleFollowTheTop) {
+  TilingModel model;
+  for (WindowId id : {1, 2}) model.add(kA, id);
+  model.edit(kA).weights[1] = 2.0;
+  model.edit(kA).monocle = 1;
+  model.stackOnto(2, 1);
+  EXPECT_EQ(model.view(kA).monocle, 2u);
+  EXPECT_DOUBLE_EQ(model.view(kA).weights.at(2), 2.0);
+  EXPECT_TRUE(model.raiseInStack(1));
+  EXPECT_EQ(model.view(kA).monocle, 1u);
+}

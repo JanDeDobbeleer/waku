@@ -116,6 +116,9 @@ class Tiling : public QObject, public TilingControl {
   QString controlFocusDirection(Direction direction) override;
   QString controlMove(Direction direction) override;
   QString controlPromote() override;
+  QString controlStack(Direction direction) override;
+  QString controlUnstack() override;
+  QString controlCycleStack(int step) override;
   QString controlResize(Axis axis, int sign) override;
   QString controlFlip(Axis axis) override;
   QString controlMonocle() override;

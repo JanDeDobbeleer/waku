@@ -171,6 +171,12 @@ class Win32WindowPlacer final : public WindowPlacer {
 
   void activate(WindowId id) override { kernel::forceForegroundFocus(id); }
 
+  // A documented z-order change only: HWND_TOP, no move, no size, no activation.
+  void raise(WindowId id) override {
+    SetWindowPos(toHwnd(id), HWND_TOP, 0, 0, 0, 0,
+                 SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
+  }
+
   // PostMessage and ShowWindowAsync do not wait for the window, so a hung one cannot block us.
   bool close(WindowId id) override {
     return PostMessageW(reinterpret_cast<HWND>(id), WM_CLOSE, 0, 0) != FALSE;
