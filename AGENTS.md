@@ -204,7 +204,7 @@ Conventional commits: `type(scope): subject`, imperative, lower case, no trailin
 
 - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`, `revert`.
 - Scopes: the unit names `kernel`, `control`, `host`, `ui`, `quickshell`, `app`; the feature names `apps`, `audio`,
-  `bluetooth`, `brightness`, `clock`, `color_scheme`, `control_center`, `desktop_state`, `github`, `media`, `network`,
+  `bluetooth`, `brightness`, `clock`, `color_scheme`, `control_center`, `desktop_state`, `github`, `keymap`, `media`, `network`,
   `notifications`, `quickshell_io`, `startup`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces`; and
   `build`, `docs`, `test`, `style`, `chore`. The scope is optional. `tools/hooks/commit-msg` checks it.
 - One logical change per commit; `tools\check.ps1` green before committing.

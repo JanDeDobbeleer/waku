@@ -95,6 +95,24 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 
 `--dry-run` after `wallpaper` (not `gallery`) plays the animation without setting the wallpaper.
 
+### `wakuc keys`: global hotkeys without whkd
+
+`wakuc keys` is a hotkey daemon in `wakuc.exe` (the bar, `waku.exe`, is not involved). It reads a
+whkd binding file (`alt + h : komorebic focus left`), registers the keys with `RegisterHotKey` and
+runs the commands. A copy of your `whkdrc` loads unchanged. Syntax, actions and decisions:
+`src/features/keymap/design.md`.
+
+| Command | Effect |
+|---|---|
+| `wakuc keys [--config <file>] [--log-file <file>]` | Start the daemon, hidden and detached; returns when it answers. `--config` defaults to `%USERPROFILE%\.config\waku\keys.conf` if that file exists. One daemon per user. |
+| `wakuc keys --foreground [--config <file>]` | Stay in this console and log to stderr. For a first test. |
+| `wakuc keys reload`, `stop`, `status` | Reload the file now (it also reloads when it changes; a bad file keeps the old bindings), stop the daemon, or print `ok: running; pid=P; bindings=N; conflicts=C; issues=I; paused=no; config=F`. |
+
+Beside shell commands, a binding can run `waku:shortcut <name>`, `waku:surface show|hide|toggle
+<name>`, `waku:call <target> <function> [args]` and `waku:reload` (all sent to the bar, as `wakuc`
+does), `waku:keys-reload`, `waku:keys-stop`, and `waku:activate-or-launch <exe-or-title> <command>`
+(focus the app's window, else run the command). `--config-home <dir>` selects the bar.
+
 ### Moving a waku 1 config to waku 2
 
 waku 2 uses Quickshell's names (`docs/plans/2026-10-29-waku-extensibility-proposal.md`, section
