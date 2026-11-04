@@ -1,8 +1,8 @@
 # keymap
 
-`wakuc keys` is a hotkey daemon: it loads a whkd binding file, registers the keys and runs the
-commands. A user needs no whkd or AutoHotkey. The daemon is part of `wakuc.exe`. `waku.exe` does
-not link this feature and does not change.
+`wakukeys.exe` is a hotkey daemon: it loads a whkd binding file, registers the keys and runs the
+commands. A user needs no whkd or AutoHotkey. The daemon is its own executable (`src/app/wakukeys`).
+`waku.exe` and `wakuc.exe` do not link this feature.
 
 Phases 1 and 2 only. Not built: a low-level keyboard hook, chords, hotstrings, scripting.
 
@@ -10,15 +10,16 @@ Phases 1 and 2 only. Not built: a low-level keyboard hook, chords, hotstrings, s
 
 | Command | Effect |
 |---|---|
-| `wakuc keys [--config <file>] [--foreground] [--log-file <file>]` | Start the daemon. |
-| `wakuc keys reload` | Read the file now. Prints `ok: N bindings active; ...` or `error: ...`. |
-| `wakuc keys stop` | End the daemon. |
-| `wakuc keys status` | `ok: running; pid=P; bindings=N; conflicts=C; issues=I; paused=no; config=F`. |
+| `wakukeys [--config <file>] [--config-home <dir>] [--log-file <file>]` | Start the daemon. |
+| `wakukeys reload` | Read the file now. Prints `ok: N bindings active; ...` or `error: ...`. |
+| `wakukeys stop` | End the daemon. |
+| `wakukeys status` | `ok: running; pid=P; bindings=N; conflicts=C; issues=I; paused=no; config=F`. |
 
 `--config` defaults to `%USERPROFILE%\.config\waku\keys.conf` when that file exists. No other
 location is assumed (the whkd location is not read). `--config-home <dir>` selects the bar that the
-`waku:` actions talk to, as for every `wakuc` command. Exit codes: 0 ok, 1 error (a bad first file,
-already running, did not start), 2 daemon not running, 3 usage.
+`waku:` actions talk to, as for every `wakuc` command. `reload`, `stop` and `status` take no
+options. Exit codes: 0 ok, 1 error (a bad first file, already running), 2 daemon not running,
+3 usage. A second start exits with 1 and prints one line only when a terminal started it.
 
 ## Decisions
 
@@ -28,12 +29,17 @@ already running, did not start), 2 daemon not running, 3 usage.
   `QCoreApplication`'s Windows dispatcher also calls. So it works in a console program without a
   `QGuiApplication`. `liveDesktop()` is true there (it is false only on the offscreen platform).
   No kernel change. No new singleton: the daemon uses the existing `Hotkeys` one.
-- **Detaching: re-launch, not `FreeConsole`.** `wakuc keys` starts `wakuc keys --foreground ...`
-  with `CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP` and waits up to 6 s for it to answer `status`.
-  No console window flashes, closing the terminal does not end the daemon, and Ctrl+C in the
-  terminal does not reach it. Commands it starts inherit its hidden console, so none shows a
-  window. `FreeConsole` in the same process would flash a window and leave the shell blocked until
-  the process had detached.
+- **A GUI-subsystem executable, no detaching.** `wakukeys.exe` is linked as a Windows (GUI) program
+  (`WIN32`), like `waku.exe`. It has no console, so a login task, a shortcut or a script starts it
+  without a window, nothing waits for it, and closing the terminal that ran it does not end it.
+  There is no re-launch and no `--foreground`. Commands it starts get `CREATE_NO_WINDOW` from
+  `kernel::startDetachedHidden`, so none shows a window either. The log goes to `--log-file` only.
+  The cost: a GUI program has no stdio. The first line the program prints (a subcommand answer, a
+  usage error, a bad first file) attaches to the console of the parent (`AttachConsole`) and
+  reopens `stdout` and `stderr` on it, unless they are already redirected to a file or a pipe. So
+  `wakukeys status` works when its output is captured (`cmd /c`, `$(...)`, `| Out-String` in
+  PowerShell). A shell at the prompt does not wait for a GUI program, so a bare `wakukeys status`
+  may print after the next prompt and `$LASTEXITCODE` is not set. Verified on build 26300.
 - **One daemon per user.** The daemon serves a control pipe (`control::ControlServer`), whose
   `Local\` mutex is the guard. The pipe name hashes `keys:<USERNAME>`. `reload`, `stop` and
   `status` are lines on that pipe. A second start prints the running status and exits 1.
@@ -42,7 +48,7 @@ already running, did not start), 2 daemon not running, 3 usage.
   lines; each bad line is logged with its number. A first load that fails ends the start.
 - **Reload on change.** `QFileSystemWatcher` watches the file and its folder (an editor that saves
   by rename drops the watch on the file). A change restarts a 400 ms timer; then the file is read
-  again, and a file whose text is unchanged does nothing. `wakuc keys reload` always applies.
+  again, and a file whose text is unchanged does nothing. `wakukeys reload` always applies.
 - **A taken key is not fatal.** If `RegisterHotKey` refuses a combination (another program owns
   it), the daemon logs it once per run, counts it in `conflicts` and binds the rest. The kernel
   table logs a generic warning for the same event.
@@ -124,14 +130,14 @@ An unknown or malformed `waku:` command is an error of its line at load time.
 | `win32/keymap_system_win.cpp` | The Windows `ProcessLauncher` and `WindowSystem`. |
 | `testing/` | Fakes and a copy of a real `whkdrc`, for tests only. |
 
-The daemon and its pieces are in this feature; the command line (`keys_command.*`) is in
-`src/app/wakuc`. Documented Windows APIs only: `RegisterHotKey`, `EnumWindows`,
+The daemon and its pieces are in this feature; the program around it (`keys_args.*` the command
+line, `keys_daemon.*` the event loop and the control verbs, `main.cpp`) is in `src/app/wakukeys`. Documented Windows APIs only: `RegisterHotKey`, `EnumWindows`,
 `GetWindowThreadProcessId`, `OpenProcess`, `QueryFullProcessImageNameW`, `AllowSetForegroundWindow`,
 and `forceForegroundFocus` (`AttachThreadInput`, documented). No row in the undocumented API list.
 
 ## Tests
 
-`Keymap*` (`ctest -R Keymap`). They use `ScopedFakeHotkeys`, a fake launcher, window system and
+`WakukeysArgs` (`tests/integration/test_wakukeys_args.cpp`) covers the command line. `Keymap*` (`ctest -R Keymap`). They use `ScopedFakeHotkeys`, a fake launcher, window system and
 control client, and a synchronous executor. They never register a key, start a process or open the
 bar's pipe. The parser test loads a copy of a real `whkdrc` (`testing/whkdrc_sample.h`). One test
 watches a file in a temporary folder.
@@ -147,7 +153,8 @@ watches a file in a temporary folder.
   registered. They count as conflicts.
 - **`-NoProfile`.** PowerShell commands do not load the profile. Make it an option if a user needs
   it.
-- **`wakuc startup`.** It registers one task for `waku.exe`. Starting the daemon at sign-in needs a
-  second task (or an `--also` action) in `startup`. That is more than a small change, so it is not
-  done; add `wakuc keys` to the Startup folder or a task by hand for now.
+- **Start at sign-in.** `wakuc startup` registers one task for `waku.exe`. Starting `wakukeys` at
+  sign-in needs a second task (or an `--also` action) in `startup`. That is more than a small
+  change, so it is not done; put `wakukeys.exe --config <file>` in the Startup folder or a task by
+  hand. It needs no hidden window or wrapper.
 - **Left and right modifiers** are the same modifier.

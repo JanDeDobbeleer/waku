@@ -46,7 +46,8 @@ cmd /c "call `"$vc\vcvarsarm64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset
 cmd /c "call `"$vc\vcvarsarm64_amd64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64-release && cmake --build --preset x64-release && ctest --test-dir build\x64-release --output-on-failure --timeout 120 -j"
 ```
 
-Targets: `waku` (the bar), `wakuc` (its console client), `WakuTrayHook[_arm64]` (the DLL injected
+Targets: `waku` (the bar), `wakuc` (its console client), `wakukeys` (the hotkey daemon, a GUI
+program), `WakuTrayHook[_arm64]` (the DLL injected
 into Explorer), `waku_tests` (all tests, defined in `tests/`) and `deploy` (assembles `dist/waku`;
 see `docs/building.md`). `ctest` needs `QT_QPA_PLATFORM=offscreen`; the CMake test properties set
 it, so `ctest --test-dir` works without the test preset. A ctest test is one gtest suite (one

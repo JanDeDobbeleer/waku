@@ -4,7 +4,7 @@ waku (枠, "frame", say "wah-koo") is a Qt Quick top bar for Windows, configured
 the Japanese word for a window frame. It began as a counterpart of Waybar, the bar for Wayland. It is
 written in lower case and plain ASCII in code and paths.
 
-- `waku.exe` runs the bar; `wakuc.exe` controls a running one:
+- `waku.exe` runs the bar; `wakukeys.exe` is the hotkey daemon (below); `wakuc.exe` controls a running bar:
   - `wakuc reload`, `wakuc status`, `wakuc quit`
   - `wakuc config init [--force]`: write a starter `shell.qml` (the built-in bar) into the config
     home so you can edit it. It needs no running bar. It refuses, with exit code 1, to replace an
@@ -30,6 +30,11 @@ written in lower case and plain ASCII in code and paths.
   folder, hotkey and animation come from a `WallpaperSettings { ... }` next to the windows in `shell.qml`
   (`import waku.services as S`, then `S.WallpaperSettings`: the services share names with the
   widgets, so import them under an alias) or from a `Wallpapers` widget.
+- `wakukeys.exe` is a hotkey daemon, a separate Windows (GUI) program with no console window:
+  `wakukeys [--config <file>] [--config-home <dir>] [--log-file <file>]` loads a whkd binding file and
+  runs the keys (one daemon per user); `wakukeys reload|stop|status` talk to it and print to the
+  terminal (exit code 0 ok, 1 error, 2 not running, 3 usage). See `docs/building.md` and
+  `src/features/keymap/design.md`.
 - Config home: a folder with `shell.qml`, optionally `theme.qml` and your own widgets in `widgets/`.
   Select it with `--config-home <dir>` or `WAKU_CONFIG_HOME`; without either, `waku` and `wakuc`
   use `%USERPROFILE%\.config\waku` (also when it does not exist, so both agree on the control

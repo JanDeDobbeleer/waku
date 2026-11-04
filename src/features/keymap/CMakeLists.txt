@@ -1,4 +1,4 @@
-# keymap: the hotkey daemon of `wakuc keys`. Loads a whkd binding file, registers it in the kernel
+# keymap: the hotkey daemon of `wakukeys`. Loads a whkd binding file, registers it in the kernel
 # hotkey table and runs the actions. Linked into wakuc only (src/app/wakuc), never into waku.exe.
 waku_feature(NAME keymap
   SOURCES
