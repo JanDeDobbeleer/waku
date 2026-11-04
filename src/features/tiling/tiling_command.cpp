@@ -5,7 +5,7 @@ namespace {
 
 QString usage() {
   return QStringLiteral(
-      "error: usage: tile toggle | float | layout <name> | retile | status | "
+      "error: usage: tile toggle | float | layout <name>|next|previous | retile | status | "
       "focus next|previous|left|right|up|down | move left|right|up|down | promote | "
       "resize horizontal|vertical increase|decrease | flip horizontal|vertical | monocle | pause | "
       "close | minimize");
@@ -38,7 +38,12 @@ QString answerTileCommand(const QStringList& words, TilingControl* tiling) {
   if (verb == QLatin1String("float") && count == 1) return tiling->controlFloat(true);
   if (verb == QLatin1String("retile") && count == 1) return tiling->controlRetile();
   if (verb == QLatin1String("status") && count == 1) return tiling->controlStatus();
-  if (verb == QLatin1String("layout") && count == 2) return tiling->controlLayout(words.at(1));
+  if (verb == QLatin1String("layout") && count == 2) {
+    const QString which = words.at(1).toLower();
+    if (which == QLatin1String("next")) return tiling->controlLayoutStep(1);
+    if (which == QLatin1String("previous")) return tiling->controlLayoutStep(-1);
+    return tiling->controlLayout(words.at(1));
+  }
   if (verb == QLatin1String("focus") && count == 2) {
     const QString which = words.at(1).toLower();
     if (which == QLatin1String("next")) return tiling->controlFocus(1);

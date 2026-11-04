@@ -216,7 +216,10 @@ TEST(TilingService, SettingsAreValidatedAndNotified) {
   rig.tiling->setRatio(7.0);
   EXPECT_DOUBLE_EQ(rig.tiling->ratio(), 0.9);
   EXPECT_EQ(rig.tiling->layouts(),
-            (QStringList{QStringLiteral("mainStack"), QStringLiteral("columns")}));
+            (QStringList{QStringLiteral("mainStack"), QStringLiteral("mainStackTop"),
+                         QStringLiteral("columns"), QStringLiteral("rows"), QStringLiteral("bsp"),
+                         QStringLiteral("grid"), QStringLiteral("centerMain")}));
+  EXPECT_DOUBLE_EQ(TilingSettings().ratio, 0.5);
 }
 
 TEST(TilingService, RulesFromTheShellReachTheEngine) {
@@ -261,6 +264,9 @@ TEST(TilingService, CommandsDriveTheEngineAndAnswerLines) {
             QStringLiteral("ok: layout columns"));
   EXPECT_TRUE(rig.tiling->controlLayout(QStringLiteral("spiral"))
                   .startsWith(QLatin1String("error: unknown layout")));
+  EXPECT_EQ(rig.tiling->controlLayoutStep(1), QStringLiteral("ok: layout rows"));
+  EXPECT_EQ(rig.tiling->controlLayoutStep(-1), QStringLiteral("ok: layout columns"));
+  EXPECT_TRUE(rig.tiling->controlStatus().contains(QLatin1String("layout=columns;")));
   EXPECT_EQ(rig.tiling->controlFocus(1), QStringLiteral("ok: focused"));
   EXPECT_EQ(rig.tiling->controlRetile(), QStringLiteral("ok: retiling"));
   const QString status = rig.tiling->controlStatus();

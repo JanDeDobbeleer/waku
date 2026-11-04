@@ -517,6 +517,38 @@ TEST(TilingEngine, ALayoutNameAppliesToTheForegroundWorkspaceOnly) {
   EXPECT_EQ(rig.placer.lastSlot(3), columns[2]);
 }
 
+TEST(TilingEngine, CycleLayoutWalksTheListOfTheForegroundWorkspaceAndWraps) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.open(3);
+  rig.placer.front = 1;
+  const QStringList names = waku::tiling::layoutNames();
+  EXPECT_EQ(rig.engine.currentLayout(), names.first());
+  EXPECT_EQ(rig.engine.cycleLayout(1).message, names.at(1));
+  rig.settle();
+  EXPECT_EQ(rig.placer.lastSlot(1), layoutSlots(names.at(1), kAreaA, 3, kGap, 0.5)[0]);
+  EXPECT_EQ(rig.engine.status().layout, names.at(1));
+  EXPECT_EQ(rig.engine.cycleLayout(-1).message, names.first());
+  EXPECT_EQ(rig.engine.cycleLayout(-1).message, names.last());  // wraps
+  EXPECT_EQ(rig.engine.cycleLayout(1).message, names.first());
+}
+
+TEST(TilingEngine, ColumnsRowsAndGridDoNotResize) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.placer.front = 1;
+  for (const char* layout : {"columns", "rows", "grid"}) {
+    rig.engine.setWorkspaceLayout(QString::fromLatin1(layout));
+    EXPECT_FALSE(rig.engine.resize(Axis::Horizontal, 1).ok) << layout;
+  }
+  rig.engine.setWorkspaceLayout(QStringLiteral("bsp"));
+  EXPECT_TRUE(rig.engine.resize(Axis::Horizontal, 1).ok);
+}
+
 TEST(TilingEngine, FocusStepActivatesTheNextAndPreviousWindowWithWrap) {
   Rig rig;
   rig.engine.start();

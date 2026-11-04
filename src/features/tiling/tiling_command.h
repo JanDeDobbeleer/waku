@@ -18,6 +18,8 @@ class TilingControl {
   virtual QString controlFloat(std::optional<bool> floating) = 0;
   // Sets the layout of the focused window's workspace.
   virtual QString controlLayout(const QString& name) = 0;
+  // Moves that layout `step` places along the layout list (+1 next, -1 previous), wrapping.
+  virtual QString controlLayoutStep(int step) = 0;
   virtual QString controlRetile() = 0;
   // Focuses the next (+1) or previous (-1) window of the workspace.
   virtual QString controlFocus(int direction) = 0;
@@ -43,7 +45,7 @@ class TilingControl {
 
 // The `tile` command of the control pipe, given the words after "tile" (split as
 // control::splitCommand does):
-//   toggle | float | layout <name> | retile | status
+//   toggle | float | layout <name>|next|previous | retile | status
 //   focus next|previous|left|right|up|down     (left... : the nearest tiled window that way)
 //   move left|right|up|down                    swap with the neighbour in that direction
 //   promote                                    the focused window takes the main slot

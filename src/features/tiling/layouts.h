@@ -22,10 +22,19 @@ QString canonicalLayout(const QString& name);
 
 // The slots for `count` windows inside `area` (the work area), in stack order. `gap` is the space
 // between windows and between the windows and the edge of the area; `ratio` is the share of the
-// width the main window takes (clamped to 0.1..0.9). An unknown layout is mainStack.
-//   mainStack  one window fills the area; with more, the first takes the left `ratio` of the
-//              width and the others share the right column, stacked top to bottom
-//   columns    equal columns side by side
+// width the main window takes (clamped to 0.1..0.9). An unknown layout is mainStack. One window
+// fills the area in every layout.
+//   mainStack     the first window takes the left `ratio` of the width, the others share the
+//                 right column, stacked top to bottom
+//   mainStackTop  the first window takes the top `ratio` of the height, the others share the
+//                 bottom row, side by side
+//   columns       equal columns side by side
+//   rows          equal bands, top to bottom
+//   bsp           the first window takes the left `ratio` of the area, the next the top half of
+//                 what is left, the next the left half of that, and so on
+//   grid          a near-square grid, filled row by row; the last row spreads over the width
+//   centerMain    the first window takes the middle `ratio` of the width, the others stand in a
+//                 column on each side (right first); with two windows it is mainStack
 // `weights` (optional, one per window in stack order) sizes the stacked windows of mainStack
 // against each other by height; the entry of the main window and a missing entry count as 1.
 // The slots do not overlap and lie inside `area`; the last slot of a row or column absorbs the

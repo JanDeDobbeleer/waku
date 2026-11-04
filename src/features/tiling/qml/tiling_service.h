@@ -29,10 +29,12 @@ namespace waku::tiling {
 // TilingEngine (tiling_engine.h); this class owns its inputs and the settings. GUI thread only.
 //
 //   enabled   the switch. Off: nothing is hooked and no window is touched
-//   layout    "mainStack" (default) or "columns": the layout of a workspace with none of its own
+//   layout    the layout of a workspace with none of its own: "mainStack" (default),
+//             "mainStackTop", "columns", "rows", "bsp", "grid" or "centerMain" (see layouts())
 //   gap       pixels between windows and around them (default 8)
-//   ratio     the share of the width of the main window in mainStack (default 0.55)
-//   rules     [{process, class, title, action}]: `action` is "ignore" (default) or "float";
+//   ratio     the share of the width of the main window (default 0.5; a height share in
+//   mainStackTop) rules     [{process, class, title, action}]: `action` is "ignore" (default) or
+//   "float";
 //             `process` and `class` match whole and without case, `title` is a regular expression.
 //             No rule ships by default beyond the built-in splash and shell classes
 //   active    true while the tiler runs: enabled, on the live desktop and no other tiler present
@@ -110,6 +112,7 @@ class Tiling : public QObject, public TilingControl {
   // TilingControl
   QString controlFloat(std::optional<bool> floating) override;
   QString controlLayout(const QString& name) override;
+  QString controlLayoutStep(int step) override;
   QString controlRetile() override;
   QString controlFocus(int direction) override;
   QString controlStatus() override;
