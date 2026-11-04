@@ -288,6 +288,27 @@ TEST(TilingEngine, ADesktopSwitchKeepsEachDesktopsStackAndNeverPlacesCloakedWind
   EXPECT_TRUE(rig.placer.cloakedPlacements.empty());
 }
 
+TEST(TilingEngine, AWindowMovedToAnotherDesktopLeavesTheStackAndTheOthersRefill) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.open(3);
+  ASSERT_EQ(rig.engine.model().managedCount(), 3);
+  ASSERT_EQ(rig.placer.lastSlot(2), rig.slot(1, 3));
+
+  // Window 3 is sent to D2 while D1 stays shown: Windows cloaks it, the shown desktop is unchanged.
+  rig.placer.windows[3].desktopId = QStringLiteral("{D2}");
+  rig.placer.windows[3].cloaked = true;
+  rig.send(EventKind::Cloaked, 3);
+  rig.settle();
+
+  EXPECT_FALSE(rig.engine.model().contains(3));
+  EXPECT_EQ(rig.engine.model().managedCount(), 2);
+  EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(0, 2));
+  EXPECT_EQ(rig.placer.lastSlot(2), rig.slot(1, 2));  // the freed slot is filled
+}
+
 TEST(TilingEngine, TheFirstUncloakAfterASwitchRetilesTheNewDesktop) {
   Rig rig;
   rig.engine.start();

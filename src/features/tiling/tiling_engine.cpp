@@ -154,9 +154,14 @@ void TilingEngine::onCloaked(WindowId hwnd) {
     return;
   }
   if (!facts->cloaked) return;
-  // Cloaked because its desktop is not the shown one: it keeps its place in that desktop's stack.
+  // Cloaked because its desktop is not the shown one. A desktop switch cloaks every window of the
+  // desktop it leaves: those keep their place in that desktop's stack. A window that was filed
+  // under the shown desktop and now belongs to another was moved away (Task View, `wakuc desktop
+  // move`): it leaves this stack and the others fill the gap.
   if (!facts->desktopId.isEmpty() && !currentDesktop_.isEmpty() &&
       facts->desktopId != currentDesktop_) {
+    const std::optional<WorkspaceKey> key = model_.keyOf(hwnd);
+    if (key && key->desktop == currentDesktop_) forget(hwnd, false);
     return;
   }
   forget(hwnd, false);
