@@ -59,7 +59,9 @@ using Executor = std::function<void(std::function<void()>)>;
 Executor poolExecutor();
 
 // The Windows implementations (win32/keymap_system_win.cpp).
-std::unique_ptr<ProcessLauncher> makeWin32ProcessLauncher();
+// Every command it starts gets `pathPrefix` first in its PATH (withPathPrefix), so the keys file
+// can run `wakuc` without the user editing the PATH. Empty: the PATH is left as it is.
+std::unique_ptr<ProcessLauncher> makeWin32ProcessLauncher(const QString& pathPrefix = QString());
 std::unique_ptr<WindowSystem> makeWin32WindowSystem();
 
 }  // namespace waku::keymap

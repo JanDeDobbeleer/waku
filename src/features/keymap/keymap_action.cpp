@@ -1,6 +1,7 @@
 #include "features/keymap/keymap_action.h"
 
 #include <QByteArray>
+#include <QDir>
 
 #include "control/control.h"
 #include "features/keymap/window_match.h"
@@ -173,6 +174,20 @@ QString commandForForeground(const Binding& binding, const QStringList& blacklis
   if (fallback == nullptr) return skip(QStringLiteral("no rule for %1").arg(foregroundProcess));
   if (fallback->ignore) return skip(QStringLiteral("Default is set to Ignore"));
   return fallback->command;
+}
+
+QProcessEnvironment withPathPrefix(const QProcessEnvironment& environment, const QString& folder) {
+  QProcessEnvironment result = environment;
+  if (folder.isEmpty()) return result;
+  const QString native = QDir::toNativeSeparators(folder);
+  const QString path = environment.value(QStringLiteral("PATH"));
+  if (path.isEmpty()) {
+    result.insert(QStringLiteral("PATH"), native);
+  } else if (!path.startsWith(native + QLatin1Char(';'), Qt::CaseInsensitive) &&
+             path.compare(native, Qt::CaseInsensitive) != 0) {
+    result.insert(QStringLiteral("PATH"), native + QLatin1Char(';') + path);
+  }
+  return result;
 }
 
 }  // namespace waku::keymap

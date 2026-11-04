@@ -1,8 +1,10 @@
 #include <windows.h>
 
+#include <QProcessEnvironment>
 #include <QString>
 #include <vector>
 
+#include "features/keymap/keymap_action.h"
 #include "features/keymap/keymap_system.h"
 #include "features/keymap/window_match.h"
 #include "kernel/win32/shell_launch.h"
@@ -95,9 +97,18 @@ class Win32WindowSystem final : public WindowSystem {
 
 class Win32ProcessLauncher final : public ProcessLauncher {
  public:
+  explicit Win32ProcessLauncher(QString pathPrefix) : pathPrefix_(std::move(pathPrefix)) {}
+
   bool launch(const ShellInvocation& invocation) override {
-    return kernel::startDetachedHidden(invocation.program, invocation.args, invocation.nativeArgs);
+    // Read the environment each time: it is cheap and follows a changed PATH of the session.
+    const QProcessEnvironment environment =
+        withPathPrefix(QProcessEnvironment::systemEnvironment(), pathPrefix_);
+    return kernel::startDetachedHidden(invocation.program, invocation.args, invocation.nativeArgs,
+                                       &environment);
   }
+
+ private:
+  QString pathPrefix_;
 };
 
 }  // namespace
@@ -106,8 +117,8 @@ std::unique_ptr<WindowSystem> makeWin32WindowSystem() {
   return std::make_unique<Win32WindowSystem>();
 }
 
-std::unique_ptr<ProcessLauncher> makeWin32ProcessLauncher() {
-  return std::make_unique<Win32ProcessLauncher>();
+std::unique_ptr<ProcessLauncher> makeWin32ProcessLauncher(const QString& pathPrefix) {
+  return std::make_unique<Win32ProcessLauncher>(pathPrefix);
 }
 
 }  // namespace waku::keymap

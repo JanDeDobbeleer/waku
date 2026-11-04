@@ -59,6 +59,17 @@ options. Exit codes: 0 ok, 1 error (a bad first file, already running), 2 daemon
   default shell is `powershell` (always installed); `pwsh` must be on the `PATH`. Every shell is
   started with `CREATE_NO_WINDOW`, stdout and stderr discarded, and not waited for
   (`kernel::startDetachedHidden`).
+- **Commands find `wakuc`.** The daemon puts the folder of `wakukeys.exe` first in the `PATH` of
+  every command it starts (`withPathPrefix` in `keymap_action.*`, used by the Windows launcher).
+  `wakuc.exe` sits next to it in the deploy folder and in the MSIX, so a binding that runs `wakuc`
+  works without the user editing the `PATH`. The change is for the started command only; the
+  `PATH` of the daemon and of the session stays as it is. A `PATH` that already starts with the
+  folder is kept.
+- **Which bar.** Without `--config-home` the daemon talks to the bar of the default config home
+  (`WAKU_CONFIG_HOME`, else `~/.config/waku`), as `wakuc` does. To drive a bar started with
+  `--config-home` elsewhere, set the user environment variable `WAKU_CONFIG_HOME` to that folder
+  (sign out and in, so a task started at sign-in sees it). Commands that run `wakuc` read the same
+  variable, so they reach the same bar.
 - **Nothing blocks the key handler.** Starting a shell and every control-pipe call run on the
   global `QThreadPool`. Finding and focusing a window (`activate-or-launch`) runs on the GUI thread
   inside the `WM_HOTKEY` handling, because Windows lets the process that received the hotkey set the
@@ -153,8 +164,6 @@ watches a file in a temporary folder.
   registered. They count as conflicts.
 - **`-NoProfile`.** PowerShell commands do not load the profile. Make it an option if a user needs
   it.
-- **Start at sign-in.** `wakuc startup` registers one task for `waku.exe`. Starting `wakukeys` at
-  sign-in needs a second task (or an `--also` action) in `startup`. That is more than a small
-  change, so it is not done; put `wakukeys.exe --config <file>` in the Startup folder or a task by
-  hand. It needs no hidden window or wrapper.
+- **Start at sign-in.** `wakuc startup enable` registers a second task for `wakukeys.exe` when the
+  keys file exists (`startup/design.md`).
 - **Left and right modifiers** are the same modifier.

@@ -143,3 +143,30 @@ TEST(KeymapForeground, BlockWithoutDefaultDoesNothingElsewhere) {
       parseKeymap(QStringLiteral("alt + n [\n Firefox : ff\n]\n")).keymap.bindings.at(0);
   EXPECT_TRUE(commandForForeground(binding, {}, QStringLiteral("code.exe")).isEmpty());
 }
+
+TEST(KeymapPathPrefix, PutsTheFolderFirst) {
+  QProcessEnvironment env;
+  env.insert(QStringLiteral("Path"), QStringLiteral("C:\\Windows;C:\\Tools"));
+  env.insert(QStringLiteral("OTHER"), QStringLiteral("x"));
+  const QProcessEnvironment out = withPathPrefix(env, QStringLiteral("D:/Apps/waku"));
+  // The variable name matches in any case on Windows; the value keeps the old entries.
+  EXPECT_EQ(out.value(QStringLiteral("PATH")),
+            QStringLiteral("D:\\Apps\\waku;C:\\Windows;C:\\Tools"));
+  EXPECT_EQ(out.value(QStringLiteral("OTHER")), QStringLiteral("x"));
+}
+
+TEST(KeymapPathPrefix, KeepsAPathThatAlreadyStartsWithIt) {
+  QProcessEnvironment env;
+  env.insert(QStringLiteral("PATH"), QStringLiteral("d:\\apps\\WAKU;C:\\Windows"));
+  EXPECT_EQ(withPathPrefix(env, QStringLiteral("D:\\Apps\\waku")).value(QStringLiteral("PATH")),
+            QStringLiteral("d:\\apps\\WAKU;C:\\Windows"));
+}
+
+TEST(KeymapPathPrefix, MissingPathBecomesTheFolderAndEmptyFolderChangesNothing) {
+  EXPECT_EQ(
+      withPathPrefix(QProcessEnvironment(), QStringLiteral("D:\\w")).value(QStringLiteral("PATH")),
+      QStringLiteral("D:\\w"));
+  QProcessEnvironment env;
+  env.insert(QStringLiteral("PATH"), QStringLiteral("C:\\x"));
+  EXPECT_EQ(withPathPrefix(env, QString()), env);
+}

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QProcessEnvironment>
 #include <QString>
 #include <QStringList>
 #include <optional>
@@ -41,6 +42,11 @@ struct ShellInvocation {
   QString nativeArgs;
 };
 ShellInvocation shellInvocation(Shell shell, const QString& command);
+
+// `environment` with `folder` put first in PATH, so a command finds the programs that sit next to
+// wakukeys.exe (wakuc.exe) without the user editing the PATH. An empty `folder` changes nothing;
+// a PATH that already starts with it is kept as it is. Pure.
+QProcessEnvironment withPathPrefix(const QProcessEnvironment& environment, const QString& folder);
 
 // The command a binding runs when `foregroundProcess` (e.g. "firefox.exe", "" when unknown) is in
 // front: the plain command, or the matching rule of a block, else its Default. Empty when the

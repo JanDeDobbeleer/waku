@@ -157,7 +157,7 @@ int runDaemon(const KeysArgs& args, const QString& configFile) {
   const QString barPipe = waku::control::controlPipeName(
       waku::control::resolveConfigHome(args.configHome, QDir::homePath()).path);
   const std::unique_ptr<waku::keymap::ProcessLauncher> launcher =
-      waku::keymap::makeWin32ProcessLauncher();
+      waku::keymap::makeWin32ProcessLauncher(QCoreApplication::applicationDirPath());
   const std::unique_ptr<waku::keymap::WindowSystem> windows = waku::keymap::makeWin32WindowSystem();
   waku::keymap::PipeControlClient bar(barPipe);
 
