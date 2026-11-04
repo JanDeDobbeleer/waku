@@ -2,7 +2,8 @@
 #
 # waku_host_base (STATIC, waku_options): what has no QML in it. screen_match, popup_placement and
 #   panel_geometry (pure functions), plugin_guard (checks user-built QML plugins before the engine
-#   sees them), startup_trace (WAKU_TRACE=1 timing lines), the app bar interface (app_bar.h) and
+#   sees them), startup_trace (WAKU_TRACE=1 timing lines), run_log (the --log-file JSON Lines
+#   diagnostics file), the app bar interface (app_bar.h) and
 #   its Win32 implementation, and the DWM backdrop helpers (win32/). The global hotkey table is
 #   kernel::Hotkeys (src/kernel/qt/hotkeys.h).
 # waku_host (STATIC + QML module `waku` 2.0): the QML types a shell imports (ShellRoot, Scope,
@@ -28,6 +29,8 @@ add_library(waku_host_base STATIC
   popup_placement.cpp
   region_math.h
   region_math.cpp
+  run_log.h
+  run_log.cpp
   screen_match.h
   screen_match.cpp
   startup_trace.h
@@ -141,6 +144,7 @@ waku_contribute(
     tests/test_popups.cpp
     tests/test_region_math.cpp
     tests/test_region_mask.cpp
+    tests/test_run_log.cpp
     tests/test_screen_match.cpp
     tests/test_shell_host.cpp
     tests/test_shell_screen.cpp
