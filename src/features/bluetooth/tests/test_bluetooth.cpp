@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QEventLoop>
 #include <QSignalSpy>
+#include <QStringList>
 #include <QTimer>
 #include <QVariantMap>
 #include <memory>
@@ -140,6 +141,96 @@ TEST(BluetoothService, AFinishedConnectionRefreshesTheList) {
   Fixture f;
   emit f.fake->connectionFinished(true, QString(), BluetoothDevice());
   EXPECT_EQ(f.fake->refreshes, 1);
+}
+
+TEST(BluetoothService, AConnectionIsPendingUntilTheBackendReportsIt) {
+  Fixture f;
+  BluetoothStatus status;
+  status.radioOn = true;
+  status.devices = {device(QStringLiteral("Buds"), false)};
+  f.fake->publish(status);
+  const QString id = QStringLiteral("addr-Buds");
+  auto row = [&] { return f.service->devices().at(0).toMap(); };
+  EXPECT_FALSE(row().value(QStringLiteral("connecting")).toBool());
+
+  QSignalSpy changed(f.service.get(), &Bluetooth::changed);
+  f.service->connectDevice(id);
+  EXPECT_TRUE(row().value(QStringLiteral("connecting")).toBool());
+  EXPECT_FALSE(row().value(QStringLiteral("disconnecting")).toBool());
+  EXPECT_FALSE(row().value(QStringLiteral("connected")).toBool());
+  EXPECT_GE(changed.count(), 1);
+  // A second request for the same device while one runs does nothing.
+  f.service->connectDevice(id);
+  EXPECT_EQ(f.fake->connects.size(), 1);
+
+  emit f.fake->connectionFinished(true, QString(), status.devices.front());
+  EXPECT_FALSE(row().value(QStringLiteral("connecting")).toBool());
+  EXPECT_TRUE(f.service->error().isEmpty());
+}
+
+TEST(BluetoothService, AFailedConnectionSetsTheErrorAndClearsThePendingFlag) {
+  Fixture f;
+  BluetoothStatus status;
+  status.radioOn = true;
+  status.devices = {device(QStringLiteral("Buds"), true)};
+  f.fake->publish(status);
+  const QString id = QStringLiteral("addr-Buds");
+
+  f.service->disconnectDevice(id);
+  EXPECT_TRUE(f.service->devices().at(0).toMap().value(QStringLiteral("disconnecting")).toBool());
+  const int refreshes = f.fake->refreshes;
+  QSignalSpy errors(f.service.get(), &Bluetooth::errorChanged);
+  emit f.fake->connectionFinished(false, QStringLiteral("Failed to disconnect device"),
+                                  status.devices.front());
+  EXPECT_FALSE(f.service->devices().at(0).toMap().value(QStringLiteral("disconnecting")).toBool());
+  EXPECT_TRUE(f.service->devices().at(0).toMap().value(QStringLiteral("connected")).toBool());
+  EXPECT_EQ(f.service->error(), QStringLiteral("Failed to disconnect device"));
+  EXPECT_EQ(errors.count(), 1);
+  EXPECT_EQ(f.fake->refreshes, refreshes + 1);
+
+  // The next request clears the error.
+  f.service->disconnectDevice(id);
+  EXPECT_TRUE(f.service->error().isEmpty());
+}
+
+namespace {
+QStringList& captured() {
+  static QStringList lines;
+  return lines;
+}
+QtMessageHandler g_before = nullptr;
+void capture(QtMsgType type, const QMessageLogContext& context, const QString& text) {
+  if (text.startsWith(QLatin1String("Bluetooth:"))) {
+    captured() << text;
+    return;
+  }
+  if (g_before) g_before(type, context, text);
+}
+}  // namespace
+
+TEST(BluetoothService, EveryRequestAndItsResultIsLogged) {
+  captured().clear();
+  g_before = qInstallMessageHandler(capture);
+  {
+    Fixture f;
+    BluetoothStatus status;
+    status.radioOn = true;
+    status.devices = {device(QStringLiteral("Buds"), false)};
+    f.fake->publish(status);
+    const QString id = QStringLiteral("addr-Buds");
+    f.service->connectDevice(id);
+    emit f.fake->connectionFinished(false, QStringLiteral("Failed to connect device. Is it on?"),
+                                    status.devices.front());
+    f.service->connectDevice(id);
+    emit f.fake->connectionFinished(true, QString(), status.devices.front());
+  }
+  qInstallMessageHandler(g_before);
+  ASSERT_EQ(captured().size(), 4) << captured().join(QLatin1Char('\n')).toStdString();
+  EXPECT_EQ(captured().at(0), QStringLiteral("Bluetooth: connect requested for addr-Buds"));
+  EXPECT_EQ(captured().at(1),
+            QStringLiteral("Bluetooth: connect Buds (addr-Buds) failed: Failed to "
+                           "connect device. Is it on?"));
+  EXPECT_EQ(captured().at(3), QStringLiteral("Bluetooth: connect Buds (addr-Buds) ok"));
 }
 
 TEST(BluetoothService, TheRealServiceIsUnavailableOffscreen) {

@@ -2,6 +2,7 @@
 
 #include <QtQml/qqmlregistration.h>
 
+#include <QHash>
 #include <QList>
 #include <QMetaMethod>
 #include <QObject>
@@ -24,7 +25,9 @@ namespace waku::bluetooth {
 // `available` is false (and the backend is never created) when kernel::liveDesktop("bluetooth")
 // is false, and on a machine without a Bluetooth adapter. `devices` is a
 // list of maps: id (the address, pass it back to connectDevice), name, connected, paired,
-// canConnect (classic audio devices only), type (device type name) and batteryPercent (-1 when
+// canConnect (classic audio devices only), connecting and disconnecting (true from
+// connectDevice()/disconnectDevice() until the backend reports the result; `connected` changes
+// only from the state Windows reports), type (device type name) and batteryPercent (-1 when
 // unknown), connected devices first, then the nearby ones. A nearby device has `paired` false: it
 // was found by the last scan() and is not paired yet (see Scanning and pairing).
 //
@@ -34,8 +37,8 @@ namespace waku::bluetooth {
 // pairDevice(id) pairs a nearby device with Windows' default pairing and forgetDevice(id) forgets a
 // paired one; `pairing` is true while either runs and cancelPair() stops it. A device that needs a
 // PIN or a confirmation sets `error` to "This device needs pairing in Windows Settings". `error`
-// holds the last scan, pair or forget failure and clears when the next one starts. Nothing scans
-// on its own: only scan() does.
+// holds the last scan, pair, forget, connect or disconnect failure and clears when the next one
+// starts. Nothing scans on its own: only scan() does.
 //
 // Start-up: when Windows reports neither a radio state nor a device (the stack is not ready), the
 // backend flags the snapshot `radioUnknown`. The service asks again after 1, 3, 8 and 20 s and
@@ -99,15 +102,20 @@ class Bluetooth : public QObject {
   void retryTick();
   QVector<BluetoothDevice> connectedDevices() const;
   void onStatus(const BluetoothStatus& status);
+  void onConnectionFinished(bool success, const QString& message, const BluetoothDevice& device);
+  void startConnection(const QString& id, bool connect);
   void onScanCompleted(int status, const QVector<BluetoothDevice>& found);
   void onPairingFinished(bool success, const QString& message, const BluetoothDevice& device);
   void startPairing(bool pair, const QString& id);
   void setScanning(bool scanning);
   void setPairing(bool pairing);
   void setError(const QString& error);
+  static void logResult(const QString& kind, bool success, const QString& message,
+                        const BluetoothDevice& device);
 
   std::unique_ptr<BluetoothBackend> backend_;
   BluetoothStatus status_;
+  QHash<QString, bool> pending_;     // address -> true while connecting, false while disconnecting
   QVector<BluetoothDevice> nearby_;  // unpaired devices of the last scan
   bool scanning_ = false;
   bool pairing_ = false;

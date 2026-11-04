@@ -75,6 +75,38 @@ confirmation) sets `error` to "This device needs pairing in Windows Settings". `
 both pair and forget. A success refreshes the list. Tests use `FakeBackend`; no test pairs, forgets
 or scans real hardware.
 
+## Connect and disconnect
+
+`connectDevice(id)` and `disconnectDevice(id)` run on the worker thread (audio endpoint state via
+`IKsControl`, polled up to 10 s) and end in `connectionFinished`. The service tracks the request in
+`pending_` (address to target) and puts `connecting` / `disconnecting` in the device map until the
+result arrives; a second request for the same device meanwhile is ignored. A failure sets `error`
+(for example "Failed to connect device. Is it powered on and in range?") and clears when the next
+request starts. `connected` always comes from the OS snapshot, never from the request. The
+`Quickshell.Bluetooth` `BluetoothDevice.state` maps the flags to `Connecting` / `Disconnecting`, and
+a write to `connected` is a request that snaps back to the service value.
+
+An audio endpoint belongs to a device when its friendly name contains the device name or when one
+of its connectors leads to a Bluetooth device id that holds the device address
+(`audioIsConnected(..., addressInt)`). The address is needed: a row can carry the name Windows gave
+the Bluetooth node ("AirPods Pro - Find My") or a placeholder ("Bluetooth 90:62:..."), neither of
+which is in the endpoint names ("Headphones (AirPods Pro)"). With the name alone every request on
+such a device failed at once with "no audio path". Each audio request logs one line with the
+endpoint state before and after, the reason code and the time taken.
+The endpoints are resolved once per request (finding them walks every endpoint's topology) and
+then polled by id every 100 ms, so a request ends soon after Windows makes the endpoint active.
+
+## Names
+
+The Bluetooth APIs return "Bluetooth <address>" (or an empty name) for a device that is not
+connected, so a row of a paired headset showed its address. `isPlaceholderBtName` recognises that,
+and the backend then reads `DEVPKEY_Device_FriendlyName` of the device's PnP node
+(`BTHENUM\DEV_<address>`, `BTHLE\DEV_<address>` for LE), which holds the name whether or not the
+device is connected. The address stays as the last resort.
+
+Open point: the audio connect uses undocumented one-shot KS properties and is not verified on a
+real headset (see the allowlist in `docs/architecture.md`).
+
 ## Depends on
 
 kernel in C++ (`ensureWinrtApartment`); `quickshell_io` for the QML `S.Shell.open` clicks.

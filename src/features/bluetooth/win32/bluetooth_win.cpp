@@ -57,6 +57,55 @@ const DEVPROPKEY kBluetoothBatteryKey = {
 
 using kernel::toQString;
 
+// DEVPKEY_Device_FriendlyName (devpkey.h, documented), spelled out because the key lives in no
+// library.
+const DEVPROPKEY kFriendlyNameKey = {
+    {0xA45C254E, 0xDF1C, 0x4EFD, {0x80, 0x20, 0x67, 0xD1, 0x46, 0xA8, 0x50, 0xE0}}, 14};
+
+// The name Windows keeps on the PnP node of a device (BTHENUM\DEV_<address> for a classic device,
+// BTHLE\DEV_<address> for an LE one). It is there whether or not the device is connected, where
+// the Bluetooth APIs return "Bluetooth <address>" for a device that is not. Empty when there is
+// none.
+QString pnpFriendlyName(quint64 addressInt, bool isLe) {
+  if (!addressInt) return {};
+  const QString hex = QStringLiteral("%1").arg(addressInt, 12, 16, QLatin1Char('0')).toUpper();
+  const std::wstring filter = isLe ? L"BTHLE" : L"BTHENUM";
+  const QString wanted = QStringLiteral("%1\\DEV_%2")
+                             .arg(isLe ? QStringLiteral("BTHLE") : QStringLiteral("BTHENUM"), hex);
+  constexpr ULONG flags = CM_GETIDLIST_FILTER_ENUMERATOR | CM_GETIDLIST_FILTER_PRESENT;
+  for (int attempt = 0; attempt < 2; ++attempt) {
+    ULONG length = 0;
+    if (CM_Get_Device_ID_List_SizeW(&length, filter.c_str(), flags) != CR_SUCCESS) return {};
+    if (length <= 1 || length > 256 * 1024) return {};
+    std::vector<wchar_t> buffer(length);
+    const CONFIGRET status = CM_Get_Device_ID_ListW(filter.c_str(), buffer.data(), length, flags);
+    if (status == CR_BUFFER_SMALL) continue;
+    if (status != CR_SUCCESS) return {};
+    for (const wchar_t* id = buffer.data(); *id; id += wcslen(id) + 1) {
+      if (!QString::fromWCharArray(id).toUpper().startsWith(wanted)) continue;
+      DEVINST devInst = 0;
+      if (CM_Locate_DevNodeW(&devInst, const_cast<DEVINSTID_W>(id), 0) != CR_SUCCESS) continue;
+      DEVPROPTYPE type = 0;
+      ULONG size = 0;
+      if (CM_Get_DevNode_PropertyW(devInst, &kFriendlyNameKey, &type, nullptr, &size, 0) !=
+              CR_BUFFER_SMALL ||
+          type != DEVPROP_TYPE_STRING || size < sizeof(wchar_t) || size > 1024) {
+        continue;
+      }
+      std::vector<BYTE> value(size);
+      if (CM_Get_DevNode_PropertyW(devInst, &kFriendlyNameKey, &type, value.data(), &size, 0) !=
+          CR_SUCCESS) {
+        continue;
+      }
+      const QString name =
+          QString::fromWCharArray(reinterpret_cast<const wchar_t*>(value.data())).trimmed();
+      if (!name.isEmpty()) return name;
+    }
+    return {};
+  }
+  return {};
+}
+
 // The container id shared by the classic and LE nodes of one physical device. Cached per device id:
 // the WinRT lookup costs a round trip. Empty when Windows reports none.
 QString containerIdFor(const QString& deviceId) {
@@ -130,7 +179,10 @@ void enumerateClassic(bool inquiry, std::map<QString, BluetoothDevice>& out) {
         device.address = formatBtAddress(device.addressInt);
         const auto [major, minor] = parseClassOfDevice(info.ulClassofDevice);
         device.name = QString::fromWCharArray(info.szName);
-        if (device.name.isEmpty()) device.name = device.address;
+        if (isPlaceholderBtName(device.name, device.address)) {
+          const QString pnp = pnpFriendlyName(device.addressInt, false);
+          device.name = pnp.isEmpty() ? device.address : pnp;
+        }
         device.connected = info.fConnected != FALSE;
         device.paired = info.fAuthenticated != FALSE;
         device.remembered = info.fRemembered != FALSE;
@@ -357,6 +409,10 @@ void enrichDevices(std::vector<BluetoothDevice>& devices,
           }
         } catch (...) {
         }
+      }
+      if (isPlaceholderBtName(device.name, device.address)) {
+        const QString pnp = pnpFriendlyName(device.addressInt, device.isLe);
+        if (!pnp.isEmpty()) device.name = pnp;
       }
       // The WinRT calls above can take seconds: a worker told to stop meanwhile ends here.
       if (running && !running->load()) return;
@@ -806,6 +862,11 @@ class BluetoothWorker : public QObject {
     }
   }
 
+  static QString audioText(const std::optional<bool>& state) {
+    if (!state) return QStringLiteral("none");
+    return *state ? QStringLiteral("active") : QStringLiteral("unplugged");
+  }
+
   void connectDevice(const QString& address, bool connect) {
     waku::kernel::ensureWinrtApartment();
     const QString action = connect ? QStringLiteral("connect") : QStringLiteral("disconnect");
@@ -834,13 +895,20 @@ class BluetoothWorker : public QObject {
                               device);
       return;
     }
-    const auto audioBefore = audioIsConnected(enumerator.get(), device.name);
-    error = setAudioConnection(enumerator.get(), device.addressInt, device.name, connect, cancel_);
+    QElapsedTimer attempt;
+    attempt.start();
+    // The endpoints are resolved once: finding them walks every endpoint's topology, which is slow
+    // enough to be seen in the spinner when repeated for every poll.
+    const std::vector<QString> endpointIds =
+        audioEndpointIds(enumerator.get(), device.name, device.addressInt);
+    const auto audioBefore = audioEndpointsConnected(enumerator.get(), endpointIds);
+    error = setAudioConnection(enumerator.get(), device.addressInt, device.name, connect, cancel_,
+                               endpointIds);
     if (!started_) {
       connectRunning_->store(false);
       return;
     }
-    const auto audio = audioIsConnected(enumerator.get(), device.name);
+    const auto audio = audioEndpointsConnected(enumerator.get(), endpointIds);
     if (error.isEmpty() && audio != std::optional<bool>(connect)) error = QStringLiteral("timeout");
     // Idle audio with WinRT still reporting Connected is not a real disconnect.
     if (error.isEmpty() && !connect && audioBefore != std::optional<bool>(true)) {
@@ -850,6 +918,14 @@ class BluetoothWorker : public QObject {
       devices_[address] = device;
       if (device.connected) error = QStringLiteral("timeout");
     }
+    qInfo().noquote()
+        << QStringLiteral(
+               "Bluetooth: audio %1 of %2 (%3): endpoints=%4 before=%5 after=%6 reason=%7 in %8 ms")
+               .arg(action, device.name, device.address)
+               .arg(endpointIds.size())
+               .arg(audioText(audioBefore), audioText(audio),
+                    error.isEmpty() ? QStringLiteral("ok") : error)
+               .arg(attempt.elapsed());
     if (!error.isEmpty()) {
       finishConnect(device, false, connectError(action, error));
       return;

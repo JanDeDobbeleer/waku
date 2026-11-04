@@ -618,6 +618,73 @@ QtObject {
   EXPECT_EQ(fake->property("calls").toList().at(6).toString(), "forget:AA:BB");
 }
 
+TEST(QuickshellBluetooth, ConnectedIsARequestAndStateShowsThePendingConnection) {
+  Loaded l(R"(
+import QtQuick
+import Quickshell.Bluetooth
+Item {
+    QtObject {
+        id: fake; objectName: "fake"
+        property bool available: true
+        property bool radioOn: true
+        property var calls: []
+        property var devices: [
+            { id: "AA:BB", name: "Buds", connected: false, paired: true, connecting: false, disconnecting: false }
+        ]
+        signal changed
+        function setRadio(on) {}
+        function connectDevice(id) { calls = calls.concat(["connect:" + id]) }
+        function disconnectDevice(id) { calls = calls.concat(["disconnect:" + id]) }
+        property bool scanning: false
+        property bool pairing: false
+    }
+    Component.onCompleted: Bluetooth.service = fake
+    property var buds: Bluetooth.devices.values[0]
+}
+)");
+  ASSERT_NE(l.root, nullptr);
+  QObject* fake = l.child("fake");
+  QObject* buds = l.get("buds").value<QObject*>();
+  ASSERT_NE(buds, nullptr);
+  const int disconnected = 0, connected = 1, disconnecting = 2, connecting = 3;
+  EXPECT_EQ(buds->property("state").toInt(), disconnected);
+
+  // The write is a request: the value does not flip before Windows reports it.
+  buds->setProperty("connected", true);
+  EXPECT_EQ(fake->property("calls").toList().size(), 1);
+  EXPECT_FALSE(buds->property("connected").toBool());
+  EXPECT_EQ(buds->property("state").toInt(), disconnected);
+
+  auto publish = [&](bool isConnected, bool isConnecting, bool isDisconnecting) {
+    fake->setProperty("devices", QVariantList{QVariantMap{{"id", "AA:BB"},
+                                                          {"name", "Buds"},
+                                                          {"connected", isConnected},
+                                                          {"paired", true},
+                                                          {"connecting", isConnecting},
+                                                          {"disconnecting", isDisconnecting}}});
+    l.call(fake, "changed");
+  };
+  publish(false, true, false);
+  EXPECT_EQ(buds->property("state").toInt(), connecting);
+  EXPECT_FALSE(buds->property("connected").toBool());
+  // A failed connection: the flag clears and the device stays disconnected.
+  publish(false, false, false);
+  EXPECT_EQ(buds->property("state").toInt(), disconnected);
+  EXPECT_FALSE(buds->property("connected").toBool());
+  // A real connection.
+  publish(true, false, false);
+  EXPECT_EQ(buds->property("state").toInt(), connected);
+  EXPECT_TRUE(buds->property("connected").toBool());
+  // A disconnect that fails leaves it connected.
+  buds->setProperty("connected", false);
+  EXPECT_TRUE(buds->property("connected").toBool());
+  publish(true, false, true);
+  EXPECT_EQ(buds->property("state").toInt(), disconnecting);
+  publish(true, false, false);
+  EXPECT_EQ(buds->property("state").toInt(), connected);
+  EXPECT_EQ(fake->property("calls").toList().at(1).toString(), "disconnect:AA:BB");
+}
+
 TEST(QuickshellBluetooth, NoRadioMeansNoAdapter) {
   Loaded l(R"(
 import QtQuick
