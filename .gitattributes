@@ -1,3 +1,5 @@
 # Windows runners check out text files with CRLF. QML stays LF (see .editorconfig); the
 # ConfigInit test looks for an LF-terminated "import waku" line in DefaultShell.qml.
 *.qml text eol=lf
+# A skill's frontmatter must parse the same on every checkout, so SKILL.md stays LF.
+skills/waku-shell/SKILL.md text eol=lf

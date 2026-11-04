@@ -58,6 +58,34 @@ shells ported to Windows (Caelestia, Noctalia, Omarchy) are in
 [waku-ports](https://github.com/JanDeDobbeleer/waku-ports). Copy one into your config home. What
 differs from Quickshell is in [docs/shells.md](docs/shells.md).
 
+### Build your own shell with an AI agent
+
+The repository ships a skill, `waku-shell`, that helps an agent create, port or restyle a shell from
+a screenshot, a Reddit post (such as an r/unixporn URL) or an existing Quickshell shell. It works
+from a measured spec, keeps only elements that have a real backend on Windows, drops and reports
+the rest, and checks each shell before it hands it over. Source: [skills/waku-shell](skills/waku-shell).
+
+Claude Code:
+
+```
+claude plugin marketplace add JanDeDobbeleer/waku
+claude plugin install waku-shell@waku
+```
+
+Then ask for what you want, for example "recreate the look of this screenshot as a waku shell", or
+run `/waku-shell:waku-shell`. In Claude Code 2.1.275 or later,
+`/plugin install waku-shell --marketplace JanDeDobbeleer/waku` does both steps.
+
+Other agents (Codex, Cursor and others) can install the skill folder with the
+[skills CLI](https://vercel.com/docs/agent-resources/skills):
+
+```
+npx skills add JanDeDobbeleer/waku --skill waku-shell
+```
+
+or copy `skills/waku-shell` into your agent's skills folder.
+
+
 ## Optional companions
 
 waku runs on its own. Two things need a helper:
