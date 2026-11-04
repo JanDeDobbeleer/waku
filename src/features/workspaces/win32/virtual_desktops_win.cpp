@@ -100,6 +100,32 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
     return jumpWithAnchor(index);
   }
 
+  MoveResult moveForegroundWindow(int index) override {
+    HWND hwnd = GetForegroundWindow();
+    if (!hwnd) return MoveResult::NoWindow;
+    if (const HWND root = GetAncestor(hwnd, GA_ROOT)) hwnd = root;
+    wchar_t className[64] = {};
+    GetClassNameW(hwnd, className, 64);
+    for (const wchar_t* shell :
+         {L"Progman", L"WorkerW", L"Shell_TrayWnd", L"Shell_SecondaryTrayWnd"}) {
+      if (wcscmp(className, shell) == 0) return MoveResult::NoWindow;
+    }
+    DWORD pid = 0;
+    GetWindowThreadProcessId(hwnd, &pid);
+    if (pid == GetCurrentProcessId()) return MoveResult::OwnWindow;
+    IVirtualDesktopManager* mgr = manager();
+    if (!mgr) return MoveResult::Unsupported;
+    const std::vector<GUID> ids = desktopGuids();
+    if (index < 0 || index >= static_cast<int>(ids.size())) return MoveResult::Refused;
+    const HRESULT hr = mgr->MoveWindowToDesktop(hwnd, ids[static_cast<size_t>(index)]);
+    if (FAILED(hr)) {
+      qWarning().noquote() << "virtual desktops: MoveWindowToDesktop failed, hr ="
+                           << QString::number(static_cast<quint32>(hr), 16);
+      return MoveResult::Refused;
+    }
+    return MoveResult::Moved;
+  }
+
   std::optional<State> read() override {
     // Explorer restarted: the next read opens the interface again (throttled).
     if (hook_ && !api_ && apiState_ == ApiState::Lost) shellApi();

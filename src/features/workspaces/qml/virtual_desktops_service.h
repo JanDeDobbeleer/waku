@@ -7,6 +7,7 @@
 #include <QVariantList>
 #include <memory>
 
+#include "features/workspaces/desktop_command.h"
 #include "features/workspaces/virtual_desktops.h"
 
 namespace waku::workspaces {
@@ -29,7 +30,7 @@ namespace waku::workspaces {
 // 500 ms. `changed()` fires only when the model differs. GUI thread only; no worker thread.
 // Without a live desktop (the offscreen platform) there is no system and `available` stays
 // false.
-class VirtualDesktops : public QObject {
+class VirtualDesktops : public QObject, public DesktopControl {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
@@ -76,6 +77,14 @@ class VirtualDesktops : public QObject {
   // Reads the system now; true when the model changed. A shell may call it to look sooner than
   // the poll, e.g. when the taskbar rows change.
   Q_INVOKABLE bool refresh();
+
+  // DesktopControl: the `desktop` verb of `wakuc` (desktop_command.h). Each reads the system
+  // first, so a desktop closed a moment ago is not a target. Numbers count from 1; none creates a
+  // desktop (unlike switchTo, which makes the next one).
+  QString controlGoto(int number) override;
+  QString controlMove(int number) override;
+  QString controlStep(int direction) override;
+  QString controlStatus() override;
 
  signals:
   void changed();

@@ -141,6 +141,22 @@ fails soft. The GUIDs, slots and what was verified are in the allowlist rows of
 - Notification delivery was not observed on the research machine; the registry watch covers it.
 - The window lists are not covered by any notification; the 5 s poll (and `refresh()`) updates them.
 
+## The `desktop` verb
+
+`wakuc desktop goto <n> | move <n> | next | previous | status` (`desktop_command.h`; `VirtualDesktops`
+implements `DesktopControl`). Numbers count from 1. Each command reads the registry list first.
+
+- `goto`, `next`, `previous` make one jump with `jumpTo` and never create a desktop (`switchTo`, the
+  QML call, still makes the next one). `next` and `previous` stop at the ends and answer `ok:
+  unchanged`.
+- `move <n>` sends the foreground window to desktop `n` with the documented
+  `IVirtualDesktopManager::MoveWindowToDesktop`, using the GUID from the registry list. Nothing is
+  created and the view does not follow. A window of waku, the desktop and the taskbar are refused.
+  Open point: the documented call is meant for windows of the calling process, so Windows may
+  refuse a window of another process (it answers `error: Windows refused ...` and logs the
+  `HRESULT`). The move through `IVirtualDesktopManagerInternal::MoveViewToDesktop` needs an
+  `IApplicationView` for the window and is not built; see the shell interface section.
+
 ## komorebi's work area
 
 komorebi caches each monitor's work area and refreshes it only from three window messages to its
