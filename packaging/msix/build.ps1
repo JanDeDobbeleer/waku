@@ -51,7 +51,7 @@ function Find-SdkTool([string]$Name) {
 }
 
 $Source = (Resolve-Path $Source).Path
-foreach ($file in 'waku.exe', 'wakuc.exe') {
+foreach ($file in 'waku.exe', 'wakuc.exe', 'wakukeys.exe') {
     if (-not (Test-Path (Join-Path $Source $file))) { throw "$file not found in $Source" }
 }
 $hook = if ($Architecture -eq 'arm64') { 'WakuTrayHook_arm64.dll' } else { 'WakuTrayHook.dll' }
@@ -110,7 +110,7 @@ if ($Sign) {
     $signArgs = @('sign', '/v', '/d', 'waku', '/fd', 'SHA256', '/tr', 'http://timestamp.acs.microsoft.com',
         '/td', 'SHA256', '/dlib', $dlib, '/dmdf', (Join-Path $PSScriptRoot 'signing.json'))
 
-    $binaries = @('waku.exe', 'wakuc.exe') | ForEach-Object { Join-Path $stage $_ }
+    $binaries = @('waku.exe', 'wakuc.exe', 'wakukeys.exe') | ForEach-Object { Join-Path $stage $_ }
     $binaries += Get-ChildItem -Path $stage -Filter 'WakuTrayHook*.dll' | ForEach-Object FullName
     & $signtool @signArgs @binaries
 }

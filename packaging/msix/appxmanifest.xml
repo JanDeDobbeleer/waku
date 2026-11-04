@@ -56,5 +56,17 @@
         </uap5:Extension>
       </Extensions>
     </Application>
+    <!-- wakukeys, the hotkey daemon (a GUI program), gets its own alias and no Start entry. -->
+    <Application Id="Wakukeys" Executable="wakukeys.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap3:VisualElements DisplayName="wakukeys" Description="waku hotkey daemon" Square150x150Logo="icons\icon.png" Square44x44Logo="icons\44.png" BackgroundColor="#1e2030" AppListEntry="none">
+      </uap3:VisualElements>
+      <Extensions>
+        <uap5:Extension Category="windows.appExecutionAlias" Executable="wakukeys.exe" EntryPoint="Windows.FullTrustApplication">
+          <uap5:AppExecutionAlias>
+            <uap5:ExecutionAlias Alias="wakukeys.exe" />
+          </uap5:AppExecutionAlias>
+        </uap5:Extension>
+      </Extensions>
+    </Application>
   </Applications>
 </Package>

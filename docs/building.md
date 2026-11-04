@@ -29,9 +29,9 @@ cmd /c "call `"$vc`" arm64_amd64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64
 
 On an x64 host use `vcvarsall.bat x64` and the same presets.
 
-Everything lands in `build\<preset>`: `waku.exe`, `wakuc.exe`, the tray hook DLL next to them and
+Everything lands in `build\<preset>`: `waku.exe`, `wakuc.exe`, `wakukeys.exe`, the tray hook DLL next to them and
 `waku_tests.exe` with the Qt DLLs and the offscreen platform plugin that `windeployqt` copies next
-to it. The targets are `waku`, `wakuc`, `WakuTrayHook` (`WakuTrayHook_arm64` on ARM64),
+to it. The targets are `waku`, `wakuc`, `wakukeys`, `WakuTrayHook` (`WakuTrayHook_arm64` on ARM64),
 `waku_tests` and `deploy`; select one with `cmake --build --preset <preset> --target <name>`.
 
 `build\<preset>\qml_modules` holds the build copy of every QML module of `src/` (qmldir, `.qmltypes`,
