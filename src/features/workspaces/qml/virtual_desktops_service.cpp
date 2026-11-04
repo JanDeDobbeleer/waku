@@ -36,6 +36,8 @@ bool VirtualDesktops::refresh() {
       current = state->current;
       int index = 0;
       for (const vdesk::Desktop& desktop : state->desktops) {
+        QVariantList windows;
+        for (const quint64 hwnd : desktop.windows) windows << static_cast<qlonglong>(hwnd);
         desktops << QVariantMap{
             {QStringLiteral("id"), desktop.id},
             {QStringLiteral("name"), desktop.name},
@@ -43,7 +45,8 @@ bool VirtualDesktops::refresh() {
              desktop.name.isEmpty() ? QString::number(index + 1) : desktop.name},
             {QStringLiteral("index"), index},
             {QStringLiteral("current"), index == current},
-            {QStringLiteral("windowCount"), desktop.windowCount}};
+            {QStringLiteral("windowCount"), static_cast<int>(desktop.windows.size())},
+            {QStringLiteral("windows"), windows}};
         ++index;
       }
     }

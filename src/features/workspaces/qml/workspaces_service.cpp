@@ -72,10 +72,10 @@ QVariantList fromWindows(const QVariantList& desktops) {
   for (const QVariant& d : desktops) {
     const QVariantMap desktop = d.toMap();
     const bool current = desktop.value(QStringLiteral("current")).toBool();
-    const int windowCount = desktop.value(QStringLiteral("windowCount")).toInt();
+    const QVariantList windows = desktop.value(QStringLiteral("windows")).toList();
     workspaces << workspace(QString::number(desktop.value(QStringLiteral("index")).toInt()),
                             desktop.value(QStringLiteral("label")).toString(), current, current,
-                            windowCount > 0, windowCount, QVariantList());
+                            !windows.isEmpty(), static_cast<int>(windows.size()), windows);
   }
   return {monitor(0, QString(), workspaces)};
 }

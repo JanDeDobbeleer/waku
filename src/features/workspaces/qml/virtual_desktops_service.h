@@ -15,8 +15,11 @@ namespace waku::workspaces {
 // The Workspaces singleton builds on it; a widget may also read it directly.
 //
 // `available` is true while Windows exposes the desktop list. `desktops` is
-// [{id, name, label, index, current, windowCount}] in Task View order; `label` is the name, or
-// the 1-based index of a desktop without one. `current` is the index of the shown desktop (-1
+// [{id, name, label, index, current, windowCount, windows}] in Task View order; `label` is the
+// name, or the 1-based index of a desktop without one. `windows` is the HWNDs (numbers, ascending)
+// of the desktop's windows: top-level, titled, unowned, not of this process; minimized ones stay on
+// their desktop and a pinned window counts on the shown desktop. A shell joins them with the
+// taskbar rows by hwnd. `current` is the index of the shown desktop (-1
 // when unknown). Windows sends no documented change notification for desktops, so the singleton
 // polls (every 500 ms) while it exists and `changed()` fires only when the list differs. GUI
 // thread only; no worker thread. Without a live desktop (the offscreen platform) there is no
@@ -50,8 +53,9 @@ class VirtualDesktops : public QObject {
   Q_INVOKABLE void switchTo(int index);
   Q_INVOKABLE void next() { stepBy(1); }
   Q_INVOKABLE void previous() { stepBy(-1); }
-  // Reads the system now; true when the model changed.
-  bool refresh();
+  // Reads the system now; true when the model changed. A shell may call it to look sooner than
+  // the poll, e.g. when the taskbar rows change.
+  Q_INVOKABLE bool refresh();
 
  signals:
   void changed();

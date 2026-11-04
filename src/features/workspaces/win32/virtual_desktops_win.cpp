@@ -1,6 +1,6 @@
 // The real VirtualDesktopSystem. The desktop list comes from the registry values Explorer keeps
 // under HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\VirtualDesktops (undocumented; the
-// allowlist row is in docs/architecture.md). The window count per desktop uses the documented
+// allowlist row is in docs/architecture.md). The windows per desktop come from the documented
 // IVirtualDesktopManager. A jump to a desktop moves a small off-screen window of this process
 // there with IVirtualDesktopManager::MoveWindowToDesktop and activates it, which makes Windows
 // switch (verified on build 26300; a WS_EX_TOOLWINDOW or layered window is not tracked by the
@@ -11,6 +11,7 @@
 
 #include <QByteArray>
 #include <QDebug>
+#include <algorithm>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -60,8 +61,11 @@ QString readDesktopName(const QString& id) {
 }
 
 // A window the user would call "a window on this desktop": top-level, titled, not a tool window
-// or an owned popup, not the shell's own.
+// or an owned popup, not the shell's own and not one of this process (the jump anchor).
 bool countsAsWindow(HWND hwnd) {
+  DWORD pid = 0;
+  GetWindowThreadProcessId(hwnd, &pid);
+  if (pid == GetCurrentProcessId()) return false;
   if (!IsWindowVisible(hwnd) && !IsIconic(hwnd)) {
     // Windows on other desktops are cloaked, not hidden, so they stay visible.
     return false;
@@ -141,7 +145,7 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
       const qsizetype at = ids.indexOf(shown.first());
       if (at >= 0) state.current = static_cast<int>(at);
     }
-    countWindows(state);
+    collectWindows(state);
     return state;
   }
 
@@ -201,7 +205,7 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
     return anchor_ != nullptr;
   }
 
-  struct Counting {
+  struct Collecting {
     IVirtualDesktopManager* manager;
     State* state;
   };
@@ -218,28 +222,49 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
     return manager_;
   }
 
-  void countWindows(State& state) {
+  // Puts each eligible window on its desktop. A window that belongs to no listed desktop (a
+  // pinned "show on all desktops" window may report GUID_NULL or an id outside the list) goes to
+  // the shown desktop when Windows says it is on the current one.
+  void collectWindows(State& state) {
     IVirtualDesktopManager* mgr = manager();
     if (!mgr) return;
-    Counting counting{mgr, &state};
+    Collecting collecting{mgr, &state};
     EnumWindows(
         [](HWND hwnd, LPARAM param) -> BOOL {
-          auto* c = reinterpret_cast<Counting*>(param);
+          auto* c = reinterpret_cast<Collecting*>(param);
           if (!countsAsWindow(hwnd)) return TRUE;
+          Desktop* owner = nullptr;
           GUID id = {};
-          if (FAILED(c->manager->GetWindowDesktopId(hwnd, &id))) return TRUE;
           wchar_t text[64] = {};
-          if (StringFromGUID2(id, text, 64) == 0) return TRUE;
-          const QString key = QString::fromWCharArray(text).toUpper();
-          for (Desktop& desktop : c->state->desktops) {
-            if (desktop.id == key) {
-              ++desktop.windowCount;
-              break;
+          if (SUCCEEDED(c->manager->GetWindowDesktopId(hwnd, &id)) &&
+              StringFromGUID2(id, text, 64) != 0) {
+            const QString key = QString::fromWCharArray(text).toUpper();
+            for (Desktop& desktop : c->state->desktops) {
+              if (desktop.id == key) {
+                owner = &desktop;
+                break;
+              }
             }
+          }
+          if (!owner) {
+            BOOL here = FALSE;
+            const int current = c->state->current;
+            if (current >= 0 &&
+                SUCCEEDED(c->manager->IsWindowOnCurrentVirtualDesktop(hwnd, &here)) && here) {
+              owner = &c->state->desktops[static_cast<size_t>(current)];
+            }
+          }
+          if (owner) {
+            owner->windows.push_back(static_cast<quint64>(reinterpret_cast<quintptr>(hwnd)));
           }
           return TRUE;
         },
-        reinterpret_cast<LPARAM>(&counting));
+        reinterpret_cast<LPARAM>(&collecting));
+    // EnumWindows runs in z-order, which changes with every focus change. Sort, or every focus
+    // change would look like a change of the desktop.
+    for (Desktop& desktop : state.desktops) {
+      std::sort(desktop.windows.begin(), desktop.windows.end());
+    }
   }
 
   IVirtualDesktopManager* manager_ = nullptr;

@@ -54,8 +54,18 @@ manager; `Workspaces` maps it to `provider: "windows"`.
 
 - **Read.** Explorer keeps the desktop list, the shown desktop and the names in the registry
   (`win32/virtual_desktops_win.cpp`, allowlist row in `docs/architecture.md`). A 500 ms `QTimer`
-  polls it; there is no documented notification. The window count per desktop uses the documented
-  `IVirtualDesktopManager::GetWindowDesktopId` over top-level, titled, unowned windows.
+  polls it; there is no documented notification. The windows per desktop come from the documented
+  `IVirtualDesktopManager::GetWindowDesktopId` over top-level, titled, unowned windows. Each
+  desktop carries `windows`, the HWNDs ascending (EnumWindows order follows focus, so an unsorted
+  list would fire `changed()` on every focus change), and `windowCount` (its size). Windows of
+  waku's own process are left out: the jump anchor is visible for 700 ms. The filter is
+  `countsAsWindow`, not the taskbar's; the shell joins the HWNDs with the taskbar rows
+  (`hwnd` role), so the taskbar's rules decide what is listed and in which order. Minimized
+  windows stay on their desktop. A pinned ("show on all desktops") window that reports no listed
+  desktop (GUID_NULL, an error or an unknown id) is put on the shown desktop when
+  `IsWindowOnCurrentVirtualDesktop` says so; which of the three Windows returns for a pinned window
+  is not verified live yet, the fallback covers all of them. `refresh()` is invokable so a shell can
+  look sooner than the poll.
 - **Switch.** One jump to any desktop. A small off-screen window of waku's own is moved to the
   target desktop with the documented `IVirtualDesktopManager::MoveWindowToDesktop` (while it is
   hidden; the desktop service only reports a window it has seen shown) and activated;

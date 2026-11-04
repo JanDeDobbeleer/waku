@@ -3,6 +3,7 @@
 #include <QByteArray>
 #include <QString>
 #include <QStringList>
+#include <QtGlobal>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -13,7 +14,9 @@ namespace waku::workspaces::vdesk {
 struct Desktop {
   QString id;    // the desktop GUID in registry form: {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
   QString name;  // what the user named it; empty when it has the default name
-  int windowCount = 0;
+  // HWNDs of the windows on this desktop, ascending (a stable order, so an unchanged desktop
+  // compares equal). The count is windows.size().
+  std::vector<quint64> windows;
 
   friend bool operator==(const Desktop&, const Desktop&) = default;
 };

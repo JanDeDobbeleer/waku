@@ -30,8 +30,9 @@ namespace waku::workspaces {
 //           index
 //   active  shown on its monitor
 //   focused active on the focused monitor (GlazeWM: its global focus)
-//   windows handles (HWND, numbers) of the workspace's windows, in the window manager's order;
-//           komorebi only, empty otherwise. Join them with the taskbar rows (their hwnd role)
+//   windows handles (HWND, numbers) of the workspace's windows, in the window manager's order
+//           (komorebi), or ascending (Windows desktops); empty for GlazeWM. Join them with the
+//           taskbar rows (their hwnd role)
 // Virtual desktops belong to no monitor: the Windows provider returns one entry with handle 0,
 // which every bar shows (match `m.handle === handle || m.handle === 0`).
 // provider: "komorebi", "glazewm", "windows" or "". A tiling manager that is connected wins over

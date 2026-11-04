@@ -29,9 +29,9 @@ class FakeSystem final : public vdesk::VirtualDesktopSystem {
 
 vdesk::State threeDesktops(int current) {
   vdesk::State state;
-  state.desktops = {{QStringLiteral("{A}"), QStringLiteral("Mail"), 2},
-                    {QStringLiteral("{B}"), QString(), 0},
-                    {QStringLiteral("{C}"), QString(), 1}};
+  state.desktops = {{QStringLiteral("{A}"), QStringLiteral("Mail"), {101, 102}},
+                    {QStringLiteral("{B}"), QString(), {}},
+                    {QStringLiteral("{C}"), QString(), {201}}};
   state.current = current;
   return state;
 }
@@ -73,6 +73,10 @@ TEST(VirtualDesktops, ListsDesktopsWithLabels) {
   const QVariantMap first = h.desktops->desktops().at(0).toMap();
   EXPECT_EQ(first.value(QStringLiteral("label")).toString(), QStringLiteral("Mail"));
   EXPECT_EQ(first.value(QStringLiteral("windowCount")).toInt(), 2);
+  EXPECT_EQ(first.value(QStringLiteral("windows")).toList(),
+            (QVariantList{qlonglong(101), qlonglong(102)}));
+  EXPECT_TRUE(
+      h.desktops->desktops().at(1).toMap().value(QStringLiteral("windows")).toList().isEmpty());
   const QVariantMap second = h.desktops->desktops().at(1).toMap();
   EXPECT_EQ(second.value(QStringLiteral("label")).toString(), QStringLiteral("2"));
   EXPECT_TRUE(second.value(QStringLiteral("current")).toBool());
@@ -90,6 +94,30 @@ TEST(VirtualDesktops, EmitsChangedOnlyWhenTheListDiffers) {
   EXPECT_TRUE(h.desktops->refresh());
   EXPECT_FALSE(h.desktops->available());
   EXPECT_EQ(h.desktops->current(), -1);
+}
+
+TEST(VirtualDesktops, AMovedWindowEmitsChangedOnce) {
+  Harness h;
+  QSignalSpy spy(h.desktops.get(), &VirtualDesktops::changed);
+  vdesk::State moved = threeDesktops(1);
+  moved.desktops[0].windows = {101};  // 102 moves to the empty desktop
+  moved.desktops[1].windows = {102};
+  h.system->state = moved;
+  EXPECT_TRUE(h.desktops->refresh());
+  EXPECT_EQ(spy.count(), 1);
+  EXPECT_EQ(h.desktops->current(), 1);
+  EXPECT_EQ(h.desktops->desktops().at(0).toMap().value(QStringLiteral("windowCount")).toInt(), 1);
+  EXPECT_EQ(h.desktops->desktops().at(1).toMap().value(QStringLiteral("windowCount")).toInt(), 1);
+  EXPECT_FALSE(h.desktops->refresh());  // the same state again: nothing
+  EXPECT_EQ(spy.count(), 1);
+}
+
+TEST(VirtualDesktops, AnUnchangedWindowListDoesNotEmit) {
+  Harness h;
+  QSignalSpy spy(h.desktops.get(), &VirtualDesktops::changed);
+  h.system->state = threeDesktops(1);  // equal lists, built again
+  EXPECT_FALSE(h.desktops->refresh());
+  EXPECT_EQ(spy.count(), 0);
 }
 
 TEST(VirtualDesktops, JumpsStraightToTheDesktop) {
@@ -123,7 +151,7 @@ TEST(VirtualDesktops, StopsCreatingAtTheLimit) {
   Harness h;
   vdesk::State full;
   for (int i = 0; i < VirtualDesktops::kMaxDesktops; ++i) {
-    full.desktops.push_back({QStringLiteral("{%1}").arg(i), QString(), 0});
+    full.desktops.push_back({QStringLiteral("{%1}").arg(i), QString(), {}});
   }
   full.current = 0;
   h.system->state = full;
@@ -157,6 +185,24 @@ TEST(WorkspacesWindowsProvider, ShowsDesktopsWhenNoManagerRuns) {
   EXPECT_TRUE(shown.value(QStringLiteral("active")).toBool());
   EXPECT_FALSE(shown.value(QStringLiteral("hasWindows")).toBool());
   EXPECT_TRUE(list.at(0).toMap().value(QStringLiteral("hasWindows")).toBool());
+}
+
+TEST(WorkspacesWindowsProvider, PassesTheWindowsThrough) {
+  Harness h;
+  Workspaces workspaces(nullptr, nullptr, h.desktops.get());
+  const QVariantList list =
+      workspaces.monitors().at(0).toMap().value(QStringLiteral("workspaces")).toList();
+  ASSERT_EQ(list.size(), 3);
+  const QVariantMap first = list.at(0).toMap();
+  EXPECT_EQ(first.value(QStringLiteral("windows")).toList(),
+            (QVariantList{qlonglong(101), qlonglong(102)}));
+  EXPECT_EQ(first.value(QStringLiteral("windowCount")).toInt(), 2);
+  EXPECT_TRUE(first.value(QStringLiteral("hasWindows")).toBool());
+  const QVariantMap empty = list.at(1).toMap();
+  EXPECT_TRUE(empty.value(QStringLiteral("windows")).toList().isEmpty());
+  EXPECT_FALSE(empty.value(QStringLiteral("hasWindows")).toBool());
+  EXPECT_EQ(list.at(2).toMap().value(QStringLiteral("windows")).toList(),
+            (QVariantList{qlonglong(201)}));
 }
 
 TEST(WorkspacesWindowsProvider, FocusAndStepSwitchDesktopsOnAnyMonitor) {
