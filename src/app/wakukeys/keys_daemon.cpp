@@ -154,8 +154,11 @@ int runDaemon(const KeysArgs& args, const QString& configFile) {
     return kError;
   }
 
-  const QString barPipe = waku::control::controlPipeName(
-      waku::control::resolveConfigHome(args.configHome, QDir::homePath()).path);
+  const QString barHome = waku::control::resolveConfigHome(args.configHome, QDir::homePath()).path;
+  // The commands of the key file run `wakuc`, which finds its bar through WAKU_CONFIG_HOME. Every
+  // command inherits this environment, so `--config-home` steers them as it steers `waku:` actions.
+  qputenv("WAKU_CONFIG_HOME", QDir::toNativeSeparators(barHome).toLocal8Bit());
+  const QString barPipe = waku::control::controlPipeName(barHome);
   const std::unique_ptr<waku::keymap::ProcessLauncher> launcher =
       waku::keymap::makeWin32ProcessLauncher(QCoreApplication::applicationDirPath());
   const std::unique_ptr<waku::keymap::WindowSystem> windows = waku::keymap::makeWin32WindowSystem();

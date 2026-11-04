@@ -65,11 +65,10 @@ options. Exit codes: 0 ok, 1 error (a bad first file, already running), 2 daemon
   works without the user editing the `PATH`. The change is for the started command only; the
   `PATH` of the daemon and of the session stays as it is. A `PATH` that already starts with the
   folder is kept.
-- **Which bar.** Without `--config-home` the daemon talks to the bar of the default config home
-  (`WAKU_CONFIG_HOME`, else `~/.config/waku`), as `wakuc` does. To drive a bar started with
-  `--config-home` elsewhere, set the user environment variable `WAKU_CONFIG_HOME` to that folder
-  (sign out and in, so a task started at sign-in sees it). Commands that run `wakuc` read the same
-  variable, so they reach the same bar.
+- **Which bar.** The bar is the one of `--config-home`, else `WAKU_CONFIG_HOME`, else
+  `~/.config/waku`, as for `wakuc`. The daemon exports the folder it resolved as `WAKU_CONFIG_HOME`
+  in its own environment, so every command it starts (`wakuc tile ...`) reaches the same bar as the
+  `waku:` actions do. `startup enable` passes `--config-home` to the daemon for this reason.
 - **Nothing blocks the key handler.** Starting a shell and every control-pipe call run on the
   global `QThreadPool`. Finding and focusing a window (`activate-or-launch`) runs on the GUI thread
   inside the `WM_HOTKEY` handling, because Windows lets the process that received the hotkey set the
