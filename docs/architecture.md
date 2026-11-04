@@ -390,7 +390,10 @@ screen signals (`availableGeometryChanged` and friends), waits 500 ms after the 
 `komorebi-hidden`) with `SendMessageTimeoutW` (250 ms), at once and 5 s later. GUI thread, no thread of its
 own (so no row in the thread table), two single-shot timers idle between bursts, documented APIs
 only (no allowlist row). `--no-workarea-sync` disables the capability `workarea_sync`; off the live
-desktop the guard has no sender. Details: `src/features/workspaces/design.md`.
+desktop the guard has no sender. With `--manage-komorebi` (capability `manage_komorebi`) the same
+settle also starts `komorebic replace-configuration` after a display change, only while
+`komorebi.exe` and `komorebi-bar.exe` run, at most once per 30 s (`CreateToolhelp32Snapshot`, no
+allowlist row). Details: `src/features/workspaces/design.md`.
 
 ## Threading
 

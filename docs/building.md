@@ -67,6 +67,7 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `--hide-taskbar` | Hide the Windows taskbar (all monitors) while waku runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wakuc shortcut`. |
 | `--no-workarea-sync` | Never tell komorebi that the work area changed. By default waku sends `WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window 0.5 s after a screen or work area change and again 5 s later, so windows do not tile under the bar. See "komorebi's work area" in `docs/architecture.md`. |
+| `--manage-komorebi` | After a screen or scale change, run `komorebic replace-configuration` so komorebi and komorebi-bar pick it up. Acts only while both run, at most once per 30 s. Off by default. See "Managing komorebi" in `src/features/workspaces/design.md`. |
 | `--font-engine <engine>` | `gdi` (default, small) or `directwrite` (honours variable-font axes, tens of MB more memory and about 1,000 more handles). A shell that uses variable fonts needs `directwrite`. `QT_QPA_PLATFORM` wins when it is set. |
 | `--help` | Print the options. |
 

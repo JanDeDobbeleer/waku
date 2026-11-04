@@ -105,9 +105,14 @@ int main(int argc, char* argv[]) {
       QStringLiteral("no-workarea-sync"),
       QStringLiteral(
           "Never nudge a tiling window manager (komorebi) after the work area changed."));
+  QCommandLineOption manageKomorebiOpt(
+      QStringLiteral("manage-komorebi"),
+      QStringLiteral("After a screen or scale change, run `komorebic replace-configuration` so "
+                     "komorebi and komorebi-bar pick it up. Only when both run. Off by default."));
   parser.addOption(configHomeOpt);
   parser.addOption(importPathOpt);
   parser.addOption(noWorkAreaSyncOpt);
+  parser.addOption(manageKomorebiOpt);
   parser.addOption(hideTaskbarOpt);
   parser.addOption(noHotkeysOpt);
   parser.addOption(fontEngineOpt);
@@ -120,6 +125,8 @@ int main(int argc, char* argv[]) {
   waku::kernel::setCapabilityDisabled(QStringLiteral("hotkeys"), parser.isSet(noHotkeysOpt));
   waku::kernel::setCapabilityDisabled(QStringLiteral("workarea_sync"),
                                       parser.isSet(noWorkAreaSyncOpt));
+  waku::kernel::setCapabilityDisabled(QStringLiteral("manage_komorebi"),
+                                      !parser.isSet(manageKomorebiOpt));
 
   const waku::control::ConfigHome resolvedHome =
       waku::control::resolveConfigHome(parser.value(configHomeOpt), QDir::homePath());

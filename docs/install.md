@@ -138,7 +138,8 @@ The task starts waku with `--register-app-bar --hide-taskbar`. Change that with:
   (`WAKU_CONFIG_HOME`, else `~/.config/waku`).
 - `--no-app-bar`: leave out `--register-app-bar`.
 - `--keep-taskbar`: leave out `--hide-taskbar`.
-- Other `waku` flags after `--`, for example `wakuc startup enable -- --no-tray`.
+- Other `waku` flags after `--`, for example `wakuc startup enable -- --no-tray` or
+  `wakuc startup enable -- --manage-komorebi`.
 
 `wakuc startup enable` again replaces the task. `wakuc startup status` shows whether it is
 registered, its command and which `waku.exe` the PATH finds. `wakuc startup disable` removes the

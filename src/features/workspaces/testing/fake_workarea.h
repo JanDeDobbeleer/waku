@@ -69,18 +69,45 @@ class FakeWorkAreaClock final : public WorkAreaTimers {
   std::map<Slot, std::pair<int, std::function<void()>>> pending_;
 };
 
-// A guard on the fakes, with the default timing (500 ms settle, 5 s late).
+struct FakeManageLog {
+  // The fake clock's time (ms) of every reloadConfiguration() call.
+  std::vector<int> calls;
+  KomorebiManageResult result{true, true};
+};
+
+class FakeKomorebiManager final : public KomorebiManager {
+ public:
+  FakeKomorebiManager(std::shared_ptr<FakeManageLog> log, std::shared_ptr<int> now)
+      : log_(std::move(log)), now_(std::move(now)) {}
+  KomorebiManageResult reloadConfiguration() override {
+    log_->calls.push_back(*now_);
+    return log_->result;
+  }
+
+ private:
+  std::shared_ptr<FakeManageLog> log_;
+  std::shared_ptr<int> now_;
+};
+
+// A guard on the fakes, with the default timing (500 ms settle, 5 s late, 30 s cooldown). The
+// manager exists only when `withManager` is set.
 struct WorkAreaRig {
   std::shared_ptr<int> now = std::make_shared<int>(0);
   std::shared_ptr<FakeWorkAreaLog> log = std::make_shared<FakeWorkAreaLog>();
+  std::shared_ptr<FakeManageLog> manageLog = std::make_shared<FakeManageLog>();
   FakeWorkAreaClock* clock = nullptr;
   std::unique_ptr<KomorebiWorkAreaGuard> guard;
 
-  WorkAreaRig() {
+  explicit WorkAreaRig(bool withManager = false, bool withNotifier = true) {
     auto timers = std::make_unique<FakeWorkAreaClock>(now);
     clock = timers.get();
-    guard = std::make_unique<KomorebiWorkAreaGuard>(
-        std::make_unique<FakeWorkAreaNotifier>(log, now), std::move(timers));
+    std::unique_ptr<WorkAreaNotifier> notifier;
+    if (withNotifier) notifier = std::make_unique<FakeWorkAreaNotifier>(log, now);
+    std::unique_ptr<KomorebiManager> manager;
+    if (withManager) manager = std::make_unique<FakeKomorebiManager>(manageLog, now);
+    guard = std::make_unique<KomorebiWorkAreaGuard>(std::move(notifier), std::move(timers),
+                                                    KomorebiWorkAreaGuard::Timing{},
+                                                    std::move(manager));
   }
 };
 

@@ -33,11 +33,33 @@ class WorkAreaNotifier {
 // Defined in win32/komorebi_workarea_win.cpp.
 std::unique_ptr<WorkAreaNotifier> makeWin32WorkAreaNotifier();
 
+// What one reload request did: whether komorebi and komorebi-bar both run, and whether
+// `komorebic replace-configuration` was started.
+struct KomorebiManageResult {
+  bool barRunning = false;
+  bool started = false;
+};
+
+// Makes a running komorebi and its bar pick up a changed display: `komorebic
+// replace-configuration <komorebi.json>` rebuilds the window manager and respawns komorebi-bar,
+// which does not follow a scale change on its own. The real one
+// (win32/komorebi_manage_win.cpp) acts only when komorebi.exe and komorebi-bar.exe run, and
+// starts komorebic without waiting for it. Created only with `--manage-komorebi`. Tests use
+// testing/fake_workarea.h.
+class KomorebiManager {
+ public:
+  virtual ~KomorebiManager() = default;
+  virtual KomorebiManageResult reloadConfiguration() = 0;
+};
+
+// Defined in win32/komorebi_manage_win.cpp.
+std::unique_ptr<KomorebiManager> makeWin32KomorebiManager();
+
 // The guard's two single-shot timers, behind an interface so tests drive a fake clock. start()
 // replaces a pending call of the same slot.
 class WorkAreaTimers {
  public:
-  enum class Slot { Settle, Late };
+  enum class Slot { Settle, Late, Cooldown };
   virtual ~WorkAreaTimers() = default;
   virtual void start(Slot slot, int ms, std::function<void()> fire) = 0;
   virtual void stop(Slot slot) = 0;
@@ -69,16 +91,30 @@ class KomorebiWorkAreaGuard : public QObject {
   struct Timing {
     int settleMs = 500;
     int lateMs = 5000;
+    // After a reload request no other one starts for this long: the reload itself moves windows
+    // and the bar, and that must not start another.
+    int manageCooldownMs = 30000;
   };
 
-  // A null `notifier` makes the guard inert; null `timers` means makeQtWorkAreaTimers().
+  // A null `notifier` and a null `manager` make the guard inert; null `timers` means
+  // makeQtWorkAreaTimers(). A `manager` reloads komorebi after a display change (see
+  // displayChanged()).
   explicit KomorebiWorkAreaGuard(std::unique_ptr<WorkAreaNotifier> notifier,
                                  std::unique_ptr<WorkAreaTimers> timers = nullptr,
-                                 Timing timing = {}, QObject* parent = nullptr);
+                                 Timing timing = {},
+                                 std::unique_ptr<KomorebiManager> manager = nullptr,
+                                 QObject* parent = nullptr);
   ~KomorebiWorkAreaGuard() override;
 
   // True when it has a notifier, so it can ever send.
   bool active() const { return notifier_ != nullptr; }
+  // True when it has a manager, so it can ever reload komorebi.
+  bool managing() const { return manager_ != nullptr; }
+
+  // A display changed (a screen added or removed, the primary screen, a geometry or a scale): like
+  // screensChanged(), and the settle also asks the manager to reload komorebi. A change of the
+  // work area alone (the bar's own registration) does not.
+  void displayChanged();
 
   // A screen changed: (re)starts the settle wait; the pair of notifications follows it. The slot
   // every screen signal is connected to.
@@ -89,18 +125,25 @@ class KomorebiWorkAreaGuard : public QObject {
 
  private:
   void watchScreen(QScreen* screen);
+  void settled();
   void notifyOnce();
+  void manage();
 
   std::unique_ptr<WorkAreaNotifier> notifier_;
   std::unique_ptr<WorkAreaTimers> timers_;
   Timing timing_;
+  std::unique_ptr<KomorebiManager> manager_;
+  // A display change is waiting for the settle.
+  bool pendingManage_ = false;
+  bool lastBarRunning_ = true;
   // The last "window found" answer, so a missing komorebi is logged once per change.
   bool lastFound_ = true;
   bool refusalLogged_ = false;
 };
 
 // The guard of a `waku` run: the real notifier when kernel::liveDesktop("workarea_sync"), none
-// (inert) otherwise.
+// (inert) otherwise; the real manager when kernel::liveDesktop("manage_komorebi") (only with
+// --manage-komorebi), none otherwise.
 std::unique_ptr<KomorebiWorkAreaGuard> makeKomorebiWorkAreaGuard(QObject* parent = nullptr);
 
 }  // namespace waku::workspaces::komorebi
