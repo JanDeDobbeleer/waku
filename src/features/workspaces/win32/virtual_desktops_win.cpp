@@ -249,6 +249,19 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
 
 }  // namespace
 
+std::optional<QString> currentDesktopId() {
+  HKEY key = nullptr;
+  if (RegOpenKeyExW(HKEY_CURRENT_USER, kKey, 0, KEY_QUERY_VALUE, &key) != ERROR_SUCCESS) {
+    return std::nullopt;
+  }
+  const std::optional<QByteArray> current = readBinary(key, L"CurrentVirtualDesktop");
+  RegCloseKey(key);
+  if (!current) return std::nullopt;
+  const QStringList ids = parseDesktopIds(*current);
+  if (ids.isEmpty()) return std::nullopt;
+  return ids.first();
+}
+
 std::unique_ptr<VirtualDesktopSystem> makeWin32VirtualDesktopSystem() {
   return std::make_unique<Win32VirtualDesktopSystem>();
 }

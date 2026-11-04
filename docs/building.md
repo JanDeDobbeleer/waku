@@ -67,6 +67,7 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `--hide-taskbar` | Hide the Windows taskbar (all monitors) while waku runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wakuc shortcut`. |
 | `--no-workarea-sync` | Never tell komorebi that the work area changed. By default waku sends `WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window 0.5 s after a screen or work area change and again 5 s later, so windows do not tile under the bar. See "komorebi's work area" in `docs/architecture.md`. |
+| `--no-tiling` | Never start the built-in tiler, even when the shell sets `Tiling.enabled`. The tiler is off by default and yields to komorebi and GlazeWM. See "The built-in tiler" in `docs/architecture.md`. |
 | `--manage-komorebi` | After a screen or scale change, run `komorebic replace-configuration` so komorebi and komorebi-bar pick it up. Acts only while both run, at most once per 30 s. Off by default. See "Managing komorebi" in `src/features/workspaces/design.md`. |
 | `--log-file <path>` | Write a JSON Lines diagnostics log to `<path>`: every log message, the start and stop of the run, screen and scale changes and shell reloads. Off by default. Format and how to read it: `docs/logging.md`. |
 | `--font-engine <engine>` | `gdi` (default, small) or `directwrite` (honours variable-font axes, tens of MB more memory and about 1,000 more handles). A shell that uses variable fonts needs `directwrite`. `QT_QPA_PLATFORM` wins when it is set. |
@@ -84,6 +85,8 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `wakuc call` | List the `IpcHandler` targets and their functions. |
 | `wakuc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
 | `wakuc taskbar hide`, `show`, `status` | Hide the Windows taskbar, restore what waku changed (it stays shown until `hide`), or print `ok: taskbar: hidden|visible|autohide-was-on`. |
+| `wakuc tile toggle`, `float`, `retile`, `status` | The built-in tiler (off unless the shell sets `Tiling.enabled`): float the focused window, or tile it again; float it only; place every window of the shown desktop again; print `ok: enabled=...; active=...; managed=...`. |
+| `wakuc tile layout <name>`, `focus next`, `focus previous` | Set the layout (`mainStack`, `columns`) of the focused window's workspace; focus the next or previous window of it. |
 | `wakuc quit` | Stop the bar. |
 | `wakuc config init [--force]` | Write a starter `shell.qml` (the built-in bar) into the config home. Needs no running bar. Exit 1 if `shell.qml` exists, unless `--force`. |
 | `wakuc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |

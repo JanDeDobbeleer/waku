@@ -50,4 +50,9 @@ class VirtualDesktopSystem {
 // The real system (win32/virtual_desktops_win.cpp).
 std::unique_ptr<VirtualDesktopSystem> makeWin32VirtualDesktopSystem();
 
+// The GUID of the shown desktop (registry form, upper case), from the one registry value
+// `CurrentVirtualDesktop`; nothing when Windows does not expose it. Cheap: no window is
+// enumerated. Defined in win32/virtual_desktops_win.cpp; the tiler asks it after a window event.
+std::optional<QString> currentDesktopId();
+
 }  // namespace waku::workspaces::vdesk
