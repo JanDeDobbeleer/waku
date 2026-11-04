@@ -18,6 +18,7 @@
 #include "host/plugin_guard.h"
 #include "host/qml/control_handler.h"
 #include "host/qml/shell_host.h"
+#include "host/run_log.h"
 #include "host/startup_trace.h"
 #include "host/windows_taskbar.h"
 #include "kernel/qt/app_data.h"
@@ -109,8 +110,15 @@ int main(int argc, char* argv[]) {
       QStringLiteral("manage-komorebi"),
       QStringLiteral("After a screen or scale change, run `komorebic replace-configuration` so "
                      "komorebi and komorebi-bar pick it up. Only when both run. Off by default."));
+  QCommandLineOption logFileOpt(
+      QStringLiteral("log-file"),
+      QStringLiteral("Write a diagnostics log (JSON Lines) to <file>: every log message, the start "
+                     "and stop of the run, screen and scale changes and shell reloads. Off by "
+                     "default. See docs/logging.md."),
+      QStringLiteral("file"));
   parser.addOption(configHomeOpt);
   parser.addOption(importPathOpt);
+  parser.addOption(logFileOpt);
   parser.addOption(noWorkAreaSyncOpt);
   parser.addOption(manageKomorebiOpt);
   parser.addOption(hideTaskbarOpt);
@@ -131,6 +139,13 @@ int main(int argc, char* argv[]) {
   const waku::control::ConfigHome resolvedHome =
       waku::control::resolveConfigHome(parser.value(configHomeOpt), QDir::homePath());
   const QString configHome = resolvedHome.path;
+  if (parser.isSet(logFileOpt)) {
+    waku::host::RunLogOptions logOptions;
+    logOptions.path = QDir::current().absoluteFilePath(parser.value(logFileOpt));
+    if (waku::host::RunLog::start(logOptions, rawArguments, configHome)) {
+      waku::host::RunLog::watchScreens();
+    }
+  }
 
   QQmlEngine engine;
   // User-built QML plugins. A folder whose plugin was built for another Qt, flavour or processor
@@ -195,9 +210,16 @@ int main(int argc, char* argv[]) {
   // included. Lives for the run, so a reload keeps a pending late notification. Inert off the
   // live desktop and with --no-workarea-sync (features/workspaces/komorebi_workarea.h).
   const auto workAreaGuard = waku::workspaces::komorebi::makeKomorebiWorkAreaGuard();
+  QObject::connect(&host, &waku::host::ShellHost::reloaded, &host, [&host](bool ok) {
+    waku::host::RunLog::event(
+        QStringLiteral("shell.reload"),
+        {{QStringLiteral("ok"), ok}, {QStringLiteral("error"), host.error()}});
+  });
   host.reload();
   waku::host::traceStep("first reload done");
   host.watch();
   waku::host::traceStep("watch done");
-  return app.exec();
+  const int exitCode = app.exec();
+  waku::host::RunLog::stop(exitCode);
+  return exitCode;
 }

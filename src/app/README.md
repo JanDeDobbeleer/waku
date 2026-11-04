@@ -53,6 +53,8 @@ written in lower case and plain ASCII in code and paths.
   komorebi's hidden window); `--no-workarea-sync` turns that off. `--manage-komorebi` also runs
   `komorebic replace-configuration` after a screen or scale change while komorebi and
   komorebi-bar run, so the bar follows the new scale; it is off by default.
+- `--log-file <path>` writes a JSON Lines diagnostics log (log messages, screen and scale
+  changes, reloads, start and stop); off by default. Format: `docs/logging.md`.
 
 The architecture is in [docs/architecture.md](../../docs/architecture.md), the build and every flag
 in [docs/building.md](../../docs/building.md), notes for shell authors in

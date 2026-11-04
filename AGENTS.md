@@ -178,6 +178,8 @@ fine. Never use the `const` `nlohmann::json::operator[]` on a key that may be mi
   user's real config (`%USERPROFILE%\.config\waku`) and never write to that folder.
 - Tests never touch the user's real bar, wallpaper, tray or Explorer. Use `--no-tray` so a test run
   never hooks Explorer, and never change the wallpaper outside a `--dry-run`.
+- To diagnose a live run, start waku with `--log-file <path>` (off by default; format and how to
+  read it in `docs/logging.md`).
 - Services ask `kernel::liveDesktop()` before touching the machine; it is false on the offscreen
   platform. No service tests `platformName()` itself.
 - No bar reserves screen work area unless `--register-app-bar` is passed, so a test or tool run
