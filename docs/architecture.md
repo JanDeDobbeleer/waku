@@ -263,7 +263,14 @@ host stores it on the `PanelWindow` (`setAppBarInset`, logical pixels) and `appl
 the window that far in on every pass. When the placement, the reserved zone, the layer or the
 focus mode changes, `ShellHost::syncAppBar` compares the new request with the last one and calls
 `IAppBar::reposition` (the same `ABM_QUERYPOS`/`ABM_SETPOS` without a new `ABM_NEW`), or removes the
-bar when the panel is no longer docked.
+bar when the panel is no longer docked. The request holds the screen's device pixel ratio: a scale
+change alone (same logical thickness, 63 physical pixels at 1.5 and 84 at 2) is a different request.
+
+A screen added or removed, a new primary screen, and a change of a screen's logical DPI or geometry
+reload the shell once the changes stop (`screenSettleMs`, 1.5 s). Windows reports a scale change as
+a new device pixel ratio and a new logical size with the logical DPI unchanged, so the geometry
+signal is the one that tells; without it the shell kept the work area it had reserved at the old
+scale. The work area change that the bar's own registration causes is not a trigger.
 
 `ShellScreen` mirrors `QScreen`. `width` and `height` are logical (device-independent) pixels, the
 units of window sizes and margins: `QScreen::size()` is the physical size divided by

@@ -25,6 +25,9 @@ struct AppBarRequest {
   // the margin on that edge. Logical pixels.
   int thickness = 0;
   QScreen* screen = nullptr;
+  // The screen's device pixel ratio when the request was made. Part of the request so that a scale
+  // change alone (same screen, same logical thickness) re-negotiates the width in physical pixels.
+  double dpr = 1.0;
   bool reserveSpace = false;
   bool alwaysOnTop = false;
   // WS_EX_NOACTIVATE: a click on the bar does not take the focus (keyboardFocus None).

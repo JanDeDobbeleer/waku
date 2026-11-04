@@ -94,6 +94,26 @@ TEST(ShellHostTest, AScreenChangeReloadsTheShellOnceAfterItSettles) {
   EXPECT_EQ(reloads, 1);
 }
 
+TEST(ShellHostTest, AScaleChangeThatMovesOnlyTheGeometryReloadsTheShell) {
+  // Windows reports a scale change as a new device pixel ratio and a new logical size, with the
+  // logical DPI unchanged: only geometryChanged tells.
+  Harness h;
+  h.screenSettleMs = 200;
+  h.start(shellConfig());
+  ASSERT_TRUE(h.host->reload());
+  int reloads = 0;
+  QObject::connect(h.host.get(), &ShellHost::reloaded, [&reloads] { ++reloads; });
+  QScreen* screen = QGuiApplication::primaryScreen();
+  ASSERT_NE(screen, nullptr);
+  emit qGuiApp->screenAdded(screen);  // makes the host watch this screen
+  ASSERT_TRUE(QTest::qWaitFor([&] { return reloads > 0; }, 5000));
+  reloads = 0;
+  emit screen->geometryChanged(screen->geometry());
+  EXPECT_TRUE(h.host->screenReloadPending());
+  ASSERT_TRUE(QTest::qWaitFor([&] { return reloads > 0; }, 5000));
+  EXPECT_EQ(reloads, 1);
+}
+
 TEST(ShellHostTest, AScreenChangeWaitsForADockToSettle) {
   EXPECT_EQ(ShellHost::Options().screenSettleMs, 1500);  // a dock sends changes for 1 to 3 s
   Harness h;

@@ -410,6 +410,11 @@ void ShellHost::watchScreen(QScreen* screen) {
   if (!screen) return;
   connect(screen, &QScreen::logicalDotsPerInchChanged, &screenDebounce_,
           qOverload<>(&QTimer::start), Qt::UniqueConnection);
+  // A scale change on Windows moves the device pixel ratio and the logical size of the screen, and
+  // leaves the logical DPI at 96, so logicalDotsPerInchChanged alone never fires for it: the bar
+  // then kept the work area it had reserved at the old scale.
+  connect(screen, &QScreen::geometryChanged, &screenDebounce_, qOverload<>(&QTimer::start),
+          Qt::UniqueConnection);
 }
 
 bool ShellHost::reload() {
@@ -812,6 +817,7 @@ void ShellHost::syncAppBar(Entry& entry) {
   request.thickness =
       zone > 0 ? zone : panelThickness(*edge, QSize(panel->width(), panel->height()));
   request.screen = panel->targetScreen();
+  request.dpr = request.screen ? request.screen->devicePixelRatio() : 1.0;
   request.reserveSpace = options_.allowReserve && zone > 0;
   request.alwaysOnTop = panel->aboveWindows();
   request.noActivate = !panel->focusable();
