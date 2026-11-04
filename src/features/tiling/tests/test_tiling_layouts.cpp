@@ -1,6 +1,8 @@
 // The pure geometry of the tiler: rects, border compensation, layout names.
 #include <gtest/gtest.h>
 
+#include <QSet>
+
 #include "features/tiling/layouts.h"
 
 using waku::tiling::canonicalLayout;
@@ -64,11 +66,139 @@ TEST(TilingLayouts, ColumnsAreEqualAndAbsorbTheRemainder) {
 
 TEST(TilingLayouts, ManyWindowsStayInsideAndDisjoint) {
   const QRect area(1920, 0, 1280, 1000);
-  for (const char* layout : {"mainStack", "columns"}) {
+  for (const QString& layout : waku::tiling::layoutNames()) {
     for (int n = 1; n <= 12; ++n) {
-      expectDisjointInside(layoutSlots(QString::fromLatin1(layout), area, n, 6, 0.6), area);
+      const auto rects = layoutSlots(layout, area, n, 6, 0.6);
+      EXPECT_EQ(rects.size(), static_cast<size_t>(n)) << qPrintable(layout);
+      expectDisjointInside(rects, area);
     }
   }
+}
+
+TEST(TilingLayouts, EveryLayoutKeepsItsInvariantsAtEveryCountAndSize) {
+  const QRect areas[] = {QRect(0, 0, 1920, 1040), QRect(-1920, 40, 1366, 728), QRect(5, 7, 80, 60)};
+  for (const QString& layout : waku::tiling::layoutNames()) {
+    for (const QRect& area : areas) {
+      for (const int gap : {0, 8, 40}) {
+        for (const double ratio : {0.1, 0.5, 0.77, 0.9}) {
+          for (int n = 1; n <= 9; ++n) {
+            const auto rects = layoutSlots(layout, area, n, gap, ratio);
+            SCOPED_TRACE(qPrintable(QStringLiteral("%1 n=%2 gap=%3 ratio=%4 w=%5")
+                                        .arg(layout)
+                                        .arg(n)
+                                        .arg(gap)
+                                        .arg(ratio)
+                                        .arg(area.width())));
+            ASSERT_EQ(rects.size(), static_cast<size_t>(n)) << qPrintable(layout) << n;
+            expectDisjointInside(rects, area);
+          }
+        }
+      }
+    }
+  }
+}
+
+TEST(TilingLayouts, WithoutAGapTheSlotsTileTheAreaExactly) {
+  const QRect area(0, 0, 1001, 603);  // odd sizes: the last slot absorbs the rounding
+  for (const QString& layout : waku::tiling::layoutNames()) {
+    for (int n = 1; n <= 9; ++n) {
+      qint64 sum = 0;
+      for (const QRect& r : layoutSlots(layout, area, n, 0, 0.5))
+        sum += qint64{r.width()} * r.height();
+      EXPECT_EQ(sum, qint64{area.width()} * area.height()) << qPrintable(layout) << n;
+    }
+  }
+}
+
+TEST(TilingLayouts, MainStackTopPutsTheMainWindowOnTopWithTheRestBelow) {
+  const QRect area(0, 0, 1000, 600);
+  const auto rects = layoutSlots(QStringLiteral("mainStackTop"), area, 3, 0, 0.5);
+  ASSERT_EQ(rects.size(), 3u);
+  EXPECT_EQ(rects[0], QRect(0, 0, 1000, 300));
+  EXPECT_EQ(rects[1], QRect(0, 300, 500, 300));
+  EXPECT_EQ(rects[2], QRect(500, 300, 500, 300));
+  EXPECT_EQ(layoutSlots(QStringLiteral("mainStackTop"), area, 2, 0, 0.75)[0].height(), 450);
+}
+
+TEST(TilingLayouts, RowsAreEqualBandsTopToBottom) {
+  const QRect area(0, 0, 1000, 600);
+  const auto rects = layoutSlots(QStringLiteral("rows"), area, 3, 0, 0.5);
+  ASSERT_EQ(rects.size(), 3u);
+  EXPECT_EQ(rects[0], QRect(0, 0, 1000, 200));
+  EXPECT_EQ(rects[1], QRect(0, 200, 1000, 200));
+  EXPECT_EQ(rects[2], QRect(0, 400, 1000, 200));
+}
+
+TEST(TilingLayouts, BspHalvesTheAreaThenSplitsWhatIsLeftAlternately) {
+  const QRect area(0, 0, 1000, 600);
+  const auto rects = layoutSlots(QStringLiteral("bsp"), area, 4, 0, 0.5);
+  ASSERT_EQ(rects.size(), 4u);
+  EXPECT_EQ(rects[0], QRect(0, 0, 500, 600));    // left half
+  EXPECT_EQ(rects[1], QRect(500, 0, 500, 300));  // top of the right half
+  EXPECT_EQ(rects[2], QRect(500, 300, 250, 300));
+  EXPECT_EQ(rects[3], QRect(750, 300, 250, 300));
+  // The ratio drives the first split only.
+  EXPECT_EQ(layoutSlots(QStringLiteral("bsp"), area, 3, 0, 0.75)[0].width(), 750);
+  EXPECT_EQ(layoutSlots(QStringLiteral("bsp"), area, 3, 0, 0.75)[1].height(), 300);
+}
+
+TEST(TilingLayouts, GridIsNearSquareAndTheLastRowSpreadsOverTheWidth) {
+  const QRect area(0, 0, 900, 600);
+  const auto four = layoutSlots(QStringLiteral("grid"), area, 4, 0, 0.5);
+  EXPECT_EQ(four[0], QRect(0, 0, 450, 300));
+  EXPECT_EQ(four[3], QRect(450, 300, 450, 300));
+  const auto five = layoutSlots(QStringLiteral("grid"), area, 5, 0, 0.5);  // 3 + 2
+  EXPECT_EQ(five[2], QRect(600, 0, 300, 300));
+  EXPECT_EQ(five[3], QRect(0, 300, 450, 300));
+  EXPECT_EQ(five[4], QRect(450, 300, 450, 300));
+  const auto two = layoutSlots(QStringLiteral("grid"), area, 2, 0, 0.5);
+  EXPECT_EQ(two[1], QRect(450, 0, 450, 600));
+}
+
+TEST(TilingLayouts, CenterMainPutsTheMainWindowInTheMiddleBetweenTwoStacks) {
+  const QRect area(0, 0, 1000, 600);
+  const auto rects = layoutSlots(QStringLiteral("centerMain"), area, 5, 0, 0.5);
+  ASSERT_EQ(rects.size(), 5u);
+  EXPECT_EQ(rects[0], QRect(250, 0, 500, 600));
+  EXPECT_EQ(rects[1], QRect(750, 0, 250, 300));  // right stack first
+  EXPECT_EQ(rects[2], QRect(0, 0, 250, 300));
+  EXPECT_EQ(rects[3], QRect(750, 300, 250, 300));
+  EXPECT_EQ(rects[4], QRect(0, 300, 250, 300));
+  // Three windows: one column on each side, full height.
+  const auto three = layoutSlots(QStringLiteral("centerMain"), area, 3, 0, 0.5);
+  EXPECT_EQ(three[1], QRect(750, 0, 250, 600));
+  EXPECT_EQ(three[2], QRect(0, 0, 250, 600));
+  // Two windows are main and stack.
+  EXPECT_EQ(layoutSlots(QStringLiteral("centerMain"), area, 2, 8, 0.5),
+            layoutSlots(QStringLiteral("mainStack"), area, 2, 8, 0.5));
+}
+
+TEST(TilingLayouts, FlipMirrorsEveryLayout) {
+  const QRect area(100, 50, 1000, 600);
+  for (const QString& layout : waku::tiling::layoutNames()) {
+    for (int n = 1; n <= 7; ++n) {
+      const auto rects = layoutSlots(layout, area, n, 8, 0.6);
+      const auto h = waku::tiling::flipSlots(rects, area, true, false);
+      const auto v = waku::tiling::flipSlots(rects, area, false, true);
+      expectDisjointInside(h, area);
+      expectDisjointInside(v, area);
+      for (size_t i = 0; i < rects.size(); ++i) {
+        EXPECT_EQ(h[i].size(), rects[i].size());
+        EXPECT_EQ(h[i].left() - area.left(), area.right() - rects[i].right()) << qPrintable(layout);
+        EXPECT_EQ(h[i].top(), rects[i].top());
+        EXPECT_EQ(v[i].top() - area.top(), area.bottom() - rects[i].bottom());
+        EXPECT_EQ(v[i].left(), rects[i].left());
+      }
+      EXPECT_EQ(waku::tiling::flipSlots(h, area, true, false), rects);
+    }
+  }
+}
+
+TEST(TilingLayouts, TheLayoutListStartsWithMainStackAndHasNoDuplicates) {
+  const QStringList names = waku::tiling::layoutNames();
+  EXPECT_EQ(names.first(), QStringLiteral("mainStack"));
+  EXPECT_EQ(names.size(), 7);
+  EXPECT_EQ(QSet<QString>(names.begin(), names.end()).size(), names.size());
 }
 
 TEST(TilingLayouts, ZeroWindowsOrAnEmptyAreaGiveNothing) {
@@ -93,6 +223,11 @@ TEST(TilingLayouts, CanonicalNamesIgnoreCaseAndSeparators) {
   EXPECT_EQ(canonicalLayout(QStringLiteral("main-stack")), QStringLiteral("mainStack"));
   EXPECT_EQ(canonicalLayout(QStringLiteral("MAIN_STACK")), QStringLiteral("mainStack"));
   EXPECT_EQ(canonicalLayout(QStringLiteral("Columns")), QStringLiteral("columns"));
+  EXPECT_EQ(canonicalLayout(QStringLiteral("main-stack-top")), QStringLiteral("mainStackTop"));
+  EXPECT_EQ(canonicalLayout(QStringLiteral("BSP")), QStringLiteral("bsp"));
+  EXPECT_EQ(canonicalLayout(QStringLiteral("center_main")), QStringLiteral("centerMain"));
+  EXPECT_EQ(canonicalLayout(QStringLiteral("GRID")), QStringLiteral("grid"));
+  EXPECT_EQ(canonicalLayout(QStringLiteral("Rows")), QStringLiteral("rows"));
   EXPECT_TRUE(canonicalLayout(QStringLiteral("spiral")).isEmpty());
 }
 

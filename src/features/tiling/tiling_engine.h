@@ -29,7 +29,7 @@ std::unique_ptr<Scheduler> makeQtScheduler();
 struct TilingSettings {
   QString layout = QStringLiteral("mainStack");  // the layout of a workspace with none of its own
   int gap = 8;                                   // pixels between windows and around them
-  double ratio = 0.55;                           // the share of the width the main window takes
+  double ratio = 0.5;                            // the share of the width the main window takes
   std::vector<Rule> rules;
   bool selfElevated = false;  // waku runs elevated: elevated windows are movable
 };
@@ -103,6 +103,11 @@ class TilingEngine {
   // The layout of the workspace of the foreground window (the default layout when no managed
   // window is in front). False for an unknown name.
   bool setWorkspaceLayout(const QString& name);
+  // The layout in force for the foreground window's workspace (the default layout without one).
+  QString currentLayout() const;
+  // Moves the layout of that workspace `step` places along layoutNames(), wrapping. The message
+  // is the new layout's name.
+  CommandResult cycleLayout(int step);
   // Activates the next or previous window of the foreground window's workspace, wrapping.
   bool focusStep(int direction);
 

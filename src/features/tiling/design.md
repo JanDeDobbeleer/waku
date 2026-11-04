@@ -6,9 +6,9 @@ injects nothing. A shell turns it on; the engine ships no default beyond what an
 
 ```qml
 Component.onCompleted: {
-    Tiling.layout = "mainStack"   // or "columns"
+    Tiling.layout = "mainStack"   // see Layouts
     Tiling.gap = 8
-    Tiling.ratio = 0.55
+    Tiling.ratio = 0.5
     Tiling.rules = [{ process: "Calculator.exe", action: "float" },
                     { class: "TaskManagerWindow", action: "ignore" }]
     Tiling.enabled = true
@@ -93,6 +93,42 @@ the coexistence rule for them.
 
 ## Commands
 
+## Layouts
+
+The names are case-insensitive and ignore `-`, `_` and spaces (`main-stack-top` is
+`mainStackTop`). `Tiling.layout` is the default; `wakuc tile layout <name>` sets one workspace;
+`wakuc tile layout next|previous` walks the list below for the focused window's workspace, wrapping
+(`tile status` shows the layout in force). `ratio` (0.5 by default) is the share of the first
+split: of the width for `mainStack`, `bsp` and `centerMain`, of the height for `mainStackTop`. One
+window fills the area in every layout. `tile flip` mirrors the slots of any of them.
+
+```text
+mainStack            mainStackTop         columns              rows
++-----+-----+        +-----------+        +----+-----+----+    +-----------+
+|     |  2  |        |     1     |        |    |     |    |    |     1     |
+|  1  +-----+        +-----+-----+        | 1  |  2  | 3  |    +-----------+
+|     |  3  |        |  2  |  3  |        |    |     |    |    |     2     |
++-----+-----+        +-----+-----+        +----+-----+----+    +-----------+
+                                                                |     3     |
+                                                                +-----------+
+bsp                  grid                 centerMain
++-----+-----+        +-----+-----+        +----+-------+----+
+|     |  2  |        |  1  |  2  |        | 3  |       | 2  |
+|  1  +--+--+        +-----+-----+        +----+   1   +----+
+|     |3 |4 |        |  3  |  4  |        | 5  |       | 4  |
++-----+--+--+        +-----+-----+        +----+-------+----+
+```
+
+- `mainStack`: main left, the rest stacked right. The only layout with height weights.
+- `mainStackTop`: main on top, the rest side by side below.
+- `columns`, `rows`: equal columns or bands; they do not resize.
+- `bsp`: window 1 takes `ratio` of the width; every next window takes the top (then left, then
+  top...) half of what is left. Like the default komorebi layout.
+- `grid`: ceil(sqrt(n)) columns filled by row; a short last row spreads over the width. Does not
+  resize.
+- `centerMain`: main in the middle; the others alternate right, left, right... in two columns.
+  With two windows it is `mainStack`.
+
 `wakuc tile ...` acts on the foreground window (`TilingControl`, `tiling_command.h`; the service
 answers `ok: ...` or `error: ...`). The pure logic is in `layouts.cpp` (`flipSlots`,
 `neighbourSlot`, weights) and `tiling_model.cpp` (`swap`, `promote`, the per-workspace
@@ -103,11 +139,11 @@ answers `ok: ...` or `error: ...`). The pure logic is in `layouts.cpp` (`flipSlo
   height. No wrap. `focus next|previous` keep the stack order.
 - `move <direction>`: swaps the focused window with that neighbour in the stack order and
   retiles. `promote`: the focused window takes slot 0 (unchanged if it already has it).
-- `resize horizontal`: changes the main share of `mainStack` by 5% per call (a stack window
+- `resize horizontal`: changes the `ratio` of the layout by 5% per call (a stack window
   that grows takes width from the main window), clamped to 0.1..0.9, per workspace. `vertical`: a
-  height weight (step 0.1, 0.3..3) for a stacked window, so it needs three or more windows. The
-  `columns` layout does not resize. A change of `Tiling.ratio` clears the overrides.
-- `flip horizontal|vertical`: mirrors the slots in the work area; again undoes it.
+  height weight (step 0.1, 0.3..3) for a stacked window of `mainStack`, so it needs three or more
+  windows. `columns`, `rows` and `grid` do not resize. A change of `Tiling.ratio` clears the overrides.
+- `flip horizontal|vertical`: mirrors the slots of the layout in the work area; again undoes it.
 - `monocle`: the focused window gets the whole work area (inside the gap); the other windows are
   not touched, so they stay behind it. Again re-tiles. A monocle window that leaves the
   stack ends the mode.

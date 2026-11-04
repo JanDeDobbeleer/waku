@@ -260,6 +260,14 @@ QString Tiling::controlLayout(const QString& name) {
   return QStringLiteral("ok: layout %1").arg(canonicalLayout(name));
 }
 
+QString Tiling::controlLayoutStep(int step) {
+  return run([step](TilingEngine& e) {
+    CommandResult result = e.cycleLayout(step);
+    result.message = QStringLiteral("layout %1").arg(result.message);
+    return result;
+  });
+}
+
 QString Tiling::controlRetile() {
   if (!active_ || !engine_) return notActive();
   engine_->retileAll();
@@ -336,7 +344,8 @@ QString Tiling::controlStatus() {
              "ok: enabled=%1; active=%2; blocked=%3; layout=%4; gap=%5; ratio=%6; managed=%7; "
              "floating=%8; workspaces=%9; stacks=%10; clamped=%11; paused=%12; desktop=%13")
       .arg(yesNo(enabled_), yesNo(active_),
-           blockedBy().isEmpty() ? QStringLiteral("no") : blockedBy(), settings_.layout,
+           blockedBy().isEmpty() ? QStringLiteral("no") : blockedBy(),
+           status.layout.isEmpty() ? settings_.layout : status.layout,
            QString::number(settings_.gap), QString::number(settings_.ratio))
       .arg(status.managed)
       .arg(status.floating)

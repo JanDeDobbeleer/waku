@@ -471,6 +471,22 @@ bool TilingEngine::setWorkspaceLayout(const QString& name) {
   return true;
 }
 
+QString TilingEngine::currentLayout() const {
+  QString name = settings_.layout;
+  if (const std::optional<WorkspaceKey> key = foregroundKey()) name = model_.layout(*key, name);
+  const QString canonical = canonicalLayout(name);
+  return canonical.isEmpty() ? layoutNames().front() : canonical;
+}
+
+CommandResult TilingEngine::cycleLayout(int step) {
+  const QStringList names = layoutNames();
+  const qsizetype size = names.size();
+  const qsizetype at = std::max<qsizetype>(0, names.indexOf(currentLayout()));
+  const QString next = names.at(static_cast<qsizetype>(((at + step) % size + size) % size));
+  setWorkspaceLayout(next);
+  return {true, next};
+}
+
 bool TilingEngine::focusStep(int direction) {
   if (!running_ || direction == 0) return false;
   const std::optional<WindowId> front = placer_.foreground();
@@ -631,8 +647,10 @@ CommandResult TilingEngine::resize(Axis axis, int sign) {
   const std::optional<Focused> focused = focusedManaged();
   if (!focused) return fail(QStringLiteral("the focused window is not tiled"));
   const WorkspaceKey& key = focused->key;
-  if (canonicalLayout(model_.layout(key, settings_.layout)) != QLatin1String("mainStack")) {
-    return fail(QStringLiteral("only the mainStack layout resizes"));
+  const QString layout = canonicalLayout(model_.layout(key, settings_.layout));
+  if (layout == QLatin1String("columns") || layout == QLatin1String("rows") ||
+      layout == QLatin1String("grid")) {
+    return fail(QStringLiteral("the %1 layout does not resize").arg(layout));
   }
   const std::vector<WindowId> active = activeWindows(key);
   const auto at = std::find(active.begin(), active.end(), focused->hwnd);
@@ -730,7 +748,7 @@ TilingStatus TilingEngine::status() const {
   out.workspaces = static_cast<int>(model_.keys().size());
   out.stacks = model_.stackCount();
   out.clamped = static_cast<int>(clamped_.size());
-  out.layout = settings_.layout;
+  out.layout = currentLayout();
   out.paused = paused_;
   return out;
 }

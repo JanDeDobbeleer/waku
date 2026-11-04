@@ -19,6 +19,10 @@ class FakeControl final : public TilingControl {
     calls << QStringLiteral("layout|%1").arg(name);
     return QStringLiteral("ok: fake");
   }
+  QString controlLayoutStep(int step) override {
+    calls << QStringLiteral("layoutstep|%1").arg(step);
+    return QStringLiteral("ok: fake");
+  }
   QString controlRetile() override {
     calls << QStringLiteral("retile");
     return QStringLiteral("ok: fake");
@@ -89,14 +93,18 @@ TEST(TilingCommand, EachVerbReachesTheRightFunction) {
   answerTileCommand({QStringLiteral("toggle")}, &control);
   answerTileCommand({QStringLiteral("float")}, &control);
   answerTileCommand({QStringLiteral("layout"), QStringLiteral("columns")}, &control);
+  answerTileCommand({QStringLiteral("layout"), QStringLiteral("next")}, &control);
+  answerTileCommand({QStringLiteral("layout"), QStringLiteral("Previous")}, &control);
   answerTileCommand({QStringLiteral("retile")}, &control);
   answerTileCommand({QStringLiteral("focus"), QStringLiteral("next")}, &control);
   answerTileCommand({QStringLiteral("focus"), QStringLiteral("previous")}, &control);
   answerTileCommand({QStringLiteral("status")}, &control);
-  EXPECT_EQ(control.calls, (QStringList{QStringLiteral("float|toggle"), QStringLiteral("float|yes"),
-                                        QStringLiteral("layout|columns"), QStringLiteral("retile"),
-                                        QStringLiteral("focus|1"), QStringLiteral("focus|-1"),
-                                        QStringLiteral("status")}));
+  EXPECT_EQ(control.calls,
+            (QStringList{QStringLiteral("float|toggle"), QStringLiteral("float|yes"),
+                         QStringLiteral("layout|columns"), QStringLiteral("layoutstep|1"),
+                         QStringLiteral("layoutstep|-1"), QStringLiteral("retile"),
+                         QStringLiteral("focus|1"), QStringLiteral("focus|-1"),
+                         QStringLiteral("status")}));
 }
 
 TEST(TilingCommand, BadUsageAnswersAnErrorAndCallsNothing) {
