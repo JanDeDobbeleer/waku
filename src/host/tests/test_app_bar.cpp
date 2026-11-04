@@ -20,6 +20,18 @@ const AppBarRect kPhysical{0, 0, 1920, 1080};
 
 }  // namespace
 
+TEST(AppBarRequestTest, AScaleChangeAloneMakesADifferentRequest) {
+  waku::host::AppBarRequest before;
+  before.edge = AppBarEdge::Left;
+  before.thickness = 42;
+  before.reserveSpace = true;
+  before.dpr = 1.5;
+  waku::host::AppBarRequest after = before;
+  EXPECT_TRUE(before == after);
+  after.dpr = 2.0;  // same screen, same logical width: 63 physical pixels become 84
+  EXPECT_FALSE(before == after);
+}
+
 TEST(AppBarEdgeTest, TheValuesAreTheAbeConstants) {
   EXPECT_EQ(static_cast<int>(AppBarEdge::Left), 0);
   EXPECT_EQ(static_cast<int>(AppBarEdge::Top), 1);
