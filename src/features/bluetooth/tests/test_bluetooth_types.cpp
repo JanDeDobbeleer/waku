@@ -104,3 +104,17 @@ TEST(BluetoothMerge, ConnectedAndBatteryCombine) {
   EXPECT_TRUE(merged[0].remembered);
   EXPECT_EQ(merged[0].battery, std::optional<int>(80));
 }
+
+TEST(BluetoothTypes, APlaceholderNameIsNoName) {
+  const QString address = QStringLiteral("90:62:3F:52:52:C0");
+  EXPECT_TRUE(isPlaceholderBtName(QString(), address));
+  EXPECT_TRUE(isPlaceholderBtName(QStringLiteral("  "), address));
+  EXPECT_TRUE(isPlaceholderBtName(address, address));
+  EXPECT_TRUE(isPlaceholderBtName(QStringLiteral("90:62:3f:52:52:c0"), address));
+  EXPECT_TRUE(isPlaceholderBtName(QStringLiteral("Bluetooth 90:62:3f:52:52:c0"), address));
+  EXPECT_TRUE(isPlaceholderBtName(QStringLiteral("bluetooth 90:62:3F:52:52:C0"), address));
+  EXPECT_FALSE(isPlaceholderBtName(QStringLiteral("AirPods Pro"), address));
+  EXPECT_FALSE(isPlaceholderBtName(QStringLiteral("Bluetooth Speaker"), address));
+  // The address of another device is a name, if an odd one.
+  EXPECT_FALSE(isPlaceholderBtName(QStringLiteral("Bluetooth 11:22:33:44:55:66"), address));
+}

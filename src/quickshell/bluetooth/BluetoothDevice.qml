@@ -3,7 +3,11 @@ import QtQuick
 // Quickshell.Bluetooth's BluetoothDevice over a device of the Bluetooth service. The adapter
 // creates these; a shell does not declare one.
 //
-//   connected   writable: true calls connect(), false disconnect()
+//   connected   writable: true calls connect(), false disconnect(). The write is a request: the
+//               value reads back what Windows reports and changes only when the connection is
+//               really up or down. A failure leaves it unchanged (the service sets `error`).
+//   state       Connecting or Disconnecting from the request until the service reports the result,
+//               else Connected or Disconnected
 //   battery     0 to 1, valid when batteryAvailable
 //   trusted, blocked, wakeAllowed  false and read-only in effect: Windows pairs and trusts a
 //               device itself
@@ -15,7 +19,7 @@ import QtQuick
 //
 // `service` is the Bluetooth service (connectDevice, disconnectDevice, pairDevice, forgetDevice,
 // cancelPair, pairing); `row` is the device's map: id (address), name, connected, paired, type,
-// batteryPercent.
+// connecting, disconnecting, batteryPercent.
 QtObject {
     id: root
 
@@ -26,7 +30,13 @@ QtObject {
     property string name: ""
     readonly property string deviceName: String(row.name ? row.name : "")
     readonly property string address: String(row.id ? row.id : "")
-    readonly property int state: connected ? BluetoothDeviceState.Connected : BluetoothDeviceState.Disconnected
+    readonly property int state: {
+        if (row.connecting === true)
+            return BluetoothDeviceState.Connecting;
+        if (row.disconnecting === true)
+            return BluetoothDeviceState.Disconnecting;
+        return connected ? BluetoothDeviceState.Connected : BluetoothDeviceState.Disconnected;
+    }
     property bool connected: false
     readonly property bool paired: row.paired === true
     readonly property bool bonded: paired
@@ -65,6 +75,10 @@ QtObject {
             service.connectDevice(address);
         else
             service.disconnectDevice(address);
+        // A request, not a result: snap back to what the service reports.
+        pulling = true;
+        connected = row.connected === true;
+        pulling = false;
     }
 
     function connect() {

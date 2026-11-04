@@ -23,7 +23,7 @@ namespace waku::bluetooth {
 namespace {
 
 constexpr auto kSettleTimeout = std::chrono::seconds(10);
-constexpr auto kSettlePoll = std::chrono::milliseconds(250);
+constexpr auto kSettlePoll = std::chrono::milliseconds(100);
 
 // Undocumented: KSPROPSETID_BtAudio, the kernel-streaming property set of the Bluetooth audio
 // driver; ids 0 (reconnect) and 1 (disconnect) are one-shot requests. Verified on Windows 11
@@ -78,6 +78,32 @@ bool idHasMac(const QString& deviceId, const QString& mac) {
   return compact.contains(mac);
 }
 
+// True when a connector of the endpoint `endpointId` leads to a Bluetooth device id that holds
+// the address `mac` (twelve upper-case hex digits).
+bool endpointHasMac(IMMDeviceEnumerator* enumerator, const QString& endpointId,
+                    const QString& mac) {
+  winrt::com_ptr<IMMDevice> device;
+  if (FAILED(enumerator->GetDevice(reinterpret_cast<LPCWSTR>(endpointId.utf16()), device.put())))
+    return false;
+  winrt::com_ptr<IDeviceTopology> topology;
+  if (FAILED(
+          device->Activate(__uuidof(IDeviceTopology), CLSCTX_ALL, nullptr, topology.put_void()))) {
+    return false;
+  }
+  UINT connectors = 0;
+  topology->GetConnectorCount(&connectors);
+  for (UINT c = 0; c < connectors; ++c) {
+    winrt::com_ptr<IConnector> connector;
+    if (FAILED(topology->GetConnector(c, connector.put()))) continue;
+    LPWSTR other = nullptr;
+    if (FAILED(connector->GetDeviceIdConnectedTo(&other)) || !other) continue;
+    const QString otherId = QString::fromWCharArray(other);
+    CoTaskMemFree(other);
+    if (otherId.toLower().contains(QLatin1String("bth")) && idHasMac(otherId, mac)) return true;
+  }
+  return false;
+}
+
 QString containerId(IMMDevice* device) {
   winrt::com_ptr<IPropertyStore> store;
   if (FAILED(device->OpenPropertyStore(STGM_READ, store.put()))) return {};
@@ -97,21 +123,46 @@ QString containerId(IMMDevice* device) {
 
 }  // namespace
 
-std::optional<bool> audioIsConnected(IMMDeviceEnumerator* enumerator, const QString& deviceName) {
+std::vector<QString> audioEndpointIds(IMMDeviceEnumerator* enumerator, const QString& deviceName,
+                                      quint64 addressInt) {
+  std::vector<QString> ids;
   const QString needle = deviceName.trimmed().toCaseFolded();
-  if (needle.isEmpty()) return std::nullopt;
-  bool seen = false;
+  const QString mac = addressInt
+                          ? QStringLiteral("%1").arg(addressInt, 12, 16, QLatin1Char('0')).toUpper()
+                          : QString();
+  if (needle.isEmpty() && mac.isEmpty()) return ids;
   for (const AudioEndpoint& endpoint : audioEndpoints(enumerator)) {
-    if (!endpoint.friendlyName.toCaseFolded().contains(needle)) continue;
+    bool ours = !needle.isEmpty() && endpoint.friendlyName.toCaseFolded().contains(needle);
+    if (!ours && !mac.isEmpty()) ours = endpointHasMac(enumerator, endpoint.id, mac);
+    if (ours) ids.push_back(endpoint.id);
+  }
+  return ids;
+}
+
+std::optional<bool> audioEndpointsConnected(IMMDeviceEnumerator* enumerator,
+                                            const std::vector<QString>& ids) {
+  bool seen = false;
+  for (const QString& id : ids) {
+    winrt::com_ptr<IMMDevice> device;
+    if (FAILED(enumerator->GetDevice(reinterpret_cast<LPCWSTR>(id.utf16()), device.put())))
+      continue;
+    DWORD state = 0;
+    if (FAILED(device->GetState(&state))) continue;
     seen = true;
-    if (endpoint.state == DEVICE_STATE_ACTIVE) return true;
+    if (state == DEVICE_STATE_ACTIVE) return true;
   }
   return seen ? std::optional<bool>(false) : std::nullopt;
 }
 
+std::optional<bool> audioIsConnected(IMMDeviceEnumerator* enumerator, const QString& deviceName,
+                                     quint64 addressInt) {
+  return audioEndpointsConnected(enumerator, audioEndpointIds(enumerator, deviceName, addressInt));
+}
+
 QString setAudioConnection(IMMDeviceEnumerator* enumerator, quint64 addressInt,
-                           const QString& deviceName, bool connect, std::atomic<bool>& cancel) {
-  const auto current = audioIsConnected(enumerator, deviceName);
+                           const QString& deviceName, bool connect, std::atomic<bool>& cancel,
+                           const std::vector<QString>& endpointIds) {
+  const auto current = audioEndpointsConnected(enumerator, endpointIds);
   if (!current) return QStringLiteral("not_audio_device");
   if (connect && *current) return {};
 
@@ -188,7 +239,7 @@ QString setAudioConnection(IMMDeviceEnumerator* enumerator, quint64 addressInt,
   const auto deadline = std::chrono::steady_clock::now() + kSettleTimeout;
   while (std::chrono::steady_clock::now() < deadline) {
     if (cancel.load()) return QStringLiteral("cancelled");
-    if (audioIsConnected(enumerator, deviceName) == std::optional<bool>(connect)) return {};
+    if (audioEndpointsConnected(enumerator, endpointIds) == std::optional<bool>(connect)) return {};
     std::this_thread::sleep_for(kSettlePoll);
   }
   return QStringLiteral("timeout");

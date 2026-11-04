@@ -88,6 +88,17 @@ QString pairNeedsSettingsMessage();
 
 // Pure helpers of bluetooth_types.py.
 QString formatBtAddress(quint64 address);
+
+// True when `name` is no name: empty, the address itself, or "Bluetooth <address>", in any case.
+// Windows hands that out for a device it is not connected to, while the real name sits on the
+// device's PnP node.
+inline bool isPlaceholderBtName(const QString& name, const QString& address) {
+  const QString trimmed = name.trimmed();
+  if (trimmed.isEmpty() || trimmed.compare(address, Qt::CaseInsensitive) == 0) return true;
+  const QString prefix = QStringLiteral("Bluetooth ");
+  return trimmed.startsWith(prefix, Qt::CaseInsensitive) &&
+         trimmed.mid(prefix.size()).compare(address, Qt::CaseInsensitive) == 0;
+}
 std::pair<int, int> parseClassOfDevice(quint32 classOfDevice);
 BtDeviceType deviceTypeFromCod(int major, int minor);
 BtDeviceType deviceTypeFromLeAppearance(int category, int subcategory);

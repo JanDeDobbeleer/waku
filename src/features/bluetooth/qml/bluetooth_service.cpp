@@ -1,5 +1,6 @@
 #include "features/bluetooth/qml/bluetooth_service.h"
 
+#include <QDebug>
 #include <QVariantMap>
 #include <algorithm>
 
@@ -43,10 +44,8 @@ Bluetooth::Bluetooth(std::unique_ptr<BluetoothBackend> backend, QObject* parent)
     backend_->refresh();
   });
   connect(backend_.get(), &BluetoothBackend::statusUpdated, this, &Bluetooth::onStatus);
-  // The backend publishes the new connection through its watchers; ask once more so the list is
-  // exact when a connect or disconnect ends.
   connect(backend_.get(), &BluetoothBackend::connectionFinished, this,
-          [this] { backend_->refresh(); });
+          &Bluetooth::onConnectionFinished);
   connect(backend_.get(), &BluetoothBackend::scanStarted, this, [this] { setScanning(true); });
   connect(backend_.get(), &BluetoothBackend::scanCompleted, this, &Bluetooth::onScanCompleted);
   connect(backend_.get(), &BluetoothBackend::pairingFinished, this, &Bluetooth::onPairingFinished);
@@ -75,6 +74,19 @@ void Bluetooth::onStatus(const BluetoothStatus& status) {
   emit changed();
 }
 
+void Bluetooth::onConnectionFinished(bool success, const QString& message,
+                                     const BluetoothDevice& device) {
+  const bool wasConnect = pending_.value(device.address, true);
+  pending_.remove(device.address);
+  logResult(wasConnect ? QStringLiteral("connect") : QStringLiteral("disconnect"), success, message,
+            device);
+  if (!success) setError(message);
+  // The backend publishes the new connection through its watchers; ask once more so the list is
+  // exact when a connect or disconnect ends (also after a failure: it undoes the pending flags).
+  if (backend_) backend_->refresh();
+  emit changed();
+}
+
 void Bluetooth::onScanCompleted(int status, const QVector<BluetoothDevice>& found) {
   setScanning(false);
   switch (static_cast<BtScanStatus>(status)) {
@@ -88,13 +100,16 @@ void Bluetooth::onScanCompleted(int status, const QVector<BluetoothDevice>& foun
     }
     case BtScanStatus::RadioOff:
       nearby_.clear();
+      qWarning() << "Bluetooth: scan refused, the radio is off";
       setError(QStringLiteral("Bluetooth is off"));
       emit changed();
       break;
     case BtScanStatus::ApiUnavailable:
+      qWarning() << "Bluetooth: scan refused, the scan API is not available";
       setError(QStringLiteral("Bluetooth scanning is not available"));
       break;
     case BtScanStatus::Error:
+      qWarning() << "Bluetooth: scan failed";
       setError(QStringLiteral("Bluetooth scan failed"));
       break;
   }
@@ -103,6 +118,7 @@ void Bluetooth::onScanCompleted(int status, const QVector<BluetoothDevice>& foun
 void Bluetooth::onPairingFinished(bool success, const QString& message,
                                   const BluetoothDevice& device) {
   setPairing(false);
+  logResult(QStringLiteral("pair"), success, message, device);
   if (!success) {
     setError(message);
     return;
@@ -123,6 +139,19 @@ void Bluetooth::setPairing(bool pairing) {
   if (pairing_ == pairing) return;
   pairing_ = pairing;
   emit pairingChanged();
+}
+
+// One line per finished request, so the log shows what a connect or pairing attempt returned: the
+// kind, the device name and address, the result and the backend's message (which carries the
+// Windows error text of a failure).
+void Bluetooth::logResult(const QString& kind, bool success, const QString& message,
+                          const BluetoothDevice& device) {
+  const QString who = QStringLiteral("%1 (%2)").arg(device.name, device.address);
+  if (success) {
+    qInfo().noquote() << QStringLiteral("Bluetooth: %1 %2 ok").arg(kind, who);
+  } else {
+    qWarning().noquote() << QStringLiteral("Bluetooth: %1 %2 failed: %3").arg(kind, who, message);
+  }
 }
 
 void Bluetooth::setError(const QString& error) {
@@ -197,6 +226,9 @@ QVariantList Bluetooth::devices() const {
     map.insert(QStringLiteral("name"), device.name);
     map.insert(QStringLiteral("connected"), device.connected);
     map.insert(QStringLiteral("paired"), device.paired);
+    const auto pending = pending_.constFind(device.address);
+    map.insert(QStringLiteral("connecting"), pending != pending_.constEnd() && pending.value());
+    map.insert(QStringLiteral("disconnecting"), pending != pending_.constEnd() && !pending.value());
     map.insert(QStringLiteral("canConnect"), device.supportsConnect());
     map.insert(QStringLiteral("type"), btDeviceTypeName(device.deviceType));
     map.insert(QStringLiteral("batteryPercent"), device.battery.value_or(-1));
@@ -209,12 +241,23 @@ void Bluetooth::setRadio(bool on) {
   if (backend_) backend_->setRadio(on);
 }
 
-void Bluetooth::connectDevice(const QString& id) {
-  if (backend_) backend_->connectDevice(id);
-}
+void Bluetooth::connectDevice(const QString& id) { startConnection(id, true); }
 
-void Bluetooth::disconnectDevice(const QString& id) {
-  if (backend_) backend_->disconnectDevice(id);
+void Bluetooth::disconnectDevice(const QString& id) { startConnection(id, false); }
+
+void Bluetooth::startConnection(const QString& id, bool connect) {
+  if (!backend_ || pending_.contains(id)) return;
+  setError(QString());
+  // Before the call: the backend may report "busy" from inside it.
+  pending_.insert(id, connect);
+  qInfo().noquote() << QStringLiteral("Bluetooth: %1 requested for %2")
+                           .arg(connect ? QStringLiteral("connect") : QStringLiteral("disconnect"),
+                                id);
+  emit changed();
+  if (connect)
+    backend_->connectDevice(id);
+  else
+    backend_->disconnectDevice(id);
 }
 
 void Bluetooth::scan() {
@@ -234,8 +277,10 @@ void Bluetooth::startPairing(bool pair, const QString& id) {
   const bool started = pair ? backend_->pairDevice(id) : backend_->unpairDevice(id);
   if (started)
     setPairing(true);
-  else
+  else {
+    qWarning() << "Bluetooth: pairing request refused, another operation is in progress";
     setError(QStringLiteral("Another Bluetooth operation is in progress"));
+  }
 }
 
 void Bluetooth::cancelPair() {
