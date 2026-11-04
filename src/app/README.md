@@ -9,6 +9,9 @@ written in lower case and plain ASCII in code and paths.
   - `wakuc config init [--force]`: write a starter `shell.qml` (the built-in bar) into the config
     home so you can edit it. It needs no running bar. It refuses, with exit code 1, to replace an
     existing `shell.qml` unless you pass `--force`; it touches no other file
+  - `wakuc startup enable|disable|status`: register, remove or report the logon Scheduled Task that
+    starts `waku.exe` (no running bar needed). `waku.exe` must be on your PATH. `enable` takes
+    `--config-home <dir>`, `--no-app-bar`, `--keep-taskbar` and extra `waku` flags after `--`
   - `wakuc wallpaper set <file-or-path>`: a full path to any image, or a file name in the
     wallpaper folder (case does not matter, the extension may be left out; an ambiguous name is an
     error that lists the candidates)

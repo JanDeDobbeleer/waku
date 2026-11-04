@@ -52,8 +52,10 @@ their `win32/` or `qml/` C++ headers, and `testing/` only from tests. The graph 
 | `quickshell` | `kernel`, `control`, `host/qml/`, the root and `qml/` headers and the QML types of any feature, Qt Quick. Only `app` and tests include it. Layout and the type table: `src/quickshell/README.md` |
 | `audio`, `bluetooth`, `network`, `github` | `quickshell_io` (the "open settings" and "open URL" clicks use the `Shell` service) |
 | `control_center` | `audio`, `media`, `notifications`, `brightness` |
-| `apps`, `brightness`, `clock`, `color_scheme`, `desktop_state`, `media`, `notifications`, `quickshell_io`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces` | no other feature |
+| `apps`, `brightness`, `clock`, `color_scheme`, `desktop_state`, `media`, `notifications`, `quickshell_io`, `startup`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces` | no other feature |
 | `app`, `tests/` | everything |
+
+`startup` registers the logon Scheduled Task of `wakuc startup` through the documented Task Scheduler COM API (`ITaskService`), so it adds no row to the undocumented API allowlist.
 
 A feature may also include the root headers of `control/` (the pipe protocol in `control.h`):
 they are a stable shared interface, not a feature edge. `host` includes `control/` too. Neither
@@ -362,6 +364,10 @@ area is released. Before the first change `hide()` writes `taskbar_hidden.marker
 changes and deletes the file. It runs on `aboutToQuit` (so `wakuc quit` too) and in the
 destructor. At the start of every live run a marker whose pid is not a running `waku.exe` is
 undone first (a crash, `taskbar /F`); a marker of a live waku is left alone.
+
+At sign-in the startup task can run waku before Explorer has created the taskbar. When `hide()` finds
+no taskbar window, it hides them as soon as one appears (the once-a-second check or `TaskbarCreated`)
+and updates the marker then.
 
 Co-existence: if another tool (`thide`) already hides the windows or auto-hide is on, waku leaves
 that part alone, writes no marker for it and does not undo it. `wakuc taskbar status` reports what

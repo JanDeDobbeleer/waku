@@ -111,6 +111,7 @@ void WindowsTaskbarHider::hide() {
   if (hiding_) return;
   changedAutoHide_ = !system_.autoHide();
   changedWindows_ = system_.windowsVisible();
+  windowsPending_ = !system_.windowsPresent();
   // Only a run that changes something owns a marker: a second waku that finds the taskbar
   // already hidden by the first must not overwrite the first one's marker.
   if (changedAutoHide_ || changedWindows_) {
@@ -126,6 +127,7 @@ void WindowsTaskbarHider::hide() {
 void WindowsTaskbarHider::restore() {
   if (!hiding_) return;
   hiding_ = false;
+  windowsPending_ = false;
   system_.onExplorerRestart({});
   if (changedWindows_) system_.setWindowsHidden(false);
   if (changedAutoHide_) system_.setAutoHide(false);
@@ -146,6 +148,12 @@ void WindowsTaskbarHider::reassert() {
   // Auto-hide lives in the registry and survives, but is set again if Explorer dropped it.
   if (!hiding_) return;
   if (changedAutoHide_ && !system_.autoHide()) system_.setAutoHide(true);
+  if (windowsPending_ && system_.windowsVisible()) {
+    // The taskbar did not exist at hide(): it is waku's to hide now, and to restore.
+    windowsPending_ = false;
+    changedWindows_ = true;
+    store_.write({ownPid_, changedAutoHide_, changedWindows_});
+  }
   if (changedWindows_ && system_.windowsVisible()) system_.setWindowsHidden(true);
 }
 

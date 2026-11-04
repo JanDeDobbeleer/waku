@@ -119,20 +119,31 @@ waku runs without them. Install the ones you need:
 
 ## Run at sign-in
 
-This is a manual step. The package does not register a startup task. Put a shortcut to the
-packaged app in your Startup folder:
+The package does not start waku by itself. One command registers a per-user Scheduled Task that
+starts waku when you sign in. It runs faster than a Startup folder shortcut, which Explorer delays
+by up to a minute:
 
 ```powershell
-$family = (Get-AppxPackage JanDeDobbeleer.Waku).PackageFamilyName
-$link = Join-Path ([Environment]::GetFolderPath('Startup')) 'waku.lnk'
-$shell = New-Object -ComObject WScript.Shell
-$s = $shell.CreateShortcut($link)
-$s.TargetPath = 'explorer.exe'
-$s.Arguments = "shell:AppsFolder\$family!Waku"
-$s.Save()
+wakuc startup enable
 ```
 
-Delete `waku.lnk` from the Startup folder (`shell:startup`) to undo it.
+The task runs the bare `waku.exe`, so `waku.exe` must be on your user PATH. The package puts an
+execution alias there. If it is missing, `enable` registers nothing and tells you which folder to
+add. A change to the PATH reaches new sessions only: sign out and in again, then run the command
+again.
+
+The task starts waku with `--register-app-bar --hide-taskbar`. Change that with:
+
+- `--config-home <dir>`: start waku with that config home. Without it, waku uses its own default
+  (`WAKU_CONFIG_HOME`, else `~/.config/waku`).
+- `--no-app-bar`: leave out `--register-app-bar`.
+- `--keep-taskbar`: leave out `--hide-taskbar`.
+- Other `waku` flags after `--`, for example `wakuc startup enable -- --no-tray`.
+
+`wakuc startup enable` again replaces the task. `wakuc startup status` shows whether it is
+registered, its command and which `waku.exe` the PATH finds. `wakuc startup disable` removes the
+task. An old `waku.lnk` in the Startup folder is deleted on `enable`; `disable` does not bring it
+back.
 
 ## Updates
 
@@ -149,7 +160,7 @@ Get-AppxPackage JanDeDobbeleer.Waku | Remove-AppxPackage
 
 Your config in `%USERPROFILE%\.config\waku` and the data in `%LOCALAPPDATA%\waku` stay. The package
 does not redirect writes into its own folder, so these locations are shared with unpackaged tools.
-Delete them yourself for a clean slate. Remove the Startup shortcut too if you added one.
+Delete them yourself for a clean slate. Run `wakuc startup disable` too if you enabled it.
 
 ## Troubleshooting
 
