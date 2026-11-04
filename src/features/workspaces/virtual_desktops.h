@@ -51,6 +51,21 @@ class VirtualDesktopSystem {
   // moved to that desktop and activated (documented IVirtualDesktopManager::MoveWindowToDesktop).
   // False when neither works. The change shows up in the next read().
   virtual bool jumpTo(int index) = 0;
+  // The outcome of moveForegroundWindow().
+  enum class MoveResult {
+    Moved,
+    NoWindow,     // nothing is in front, or only the desktop or the taskbar
+    OwnWindow,    // a window of waku itself: not moved
+    Refused,      // Windows refused, or the desktop does not exist
+    Unsupported,  // this system cannot move windows
+  };
+  // Moves the foreground window to the desktop at `index` without showing that desktop (documented
+  // IVirtualDesktopManager::MoveWindowToDesktop). Creates nothing. If `index` is not the shown
+  // desktop the window leaves this one.
+  virtual MoveResult moveForegroundWindow(int index) {
+    Q_UNUSED(index);
+    return MoveResult::Unsupported;
+  }
   // Creates one desktop. Returns its index when the system made it without showing it (the caller
   // shows it with jumpTo), or -1 when Windows showed the new desktop itself (the Win+Ctrl+D
   // fallback, which has no documented call) or nothing was made.

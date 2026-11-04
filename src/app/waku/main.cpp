@@ -16,7 +16,9 @@
 #include "features/tiling/tiling_command.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/wallpaper_command.h"
+#include "features/workspaces/desktop_command.h"
 #include "features/workspaces/komorebi_workarea.h"
+#include "features/workspaces/qml/virtual_desktops_service.h"
 #include "host/plugin_guard.h"
 #include "host/qml/control_handler.h"
 #include "host/qml/shell_host.h"
@@ -221,6 +223,13 @@ int main(int argc, char* argv[]) {
               return waku::tiling::answerTileCommand(
                   words, engine.singletonInstance<waku::tiling::Tiling*>(
                              QStringLiteral("waku.services"), QStringLiteral("Tiling")));
+            }},
+           {QStringLiteral("desktop"),
+            [&engine](const QStringList& words) {
+              // Built on the first `desktop` command if no config did.
+              return waku::workspaces::answerDesktopCommand(
+                  words, engine.singletonInstance<waku::workspaces::VirtualDesktops*>(
+                             QStringLiteral("waku.services"), QStringLiteral("VirtualDesktops")));
             }}},
           taskbar.get())));
   if (!control.listen()) {

@@ -7,6 +7,8 @@ waku_feature(NAME workspaces
     backoff.h
     command_line.h
     command_line.cpp
+    desktop_command.h
+    desktop_command.cpp
     event_bus.h
     glazewm.h
     glazewm_service.h
@@ -47,6 +49,7 @@ waku_feature(NAME workspaces
     tests/test_active_layout.cpp
     tests/test_backoff.cpp
     tests/test_command_line.cpp
+    tests/test_desktop_command.cpp
     tests/test_glazewm_socket.cpp
     tests/test_glazewm_state.cpp
     tests/test_komorebi_manage.cpp

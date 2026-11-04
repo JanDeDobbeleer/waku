@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <QFile>
+
 #include "features/keymap/key_names.h"
 #include "features/keymap/keymap_parser.h"
 #include "features/keymap/testing/whkdrc_sample.h"
@@ -318,4 +320,25 @@ TEST(KeymapParserComments, StripComment) {
   EXPECT_EQ(stripComment(QStringLiteral("a#b")), QStringLiteral("a#b"));
   EXPECT_EQ(stripComment(QStringLiteral("\"a # b\" # c")), QStringLiteral("\"a # b\""));
   EXPECT_EQ(stripComment(QStringLiteral("'a # b'")), QStringLiteral("'a # b'"));
+}
+
+// The key file the repository ships (examples/config/keys.conf) loads without an issue and binds
+// every command a user needs to replace komorebi and whkd.
+TEST(KeymapParserShipped, TheExampleKeyFileLoadsWithoutIssues) {
+  QFile file(QStringLiteral(WAKU_EXAMPLES_DIR "/config/keys.conf"));
+  ASSERT_TRUE(file.open(QIODevice::ReadOnly | QIODevice::Text));
+  const KeymapParseResult result = parseKeymap(QString::fromUtf8(file.readAll()));
+  EXPECT_TRUE(result.issues.empty()) << allIssues(result).toStdString();
+  EXPECT_EQ(result.keymap.shell, Shell::Cmd);
+  // Counted so a lost line shows.
+  EXPECT_EQ(result.keymap.bindings.size(), 43u);
+  QStringList commands;
+  for (const Binding& binding : result.keymap.bindings) commands << binding.command;
+  for (const char* wanted :
+       {"wakuc tile close", "wakuc tile focus left", "wakuc tile move down", "wakuc tile promote",
+        "wakuc tile resize horizontal increase", "wakuc tile monocle", "wakuc tile pause",
+        "wakuc tile flip vertical", "wakuc desktop goto 8", "wakuc desktop move 1",
+        "wakuc desktop previous", "wakuc desktop next"}) {
+    EXPECT_TRUE(commands.contains(QString::fromLatin1(wanted))) << wanted;
+  }
 }

@@ -3,11 +3,16 @@
 #include <QRect>
 #include <QString>
 #include <QStringList>
+#include <cstddef>
+#include <optional>
 #include <vector>
 
 namespace waku::tiling {
 
 // Pure geometry: where the n windows of a workspace go. Slots are the visible bounds of a window.
+
+enum class Direction { Left, Right, Up, Down };
+enum class Axis { Horizontal, Vertical };
 
 // The layouts, in the order a cycle visits them.
 QStringList layoutNames();
@@ -21,10 +26,22 @@ QString canonicalLayout(const QString& name);
 //   mainStack  one window fills the area; with more, the first takes the left `ratio` of the
 //              width and the others share the right column, stacked top to bottom
 //   columns    equal columns side by side
+// `weights` (optional, one per window in stack order) sizes the stacked windows of mainStack
+// against each other by height; the entry of the main window and a missing entry count as 1.
 // The slots do not overlap and lie inside `area`; the last slot of a row or column absorbs the
 // rounding remainder. A gap larger than the area leaves 1 pixel slots instead of negative ones.
 std::vector<QRect> layoutSlots(const QString& layout, const QRect& area, int count, int gap,
-                               double ratio);
+                               double ratio, const std::vector<double>& weights = {});
+
+// Mirrors `rects` inside `area`: left to right when `horizontal`, top to bottom when `vertical`.
+std::vector<QRect> flipSlots(std::vector<QRect> rects, const QRect& area, bool horizontal,
+                             bool vertical);
+
+// The slot nearest to slot `from` in `direction`, by the distance of the centres with the
+// sideways offset counting double (so "right" of a tall main window is the stack window at its
+// height); nothing when no slot lies that way.
+std::optional<size_t> neighbourSlot(const std::vector<QRect>& rects, size_t from,
+                                    Direction direction);
 
 // The rectangle to give SetWindowPos so that the visible bounds become `slot`: Windows 10 and 11
 // draw a frame of a few invisible pixels around a resizable window, so `windowRect`

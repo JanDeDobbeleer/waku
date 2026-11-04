@@ -91,6 +91,35 @@ it starts by itself when the other tiler quits and stops when it starts. Snap La
 Assist are not suppressed: a window the user snaps by mouse floats (move and size end), which is
 the coexistence rule for them.
 
+## Commands
+
+`wakuc tile ...` acts on the foreground window (`TilingControl`, `tiling_command.h`; the service
+answers `ok: ...` or `error: ...`). The pure logic is in `layouts.cpp` (`flipSlots`,
+`neighbourSlot`, weights) and `tiling_model.cpp` (`swap`, `promote`, the per-workspace
+`WorkspaceView`); the engine ties them together and a fake placer tests them.
+
+- `focus left|right|up|down`: the nearest tiled window of the workspace by slot centre, the
+  sideways offset counting double, so "right" of the main window is the stack window at its
+  height. No wrap. `focus next|previous` keep the stack order.
+- `move <direction>`: swaps the focused window with that neighbour in the stack order and
+  retiles. `promote`: the focused window takes slot 0 (unchanged if it already has it).
+- `resize horizontal`: changes the main share of `mainStack` by 5% per call (a stack window
+  that grows takes width from the main window), clamped to 0.1..0.9, per workspace. `vertical`: a
+  height weight (step 0.1, 0.3..3) for a stacked window, so it needs three or more windows. The
+  `columns` layout does not resize. A change of `Tiling.ratio` clears the overrides.
+- `flip horizontal|vertical`: mirrors the slots in the work area; again undoes it.
+- `monocle`: the focused window gets the whole work area (inside the gap); the other windows are
+  not touched, so they stay behind it. Again re-tiles. A monocle window that leaves the
+  stack ends the mode.
+- `pause`: no window is placed while paused (windows are still tracked, a drag does not float
+  one); resuming retiles. Not the same as `Tiling.enabled = false`, which drops every hook.
+- `close`, `minimize`: any visible foreground window, tiled or not, except windows of waku and the
+  desktop and taskbar classes. `close` posts `WM_CLOSE` (a window may ask to save), `minimize`
+  uses `ShowWindowAsync`; neither blocks on a hung window.
+
+Not implemented: stacking (komorebic `stack`, `unstack`, `cycle-stack`). A workspace is one flat
+list; stacks would need a second level in the model, the layouts and every command.
+
 ## Decisions
 
 - State is in memory only. A reload of the shell builds a new service, which scans the open
@@ -107,6 +136,7 @@ the coexistence rule for them.
 - Keyboard Snap (Win+Arrow) and a maximize emit no event the tiler hooks, so a snapped window is
   noticed at the next retile; a window maximized or restored by the user takes or frees its slot
   only then. `retile` fixes it by hand.
-- No stack reordering (swap, promote to main), no per-monitor gap and no persistence.
+- No stacking, no per-monitor gap and no persistence. Flips, ratio, weights and monocle live in
+  memory per workspace.
 - Exclusive-fullscreen games are detected only by their bounds.
 - UWP frames (`ApplicationFrameWindow`) that animate their size can clamp for a moment.

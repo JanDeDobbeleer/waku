@@ -59,6 +59,10 @@ class WindowPlacer {
   // reads the bounds back. The real one adds the invisible border (see layouts.h, outerRect).
   virtual PlaceResult place(WindowId hwnd, const QRect& slot) = 0;
   virtual void activate(WindowId hwnd) = 0;
+  // Asks the window to close like its close button (WM_CLOSE); it may refuse or ask to save.
+  virtual bool close(WindowId hwnd) = 0;
+  // Minimizes the window.
+  virtual bool minimize(WindowId hwnd) = 0;
 };
 
 // The real placer (win32/window_placer_win.cpp).

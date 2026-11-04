@@ -547,3 +547,164 @@ TEST(TilingEngine, ChangingTheGapRetilesTheWindows) {
   rig.settle();
   EXPECT_EQ(rig.placer.lastSlot(1), kAreaA);
 }
+
+// --- the focused-window commands
+
+namespace {
+
+// Three windows (1 main, 2 and 3 in the stack), 3 in front.
+void openThree(Rig& rig) {
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.open(3);
+  rig.placer.front = 3;
+}
+
+}  // namespace
+
+TEST(TilingCommands, FocusDirectionActivatesTheGeometricNeighbour) {
+  Rig rig;
+  openThree(rig);
+  EXPECT_TRUE(rig.engine.focusDirection(Direction::Up).ok);
+  EXPECT_EQ(rig.placer.front, 2u);
+  EXPECT_TRUE(rig.engine.focusDirection(Direction::Left).ok);
+  EXPECT_EQ(rig.placer.front, 1u);
+  EXPECT_TRUE(rig.engine.focusDirection(Direction::Right).ok);  // a stack window, level with it
+  EXPECT_TRUE(rig.engine.focusDirection(Direction::Left).ok);   // and back to the main window
+  EXPECT_EQ(rig.placer.front, 1u);
+  EXPECT_FALSE(rig.engine.focusDirection(Direction::Left).ok);
+}
+
+TEST(TilingCommands, FocusDirectionNeedsATiledForegroundWindow) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.placer.front = 99;
+  EXPECT_FALSE(rig.engine.focusDirection(Direction::Left).ok);
+  EXPECT_TRUE(rig.placer.activated.empty());
+}
+
+TEST(TilingCommands, MoveSwapsWithTheNeighbourAndRetiles) {
+  Rig rig;
+  openThree(rig);
+  EXPECT_TRUE(rig.engine.moveDirection(Direction::Left).ok);  // 3 swaps with the main window
+  rig.settle();
+  EXPECT_EQ(rig.engine.model().stack(*rig.engine.model().keyOf(3)),
+            (std::vector<WindowId>{3, 2, 1}));
+  EXPECT_EQ(rig.placer.lastSlot(3), rig.slot(0, 3));
+  EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(2, 3));
+  EXPECT_TRUE(rig.placer.activated.empty());
+}
+
+TEST(TilingCommands, PromoteGivesTheMainSlot) {
+  Rig rig;
+  openThree(rig);
+  EXPECT_EQ(rig.engine.promote().message, QStringLiteral("promoted"));
+  rig.settle();
+  EXPECT_EQ(rig.placer.lastSlot(3), rig.slot(0, 3));
+  EXPECT_EQ(rig.engine.promote().message, QStringLiteral("already the main window"));
+}
+
+TEST(TilingCommands, ResizeMovesTheRatioPerWorkspaceAndClamps) {
+  Rig rig;
+  openThree(rig);
+  rig.placer.front = 1;  // the main window
+  const int before = rig.placer.lastSlot(1).width();
+  EXPECT_EQ(rig.engine.resize(Axis::Horizontal, 1).message, QStringLiteral("resized"));
+  rig.settle();
+  EXPECT_GT(rig.placer.lastSlot(1).width(), before);
+  rig.placer.front = 2;  // a stack window: increase takes width from the main window
+  const int main = rig.placer.lastSlot(1).width();
+  rig.engine.resize(Axis::Horizontal, 1);
+  rig.settle();
+  EXPECT_LT(rig.placer.lastSlot(1).width(), main);
+  for (int i = 0; i < 40; ++i) rig.engine.resize(Axis::Horizontal, 1);
+  rig.settle();
+  EXPECT_EQ(rig.engine.resize(Axis::Horizontal, 1).message, QStringLiteral("unchanged"));
+  // The ratio is clamped to 0.1: the main window keeps a tenth of the width.
+  EXPECT_LE(rig.placer.lastSlot(1).width(), kAreaA.width() * 2 / 10);
+}
+
+TEST(TilingCommands, VerticalResizeChangesTheHeightOfAStackedWindow) {
+  Rig rig;
+  openThree(rig);
+  rig.placer.front = 2;
+  const int before = rig.placer.lastSlot(2).height();
+  EXPECT_EQ(rig.engine.resize(Axis::Vertical, 1).message, QStringLiteral("resized"));
+  rig.settle();
+  EXPECT_GT(rig.placer.lastSlot(2).height(), before);
+  EXPECT_LT(rig.placer.lastSlot(3).height(), before);
+  rig.placer.front = 1;
+  EXPECT_EQ(rig.engine.resize(Axis::Vertical, 1).message, QStringLiteral("unchanged"));
+}
+
+TEST(TilingCommands, FlipMirrorsTheLayoutAndAgainUndoesIt) {
+  Rig rig;
+  openThree(rig);
+  const QRect plain = rig.placer.lastSlot(1);
+  EXPECT_EQ(rig.engine.flip(Axis::Horizontal).message, QStringLiteral("flip horizontal on"));
+  rig.settle();
+  EXPECT_GT(rig.placer.lastSlot(1).left(), plain.left());
+  EXPECT_EQ(rig.engine.flip(Axis::Horizontal).message, QStringLiteral("flip horizontal off"));
+  rig.settle();
+  EXPECT_EQ(rig.placer.lastSlot(1), plain);
+}
+
+TEST(TilingCommands, MonocleFillsTheAreaAndLeavesTheOthersUntouched) {
+  Rig rig;
+  openThree(rig);
+  const size_t placementsBefore = rig.placer.placements.size();
+  EXPECT_EQ(rig.engine.monocle().message, QStringLiteral("monocle on"));
+  rig.settle();
+  EXPECT_EQ(rig.placer.lastSlot(3), rig.slot(0, 1));
+  for (size_t i = placementsBefore; i < rig.placer.placements.size(); ++i) {
+    EXPECT_EQ(rig.placer.placements[i].hwnd, 3u);
+  }
+  EXPECT_EQ(rig.engine.monocle().message, QStringLiteral("monocle off"));
+  rig.settle();
+  EXPECT_EQ(rig.placer.lastSlot(3), rig.slot(2, 3));
+  EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(0, 3));
+}
+
+TEST(TilingCommands, PausePlacesNothingUntilResumed) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  EXPECT_EQ(rig.engine.togglePause().message, QStringLiteral("paused"));
+  EXPECT_TRUE(rig.engine.status().paused);
+  const size_t placed = rig.placer.placements.size();
+  rig.open(2);
+  rig.engine.retileAll();
+  rig.settle();
+  EXPECT_EQ(rig.placer.placements.size(), placed);
+  EXPECT_EQ(rig.engine.togglePause().message, QStringLiteral("resumed"));
+  rig.settle();
+  EXPECT_EQ(rig.placer.lastSlot(2), rig.slot(1, 2));
+}
+
+TEST(TilingCommands, CloseAndMinimizeActOnTheForegroundWindow) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.placer.front = 1;
+  EXPECT_TRUE(rig.engine.closeForeground().ok);
+  EXPECT_TRUE(rig.engine.minimizeForeground().ok);
+  EXPECT_EQ(rig.placer.closed, std::vector<WindowId>{1});
+  EXPECT_EQ(rig.placer.minimized, std::vector<WindowId>{1});
+}
+
+TEST(TilingCommands, CloseRefusesOwnWindowsTheDesktopAndNoWindow) {
+  Rig rig;
+  rig.engine.start();
+  rig.placer.add(1).ownProcess = true;
+  rig.placer.add(2).className = QStringLiteral("Progman");
+  rig.placer.front = 1;
+  EXPECT_FALSE(rig.engine.closeForeground().ok);
+  rig.placer.front = 2;
+  EXPECT_FALSE(rig.engine.closeForeground().ok);
+  rig.placer.front = std::nullopt;
+  EXPECT_FALSE(rig.engine.minimizeForeground().ok);
+  EXPECT_TRUE(rig.placer.closed.empty());
+  EXPECT_TRUE(rig.placer.minimized.empty());
+}
