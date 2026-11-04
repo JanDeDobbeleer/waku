@@ -9,6 +9,7 @@
 
 #include "features/workspaces/qml/glazewm_client.h"
 #include "features/workspaces/qml/komorebi_client.h"
+#include "features/workspaces/qml/virtual_desktops_service.h"
 
 class QJSEngine;
 class QQmlEngine;
@@ -16,22 +17,26 @@ class QQmlEngine;
 namespace waku::workspaces {
 
 // The workspaces of whichever tiling window manager is running, as one QML singleton, so a widget
-// never mentions komorebi or GlazeWM. Built on the Komorebi and GlazeWM singletons (shared with
-// any widget that uses them directly) and rebuilt whenever either changes. GUI thread only.
+// never mentions komorebi or GlazeWM. With no manager running it shows the Windows virtual
+// desktops instead. Built on the Komorebi, GlazeWM and VirtualDesktops singletons (shared with any
+// widget that uses them directly) and rebuilt whenever one changes. GUI thread only.
 //
 // monitors: [{handle, name, workspaces: [{id, label, focused, active, hasWindows, windowCount,
 //                                         windows}]}]
 //   handle  monitor handle (HMONITOR); match it with Window.window.monitorHandle
 //   id      opaque to widgets: pass it back to focus(). komorebi: the workspace index; GlazeWM:
-//           the workspace name
+//           the workspace name; Windows: the desktop index
 //   label   what to show: the workspace name, or for an unnamed komorebi workspace its 1-based
 //           index
 //   active  shown on its monitor
 //   focused active on the focused monitor (GlazeWM: its global focus)
 //   windows handles (HWND, numbers) of the workspace's windows, in the window manager's order;
-//           komorebi only, empty with GlazeWM. Join them with the taskbar rows (their hwnd role)
-// provider: "komorebi", "glazewm" or "" when neither is connected. When both are connected,
-// `prefer` decides (default "komorebi"; any other value means the default).
+//           komorebi only, empty otherwise. Join them with the taskbar rows (their hwnd role)
+// Virtual desktops belong to no monitor: the Windows provider returns one entry with handle 0,
+// which every bar shows (match `m.handle === handle || m.handle === 0`).
+// provider: "komorebi", "glazewm", "windows" or "". A tiling manager that is connected wins over
+// the virtual desktops. When both managers are connected, `prefer` decides (default "komorebi").
+// `prefer` "windows" shows the virtual desktops even while a manager runs.
 class Workspaces : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -42,11 +47,12 @@ class Workspaces : public QObject {
   Q_PROPERTY(QString prefer READ prefer WRITE setPrefer NOTIFY changed FINAL)
 
  public:
-  // Both backends are borrowed; either may be null. They are sibling singletons, and
+  // The backends are borrowed; any may be null. They are sibling singletons, and
   // QQmlEngine::clearSingletons() deletes them in its own order on a reload, so either may go
   // first: they are held as QPointer and a gone one counts as disconnected.
-  Workspaces(Komorebi* komorebi, GlazeWM* glazewm, QObject* parent = nullptr);
-  // The engine's own Komorebi and GlazeWM singletons.
+  Workspaces(Komorebi* komorebi, GlazeWM* glazewm, VirtualDesktops* desktops = nullptr,
+             QObject* parent = nullptr);
+  // The engine's own Komorebi, GlazeWM and VirtualDesktops singletons.
   static Workspaces* create(QQmlEngine* engine, QJSEngine* scriptEngine);
 
   QString provider() const { return provider_; }
@@ -72,6 +78,7 @@ class Workspaces : public QObject {
 
   QPointer<Komorebi> komorebi_;
   QPointer<GlazeWM> glazewm_;
+  QPointer<VirtualDesktops> desktops_;
   QString prefer_ = QStringLiteral("komorebi");
   QString provider_;
   QVariantList monitors_;

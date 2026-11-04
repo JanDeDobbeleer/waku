@@ -40,11 +40,41 @@ the work area guard included (no thread of its own).
 
 ## Behaviour
 
-- Neither manager running is a normal state: `connected` stays false and `Workspaces.provider` is "".
+- Neither manager running is a normal state. `Workspaces.provider` is then "windows" (the virtual
+  desktops, below) and only "" when Windows exposes no desktop list either.
 - The komorebi monitor id is the `HMONITOR`; `Workspaces.monitors[].handle` matches
   `Window.window.monitorHandle`, so a bar shows the workspaces of its own screen.
 - Commands (`focus`, layout toggles) are fire-and-forget hidden processes (`kernel::launchHiddenShell`
   for komorebic chains) so a slow `komorebic` never blocks the GUI thread.
+
+## Windows virtual desktops
+
+`VirtualDesktops` (`qml/virtual_desktops_service.*`) is the provider for a bar without a tiling
+manager; `Workspaces` maps it to `provider: "windows"`.
+
+- **Read.** Explorer keeps the desktop list, the shown desktop and the names in the registry
+  (`win32/virtual_desktops_win.cpp`, allowlist row in `docs/architecture.md`). A 500 ms `QTimer`
+  polls it; there is no documented notification. The window count per desktop uses the documented
+  `IVirtualDesktopManager::GetWindowDesktopId` over top-level, titled, unowned windows.
+- **Switch.** One jump to any desktop. A small off-screen window of waku's own is moved to the
+  target desktop with the documented `IVirtualDesktopManager::MoveWindowToDesktop` (while it is
+  hidden; the desktop service only reports a window it has seen shown) and activated;
+  Windows then switches to the desktop of the active window. The window must be a plain popup: the
+  desktop service does not track tool or layered windows (`GetWindowDesktopId` fails and the move
+  does nothing). It hides itself 700 ms later, after the animation. `SetForegroundWindow` needs the
+  foreground right, which a click on a no-activate bar does not give; `SwitchToThisWindow` (the call
+  Alt+Tab uses, documented but marked not for general use) has no such restriction and is the
+  fallback. A failed jump logs `virtual desktops: jump failed: <reason>` and does nothing.
+  Keystrokes (Win+Ctrl+Left/Right) were tried first and dropped: Windows ignores a key pressed while
+  the last switch animates, so a switch of several desktops moved one.
+- **Monitors.** Desktops are not per monitor, so the model has one entry with handle 0 that every
+  bar shows (`Workspaces.qml` accepts handle 0).
+- **Priority.** A connected komorebi or GlazeWM wins; `prefer = "windows"` forces the desktops.
+- **Create.** `switchTo` with the index just past the last desktop (below 20) sends one Win+Ctrl+D,
+  the only call Windows offers; the new desktop is shown. A shell draws one spare dot for it
+  (Caelestia).
+- **Open.** Removing, renaming and moving windows between desktops. They need the undocumented
+  interface or more shortcuts (Win+Ctrl+F4).
 
 ## komorebi's work area
 
