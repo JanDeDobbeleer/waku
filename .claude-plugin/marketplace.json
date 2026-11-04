@@ -1,0 +1,14 @@
+{
+  "name": "waku",
+  "owner": {
+    "name": "Jan De Dobbeleer"
+  },
+  "plugins": [
+    {
+      "name": "waku-shell",
+      "source": "./",
+      "description": "Create, port or restyle a waku shell from a screenshot, a Reddit post or an existing Quickshell shell. Every element must work."
+    }
+  ],
+  "description": "Skills for building shells on waku, the Windows shell runtime."
+}

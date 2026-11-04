@@ -1,0 +1,9 @@
+{
+  "name": "waku-shell",
+  "version": "0.1.0",
+  "description": "Create, port or restyle a waku shell from a screenshot, a Reddit post or an existing Quickshell shell. Every element must work.",
+  "license": "MIT",
+  "author": {
+    "name": "Jan De Dobbeleer"
+  }
+}

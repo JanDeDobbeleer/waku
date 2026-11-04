@@ -3,6 +3,8 @@
 Short notes on what differs from Quickshell when you write a shell for waku. The design is in
 `docs/architecture.md`.
 
+To have an agent write or port a shell for you, install the `waku-shell` skill (see the README).
+
 ### Input regions (`mask`)
 
 `PanelWindow` and `FloatingWindow` take a `mask: Region`, as in Quickshell.
