@@ -136,6 +136,8 @@ class FakeWindowPlacer final : public WindowPlacer {
     front = hwnd;
   }
 
+  void raise(WindowId hwnd) override { raised.push_back(hwnd); }
+
   bool close(WindowId hwnd) override {
     closed.push_back(hwnd);
     return windows.count(hwnd) != 0;
@@ -167,6 +169,7 @@ class FakeWindowPlacer final : public WindowPlacer {
   std::vector<Placement> placements;
   std::vector<WindowId> cloakedPlacements;
   std::vector<WindowId> activated;
+  std::vector<WindowId> raised;
   std::vector<WindowId> closed;
   std::vector<WindowId> minimized;
   int queries = 0;

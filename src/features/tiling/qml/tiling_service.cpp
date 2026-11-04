@@ -290,6 +290,18 @@ QString Tiling::controlMove(Direction direction) {
   return run([direction](TilingEngine& e) { return e.moveDirection(direction); });
 }
 
+QString Tiling::controlStack(Direction direction) {
+  return run([direction](TilingEngine& e) { return e.stackDirection(direction); });
+}
+
+QString Tiling::controlUnstack() {
+  return run([](TilingEngine& e) { return e.unstack(); });
+}
+
+QString Tiling::controlCycleStack(int step) {
+  return run([step](TilingEngine& e) { return e.cycleStack(step); });
+}
+
 QString Tiling::controlPromote() {
   return run([](TilingEngine& e) { return e.promote(); });
 }
@@ -322,13 +334,14 @@ QString Tiling::controlStatus() {
   const TilingStatus status = engine_ ? engine_->status() : TilingStatus();
   return QStringLiteral(
              "ok: enabled=%1; active=%2; blocked=%3; layout=%4; gap=%5; ratio=%6; managed=%7; "
-             "floating=%8; workspaces=%9; clamped=%10; paused=%11; desktop=%12")
+             "floating=%8; workspaces=%9; stacks=%10; clamped=%11; paused=%12; desktop=%13")
       .arg(yesNo(enabled_), yesNo(active_),
            blockedBy().isEmpty() ? QStringLiteral("no") : blockedBy(), settings_.layout,
            QString::number(settings_.gap), QString::number(settings_.ratio))
       .arg(status.managed)
       .arg(status.floating)
       .arg(status.workspaces)
+      .arg(status.stacks)
       .arg(status.clamped)
       .arg(yesNo(status.paused))
       .arg(status.desktop.isEmpty() ? QStringLiteral("unknown") : status.desktop);

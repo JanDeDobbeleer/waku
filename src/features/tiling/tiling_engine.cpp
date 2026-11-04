@@ -83,6 +83,7 @@ void TilingEngine::stop() {
   moving_.clear();
   placed_.clear();
   clamped_.clear();
+  wasTop_.clear();
   retiles_.clear();
   flushScheduled_ = false;
   currentDesktop_.clear();
@@ -141,6 +142,10 @@ void TilingEngine::handle(const WindowEvent& event) {
       break;
     case EventKind::Foreground:
       refreshDesktop();
+      // A window that is under the top of its stack (alt-tab, the taskbar) takes the top.
+      if (model_.raiseInStack(hwnd)) {
+        if (const auto key = model_.keyOf(hwnd)) requestRetile(*key);
+      }
       break;
   }
 }
@@ -241,6 +246,7 @@ void TilingEngine::forget(WindowId hwnd, bool dropFloat) {
   placed_.erase(hwnd);
   clamped_.erase(hwnd);
   moving_.erase(hwnd);
+  wasTop_.erase(hwnd);
   const std::optional<WorkspaceKey> key = model_.remove(hwnd);
   if (dropFloat) model_.setFloating(hwnd, false);
   if (key) requestRetile(*key);
@@ -287,36 +293,50 @@ void TilingEngine::retile(const WorkspaceKey& key) {
   if (!running_ || paused_) return;
   // Never place a window of a desktop that is not shown: it is cloaked.
   if (!currentDesktop_.isEmpty() && key.desktop != currentDesktop_) return;
-  const std::vector<WindowId> stack = model_.stack(key);
-  if (stack.empty()) return;
+  const std::vector<Slot> order =
+      model_.slotList(key);  // a copy: forgetting a window edits the model
+  if (order.empty()) return;
   const QRect area = placer_.workArea(key.monitor);
   if (area.isEmpty()) return;
 
+  // Every slot gives one window (its top) to the layout. The windows under the top follow it to
+  // the same rectangle.
   std::vector<WindowId> active;
   std::map<WindowId, QRect> current;
-  for (const WindowId hwnd : stack) {
-    const std::optional<WindowFacts> facts = placer_.query(hwnd);
-    if (!facts) {
-      forget(hwnd, true);
-      continue;
+  std::map<WindowId, std::vector<WindowId>> beneath;  // top -> the windows under it
+  for (const Slot& slot : order) {
+    std::vector<WindowId> hidden;
+    bool topActive = false;
+    for (const WindowId hwnd : slot.windows) {
+      const std::optional<WindowFacts> facts = placer_.query(hwnd);
+      if (!facts) {
+        forget(hwnd, true);
+        continue;
+      }
+      if (!facts->visible) {
+        forget(hwnd, false);
+        continue;
+      }
+      if (facts->monitor != 0 && facts->monitor != key.monitor) {
+        // Moved to another monitor by something other than a drag (a hotkey, a script).
+        const WorkspaceKey moved{facts->monitor, key.desktop};
+        model_.add(moved, hwnd);
+        placed_.erase(hwnd);
+        requestRetile(moved);
+        requestRetile(key);
+        continue;
+      }
+      // A minimized, maximized or cloaked window keeps its place in the stack but takes no slot.
+      if (facts->iconic || facts->zoomed || facts->cloaked) continue;
+      current[hwnd] = facts->rect;
+      if (hwnd == slot.topWindow()) {
+        active.push_back(hwnd);
+        topActive = true;
+      } else {
+        hidden.push_back(hwnd);
+      }
     }
-    if (!facts->visible) {
-      forget(hwnd, false);
-      continue;
-    }
-    if (facts->monitor != 0 && facts->monitor != key.monitor) {
-      // Moved to another monitor by something other than a drag (a hotkey, a script).
-      const WorkspaceKey moved{facts->monitor, key.desktop};
-      model_.add(moved, hwnd);
-      placed_.erase(hwnd);
-      requestRetile(moved);
-      requestRetile(key);
-      continue;
-    }
-    // A minimized, maximized or cloaked window keeps its place in the stack but takes no slot.
-    if (facts->iconic || facts->zoomed || facts->cloaked) continue;
-    active.push_back(hwnd);
-    current[hwnd] = facts->rect;
+    if (topActive) beneath[slot.topWindow()] = std::move(hidden);
   }
 
   std::vector<QRect> rects = slotsFor(key, area, active);
@@ -327,28 +347,51 @@ void TilingEngine::retile(const WorkspaceKey& key) {
     active = {monocle};
   }
   std::vector<std::pair<WindowId, QRect>> placedNow;
-  for (size_t i = 0; i < active.size() && i < rects.size(); ++i) {
-    const WindowId hwnd = active[i];
-    if (moving_.count(hwnd)) continue;  // the user holds it: its slot stays empty
-    if (current[hwnd] == rects[i]) {
-      placed_[hwnd] = rects[i];
+  auto placeOne = [&](WindowId hwnd, const QRect& slot) {
+    if (moving_.count(hwnd)) return;  // the user holds it: its slot stays empty
+    if (current[hwnd] == slot) {
+      placed_[hwnd] = slot;
       clamped_.erase(hwnd);
-      continue;
+      return;
     }
-    const PlaceResult result = placer_.place(hwnd, rects[i]);
+    const PlaceResult result = placer_.place(hwnd, slot);
     if (!result.ok) {
       // It refused (elevated, gone): leave it alone from now on.
       forget(hwnd, false);
       ignored_[hwnd] = false;
-      continue;
+      return;
     }
     // A window that clamped keeps its slot and leaves a gap; its achieved bounds are what the
     // next MoveSizeEnd is compared with.
     placed_[hwnd] = result.achieved;
-    placedNow.emplace_back(hwnd, rects[i]);
+    placedNow.emplace_back(hwnd, slot);
+  };
+  for (size_t i = 0; i < active.size() && i < rects.size(); ++i) {
+    placeOne(active[i], rects[i]);
+    for (const WindowId hidden : beneath[active[i]]) placeOne(hidden, rects[i]);
   }
+  raiseNewTops(key, active);
   if (!placedNow.empty()) {
     defer(kVerifyMs, [this, placedNow] { verifyPlacements(placedNow); });
+  }
+}
+
+// A stack shows its top: when the top of a stack is not the one the last retile left on top, it
+// is brought to the front of the windows it shares a rectangle with.
+void TilingEngine::raiseNewTops(const WorkspaceKey& key, const std::vector<WindowId>& active) {
+  std::set<WindowId> before;
+  std::set<WindowId> tops;
+  for (const Slot& slot : model_.slotList(key)) {
+    for (const WindowId hwnd : slot.windows) {
+      if (wasTop_.erase(hwnd) != 0) before.insert(hwnd);
+    }
+    if (slot.windows.size() > 1) tops.insert(slot.topWindow());
+  }
+  for (const WindowId top : tops) {
+    wasTop_.insert(top);
+    if (before.count(top) == 0 && std::find(active.begin(), active.end(), top) != active.end()) {
+      placer_.raise(top);
+    }
   }
 }
 
@@ -530,6 +573,49 @@ CommandResult TilingEngine::moveDirection(Direction direction) {
   return ok(QStringLiteral("moved"));
 }
 
+CommandResult TilingEngine::stackDirection(Direction direction) {
+  if (!running_) return fail(QStringLiteral("the tiler is not running"));
+  const std::optional<Focused> focused = focusedManaged();
+  if (!focused) return fail(QStringLiteral("the focused window is not tiled"));
+  const QRect area = placer_.workArea(focused->key.monitor);
+  const std::vector<WindowId> active = activeWindows(focused->key);
+  const auto at = std::find(active.begin(), active.end(), focused->hwnd);
+  if (area.isEmpty() || at == active.end()) {
+    return fail(QStringLiteral("the focused window has no slot"));
+  }
+  const std::vector<QRect> rects = slotsFor(focused->key, area, active);
+  const std::optional<size_t> next =
+      neighbourSlot(rects, static_cast<size_t>(at - active.begin()), direction);
+  if (!next) return fail(QStringLiteral("no window to the %1").arg(directionName(direction)));
+  if (!model_.stackOnto(focused->hwnd, active[*next])) {
+    return fail(QStringLiteral("cannot stack onto that window"));
+  }
+  requestRetile(focused->key);
+  return ok(QStringLiteral("stacked"));
+}
+
+CommandResult TilingEngine::unstack() {
+  if (!running_) return fail(QStringLiteral("the tiler is not running"));
+  const std::optional<Focused> focused = focusedManaged();
+  if (!focused) return fail(QStringLiteral("the focused window is not tiled"));
+  if (!model_.unstack(focused->hwnd)) {
+    return fail(QStringLiteral("the focused window is not stacked"));
+  }
+  requestRetile(focused->key);
+  return ok(QStringLiteral("unstacked"));
+}
+
+CommandResult TilingEngine::cycleStack(int step) {
+  if (!running_) return fail(QStringLiteral("the tiler is not running"));
+  const std::optional<Focused> focused = focusedManaged();
+  if (!focused) return fail(QStringLiteral("the focused window is not tiled"));
+  const WindowId top = model_.cycle(focused->hwnd, step);
+  if (top == 0) return fail(QStringLiteral("the focused window is not stacked"));
+  requestRetile(focused->key);
+  placer_.activate(top);
+  return ok(QStringLiteral("cycled"));
+}
+
 CommandResult TilingEngine::promote() {
   if (!running_) return fail(QStringLiteral("the tiler is not running"));
   const std::optional<Focused> focused = focusedManaged();
@@ -642,6 +728,7 @@ TilingStatus TilingEngine::status() const {
   out.managed = model_.managedCount();
   out.floating = model_.floatingCount();
   out.workspaces = static_cast<int>(model_.keys().size());
+  out.stacks = model_.stackCount();
   out.clamped = static_cast<int>(clamped_.size());
   out.layout = settings_.layout;
   out.paused = paused_;

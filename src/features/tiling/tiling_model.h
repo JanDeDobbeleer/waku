@@ -34,9 +34,21 @@ struct WorkspaceView {
   std::map<WindowId, double> weights;  // height weights of the stacked windows (default 1)
 };
 
-// What the tiler remembers: per workspace an ordered stack (the first window is the main one), a
-// layout name that overrides the default, and one set of floating windows (never placed). In
-// memory only. GUI thread only.
+// One slot of a layout. Usually one window; windows that were stacked onto it share it, and only
+// the top one shows (the others sit under it at the same place).
+struct Slot {
+  std::vector<WindowId> windows;  // in stacking order; never empty
+  size_t top = 0;                 // index of the visible window
+
+  WindowId topWindow() const { return windows[top]; }
+};
+
+// What the tiler remembers: per workspace an ordered list of slots (the first is the main one;
+// each holds one window or a stack of windows), a layout name that overrides the default, and one
+// set of floating windows (never placed). In memory only. GUI thread only.
+//
+// "The stack" below is the list of slots, in order, as their top windows: the layout counts slots,
+// not windows. A window that is below the top of a stack is still managed.
 class TilingModel {
  public:
   // Appends `hwnd` to the stack of `key`; moves it there when it is in another stack. A window
@@ -47,8 +59,18 @@ class TilingModel {
 
   bool contains(WindowId hwnd) const { return owner_.count(hwnd) != 0; }
   std::optional<WorkspaceKey> keyOf(WindowId hwnd) const;
-  // The stack of `key` in order; empty for an unknown workspace.
-  const std::vector<WindowId>& stack(const WorkspaceKey& key) const;
+  // The top window of every slot of `key`, in order; empty for an unknown workspace.
+  std::vector<WindowId> stack(const WorkspaceKey& key) const;
+  // The slots of `key` in order; empty for an unknown workspace.
+  const std::vector<Slot>& slotList(const WorkspaceKey& key) const;
+  // Every window of `key`, hidden ones included.
+  std::vector<WindowId> members(const WorkspaceKey& key) const;
+  // The windows that share a slot with `hwnd` (itself included); empty when it is not managed.
+  std::vector<WindowId> stackOf(WindowId hwnd) const;
+  // The number of slots that hold more than one window.
+  int stackCount() const;
+  // True when `hwnd` is the visible window of its slot.
+  bool isTop(WindowId hwnd) const;
   // The workspaces that have at least one window.
   std::vector<WorkspaceKey> keys() const;
   int managedCount() const { return static_cast<int>(owner_.size()); }
@@ -70,16 +92,40 @@ class TilingModel {
   // Forgets every ratio override (the default ratio changed).
   void clearRatios();
 
-  // Exchanges the places of two windows of one stack; false when they are not in the same one.
+  // Exchanges the slots of two windows of one workspace (a stack moves as a whole); false when
+  // they are not in the same workspace or share a slot.
   bool swap(WindowId a, WindowId b);
-  // Moves the window to the front of its stack (the main slot); false when it is there already or
-  // is in no stack.
+  // Moves the slot of the window to the front (the main slot); false when it is there already or
+  // the window is in no workspace.
   bool promote(WindowId hwnd);
+
+  // Moves `hwnd` onto the slot of `target` (another window of the same workspace) and makes it the
+  // top there. The slot it leaves is dropped when it was alone, else its next window shows. False
+  // when either is unmanaged, they are in different workspaces or already share a slot.
+  bool stackOnto(WindowId hwnd, WindowId target);
+  // Takes `hwnd` out of its stack into a slot of its own right after the stack's slot. False when
+  // it is alone in its slot.
+  bool unstack(WindowId hwnd);
+  // Makes the next (`step` > 0) or previous window of the stack of `hwnd` the top, wrapping;
+  // the new top, or 0 when `hwnd` is not in a stack.
+  WindowId cycle(WindowId hwnd, int step);
+  // Makes `hwnd` the top of its slot; false when it is not managed or is the top already.
+  bool raiseInStack(WindowId hwnd);
 
   void clear();
 
  private:
-  std::map<WorkspaceKey, std::vector<WindowId>> stacks_;
+  struct Where {
+    std::vector<Slot>* list = nullptr;
+    size_t slot = 0;
+    size_t index = 0;
+  };
+  Where find(WindowId hwnd);
+  // Makes the window at `index` of the slot the top; the old top hands its height weight and the
+  // monocle mark over.
+  void setTop(const WorkspaceKey& key, Slot& slot, size_t index);
+
+  std::map<WorkspaceKey, std::vector<Slot>> stacks_;
   std::map<WindowId, WorkspaceKey> owner_;
   std::map<WorkspaceKey, QString> layouts_;
   std::map<WorkspaceKey, WorkspaceView> views_;

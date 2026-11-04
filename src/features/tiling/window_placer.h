@@ -59,6 +59,9 @@ class WindowPlacer {
   // reads the bounds back. The real one adds the invisible border (see layouts.h, outerRect).
   virtual PlaceResult place(WindowId hwnd, const QRect& slot) = 0;
   virtual void activate(WindowId hwnd) = 0;
+  // Brings the window to the front of the z-order without activating it or moving it (the top of
+  // a stack goes over the windows that share its rectangle).
+  virtual void raise(WindowId hwnd) = 0;
   // Asks the window to close like its close button (WM_CLOSE); it may refuse or ask to save.
   virtual bool close(WindowId hwnd) = 0;
   // Minimizes the window.

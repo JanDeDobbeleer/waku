@@ -40,6 +40,7 @@ struct TilingStatus {
   int managed = 0;
   int floating = 0;
   int workspaces = 0;
+  int stacks = 0;   // slots that hold more than one window
   int clamped = 0;  // placed windows whose bounds differ from their slot (a minimum size)
   QString layout;
   bool paused = false;
@@ -114,6 +115,14 @@ class TilingEngine {
   CommandResult moveDirection(Direction direction);
   // Gives the focused window the main slot (the front of the stack).
   CommandResult promote();
+  // Stacking: several windows share one slot and only the top one shows, the others sit under it.
+  // Puts the focused window on the stack of the slot nearest in `direction` (it becomes the top).
+  CommandResult stackDirection(Direction direction);
+  // Takes the focused window out of its stack into a slot of its own right after the stack's.
+  CommandResult unstack();
+  // Brings the next (`step` > 0) or previous window of the focused window's stack to the top and
+  // activates it.
+  CommandResult cycleStack(int step);
   // Grows (`sign` > 0) or shrinks the focused window along `axis` by one step. Horizontal moves
   // the main/stack boundary of mainStack (kRatioStep); vertical changes the height share of a
   // stacked window (kWeightStep). Per workspace; clamped.
@@ -151,6 +160,7 @@ class TilingEngine {
   void onCloaked(WindowId hwnd);
   void onMoveSizeStart(WindowId hwnd);
   void onMoveSizeEnd(WindowId hwnd);
+  void raiseNewTops(const WorkspaceKey& key, const std::vector<WindowId>& active);
   void verifyPlacements(const std::vector<std::pair<WindowId, QRect>>& placed);
   WorkspaceKey keyFor(const WindowFacts& facts) const;
   std::optional<WorkspaceKey> foregroundKey() const;
@@ -181,6 +191,7 @@ class TilingEngine {
   std::set<WindowId> moving_;         // the user drags or resizes it
   std::map<WindowId, QRect> placed_;  // the visible bounds the window had when we last looked
   std::set<WindowId> clamped_;        // placed, but not at the size of its slot
+  std::set<WindowId> wasTop_;         // tops of stacks (two windows or more) at the last retile
   std::set<WorkspaceKey> retiles_;
   bool flushScheduled_ = false;
   // Tasks hold a weak copy: a task that outlives stop() or the engine does nothing.

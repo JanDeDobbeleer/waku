@@ -729,3 +729,124 @@ TEST(TilingCommands, CloseRefusesOwnWindowsTheDesktopAndNoWindow) {
   EXPECT_TRUE(rig.placer.closed.empty());
   EXPECT_TRUE(rig.placer.minimized.empty());
 }
+
+// --- stacking
+
+namespace {
+
+// Three tiled windows (1 main, 2 and 3 in the column), 3 focused.
+void openStackRig(Rig& rig) {
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.open(3);
+  rig.placer.front = 3;
+}
+
+}  // namespace
+
+TEST(TilingStacking, StackLeftPutsTheWindowOnTheMainSlot) {
+  Rig rig;
+  openStackRig(rig);
+  EXPECT_TRUE(rig.engine.stackDirection(Direction::Left).ok);
+  rig.settle();
+  // Two slots now: main [1 3] and the column [2]. Everything shows at its slot.
+  EXPECT_EQ(rig.placer.windows[3].rect, rig.slot(0, 2));
+  EXPECT_EQ(rig.placer.windows[1].rect, rig.slot(0, 2));
+  EXPECT_EQ(rig.placer.windows[2].rect, rig.slot(1, 2));
+  EXPECT_EQ(rig.engine.status().stacks, 1);
+  EXPECT_EQ(rig.engine.status().managed, 3);
+  ASSERT_FALSE(rig.placer.raised.empty());
+  EXPECT_EQ(rig.placer.raised.back(), 3u);  // the moved window is on top
+}
+
+TEST(TilingStacking, ThereIsNoStackWhereThereIsNoNeighbour) {
+  Rig rig;
+  openStackRig(rig);
+  EXPECT_FALSE(rig.engine.stackDirection(Direction::Right).ok);
+  EXPECT_FALSE(rig.engine.unstack().ok);
+  EXPECT_FALSE(rig.engine.cycleStack(1).ok);
+}
+
+TEST(TilingStacking, CycleBringsTheOtherWindowToTheTopAndFocusesIt) {
+  Rig rig;
+  openStackRig(rig);
+  rig.engine.stackDirection(Direction::Left);
+  rig.settle();
+  rig.placer.raised.clear();
+  EXPECT_TRUE(rig.engine.cycleStack(1).ok);
+  rig.settle();
+  EXPECT_EQ(rig.placer.front, std::optional<WindowId>(1));
+  EXPECT_EQ(rig.placer.raised, std::vector<WindowId>{1});
+  EXPECT_TRUE(rig.engine.model().isTop(1));
+  EXPECT_TRUE(rig.engine.cycleStack(-1).ok);
+  EXPECT_EQ(rig.placer.front, std::optional<WindowId>(3));
+}
+
+TEST(TilingStacking, UnstackGivesTheWindowItsOwnSlotAfterTheStack) {
+  Rig rig;
+  openStackRig(rig);
+  rig.engine.stackDirection(Direction::Left);
+  rig.settle();
+  EXPECT_TRUE(rig.engine.unstack().ok);
+  rig.settle();
+  EXPECT_EQ(rig.engine.status().stacks, 0);
+  // Order: 1, 3, 2 - three slots again.
+  EXPECT_EQ(rig.placer.windows[1].rect, rig.slot(0, 3));
+  EXPECT_EQ(rig.placer.windows[3].rect, rig.slot(1, 3));
+  EXPECT_EQ(rig.placer.windows[2].rect, rig.slot(2, 3));
+}
+
+TEST(TilingStacking, ClosingTheTopShowsTheNextWindow) {
+  Rig rig;
+  openStackRig(rig);
+  rig.engine.stackDirection(Direction::Left);
+  rig.settle();
+  rig.placer.raised.clear();
+  rig.placer.windows.erase(3);
+  rig.send(EventKind::Destroy, 3);
+  rig.settle();
+  EXPECT_TRUE(rig.engine.model().isTop(1));
+  EXPECT_EQ(rig.engine.status().stacks, 0);
+  EXPECT_EQ(rig.placer.windows[1].rect, rig.slot(0, 2));
+}
+
+TEST(TilingStacking, AHiddenWindowThatTakesTheForegroundBecomesTheTop) {
+  Rig rig;
+  openStackRig(rig);
+  rig.engine.stackDirection(Direction::Left);
+  rig.settle();
+  rig.placer.front = 1;
+  rig.send(EventKind::Foreground, 1);
+  rig.settle();
+  EXPECT_TRUE(rig.engine.model().isTop(1));
+  EXPECT_EQ(rig.placer.raised.back(), 1u);
+}
+
+TEST(TilingStacking, FloatingAStackedWindowLeavesTheStackAlone) {
+  Rig rig;
+  openStackRig(rig);
+  rig.engine.stackDirection(Direction::Left);
+  rig.settle();
+  EXPECT_EQ(rig.engine.setForegroundFloating(true), FloatOutcome::Floated);
+  rig.settle();
+  EXPECT_EQ(rig.engine.status().stacks, 0);
+  EXPECT_EQ(rig.engine.status().managed, 2);
+  EXPECT_EQ(rig.placer.windows[1].rect, rig.slot(0, 2));
+}
+
+TEST(TilingStacking, FocusAndMoveTreatAStackAsOneSlot) {
+  Rig rig;
+  openStackRig(rig);
+  rig.engine.stackDirection(Direction::Left);  // slots: [1 3] [2]
+  rig.settle();
+  EXPECT_TRUE(rig.engine.focusDirection(Direction::Right).ok);
+  EXPECT_EQ(rig.placer.front, std::optional<WindowId>(2));
+  EXPECT_TRUE(rig.engine.focusDirection(Direction::Left).ok);
+  EXPECT_EQ(rig.placer.front, std::optional<WindowId>(3));  // the top of the stack
+  EXPECT_TRUE(rig.engine.moveDirection(Direction::Right).ok);
+  rig.settle();
+  EXPECT_EQ(rig.placer.windows[3].rect, rig.slot(1, 2));  // the whole stack moved
+  EXPECT_EQ(rig.placer.windows[1].rect, rig.slot(1, 2));
+  EXPECT_EQ(rig.placer.windows[2].rect, rig.slot(0, 2));
+}

@@ -7,6 +7,7 @@ QString usage() {
   return QStringLiteral(
       "error: usage: tile toggle | float | layout <name> | retile | status | "
       "focus next|previous|left|right|up|down | move left|right|up|down | promote | "
+      "stack left|right|up|down | unstack | cycle-stack next|previous | "
       "resize horizontal|vertical increase|decrease | flip horizontal|vertical | monocle | pause | "
       "close | minimize");
 }
@@ -53,6 +54,17 @@ QString answerTileCommand(const QStringList& words, TilingControl* tiling) {
     }
   }
   if (verb == QLatin1String("promote") && count == 1) return tiling->controlPromote();
+  if (verb == QLatin1String("stack") && count == 2) {
+    if (const std::optional<Direction> direction = parseDirection(words.at(1))) {
+      return tiling->controlStack(*direction);
+    }
+  }
+  if (verb == QLatin1String("unstack") && count == 1) return tiling->controlUnstack();
+  if (verb == QLatin1String("cycle-stack") && count == 2) {
+    const QString which = words.at(1).toLower();
+    if (which == QLatin1String("next")) return tiling->controlCycleStack(1);
+    if (which == QLatin1String("previous")) return tiling->controlCycleStack(-1);
+  }
   if (verb == QLatin1String("resize") && count == 3) {
     const std::optional<Axis> axis = parseAxis(words.at(1));
     const QString how = words.at(2).toLower();

@@ -331,7 +331,7 @@ TEST(KeymapParserShipped, TheExampleKeyFileLoadsWithoutIssues) {
   EXPECT_TRUE(result.issues.empty()) << allIssues(result).toStdString();
   EXPECT_EQ(result.keymap.shell, Shell::Cmd);
   // Counted so a lost line shows.
-  EXPECT_EQ(result.keymap.bindings.size(), 43u);
+  EXPECT_EQ(result.keymap.bindings.size(), 50u);
   QStringList commands;
   for (const Binding& binding : result.keymap.bindings) commands << binding.command;
   for (const char* wanted :
