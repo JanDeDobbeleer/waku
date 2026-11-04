@@ -87,7 +87,14 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `wakuc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
 | `wakuc taskbar hide`, `show`, `status` | Hide the Windows taskbar, restore what waku changed (it stays shown until `hide`), or print `ok: taskbar: hidden|visible|autohide-was-on`. |
 | `wakuc tile toggle`, `float`, `retile`, `status` | The built-in tiler (off unless the shell sets `Tiling.enabled`): float the focused window, or tile it again; float it only; place every window of the shown desktop again; print `ok: enabled=...; active=...; managed=...`. |
-| `wakuc tile layout <name>`, `focus next`, `focus previous` | Set the layout (`mainStack`, `columns`) of the focused window's workspace; focus the next or previous window of it. |
+| `wakuc tile layout <name>` | Set the layout (`mainStack`, `columns`) of the focused window's workspace. |
+| `wakuc tile focus next\|previous\|left\|right\|up\|down` | Focus the next or previous window of the workspace (wrapping), or the nearest tiled window in a direction. |
+| `wakuc tile move left\|right\|up\|down`, `promote` | Swap the focused window with its neighbour in that direction; give it the main slot. |
+| `wakuc tile resize horizontal\|vertical increase\|decrease` | Grow or shrink the focused window by one step: horizontal moves the main/stack boundary (5% of the width), vertical changes the height of a stacked window. Per workspace, clamped. |
+| `wakuc tile flip horizontal\|vertical`, `monocle`, `pause` | Mirror the layout (again undoes it); the focused window fills the work area, the others stay put (again tiles it back); stop and resume placing windows. |
+| `wakuc tile close`, `minimize` | Close (`WM_CLOSE`) or minimize the focused window. |
+| `wakuc desktop goto <n>`, `next`, `previous`, `status` | Windows virtual desktops: show desktop `n` (counting from 1; never creates one), the next or previous one (no wrap), or print `ok: current=2; count=3`. |
+| `wakuc desktop move <n>` | Send the focused window to desktop `n` without showing it; creates nothing, refuses a window of waku. |
 | `wakuc quit` | Stop the bar. |
 | `wakuc config init [--force]` | Write a starter `shell.qml` (the built-in bar) into the config home. Needs no running bar. Exit 1 if `shell.qml` exists, unless `--force`. |
 | `wakuc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
@@ -95,6 +102,8 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `wakuc wallpaper gallery` | Open or close the wallpaper picker. |
 | `wakuc shortcut <name>` | Fire the `GlobalShortcut` with that name (its `onPressed`, then `onReleased`). Bind a key to this command in whkd or AutoHotkey for a shortcut with no `keys`. |
 | `wakuc shortcut list` | Print the names of the shortcuts the shell declares. A shortcut named `list` cannot be fired. |
+
+The `tile` and `desktop` commands are meant for the key daemon: `examples/config/keys.conf` is a whkd-syntax file that binds all of them (alt+arrows to focus and move, alt+1..8 for desktops) and replaces a komorebi plus whkd setup. Its commands start `wakuc`, so `wakuc.exe` must be on `PATH`.
 
 `--dry-run` after `wallpaper` (not `gallery`) plays the animation without setting the wallpaper.
 
