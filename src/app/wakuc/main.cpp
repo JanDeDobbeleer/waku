@@ -38,6 +38,22 @@
 //                       The task runs `waku.exe --register-app-bar --hide-taskbar`;
 //                       `--config-home` is passed to waku only when given here, `--no-app-bar`
 //                       and `--keep-taskbar` drop the other two, flags after `--` are added
+//     wakuc keys [--config <file>] [--foreground] [--log-file <file>]
+//                       the hotkey daemon: loads a whkd binding file (`alt + h : command`),
+//                       registers the keys with RegisterHotKey and runs the commands, so no extra
+//                       tool is needed. Starts hidden and detached and returns once the daemon
+//                       answers; one daemon per user. --config defaults to
+//                       %USERPROFILE%\.config\waku\keys.conf when that file exists. A command is
+//                       run by the file's `.shell` (hidden); `waku:` commands talk to the bar
+//                       (waku:shortcut|surface|call|reload), the daemon (waku:keys-reload,
+//                       waku:keys-stop) or find a window (waku:activate-or-launch <exe-or-title>
+//                       <command>). --foreground keeps it in this console and logs to stderr;
+//                       --log-file also writes the log to a file. --config-home picks the bar.
+//                       The file reloads when it changes; a file with errors keeps what loaded
+//     wakuc keys reload|stop|status
+//                       reload the file now, stop the daemon, or print "ok: running; pid=P;
+//                       bindings=N; conflicts=C; issues=I; paused=no|yes; config=F". Syntax and
+//                       decisions: src/features/keymap/design.md
 //
 // `--dry-run` plays the animation but does not set the wallpaper. A command is sent as one line;
 // arguments with spaces are quoted (control.h, joinCommand).
@@ -56,6 +72,7 @@
 #include <cstdio>
 #include <memory>
 
+#include "app/wakuc/keys_command.h"
 #include "control/config_init.h"
 #include "control/control.h"
 #include "features/startup/startup_service.h"
@@ -125,6 +142,9 @@ int main(int argc, char* argv[]) {
       "  config init [--force]          write a starter shell.qml into the config home\n"
       "  startup enable [--config-home <dir>] [--no-app-bar] [--keep-taskbar] [-- <waku flags>]\n"
       "  startup disable | status       start waku at sign-in through a Scheduled Task\n"
+      "  keys [--config <file>] [--foreground] [--log-file <file>]\n"
+      "                                 hotkey daemon: runs a whkd-style binding file\n"
+      "  keys reload | stop | status    control the running hotkey daemon\n"
       "  call <target> <function> [args...]  run a function of an IpcHandler; call alone lists\n"
       "Add --dry-run to set, random, next or previous to play the animation without "
       "changing the wallpaper."));
@@ -145,10 +165,23 @@ int main(int argc, char* argv[]) {
   QCommandLineOption keepTaskbarOpt(QStringLiteral("keep-taskbar"),
                                     QStringLiteral("startup enable: leave out --hide-taskbar."));
   parser.addOption(keepTaskbarOpt);
+  QCommandLineOption keysConfigOpt(QStringLiteral("config"),
+                                   QStringLiteral("keys: the binding file (whkd syntax)."),
+                                   QStringLiteral("file"));
+  parser.addOption(keysConfigOpt);
+  QCommandLineOption foregroundOpt(
+      QStringLiteral("foreground"),
+      QStringLiteral("keys: run in this console and log to stderr instead of detaching."));
+  parser.addOption(foregroundOpt);
+  QCommandLineOption logFileOpt(QStringLiteral("log-file"),
+                                QStringLiteral("keys: also write the log to this file."),
+                                QStringLiteral("file"));
+  parser.addOption(logFileOpt);
   parser.addPositionalArgument(
       QStringLiteral("command"),
       QStringLiteral(
-          "reload, status, quit, wallpaper, shortcut, surface, taskbar, config, startup or call"));
+          "reload, status, quit, wallpaper, shortcut, surface, taskbar, config, startup, "
+          "keys or call"));
   parser.process(app);
 
   const QStringList positional = parser.positionalArguments();
@@ -156,7 +189,8 @@ int main(int argc, char* argv[]) {
       "usage: wakuc [--config-home <dir>] reload|status|quit|wallpaper "
       "(set [--dry-run] <file-or-path>|random|next|previous|gallery)|shortcut <name>|list|surface "
       "(list|show|hide|toggle|status <name>)|taskbar (hide|show|status)|config init [--force]|"
-      "startup (enable [--no-app-bar] [--keep-taskbar] [-- <waku flags>]|disable|status)|call "
+      "startup (enable [--no-app-bar] [--keep-taskbar] [-- <waku flags>]|disable|status)|keys "
+      "([--config <file>] [--foreground] [--log-file <file>]|reload|stop|status)|call "
       "<target> <function> [args...]");
   if (positional.isEmpty()) {
     print(stderr, usage);
@@ -164,6 +198,27 @@ int main(int argc, char* argv[]) {
   }
   const QString command = positional.first();
   QString line = command;
+  const bool keysOptionSet =
+      parser.isSet(keysConfigOpt) || parser.isSet(foregroundOpt) || parser.isSet(logFileOpt);
+  if (command == QLatin1String("keys")) {
+    // Client side and daemon: no bar is needed to start; the daemon talks to one for `waku:`.
+    if (positional.size() > 2 || parser.isSet(forceOpt) || parser.isSet(dryRunOpt) ||
+        parser.isSet(noAppBarOpt) || parser.isSet(keepTaskbarOpt)) {
+      print(stderr, usage);
+      return kUsage;
+    }
+    wakuc::KeysOptions options;
+    options.verb = positional.value(1);
+    options.configFile = parser.value(keysConfigOpt);
+    options.logFile = parser.value(logFileOpt);
+    options.configHome = parser.value(configHomeOpt);
+    options.foreground = parser.isSet(foregroundOpt);
+    return wakuc::runKeysCommand(options);
+  }
+  if (keysOptionSet) {
+    print(stderr, usage);
+    return kUsage;
+  }
   if (command == QLatin1String("config")) {
     // Client side: no bar, no pipe.
     if (positional.size() != 2 || positional.at(1) != QLatin1String("init") ||
