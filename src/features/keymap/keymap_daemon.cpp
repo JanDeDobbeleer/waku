@@ -233,23 +233,32 @@ void KeymapDaemon::run(const QString& command, const QString& keys) {
       WindowSystem* windows = deps_.windows;
       const auto logger = deps_.log;
       log(QStringLiteral("%1: bar %2").arg(keys, line));
-      post([bar, windows, logger, line, keys] {
+      // The bar can only take the keyboard focus if this process, which the user's input just
+      // reached, allows it (the same step as `wakuc surface show`). With the bar's pid known the
+      // right is passed on here, at the key press.
+      const bool takesFocus = line.startsWith(QLatin1String("surface show ")) ||
+                              line.startsWith(QLatin1String("surface toggle "));
+      const std::shared_ptr<std::atomic<unsigned long>> pid = barPid_;
+      if (takesFocus && windows && pid->load() != 0) windows->allowForeground(pid->load());
+      post([bar, windows, logger, line, keys, takesFocus, pid] {
         if (!bar) return;
-        const bool takesFocus = line.startsWith(QLatin1String("surface show ")) ||
-                                line.startsWith(QLatin1String("surface toggle "));
-        if (takesFocus && windows) {
-          // The bar can only take the keyboard focus if this process, which the user's input just
-          // reached, allows it (the same step as `wakuc surface show`). The pid is in `status`.
+        if (takesFocus && windows && pid->load() == 0) {
+          // The first time: the pid is in `status`; later presses use the cached one.
           const control::ControlReply status =
               bar->send(QStringLiteral("status"), kStatusTimeoutMs);
           if (status.status == control::ControlReply::Ok) {
             const QRegularExpressionMatch match =
                 QRegularExpression(QStringLiteral("\\bpid=(\\d+)")).match(status.text);
-            if (match.hasMatch()) windows->allowForeground(match.captured(1).toULong());
+            if (match.hasMatch()) {
+              pid->store(match.captured(1).toULong());
+              windows->allowForeground(pid->load());
+            }
           }
         }
         const int timeout = line == QLatin1String("reload") ? kBarReloadTimeoutMs : kBarTimeoutMs;
         const control::ControlReply reply = bar->send(line, timeout);
+        if (reply.status != control::ControlReply::Ok)
+          pid->store(0);  // a restarted bar has a new pid
         if (!logger) return;
         switch (reply.status) {
           case control::ControlReply::NotRunning:

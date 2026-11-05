@@ -18,6 +18,10 @@ namespace waku::control {
 // "waku-" plus a short hash of the config home (case and trailing slashes do not matter).
 QString controlPipeName(const QString& configHome);
 
+// The pipe name of a service that is not a bar: any key (the keys daemon uses "keys:<user>"). It
+// shares the hash of controlPipeName() without the meaning of a config home.
+QString pipeNameFor(const QString& key);
+
 // The config home to use: the command-line value if given, else $WAKU_CONFIG_HOME, else
 // `<userHome>/.config/waku`. The last is returned even when the folder does not exist, so `waku`
 // and `wakuc` agree on the control pipe. `implicit` is true for that last case only. `userHome` is

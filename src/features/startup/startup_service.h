@@ -20,9 +20,9 @@ struct StartupOptions {
 // extras. An extra flag that is already present is dropped.
 QStringList wakuArguments(const StartupOptions& options);
 
-// The arguments of wakukeys.exe: --config <keysFile>, then --config-home when set (the bar the
-// `waku:` actions talk to).
-QStringList keysArguments(const QString& keysFile, const QString& configHome);
+// The arguments of wakukeys.exe: --config-home when set (the bar the `waku:` actions talk to). The
+// key file is wakukeys's default one.
+QStringList keysArguments(const QString& configHome);
 
 // The arguments as one Windows command line (CommandLineToArgvW quoting rules).
 QString commandLine(const QStringList& arguments);

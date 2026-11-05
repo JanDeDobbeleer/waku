@@ -10,6 +10,7 @@
 #include <QThreadPool>
 #include <QTimer>
 #include <cstdio>
+#include <cstdlib>
 #include <memory>
 
 #include "control/control.h"
@@ -184,7 +185,13 @@ int runDaemon(const KeysArgs& args, const QString& configFile) {
 
   const int code = QCoreApplication::exec();
   daemon.reset();
-  QThreadPool::globalInstance()->waitForDone(5000);
+  QThreadPool::globalInstance()->clear();
+  if (!QThreadPool::globalInstance()->waitForDone(5000)) {
+    // A bar call (a reload waits up to 60 s) still runs and points at objects of this function.
+    // End the process without unwinding them.
+    log(QStringLiteral("keys: stopped with a bar call still running"));
+    std::quick_exit(code == 0 ? kOk : kError);
+  }
   log(QStringLiteral("keys: stopped"));
   return code == 0 ? kOk : kError;
 }
@@ -193,7 +200,7 @@ int runDaemon(const KeysArgs& args, const QString& configFile) {
 
 QString keysPipeName() {
   // One daemon per user: the pipe name carries the user name, the instance mutex is per session.
-  return waku::control::controlPipeName(QStringLiteral("keys:") + qEnvironmentVariable("USERNAME"));
+  return waku::control::pipeNameFor(QStringLiteral("keys:") + qEnvironmentVariable("USERNAME"));
 }
 
 int runKeys(const KeysArgs& args) {

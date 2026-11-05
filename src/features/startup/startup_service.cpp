@@ -76,8 +76,8 @@ bool enableKeys(StartupSystem& system, const StartupOptions& options, StartupRes
                         .arg(QDir::toNativeSeparators(found),
                              QDir::toNativeSeparators(system.ownFolder()));
   }
-  const QString arguments = commandLine(
-      keysArguments(QDir::toNativeSeparators(system.keysConfigPath()), options.configHome));
+  // No --config: wakukeys reads its default file itself, which is the file checked above.
+  const QString arguments = commandLine(keysArguments(options.configHome));
   const QString error = system.registerTask(Task::Keys, arguments);
   if (!error.isEmpty()) {
     result.lines << QStringLiteral("keys daemon: %1").arg(error);
@@ -103,8 +103,8 @@ QStringList wakuArguments(const StartupOptions& options) {
   return out;
 }
 
-QStringList keysArguments(const QString& keysFile, const QString& configHome) {
-  QStringList out{QStringLiteral("--config"), keysFile};
+QStringList keysArguments(const QString& configHome) {
+  QStringList out;
   if (!configHome.isEmpty()) out << QStringLiteral("--config-home") << configHome;
   return out;
 }

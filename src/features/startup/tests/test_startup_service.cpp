@@ -213,9 +213,7 @@ TEST(StartupServiceKeys, RegisteredWhenTheFileExists) {
   const StartupResult result = enableStartup(system, options);
   EXPECT_TRUE(result.ok);
   ASSERT_EQ(system.keysRegisteredArguments.size(), 1);
-  EXPECT_EQ(
-      system.keysRegisteredArguments.first(),
-      QStringLiteral("--config C:\\Users\\me\\.config\\waku\\keys.conf --config-home D:\\cfg"));
+  EXPECT_EQ(system.keysRegisteredArguments.first(), QStringLiteral("--config-home D:\\cfg"));
   EXPECT_TRUE(result.lines.last().startsWith(QStringLiteral("startup: keys daemon enabled")));
 }
 

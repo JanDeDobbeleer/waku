@@ -13,6 +13,8 @@
 
 namespace waku::control {
 
+QString pipeNameFor(const QString& key) { return controlPipeName(key); }
+
 QString controlPipeName(const QString& configHome) {
   QString normal = QDir::cleanPath(QDir::fromNativeSeparators(configHome)).toLower();
   const QByteArray hash = QCryptographicHash::hash(normal.toUtf8(), QCryptographicHash::Sha1);

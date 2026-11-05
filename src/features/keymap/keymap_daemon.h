@@ -3,7 +3,9 @@
 #include <QObject>
 #include <QSet>
 #include <QString>
+#include <atomic>
 #include <functional>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -13,7 +15,7 @@
 
 namespace waku::keymap {
 
-// The hotkey table of `wakuc keys`: loads a whkd file, registers its bindings in the kernel
+// The hotkey table of `wakukeys`: loads a whkd file, registers its bindings in the kernel
 // Hotkeys table (RegisterHotKey) and runs the action of a binding when its key is pressed.
 //
 // A bad file never replaces a good one: a file that cannot be read, or whose every binding is
@@ -74,6 +76,10 @@ class KeymapDaemon : public QObject {
   void log(const QString& line) const;
 
   Deps deps_;
+  // The pid of the bar, learned from its first `status` answer. With it the foreground right is
+  // passed on at the key press, on the GUI thread, not after a round trip on a pool thread.
+  std::shared_ptr<std::atomic<unsigned long>> barPid_ =
+      std::make_shared<std::atomic<unsigned long>>(0);
   Keymap keymap_;
   std::vector<kernel::Hotkeys::Handle> handles_;
   QSet<quint64> reportedConflicts_;  // combinations already reported as taken
