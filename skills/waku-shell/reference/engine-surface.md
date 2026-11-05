@@ -32,7 +32,7 @@ your type.
 
 ## Built-in widgets (`waku.widgets`)
 
-`Clock`, `Calendar`, `Workspaces` (komorebi and GlazeWM), `ActiveLayout`, `Taskbar`, `Tray`, `Media`,
+`Clock`, `Calendar`, `Workspaces` (Windows virtual desktops), `Taskbar`, `Tray`, `Media`,
 `Volume`, `Bluetooth`, `Wifi`, `Battery`, `Cpu`, `Memory`, `Notifications`, `GitHub`,
 `ControlCenter`, `Wallpapers`, `WallpaperGallery`, and the shared `Pill`, `Slider`, `Strip`,
 `DeviceMenu`, `DeviceRow`. Source: `src/features/<f>/qml/` and `src/ui/`. After a build,
@@ -88,9 +88,9 @@ with its own components carries its own tokens and does not need it.
 ## CLI
 
 `waku.exe`: `--config-home`, `--register-app-bar`, `--hide-taskbar`, `--no-tray`, `--safe`,
-`--no-hotkeys`, `--font-engine`, `--log-file`, `--manage-komorebi`, `--no-workarea-sync`,
-`--import-path`. `wakuc` (give it the same `--config-home`): `status`, `reload`, `quit`,
-`surface`, `call`, `shortcut`, `taskbar`, `wallpaper`, `config init`, `startup`. Exit codes of
+`--no-hotkeys`, `--font-engine`, `--log-file`, `--import-path`. `wakuc` (give it the same `--config-home`): `status`, `reload`, `quit`,
+`surface`, `call`, `shortcut`, `taskbar`, `tile`, `desktop`, `wallpaper`, `config init`,
+`startup`. Exit codes of
 `wakuc`: 0 ok, 1 error answer, 2 no bar running, 3 usage.
 
 ## Not present

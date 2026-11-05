@@ -14,7 +14,8 @@ keys, launch code or panels.
 - **Redeclared properties shadow the engine's.** A window that declares `screen` keeps the engine's
   placement on the primary screen. Pass the screen under another name.
 - **No Hyprland data.** `Hyprland.workspaces` and friends are empty. Use `Workspaces` and
-  `Taskbar` (komorebi or GlazeWM). With GlazeWM `windows` is empty.
+  `Taskbar`. Workspaces are the Windows virtual desktops, so there is one list for all monitors
+  (`handle` 0).
 - **Bluetooth names.** A device may show its address until Windows resolves a name. Do not hardcode
   names. Display the name the service reports and fall back to the address.
 
@@ -31,25 +32,25 @@ keys, launch code or panels.
   pixels. Hover outside the mask does not run.
 - **Live window previews** (`WindowThumbnail`) are drawn by the compositor above the window. Nothing
   overlays them.
-- **Windows 11 rounds window corners by 8 logical px** and komorebi's border follows. A per-window
+- **Windows 11 rounds window corners by 8 logical px.** A per-window
   radius cannot be set. Match 8 px where the shell frames tiled windows.
 - **Auto-hide docks** leave a 1 px hover window at the screen edge. It reads as a stray bar.
 - **Detach and focus-grab popups** (`HyprlandFocusGrab.onCleared`) never fire. A popup built on them
   cannot be closed. Close popups on `Escape`, outside click, or `FocusScope`/`activeFocus` loss.
 
-## Windows tiling (komorebi)
+## Windows tiling (built-in tiler)
 
-- komorebi adds its own padding (about 4 to 6 px) and border (about 2 px). A shell that wants
-  windows to sit in a frame ships a `komorebi.json`. Measure with `komorebic state` window
-  rectangles, not by eye.
-- Do not write `komorebi.json` into the user's real komorebi folder. Ship it in the shell and let
-  the user apply it. Back up before applying.
-- `--manage-komorebi` runs `komorebic replace-configuration` after screen or scale changes. Opt in.
+- waku tiles with its own tiler (`Tiling` singleton, `wakuc tile ...`). Gap, ratio, layout and rules
+  are `Tiling` properties set in `shell.qml`. It is off until `Tiling.enabled` is true.
+- Windows 11 draws a thin invisible frame around windows. The tiler compensates, so measure the
+  result with `wakuc tile status` and pixels, not by eye.
+- Only the tiler is supported. Do not start komorebi or GlazeWM beside it.
 
 ## Keys and launching
 
-- **Check for key owners first.** whkd (`whkdrc`) and AutoHotkey grab keys system-wide. Alt+Shift+
-  Enter was `komorebic promote`. Read the user's files and avoid taken combinations.
+- **Check for key owners first.** whkd (`whkdrc`) and AutoHotkey grab keys system-wide. A shell
+  ships its own `keys.conf` for `wakukeys.exe`. Read the user's other key tools (AutoHotkey, PowerToys)
+  and avoid taken combinations.
 - **Store apps** (Windows Terminal) have an AUMID and an execution alias. `execute()` raises a
   running one. Use `executeNew()` to start another and `launchAsAdmin` for admin.
 - **Elevation** shows UAC. You cannot answer it. Mark the row `needs the user`.
@@ -58,14 +59,13 @@ keys, launch code or panels.
 
 ## Environment and startup
 
-- Run with `--config-home`. Ports that need environment variables (a config dir, `PATH` entries such
-  as komorebic's folder) set them in a start script. A scheduled task does not run that script:
+- Run with `--config-home`. Ports that need environment variables (a config dir) set them in a start script. A scheduled task does not run that script:
   tell the user to set the variables in their user environment.
 - `wakuc startup enable` registers a per-user logon task. It replaces any earlier task and deletes
   `waku.lnk` in the Startup folder. It bakes in one config home. A bare `waku.exe` resolves on the
   system `PATH`. Tell the user before you run it. Do not run it unasked.
-- Restart order for a live bar: `wakuc --config-home <dir> quit`, then stop komorebi with
-  `komorebic stop --whkd` if the shell uses it, then start the shell.
+- Restart order for a live bar: `wakuc --config-home <dir> quit`, then `wakukeys.exe --config-home <dir> stop`
+  if the shell uses it, then start the shell.
 
 ## Screenshots
 

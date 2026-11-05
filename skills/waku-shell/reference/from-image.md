@@ -50,8 +50,8 @@ the body or a comment.
 
 - A wallpaper in the screenshot is not part of the shell. Ask whether the user wants it.
 - Terminal and application windows in the screenshot are not the shell. Do not build them.
-- Window gaps and rounded tiled windows belong to the tiler (komorebi), not the bar. If the look
-  needs them, add a komorebi config as a separate, optional piece.
+- Window gaps and rounded tiled windows belong to the tiler, not the bar. If the look needs gaps,
+  set `Tiling.gap` in `shell.qml` as a separate, optional piece.
 - Do not add elements the screenshot lacks to "fill out" the bar.
 - If the user's screen is a different size or scale, scale the sizes from the reference with a
   stated factor. Do not copy pixels blindly.

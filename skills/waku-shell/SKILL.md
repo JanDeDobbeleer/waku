@@ -78,8 +78,9 @@ the shell. Do not build a lookalike.
 - Services are `null` or unavailable until they report ready. Never gate a widget's `visible` on
   such an object.
 - Workspace ids are strings (`DISPLAY1:0`). Use `var`, not `int`.
-- Add what the shell needs to run beyond QML: a `start.ps1` that sets its environment, and a
-  komorebi config if the look depends on window gaps. Both only if the shell needs them.
+- Add what the shell needs to run beyond QML: a `start.ps1` that starts waku and `wakukeys.exe`
+  with the shell's `--config-home`, and a `keys.conf` beside `shell.qml`. Window gaps, layout and
+  ratio come from `Tiling` (`gap`, `ratio`, `layout`), not from a separate tiler config.
 
 ### 5. Audit and verify
 

@@ -58,8 +58,8 @@ Replace each with a Windows route that works, or drop the element.
 
 ## Behaviour that does not carry over
 
-- Compositor blur rules, animations, window rules, gaps: the tiling is komorebi's or GlazeWM's. Ship
-  a komorebi config only if the look needs it.
+- Compositor blur rules, animations, window rules, gaps: the tiling is waku's built-in tiler. Set
+  `Tiling.gap`, `ratio`, `layout` and `rules` in `shell.qml` if the look needs them.
 - Dynamic wallpaper, colour generation (matugen, wallust): only if the shell does it with a tool that
   runs on Windows. Otherwise static theme.
 - Lock screens, greeters, polkit agents, screen recording: not provided. Drop.
