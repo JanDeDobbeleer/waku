@@ -22,12 +22,8 @@ Tiling::Deps liveDeps() {
   deps.hooks = makeWin32TilingHooks();
   deps.scheduler = makeQtScheduler();
   deps.selfElevated = processIsElevated();
-  deps.blocker = [] { return runningWindowManager(); };
   return deps;
 }
-
-constexpr int kBlockerCheckMs = 5000;
-constexpr qint64 kBlockerCacheMs = 3000;
 
 QString yesNo(bool value) { return value ? QStringLiteral("yes") : QStringLiteral("no"); }
 
@@ -46,11 +42,8 @@ void Tiling::init(Deps deps) {
   placer_ = std::move(deps.placer);
   hooks_ = std::move(deps.hooks);
   scheduler_ = std::move(deps.scheduler);
-  blocker_ = std::move(deps.blocker);
   settings_.selfElevated = deps.selfElevated;
   watchScreens_ = deps.watchScreens;
-  blockerTimer_.setInterval(kBlockerCheckMs);
-  connect(&blockerTimer_, &QTimer::timeout, this, &Tiling::reevaluate);
   if (placer_ && scheduler_) engine_ = std::make_unique<TilingEngine>(*placer_, *scheduler_);
 
   screenTimer_.setSingleShot(true);
@@ -79,23 +72,11 @@ void Tiling::screensChanged() {
   if (active_) screenTimer_.start();
 }
 
-// --- coexistence
-
-// A process listing is not free: the answer is kept for a few seconds, and reevaluate() (the timer,
-// `enabled`) asks for a fresh one.
-QString Tiling::blockedBy() const {
-  if (!blocker_) return {};
-  if (!blockedAge_.isValid() || blockedAge_.hasExpired(kBlockerCacheMs)) {
-    blockedBy_ = blocker_();
-    blockedAge_.start();
-  }
-  return blockedBy_;
-}
+// --- switch
 
 void Tiling::reevaluate() {
   try {
-    blockedAge_.invalidate();
-    const bool want = enabled_ && engine_ && hooks_ && blockedBy().isEmpty();
+    const bool want = enabled_ && engine_ && hooks_;
     if (want == active_) return;
     if (want) {
       if (!hooks_->install([this](const WindowEvent& event) { onEvent(event); })) {
@@ -133,11 +114,6 @@ void Tiling::onEvent(const WindowEvent& event) {
 void Tiling::setEnabled(bool enabled) {
   if (enabled == enabled_) return;
   enabled_ = enabled;
-  if (enabled_) {
-    blockerTimer_.start();
-  } else {
-    blockerTimer_.stop();
-  }
   emit enabledChanged();
   reevaluate();
 }
@@ -231,10 +207,6 @@ QString Tiling::notActive() const {
         "error: the tiler is not available here (offscreen platform or --no-tiling)");
   }
   if (!enabled_) return QStringLiteral("error: tiling is off (set Tiling.enabled in the shell)");
-  const QString blocker = blockedBy();
-  if (!blocker.isEmpty()) {
-    return QStringLiteral("error: tiling yields to %1 while it runs").arg(blocker);
-  }
   return QStringLiteral("error: the tiler is not running");
 }
 
@@ -348,10 +320,9 @@ QString Tiling::controlMinimize() {
 QString Tiling::controlStatus() {
   const TilingStatus status = engine_ ? engine_->status() : TilingStatus();
   return QStringLiteral(
-             "ok: enabled=%1; active=%2; blocked=%3; layout=%4; gap=%5; ratio=%6; managed=%7; "
-             "floating=%8; workspaces=%9; stacks=%10; clamped=%11; paused=%12; desktop=%13")
+             "ok: enabled=%1; active=%2; layout=%3; gap=%4; ratio=%5; managed=%6; "
+             "floating=%7; workspaces=%8; stacks=%9; clamped=%10; paused=%11; desktop=%12")
       .arg(yesNo(enabled_), yesNo(active_),
-           blockedBy().isEmpty() ? QStringLiteral("no") : blockedBy(),
            status.layout.isEmpty() ? settings_.layout : status.layout,
            QString::number(settings_.gap), QString::number(settings_.ratio))
       .arg(status.managed)

@@ -78,8 +78,4 @@ std::unique_ptr<WindowPlacer> makeWin32WindowPlacer();
 // normal one (UIPI). Defined in win32/window_placer_win.cpp.
 bool processIsElevated();
 
-// The name of a tiling window manager whose process runs ("komorebi" or "glazewm"), or empty. One
-// process listing. Defined in win32/window_placer_win.cpp.
-QString runningWindowManager();
-
 }  // namespace waku::tiling

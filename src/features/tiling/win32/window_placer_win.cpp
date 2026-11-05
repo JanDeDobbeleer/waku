@@ -8,7 +8,6 @@
 // request, so the readback it returns can be stale; the engine verifies the bounds later.
 // SetWindowPos is called here and nowhere else in the tiler.
 #include <Windows.h>
-#include <TlHelp32.h>
 #include <dwmapi.h>
 
 #include <vector>
@@ -201,23 +200,5 @@ std::unique_ptr<WindowPlacer> makeWin32WindowPlacer() {
 }
 
 bool processIsElevated() { return tokenElevated(GetCurrentProcess()); }
-
-QString runningWindowManager() {
-  HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  if (snapshot == INVALID_HANDLE_VALUE) return {};
-  QString found;
-  PROCESSENTRY32W entry = {};
-  entry.dwSize = sizeof(entry);
-  for (BOOL ok = Process32FirstW(snapshot, &entry); ok && found.isEmpty();
-       ok = Process32NextW(snapshot, &entry)) {
-    if (_wcsicmp(entry.szExeFile, L"komorebi.exe") == 0) {
-      found = QStringLiteral("komorebi");
-    } else if (_wcsicmp(entry.szExeFile, L"glazewm.exe") == 0) {
-      found = QStringLiteral("glazewm");
-    }
-  }
-  CloseHandle(snapshot);
-  return found;
-}
 
 }  // namespace waku::tiling

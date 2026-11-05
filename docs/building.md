@@ -66,10 +66,8 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
 | `--hide-taskbar` | Hide the Windows taskbar (all monitors) while waku runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wakuc shortcut`. |
-| `--no-workarea-sync` | Never tell komorebi that the work area changed. By default waku sends `WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window 0.5 s after a screen or work area change and again 5 s later, so windows do not tile under the bar. See "komorebi's work area" in `docs/architecture.md`. |
 | `--no-shell-desktops` | Never use the undocumented shell interface behind Task View for virtual desktops: closing a desktop, creating one without a keystroke, the animated switch and the change notifications. The registry and the documented calls remain, so switching still works and closing is unavailable (`Workspaces.canRemove` is false). See "Shell interface" in `src/features/workspaces/design.md`. |
-| `--no-tiling` | Never start the built-in tiler, even when the shell sets `Tiling.enabled`. The tiler is off by default and yields to komorebi and GlazeWM. See "The built-in tiler" in `docs/architecture.md`. |
-| `--manage-komorebi` | After a screen or scale change, run `komorebic replace-configuration` so komorebi and komorebi-bar pick it up. Acts only while both run, at most once per 30 s. Off by default. See "Managing komorebi" in `src/features/workspaces/design.md`. |
+| `--no-tiling` | Never start the built-in tiler, even when the shell sets `Tiling.enabled`. The tiler is off by default. See "The built-in tiler" in `docs/architecture.md`. |
 | `--log-file <path>` | Write a JSON Lines diagnostics log to `<path>`: every log message, the start and stop of the run, screen and scale changes and shell reloads. Off by default. Format and how to read it: `docs/logging.md`. |
 | `--font-engine <engine>` | `gdi` (default, small) or `directwrite` (honours variable-font axes, tens of MB more memory and about 1,000 more handles). A shell that uses variable fonts needs `directwrite`. `QT_QPA_PLATFORM` wins when it is set. |
 | `--help` | Print the options. |
@@ -104,7 +102,7 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `wakuc shortcut <name>` | Fire the `GlobalShortcut` with that name (its `onPressed`, then `onReleased`). Bind a key to this command in whkd or AutoHotkey for a shortcut with no `keys`. |
 | `wakuc shortcut list` | Print the names of the shortcuts the shell declares. A shortcut named `list` cannot be fired. |
 
-The `tile` and `desktop` commands are meant for the key daemon: `examples/config/keys.conf` is a whkd-syntax file that binds all of them (alt+arrows to focus and move, alt+1..8 for desktops) and replaces a komorebi plus whkd setup. Its commands start `wakuc`, so `wakuc.exe` must be on `PATH`.
+The `tile` and `desktop` commands are meant for the key daemon: `examples/config/keys.conf` is a whkd-syntax file that binds all of them (alt+arrows to focus and move, alt+1..8 for desktops) and replaces a tiling window manager plus whkd setup. Its commands start `wakuc`, so `wakuc.exe` must be on `PATH`.
 
 `--dry-run` after `wallpaper` (not `gallery`) plays the animation without setting the wallpaper.
 
@@ -112,7 +110,7 @@ The `tile` and `desktop` commands are meant for the key daemon: `examples/config
 
 `wakukeys.exe` is a hotkey daemon, a third program next to `waku.exe` and `wakuc.exe` (the bar is
 not involved). It is a Windows (GUI) program: no console window ever appears, so a login task or
-the Startup folder can run it directly. It reads a whkd binding file (`alt + h : komorebic focus
+the Startup folder can run it directly. It reads a whkd binding file (`alt + h : wakuc tile focus
 left`), registers the keys with `RegisterHotKey` and runs the commands. A copy of your `whkdrc`
 loads unchanged. Syntax, actions and decisions: `src/features/keymap/design.md`.
 

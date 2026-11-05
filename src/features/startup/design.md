@@ -19,9 +19,7 @@ second task (`waku keys`) starts the keys daemon `wakukeys.exe`.
   config home at start. `--config-home` is passed only when the user gave one (made absolute).
   `--no-app-bar` and `--keep-taskbar` drop the defaults. Extra waku flags follow `--`; an exact
   duplicate of a flag already present is dropped.
-- waku never starts komorebi or any other tool. Start those with their own tasks or from the shell.
-  The one exception is `--manage-komorebi` (`workspaces/design.md`): it asks a running komorebi to
-  reload after a display change, and starts nothing else.
+- waku never starts another tool. Start those with their own tasks or from the shell.
 - The task: trigger at logon of the current user with no delay, Limited run level, priority 4, no
   execution time limit, one instance, runs on battery. `enable` twice replaces the task.
 - An old `waku.lnk` in the Startup folder would start a second waku. `enable` deletes it and keeps

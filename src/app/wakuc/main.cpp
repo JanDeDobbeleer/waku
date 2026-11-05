@@ -42,7 +42,7 @@
 // `--dry-run` plays the animation but does not set the wallpaper. A command is sent as one line;
 // arguments with spaces are quoted (control.h, joinCommand).
 //
-// A separate console program, as komorebic is to komorebi: the bar itself is a Windows (GUI)
+// A separate console program: the bar itself is a Windows (GUI)
 // program with no console to print to. `--config-home <dir>` (or $WAKU_CONFIG_HOME) selects
 // the instance, as it does for the bar.
 //

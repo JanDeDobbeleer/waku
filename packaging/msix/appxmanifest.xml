@@ -15,7 +15,7 @@
     <Description>A top bar for Windows, configured in QML.</Description>
     <Logo>icons\store.png</Logo>
     <!-- The config home, %LOCALAPPDATA%\waku and the registry are shared with unpackaged tools
-         (wakuc from a terminal, editors, komorebi), so never redirect writes into the package. -->
+         (wakuc from a terminal, editors), so never redirect writes into the package. -->
     <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
     <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
     <uap13:AutoUpdate>

@@ -153,6 +153,6 @@ Both take `implicitWidth` and `implicitHeight`; unset, the content sizes the win
 
 ### Windows of a workspace
 
-With komorebi each `Workspaces` workspace has `windows`, the handles (`hwnd`) of its windows. Join them with
-the taskbar rows, whose `hwnd`, `exe`, `className` and `monitorHandle` roles carry the window data.
-With GlazeWM `windows` is empty.
+Each `Workspaces` workspace (a Windows virtual desktop) has `windows`, the handles (`hwnd`) of its windows.
+Join them with the taskbar rows, whose `hwnd`, `exe`, `className` and `monitorHandle` roles carry the
+window data.

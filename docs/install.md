@@ -110,9 +110,6 @@ Commands and flags are in [src/app/README.md](../src/app/README.md).
 
 waku runs without them. Install the ones you need:
 
-- [komorebi](https://github.com/LGUG2234/komorebi) or [GlazeWM](https://github.com/glzr-io/glazewm):
-  a tiling window manager. The Workspaces widget shows its workspaces. waku has no native Windows
-  virtual desktop support yet, so the widget needs one of them.
 - [whkd](https://github.com/LGUG2234/whkd) or [AutoHotkey](https://www.autohotkey.com/): a hotkey
   tool. Bind a key to `wakuc shortcut <name>` to fire a `GlobalShortcut` of your shell. The example
   is in [docs/shells.md](shells.md).
@@ -138,8 +135,7 @@ The task starts waku with `--register-app-bar --hide-taskbar`. Change that with:
   (`WAKU_CONFIG_HOME`, else `~/.config/waku`).
 - `--no-app-bar`: leave out `--register-app-bar`.
 - `--keep-taskbar`: leave out `--hide-taskbar`.
-- Other `waku` flags after `--`, for example `wakuc startup enable -- --no-tray` or
-  `wakuc startup enable -- --manage-komorebi`.
+- Other `waku` flags after `--`, for example `wakuc startup enable -- --no-tray`.
 
 If `keys.conf` exists in your config home (`--config-home`, else `%USERPROFILE%\.config\waku`),
 `enable` registers a second task that starts the keys daemon `wakukeys.exe` (it reads that file, and

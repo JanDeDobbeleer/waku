@@ -1,5 +1,5 @@
-// The Tiling service on fakes: the switch, the coexistence guard (komorebi.exe or glazewm.exe
-// runs), the settings, the commands and the capability gate. No real window or hook.
+// The Tiling service on fakes: the switch, the settings, the commands and the capability gate. No
+// real window or hook.
 #include <gtest/gtest.h>
 
 #include <QCoreApplication>
@@ -41,7 +41,7 @@ class FakeHooks final : public TilingHooks {
 };
 
 struct Rig {
-  explicit Rig(bool komorebiRunning = false) {
+  Rig() {
     Tiling::Deps deps;
     auto fakePlacer = std::make_unique<FakeWindowPlacer>();
     auto fakeHooks = std::make_unique<FakeHooks>();
@@ -52,8 +52,6 @@ struct Rig {
     deps.placer = std::move(fakePlacer);
     deps.hooks = std::move(fakeHooks);
     deps.scheduler = std::move(fakeScheduler);
-    if (komorebiRunning) blocker = QStringLiteral("komorebi");
-    deps.blocker = [this] { return blocker; };
     deps.watchScreens = false;
     tiling = std::make_unique<Tiling>(std::move(deps), nullptr);
     tiling->setGap(10);
@@ -63,7 +61,6 @@ struct Rig {
   FakeWindowPlacer* placer = nullptr;
   FakeHooks* hooks = nullptr;
   FakeScheduler* scheduler = nullptr;
-  QString blocker;  // the window manager that runs
   std::unique_ptr<Tiling> tiling;
 };
 
@@ -113,40 +110,6 @@ TEST(TilingService, HookEventsReachTheEngine) {
   rig.hooks->fire(EventKind::Show, 7);
   rig.scheduler->runAll();
   EXPECT_EQ(rig.placer->slotsOf(7).size(), 1u);
-}
-
-TEST(TilingService, StaysInertWhileKomorebiRunsAndStartsWhenItGoes) {
-  Rig rig(true);
-  rig.placer->add(1);
-  rig.tiling->setEnabled(true);
-  EXPECT_FALSE(rig.tiling->active());
-  EXPECT_EQ(rig.hooks->installs, 0);
-  EXPECT_EQ(rig.tiling->blockedBy(), QStringLiteral("komorebi"));
-  rig.scheduler->runAll();
-  EXPECT_TRUE(rig.placer->placements.empty());
-
-  rig.blocker.clear();
-  rig.tiling->reevaluate();
-  EXPECT_TRUE(rig.tiling->active());
-  rig.scheduler->runAll();
-  EXPECT_EQ(rig.placer->slotsOf(1).size(), 1u);
-}
-
-TEST(TilingService, YieldsWhileAnotherWindowManagerRuns) {
-  Rig rig;
-  rig.placer->add(1);
-  rig.tiling->setEnabled(true);
-  ASSERT_TRUE(rig.tiling->active());
-
-  rig.blocker = QStringLiteral("glazewm");
-  rig.tiling->reevaluate();
-  EXPECT_FALSE(rig.tiling->active());
-  EXPECT_FALSE(rig.hooks->installed());
-  EXPECT_EQ(rig.tiling->blockedBy(), QStringLiteral("glazewm"));
-
-  rig.blocker.clear();
-  rig.tiling->reevaluate();
-  EXPECT_TRUE(rig.tiling->active());
 }
 
 TEST(TilingService, ARefusedHookLeavesTheTilerInactive) {
@@ -253,8 +216,7 @@ TEST(TilingService, CommandsDriveTheEngineAndAnswerLines) {
 }
 
 TEST(TilingService, CommandsExplainWhyTheTilerIsNotRunning) {
-  Rig rig(true);
-  rig.tiling->setEnabled(true);
+  Rig rig;
   EXPECT_EQ(rig.tiling->controlRetile(),
-            QStringLiteral("error: tiling yields to komorebi while it runs"));
+            QStringLiteral("error: tiling is off (set Tiling.enabled in the shell)"));
 }

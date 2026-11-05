@@ -140,8 +140,21 @@ QString VirtualDesktops::controlMove(int number) {
   refresh();
   if (!available_) return kUnavailable;
   const int count = static_cast<int>(desktops_.size());
-  if (number < 1 || number > count) {
+  if (number < 1) {
     return QStringLiteral("error: no desktop %1 (there are %2)").arg(number).arg(count);
+  }
+  if (number > count) {
+    // Past the last desktop: the window goes to one new desktop, the next one, not to a gap of
+    // empty desktops (`move 5` with two desktops makes the third).
+    if (count >= kMaxDesktops) {
+      return QStringLiteral("error: no desktop %1 (there are %2)").arg(number).arg(count);
+    }
+    system_->create();  // a system that shows the new desktop itself returns -1
+    refresh();
+    if (static_cast<int>(desktops_.size()) <= count) {
+      return QStringLiteral("error: Windows did not create a desktop");
+    }
+    number = count + 1;
   }
   if (number - 1 == current_) return QStringLiteral("ok: the window is on desktop %1").arg(number);
   switch (system_->moveForegroundWindow(number - 1)) {

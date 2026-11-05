@@ -151,10 +151,13 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
   MoveResult moveWindow(quint64 hwnd, int index) override {
     const HWND window = reinterpret_cast<HWND>(static_cast<quintptr>(hwnd));
     if (!IsWindow(window)) return MoveResult::Refused;
-    const QStringList registry = registryIds();
+    QStringList registry = registryIds();
+    ShellDesktopApi* api = shellApi();
+    // A desktop that was just created may not be in the registry yet; the shell knows it.
+    if (api && index >= registry.size()) registry = api->desktopIds().value_or(registry);
     if (index < 0 || index >= registry.size()) return MoveResult::Refused;
-    const QString& target = registry.at(index);
-    if (ShellDesktopApi* api = shellApi()) {
+    const QString target = registry.at(index);
+    if (api) {
       const bool moved = api->moveWindow(hwnd, target);
       checkLost();
       if (moved) return MoveResult::Moved;

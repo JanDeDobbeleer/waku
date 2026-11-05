@@ -2,7 +2,6 @@
 
 #include <QtQml/qqmlregistration.h>
 
-#include <QElapsedTimer>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -36,11 +35,9 @@ namespace waku::tiling {
 //   "float";
 //             `process` and `class` match whole and without case, `title` is a regular expression.
 //             No rule ships by default beyond the built-in splash and shell classes
-//   active    true while the tiler runs: enabled, on the live desktop and no other tiler present
+//   active    true while the tiler runs: enabled and on the live desktop
 //
-// The tiler stays inert (`active` false, no hook) while komorebi.exe or glazewm.exe runs, and
-// starts by itself when they go away (a check every few seconds; no other service is started). A
-// shell turns it on with
+// A shell turns it on with
 //   Component.onCompleted: { Tiling.enabled = true }
 // The `tile` verb of `wakuc` drives the same functions (tiling_command.h).
 class Tiling : public QObject, public TilingControl {
@@ -63,9 +60,6 @@ class Tiling : public QObject, public TilingControl {
     std::unique_ptr<WindowPlacer> placer;
     std::unique_ptr<TilingHooks> hooks;
     std::unique_ptr<Scheduler> scheduler;
-    // The name of the window manager that tiles and runs ("komorebi", "glazewm"), or empty. Null:
-    // none does. The service asks at most every few seconds.
-    std::function<QString()> blocker;
     bool selfElevated = false;
     bool watchScreens = true;
     int screenDebounceMs = 400;
@@ -105,9 +99,6 @@ class Tiling : public QObject, public TilingControl {
   Q_INVOKABLE QString cycleLayout(int step = 1);
   Q_INVOKABLE void focusNext();
   Q_INVOKABLE void focusPrevious();
-
-  // Why the tiler yields: "komorebi", "glazewm" or empty.
-  QString blockedBy() const;
 
   // The engine, null when inert. For tests.
   TilingEngine* engine() { return engine_.get(); }
@@ -162,12 +153,8 @@ class Tiling : public QObject, public TilingControl {
   std::unique_ptr<TilingHooks> hooks_;
   std::unique_ptr<Scheduler> scheduler_;
   std::unique_ptr<TilingEngine> engine_;
-  std::function<QString()> blocker_;
   QString currentLayout_;
   QTimer screenTimer_;
-  QTimer blockerTimer_;  // while enabled: look again for a window manager
-  mutable QString blockedBy_;
-  mutable QElapsedTimer blockedAge_;  // invalid until the first check
   TilingSettings settings_;
   QVariantList rules_;
   bool enabled_ = false;

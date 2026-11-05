@@ -10,7 +10,7 @@
 namespace waku::taskbar {
 
 // Brings a window to the front by its HWND, for a shell that learns its windows from somewhere
-// other than the taskbar tracker (komorebi's state, for example). No state: every call goes
+// other than the taskbar tracker. No state: every call goes
 // straight to Win32. GUI thread only; no thread, no timer.
 //
 // `activate` restores the window when it is minimised, then forces it to the foreground

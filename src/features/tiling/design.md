@@ -79,17 +79,13 @@ visible bounds; `outerRect` adds the invisible border per edge (`GetWindowRect` 
 pixels. A cloaked window is never placed. Retile requests are coalesced: any number in one turn
 place each window once.
 
-Screen changes (`screenAdded`, `screenRemoved`, `availableGeometryChanged`, `geometryChanged`, the
-same Qt signals `KomorebiWorkAreaGuard` uses) retile after 400 ms.
+Screen changes (`screenAdded`, `screenRemoved`, `availableGeometryChanged`, `geometryChanged`)
+retile after 400 ms.
 
-## Coexistence
+## Snap
 
-`Tiling.active` is false, and no hook is installed, while `komorebi.exe` or `glazewm.exe` runs. One
-process listing (`runningWindowManager`) answers; the service keeps the answer for 3 s and asks
-again every 5 s while enabled, so it starts by itself when the other tiler quits and stops when it
-starts. It starts no Komorebi or GlazeWM client for this. Snap Layouts and Snap
-Assist are not suppressed: a window the user snaps by mouse floats (move and size end), which is
-the coexistence rule for them.
+Snap Layouts and Snap Assist are not suppressed: a window the user snaps by mouse floats (move and
+size end).
 
 ## Commands
 
@@ -123,7 +119,7 @@ bsp                  grid                 centerMain
 - `mainStackTop`: main on top, the rest side by side below.
 - `columns`, `rows`: equal columns or bands; they do not resize.
 - `bsp`: window 1 takes `ratio` of the width; every next window takes the top (then left, then
-  top...) half of what is left. Like the default komorebi layout.
+  top...) half of what is left. 
 - `grid`: ceil(sqrt(n)) columns filled by row; a short last row spreads over the width. Does not
   resize.
 - `centerMain`: main in the middle; the others alternate right, left, right... in two columns.
@@ -155,7 +151,7 @@ answers `ok: ...` or `error: ...`). The pure logic is in `layouts.cpp` (`flipSlo
 
 ## Stacking
 
-Several windows can share one slot of the layout, like komorebi's stacks. A workspace is an
+Several windows can share one slot of the layout. A workspace is an
 ordered list of slots (`Slot` in `tiling_model.h`); a slot holds an ordered list of windows and
 the index of the top one. A workspace with no stacks is a list of one-window slots, so it behaves
 as before. The layout counts slots, not windows.
@@ -189,8 +185,6 @@ as before. The layout counts slots, not windows.
   workspaces without one and clears the overrides when it changes.
 - New windows go to the end of the stack; the first window is the main one.
 - No undocumented API. The shown desktop reuses the registry value on the allowlist.
-- komorebi (Komorebi License 2.0) and GlazeWM (GPL-3) were read for behaviour only; nothing was
-  copied.
 
 ## Open points
 

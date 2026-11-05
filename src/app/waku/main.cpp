@@ -17,7 +17,6 @@
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/wallpaper_command.h"
 #include "features/workspaces/desktop_command.h"
-#include "features/workspaces/komorebi_workarea.h"
 #include "features/workspaces/qml/virtual_desktops_service.h"
 #include "host/plugin_guard.h"
 #include "host/qml/control_handler.h"
@@ -106,10 +105,6 @@ int main(int argc, char* argv[]) {
       QStringLiteral("hide-taskbar"),
       QStringLiteral("Hide the Windows taskbar while waku runs (auto-hide on, taskbar windows "
                      "hidden) and restore it on exit. Off by default."));
-  QCommandLineOption noWorkAreaSyncOpt(
-      QStringLiteral("no-workarea-sync"),
-      QStringLiteral(
-          "Never nudge a tiling window manager (komorebi) after the work area changed."));
   QCommandLineOption noShellDesktopsOpt(
       QStringLiteral("no-shell-desktops"),
       QStringLiteral("Never use the undocumented shell interface behind Task View for virtual "
@@ -118,10 +113,6 @@ int main(int argc, char* argv[]) {
   QCommandLineOption noTilingOpt(
       QStringLiteral("no-tiling"),
       QStringLiteral("Never start the built-in tiler, even when the shell sets Tiling.enabled."));
-  QCommandLineOption manageKomorebiOpt(
-      QStringLiteral("manage-komorebi"),
-      QStringLiteral("After a screen or scale change, run `komorebic replace-configuration` so "
-                     "komorebi and komorebi-bar pick it up. Only when both run. Off by default."));
   QCommandLineOption logFileOpt(
       QStringLiteral("log-file"),
       QStringLiteral("Write a diagnostics log (JSON Lines) to <file>: every log message, the start "
@@ -131,10 +122,8 @@ int main(int argc, char* argv[]) {
   parser.addOption(configHomeOpt);
   parser.addOption(importPathOpt);
   parser.addOption(logFileOpt);
-  parser.addOption(noWorkAreaSyncOpt);
   parser.addOption(noShellDesktopsOpt);
   parser.addOption(noTilingOpt);
-  parser.addOption(manageKomorebiOpt);
   parser.addOption(hideTaskbarOpt);
   parser.addOption(noHotkeysOpt);
   parser.addOption(fontEngineOpt);
@@ -145,13 +134,9 @@ int main(int argc, char* argv[]) {
   if (!fontEngine.error.isEmpty()) qWarning().noquote() << "waku:" << fontEngine.error;
   waku::kernel::setCapabilityDisabled(QStringLiteral("tray"), parser.isSet(noTrayOpt));
   waku::kernel::setCapabilityDisabled(QStringLiteral("hotkeys"), parser.isSet(noHotkeysOpt));
-  waku::kernel::setCapabilityDisabled(QStringLiteral("workarea_sync"),
-                                      parser.isSet(noWorkAreaSyncOpt));
   waku::kernel::setCapabilityDisabled(QStringLiteral("shell_desktops"),
                                       parser.isSet(noShellDesktopsOpt));
   waku::kernel::setCapabilityDisabled(QStringLiteral("tiling"), parser.isSet(noTilingOpt));
-  waku::kernel::setCapabilityDisabled(QStringLiteral("manage_komorebi"),
-                                      !parser.isSet(manageKomorebiOpt));
 
   const waku::control::ConfigHome resolvedHome =
       waku::control::resolveConfigHome(parser.value(configHomeOpt), QDir::homePath());
@@ -238,10 +223,6 @@ int main(int argc, char* argv[]) {
   }
 
   if (taskbar) taskbar->start(parser.isSet(hideTaskbarOpt));
-  // komorebi's work area follows the OS after every screen change, the first registration
-  // included. Lives for the run, so a reload keeps a pending late notification. Inert off the
-  // live desktop and with --no-workarea-sync (features/workspaces/komorebi_workarea.h).
-  const auto workAreaGuard = waku::workspaces::komorebi::makeKomorebiWorkAreaGuard();
   QObject::connect(&host, &waku::host::ShellHost::reloaded, &host, [&host](bool ok) {
     waku::host::RunLog::event(
         QStringLiteral("shell.reload"),

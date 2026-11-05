@@ -11,7 +11,7 @@ waku (枠, "frame", say "wah-koo") is a top bar for Windows, written in C++20 an
 (Qt Quick) and configured in QML. The name is the Japanese word for the frame around a window
 (Dutch: kozijn), and the frame of your desktop is where the bar lives.
 
-Built-in widgets cover the clock, workspaces (komorebi and GlazeWM), media, volume, Bluetooth,
+Built-in widgets cover the clock, workspaces (Windows virtual desktops), media, volume, Bluetooth,
 Wi-Fi, battery, CPU, memory, the tray, the taskbar, notifications, GitHub, wallpapers and a control
 center. You can copy any of them into your config and change it.
 
@@ -88,11 +88,8 @@ or copy `skills/waku-shell` into your agent's skills folder.
 
 ## Optional companions
 
-waku runs on its own. Two things need a helper:
+waku runs on its own. One thing may need a helper:
 
-- **Workspaces.** The Workspaces widget reads [komorebi](https://github.com/LGUG2234/komorebi) or
-  [GlazeWM](https://github.com/glzr-io/glazewm). waku has no native Windows virtual desktop support
-  yet, so without one of them the widget has nothing to show.
 - **Keybinds.** waku does not bind keys for a shell's shortcuts by default. Bind a key to
   `wakuc shortcut <name>` in [whkd](https://github.com/LGUG2234/whkd) or
   [AutoHotkey](https://www.autohotkey.com/), for example `win + space : wakuc shortcut launcher`.

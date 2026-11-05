@@ -1,6 +1,6 @@
 // The shared look (Pill, Slider) and the tooltips of the built-in widgets of several features,
 // instantiated in a real bar on the offscreen platform. Volume, Media and Workspaces are left out
-// on purpose: creating them starts real audio, media-session, komorebi and GlazeWM clients, which
+// on purpose: creating them starts real audio, media-session and other clients, which
 // a test must not do on a developer's machine.
 #include <gtest/gtest.h>
 

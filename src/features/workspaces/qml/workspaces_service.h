@@ -7,8 +7,6 @@
 #include <QString>
 #include <QVariantList>
 
-#include "features/workspaces/qml/glazewm_client.h"
-#include "features/workspaces/qml/komorebi_client.h"
 #include "features/workspaces/qml/virtual_desktops_service.h"
 
 class QJSEngine;
@@ -16,30 +14,23 @@ class QQmlEngine;
 
 namespace waku::workspaces {
 
-// The workspaces of whichever tiling window manager is running, as one QML singleton, so a widget
-// never mentions komorebi or GlazeWM. With no manager running it shows the Windows virtual
-// desktops instead. Built on the Komorebi, GlazeWM and VirtualDesktops singletons (shared with any
-// widget that uses them directly) and rebuilt whenever one changes. GUI thread only.
+// The workspaces of the bar: the Windows virtual desktops, as one QML singleton so a widget does
+// not depend on how they are read. Built on the VirtualDesktops singleton (shared with any widget
+// that uses it directly) and rebuilt whenever it changes. GUI thread only.
 //
 // monitors: [{handle, name, workspaces: [{id, label, focused, active, hasWindows, windowCount,
 //                                         windows}]}]
-//   handle  monitor handle (HMONITOR); match it with Window.window.monitorHandle
-//   id      opaque to widgets: pass it back to focus(). komorebi: the workspace index; GlazeWM:
-//           the workspace name; Windows: the desktop index
-//   label   what to show: the workspace name, or for an unnamed komorebi workspace its 1-based
-//           index
-//   active  shown on its monitor
-//   focused active on the focused monitor (GlazeWM: its global focus)
-//   windows handles (HWND, numbers) of the workspace's windows, in the window manager's order
-//           (komorebi), or ascending (Windows desktops); empty for GlazeWM. Join them with the
+//   handle  0: virtual desktops belong to no monitor, so there is one entry that every bar shows
+//           (match `m.handle === handle || m.handle === 0`)
+//   id      opaque to widgets: pass it back to focus() (the desktop index)
+//   label   what to show: the desktop's name, or its 1-based index
+//   active  the desktop that is shown
+//   focused the same as active
+//   windows handles (HWND, numbers) of the desktop's windows, ascending. Join them with the
 //           taskbar rows (their hwnd role)
-// Virtual desktops belong to no monitor: the Windows provider returns one entry with handle 0,
-// which every bar shows (match `m.handle === handle || m.handle === 0`).
-// provider: "komorebi", "glazewm", "windows" or "". A tiling manager that is connected wins over
-// the virtual desktops. When both managers are connected, `prefer` decides (default "komorebi").
-// `prefer` "windows" shows the virtual desktops even while a manager runs.
-// canRemove: true when remove() can close a workspace: the "windows" provider with the shell
-// interface open and more than one desktop. The tiling managers have no such call here.
+// provider: "windows", or "" when Windows does not expose its desktops.
+// canRemove: true when remove() can close a desktop: the shell interface is open and more than one
+// desktop exists.
 class Workspaces : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -47,33 +38,28 @@ class Workspaces : public QObject {
   Q_PROPERTY(QString provider READ provider NOTIFY changed FINAL)
   Q_PROPERTY(bool connected READ connected NOTIFY changed FINAL)
   Q_PROPERTY(QVariantList monitors READ monitors NOTIFY changed FINAL)
-  Q_PROPERTY(QString prefer READ prefer WRITE setPrefer NOTIFY changed FINAL)
   Q_PROPERTY(bool canRemove READ canRemove NOTIFY changed FINAL)
 
  public:
-  // The backends are borrowed; any may be null. They are sibling singletons, and
-  // QQmlEngine::clearSingletons() deletes them in its own order on a reload, so either may go
-  // first: they are held as QPointer and a gone one counts as disconnected.
-  Workspaces(Komorebi* komorebi, GlazeWM* glazewm, VirtualDesktops* desktops = nullptr,
-             QObject* parent = nullptr);
-  // The engine's own Komorebi, GlazeWM and VirtualDesktops singletons.
+  // `desktops` is borrowed and may be null. It is a sibling singleton, and
+  // QQmlEngine::clearSingletons() deletes singletons in its own order on a reload, so it is held
+  // as a QPointer and a gone one counts as unavailable.
+  explicit Workspaces(VirtualDesktops* desktops = nullptr, QObject* parent = nullptr);
+  // The engine's own VirtualDesktops singleton.
   static Workspaces* create(QQmlEngine* engine, QJSEngine* scriptEngine);
 
   QString provider() const { return provider_; }
   bool connected() const { return !provider_.isEmpty(); }
   QVariantList monitors() const { return monitors_; }
-  QString prefer() const { return prefer_; }
-  void setPrefer(const QString& prefer);
-  bool canRemove() const;
+  bool canRemove() const { return canRemove_; }
 
-  // Shows workspace `id` on the monitor with this handle. Unknown monitors and ids are ignored.
+  // Shows desktop `id` (the monitor handle is ignored: every monitor shows the same desktops).
+  // Unknown ids are ignored.
   Q_INVOKABLE void focus(qlonglong monitorHandle, const QString& id);
-  // The next or previous workspace of that monitor in list order, wrapping at the ends.
+  // The next or previous desktop in list order, wrapping at the ends.
   Q_INVOKABLE void focusNext(qlonglong monitorHandle) { step(monitorHandle, 1); }
   Q_INVOKABLE void focusPrevious(qlonglong monitorHandle) { step(monitorHandle, -1); }
-  // Closes workspace `id` (the same id focus() takes) like Task View's close button. Only the
-  // "windows" provider closes anything; the monitor handle is ignored (desktops are not per
-  // monitor). Other providers and unknown ids are ignored.
+  // Closes desktop `id` like Task View's close button. Unknown ids are ignored.
   Q_INVOKABLE void remove(qlonglong monitorHandle, const QString& id);
 
  signals:
@@ -85,10 +71,7 @@ class Workspaces : public QObject {
   bool update();
   void step(qlonglong monitorHandle, int direction);
 
-  QPointer<Komorebi> komorebi_;
-  QPointer<GlazeWM> glazewm_;
   QPointer<VirtualDesktops> desktops_;
-  QString prefer_ = QStringLiteral("komorebi");
   QString provider_;
   bool canRemove_ = false;
   QVariantList monitors_;

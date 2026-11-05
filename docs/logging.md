@@ -39,7 +39,7 @@ Keys on every record:
 `log` records add `lvl` (`debug`, `info`, `warning`, `critical`, `fatal`), `msg`, and `cat` when the
 message has a logging category other than the default (for example `qml`). Every `qDebug`,
 `qInfo`, `qWarning`, `qCritical` and QML `console.*` call is one. Waku's own lines start with a
-feature prefix such as `komorebi manage:` or `komorebi work area`.
+feature prefix such as `virtual desktops:` or `tiling:`.
 
 `ev` records add `ev` (the event name) and the fields of that event.
 

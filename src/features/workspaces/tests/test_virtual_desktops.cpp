@@ -26,7 +26,12 @@ class FakeSystem final : public vdesk::VirtualDesktopSystem {
   }
   int create() override {
     ++created;
+    if (state && addOnCreate) state->desktops.push_back({QStringLiteral("{N}"), QString(), {}});
     return createdIndex;
+  }
+  MoveResult moveForegroundWindow(int index) override {
+    moves.push_back(index);
+    return moveResult;
   }
   bool canRemove() const override { return supportsRemove; }
   bool remove(int index) override {
@@ -47,6 +52,9 @@ class FakeSystem final : public vdesk::VirtualDesktopSystem {
   std::vector<int> jumps;
   int created = 0;
   int createdIndex = -1;  // -1: the system showed the desktop itself
+  bool addOnCreate = true;
+  std::vector<int> moves;
+  MoveResult moveResult = MoveResult::Moved;
   bool jumpWorks = true;
   bool supportsRemove = true;
   bool removeWorks = true;
@@ -204,7 +212,7 @@ TEST(VirtualDesktops, NextAndPreviousWrap) {
 
 TEST(WorkspacesWindowsProvider, ShowsDesktopsWhenNoManagerRuns) {
   Harness h;
-  Workspaces workspaces(nullptr, nullptr, h.desktops.get());
+  Workspaces workspaces(h.desktops.get());
   EXPECT_EQ(workspaces.provider(), QStringLiteral("windows"));
   ASSERT_EQ(workspaces.monitors().size(), 1);
   const QVariantMap monitor = workspaces.monitors().at(0).toMap();
@@ -220,7 +228,7 @@ TEST(WorkspacesWindowsProvider, ShowsDesktopsWhenNoManagerRuns) {
 
 TEST(WorkspacesWindowsProvider, PassesTheWindowsThrough) {
   Harness h;
-  Workspaces workspaces(nullptr, nullptr, h.desktops.get());
+  Workspaces workspaces(h.desktops.get());
   const QVariantList list =
       workspaces.monitors().at(0).toMap().value(QStringLiteral("workspaces")).toList();
   ASSERT_EQ(list.size(), 3);
@@ -238,7 +246,7 @@ TEST(WorkspacesWindowsProvider, PassesTheWindowsThrough) {
 
 TEST(WorkspacesWindowsProvider, FocusAndStepSwitchDesktopsOnAnyMonitor) {
   Harness h;
-  Workspaces workspaces(nullptr, nullptr, h.desktops.get());
+  Workspaces workspaces(h.desktops.get());
   workspaces.focus(12345, QStringLiteral("2"));
   EXPECT_EQ(h.system->jumps, (std::vector<int>{2}));
   h.system->state = threeDesktops(2);
@@ -249,7 +257,7 @@ TEST(WorkspacesWindowsProvider, FocusAndStepSwitchDesktopsOnAnyMonitor) {
 
 TEST(WorkspacesWindowsProvider, FollowsTheDesktops) {
   Harness h;
-  Workspaces workspaces(nullptr, nullptr, h.desktops.get());
+  Workspaces workspaces(h.desktops.get());
   QSignalSpy spy(&workspaces, &Workspaces::changed);
   h.system->state = threeDesktops(0);
   h.desktops->refresh();
@@ -381,7 +389,7 @@ TEST(VirtualDesktopsAnimate, ReachesTheSystem) {
 
 TEST(WorkspacesWindowsProvider, RemoveClosesTheDesktopOnAnyMonitor) {
   Harness h;
-  Workspaces workspaces(nullptr, nullptr, h.desktops.get());
+  Workspaces workspaces(h.desktops.get());
   EXPECT_TRUE(workspaces.canRemove());
   workspaces.remove(12345, QStringLiteral("2"));
   workspaces.remove(0, QStringLiteral("not a number"));
@@ -390,10 +398,33 @@ TEST(WorkspacesWindowsProvider, RemoveClosesTheDesktopOnAnyMonitor) {
 
 TEST(WorkspacesWindowsProvider, CanRemoveFollowsTheDesktops) {
   Harness h;
-  Workspaces workspaces(nullptr, nullptr, h.desktops.get());
+  Workspaces workspaces(h.desktops.get());
   QSignalSpy spy(&workspaces, &Workspaces::changed);
   h.system->supportsRemove = false;
   h.desktops->refresh();
   EXPECT_FALSE(workspaces.canRemove());
   EXPECT_EQ(spy.count(), 1);
+}
+
+TEST(VirtualDesktopsMove, APastTheLastNumberMakesOneNewDesktopAndMovesTheWindowThere) {
+  Harness h;  // three desktops
+  const QString answer = h.desktops->controlMove(7);
+  EXPECT_EQ(h.system->created, 1);
+  EXPECT_EQ(h.system->moves, (std::vector<int>{3}));
+  EXPECT_EQ(answer, QStringLiteral("ok: moved to desktop 4"));
+}
+
+TEST(VirtualDesktopsMove, ANumberInRangeCreatesNothing) {
+  Harness h;
+  h.desktops->controlMove(1);
+  EXPECT_EQ(h.system->created, 0);
+  EXPECT_EQ(h.system->moves, (std::vector<int>{0}));
+}
+
+TEST(VirtualDesktopsMove, NothingIsMovedWhenTheDesktopWasNotCreated) {
+  Harness h;
+  h.system->addOnCreate = false;
+  const QString answer = h.desktops->controlMove(4);
+  EXPECT_TRUE(answer.startsWith(QStringLiteral("error:")));
+  EXPECT_TRUE(h.system->moves.empty());
 }

@@ -1,7 +1,6 @@
 # tiling: a built-in, opt-in tiler. Window events (WinEvent hooks) place a window that opens in the
-# slot of its layout, per monitor and virtual desktop, with documented Win32 only. Inert while
-# komorebi or GlazeWM runs. Depends on workspaces for the shown virtual desktop
-# (virtual_desktops.h) and the komorebi process check (komorebi.h). dwmapi: the visible frame
+# slot of its layout, per monitor and virtual desktop, with documented Win32 only. Depends on workspaces for the shown virtual desktop and a window's desktop
+# (virtual_desktops.h). dwmapi: the visible frame
 # bounds and the cloak state; ole32: IVirtualDesktopManager.
 waku_feature(
   NAME tiling
