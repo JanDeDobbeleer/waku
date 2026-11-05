@@ -50,6 +50,9 @@ class WindowPlacer {
   virtual std::vector<WindowId> candidates() = 0;
   // Nothing when the window is gone.
   virtual std::optional<WindowFacts> query(WindowId hwnd) = 0;
+  // The cheap part of query(): visible, iconic, zoomed, cloaked, monitor and rect, without the
+  // process, class, title and desktop lookups. Enough to place a window that is already tracked.
+  virtual std::optional<WindowFacts> state(WindowId hwnd) { return query(hwnd); }
   // The work area of a monitor in physical pixels; empty when the monitor is unknown.
   virtual QRect workArea(MonitorId monitor) = 0;
   // The GUID of the virtual desktop that is shown; empty when Windows does not say.
@@ -74,5 +77,9 @@ std::unique_ptr<WindowPlacer> makeWin32WindowPlacer();
 // True when waku itself runs elevated; a window of an elevated process cannot be moved from a
 // normal one (UIPI). Defined in win32/window_placer_win.cpp.
 bool processIsElevated();
+
+// The name of a tiling window manager whose process runs ("komorebi" or "glazewm"), or empty. One
+// process listing. Defined in win32/window_placer_win.cpp.
+QString runningWindowManager();
 
 }  // namespace waku::tiling

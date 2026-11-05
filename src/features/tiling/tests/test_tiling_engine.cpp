@@ -205,6 +205,41 @@ TEST(TilingEngine, ANameChangeOfAManagedOrRejectedWindowCostsNothing) {
   EXPECT_EQ(rig.placer.queries, before);
 }
 
+TEST(TilingEngine, AShowOfAWindowRejectedForGoodCostsNothing) {
+  Rig rig;
+  rig.engine.start();
+  rig.placer.add(2).toolWindow = true;
+  rig.send(EventKind::Show, 2);
+  rig.settle();
+  const int before = rig.placer.queries;
+  rig.send(EventKind::Show, 2);
+  rig.settle();
+  EXPECT_EQ(rig.placer.queries, before);
+}
+
+TEST(TilingEngine, AShowOfAWindowThatWasMaximizedLooksAgain) {
+  Rig rig;
+  rig.engine.start();
+  rig.placer.add(1).zoomed = true;
+  rig.send(EventKind::Show, 1);
+  rig.settle();
+  EXPECT_FALSE(rig.engine.model().contains(1));
+  rig.placer.windows[1].zoomed = false;
+  rig.send(EventKind::Show, 1);
+  rig.settle();
+  EXPECT_TRUE(rig.engine.model().contains(1));
+}
+
+TEST(TilingEngine, AHideOfAWindowTheTilerNeverHeldCostsNothing) {
+  Rig rig;
+  rig.engine.start();
+  rig.placer.add(5);
+  const int before = rig.placer.queries;
+  rig.send(EventKind::Hide, 5);
+  rig.settle();
+  EXPECT_EQ(rig.placer.queries, before);
+}
+
 TEST(TilingEngine, DraggingAWindowFloatsItAndTheOthersFillTheGap) {
   Rig rig;
   rig.engine.start();

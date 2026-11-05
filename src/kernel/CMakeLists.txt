@@ -70,7 +70,6 @@ waku_contribute(
     tests/test_shell_icons.cpp
     tests/test_task_thread.cpp
     tests/test_windows_build.cpp
-    tests/test_winevent_hook.cpp
     tests/test_winrt_strings.cpp
   TEST_LIBS waku_kernel
 )

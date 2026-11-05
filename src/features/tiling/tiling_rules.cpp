@@ -88,22 +88,22 @@ bool isBuiltinIgnoredClass(const QString& className) {
 
 Eligibility classify(const WindowFacts& facts, const std::vector<Rule>& rules, bool selfElevated,
                      bool forceTile) {
-  auto ignore = [](const char* reason) {
-    return Eligibility{Verdict::Ignore, QString::fromLatin1(reason)};
+  auto ignore = [](const char* reason, bool lasting = false) {
+    return Eligibility{Verdict::Ignore, QString::fromLatin1(reason), lasting};
   };
-  if (facts.ownProcess) return ignore("own process");
+  if (facts.ownProcess) return ignore("own process", true);
   if (!facts.visible) return ignore("not visible");
   if (facts.cloaked) return ignore("cloaked");
   if (facts.iconic) return {Verdict::Retry, QStringLiteral("minimized")};
   if (facts.title.isEmpty()) return {Verdict::Retry, QStringLiteral("untitled")};
   if (facts.ownedByVisible) return ignore("owned by a visible window");
-  if (facts.toolWindow) return ignore("tool window");
-  if (!facts.thickFrame) return ignore("not resizable");
-  if (!facts.caption) return ignore("no caption");
+  if (facts.toolWindow) return ignore("tool window", true);
+  if (!facts.thickFrame) return ignore("not resizable", true);
+  if (!facts.caption) return ignore("no caption", true);
   if (facts.zoomed) return ignore("maximized");
   if (facts.fullscreen) return ignore("fullscreen");
-  if (isBuiltinIgnoredClass(facts.className)) return ignore("ignored class");
-  if (facts.elevated && !selfElevated) return ignore("elevated");
+  if (isBuiltinIgnoredClass(facts.className)) return ignore("ignored class", true);
+  if (facts.elevated && !selfElevated) return ignore("elevated", true);
   if (!forceTile) {
     const std::optional<RuleAction> action = matchRules(rules, facts);
     if (action == RuleAction::Ignore) return ignore("rule");

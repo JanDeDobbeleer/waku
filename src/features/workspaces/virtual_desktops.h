@@ -113,4 +113,9 @@ std::unique_ptr<VirtualDesktopSystem> makeWin32VirtualDesktopSystem();
 // enumerated. Defined in win32/virtual_desktops_win.cpp; the tiler asks it after a window event.
 std::optional<QString> currentDesktopId();
 
+// The GUID (registry form, upper case) of the desktop a top-level window is on, from the documented
+// IVirtualDesktopManager; nothing when the window has none (GUID_NULL, a pinned window) or Windows
+// does not answer. GUI thread only. Defined in win32/virtual_desktops_win.cpp; the tiler uses it.
+std::optional<QString> windowDesktopId(quint64 hwnd);
+
 }  // namespace waku::workspaces::vdesk

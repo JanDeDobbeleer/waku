@@ -8,7 +8,7 @@
 // request, so the readback it returns can be stale; the engine verifies the bounds later.
 // SetWindowPos is called here and nowhere else in the tiler.
 #include <Windows.h>
-#include <ShObjIdl.h>
+#include <TlHelp32.h>
 #include <dwmapi.h>
 
 #include <vector>
@@ -16,7 +16,6 @@
 #include "features/tiling/layouts.h"
 #include "features/tiling/window_placer.h"
 #include "features/workspaces/virtual_desktops.h"
-#include "kernel/win32/com_scope.h"
 #include "kernel/win32/window_focus.h"
 
 namespace waku::tiling {
@@ -64,11 +63,6 @@ bool tokenElevated(HANDLE process) {
 
 class Win32WindowPlacer final : public WindowPlacer {
  public:
-  Win32WindowPlacer() : com_(kernel::ComApartment::SingleThreaded) {}
-  ~Win32WindowPlacer() override {
-    if (manager_) manager_->Release();
-  }
-
   std::vector<WindowId> candidates() override {
     std::vector<WindowId> out;
     EnumWindows(
@@ -83,7 +77,8 @@ class Win32WindowPlacer final : public WindowPlacer {
     return out;
   }
 
-  std::optional<WindowFacts> query(WindowId id) override {
+  // The cheap part: window state and place. No process handle, no title, no COM.
+  std::optional<WindowFacts> state(WindowId id) override {
     HWND hwnd = toHwnd(id);
     if (!IsWindow(hwnd)) return std::nullopt;
     WindowFacts facts;
@@ -92,6 +87,20 @@ class Win32WindowPlacer final : public WindowPlacer {
     facts.iconic = IsIconic(hwnd) != 0;
     facts.zoomed = IsZoomed(hwnd) != 0;
     facts.cloaked = isCloaked(hwnd);
+    RECT window = {};
+    GetWindowRect(hwnd, &window);
+    facts.rect = visibleBounds(hwnd, window);
+    HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    facts.monitor = reinterpret_cast<MonitorId>(monitor);
+    return facts;
+  }
+
+  // Everything classify() needs, once per window that is new to the tiler.
+  std::optional<WindowFacts> query(WindowId id) override {
+    std::optional<WindowFacts> found = state(id);
+    if (!found) return std::nullopt;
+    WindowFacts& facts = *found;
+    HWND hwnd = toHwnd(id);
     const LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_STYLE);
     const LONG_PTR exStyle = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
     facts.toolWindow = (exStyle & WS_EX_TOOLWINDOW) != 0;
@@ -104,9 +113,7 @@ class Win32WindowPlacer final : public WindowPlacer {
 
     RECT window = {};
     GetWindowRect(hwnd, &window);
-    facts.rect = visibleBounds(hwnd, window);
-    HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-    facts.monitor = reinterpret_cast<MonitorId>(monitor);
+    HMONITOR monitor = reinterpret_cast<HMONITOR>(facts.monitor);
     MONITORINFO info = {sizeof(info)};
     if (monitor && GetMonitorInfoW(monitor, &info)) {
       facts.fullscreen = !facts.iconic && window.left <= info.rcMonitor.left &&
@@ -132,7 +139,8 @@ class Win32WindowPlacer final : public WindowPlacer {
         facts.elevated = true;  // cannot even be opened: not ours to move
       }
     }
-    facts.desktopId = desktopOf(hwnd);
+    facts.desktopId =
+        workspaces::vdesk::windowDesktopId(static_cast<quint64>(id)).value_or(QString());
     return facts;
   }
 
@@ -184,27 +192,6 @@ class Win32WindowPlacer final : public WindowPlacer {
   bool minimize(WindowId id) override {
     return ShowWindowAsync(reinterpret_cast<HWND>(id), SW_MINIMIZE) != FALSE;
   }
-
- private:
-  QString desktopOf(HWND hwnd) {
-    if (!manager_ && !managerFailed_) {
-      if (FAILED(CoCreateInstance(__uuidof(VirtualDesktopManager), nullptr, CLSCTX_INPROC_SERVER,
-                                  IID_PPV_ARGS(&manager_)))) {
-        manager_ = nullptr;
-        managerFailed_ = true;
-      }
-    }
-    if (!manager_) return {};
-    GUID id = {};
-    if (FAILED(manager_->GetWindowDesktopId(hwnd, &id)) || IsEqualGUID(id, GUID_NULL)) return {};
-    wchar_t text[64] = {};
-    if (StringFromGUID2(id, text, 64) == 0) return {};
-    return QString::fromWCharArray(text).toUpper();
-  }
-
-  kernel::ComScope com_;
-  IVirtualDesktopManager* manager_ = nullptr;
-  bool managerFailed_ = false;
 };
 
 }  // namespace
@@ -214,5 +201,23 @@ std::unique_ptr<WindowPlacer> makeWin32WindowPlacer() {
 }
 
 bool processIsElevated() { return tokenElevated(GetCurrentProcess()); }
+
+QString runningWindowManager() {
+  HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (snapshot == INVALID_HANDLE_VALUE) return {};
+  QString found;
+  PROCESSENTRY32W entry = {};
+  entry.dwSize = sizeof(entry);
+  for (BOOL ok = Process32FirstW(snapshot, &entry); ok && found.isEmpty();
+       ok = Process32NextW(snapshot, &entry)) {
+    if (_wcsicmp(entry.szExeFile, L"komorebi.exe") == 0) {
+      found = QStringLiteral("komorebi");
+    } else if (_wcsicmp(entry.szExeFile, L"glazewm.exe") == 0) {
+      found = QStringLiteral("glazewm");
+    }
+  }
+  CloseHandle(snapshot);
+  return found;
+}
 
 }  // namespace waku::tiling

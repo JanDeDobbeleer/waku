@@ -2,15 +2,14 @@
 
 #include <QtQml/qqmlregistration.h>
 
+#include <QElapsedTimer>
 #include <QObject>
-#include <QPointer>
 #include <QString>
 #include <QStringList>
 #include <QTimer>
 #include <QVariantList>
 #include <functional>
 #include <memory>
-#include <vector>
 
 #include "features/tiling/tiling_command.h"
 #include "features/tiling/tiling_engine.h"
@@ -39,8 +38,9 @@ namespace waku::tiling {
 //             No rule ships by default beyond the built-in splash and shell classes
 //   active    true while the tiler runs: enabled, on the live desktop and no other tiler present
 //
-// The tiler stays inert (`active` false, no hook) while komorebi.exe runs or komorebi or GlazeWM is
-// connected, and starts by itself when they go away. A shell turns it on with
+// The tiler stays inert (`active` false, no hook) while komorebi.exe or glazewm.exe runs, and
+// starts by itself when they go away (a check every few seconds; no other service is started). A
+// shell turns it on with
 //   Component.onCompleted: { Tiling.enabled = true }
 // The `tile` verb of `wakuc` drives the same functions (tiling_command.h).
 class Tiling : public QObject, public TilingControl {
@@ -54,6 +54,7 @@ class Tiling : public QObject, public TilingControl {
   Q_PROPERTY(QVariantList rules READ rules WRITE setRules NOTIFY rulesChanged FINAL)
   Q_PROPERTY(bool active READ active NOTIFY activeChanged FINAL)
   Q_PROPERTY(QStringList layouts READ layouts CONSTANT FINAL)
+  Q_PROPERTY(QString currentLayout READ currentLayout NOTIFY currentLayoutChanged FINAL)
 
  public:
   // Everything the service needs from the machine. A null placer or hooks (the offscreen
@@ -62,8 +63,9 @@ class Tiling : public QObject, public TilingControl {
     std::unique_ptr<WindowPlacer> placer;
     std::unique_ptr<TilingHooks> hooks;
     std::unique_ptr<Scheduler> scheduler;
-    // True while a window manager that tiles runs (komorebi.exe). Null: none does.
-    std::function<bool()> komorebiRunning;
+    // The name of the window manager that tiles and runs ("komorebi", "glazewm"), or empty. Null:
+    // none does. The service asks at most every few seconds.
+    std::function<QString()> blocker;
     bool selfElevated = false;
     bool watchScreens = true;
     int screenDebounceMs = 400;
@@ -73,7 +75,7 @@ class Tiling : public QObject, public TilingControl {
   explicit Tiling(QObject* parent = nullptr);
   Tiling(Deps deps, QObject* parent);
   ~Tiling() override;
-  // The engine's own singleton; also watches the Komorebi and GlazeWM singletons.
+  // The engine's own singleton.
   static Tiling* create(QQmlEngine* engine, QJSEngine* scriptEngine);
 
   bool enabled() const { return enabled_; }
@@ -88,6 +90,9 @@ class Tiling : public QObject, public TilingControl {
   void setRules(const QVariantList& rules);
   bool active() const { return active_; }
   QStringList layouts() const;
+  // The layout of the workspace in front (the focused window's desktop and monitor); empty while
+  // the tiler is not active. Follows the focus and every layout change.
+  QString currentLayout() const { return currentLayout_; }
 
   // Floats a tiled focused window, or tiles a floating one.
   Q_INVOKABLE void toggleFloat();
@@ -95,13 +100,11 @@ class Tiling : public QObject, public TilingControl {
   Q_INVOKABLE void retile();
   // Sets the layout of the focused window's workspace; false for an unknown name.
   Q_INVOKABLE bool setLayout(const QString& name);
+  // Steps the layout of the focused workspace through layouts(): 1 next, -1 previous. Returns the
+  // new layout, or empty when the tiler is not active.
+  Q_INVOKABLE QString cycleLayout(int step = 1);
   Q_INVOKABLE void focusNext();
   Q_INVOKABLE void focusPrevious();
-
-  // Re-reads the tiler's right to run whenever `manager` (a window manager singleton with a
-  // `connected` property and a `changed()` signal: Komorebi, GlazeWM) changes, and yields while it
-  // is connected. The service finds the two singletons itself on the first `enabled = true`.
-  void watch(QObject* manager, const QString& name);
 
   // Why the tiler yields: "komorebi", "glazewm" or empty.
   QString blockedBy() const;
@@ -130,8 +133,8 @@ class Tiling : public QObject, public TilingControl {
   QString controlMinimize() override;
 
  public slots:
-  // Re-reads whether the tiler may run: after `enabled` changes and when the Komorebi or GlazeWM
-  // singleton changes.
+  // Re-reads whether the tiler may run: after `enabled` changes and every few seconds while it is
+  // on (a window manager that starts or stops).
   void reevaluate();
   // A screen was added, removed or changed its work area: retile after a short wait.
   void screensChanged();
@@ -143,13 +146,14 @@ class Tiling : public QObject, public TilingControl {
   void ratioChanged();
   void rulesChanged();
   void activeChanged();
+  void currentLayoutChanged();
 
  private:
   void init(Deps deps);
   void onEvent(const WindowEvent& event);
   void pushSettings();
+  void refreshCurrentLayout();
   void watchScreen(QScreen* screen);
-  void watchSingletons();
   QString notActive() const;
   // Runs an engine command when the tiler is active; the answer line.
   QString run(const std::function<CommandResult(TilingEngine&)>& command);
@@ -158,20 +162,17 @@ class Tiling : public QObject, public TilingControl {
   std::unique_ptr<TilingHooks> hooks_;
   std::unique_ptr<Scheduler> scheduler_;
   std::unique_ptr<TilingEngine> engine_;
-  std::function<bool()> komorebiRunning_;
+  std::function<QString()> blocker_;
+  QString currentLayout_;
   QTimer screenTimer_;
+  QTimer blockerTimer_;  // while enabled: look again for a window manager
+  mutable QString blockedBy_;
+  mutable QElapsedTimer blockedAge_;  // invalid until the first check
   TilingSettings settings_;
   QVariantList rules_;
   bool enabled_ = false;
   bool active_ = false;
   bool watchScreens_ = true;
-  QPointer<QQmlEngine> qmlEngine_;
-  struct Manager {
-    QPointer<QObject> object;
-    QString name;  // "komorebi" or "glazewm"
-  };
-  std::vector<Manager> managers_;  // the Komorebi and GlazeWM singletons
-  bool singletonsWatched_ = false;
 };
 
 }  // namespace waku::tiling

@@ -189,9 +189,10 @@ class TilingEngine {
   bool running_ = false;
   bool paused_ = false;
   QString currentDesktop_;
-  // Windows that were looked at and rejected; the value is true when the reason was a missing
-  // title, so a title change looks again.
-  std::map<WindowId, bool> ignored_;
+  // Windows that were looked at and rejected, and why. A later Show looks again unless the verdict
+  // is Lasting; a title change looks again only at an Untitled one.
+  enum class Ignored { Lasting, Untitled, Transient };
+  std::map<WindowId, Ignored> ignored_;
   std::set<WindowId> pending_;        // an evaluation is scheduled
   std::set<WindowId> moving_;         // the user drags or resizes it
   std::map<WindowId, QRect> placed_;  // the visible bounds the window had when we last looked

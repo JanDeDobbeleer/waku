@@ -95,6 +95,9 @@ manager; `Workspaces` maps it to `provider: "windows"`.
   desktop was shown, Windows lands on the fallback. There is no keystroke fallback (Win+Ctrl+F4
   shows the desktop first), so without the shell interface `canRemove` is false.
 - **Rename.** `rename(index, name)` calls `SetDesktopName`; the same rules as close.
+- **Shell changes.** The edits that make a ported shell use the `windows` provider live with that
+  shell, in its config home, not here (a ported shell under a copyleft licence stays out of this
+  repository).
 
 ## Shell interface
 

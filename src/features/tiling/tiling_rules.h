@@ -51,6 +51,9 @@ enum class Verdict {
 struct Eligibility {
   Verdict verdict = Verdict::Ignore;
   QString reason;  // short, for the log and the tests
+  // An Ignore that holds for the life of the window (a tool window stays one). The others depend on
+  // a state that can change (hidden, maximized), so a later Show looks again.
+  bool lasting = false;
 };
 
 // Whether a window belongs to the tiler. A window is managed unless it is: not visible, cloaked,

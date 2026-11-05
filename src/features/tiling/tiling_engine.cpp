@@ -97,15 +97,21 @@ void TilingEngine::handle(const WindowEvent& event) {
   const WindowId hwnd = event.hwnd;
   switch (event.kind) {
     case EventKind::Show:
-    case EventKind::MinimizeEnd:
-      if (!model_.contains(hwnd)) scheduleEvaluate(hwnd, 0, 0, false);
+    case EventKind::MinimizeEnd: {
+      // Tooltips, menus and other transient windows show all the time: skip those that were
+      // rejected for good.
+      if (model_.contains(hwnd)) break;
+      const auto rejected = ignored_.find(hwnd);
+      if (rejected != ignored_.end() && rejected->second == Ignored::Lasting) break;
+      scheduleEvaluate(hwnd, 0, 0, false);
       break;
+    }
     case EventKind::NameChange: {
       // Frequent (terminals and browsers rename their windows all the time): look again only at a
       // window that is new to the tiler or was rejected for want of a title.
       if (model_.contains(hwnd) || model_.isFloating(hwnd)) break;
       const auto rejected = ignored_.find(hwnd);
-      if (rejected != ignored_.end() && !rejected->second) break;
+      if (rejected != ignored_.end() && rejected->second != Ignored::Untitled) break;
       scheduleEvaluate(hwnd, 0, 0, false);
       break;
     }
@@ -121,7 +127,8 @@ void TilingEngine::handle(const WindowEvent& event) {
       if (model_.contains(hwnd)) defer(kCloakSettleMs, [this, hwnd] { onCloaked(hwnd); });
       break;
     case EventKind::Hide: {
-      const std::optional<WindowFacts> facts = placer_.query(hwnd);
+      if (!model_.contains(hwnd)) break;  // most hides are of windows the tiler never held
+      const std::optional<WindowFacts> facts = placer_.state(hwnd);
       if (facts && facts->visible) break;  // a hide of a child or a transient state
       forget(hwnd, false);
       break;
@@ -176,13 +183,13 @@ void TilingEngine::onMoveSizeStart(WindowId hwnd) {
   if (!model_.contains(hwnd)) return;
   moving_.insert(hwnd);
   // The bounds now are what the end is compared with: a clamped window counts as unmoved.
-  if (const std::optional<WindowFacts> facts = placer_.query(hwnd)) placed_[hwnd] = facts->rect;
+  if (const std::optional<WindowFacts> facts = placer_.state(hwnd)) placed_[hwnd] = facts->rect;
 }
 
 void TilingEngine::onMoveSizeEnd(WindowId hwnd) {
   if (moving_.erase(hwnd) == 0 || !model_.contains(hwnd)) return;
   if (paused_) return;  // nothing was placed, so there is nothing to compare with
-  const std::optional<WindowFacts> facts = placer_.query(hwnd);
+  const std::optional<WindowFacts> facts = placer_.state(hwnd);
   const std::optional<WorkspaceKey> key = model_.keyOf(hwnd);
   if (!facts) {
     forget(hwnd, true);
@@ -219,7 +226,7 @@ void TilingEngine::evaluate(WindowId hwnd, int attempt, bool force) {
   const Eligibility eligibility = classify(*facts, settings_.rules, settings_.selfElevated, force);
   switch (eligibility.verdict) {
     case Verdict::Ignore:
-      ignored_[hwnd] = false;
+      ignored_[hwnd] = eligibility.lasting ? Ignored::Lasting : Ignored::Transient;
       break;
     case Verdict::Float:
       ignored_.erase(hwnd);
@@ -229,7 +236,8 @@ void TilingEngine::evaluate(WindowId hwnd, int attempt, bool force) {
       if (attempt < kMaxRetries) {
         scheduleEvaluate(hwnd, kRetryMs, attempt + 1, force);
       } else {
-        ignored_[hwnd] = eligibility.reason == QLatin1String("untitled");
+        ignored_[hwnd] = eligibility.reason == QLatin1String("untitled") ? Ignored::Untitled
+                                                                         : Ignored::Transient;
       }
       break;
     case Verdict::Manage: {
@@ -308,7 +316,7 @@ void TilingEngine::retile(const WorkspaceKey& key) {
     std::vector<WindowId> hidden;
     bool topActive = false;
     for (const WindowId hwnd : slot.windows) {
-      const std::optional<WindowFacts> facts = placer_.query(hwnd);
+      const std::optional<WindowFacts> facts = placer_.state(hwnd);
       if (!facts) {
         forget(hwnd, true);
         continue;
@@ -358,7 +366,7 @@ void TilingEngine::retile(const WorkspaceKey& key) {
     if (!result.ok) {
       // It refused (elevated, gone): leave it alone from now on.
       forget(hwnd, false);
-      ignored_[hwnd] = false;
+      ignored_[hwnd] = Ignored::Lasting;
       return;
     }
     // A window that clamped keeps its slot and leaves a gap; its achieved bounds are what the
@@ -398,7 +406,7 @@ void TilingEngine::raiseNewTops(const WorkspaceKey& key, const std::vector<Windo
 void TilingEngine::verifyPlacements(const std::vector<std::pair<WindowId, QRect>>& placed) {
   for (const auto& [hwnd, slot] : placed) {
     if (!model_.contains(hwnd) || moving_.count(hwnd)) continue;
-    const std::optional<WindowFacts> facts = placer_.query(hwnd);
+    const std::optional<WindowFacts> facts = placer_.state(hwnd);
     if (!facts) continue;
     placed_[hwnd] = facts->rect;
     // No second placement: a window that cannot take its slot keeps what it took.
@@ -545,7 +553,7 @@ std::optional<TilingEngine::Focused> TilingEngine::focusedManaged() const {
 std::vector<WindowId> TilingEngine::activeWindows(const WorkspaceKey& key) {
   std::vector<WindowId> active;
   for (const WindowId hwnd : model_.stack(key)) {
-    const std::optional<WindowFacts> facts = placer_.query(hwnd);
+    const std::optional<WindowFacts> facts = placer_.state(hwnd);
     if (!facts || !facts->visible || facts->iconic || facts->zoomed || facts->cloaked) continue;
     active.push_back(hwnd);
   }

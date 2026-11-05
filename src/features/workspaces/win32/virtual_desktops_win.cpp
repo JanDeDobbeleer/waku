@@ -10,6 +10,7 @@
 // and the keystroke stay as the fallback for switch and create, and remove has none.
 #include <Windows.h>
 #include <ShObjIdl.h>
+#include <dwmapi.h>
 
 #include <QByteArray>
 #include <QDebug>
@@ -67,14 +68,42 @@ bool countsAsWindow(HWND hwnd) {
          wcscmp(cls, L"Shell_TrayWnd") != 0 && wcscmp(cls, L"Shell_SecondaryTrayWnd") != 0;
 }
 
+QString guidKey(const GUID& id) {
+  wchar_t text[64] = {};
+  if (StringFromGUID2(id, text, 64) == 0) return {};
+  return QString::fromWCharArray(text).toUpper();
+}
+
 constexpr wchar_t kAnchorClass[] = L"WakuVirtualDesktopAnchor";
 constexpr UINT_PTR kHideTimer = 1;
 constexpr UINT kHideAfterMs = 700;  // the switch animation has ended
+
+// The anchor held the focus during the switch. When it goes away, the top window of the shown
+// desktop takes it, so the keyboard does not land on whatever Windows picks.
+void focusTopWindow() {
+  struct Found {
+    HWND hwnd = nullptr;
+  } found;
+  EnumWindows(
+      [](HWND hwnd, LPARAM param) -> BOOL {
+        DWORD cloaked = 0;
+        if (!countsAsWindow(hwnd) || IsIconic(hwnd) ||
+            (SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked))) &&
+             cloaked != 0)) {
+          return TRUE;
+        }
+        reinterpret_cast<Found*>(param)->hwnd = hwnd;
+        return FALSE;
+      },
+      reinterpret_cast<LPARAM>(&found));
+  if (found.hwnd) SetForegroundWindow(found.hwnd);
+}
 
 LRESULT CALLBACK anchorProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
   if (message == WM_TIMER && wParam == kHideTimer) {
     KillTimer(hwnd, kHideTimer);
     ShowWindow(hwnd, SW_HIDE);
+    focusTopWindow();
     return 0;
   }
   return DefWindowProcW(hwnd, message, wParam, lParam);
@@ -82,6 +111,7 @@ LRESULT CALLBACK anchorProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
 class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
  public:
+  Win32VirtualDesktopSystem() : com_(kernel::ComApartment::SingleThreaded) {}
   ~Win32VirtualDesktopSystem() override {
     if (anchor_) DestroyWindow(anchor_);
     if (manager_) manager_->Release();
@@ -365,7 +395,6 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
 
   IVirtualDesktopManager* manager() {
     if (!manager_ && !failed_) {
-      const kernel::ComScope com(kernel::ComApartment::SingleThreaded);
       if (FAILED(CoCreateInstance(__uuidof(VirtualDesktopManager), nullptr, CLSCTX_INPROC_SERVER,
                                   IID_PPV_ARGS(&manager_)))) {
         manager_ = nullptr;
@@ -388,10 +417,8 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
           if (!countsAsWindow(hwnd)) return TRUE;
           Desktop* owner = nullptr;
           GUID id = {};
-          wchar_t text[64] = {};
-          if (SUCCEEDED(c->manager->GetWindowDesktopId(hwnd, &id)) &&
-              StringFromGUID2(id, text, 64) != 0) {
-            const QString key = QString::fromWCharArray(text).toUpper();
+          if (SUCCEEDED(c->manager->GetWindowDesktopId(hwnd, &id))) {
+            const QString key = guidKey(id);
             for (Desktop& desktop : c->state->desktops) {
               if (desktop.id == key) {
                 owner = &desktop;
@@ -420,6 +447,7 @@ class Win32VirtualDesktopSystem final : public VirtualDesktopSystem {
     }
   }
 
+  kernel::ComScope com_;  // before manager_: the apartment outlives the interface
   IVirtualDesktopManager* manager_ = nullptr;
   bool failed_ = false;
   HWND anchor_ = nullptr;
@@ -440,6 +468,32 @@ std::optional<QString> currentDesktopId() {
   const QStringList ids = parseDesktopIds(*current);
   if (ids.isEmpty()) return std::nullopt;
   return ids.first();
+}
+
+std::optional<QString> windowDesktopId(quint64 hwnd) {
+  // One interface for the life of the process (a leaked pointer, so no teardown order to get
+  // wrong). The apartment is the GUI thread's; the scope keeps it open for a caller without one.
+  struct Manager {
+    kernel::ComScope com{kernel::ComApartment::SingleThreaded};
+    IVirtualDesktopManager* manager = nullptr;
+  };
+  static Manager* shared = [] {
+    auto* created = new Manager;
+    if (FAILED(CoCreateInstance(__uuidof(VirtualDesktopManager), nullptr, CLSCTX_INPROC_SERVER,
+                                IID_PPV_ARGS(&created->manager)))) {
+      created->manager = nullptr;
+    }
+    return created;
+  }();
+  if (!shared->manager) return std::nullopt;
+  GUID id = {};
+  const HWND window = reinterpret_cast<HWND>(static_cast<quintptr>(hwnd));
+  if (FAILED(shared->manager->GetWindowDesktopId(window, &id)) || IsEqualGUID(id, GUID_NULL)) {
+    return std::nullopt;
+  }
+  const QString key = guidKey(id);
+  if (key.isEmpty()) return std::nullopt;
+  return key;
 }
 
 std::unique_ptr<VirtualDesktopSystem> makeWin32VirtualDesktopSystem() {

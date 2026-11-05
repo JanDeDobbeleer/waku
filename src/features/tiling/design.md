@@ -84,10 +84,10 @@ same Qt signals `KomorebiWorkAreaGuard` uses) retile after 400 ms.
 
 ## Coexistence
 
-`Tiling.active` is false, and no hook is installed, while `komorebi.exe` runs (the backend function
-of `workspaces/komorebi.h`) or the Komorebi or GlazeWM singleton is connected. The service finds
-the two singletons by name on the first `enabled = true` and re-evaluates when either changes, so
-it starts by itself when the other tiler quits and stops when it starts. Snap Layouts and Snap
+`Tiling.active` is false, and no hook is installed, while `komorebi.exe` or `glazewm.exe` runs. One
+process listing (`runningWindowManager`) answers; the service keeps the answer for 3 s and asks
+again every 5 s while enabled, so it starts by itself when the other tiler quits and stops when it
+starts. It starts no Komorebi or GlazeWM client for this. Snap Layouts and Snap
 Assist are not suppressed: a window the user snaps by mouse floats (move and size end), which is
 the coexistence rule for them.
 

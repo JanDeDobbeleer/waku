@@ -10,7 +10,6 @@
 
 #include "features/tiling/layouts.h"
 #include "features/tiling/tiling_rules.h"
-#include "features/workspaces/komorebi.h"
 #include "kernel/qt/live_desktop.h"
 
 namespace waku::tiling {
@@ -23,11 +22,12 @@ Tiling::Deps liveDeps() {
   deps.hooks = makeWin32TilingHooks();
   deps.scheduler = makeQtScheduler();
   deps.selfElevated = processIsElevated();
-  const workspaces::komorebi::KomorebiBackend backend =
-      workspaces::komorebi::defaultKomorebiBackend();
-  deps.komorebiRunning = [running = backend.isKomorebiRunning] { return running && running(); };
+  deps.blocker = [] { return runningWindowManager(); };
   return deps;
 }
+
+constexpr int kBlockerCheckMs = 5000;
+constexpr qint64 kBlockerCacheMs = 3000;
 
 QString yesNo(bool value) { return value ? QStringLiteral("yes") : QStringLiteral("no"); }
 
@@ -46,9 +46,11 @@ void Tiling::init(Deps deps) {
   placer_ = std::move(deps.placer);
   hooks_ = std::move(deps.hooks);
   scheduler_ = std::move(deps.scheduler);
-  komorebiRunning_ = std::move(deps.komorebiRunning);
+  blocker_ = std::move(deps.blocker);
   settings_.selfElevated = deps.selfElevated;
   watchScreens_ = deps.watchScreens;
+  blockerTimer_.setInterval(kBlockerCheckMs);
+  connect(&blockerTimer_, &QTimer::timeout, this, &Tiling::reevaluate);
   if (placer_ && scheduler_) engine_ = std::make_unique<TilingEngine>(*placer_, *scheduler_);
 
   screenTimer_.setSingleShot(true);
@@ -66,11 +68,7 @@ void Tiling::init(Deps deps) {
   }
 }
 
-Tiling* Tiling::create(QQmlEngine* engine, QJSEngine*) {
-  auto* tiling = new Tiling(nullptr);
-  tiling->qmlEngine_ = engine;
-  return tiling;
-}
+Tiling* Tiling::create(QQmlEngine*, QJSEngine*) { return new Tiling(nullptr); }
 
 void Tiling::watchScreen(QScreen* screen) {
   connect(screen, &QScreen::availableGeometryChanged, this, &Tiling::screensChanged);
@@ -83,37 +81,20 @@ void Tiling::screensChanged() {
 
 // --- coexistence
 
-void Tiling::watch(QObject* manager, const QString& name) {
-  if (!manager) return;
-  managers_.push_back({manager, name});
-  connect(manager, SIGNAL(changed()), this, SLOT(reevaluate()));
-}
-
-void Tiling::watchSingletons() {
-  if (singletonsWatched_ || !qmlEngine_) return;
-  singletonsWatched_ = true;
-  // Looked up by name and read as properties: the tiler needs no header of the workspaces' QML.
-  const std::pair<const char*, const char*> managers[] = {{"Komorebi", "komorebi"},
-                                                          {"GlazeWM", "glazewm"}};
-  for (const auto& [type, name] : managers) {
-    watch(qmlEngine_
-              ->singletonInstance<QJSValue>(QStringLiteral("waku.services"),
-                                            QString::fromLatin1(type))
-              .toQObject(),
-          QString::fromLatin1(name));
-  }
-}
-
+// A process listing is not free: the answer is kept for a few seconds, and reevaluate() (the timer,
+// `enabled`) asks for a fresh one.
 QString Tiling::blockedBy() const {
-  for (const Manager& manager : managers_) {
-    if (manager.object && manager.object->property("connected").toBool()) return manager.name;
+  if (!blocker_) return {};
+  if (!blockedAge_.isValid() || blockedAge_.hasExpired(kBlockerCacheMs)) {
+    blockedBy_ = blocker_();
+    blockedAge_.start();
   }
-  if (komorebiRunning_ && komorebiRunning_()) return QStringLiteral("komorebi");
-  return {};
+  return blockedBy_;
 }
 
 void Tiling::reevaluate() {
   try {
+    blockedAge_.invalidate();
     const bool want = enabled_ && engine_ && hooks_ && blockedBy().isEmpty();
     if (want == active_) return;
     if (want) {
@@ -130,6 +111,7 @@ void Tiling::reevaluate() {
       active_ = false;
     }
     emit activeChanged();
+    refreshCurrentLayout();
   } catch (const std::exception& e) {
     qWarning().noquote() << "tiling: reevaluate failed:" << e.what();
   }
@@ -138,6 +120,7 @@ void Tiling::reevaluate() {
 void Tiling::onEvent(const WindowEvent& event) {
   try {
     if (engine_) engine_->handle(event);
+    if (event.kind == EventKind::Foreground) refreshCurrentLayout();
   } catch (const std::exception& e) {
     qWarning().noquote() << "tiling: event failed:" << e.what();
   } catch (...) {
@@ -150,13 +133,25 @@ void Tiling::onEvent(const WindowEvent& event) {
 void Tiling::setEnabled(bool enabled) {
   if (enabled == enabled_) return;
   enabled_ = enabled;
-  if (enabled_) watchSingletons();
+  if (enabled_) {
+    blockerTimer_.start();
+  } else {
+    blockerTimer_.stop();
+  }
   emit enabledChanged();
   reevaluate();
 }
 
 void Tiling::pushSettings() {
   if (engine_) engine_->setSettings(settings_);
+  refreshCurrentLayout();
+}
+
+void Tiling::refreshCurrentLayout() {
+  const QString now = active_ && engine_ ? engine_->currentLayout() : QString();
+  if (now == currentLayout_) return;
+  currentLayout_ = now;
+  emit currentLayoutChanged();
 }
 
 void Tiling::setLayoutName(const QString& name) {
@@ -210,7 +205,16 @@ void Tiling::retile() {
 }
 
 bool Tiling::setLayout(const QString& name) {
-  return active_ && engine_ && engine_->setWorkspaceLayout(name);
+  const bool ok = active_ && engine_ && engine_->setWorkspaceLayout(name);
+  refreshCurrentLayout();
+  return ok;
+}
+
+QString Tiling::cycleLayout(int step) {
+  if (!active_ || !engine_) return {};
+  const CommandResult result = engine_->cycleLayout(step);
+  refreshCurrentLayout();
+  return result.message;
 }
 
 void Tiling::focusNext() {
@@ -257,15 +261,18 @@ QString Tiling::controlLayout(const QString& name) {
     return QStringLiteral("error: unknown layout '%1' (%2)")
         .arg(name, layouts().join(QLatin1String(", ")));
   }
+  refreshCurrentLayout();
   return QStringLiteral("ok: layout %1").arg(canonicalLayout(name));
 }
 
 QString Tiling::controlLayoutStep(int step) {
-  return run([step](TilingEngine& e) {
+  const QString answer = run([step](TilingEngine& e) {
     CommandResult result = e.cycleLayout(step);
     result.message = QStringLiteral("layout %1").arg(result.message);
     return result;
   });
+  refreshCurrentLayout();
+  return answer;
 }
 
 QString Tiling::controlRetile() {
