@@ -8,7 +8,7 @@
 
 namespace waku::color_scheme {
 
-// The scheme variants of material-color-utilities (the 2021 colour spec) that caelestia offers.
+// The scheme variants of material-color-utilities (the 2021 colour spec) that celeste offers.
 enum class Variant {
   TonalSpot,
   Vibrant,
@@ -103,7 +103,7 @@ enum class Role {
   Count_,
 };
 
-// The role's name as caelestia and materialyoucolor write it: "primary", "onPrimary",
+// The role's name as celeste and materialyoucolor write it: "primary", "onPrimary",
 // "surfaceContainerHigh", "primaryFixedDim", "primary_paletteKeyColor".
 std::string_view roleName(Role role);
 

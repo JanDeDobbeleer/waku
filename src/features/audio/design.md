@@ -19,7 +19,7 @@ Output and input volume, mute and default-device switching (Python `AudioOutputS
 ## Per-app streams
 
 `AudioStreams` (QML singleton) lists the audio sessions of the default output device, the apps in
-the Windows volume mixer, for QML written against `Quickshell.Services.Pipewire` (caelestia
+the Windows volume mixer, for QML written against `Quickshell.Services.Pipewire` (celeste
 `services/Audio.qml` reads `Audio.streams`, `stream.audio.volume`, `stream.audio.muted`,
 `stream.properties["application.name"]`, `stream.description`).
 

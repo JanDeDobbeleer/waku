@@ -27,7 +27,7 @@ ShellRoot {
                 color: "transparent"
                 WlrLayershell.layer: WlrLayer.Overlay
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-                WlrLayershell.namespace: "caelestia-bar"
+                WlrLayershell.namespace: "celeste-bar"
 
                 Item {
                     id: anchorItem
@@ -51,7 +51,7 @@ ShellRoot {
   auto* panel = qobject_cast<PanelWindow*>(h.shellWindow());
   ASSERT_NE(panel, nullptr);
   EXPECT_EQ(panel->layer(), WlrLayer::Overlay);
-  EXPECT_EQ(panel->layerNamespace(), QStringLiteral("caelestia-bar"));
+  EXPECT_EQ(panel->layerNamespace(), QStringLiteral("celeste-bar"));
   EXPECT_EQ(panel->exclusionMode(), ExclusionMode::Ignore);
   QQuickItem* item = findItem(h.window(), QStringLiteral("anchorItem"));
   ASSERT_NE(item, nullptr);

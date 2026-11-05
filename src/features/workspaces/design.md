@@ -68,7 +68,7 @@ callbacks are marshalled to it.
 - **Create.** `switchTo` with the index just past the last desktop (below 20) creates the next
   one and shows it. With the shell interface, `CreateDesktop` makes it without showing it and the
   service then jumps to it; without, one Win+Ctrl+D (the only call Windows documents) does both. A
-  shell draws one spare dot for it (Caelestia).
+  shell draws one spare dot for it (Celeste).
 - **Close.** `remove(index)` (`Workspaces.remove(monitor, id)` for a shell): `RemoveDesktop(desktop,
   fallback)`, no visible switch. The windows go to `removalFallbackIndex(count, index)`: the left
   neighbour, the first desktop's to the right one; the last desktop is never closed. If the closed

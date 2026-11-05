@@ -1,6 +1,6 @@
 # apps
 
-The app catalogue for a launcher, in Quickshell's shape so a ported launcher (caelestia) loads.
+The app catalogue for a launcher, in Quickshell's shape so a ported launcher (celeste) loads.
 
 ## What it gives QML
 

@@ -320,7 +320,7 @@ alone does not click through, but `WS_EX_LAYERED | WS_EX_TRANSPARENT` does, and
   rectangle or an ellipse, or the bounds of `item` mapped to the window), then each child folded in
   order by its `Intersection` (Combine = union, Intersect, Xor, Subtract). The root's own
   `Intersection` combines it with the window rectangle (`regionContainsInWindow`): Combine uses the
-  root alone, the others give `window <op> root`, so a root `Xor` (Caelestia) takes input outside
+  root alone, the others give `window <op> root`, so a root `Xor` (Celeste) takes input outside
   the inner area plus inside the open panels. An empty `Region {}` contains nothing, so the window
   is fully click-through; no `mask` means the whole window takes input.
 - The cursor comes from `ShellHost::NativeHooks::cursorPosition`. `win32()` sets it only when
@@ -446,7 +446,7 @@ No new singleton without a row here and a reason.
 
 | What | Where | Notes |
 |---|---|---|
-| working set trim | `src/host/qml/shell_host.*`, `src/host/win32/shell_host_win32.cpp` | `ShellHost::install()` starts a single-shot GUI-thread `QTimer` (5 s); when it fires and the window count has not grown since the previous look (install, then each tick) it calls `NativeHooks::trimWorkingSet` (`SetProcessWorkingSetSizeEx(-1, -1)`, documented API), else it waits another 5 s. A shell that shows windows late (noctalia) is trimmed once they stop appearing. Live desktop only. Idle working set of the sample shell 114 MB to 29 MB, no climb back in 60 s |
+| working set trim | `src/host/qml/shell_host.*`, `src/host/win32/shell_host_win32.cpp` | `ShellHost::install()` starts a single-shot GUI-thread `QTimer` (5 s); when it fires and the window count has not grown since the previous look (install, then each tick) it calls `NativeHooks::trimWorkingSet` (`SetProcessWorkingSetSizeEx(-1, -1)`, documented API), else it waits another 5 s. A shell that shows windows late (octalia) is trimmed once they stop appearing. Live desktop only. Idle working set of the sample shell 114 MB to 29 MB, no climb back in 60 s |
 | start-up trace clock | `src/host/startup_trace.{h,cpp}` | one `QElapsedTimer` started at the top of `main()` and a flag read once from `WAKU_TRACE`; `traceStep()` logs the milliseconds since start for each start-up and reload step. GUI thread only; does nothing unless `WAKU_TRACE=1` |
 | media source-app name cache, shell-app cache | `src/features/media/win32/media_source_apps.cpp` (names), `src/kernel/win32/app_activation.cpp` (shell-app cache) | AUMID to display name; `QMutex`-guarded, written from the media session thread only |
 | `waku.services.Systray` | `src/features/tray/qml/systray.{h,cpp}` | the one tray host of a `waku` run (the hook in Explorer), shared by every Tray widget of the bar; created by the QML engine on first use and destroyed with it, which stops the host. |

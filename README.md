@@ -54,7 +54,7 @@ ShellRoot {
 ## Shells
 
 waku is Quickshell-compatible, so shells written for Quickshell run with few changes. Ready-made
-shells ported to Windows (Caelestia, Noctalia, Omarchy) are in
+shells ported to Windows (Celeste, Octalia, Nomarchy) are in
 [waku-ports](https://github.com/JanDeDobbeleer/waku-ports). Copy one into your config home. What
 differs from Quickshell is in [docs/shells.md](docs/shells.md).
 

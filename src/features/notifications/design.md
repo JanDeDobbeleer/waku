@@ -20,7 +20,7 @@ concept; control_center reads it through `DEPENDS notifications`.
 
 ## Feed (Quickshell.Services.Notifications)
 
-For QML written against `Quickshell.Services.Notifications` (caelestia `services/Notifs.qml`,
+For QML written against `Quickshell.Services.Notifications` (celeste `services/Notifs.qml`,
 `NotifData.qml`). The `Notifications` singleton and the feed share one `NotificationService`
 (`acquireNotificationService()`), so the listener runs once.
 

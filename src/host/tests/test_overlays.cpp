@@ -455,7 +455,7 @@ ShellRoot {
 }
 
 TEST(OverlayControl, AWindowComponentWithItsOwnRequiredNameIsFoundByThatName) {
-  // Caelestia's StyledWindow declares `required property string name`, which shadows waku's.
+  // Celeste's StyledWindow declares `required property string name`, which shadows waku's.
   Harness h;
   write(h.dir.filePath(QStringLiteral("StyledWindow.qml")), QStringLiteral(R"(
 import waku
@@ -553,7 +553,7 @@ TEST(OverlayExample, TheLauncherLoadsHiddenAndTogglesThroughTheHostAndTheHandler
 }
 
 TEST(OverlayControl, AWindowComponentMayRedeclareScreenContentItemAndHideDelay) {
-  // Noctalia's popup windows declare their own `screen`, `contentItem` and `hideDelay`; the engine
+  // Octalia's popup windows declare their own `screen`, `contentItem` and `hideDelay`; the engine
   // lets them shadow its properties instead of refusing to load the file.
   Harness h;
   write(h.dir.filePath(QStringLiteral("MenuWindow.qml")), QStringLiteral(R"(

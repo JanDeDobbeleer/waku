@@ -46,7 +46,7 @@ opens its adapters for the temperature once and keeps them until it goes.
   drive's map. Fixed, removable and optical drives are listed; network drives are not, so an
   unreachable share cannot stall the sample. `SEM_FAILCRITICALERRORS` keeps an empty card reader
   from raising a dialog. Volumes with 0 total bytes (empty optical drives) are skipped.
-- Names follow caelestia's `Gpu` (`percentage`, `name`) and `DiskInfo` (`mount`, `used`, `total`,
+- Names follow celeste's `Gpu` (`percentage`, `name`) and `DiskInfo` (`mount`, `used`, `total`,
   `free`, `perc`, `hasRoot`). Sizes are bytes.
 
 ## Temperatures

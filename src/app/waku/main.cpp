@@ -57,13 +57,13 @@ int main(int argc, char* argv[]) {
   QQuickWindow::setDefaultAlphaBuffer(true);
   // Qt Quick draws 2D content as well without a depth buffer: the renderer then draws opaque
   // batches back to front instead of sorting them by depth. Without it every window and every item
-  // layer saves a depth buffer at physical resolution: 52 MB with the caelestia port at 2880x1920
+  // layer saves a depth buffer at physical resolution: 52 MB with the celeste port at 2880x1920
   // (docs/reviews/2026-10-31-memory-profile.md). A shell that needs depth (Qt Quick 3D) starts
   // waku with QSG_NO_DEPTH_BUFFER=0.
   if (!qEnvironmentVariableIsSet("QSG_NO_DEPTH_BUFFER")) qputenv("QSG_NO_DEPTH_BUFFER", "1");
   // No texture atlas: every image gets its own texture. Qt packs small images into one atlas
   // texture per window (4096x2048, 32 MB, at 2880x1920) and uploads each new image into it. After
-  // a burst of such uploads (the caelestia launcher's app icons) the D3D11 driver on the Adreno X1
+  // a burst of such uploads (the celeste launcher's app icons) the D3D11 driver on the Adreno X1
   // holds 9-11 more atlas-sized allocations, about 290 MB of GPU memory, for the life of the
   // process (docs/reviews/2026-10-31-memory-profile.md, "Atlas copies"). A caller that wants the
   // atlas sets QSG_ATLAS_SIZE_LIMIT itself.

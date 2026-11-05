@@ -1,6 +1,6 @@
 # Windows gotchas
 
-Each item comes from real port work (caelestia, noctalia, omarchy). Read before you write layout,
+Each item comes from real port work (celeste, octalia, nomarchy). Read before you write layout,
 keys, launch code or panels.
 
 ## Services and types

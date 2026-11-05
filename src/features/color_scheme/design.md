@@ -21,11 +21,11 @@ and prefixes a particular shell expects are that shell's business, in its own QM
 
 - The engine is a re-implementation of material-color-utilities (Apache-2.0, see
   `THIRD_PARTY_NOTICES.md`), the 2021 colour spec: the one Android, Flutter and materialyoucolor
-  (which caelestia uses) ship by default.
+  (which celeste uses) ship by default.
 - Variants: `tonalspot`, `vibrant`, `expressive`, `neutral`, `monochrome`, `fidelity`, `content`,
   `rainbow`, `fruitsalad`. A name is matched without case, `_`, `-` or spaces.
 - `contrast` runs from -1 (reduced) over 0 (standard) to 1 (high) and is clamped to that range.
-- Role names follow caelestia and materialyoucolor: `primary`, `onPrimary`, `primaryContainer`,
+- Role names follow celeste and materialyoucolor: `primary`, `onPrimary`, `primaryContainer`,
   `surface`, `surfaceContainerLowest` to `surfaceContainerHighest`, `outline`, `outlineVariant`,
   `inverseSurface`, `scrim`, `shadow`, `surfaceTint`, `primaryFixed`, `onPrimaryFixedVariant`, the
   `secondary`, `tertiary` and `error` families, and `primary_paletteKeyColor` and its four siblings.
@@ -58,7 +58,7 @@ and prefixes a particular shell expects are that shell's business, in its own QM
   clusters as the start the result is the same colours in practice.
 - **Luminance is gamma-encoded.** "Is the wallpaper light or dark" wants mid grey to read as 0.5,
   which linear-light luminance does not give. If a ported shell needs linear Y it is a one-line
-  change in `meanLuminance`; the value caelestia's ImageAnalyser returns could not be checked here.
+  change in `meanLuminance`; the value celeste's ImageAnalyser returns could not be checked here.
 - **No `liveDesktop()`.** The service reads one file the caller names and touches nothing else.
 
 ## Dependencies
@@ -67,7 +67,7 @@ Qt Core, Gui (QImage, QImageReader) and `kernel` through the feature macro. No f
 
 ## Open points
 
-- caelestia also derives non-Material colours (terminal ANSI palette, success colour, blended
+- celeste also derives non-Material colours (terminal ANSI palette, success colour, blended
   variants of the seed). They are not part of material-color-utilities and are not here.
 - The 2025 colour spec (`SpecVersion.SPEC_2025`) is not ported.
 - `luminance()` decodes on the calling thread. A wallpaper change that must not stall the GUI

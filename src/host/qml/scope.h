@@ -20,10 +20,10 @@ class Scope : public QObject {
   Q_OBJECT
   QML_ELEMENT
   // The default property is not `data`: a shell that declares its own `data` on a Singleton
-  // (Noctalia's Settings) would otherwise have its children assigned to that read-only alias.
+  // (Octalia's Settings) would otherwise have its children assigned to that read-only alias.
   Q_CLASSINFO("DefaultProperty", "shellChildren")
   Q_PROPERTY(QQmlListProperty<QObject> shellChildren READ data FINAL)
-  // Not FINAL: a ported shell that declares its own `data` property (Noctalia's Settings) loads.
+  // Not FINAL: a ported shell that declares its own `data` property (Octalia's Settings) loads.
   Q_PROPERTY(QQmlListProperty<QObject> data READ data)
   // Quickshell's Reloadable id. Accepted so a shell can set it; waku keeps no state by it.
   Q_PROPERTY(QString reloadableId MEMBER reloadableId_ NOTIFY reloadableIdChanged)
