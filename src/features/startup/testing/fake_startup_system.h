@@ -33,8 +33,8 @@ class FakeStartupSystem final : public StartupSystem {
     return exeName == QStringLiteral("wakukeys.exe") ? keysPathResult : pathResult;
   }
   QString ownFolder() const override { return own; }
-  QString keysConfigPath() const override { return keysConfig; }
-  bool keysConfigExists() const override { return keysConfigPresent; }
+  QString keysConfigPath(const QString&) const override { return keysConfig; }
+  bool keysConfigExists(const QString&) const override { return keysConfigPresent; }
   TaskInfo queryTask(Task which) const override { return which == Task::Keys ? keysTask : task; }
 
   QString registerTask(Task which, const QString& arguments) override {

@@ -28,8 +28,8 @@ second task (`waku keys`) starts the keys daemon `wakukeys.exe`.
   no backup: a backup file in the Startup folder makes Windows ask which app opens it at sign-in.
 - The keys daemon task. `enable` registers it after the bar task, with the same trigger and
   settings. The action is the bare `wakukeys.exe` (PATH, like `waku.exe`; the MSIX has an alias)
-  with `--config <%USERPROFILE%\.config\waku\keys.conf>` and the `--config-home` the user gave.
-  It is registered only when that file exists: a user without a keys file gets one line saying so
+  with the `--config-home` the user gave (no `--config`: wakukeys reads `keys.conf` in that config
+  home, else in `%USERPROFILE%\.config\waku`). It is registered only when that file exists: a user without a keys file gets one line saying so
   and no task. When `wakukeys.exe` is not on the PATH the command warns and skips the task; the bar
   task stays registered and the exit code stays 0. A registration error of the keys task fails the
   command. `disable` removes both tasks, `status` reports both. There is no flag to leave the

@@ -2,6 +2,7 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QRegularExpression>
 
 namespace waku::startup {
 
@@ -53,11 +54,11 @@ using Task = StartupSystem::Task;
 
 // Registers the keys daemon task. Adds its lines to `result`; false on a registration error.
 bool enableKeys(StartupSystem& system, const StartupOptions& options, StartupResult& result) {
-  if (!system.keysConfigExists()) {
+  if (!system.keysConfigExists(options.configHome)) {
     result.lines << QStringLiteral(
                         "startup: keys daemon not registered, no keys file at %1 (create it and "
                         "run this command again)")
-                        .arg(QDir::toNativeSeparators(system.keysConfigPath()));
+                        .arg(QDir::toNativeSeparators(system.keysConfigPath(options.configHome)));
     return true;
   }
   const QString found = system.findOnPath(keysExeName());
@@ -164,6 +165,19 @@ StartupResult disableStartup(StartupSystem& system) {
   return result;
 }
 
+namespace {
+
+// The --config-home of a registered command line; empty when it has none.
+QString configHomeOf(const QString& arguments) {
+  static const QRegularExpression pattern(
+      QStringLiteral("--config-home\\s+(?:\"([^\"]+)\"|(\\S+))"));
+  const QRegularExpressionMatch match = pattern.match(arguments);
+  if (!match.hasMatch()) return {};
+  return match.captured(1).isEmpty() ? match.captured(2) : match.captured(1);
+}
+
+}  // namespace
+
 StartupResult startupStatus(StartupSystem& system) {
   StartupResult result;
   result.ok = true;
@@ -183,6 +197,7 @@ StartupResult startupStatus(StartupSystem& system) {
     result.lines << QStringLiteral("waku.exe: %1").arg(QDir::toNativeSeparators(found));
   }
   const StartupSystem::TaskInfo keys = system.queryTask(Task::Keys);
+  const QString configHome = configHomeOf(keys.arguments);
   if (!keys.registered) {
     result.lines << QStringLiteral("keys startup: not registered");
   } else {
@@ -198,9 +213,9 @@ StartupResult startupStatus(StartupSystem& system) {
                     .arg(QDir::toNativeSeparators(system.ownFolder()))
               : QStringLiteral("wakukeys.exe: %1").arg(QDir::toNativeSeparators(keysFound)));
   result.lines << QStringLiteral("keys file: %1 (%2)")
-                      .arg(QDir::toNativeSeparators(system.keysConfigPath()),
-                           system.keysConfigExists() ? QStringLiteral("found")
-                                                     : QStringLiteral("missing"));
+                      .arg(QDir::toNativeSeparators(system.keysConfigPath(configHome)),
+                           system.keysConfigExists(configHome) ? QStringLiteral("found")
+                                                               : QStringLiteral("missing"));
   return result;
 }
 

@@ -118,7 +118,7 @@ loads unchanged. Syntax, actions and decisions: `src/features/keymap/design.md`.
 
 | Command | Effect |
 |---|---|
-| `wakukeys [--config <file>] [--config-home <dir>] [--log-file <file>]` | Start the daemon. It returns at once and has no window. `--config` defaults to `%USERPROFILE%\.config\waku\keys.conf` if that file exists. One daemon per user; a second start exits with 1. Errors on start (no file, a bad first file) print to the terminal that ran it; otherwise read `--log-file`. |
+| `wakukeys [--config <file>] [--config-home <dir>] [--log-file <file>]` | Start the daemon. It returns at once and has no window. `--config` defaults to `keys.conf` in the config home (`--config-home`, else `%USERPROFILE%\.config\waku`) if that file exists. One daemon per user; a second start exits with 1. Errors on start (no file, a bad first file) print to the terminal that ran it; otherwise read `--log-file`. |
 | `wakukeys reload`, `stop`, `status` | Reload the file now (it also reloads when it changes; a bad file keeps the old bindings), stop the daemon, or print `ok: running; pid=P; bindings=N; conflicts=C; issues=I; paused=no; config=F`. They print to the console of the terminal and exit 0, 1 (error answer), 2 (no daemon running) or 3 (usage). A shell prompt does not wait for a GUI program, so the exit code and the answer reach you only when the output is read: in PowerShell pipe it (`wakukeys status | Out-String`) or use `Start-Process -Wait`; `cmd /c`, `$(...)` and scripts that capture output wait. |
 
 Beside shell commands, a binding can run `waku:shortcut <name>`, `waku:surface show|hide|toggle

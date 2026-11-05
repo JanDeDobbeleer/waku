@@ -15,8 +15,10 @@ Phases 1 and 2 only. Not built: a low-level keyboard hook, chords, hotstrings, s
 | `wakukeys stop` | End the daemon. |
 | `wakukeys status` | `ok: running; pid=P; bindings=N; conflicts=C; issues=I; paused=no; config=F`. |
 
-`--config` defaults to `%USERPROFILE%\.config\waku\keys.conf` when that file exists. No other
-location is assumed (the whkd location is not read). `--config-home <dir>` selects the bar that the
+`--config` defaults to `keys.conf` in the config home (`--config-home`, else `WAKU_CONFIG_HOME`, else
+`%USERPROFILE%\.config\waku`) when that file exists, so a shell that ships a `keys.conf` in its
+folder gets its keys with no flag. No other location is assumed (the whkd location is not read).
+`--config-home <dir>` selects the bar that the
 `waku:` actions talk to, as for every `wakuc` command. `reload`, `stop` and `status` take no
 options. Exit codes: 0 ok, 1 error (a bad first file, already running), 2 daemon not running,
 3 usage. A second start exits with 1 and prints one line only when a terminal started it.

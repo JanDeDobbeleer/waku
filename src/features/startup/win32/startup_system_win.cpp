@@ -215,11 +215,15 @@ class Win32StartupSystem final : public StartupSystem {
     return {};
   }
 
-  QString keysConfigPath() const override {
-    return QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/.config/waku/keys.conf"));
+  QString keysConfigPath(const QString& configHome) const override {
+    const QString home =
+        configHome.isEmpty() ? QDir::homePath() + QStringLiteral("/.config/waku") : configHome;
+    return QDir::toNativeSeparators(QDir(home).filePath(QStringLiteral("keys.conf")));
   }
 
-  bool keysConfigExists() const override { return QFileInfo(keysConfigPath()).isFile(); }
+  bool keysConfigExists(const QString& configHome) const override {
+    return QFileInfo(keysConfigPath(configHome)).isFile();
+  }
 
   TaskInfo queryTask(Task which) const override {
     TaskInfo info;

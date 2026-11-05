@@ -18,10 +18,11 @@ class StartupSystem {
   // The folder of the running wakuc.exe. waku.exe and wakukeys.exe sit next to it.
   virtual QString ownFolder() const = 0;
 
-  // The default keys file of the user (%USERPROFILE%\.config\waku\keys.conf) and whether it
-  // exists. `wakuc startup enable` registers the keys daemon only when it does.
-  virtual QString keysConfigPath() const = 0;
-  virtual bool keysConfigExists() const = 0;
+  // The keys file of a config home (`<configHome>\keys.conf`; an empty home is
+  // %USERPROFILE%\.config\waku) and whether it exists. `wakuc startup enable` registers the keys
+  // daemon only when it does; wakukeys finds the same file without a --config.
+  virtual QString keysConfigPath(const QString& configHome) const = 0;
+  virtual bool keysConfigExists(const QString& configHome) const = 0;
 
   // The two logon tasks: the bar (waku.exe) and the keys daemon (wakukeys.exe).
   enum class Task { Bar, Keys };

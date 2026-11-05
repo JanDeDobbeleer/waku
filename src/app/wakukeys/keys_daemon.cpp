@@ -102,8 +102,11 @@ void qtMessageHandler(QtMsgType type, const QMessageLogContext&, const QString& 
   sink().write(QString::fromLatin1(level) + message);
 }
 
-QString defaultConfigFile() {
-  return QDir(QDir::homePath()).filePath(QStringLiteral(".config/waku/keys.conf"));
+// The key file next to the bar's config: `<config home>/keys.conf`, so a shell that ships one
+// gets it without a flag. With no config home given this is ~/.config/waku/keys.conf.
+QString defaultConfigFile(const QString& configHomeOption) {
+  const QString home = waku::control::resolveConfigHome(configHomeOption, QDir::homePath()).path;
+  return QDir(home).filePath(QStringLiteral("keys.conf"));
 }
 
 // The daemon's control verbs: the client side. Returns the exit code.
@@ -212,7 +215,7 @@ int runKeys(const KeysArgs& args) {
 
   QString configFile = args.configFile;
   if (configFile.isEmpty()) {
-    configFile = defaultConfigFile();
+    configFile = defaultConfigFile(args.configHome);
     if (!QFileInfo::exists(configFile)) {
       print(stderr, QStringLiteral("wakukeys: no key file; pass --config <file> or create %1")
                         .arg(QDir::toNativeSeparators(configFile)));

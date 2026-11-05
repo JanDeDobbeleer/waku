@@ -141,8 +141,9 @@ The task starts waku with `--register-app-bar --hide-taskbar`. Change that with:
 - Other `waku` flags after `--`, for example `wakuc startup enable -- --no-tray` or
   `wakuc startup enable -- --manage-komorebi`.
 
-If `%USERPROFILE%\.config\waku\keys.conf` exists, `enable` registers a second task that starts
-the keys daemon `wakukeys.exe` (`--config` that file, and your `--config-home`). Without the file
+If `keys.conf` exists in your config home (`--config-home`, else `%USERPROFILE%\.config\waku`),
+`enable` registers a second task that starts the keys daemon `wakukeys.exe` (it reads that file, and
+talks to the bar of your `--config-home`). Without the file
 it says so and registers nothing for the keys. `wakukeys.exe` must be on your PATH too (the package
 has an alias). The daemon puts its own folder first in the PATH of the commands it runs, so a
 binding can run `wakuc` without a PATH entry. To make `wakukeys` talk to a bar started with
