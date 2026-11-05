@@ -169,7 +169,7 @@ if ($SkipFormat) {
 }
 
 # 2. structure ------------------------------------------------------------------------------
-# Rules S1-S8 of docs/plans/2026-10-29-waku-architecture-proposal.md (section 4.2). The DEPENDS
+# Rules S1-S8 (docs/architecture.md). The DEPENDS
 # graph comes from the waku_feature( calls in src/features/*/CMakeLists.txt, read with a regex, so
 # no build tree is needed. Units: kernel, control, host, ui, features/<f>, quickshell, app/<exe>; tests/ (the
 # top-level folder) holds the test main and the integration tests.

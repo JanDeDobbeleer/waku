@@ -126,8 +126,7 @@ does), `waku:keys-reload`, `waku:keys-stop`, and `waku:activate-or-launch <exe-o
 
 ### Moving a waku 1 config to waku 2
 
-waku 2 uses Quickshell's names (`docs/plans/2026-10-29-waku-extensibility-proposal.md`, section
-11). A config home with a `bar.qml` and no `shell.qml` loads the fallback shell, whose error pill
+waku 2 uses Quickshell's names. A config home with a `bar.qml` and no `shell.qml` loads the fallback shell, whose error pill
 names the rename. There are no aliases; edit the file:
 
 | waku 1 | waku 2 |

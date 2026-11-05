@@ -1,7 +1,6 @@
 # waku systray: plan
 
-Status: built and run live (phase 5 below). Background: `docs/plans/2026-10-28-qt-quick-bar-config-design.md`
-(the `waku` modules, `Pill`, `PopupWindow`, `Tooltip`, `Theme`). The systray of the retired Widgets
+Status: built and run live (phase 5 below). The systray of the retired Widgets
 build (git tag `widgets-main-final`) is where the code came from; see "History".
 
 ## What the widget does

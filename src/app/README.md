@@ -63,6 +63,6 @@ written in lower case and plain ASCII in code and paths.
 
 The architecture is in [docs/architecture.md](../../docs/architecture.md), the build and every flag
 in [docs/building.md](../../docs/building.md), notes for shell authors in
-[docs/shells.md](../../docs/shells.md), and dated plans in [docs/plans](../../docs/plans/README.md).
+[docs/shells.md](../../docs/shells.md).
 The sample config is in [examples/config](../../examples/config), a vertical sidebar in
 [examples/sidebar](../../examples/sidebar).

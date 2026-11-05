@@ -1,8 +1,7 @@
 # Architecture
 
 How waku is put together and the rules that keep it that way. Rules for contributors and agents
-are in `AGENTS.md`; build and run commands are in `docs/building.md`. The decisions behind the
-layout are in `docs/plans/2026-10-29-waku-architecture-proposal.md`.
+are in `AGENTS.md`; build and run commands are in `docs/building.md`.
 
 ## Units and layering
 
@@ -183,8 +182,7 @@ Quickshell compatibility modules: `Quickshell`, `Quickshell.Wayland`, `Quickshel
   chrome and `WindowChrome`. The built-in widgets use the look; a ported shell carries its own and
   uses none of it. The look sits in `host` only because `ShellHost` loads `theme.qml` and applies it
   on every reload. It stays there for now. When `src/ui/` gains C++, a later step may move it into
-  a `waku.ui` module; the styling proposal (`docs/plans/2026-10-29-waku-styling-proposal.md`,
-  sections 1.1 R3 and 4.1) discusses where the tokens should live.
+  a `waku.ui` module.
 - `surfaceFormat.opaque` on `PanelWindow` and `FloatingWindow` is accepted and ignored, so Quickshell
   code that sets it loads. waku always draws into a swap chain with an alpha channel.
 - `src/modules/qml_modules.cmake` assembles the last two from the contributions. It is included
@@ -212,8 +210,7 @@ and `.qmltypes` to `dist/waku/modules/` as a read-only reference (`docs/building
 A user changes a built-in widget by copying its file into the config home's `widgets/` folder,
 which `shell.qml` imports as a directory (`import "widgets"`), and editing the copy. Give the copy a
 new name and use that name in `shell.qml`. A copy that keeps the built-in's name relies on QML's
-import order and is not covered by tests. `qmllint -I <dist>/waku/modules` lints the copy. The
-config format is described in `docs/plans/2026-10-28-qt-quick-bar-config-design.md`.
+import order and is not covered by tests. `qmllint -I <dist>/waku/modules` lints the copy.
 
 ### User-built QML plugins
 
@@ -583,5 +580,5 @@ SDK headers instead of spelling them out.
 waku began as a C++ port of Python YASB. That port, built on Qt Widgets with YAML and CSS config,
 was retired. waku replaced it with a Qt Quick shell runtime
 configured in QML, and in October 2026 the code was reorganised by capability
-into the units above (`docs/plans/2026-10-29-waku-architecture-proposal.md`). Python YASB remains a
+into the units above. Python YASB remains a
 reference for how Windows behaves, not for how waku must behave.

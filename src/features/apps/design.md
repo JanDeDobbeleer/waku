@@ -1,8 +1,6 @@
 # apps
 
 The app catalogue for a launcher, in Quickshell's shape so a ported launcher (caelestia) loads.
-Plan: `docs/plans/2026-10-29-waku-extensibility-proposal.md` section 4.4 (the `apps` row) and
-section 5 (Start menu, Store apps, icons).
 
 ## What it gives QML
 
