@@ -43,8 +43,9 @@ class Workspaces : public QObject {
  public:
   // `desktops` is borrowed and may be null. It is a sibling singleton, and
   // QQmlEngine::clearSingletons() deletes singletons in its own order on a reload, so it is held
-  // as a QPointer and a gone one counts as unavailable.
-  explicit Workspaces(VirtualDesktops* desktops = nullptr, QObject* parent = nullptr);
+  // as a QPointer and a gone one counts as unavailable. There is no default argument for it: a
+  // default constructor would make the QML engine use it and skip create().
+  Workspaces(VirtualDesktops* desktops, QObject* parent = nullptr);
   // The engine's own VirtualDesktops singleton.
   static Workspaces* create(QQmlEngine* engine, QJSEngine* scriptEngine);
 
