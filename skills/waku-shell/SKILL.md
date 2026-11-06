@@ -6,7 +6,8 @@ description: Create, port or restyle a waku shell (bar, dock, launcher, panels) 
 # waku shell authoring
 
 waku is a Qt Quick shell runtime for Windows, configured in QML, with Quickshell-compatible
-modules. A shell is a config home: a folder with `shell.qml` and its own QML. The engine holds only
+modules. waku is in active development: flags, QML types and formats can change without
+notice, so read `reference/engine-surface.md` for the current surface. A shell is a config home: a folder with `shell.qml` and its own QML. The engine holds only
 what QML cannot do. This skill gets a shell right the first time.
 
 ## Hard rules
@@ -18,7 +19,9 @@ what QML cannot do. This skill gets a shell right the first time.
 2. **Say what you verified.** Use the three levels in `reference/verify.md`. Never claim a level you
    did not reach. You cannot press keys or answer UAC; mark those rows `needs the user`.
 3. **Never touch the user's live setup.** Build and test in a throwaway config home with
-   `--no-tray`. Do not write to `%USERPROFILE%\.config\waku`. Start the live bar only when asked.
+   `--no-tray --no-app-bar --keep-taskbar --no-keys --no-tiling` (waku reserves screen space, hides
+   the taskbar, starts the key daemon and tiles windows by default). Do not write to
+   `%USERPROFILE%\.config\waku`. Start the live bar only when asked.
 4. **Licences.** Copy no code from a shell under a licence that is not MIT into this repository.
    From a third-party config, take the look (colours, sizes, layout) and write the QML yourself.
 5. **No shell-specific engine code.** A missing engine feature is reported as a generic gap. The
@@ -78,8 +81,8 @@ the shell. Do not build a lookalike.
 - Services are `null` or unavailable until they report ready. Never gate a widget's `visible` on
   such an object.
 - Workspace ids are strings (`DISPLAY1:0`). Use `var`, not `int`.
-- Add what the shell needs to run beyond QML: a `start.ps1` that starts waku and `wakukeys.exe`
-  with the shell's `--config-home`, and a `keys.conf` beside `shell.qml`. Window gaps, layout and
+- Add what the shell needs to run beyond QML: a `keys.conf` beside `shell.qml` (waku starts
+  `wakukeys.exe` with it) and, if the shell needs an environment, a `start.ps1`. Window gaps, layout and
   ratio come from `Tiling` (`gap`, `ratio`, `layout`), not from a separate tiler config.
 
 ### 5. Audit and verify

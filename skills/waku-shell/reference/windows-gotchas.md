@@ -64,8 +64,8 @@ keys, launch code or panels.
 - `wakuc startup enable` registers a per-user logon task. It replaces any earlier task and deletes
   `waku.lnk` in the Startup folder. It bakes in one config home. A bare `waku.exe` resolves on the
   system `PATH`. Tell the user before you run it. Do not run it unasked.
-- Restart order for a live bar: `wakuc --config-home <dir> quit`, then `wakukeys.exe --config-home <dir> stop`
-  if the shell uses it, then start the shell.
+- Restart order for a live bar: `wakuc --config-home <dir> quit`, then start the shell. waku starts and stops `wakukeys.exe`
+  itself when the config home has a `keys.conf`.
 
 ## Screenshots
 
