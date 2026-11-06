@@ -95,7 +95,7 @@ TEST(RegionMathTest, NestedRegionsFoldInnerFirst) {
   EXPECT_TRUE(regionContains(root, {60, 60}));   // only in the root
 }
 
-TEST(RegionMathTest, ACaelestiaStyleMaskIsTheWindowMinusItsPanels) {
+TEST(RegionMathTest, ACelesteStyleMaskIsTheWindowMinusItsPanels) {
   RegionNode root = rect(40, 8, 960, 700, RegionOp::Combine);
   root.children << rect(300, 8, 200, 100, RegionOp::Subtract)
                 << rect(800, 400, 200, 100, RegionOp::Subtract);
@@ -134,7 +134,7 @@ TEST(RegionMathTest, TheRootIntersectClipsToTheWindow) {
   EXPECT_FALSE(regionContainsInWindow(root, {120, 120}, window));
 }
 
-TEST(RegionMathTest, ACaelestiaRootXorIsTheBarBordersAndOpenPanels) {
+TEST(RegionMathTest, ACelesteRootXorIsTheBarBordersAndOpenPanels) {
   // The window is 1000x700. The root is the inner area (40, 8, 952, 684) xor-ed with the window; a
   // panel (300, 8, 200, 100) is cut out of it (an open drawer). Input is the bar, the borders and
   // the panel; not the inner area outside the panel.

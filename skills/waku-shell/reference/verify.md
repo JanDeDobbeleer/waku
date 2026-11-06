@@ -16,7 +16,8 @@ Offscreen runs reach level 1 only. They show no toast, no lazily loaded panel an
 pwsh -NoProfile -File skills\waku-shell\scripts\run-candidate.ps1 -ConfigHome $dir
 ```
 
-Throwaway home, `--no-tray`, log file in a temp folder, no app bar, no taskbar change. It prints
+Throwaway home, log file in a temp folder, and `--no-tray --no-app-bar --keep-taskbar --no-keys
+--no-tiling`, so the run reserves no space and changes neither the taskbar, the keys nor the windows. It prints
 the `wakuc status` line and any `warning` or `critical` log records. A QML warning at load is a
 finding, not noise: fix it or explain it.
 

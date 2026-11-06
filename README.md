@@ -7,11 +7,14 @@
 
 # waku
 
+> **waku is in active development.** Expect breaking changes: flags, config options, QML types and
+> file formats can change or go away between releases without a deprecation period.
+
 waku (枠, "frame", say "wah-koo") is a top bar for Windows, written in C++20 and Qt 6.10
 (Qt Quick) and configured in QML. The name is the Japanese word for the frame around a window
 (Dutch: kozijn), and the frame of your desktop is where the bar lives.
 
-Built-in widgets cover the clock, workspaces (komorebi and GlazeWM), media, volume, Bluetooth,
+Built-in widgets cover the clock, workspaces (Windows virtual desktops), media, volume, Bluetooth,
 Wi-Fi, battery, CPU, memory, the tray, the taskbar, notifications, GitHub, wallpapers and a control
 center. You can copy any of them into your config and change it.
 
@@ -54,7 +57,7 @@ ShellRoot {
 ## Shells
 
 waku is Quickshell-compatible, so shells written for Quickshell run with few changes. Ready-made
-shells ported to Windows (Caelestia, Noctalia, Omarchy) are in
+shells ported to Windows (Celeste, Octalia, Nomarchy) are in
 [waku-ports](https://github.com/JanDeDobbeleer/waku-ports). Copy one into your config home. What
 differs from Quickshell is in [docs/shells.md](docs/shells.md).
 
@@ -88,11 +91,8 @@ or copy `skills/waku-shell` into your agent's skills folder.
 
 ## Optional companions
 
-waku runs on its own. Two things need a helper:
+waku runs on its own. One thing may need a helper:
 
-- **Workspaces.** The Workspaces widget reads [komorebi](https://github.com/LGUG2234/komorebi) or
-  [GlazeWM](https://github.com/glzr-io/glazewm). waku has no native Windows virtual desktop support
-  yet, so without one of them the widget has nothing to show.
 - **Keybinds.** waku does not bind keys for a shell's shortcuts by default. Bind a key to
   `wakuc shortcut <name>` in [whkd](https://github.com/LGUG2234/whkd) or
   [AutoHotkey](https://www.autohotkey.com/), for example `win + space : wakuc shortcut launcher`.

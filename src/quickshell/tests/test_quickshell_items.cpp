@@ -230,7 +230,7 @@ TEST(QuickshellTransformWatcher, ChangingTheItemsFiresAndRewatches) {
 }
 
 TEST(QuickshellSingleton, ASingletonMayDeclareItsOwnDataAndReloadableId) {
-  // Noctalia's Settings and ShellState declare `readonly property alias data`, and
+  // Octalia's Settings and ShellState declare `readonly property alias data`, and
   // BrightnessService sets `reloadableId`; both must load on the engine's Singleton.
   QTemporaryDir dir;
   ASSERT_TRUE(dir.isValid());

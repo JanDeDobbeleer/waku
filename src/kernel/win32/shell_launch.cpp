@@ -52,10 +52,11 @@ void hideConsole(QProcess& process) {
       [](QProcess::CreateProcessArguments* args) { args->flags |= CREATE_NO_WINDOW; });
 }
 
-bool startDetachedHidden(const QString& program, const QStringList& args,
-                         const QString& nativeArgs) {
+bool startDetachedHidden(const QString& program, const QStringList& args, const QString& nativeArgs,
+                         const QProcessEnvironment* environment) {
   QProcess process;
   hideConsole(process);
+  if (environment != nullptr) process.setProcessEnvironment(*environment);
   process.setProgram(program);
   process.setArguments(args);
   if (!nativeArgs.isEmpty()) process.setNativeArguments(nativeArgs);

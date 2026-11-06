@@ -4,8 +4,7 @@ import QtQuick.Window
 import waku
 import waku.services as S
 
-// The workspaces of this bar's monitor, from whichever tiling window manager is running (komorebi
-// or GlazeWM). A click shows a workspace, the wheel steps through them. Hidden when neither runs.
+// The Windows virtual desktops. A click shows a desktop, the wheel steps through them. Hidden when there is nothing to show.
 //
 //     Workspaces { hideEmpty: true; scrollable: false }
 //
@@ -29,7 +28,7 @@ Strip {
     readonly property real handle: QsWindow.window ? QsWindow.window.monitorHandle : 0
     readonly property var monitor: {
         for (const m of S.Workspaces.monitors)
-            if (m.handle === handle) return m;
+            if (m.handle === handle || m.handle === 0) return m;
         return null;
     }
 

@@ -19,8 +19,7 @@ ShellRoot {
                 Clock {}
             ]
             center: [
-                Workspaces {},
-                BindingMode {}
+                Workspaces {}
             ]
             end: [
                 Whoami {},

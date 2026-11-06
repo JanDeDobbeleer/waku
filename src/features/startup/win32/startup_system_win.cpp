@@ -19,6 +19,7 @@ namespace waku::startup {
 namespace {
 
 constexpr wchar_t kTaskName[] = L"waku";
+constexpr wchar_t kKeysTaskName[] = L"waku keys";
 constexpr wchar_t kShortcutName[] = L"waku.lnk";
 constexpr HRESULT kNotFound = HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
 
@@ -101,15 +102,22 @@ std::wstring currentUser() {
   return name;
 }
 
-std::wstring taskXml(const std::wstring& user, const std::wstring& arguments) {
+using Task = StartupSystem::Task;
+
+const wchar_t* taskName(Task task) { return task == Task::Keys ? kKeysTaskName : kTaskName; }
+
+std::wstring taskXml(Task task, const std::wstring& user, const std::wstring& arguments) {
   const std::wstring u = xmlEscape(user);
+  const bool keys = task == Task::Keys;
   return std::wstring(
              L"<?xml version=\"1.0\" encoding=\"UTF-16\"?>\n"
              L"<Task version=\"1.2\" "
              L"xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
-             L"<RegistrationInfo><Description>Starts the waku shell at logon (wakuc startup enable)"
-             L"</Description></RegistrationInfo>\n"
-             L"<Triggers><LogonTrigger><Enabled>true</Enabled><UserId>") +
+             L"<RegistrationInfo><Description>") +
+         (keys ? L"Starts the waku keys daemon at logon (wakuc startup enable)"
+               : L"Starts the waku shell at logon (wakuc startup enable)") +
+         L"</Description></RegistrationInfo>\n"
+         L"<Triggers><LogonTrigger><Enabled>true</Enabled><UserId>" +
          u +
          L"</UserId></LogonTrigger></Triggers>\n"
          L"<Principals><Principal id=\"Author\"><UserId>" +
@@ -124,7 +132,8 @@ std::wstring taskXml(const std::wstring& user, const std::wstring& arguments) {
          L"<AllowStartOnDemand>true</AllowStartOnDemand><Enabled>true</Enabled><Hidden>false</"
          L"Hidden>"
          L"<ExecutionTimeLimit>PT0S</ExecutionTimeLimit><Priority>4</Priority></Settings>\n"
-         L"<Actions Context=\"Author\"><Exec><Command>waku.exe</Command><Arguments>" +
+         L"<Actions Context=\"Author\"><Exec><Command>" +
+         std::wstring(keys ? L"wakukeys.exe" : L"waku.exe") + L"</Command><Arguments>" +
          xmlEscape(arguments) + L"</Arguments></Exec></Actions>\n</Task>\n";
 }
 
@@ -206,13 +215,23 @@ class Win32StartupSystem final : public StartupSystem {
     return {};
   }
 
-  TaskInfo queryTask() const override {
+  QString keysConfigPath(const QString& configHome) const override {
+    const QString home =
+        configHome.isEmpty() ? QDir::homePath() + QStringLiteral("/.config/waku") : configHome;
+    return QDir::toNativeSeparators(QDir(home).filePath(QStringLiteral("keys.conf")));
+  }
+
+  bool keysConfigExists(const QString& configHome) const override {
+    return QFileInfo(keysConfigPath(configHome)).isFile();
+  }
+
+  TaskInfo queryTask(Task which) const override {
     TaskInfo info;
     try {
       kernel::ComScope com(kernel::ComApartment::SingleThreaded);
       winrt::com_ptr<ITaskFolder> root;
       if (FAILED(openRoot(root))) return info;
-      Bstr name(kTaskName);
+      Bstr name(taskName(which));
       winrt::com_ptr<IRegisteredTask> task;
       if (FAILED(root->GetTask(name.get(), task.put()))) return info;
       info.registered = true;
@@ -237,7 +256,7 @@ class Win32StartupSystem final : public StartupSystem {
     return info;
   }
 
-  QString registerTask(const QString& arguments) override {
+  QString registerTask(Task which, const QString& arguments) override {
     try {
       const std::wstring user = currentUser();
       if (user.empty()) return QStringLiteral("could not read the current user name");
@@ -245,8 +264,8 @@ class Win32StartupSystem final : public StartupSystem {
       winrt::com_ptr<ITaskFolder> root;
       HRESULT hr = openRoot(root);
       if (FAILED(hr)) return hresultText("connect to the Task Scheduler", hr);
-      Bstr name(kTaskName);
-      Bstr xml(taskXml(user, arguments.toStdWString()));
+      Bstr name(taskName(which));
+      Bstr xml(taskXml(which, user, arguments.toStdWString()));
       Variant userId(user);
       Variant empty;
       winrt::com_ptr<IRegisteredTask> task;
@@ -259,13 +278,13 @@ class Win32StartupSystem final : public StartupSystem {
     }
   }
 
-  QString removeTask() override {
+  QString removeTask(Task which) override {
     try {
       kernel::ComScope com(kernel::ComApartment::SingleThreaded);
       winrt::com_ptr<ITaskFolder> root;
       HRESULT hr = openRoot(root);
       if (FAILED(hr)) return hresultText("connect to the Task Scheduler", hr);
-      Bstr name(kTaskName);
+      Bstr name(taskName(which));
       hr = root->DeleteTask(name.get(), 0);
       if (FAILED(hr) && hr != kNotFound) return hresultText("remove the task", hr);
       return {};

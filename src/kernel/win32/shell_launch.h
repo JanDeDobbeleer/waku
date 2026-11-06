@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QProcessEnvironment>
 #include <QString>
 #include <QStringList>
 
@@ -23,8 +24,10 @@ void hideConsole(QProcess& process);
 
 // Fire-and-forget `program args` without a console window and with stdout and stderr discarded.
 // `nativeArgs`, when not empty, is passed to CreateProcess verbatim (QProcess::setNativeArguments).
+// `environment`, when not null, is the environment of the new process (default: ours).
 bool startDetachedHidden(const QString& program, const QStringList& args,
-                         const QString& nativeArgs = QString());
+                         const QString& nativeArgs = QString(),
+                         const QProcessEnvironment* environment = nullptr);
 
 // Fire-and-forget `cmd.exe /c "<commandLine>"` without a console window (Python's shell=True
 // path). The outer quotes keep cmd from stripping the first and last quote of a command that

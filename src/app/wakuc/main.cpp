@@ -23,7 +23,7 @@
 //     wakuc taskbar hide|show|status
 //                       hide the Windows taskbar (auto-hide on, windows hidden), show it again
 //                       (restores what waku changed), or report "taskbar: hidden|visible|
-//                       autohide-was-on". `waku --hide-taskbar` hides it at start
+//                       autohide-was-on". `waku` hides it at start unless --keep-taskbar
 //     wakuc call [<target> <function> [args...]]
 //                       run a function of an IpcHandler; the answer is its return value on one
 //                       line ("ok" for void). Without arguments: the handlers and their functions
@@ -35,14 +35,14 @@
 //     wakuc startup disable|status
 //                       register, remove or report the Scheduled Task that starts `waku.exe` at
 //                       sign-in. Works without a running bar. `waku.exe` must be on your PATH.
-//                       The task runs `waku.exe --register-app-bar --hide-taskbar`;
+//                       The task runs `waku.exe`;
 //                       `--config-home` is passed to waku only when given here, `--no-app-bar`
-//                       and `--keep-taskbar` drop the other two, flags after `--` are added
+//                       and `--keep-taskbar` are passed on, flags after `--` are added
 //
 // `--dry-run` plays the animation but does not set the wallpaper. A command is sent as one line;
 // arguments with spaces are quoted (control.h, joinCommand).
 //
-// A separate console program, as komorebic is to komorebi: the bar itself is a Windows (GUI)
+// A separate console program: the bar itself is a Windows (GUI)
 // program with no console to print to. `--config-home <dir>` (or $WAKU_CONFIG_HOME) selects
 // the instance, as it does for the bar.
 //
@@ -124,7 +124,8 @@ int main(int argc, char* argv[]) {
       "  taskbar hide | show | status   hide or restore the Windows taskbar\n"
       "  config init [--force]          write a starter shell.qml into the config home\n"
       "  startup enable [--config-home <dir>] [--no-app-bar] [--keep-taskbar] [-- <waku flags>]\n"
-      "  startup disable | status       start waku at sign-in through a Scheduled Task\n"
+      "  startup disable | status       start waku (and the keys daemon, when keys.conf exists) at "
+      "sign-in\n"
       "  call <target> <function> [args...]  run a function of an IpcHandler; call alone lists\n"
       "Add --dry-run to set, random, next or previous to play the animation without "
       "changing the wallpaper."));
@@ -140,15 +141,17 @@ int main(int argc, char* argv[]) {
                               QStringLiteral("config init: replace an existing shell.qml."));
   parser.addOption(forceOpt);
   QCommandLineOption noAppBarOpt(QStringLiteral("no-app-bar"),
-                                 QStringLiteral("startup enable: leave out --register-app-bar."));
+                                 QStringLiteral("startup enable: start waku with --no-app-bar."));
   parser.addOption(noAppBarOpt);
-  QCommandLineOption keepTaskbarOpt(QStringLiteral("keep-taskbar"),
-                                    QStringLiteral("startup enable: leave out --hide-taskbar."));
+  QCommandLineOption keepTaskbarOpt(
+      QStringLiteral("keep-taskbar"),
+      QStringLiteral("startup enable: start waku with --keep-taskbar."));
   parser.addOption(keepTaskbarOpt);
   parser.addPositionalArgument(
       QStringLiteral("command"),
       QStringLiteral(
-          "reload, status, quit, wallpaper, shortcut, surface, taskbar, config, startup or call"));
+          "reload, status, quit, wallpaper, shortcut, surface, taskbar, config, startup, "
+          "or call"));
   parser.process(app);
 
   const QStringList positional = parser.positionalArguments();

@@ -62,7 +62,7 @@ Row order: pinned apps in pin-file order, then the other buttons in the order th
 appeared.
 
 `S.WindowControl` (singleton, `qml/window_control.h`): `activate(hwnd)`, `foreground()`,
-`isWindow(hwnd)`. For a shell that knows HWNDs from elsewhere (komorebi's state) and has no tracker
+`isWindow(hwnd)`. For a shell that knows HWNDs from elsewhere and has no tracker
 rows, because the tracker needs a bar window to attach to. `activate` restores the window when it
 is minimised (`ShowWindowAsync(SW_RESTORE)`), then calls `kernel::forceForegroundFocus`; it
 returns true when the window is the foreground window afterwards. Windows' foreground lock can

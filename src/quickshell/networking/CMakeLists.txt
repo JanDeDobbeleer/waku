@@ -1,4 +1,4 @@
-# The QML module `Quickshell.Networking` (a noctalia-qs addition): the Wi-Fi radio switch over the
+# The QML module `Quickshell.Networking` (a octalia-qs addition): the Wi-Fi radio switch over the
 # Network service.
 waku_quickshell_qml_module(waku_quickshell_networking Quickshell.Networking
   SINGLETONS

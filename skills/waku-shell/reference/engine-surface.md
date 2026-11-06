@@ -32,7 +32,7 @@ your type.
 
 ## Built-in widgets (`waku.widgets`)
 
-`Clock`, `Calendar`, `Workspaces` (komorebi and GlazeWM), `ActiveLayout`, `Taskbar`, `Tray`, `Media`,
+`Clock`, `Calendar`, `Workspaces` (Windows virtual desktops), `Taskbar`, `Tray`, `Media`,
 `Volume`, `Bluetooth`, `Wifi`, `Battery`, `Cpu`, `Memory`, `Notifications`, `GitHub`,
 `ControlCenter`, `Wallpapers`, `WallpaperGallery`, and the shared `Pill`, `Slider`, `Strip`,
 `DeviceMenu`, `DeviceRow`. Source: `src/features/<f>/qml/` and `src/ui/`. After a build,
@@ -74,8 +74,8 @@ with its own components carries its own tokens and does not need it.
 - Windows: `PanelWindow` (anchors, margins, `implicitHeight`, `exclusiveZone`, `exclusionMode`,
   `layer`, `keyboardFocus`, `backdrop`, `mask: Region`), `FloatingWindow`, `PopupWindow`
   (`anchor.item`). A window with a `name` answers `wakuc surface show|hide|toggle <name>`.
-- Work area: `--register-app-bar` lets a panel reserve screen space. `--hide-taskbar` hides the
-  Windows taskbar and restores it on exit. Without them waku touches neither.
+- Work area: a panel reserves screen space by default on a live desktop; `--no-app-bar` turns that
+  off (tests and tools use it). The Windows taskbar is hidden and restored on exit; `--keep-taskbar` leaves it.
 - Input: `GlobalShortcut` with `keys` registers the key. Without `keys`, bind a key to
   `wakuc shortcut <name>` in whkd or AutoHotkey.
 - Commands: `IpcHandler { target; function ... }` answers `wakuc call <target> <function>`.
@@ -87,10 +87,10 @@ with its own components carries its own tokens and does not need it.
 
 ## CLI
 
-`waku.exe`: `--config-home`, `--register-app-bar`, `--hide-taskbar`, `--no-tray`, `--safe`,
-`--no-hotkeys`, `--font-engine`, `--log-file`, `--manage-komorebi`, `--no-workarea-sync`,
-`--import-path`. `wakuc` (give it the same `--config-home`): `status`, `reload`, `quit`,
-`surface`, `call`, `shortcut`, `taskbar`, `wallpaper`, `config init`, `startup`. Exit codes of
+`waku.exe`: `--config-home`, `--no-app-bar`, `--keep-taskbar`, `--no-keys`, `--no-tiling`, `--no-tray`, `--safe`,
+`--no-hotkeys`, `--font-engine`, `--log-file`, `--import-path`. `wakuc` (give it the same `--config-home`): `status`, `reload`, `quit`,
+`surface`, `call`, `shortcut`, `taskbar`, `tile`, `desktop`, `wallpaper`, `config init`,
+`startup`. Exit codes of
 `wakuc`: 0 ok, 1 error answer, 2 no bar running, 3 usage.
 
 ## Not present

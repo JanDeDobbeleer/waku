@@ -5,7 +5,7 @@
 namespace {
 
 // A tiny safe shell, so the tests start none of the real services the built-in one uses
-// (Workspaces and Volume would start komorebi, GlazeWM and audio clients).
+// (Volume would start an audio client).
 const char* kTinySafe = R"(
 import QtQuick
 import waku

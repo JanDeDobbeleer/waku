@@ -4,13 +4,14 @@ waku (枠, "frame", say "wah-koo") is a Qt Quick top bar for Windows, configured
 the Japanese word for a window frame. It began as a counterpart of Waybar, the bar for Wayland. It is
 written in lower case and plain ASCII in code and paths.
 
-- `waku.exe` runs the bar; `wakuc.exe` controls a running one:
+- `waku.exe` runs the bar; `wakukeys.exe` is the hotkey daemon (below); `wakuc.exe` controls a running bar:
   - `wakuc reload`, `wakuc status`, `wakuc quit`
   - `wakuc config init [--force]`: write a starter `shell.qml` (the built-in bar) into the config
     home so you can edit it. It needs no running bar. It refuses, with exit code 1, to replace an
     existing `shell.qml` unless you pass `--force`; it touches no other file
   - `wakuc startup enable|disable|status`: register, remove or report the logon Scheduled Task that
-    starts `waku.exe` (no running bar needed). `waku.exe` must be on your PATH. `enable` takes
+    starts `waku.exe`, and the keys daemon `wakukeys.exe` when `keys.conf` exists (no running bar
+    needed). `waku.exe` must be on your PATH. `enable` takes
     `--config-home <dir>`, `--no-app-bar`, `--keep-taskbar` and extra `waku` flags after `--`
   - `wakuc wallpaper set <file-or-path>`: a full path to any image, or a file name in the
     wallpaper folder (case does not matter, the extension may be left out; an ambiguous name is an
@@ -30,6 +31,11 @@ written in lower case and plain ASCII in code and paths.
   folder, hotkey and animation come from a `WallpaperSettings { ... }` next to the windows in `shell.qml`
   (`import waku.services as S`, then `S.WallpaperSettings`: the services share names with the
   widgets, so import them under an alias) or from a `Wallpapers` widget.
+- `wakukeys.exe` is a hotkey daemon, a separate Windows (GUI) program with no console window:
+  `wakukeys [--config <file>] [--config-home <dir>] [--log-file <file>]` loads a whkd binding file and
+  runs the keys (one daemon per user); `wakukeys reload|stop|status` talk to it and print to the
+  terminal (exit code 0 ok, 1 error, 2 not running, 3 usage). See `docs/building.md` and
+  `src/features/keymap/design.md`.
 - Config home: a folder with `shell.qml`, optionally `theme.qml` and your own widgets in `widgets/`.
   Select it with `--config-home <dir>` or `WAKU_CONFIG_HOME`; without either, `waku` and `wakuc`
   use `%USERPROFILE%\.config\waku` (also when it does not exist, so both agree on the control
@@ -45,19 +51,18 @@ written in lower case and plain ASCII in code and paths.
   is in `docs/architecture.md`).
 - Panels dock to any of the four edges (`examples/sidebar` is a left one); a docked panel
   reports its edge as `QsWindow.window.dockEdge`.
-- `--hide-taskbar` hides the Windows taskbar while waku runs and restores it on exit;
-  `wakuc taskbar hide|show|status` does the same at run time.
-- `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
+- On a live desktop waku hides the Windows taskbar while it runs and restores it on exit
+  (`--keep-taskbar` leaves it alone); `wakuc taskbar hide|show|status` does the same at run time.
+- Panels reserve screen work area on a live desktop; `--no-app-bar` turns that off; `--no-tray`
+  never hooks Explorer; `--no-keys` skips the key daemon; `--safe` starts
   the built-in shell and ignores the config; `--font-engine=directwrite` honours variable-font axes.
-- komorebi's work area follows the OS after every screen or work area change (the engine nudges
-  komorebi's hidden window); `--no-workarea-sync` turns that off. `--manage-komorebi` also runs
-  `komorebic replace-configuration` after a screen or scale change while komorebi and
-  komorebi-bar run, so the bar follows the new scale; it is off by default.
+- A built-in tiler places new windows in a main+stack or columns layout per monitor and virtual
+  desktop; on by default (`Tiling.enabled = false` in a shell or `--no-tiling` turns it off); `wakuc tile toggle|float|layout|retile|status`.
 - `--log-file <path>` writes a JSON Lines diagnostics log (log messages, screen and scale
   changes, reloads, start and stop); off by default. Format: `docs/logging.md`.
 
 The architecture is in [docs/architecture.md](../../docs/architecture.md), the build and every flag
 in [docs/building.md](../../docs/building.md), notes for shell authors in
-[docs/shells.md](../../docs/shells.md), and dated plans in [docs/plans](../../docs/plans/README.md).
+[docs/shells.md](../../docs/shells.md).
 The sample config is in [examples/config](../../examples/config), a vertical sidebar in
 [examples/sidebar](../../examples/sidebar).

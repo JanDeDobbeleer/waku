@@ -1,4 +1,4 @@
-// `Region` and a window's `mask` in a real ShellHost, with the patterns Caelestia's drawers use:
+// `Region` and a window's `mask` in a real ShellHost, with the patterns Celeste's drawers use:
 // nested Regions, `item` regions, and a region list from an Instantiator. The fake cursor stands
 // in for the real one; nothing here touches the desktop.
 #include <gtest/gtest.h>
@@ -63,7 +63,7 @@ TEST(RegionMaskTest, AnEmptyRegionMakesTheWindowFullyClickThrough) {
   }
 }
 
-TEST(RegionMaskTest, ACaelestiaStyleMaskLoadsAndEvaluates) {
+TEST(RegionMaskTest, ACelesteStyleMaskLoadsAndEvaluates) {
   Harness h;
   h.start(maskShell(QStringLiteral("import Quickshell"), QStringLiteral(R"(
     property var panels: [ {x: 100, y: 100, w: 50, h: 50}, {x: 300, y: 200, w: 40, h: 40} ]

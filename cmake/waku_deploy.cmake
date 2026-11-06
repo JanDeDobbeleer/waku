@@ -1,6 +1,8 @@
 # deploy: assembles a portable folder, dist/waku by default (WAKU_DIST_DIR):
 #
-#   waku.exe, wakuc.exe, WakuTrayHook[_arm64].dll   the program and the DLL injected into Explorer
+#   waku.exe, wakuc.exe, wakukeys.exe, WakuTrayHook[_arm64].dll
+#                                                       the bar, its console client, the hotkey
+#                                                       daemon and the DLL injected into Explorer
 #   <Qt runtime>                                        windeployqt, scanning src/ and cmake/deploy_imports/
 #   modules/waku/ ...                                  the built-in widgets as a read-only reference:
 #   modules/waku/widgets/, modules/waku/services/     .qml, qmldir and .qmltypes of the three QML
@@ -49,7 +51,8 @@ endforeach()
 add_custom_target(deploy
   COMMAND ${CMAKE_COMMAND} -E make_directory "${_dist}"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
-          $<TARGET_FILE:waku> $<TARGET_FILE:wakuc> $<TARGET_FILE:WakuTrayHook> "${_dist}"
+          $<TARGET_FILE:waku> $<TARGET_FILE:wakuc> $<TARGET_FILE:wakukeys>
+          $<TARGET_FILE:WakuTrayHook> "${_dist}"
   COMMAND Qt6::windeployqt ${_windeployqt_flags} --dir "${_dist}"
           --qmldir "${PROJECT_SOURCE_DIR}/src"
           --qmldir "${PROJECT_SOURCE_DIR}/cmake/deploy_imports" "${_dist}/$<TARGET_FILE_NAME:waku>"
@@ -58,6 +61,6 @@ add_custom_target(deploy
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_widgets_qml} "${_modules}/widgets"
   COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/examples/config"
           "${_dist}/examples/config"
-  DEPENDS waku wakuc WakuTrayHook
+  DEPENDS waku wakuc wakukeys WakuTrayHook
   COMMENT "Deploying to ${_dist}"
   VERBATIM)

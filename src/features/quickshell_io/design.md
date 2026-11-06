@@ -4,7 +4,7 @@ Processes, files and launches for QML. Two parts:
 
 - QML written for Quickshell (`import Quickshell.Io`, the `Quickshell` singleton) loads on waku.
   Names, properties, signals and functions follow the Quickshell v0.3.0 documentation and how
-  caelestia uses them.- waku's own `Shell` singleton and `ShellProcess`, which the built-in widgets use (see "waku's
+  celeste uses them.- waku's own `Shell` singleton and `ShellProcess`, which the built-in widgets use (see "waku's
   launches" below). They were the feature `shell` until it was folded in here, so that one feature
   owns every process waku starts for QML.
 

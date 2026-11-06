@@ -67,13 +67,13 @@ win + space : wakuc shortcut launcher
 registers the key itself, unless waku runs with `--no-hotkeys` or the key is taken; it still
 answers `wakuc shortcut <name>`.
 
-### Hiding the Windows taskbar (`--hide-taskbar`)
+### Hiding the Windows taskbar (`--keep-taskbar` opts out)
 
-A shell that replaces the taskbar (a bar, a dock) starts waku with `--hide-taskbar`. waku then
+A run on a live desktop hides the Windows taskbar. waku then
 turns the taskbar's auto-hide on, which releases its work area, and hides its windows on every
-monitor, before the first shell is loaded, so a panel that reserves space (`--register-app-bar`)
+monitor, before the first shell is loaded, so a panel that reserves space (the default; `--no-app-bar` opts out)
 computes it without the taskbar. It restores the taskbar when waku exits, and the next start
-undoes it if waku crashed. Without the flag waku never touches the taskbar. At run time
+undoes it if waku crashed. With `--keep-taskbar` waku never touches the taskbar. At run time
 `wakuc taskbar hide|show|status` does the same; `show` leaves the taskbar visible until `hide`.
 If another tool already hides the taskbar, waku leaves that alone: `status` reports what is seen,
 and waku undoes only what it changed.
@@ -153,6 +153,6 @@ Both take `implicitWidth` and `implicitHeight`; unset, the content sizes the win
 
 ### Windows of a workspace
 
-With komorebi each `Workspaces` workspace has `windows`, the handles (`hwnd`) of its windows. Join them with
-the taskbar rows, whose `hwnd`, `exe`, `className` and `monitorHandle` roles carry the window data.
-With GlazeWM `windows` is empty.
+Each `Workspaces` workspace (a Windows virtual desktop) has `windows`, the handles (`hwnd`) of its windows.
+Join them with the taskbar rows, whose `hwnd`, `exe`, `className` and `monitorHandle` roles carry the
+window data.

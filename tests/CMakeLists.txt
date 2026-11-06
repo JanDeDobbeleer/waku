@@ -10,7 +10,8 @@ get_property(test_libs GLOBAL PROPERTY WAKU_TEST_LIBS)
 list(REMOVE_DUPLICATES test_libs)
 
 # tests/integration: tests that load built-in widgets of several features together, or check that
-# two units share one kernel object (test_hotkeys_shared.cpp); they may include anything. Every
+# two units share one kernel object (test_hotkeys_shared.cpp); test_wakukeys_args.cpp covers the
+# command line of wakukeys.exe, whose parser is compiled in here; they may include anything. Every
 # unit's own tests come through the TESTS contributions.
 add_executable(waku_tests main.cpp
   integration/test_all_widgets_load.cpp
@@ -24,10 +25,12 @@ add_executable(waku_tests main.cpp
   integration/test_safe_mode.cpp
   integration/test_vertical_panel.cpp
   integration/test_widget_popups.cpp
+  integration/test_wakukeys_args.cpp
+  ${PROJECT_SOURCE_DIR}/src/app/wakukeys/keys_args.cpp
   ${test_sources})
 # The control tests run wakuc.exe. The plugin tests load a plugin built here (tests/plugin).
 add_subdirectory(plugin)
-add_dependencies(waku_tests wakuc waku_test_module)
+add_dependencies(waku_tests wakuc wakukeys waku_test_module)
 # The sample shells the integration tests load.
 target_compile_definitions(waku_tests PRIVATE WAKU_EXAMPLES_DIR="${PROJECT_SOURCE_DIR}/examples"
   WAKU_DEFAULT_SHELL_QML="${PROJECT_SOURCE_DIR}/src/app/waku/DefaultShell.qml")

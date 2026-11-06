@@ -45,7 +45,7 @@ class Win32AppBar : public IAppBar {
     SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style);
 
     // A window that does not reserve space is never registered, so a run without
-    // --register-app-bar leaves the shell's app bar list alone.
+    // --no-app-bar leaves the shell's app bar list alone.
     if (!r.reserveSpace || !r.screen || r.thickness <= 0) return 0;
 
     data_ = {};

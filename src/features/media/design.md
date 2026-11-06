@@ -18,7 +18,7 @@ art, and the transport commands. One QML singleton (`Media`) and one widget (`Me
 ## Players (Quickshell.Services.Mpris)
 
 `Mpris` is a QML singleton over every GSMTC session, for QML written against
-`Quickshell.Services.Mpris` (caelestia `services/Players.qml`). `Media` and `Mpris` share one
+`Quickshell.Services.Mpris` (celeste `services/Players.qml`). `Media` and `Mpris` share one
 `MediaSessionService` (`acquireMediaService()`), so GSMTC is opened once.
 
 - `Mpris.players` is a model (role `modelData`) with a `values` list of `MprisPlayer`, in first-seen

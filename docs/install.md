@@ -110,9 +110,6 @@ Commands and flags are in [src/app/README.md](../src/app/README.md).
 
 waku runs without them. Install the ones you need:
 
-- [komorebi](https://github.com/LGUG2234/komorebi) or [GlazeWM](https://github.com/glzr-io/glazewm):
-  a tiling window manager. The Workspaces widget shows its workspaces. waku has no native Windows
-  virtual desktop support yet, so the widget needs one of them.
 - [whkd](https://github.com/LGUG2234/whkd) or [AutoHotkey](https://www.autohotkey.com/): a hotkey
   tool. Bind a key to `wakuc shortcut <name>` to fire a `GlobalShortcut` of your shell. The example
   is in [docs/shells.md](shells.md).
@@ -132,18 +129,26 @@ execution alias there. If it is missing, `enable` registers nothing and tells yo
 add. A change to the PATH reaches new sessions only: sign out and in again, then run the command
 again.
 
-The task starts waku with `--register-app-bar --hide-taskbar`. Change that with:
+The task starts waku with no flags: it reserves screen space, hides the taskbar, tiles windows and
+starts the key daemon when `keys.conf` exists. Change that with:
 
 - `--config-home <dir>`: start waku with that config home. Without it, waku uses its own default
   (`WAKU_CONFIG_HOME`, else `~/.config/waku`).
-- `--no-app-bar`: leave out `--register-app-bar`.
-- `--keep-taskbar`: leave out `--hide-taskbar`.
-- Other `waku` flags after `--`, for example `wakuc startup enable -- --no-tray` or
-  `wakuc startup enable -- --manage-komorebi`.
+- `--no-app-bar`: start waku with `--no-app-bar`, so no panel reserves screen space.
+- `--keep-taskbar`: start waku with `--keep-taskbar`, so the taskbar stays.
+- Other `waku` flags after `--`, for example `wakuc startup enable -- --no-tray`.
 
-`wakuc startup enable` again replaces the task. `wakuc startup status` shows whether it is
-registered, its command and which `waku.exe` the PATH finds. `wakuc startup disable` removes the
-task. An old `waku.lnk` in the Startup folder is deleted on `enable`; `disable` does not bring it
+If `keys.conf` exists in your config home (`--config-home`, else `%USERPROFILE%\.config\waku`),
+`enable` registers a second task that starts the keys daemon `wakukeys.exe` (it reads that file, and
+talks to the bar of your `--config-home`). Without the file
+it says so and registers nothing for the keys. `wakukeys.exe` must be on your PATH too (the package
+has an alias). The daemon puts its own folder first in the PATH of the commands it runs, so a
+binding can run `wakuc` without a PATH entry. To make `wakukeys` talk to a bar started with
+`--config-home`, set the user environment variable `WAKU_CONFIG_HOME` to that folder.
+
+`wakuc startup enable` again replaces the tasks. `wakuc startup status` shows whether each is
+registered, its command and which `waku.exe` and `wakukeys.exe` the PATH finds. `wakuc startup
+disable` removes both tasks. An old `waku.lnk` in the Startup folder is deleted on `enable`; `disable` does not bring it
 back.
 
 ## Updates

@@ -1,4 +1,4 @@
-# waku's product code by intent (docs/plans/2026-10-29-waku-architecture-proposal.md, section 3).
+# waku's product code by intent (docs/architecture.md).
 # Include root is src/ (#include "features/tray/tray_host.h"); waku_kernel carries it.
 #
 # Order: kernel, control, host, ui, features, quickshell, app, then the QML modules. Features link

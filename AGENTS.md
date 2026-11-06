@@ -46,7 +46,8 @@ cmd /c "call `"$vc\vcvarsarm64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset
 cmd /c "call `"$vc\vcvarsarm64_amd64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64-release && cmake --build --preset x64-release && ctest --test-dir build\x64-release --output-on-failure --timeout 120 -j"
 ```
 
-Targets: `waku` (the bar), `wakuc` (its console client), `WakuTrayHook[_arm64]` (the DLL injected
+Targets: `waku` (the bar), `wakuc` (its console client), `wakukeys` (the hotkey daemon, a GUI
+program), `WakuTrayHook[_arm64]` (the DLL injected
 into Explorer), `waku_tests` (all tests, defined in `tests/`) and `deploy` (assembles `dist/waku`;
 see `docs/building.md`). `ctest` needs `QT_QPA_PLATFORM=offscreen`; the CMake test properties set
 it, so `ctest --test-dir` works without the test preset. A ctest test is one gtest suite (one
@@ -108,7 +109,7 @@ of that step in the script, which is exact; do not restate it here. In short:
 
 Design and the dependency table: `docs/architecture.md`.
 
-Shells are configuration, not engine. A ported or user-written shell (caelestia, a launcher, a dock)
+Shells are configuration, not engine. A ported or user-written shell (celeste, a launcher, a dock)
 lives in a config home outside this repository and carries its own tokens, palette, layout and styling.
 The engine holds only what QML cannot do and generic Quickshell compatibility. Do not add a type,
 property, name or default that exists only for one shell; the shell builds it in its own QML. A shell
@@ -182,8 +183,9 @@ fine. Never use the `const` `nlohmann::json::operator[]` on a key that may be mi
   read it in `docs/logging.md`).
 - Services ask `kernel::liveDesktop()` before touching the machine; it is false on the offscreen
   platform. No service tests `platformName()` itself.
-- No bar reserves screen work area unless `--register-app-bar` is passed, so a test or tool run
-  leaves the desktop layout alone. `--safe` starts the built-in bar and ignores the config.
+- A live run reserves screen work area, hides the Windows taskbar, tiles windows and starts the key
+  daemon. Tests and tools pass `--no-app-bar --keep-taskbar --no-keys --no-tiling` so a run leaves the
+  desktop alone (the offscreen platform never reserves). `--safe` starts the built-in bar and ignores the config.
 
 ## Undocumented Windows APIs
 
@@ -204,8 +206,8 @@ Conventional commits: `type(scope): subject`, imperative, lower case, no trailin
 
 - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `ci`, `chore`, `style`, `revert`.
 - Scopes: the unit names `kernel`, `control`, `host`, `ui`, `quickshell`, `app`; the feature names `apps`, `audio`,
-  `bluetooth`, `brightness`, `clock`, `color_scheme`, `control_center`, `desktop_state`, `github`, `media`, `network`,
-  `notifications`, `quickshell_io`, `startup`, `system_stats`, `taskbar`, `tray`, `wallpapers`, `workspaces`; and
+  `bluetooth`, `brightness`, `clock`, `color_scheme`, `control_center`, `desktop_state`, `github`, `keymap`, `media`, `network`,
+  `notifications`, `quickshell_io`, `startup`, `system_stats`, `taskbar`, `tiling`, `tray`, `wallpapers`, `workspaces`; and
   `build`, `docs`, `test`, `style`, `chore`. The scope is optional. `tools/hooks/commit-msg` checks it.
 - One logical change per commit; `tools\check.ps1` green before committing.
 - Agent-authored commits end with the attribution trailer the session instructions give.

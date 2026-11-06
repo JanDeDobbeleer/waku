@@ -18,7 +18,7 @@ namespace waku::color_scheme {
 namespace {
 
 constexpr int kLuminanceSide = 64;
-// The scheme variant used when the caller names none (caelestia's default).
+// The scheme variant used when the caller names none (celeste's default).
 constexpr Variant kDefaultVariant = Variant::TonalSpot;
 
 QColor toQColor(Argb argb) { return QColor(redOf(argb), greenOf(argb), blueOf(argb)); }

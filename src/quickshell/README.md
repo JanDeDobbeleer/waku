@@ -79,7 +79,7 @@ and limits per type: the QML module table in `docs/architecture.md`.
 | `Pipewire`, `PwNode`, `PwNodeAudio`, `PwLink`, `PwLinkGroup`, `PwObjectTracker`, `PwNodeLinkTracker` | `Quickshell.Services.Pipewire` | `waku.services` `AudioOutput`, `AudioInput`, `AudioStreams` | `services/pipewire/*.qml` |
 | `SystemTray`, `SystemTrayItem`, `Status` | `Quickshell.Services.SystemTray` | `waku.services` `Systray` | `services/systemtray/SystemTray.qml`, `services/systemtray/qml/system_tray_item.*` |
 | `Bluetooth`, `BluetoothAdapter`, `BluetoothDevice` and their state enums | `Quickshell.Bluetooth` | `waku.services` `Bluetooth` | `bluetooth/*.qml` |
-| `Networking` (`wifiEnabled`, `wifiHardwareEnabled`) | `Quickshell.Networking` (a noctalia-qs addition) | `waku.services` `Network` | `networking/Networking.qml` |
+| `Networking` (`wifiEnabled`, `wifiHardwareEnabled`) | `Quickshell.Networking` (a octalia-qs addition) | `waku.services` `Network` | `networking/Networking.qml` |
 
 `src/app/waku/quickshell_glue.h` joins the `Quickshell` singleton to the shell host (`shellDir`,
 `reload()`). It stays in `app/`: it is composition-root wiring, not a registration.

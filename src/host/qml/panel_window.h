@@ -64,7 +64,7 @@ class PanelMargins : public QObject {
 // layer. Geometry follows `anchors`, `margins`, `implicitWidth` and `implicitHeight` on its
 // screen (host/panel_geometry.h). Anchored to the top or the bottom edge alone it is a Windows
 // app bar, and it reserves work area (`exclusiveZone`, `exclusionMode`) only when the host runs
-// with --register-app-bar. The rule for a docked window is in panelAppBarEdge()
+// unless --no-app-bar is passed. The rule for a docked window is in panelAppBarEdge()
 // (host/panel_geometry.h): one edge anchored, the opposite not, the perpendicular axis stretched
 // or centred. That edge is `dockEdge`, on all four sides; the app bar uses the same edge.
 //

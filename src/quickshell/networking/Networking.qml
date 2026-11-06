@@ -2,7 +2,7 @@ pragma Singleton
 import QtQuick
 import waku.services as S
 
-// noctalia-qs's `Quickshell.Networking` singleton, reduced to the Wi-Fi radio switch over waku's
+// octalia-qs's `Quickshell.Networking` singleton, reduced to the Wi-Fi radio switch over waku's
 // Network service. Assigning `wifiEnabled` switches the radio; the value follows what Windows reports.
 //
 //   wifiEnabled          the radio is on

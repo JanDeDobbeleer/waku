@@ -1,5 +1,4 @@
-# waku_feature(): one feature's declaration (docs/plans/2026-10-29-waku-architecture-proposal.md,
-# section 7.2), and waku_contribute(), the lower-level call it and the other units (kernel, host,
+# waku_feature(): one feature's declaration, and waku_contribute(), the lower-level call it and the other units (kernel, host,
 # ui, app) use to feed the two aggregated QML modules and the test binary.
 #
 #   waku_feature(NAME <f>

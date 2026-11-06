@@ -121,7 +121,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   // waku extensions.
   // The id of the window for `wakuc surface ...` and hotkeys; unique per shell. One name can
   // belong to several windows (a Variants makes one per screen) and every verb applies to all of
-  // them. Not FINAL: a ported shell that declares its own `name` property on a window (caelestia's
+  // them. Not FINAL: a ported shell that declares its own `name` property on a window (celeste's
   // StyledWindow does) still loads, and the surface verbs use that property (surfaceName()).
   Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
   // Milliseconds between `visible` turning false and the window leaving the screen, so the content
@@ -176,7 +176,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   QString name() const { return name_; }
   void setName(const QString& name);
   // The id the surface verbs and the visibility memory use: the `name` property as the QML object
-  // has it (so a component that declares its own `name`, as Caelestia's StyledWindow does, is found
+  // has it (so a component that declares its own `name`, as Celeste's StyledWindow does, is found
   // by that), else waku's `name`, else `objectName`. Empty: the window is not addressable.
   QString surfaceName() const;
   int hideDelay() const { return hideDelay_; }

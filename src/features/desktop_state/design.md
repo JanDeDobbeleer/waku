@@ -1,7 +1,7 @@
 # desktop_state
 
 Lock keys, keyboard layout, idle time and the idle inhibitor, for QML written against
-Quickshell (caelestia reads `Hypr.capsLock`, `Hypr.numLock`, `Hypr.kbLayout` and uses
+Quickshell (celeste reads `Hypr.capsLock`, `Hypr.numLock`, `Hypr.kbLayout` and uses
 `IdleInhibitor`, `IdleMonitor`).
 
 ## Types

@@ -1,6 +1,6 @@
 # waku_kernel: helpers with no domain knowledge that two or more units use (proposal, section 6).
 #   win32/  Windows build number, WinRT apartment, hidden process launch, shell open, app activation,
-#           forced foreground focus, shell icons, COM scope, task thread, WinRT strings,
+#           forced foreground focus, the RAII WinEvent hook, shell icons, COM scope, task thread, WinRT strings,
 #           environment expansion, the RegisterHotKey backend of the hotkey table
 #   qt/     live-desktop gate, polled-source base class, the one app data folder, lingering hubs,
 #           atomic file write, guarded post to the GUI thread, the global hotkey table (Hotkeys)
@@ -37,6 +37,8 @@ add_library(waku_kernel STATIC
   win32/task_thread.cpp
   win32/window_focus.h
   win32/window_focus.cpp
+  win32/winevent_hook.h
+  win32/winevent_hook.cpp
   win32/windows_build.h
   win32/windows_build.cpp
   win32/winrt_apartment.h

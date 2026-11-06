@@ -2,9 +2,9 @@
 .SYNOPSIS
     Start a candidate shell in isolation, report its status, then stop it.
 .DESCRIPTION
-    Runs waku with --config-home <ConfigHome> --no-tray and a log file in a temp folder. It never
-    passes --register-app-bar, --hide-taskbar or --manage-komorebi, so the desktop layout, the
-    Windows taskbar and komorebi are left alone. By default it uses the offscreen platform (level 1:
+    Runs waku with --config-home <ConfigHome> --no-tray and a log file in a temp folder. It always
+    passes --no-app-bar, --keep-taskbar, --no-keys and --no-tiling, so the desktop layout and the Windows taskbar
+    are left alone. It does not start wakukeys, so no keys are grabbed. By default it uses the offscreen platform (level 1:
     the shell loads) when the engine folder has that plugin, else the real platform. -Visible uses
     the real platform so you can capture pixels (level 2); a shell window appears on the desktop
     until the script stops it.
@@ -78,7 +78,7 @@ if ($offscreen) { $env:QT_QPA_PLATFORM = 'offscreen' }
 $proc = $null
 try {
     $proc = Start-Process -FilePath $wakuExe -PassThru -WindowStyle Hidden `
-        -ArgumentList @('--config-home', $home1, '--no-tray', '--log-file', $log) `
+        -ArgumentList @('--config-home', $home1, '--no-tray', '--no-app-bar', '--keep-taskbar', '--no-keys', '--no-tiling', '--log-file', $log) `
         -RedirectStandardOutput $stdout -RedirectStandardError $stderr
     $env:QT_QPA_PLATFORM = $oldQpa
 

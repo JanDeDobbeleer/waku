@@ -37,7 +37,7 @@ std::optional<AppBarEdge> panelAppBarEdge(const PanelAnchorSet& anchors);
 int panelThickness(AppBarEdge edge, const QSize& size);
 
 // The pixels a PanelWindow reserves along its app bar edge, before the host's
-// --register-app-bar gate. `mode` is an ExclusionMode value (Ignore 0, Normal 1, Auto 2):
+// --no-app-bar gate. `mode` is an ExclusionMode value (Ignore 0, Normal 1, Auto 2):
 // Ignore reserves nothing, Normal `exclusiveZone` plus the margin on that edge, Auto the window's
 // thickness plus the margin. Nothing when the window is not an app bar.
 int panelReservedZone(const PanelAnchorSet& anchors, const QMargins& margins, int mode,

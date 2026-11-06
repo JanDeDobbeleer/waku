@@ -29,9 +29,9 @@ cmd /c "call `"$vc`" arm64_amd64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64
 
 On an x64 host use `vcvarsall.bat x64` and the same presets.
 
-Everything lands in `build\<preset>`: `waku.exe`, `wakuc.exe`, the tray hook DLL next to them and
+Everything lands in `build\<preset>`: `waku.exe`, `wakuc.exe`, `wakukeys.exe`, the tray hook DLL next to them and
 `waku_tests.exe` with the Qt DLLs and the offscreen platform plugin that `windeployqt` copies next
-to it. The targets are `waku`, `wakuc`, `WakuTrayHook` (`WakuTrayHook_arm64` on ARM64),
+to it. The targets are `waku`, `wakuc`, `wakukeys`, `WakuTrayHook` (`WakuTrayHook_arm64` on ARM64),
 `waku_tests` and `deploy`; select one with `cmake --build --preset <preset> --target <name>`.
 
 `build\<preset>\qml_modules` holds the build copy of every QML module of `src/` (qmldir, `.qmltypes`,
@@ -60,14 +60,15 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | Flag | Effect |
 |---|---|
 | `--config-home <dir>` | The config home. Default: `$WAKU_CONFIG_HOME`, else `%USERPROFILE%\.config\waku`. Only the default is implicit: a missing `shell.qml` there shows the built-in bar, in a config home you chose it is an error. |
-| `--register-app-bar` | Let windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve screen work area. Without it no window reserves space. |
+| `--no-app-bar` | Never reserve screen work area. By default windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve it on a live desktop; tests and tools pass this flag. |
 | `--safe` | Start the built-in shell with the default theme and ignore the config home. |
 | `--import-path <dir>` | Add a folder of QML modules to the import path. Repeatable. See "User-built QML plugins". |
+| `--no-keys` | Do not start `wakukeys.exe` beside waku. By default, when the config home has a `keys.conf`, waku starts the key daemon and stops it on exit (a daemon that already runs is left alone). Tests and tools pass this flag. |
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
-| `--hide-taskbar` | Hide the Windows taskbar (all monitors) while waku runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
+| `--keep-taskbar` | Leave the Windows taskbar alone. By default, on a live desktop, waku hides it (all monitors) while it runs and restores it on exit; tests and tools pass this flag. See "The Windows taskbar" in `docs/architecture.md`. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wakuc shortcut`. |
-| `--no-workarea-sync` | Never tell komorebi that the work area changed. By default waku sends `WM_SETTINGCHANGE(SPI_SETWORKAREA)` to komorebi's hidden window 0.5 s after a screen or work area change and again 5 s later, so windows do not tile under the bar. See "komorebi's work area" in `docs/architecture.md`. |
-| `--manage-komorebi` | After a screen or scale change, run `komorebic replace-configuration` so komorebi and komorebi-bar pick it up. Acts only while both run, at most once per 30 s. Off by default. See "Managing komorebi" in `src/features/workspaces/design.md`. |
+| `--no-shell-desktops` | Never use the undocumented shell interface behind Task View for virtual desktops: closing a desktop, creating one without a keystroke, the animated switch and the change notifications. The registry and the documented calls remain, so switching still works and closing is unavailable (`Workspaces.canRemove` is false). See "Shell interface" in `src/features/workspaces/design.md`. |
+| `--no-tiling` | Never start the built-in tiler. The tiler is on by default on a live desktop; tests and tools pass this flag. See "The built-in tiler" in `docs/architecture.md`. |
 | `--log-file <path>` | Write a JSON Lines diagnostics log to `<path>`: every log message, the start and stop of the run, screen and scale changes and shell reloads. Off by default. Format and how to read it: `docs/logging.md`. |
 | `--font-engine <engine>` | `gdi` (default, small) or `directwrite` (honours variable-font axes, tens of MB more memory and about 1,000 more handles). A shell that uses variable fonts needs `directwrite`. `QT_QPA_PLATFORM` wins when it is set. |
 | `--help` | Print the options. |
@@ -84,6 +85,16 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `wakuc call` | List the `IpcHandler` targets and their functions. |
 | `wakuc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
 | `wakuc taskbar hide`, `show`, `status` | Hide the Windows taskbar, restore what waku changed (it stays shown until `hide`), or print `ok: taskbar: hidden|visible|autohide-was-on`. |
+| `wakuc tile toggle`, `float`, `retile`, `status` | The built-in tiler (on by default; `--no-tiling` turns it off): float the focused window, or tile it again; float it only; place every window of the shown desktop again; print `ok: enabled=...; active=...; managed=...; ...; stacks=N; ...`. |
+| `wakuc tile layout <name>` | Set the layout of the focused window's workspace (`mainStack`, `mainStackTop`, `columns`, `rows`, `bsp`, `grid`, `centerMain`), or `next` / `previous` to cycle. |
+| `wakuc tile focus next\|previous\|left\|right\|up\|down` | Focus the next or previous window of the workspace (wrapping), or the nearest tiled window in a direction. |
+| `wakuc tile move left\|right\|up\|down`, `promote` | Swap the focused window with its neighbour in that direction; give it the main slot. |
+| `wakuc tile stack left\|right\|up\|down`, `unstack`, `cycle-stack next\|previous` | Stacking: put the focused window on the stack of the slot in that direction (windows of a stack share one slot, the top one shows); take it out into its own slot; bring the next or previous window of its stack to the top. |
+| `wakuc tile resize horizontal\|vertical increase\|decrease` | Grow or shrink the focused window by one step: horizontal moves the main/stack boundary (5% of the width), vertical changes the height of a stacked window. Per workspace, clamped. |
+| `wakuc tile flip horizontal\|vertical`, `monocle`, `pause` | Mirror the layout (again undoes it); the focused window fills the work area, the others stay put (again tiles it back); stop and resume placing windows. |
+| `wakuc tile close`, `minimize` | Close (`WM_CLOSE`) or minimize the focused window. |
+| `wakuc desktop goto <n>`, `next`, `previous`, `status` | Windows virtual desktops: show desktop `n` (counting from 1; never creates one), the next or previous one (no wrap), or print `ok: current=2; count=3`. |
+| `wakuc desktop move <n>` | Send the focused window to desktop `n` without showing it; creates nothing, refuses a window of waku. |
 | `wakuc quit` | Stop the bar. |
 | `wakuc config init [--force]` | Write a starter `shell.qml` (the built-in bar) into the config home. Needs no running bar. Exit 1 if `shell.qml` exists, unless `--force`. |
 | `wakuc wallpaper set <file-or-path>` | Set the wallpaper: a full path, or a file name in the wallpaper folder (case does not matter, the extension may be left out). |
@@ -92,12 +103,31 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `wakuc shortcut <name>` | Fire the `GlobalShortcut` with that name (its `onPressed`, then `onReleased`). Bind a key to this command in whkd or AutoHotkey for a shortcut with no `keys`. |
 | `wakuc shortcut list` | Print the names of the shortcuts the shell declares. A shortcut named `list` cannot be fired. |
 
+The `tile` and `desktop` commands are meant for the key daemon: `examples/config/keys.conf` is a whkd-syntax file that binds all of them (alt+arrows to focus and move, alt+1..8 for desktops) and replaces a tiling window manager plus whkd setup. Its commands start `wakuc`, so `wakuc.exe` must be on `PATH`.
+
 `--dry-run` after `wallpaper` (not `gallery`) plays the animation without setting the wallpaper.
+
+### `wakukeys`: global hotkeys without whkd
+
+`wakukeys.exe` is a hotkey daemon, a third program next to `waku.exe` and `wakuc.exe` (the bar is
+not involved). It is a Windows (GUI) program: no console window ever appears, so a login task or
+the Startup folder can run it directly. It reads a whkd binding file (`alt + h : wakuc tile focus
+left`), registers the keys with `RegisterHotKey` and runs the commands. A copy of your `whkdrc`
+loads unchanged. Syntax, actions and decisions: `src/features/keymap/design.md`.
+
+| Command | Effect |
+|---|---|
+| `wakukeys [--config <file>] [--config-home <dir>] [--log-file <file>]` | Start the daemon. It returns at once and has no window. `--config` defaults to `keys.conf` in the config home (`--config-home`, else `%USERPROFILE%\.config\waku`) if that file exists. One daemon per user; a second start exits with 1. Errors on start (no file, a bad first file) print to the terminal that ran it; otherwise read `--log-file`. |
+| `wakukeys reload`, `stop`, `status` | Reload the file now (it also reloads when it changes; a bad file keeps the old bindings), stop the daemon, or print `ok: running; pid=P; bindings=N; conflicts=C; issues=I; paused=no; config=F`. They print to the console of the terminal and exit 0, 1 (error answer), 2 (no daemon running) or 3 (usage). A shell prompt does not wait for a GUI program, so the exit code and the answer reach you only when the output is read: in PowerShell pipe it (`wakukeys status | Out-String`) or use `Start-Process -Wait`; `cmd /c`, `$(...)` and scripts that capture output wait. |
+
+Beside shell commands, a binding can run `waku:shortcut <name>`, `waku:surface show|hide|toggle
+<name>`, `waku:call <target> <function> [args]` and `waku:reload` (all sent to the bar, as `wakuc`
+does), `waku:keys-reload`, `waku:keys-stop`, and `waku:activate-or-launch <exe-or-title> <command>`
+(focus the app's window, else run the command). `--config-home <dir>` selects the bar.
 
 ### Moving a waku 1 config to waku 2
 
-waku 2 uses Quickshell's names (`docs/plans/2026-10-29-waku-extensibility-proposal.md`, section
-11). A config home with a `bar.qml` and no `shell.qml` loads the fallback shell, whose error pill
+waku 2 uses Quickshell's names. A config home with a `bar.qml` and no `shell.qml` loads the fallback shell, whose error pill
 names the rename. There are no aliases; edit the file:
 
 | waku 1 | waku 2 |
