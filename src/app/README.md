@@ -53,7 +53,7 @@ written in lower case and plain ASCII in code and paths.
   reports its edge as `QsWindow.window.dockEdge`.
 - `--hide-taskbar` hides the Windows taskbar while waku runs and restores it on exit;
   `wakuc taskbar hide|show|status` does the same at run time.
-- `--register-app-bar` reserves screen work area; `--no-tray` never hooks Explorer; `--safe` starts
+- Panels reserve screen work area on a live desktop; `--no-app-bar` turns that off; `--no-tray` never hooks Explorer; `--safe` starts
   the built-in shell and ignores the config; `--font-engine=directwrite` honours variable-font axes.
 - `Tiling.enabled = true` (a shell property) turns on a built-in tiler that places new windows in
   a main+stack or columns layout per monitor and virtual desktop; off by default,

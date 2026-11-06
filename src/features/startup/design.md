@@ -15,7 +15,7 @@ second task (`waku keys`) starts the keys daemon `wakukeys.exe`.
   PATH, and the task resolves it at logon. The command registers nothing when `waku.exe` is not on
   the PATH, and says which folder to add. When the PATH finds another install than the one next
   to `wakuc`, the command warns and registers anyway: the task starts the one on the PATH.
-- Defaults: `--register-app-bar --hide-taskbar`, no `--config-home`. waku resolves its own
+- Defaults: `--hide-taskbar`, no `--config-home`. waku resolves its own
   config home at start. `--config-home` is passed only when the user gave one (made absolute).
   `--no-app-bar` and `--keep-taskbar` drop the defaults. Extra waku flags follow `--`; an exact
   duplicate of a flag already present is dropped.

@@ -78,8 +78,15 @@ int main(int argc, char* argv[]) {
       QStringLiteral("Folder with shell.qml (default: $WAKU_CONFIG_HOME, else the sample config "
                      "of the repository)."),
       QStringLiteral("dir"));
+  QCommandLineOption noAppBarOpt(
+      QStringLiteral("no-app-bar"),
+      QStringLiteral("Never reserve screen work area. By default windows that ask reserve it, on a "
+                     "live desktop only; use this for tests and tools."));
+  // The old default-off switch. Reserving is the default now; the option stays so scripts that
+  // pass it keep working.
   QCommandLineOption appBarOpt(QStringLiteral("register-app-bar"),
-                               QStringLiteral("Reserve screen work area for windows that ask."));
+                               QStringLiteral("Reserve screen work area (the default; accepted "
+                                              "for old scripts)."));
   QCommandLineOption safeOpt(
       QStringLiteral("safe"),
       QStringLiteral(
@@ -129,6 +136,7 @@ int main(int argc, char* argv[]) {
   parser.addOption(fontEngineOpt);
   parser.addOption(noTrayOpt);
   parser.addOption(appBarOpt);
+  parser.addOption(noAppBarOpt);
   parser.addOption(safeOpt);
   parser.process(app);
   if (!fontEngine.error.isEmpty()) qWarning().noquote() << "waku:" << fontEngine.error;
@@ -163,7 +171,7 @@ int main(int argc, char* argv[]) {
   waku::host::ShellHost::Options options;
   options.configHome = configHome;
   options.implicitConfigHome = resolvedHome.implicit;
-  options.allowReserve = parser.isSet(appBarOpt);
+  options.allowReserve = !parser.isSet(noAppBarOpt) && waku::kernel::liveDesktop();
   options.safe = parser.isSet(safeOpt);
   options.hooks = waku::host::ShellHost::NativeHooks::win32();
   waku::host::ShellHost host(&engine, std::move(options));

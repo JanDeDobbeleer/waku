@@ -257,7 +257,7 @@ icon above its text. `Strip` (`src/ui/Strip.qml`) is the positioner of the built
 hold several items (`Workspaces`, `Taskbar`, `Tray`).
 
 A docked panel is an app bar on its edge (`AppBarEdge` Left 0, Top 1, Right 2, Bottom 3, the ABE
-values) and reserves work area only with `--register-app-bar` and a non-zero `exclusiveZone` or
+values) and reserves work area unless `--no-app-bar` is passed (and only on a live desktop), with a non-zero `exclusiveZone` or
 thickness (`panelReservedZone`). The window is registered (`ABM_NEW`) only when it reserves space.
 Rects are physical pixels: the origin of `QScreen::geometry()` (Qt keeps it in native coordinates)
 and its size times the device pixel ratio (`computeAppBarRect`). `negotiateAppBarRect` calls

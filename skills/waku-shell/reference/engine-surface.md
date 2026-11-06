@@ -74,8 +74,8 @@ with its own components carries its own tokens and does not need it.
 - Windows: `PanelWindow` (anchors, margins, `implicitHeight`, `exclusiveZone`, `exclusionMode`,
   `layer`, `keyboardFocus`, `backdrop`, `mask: Region`), `FloatingWindow`, `PopupWindow`
   (`anchor.item`). A window with a `name` answers `wakuc surface show|hide|toggle <name>`.
-- Work area: `--register-app-bar` lets a panel reserve screen space. `--hide-taskbar` hides the
-  Windows taskbar and restores it on exit. Without them waku touches neither.
+- Work area: a panel reserves screen space by default on a live desktop; `--no-app-bar` turns that
+  off (tests and tools use it). `--hide-taskbar` hides the Windows taskbar and restores it on exit.
 - Input: `GlobalShortcut` with `keys` registers the key. Without `keys`, bind a key to
   `wakuc shortcut <name>` in whkd or AutoHotkey.
 - Commands: `IpcHandler { target; function ... }` answers `wakuc call <target> <function>`.
@@ -87,7 +87,7 @@ with its own components carries its own tokens and does not need it.
 
 ## CLI
 
-`waku.exe`: `--config-home`, `--register-app-bar`, `--hide-taskbar`, `--no-tray`, `--safe`,
+`waku.exe`: `--config-home`, `--no-app-bar`, `--hide-taskbar`, `--no-tray`, `--safe`,
 `--no-hotkeys`, `--font-engine`, `--log-file`, `--import-path`. `wakuc` (give it the same `--config-home`): `status`, `reload`, `quit`,
 `surface`, `call`, `shortcut`, `taskbar`, `tile`, `desktop`, `wallpaper`, `config init`,
 `startup`. Exit codes of

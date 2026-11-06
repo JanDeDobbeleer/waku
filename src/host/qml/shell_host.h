@@ -102,7 +102,7 @@ class ShellHost : public QObject {
     // Optional: a ThemeSpec that sets the look; missing means the defaults.
     QString themeFile = QStringLiteral("theme.qml");
     // Reserving the work area changes the user's desktop, so it needs this on top of a window's
-    // own exclusive zone (the `--register-app-bar` switch).
+    // own exclusive zone (off with `--no-app-bar`).
     bool allowReserve = false;
     NativeHooks hooks;
     // Screens to build shells for (ScreenList); default: every screen of the application.

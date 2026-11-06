@@ -35,7 +35,7 @@
 //     wakuc startup disable|status
 //                       register, remove or report the Scheduled Task that starts `waku.exe` at
 //                       sign-in. Works without a running bar. `waku.exe` must be on your PATH.
-//                       The task runs `waku.exe --register-app-bar --hide-taskbar`;
+//                       The task runs `waku.exe --hide-taskbar`;
 //                       `--config-home` is passed to waku only when given here, `--no-app-bar`
 //                       and `--keep-taskbar` drop the other two, flags after `--` are added
 //
@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
                               QStringLiteral("config init: replace an existing shell.qml."));
   parser.addOption(forceOpt);
   QCommandLineOption noAppBarOpt(QStringLiteral("no-app-bar"),
-                                 QStringLiteral("startup enable: leave out --register-app-bar."));
+                                 QStringLiteral("startup enable: start waku with --no-app-bar."));
   parser.addOption(noAppBarOpt);
   QCommandLineOption keepTaskbarOpt(QStringLiteral("keep-taskbar"),
                                     QStringLiteral("startup enable: leave out --hide-taskbar."));

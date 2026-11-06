@@ -129,11 +129,11 @@ execution alias there. If it is missing, `enable` registers nothing and tells yo
 add. A change to the PATH reaches new sessions only: sign out and in again, then run the command
 again.
 
-The task starts waku with `--register-app-bar --hide-taskbar`. Change that with:
+The task starts waku with `--hide-taskbar`. Change that with:
 
 - `--config-home <dir>`: start waku with that config home. Without it, waku uses its own default
   (`WAKU_CONFIG_HOME`, else `~/.config/waku`).
-- `--no-app-bar`: leave out `--register-app-bar`.
+- `--no-app-bar`: start waku with `--no-app-bar`, so no panel reserves screen space.
 - `--keep-taskbar`: leave out `--hide-taskbar`.
 - Other `waku` flags after `--`, for example `wakuc startup enable -- --no-tray`.
 

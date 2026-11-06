@@ -16,8 +16,8 @@ struct StartupOptions {
   QStringList extraArguments;
 };
 
-// The arguments of waku.exe: --config-home (when set), --register-app-bar, --hide-taskbar, then the
-// extras. An extra flag that is already present is dropped.
+// The arguments of waku.exe: --config-home (when set), --no-app-bar (when the bar is not to reserve
+// space), --hide-taskbar, then the extras. An extra flag that is already present is dropped.
 QStringList wakuArguments(const StartupOptions& options);
 
 // The arguments of wakukeys.exe: --config-home when set (the bar the `waku:` actions talk to). The

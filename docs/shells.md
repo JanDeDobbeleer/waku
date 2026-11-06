@@ -71,7 +71,7 @@ answers `wakuc shortcut <name>`.
 
 A shell that replaces the taskbar (a bar, a dock) starts waku with `--hide-taskbar`. waku then
 turns the taskbar's auto-hide on, which releases its work area, and hides its windows on every
-monitor, before the first shell is loaded, so a panel that reserves space (`--register-app-bar`)
+monitor, before the first shell is loaded, so a panel that reserves space (the default; `--no-app-bar` opts out)
 computes it without the taskbar. It restores the taskbar when waku exits, and the next start
 undoes it if waku crashed. Without the flag waku never touches the taskbar. At run time
 `wakuc taskbar hide|show|status` does the same; `show` leaves the taskbar visible until `hide`.
@@ -155,4 +155,4 @@ Both take `implicitWidth` and `implicitHeight`; unset, the content sizes the win
 
 Each `Workspaces` workspace (a Windows virtual desktop) has `windows`, the handles (`hwnd`) of its windows.
 Join them with the taskbar rows, whose `hwnd`, `exe`, `className` and `monitorHandle` roles carry the
-window data.
+window data.

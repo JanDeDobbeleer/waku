@@ -7,7 +7,7 @@ using namespace waku::startup;
 
 namespace {
 
-const QStringList kDefaults{QStringLiteral("--register-app-bar"), QStringLiteral("--hide-taskbar")};
+const QStringList kDefaults{QStringLiteral("--hide-taskbar")};
 
 }  // namespace
 
@@ -15,19 +15,20 @@ TEST(StartupServiceArguments, DefaultsHaveNoConfigHome) {
   EXPECT_EQ(wakuArguments(StartupOptions{}), kDefaults);
 }
 
-TEST(StartupServiceArguments, OptOutsDropTheFlags) {
+TEST(StartupServiceArguments, OptOutsChangeTheFlags) {
   StartupOptions options;
   options.registerAppBar = false;
-  EXPECT_EQ(wakuArguments(options), QStringList{QStringLiteral("--hide-taskbar")});
+  EXPECT_EQ(wakuArguments(options),
+            (QStringList{QStringLiteral("--no-app-bar"), QStringLiteral("--hide-taskbar")}));
   options.hideTaskbar = false;
-  EXPECT_TRUE(wakuArguments(options).isEmpty());
+  EXPECT_EQ(wakuArguments(options), QStringList{QStringLiteral("--no-app-bar")});
 }
 
 TEST(StartupServiceArguments, ConfigHomeComesFirst) {
   StartupOptions options;
   options.configHome = QStringLiteral("D:\\cfg");
   const QStringList args = wakuArguments(options);
-  ASSERT_EQ(args.size(), 4);
+  ASSERT_EQ(args.size(), 3);
   EXPECT_EQ(args.at(0), QStringLiteral("--config-home"));
   EXPECT_EQ(args.at(1), QStringLiteral("D:\\cfg"));
 }
@@ -36,8 +37,7 @@ TEST(StartupServiceArguments, DuplicateExtrasAreDropped) {
   StartupOptions options;
   options.extraArguments = {QStringLiteral("--hide-taskbar"), QStringLiteral("--no-tray")};
   EXPECT_EQ(wakuArguments(options),
-            (QStringList{QStringLiteral("--register-app-bar"), QStringLiteral("--hide-taskbar"),
-                         QStringLiteral("--no-tray")}));
+            (QStringList{QStringLiteral("--hide-taskbar"), QStringLiteral("--no-tray")}));
 }
 
 TEST(StartupServiceCommandLine, QuotesSpacesAndQuotes) {
@@ -54,10 +54,8 @@ TEST(StartupServiceEnable, RegistersTheDefaults) {
   const StartupResult result = enableStartup(system, StartupOptions{});
   EXPECT_TRUE(result.ok);
   ASSERT_EQ(system.registeredArguments.size(), 1);
-  EXPECT_EQ(system.registeredArguments.first(),
-            QStringLiteral("--register-app-bar --hide-taskbar"));
-  EXPECT_EQ(result.lines.first(),
-            QStringLiteral("startup: enabled, waku.exe --register-app-bar --hide-taskbar"));
+  EXPECT_EQ(system.registeredArguments.first(), QStringLiteral("--hide-taskbar"));
+  EXPECT_EQ(result.lines.first(), QStringLiteral("startup: enabled, waku.exe --hide-taskbar"));
 }
 
 TEST(StartupServiceEnable, ConfigHomeWithSpacesIsQuoted) {
@@ -66,7 +64,7 @@ TEST(StartupServiceEnable, ConfigHomeWithSpacesIsQuoted) {
   options.configHome = QStringLiteral("D:\\my config");
   ASSERT_TRUE(enableStartup(system, options).ok);
   EXPECT_EQ(system.registeredArguments.first(),
-            QStringLiteral("--config-home \"D:\\my config\" --register-app-bar --hide-taskbar"));
+            QStringLiteral("--config-home \"D:\\my config\" --hide-taskbar"));
 }
 
 TEST(StartupServiceEnable, MissingFromPathRegistersNothing) {
@@ -130,7 +128,7 @@ TEST(StartupServiceEnable, TwiceReplacesTheTask) {
   options.hideTaskbar = false;
   EXPECT_TRUE(enableStartup(system, options).ok);
   EXPECT_EQ(system.registeredArguments.size(), 2);
-  EXPECT_EQ(system.task.arguments, QStringLiteral("--register-app-bar"));
+  EXPECT_TRUE(system.task.arguments.isEmpty());
 }
 
 TEST(StartupServiceDisable, NothingRegisteredIsOk) {

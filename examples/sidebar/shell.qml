@@ -7,8 +7,8 @@
 // groups top to bottom: `start` at the top, `center` in the middle, `end` at the bottom. Pills show
 // the icon above the text; popups and tooltips open to the right of the bar.
 //
-// The panel reserves its width in the work area only when waku runs with --register-app-bar;
-// without it the bar floats over the desktop. For a right sidebar swap `left` for `right`.
+// The panel reserves its width in the work area unless waku runs with --no-app-bar, in which case
+// the bar floats over the desktop. For a right sidebar swap `left` for `right`.
 import QtQuick
 import waku
 import waku.widgets

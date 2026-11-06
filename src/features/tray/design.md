@@ -183,7 +183,7 @@ its names are now `WakuTrayHook[_arm64].dll`, `waku_systray_monitor` and `WakuTr
 `%LOCALAPPDATA%\waku` (the kernel copies the `systray_state_*.json` files from `YASB` once), and
 the legacy host that replaced `Shell_TrayWnd` is gone. Python YASB has its own hook DLL
 (`YASBTrayHook_arm64.dll`); stop it before starting the `Tray` widget, because whether the two coexist
-was not tested. A regular `waku` run reserves no work area; pass `--register-app-bar` (see
+was not tested. A regular `waku` run reserves work area; pass `--no-app-bar` to avoid it (see
 `AGENTS.md`).
 
 ## Next step

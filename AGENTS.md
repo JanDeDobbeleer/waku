@@ -183,8 +183,8 @@ fine. Never use the `const` `nlohmann::json::operator[]` on a key that may be mi
   read it in `docs/logging.md`).
 - Services ask `kernel::liveDesktop()` before touching the machine; it is false on the offscreen
   platform. No service tests `platformName()` itself.
-- No bar reserves screen work area unless `--register-app-bar` is passed, so a test or tool run
-  leaves the desktop layout alone. `--safe` starts the built-in bar and ignores the config.
+- A live run reserves screen work area for panels that ask. Tests and tools pass `--no-app-bar`, so
+  a run leaves the desktop layout alone (the offscreen platform never reserves). `--safe` starts the built-in bar and ignores the config.
 
 ## Undocumented Windows APIs
 

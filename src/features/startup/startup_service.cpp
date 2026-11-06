@@ -94,7 +94,7 @@ bool enableKeys(StartupSystem& system, const StartupOptions& options, StartupRes
 QStringList wakuArguments(const StartupOptions& options) {
   QStringList out;
   if (!options.configHome.isEmpty()) out << QStringLiteral("--config-home") << options.configHome;
-  if (options.registerAppBar) out << QStringLiteral("--register-app-bar");
+  if (!options.registerAppBar) out << QStringLiteral("--no-app-bar");
   if (options.hideTaskbar) out << QStringLiteral("--hide-taskbar");
   const QStringList present = out;
   for (const QString& extra : options.extraArguments) {

@@ -60,7 +60,7 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | Flag | Effect |
 |---|---|
 | `--config-home <dir>` | The config home. Default: `$WAKU_CONFIG_HOME`, else `%USERPROFILE%\.config\waku`. Only the default is implicit: a missing `shell.qml` there shows the built-in bar, in a config home you chose it is an error. |
-| `--register-app-bar` | Let windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve screen work area. Without it no window reserves space. |
+| `--no-app-bar` | Never reserve screen work area. By default windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve it on a live desktop; tests and tools pass this flag. `--register-app-bar` is still accepted and does nothing. |
 | `--safe` | Start the built-in shell with the default theme and ignore the config home. |
 | `--import-path <dir>` | Add a folder of QML modules to the import path. Repeatable. See "User-built QML plugins". |
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
