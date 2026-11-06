@@ -61,7 +61,13 @@ void Tiling::init(Deps deps) {
   }
 }
 
-Tiling* Tiling::create(QQmlEngine*, QJSEngine*) { return new Tiling(nullptr); }
+Tiling* Tiling::create(QQmlEngine*, QJSEngine*) {
+  // The engine's tiler is on unless the run forbids it (--no-tiling) or the shell sets
+  // `enabled = false`. A Tiling built directly (tests) starts off.
+  auto* tiling = new Tiling(nullptr);
+  tiling->setEnabled(true);
+  return tiling;
+}
 
 void Tiling::watchScreen(QScreen* screen) {
   connect(screen, &QScreen::availableGeometryChanged, this, &Tiling::screensChanged);

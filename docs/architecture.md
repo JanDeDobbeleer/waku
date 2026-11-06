@@ -353,8 +353,8 @@ and gives the windows of the next shell the same state after a reload (`ShellHos
 
 ### The Windows taskbar
 
-`waku --hide-taskbar` (and `wakuc taskbar hide`) hides the Windows taskbar; it is off by default
-and inert off the live desktop (`kernel::liveDesktop()`: the offscreen platform has no
+`waku` (and `wakuc taskbar hide`) hides the Windows taskbar; `waku --keep-taskbar` leaves it alone.
+It is inert off the live desktop (`kernel::liveDesktop()`: the offscreen platform has no
 `TaskbarSystem`, and the `taskbar` verbs answer an error). Documented APIs only, so no row in the
 allowlist below:
 
@@ -392,7 +392,7 @@ visible until the next `TaskbarCreated` or `hide`. Source: `src/host/windows_tas
 ### The built-in tiler
 
 `src/features/tiling/` (design: `design.md` there) places a window that opens in the slot of its
-layout, per monitor and virtual desktop. It is opt-in: the shell sets `Tiling.enabled`. Events
+layout, per monitor and virtual desktop. It is on by default: `--no-tiling` or `Tiling.enabled = false` turns it off. Events
 come from out-of-context `SetWinEventHook`s (`kernel::WinEventHook`, shared with the taskbar
 tracker): destroy, show and hide; name change; cloak and uncloak; minimize start and end; move
 and size start and end; foreground. `EVENT_OBJECT_LOCATIONCHANGE` is never hooked. A window is

@@ -4,7 +4,9 @@
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QDir>
+#include <QFileInfo>
 #include <QGuiApplication>
+#include <QProcess>
 #include <QQmlEngine>
 #include <QQuickWindow>
 #include <memory>
@@ -26,6 +28,30 @@
 #include "host/windows_taskbar.h"
 #include "kernel/qt/app_data.h"
 #include "kernel/qt/live_desktop.h"
+
+namespace {
+
+QString keysExecutable() {
+  return QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("wakukeys.exe"));
+}
+
+// Starts wakukeys.exe with the config home; false when there is nothing to start (no daemon beside
+// waku, no keys.conf) or one already runs. The daemon is a single instance per user, so a second
+// start would only refuse anyway.
+bool startKeys(const QString& configHome) {
+  const QString exe = keysExecutable();
+  if (!QFileInfo::exists(exe) || !QFileInfo::exists(QDir(configHome).filePath("keys.conf"))) {
+    return false;
+  }
+  QProcess status;
+  status.start(exe, {QStringLiteral("status")});
+  if (status.waitForFinished(3000) && status.exitCode() == 0) return false;
+  return QProcess::startDetached(exe, {QStringLiteral("--config-home"), configHome});
+}
+
+void stopKeys() { QProcess::execute(keysExecutable(), {QStringLiteral("stop")}); }
+
+}  // namespace
 
 int main(int argc, char* argv[]) {
   waku::host::startTrace();
@@ -82,11 +108,6 @@ int main(int argc, char* argv[]) {
       QStringLiteral("no-app-bar"),
       QStringLiteral("Never reserve screen work area. By default windows that ask reserve it, on a "
                      "live desktop only; use this for tests and tools."));
-  // The old default-off switch. Reserving is the default now; the option stays so scripts that
-  // pass it keep working.
-  QCommandLineOption appBarOpt(QStringLiteral("register-app-bar"),
-                               QStringLiteral("Reserve screen work area (the default; accepted "
-                                              "for old scripts)."));
   QCommandLineOption safeOpt(
       QStringLiteral("safe"),
       QStringLiteral(
@@ -108,10 +129,16 @@ int main(int argc, char* argv[]) {
       QStringLiteral("Add a folder of QML modules (user-built plugins) to the import path. May be "
                      "repeated. <config home>/modules is always added when it exists."),
       QStringLiteral("dir"));
-  QCommandLineOption hideTaskbarOpt(
-      QStringLiteral("hide-taskbar"),
-      QStringLiteral("Hide the Windows taskbar while waku runs (auto-hide on, taskbar windows "
-                     "hidden) and restore it on exit. Off by default."));
+  QCommandLineOption keepTaskbarOpt(
+      QStringLiteral("keep-taskbar"),
+      QStringLiteral(
+          "Leave the Windows taskbar alone. By default, on a live desktop, waku hides it "
+          "(auto-hide on, taskbar windows hidden) while it runs and restores it on exit; "
+          "use this for tests and tools."));
+  QCommandLineOption noKeysOpt(
+      QStringLiteral("no-keys"),
+      QStringLiteral("Do not start wakukeys.exe (the key daemon) when the config home has a "
+                     "keys.conf."));
   QCommandLineOption noShellDesktopsOpt(
       QStringLiteral("no-shell-desktops"),
       QStringLiteral("Never use the undocumented shell interface behind Task View for virtual "
@@ -131,11 +158,11 @@ int main(int argc, char* argv[]) {
   parser.addOption(logFileOpt);
   parser.addOption(noShellDesktopsOpt);
   parser.addOption(noTilingOpt);
-  parser.addOption(hideTaskbarOpt);
+  parser.addOption(keepTaskbarOpt);
+  parser.addOption(noKeysOpt);
   parser.addOption(noHotkeysOpt);
   parser.addOption(fontEngineOpt);
   parser.addOption(noTrayOpt);
-  parser.addOption(appBarOpt);
   parser.addOption(noAppBarOpt);
   parser.addOption(safeOpt);
   parser.process(app);
@@ -179,7 +206,7 @@ int main(int argc, char* argv[]) {
   waku::host::traceStep("host built");
 
   // The Windows taskbar: inert off the live desktop. A stale marker of a crashed run is undone
-  // first; with --hide-taskbar the taskbar is hidden before the first reload, so a bar that
+  // first; the taskbar is hidden (unless --keep-taskbar) before the first reload, so a bar that
   // reserves work area computes it without the taskbar. Restored on aboutToQuit and, at the
   // latest, when `taskbar` is destroyed. The hide waits for the control pipe (below), so a
   // second start that is refused does not touch the taskbar.
@@ -230,14 +257,30 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  if (taskbar) taskbar->start(parser.isSet(hideTaskbarOpt));
-  QObject::connect(&host, &waku::host::ShellHost::reloaded, &host, [&host](bool ok) {
+  if (taskbar) taskbar->start(!parser.isSet(keepTaskbarOpt));
+  // The tiler is on by default: building the Tiling singleton turns it on, and a reload deletes the
+  // singleton, so it is built again after every load. A shell can still set Tiling.enabled = false.
+  const bool tilerWanted = !parser.isSet(noTilingOpt);
+  const auto ensureTiler = [&engine, tilerWanted] {
+    if (tilerWanted) {
+      engine.singletonInstance<waku::tiling::Tiling*>(QStringLiteral("waku.services"),
+                                                      QStringLiteral("Tiling"));
+    }
+  };
+  QObject::connect(&host, &waku::host::ShellHost::reloaded, &host, [&host, ensureTiler](bool ok) {
+    ensureTiler();
     waku::host::RunLog::event(
         QStringLiteral("shell.reload"),
         {{QStringLiteral("ok"), ok}, {QStringLiteral("error"), host.error()}});
   });
   host.reload();
+  ensureTiler();
   waku::host::traceStep("first reload done");
+  // The key daemon: started beside waku when the config home has a keys.conf, stopped with it. A
+  // daemon that already runs (a logon task) is left alone.
+  if (waku::kernel::liveDesktop() && !parser.isSet(noKeysOpt) && startKeys(configHome)) {
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &app, [] { stopKeys(); });
+  }
   host.watch();
   waku::host::traceStep("watch done");
   const int exitCode = app.exec();

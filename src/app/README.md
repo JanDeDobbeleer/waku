@@ -51,13 +51,13 @@ written in lower case and plain ASCII in code and paths.
   is in `docs/architecture.md`).
 - Panels dock to any of the four edges (`examples/sidebar` is a left one); a docked panel
   reports its edge as `QsWindow.window.dockEdge`.
-- `--hide-taskbar` hides the Windows taskbar while waku runs and restores it on exit;
-  `wakuc taskbar hide|show|status` does the same at run time.
-- Panels reserve screen work area on a live desktop; `--no-app-bar` turns that off; `--no-tray` never hooks Explorer; `--safe` starts
+- On a live desktop waku hides the Windows taskbar while it runs and restores it on exit
+  (`--keep-taskbar` leaves it alone); `wakuc taskbar hide|show|status` does the same at run time.
+- Panels reserve screen work area on a live desktop; `--no-app-bar` turns that off; `--no-tray`
+  never hooks Explorer; `--no-keys` skips the key daemon; `--safe` starts
   the built-in shell and ignores the config; `--font-engine=directwrite` honours variable-font axes.
-- `Tiling.enabled = true` (a shell property) turns on a built-in tiler that places new windows in
-  a main+stack or columns layout per monitor and virtual desktop; off by default,
-  `--no-tiling` forbids it; `wakuc tile toggle|float|layout|retile|status`.
+- A built-in tiler places new windows in a main+stack or columns layout per monitor and virtual
+  desktop; on by default (`Tiling.enabled = false` in a shell or `--no-tiling` turns it off); `wakuc tile toggle|float|layout|retile|status`.
 - `--log-file <path>` writes a JSON Lines diagnostics log (log messages, screen and scale
   changes, reloads, start and stop); off by default. Format: `docs/logging.md`.
 

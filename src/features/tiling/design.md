@@ -1,8 +1,8 @@
 # tiling
 
-A built-in, opt-in tiler. A window that opens goes into the slot of its layout instead of floating
+A built-in tiler, on by default on a live desktop. A window that opens goes into the slot of its layout instead of floating
 where the app put it. It uses documented Win32 only, runs on the GUI thread, polls nothing and
-injects nothing. A shell turns it on; the engine ships no default beyond what any shell needs.
+injects nothing. A shell turns it off with `Tiling.enabled = false`, a run with `--no-tiling`.
 
 ```qml
 Component.onCompleted: {

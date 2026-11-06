@@ -41,7 +41,7 @@ keys, launch code or panels.
 ## Windows tiling (built-in tiler)
 
 - waku tiles with its own tiler (`Tiling` singleton, `wakuc tile ...`). Gap, ratio, layout and rules
-  are `Tiling` properties set in `shell.qml`. It is off until `Tiling.enabled` is true.
+  are `Tiling` properties set in `shell.qml`. It is on by default; `Tiling.enabled = false` or `--no-tiling` turns it off.
 - Windows 11 draws a thin invisible frame around windows. The tiler compensates, so measure the
   result with `wakuc tile status` and pixels, not by eye.
 - Only the tiler is supported. Do not start komorebi or GlazeWM beside it.

@@ -7,7 +7,8 @@
 
 namespace waku::host {
 
-// Hiding the Windows taskbar while waku runs (`waku --hide-taskbar`, `wakuc taskbar ...`).
+// Hiding the Windows taskbar while waku runs (the default of `waku`, `--keep-taskbar` opts out;
+// `wakuc taskbar ...`).
 //
 // What is seen from outside. `AutoHide` is the answer "autohide-was-on": the taskbar window is
 // not hidden but Windows auto-hides it.

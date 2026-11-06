@@ -60,14 +60,15 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | Flag | Effect |
 |---|---|
 | `--config-home <dir>` | The config home. Default: `$WAKU_CONFIG_HOME`, else `%USERPROFILE%\.config\waku`. Only the default is implicit: a missing `shell.qml` there shows the built-in bar, in a config home you chose it is an error. |
-| `--no-app-bar` | Never reserve screen work area. By default windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve it on a live desktop; tests and tools pass this flag. `--register-app-bar` is still accepted and does nothing. |
+| `--no-app-bar` | Never reserve screen work area. By default windows that ask (`exclusiveZone`, `exclusionMode`, `Panel.exclusive`) reserve it on a live desktop; tests and tools pass this flag. |
 | `--safe` | Start the built-in shell with the default theme and ignore the config home. |
 | `--import-path <dir>` | Add a folder of QML modules to the import path. Repeatable. See "User-built QML plugins". |
+| `--no-keys` | Do not start `wakukeys.exe` beside waku. By default, when the config home has a `keys.conf`, waku starts the key daemon and stops it on exit (a daemon that already runs is left alone). Tests and tools pass this flag. |
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
-| `--hide-taskbar` | Hide the Windows taskbar (all monitors) while waku runs and restore it on exit. Off by default; a shell that replaces the taskbar wants it. See "The Windows taskbar" in `docs/architecture.md`. |
+| `--keep-taskbar` | Leave the Windows taskbar alone. By default, on a live desktop, waku hides it (all monitors) while it runs and restores it on exit; tests and tools pass this flag. See "The Windows taskbar" in `docs/architecture.md`. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wakuc shortcut`. |
 | `--no-shell-desktops` | Never use the undocumented shell interface behind Task View for virtual desktops: closing a desktop, creating one without a keystroke, the animated switch and the change notifications. The registry and the documented calls remain, so switching still works and closing is unavailable (`Workspaces.canRemove` is false). See "Shell interface" in `src/features/workspaces/design.md`. |
-| `--no-tiling` | Never start the built-in tiler, even when the shell sets `Tiling.enabled`. The tiler is off by default. See "The built-in tiler" in `docs/architecture.md`. |
+| `--no-tiling` | Never start the built-in tiler. The tiler is on by default on a live desktop; tests and tools pass this flag. See "The built-in tiler" in `docs/architecture.md`. |
 | `--log-file <path>` | Write a JSON Lines diagnostics log to `<path>`: every log message, the start and stop of the run, screen and scale changes and shell reloads. Off by default. Format and how to read it: `docs/logging.md`. |
 | `--font-engine <engine>` | `gdi` (default, small) or `directwrite` (honours variable-font axes, tens of MB more memory and about 1,000 more handles). A shell that uses variable fonts needs `directwrite`. `QT_QPA_PLATFORM` wins when it is set. |
 | `--help` | Print the options. |
@@ -84,7 +85,7 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `wakuc call` | List the `IpcHandler` targets and their functions. |
 | `wakuc call <target> <function> [args...]` | Run a function of the `IpcHandler` with that `target`. Arguments are words converted by the declared parameter types (`string`, `int`, `bool`, `real`, `color`); the answer is the return value on one line (`ok` for `void`, JSON for an object or list, `error: ...` on a failure). |
 | `wakuc taskbar hide`, `show`, `status` | Hide the Windows taskbar, restore what waku changed (it stays shown until `hide`), or print `ok: taskbar: hidden|visible|autohide-was-on`. |
-| `wakuc tile toggle`, `float`, `retile`, `status` | The built-in tiler (off unless the shell sets `Tiling.enabled`): float the focused window, or tile it again; float it only; place every window of the shown desktop again; print `ok: enabled=...; active=...; managed=...; ...; stacks=N; ...`. |
+| `wakuc tile toggle`, `float`, `retile`, `status` | The built-in tiler (on by default; `--no-tiling` turns it off): float the focused window, or tile it again; float it only; place every window of the shown desktop again; print `ok: enabled=...; active=...; managed=...; ...; stacks=N; ...`. |
 | `wakuc tile layout <name>` | Set the layout of the focused window's workspace (`mainStack`, `mainStackTop`, `columns`, `rows`, `bsp`, `grid`, `centerMain`), or `next` / `previous` to cycle. |
 | `wakuc tile focus next\|previous\|left\|right\|up\|down` | Focus the next or previous window of the workspace (wrapping), or the nearest tiled window in a direction. |
 | `wakuc tile move left\|right\|up\|down`, `promote` | Swap the focused window with its neighbour in that direction; give it the main slot. |

@@ -23,7 +23,7 @@
 //     wakuc taskbar hide|show|status
 //                       hide the Windows taskbar (auto-hide on, windows hidden), show it again
 //                       (restores what waku changed), or report "taskbar: hidden|visible|
-//                       autohide-was-on". `waku --hide-taskbar` hides it at start
+//                       autohide-was-on". `waku` hides it at start unless --keep-taskbar
 //     wakuc call [<target> <function> [args...]]
 //                       run a function of an IpcHandler; the answer is its return value on one
 //                       line ("ok" for void). Without arguments: the handlers and their functions
@@ -35,9 +35,9 @@
 //     wakuc startup disable|status
 //                       register, remove or report the Scheduled Task that starts `waku.exe` at
 //                       sign-in. Works without a running bar. `waku.exe` must be on your PATH.
-//                       The task runs `waku.exe --hide-taskbar`;
+//                       The task runs `waku.exe`;
 //                       `--config-home` is passed to waku only when given here, `--no-app-bar`
-//                       and `--keep-taskbar` drop the other two, flags after `--` are added
+//                       and `--keep-taskbar` are passed on, flags after `--` are added
 //
 // `--dry-run` plays the animation but does not set the wallpaper. A command is sent as one line;
 // arguments with spaces are quoted (control.h, joinCommand).
@@ -143,8 +143,9 @@ int main(int argc, char* argv[]) {
   QCommandLineOption noAppBarOpt(QStringLiteral("no-app-bar"),
                                  QStringLiteral("startup enable: start waku with --no-app-bar."));
   parser.addOption(noAppBarOpt);
-  QCommandLineOption keepTaskbarOpt(QStringLiteral("keep-taskbar"),
-                                    QStringLiteral("startup enable: leave out --hide-taskbar."));
+  QCommandLineOption keepTaskbarOpt(
+      QStringLiteral("keep-taskbar"),
+      QStringLiteral("startup enable: start waku with --keep-taskbar."));
   parser.addOption(keepTaskbarOpt);
   parser.addPositionalArgument(
       QStringLiteral("command"),

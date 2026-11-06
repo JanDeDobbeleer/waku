@@ -21,10 +21,11 @@ class QScreen;
 
 namespace waku::tiling {
 
-// The built-in tiler as one QML singleton: opt-in, off until the shell sets `enabled`. While on, a
-// window that opens is placed in the slot of its layout, per monitor and per virtual desktop, with
-// documented Win32 only (WinEvent hooks, SetWindowPos), no polling and no injected DLL. Built on
-// TilingEngine (tiling_engine.h); this class owns its inputs and the settings. GUI thread only.
+// The built-in tiler as one QML singleton: on by default in the waku engine, off with --no-tiling
+// or when the shell sets `enabled = false`. While on, a window that opens is placed in the slot of
+// its layout, per monitor and per virtual desktop, with documented Win32 only (WinEvent hooks,
+// SetWindowPos), no polling and no injected DLL. Built on TilingEngine (tiling_engine.h); this
+// class owns its inputs and the settings. GUI thread only.
 //
 //   enabled   the switch. Off: nothing is hooked and no window is touched
 //   layout    the layout of a workspace with none of its own: "mainStack" (default),
@@ -37,8 +38,8 @@ namespace waku::tiling {
 //             No rule ships by default beyond the built-in splash and shell classes
 //   active    true while the tiler runs: enabled and on the live desktop
 //
-// A shell turns it on with
-//   Component.onCompleted: { Tiling.enabled = true }
+// A shell turns it off with
+//   Component.onCompleted: { Tiling.enabled = false }
 // The `tile` verb of `wakuc` drives the same functions (tiling_command.h).
 class Tiling : public QObject, public TilingControl {
   Q_OBJECT
