@@ -5,6 +5,7 @@
 #include <QImage>
 #include <QObject>
 #include <QString>
+#include <QTimer>
 #include <QVariantList>
 #include <functional>
 #include <memory>
@@ -151,6 +152,11 @@ class Wallpapers : public QObject, public WallpaperControl {
   // The lock screen follows `path`, which has just become the wallpaper (or would have in a dry
   // run).
   void updateLockScreen(const QString& path, bool dryRun);
+  // Windows can still report the old wallpaper just after a set. Waits, rereading `current`, until
+  // it is `path` (or, with an empty `path`, differs from `beforeKey`), then moves the lock screen.
+  // Gives up after about three seconds, which is a failed set: the lock screen stays.
+  void confirmChange(const QString& path, const QString& beforeKey);
+  bool changeConfirmed();
   QString controlStep(int step, bool dryRun);
   QString controlStart(const QString& path, bool dryRun);
 
@@ -168,6 +174,10 @@ class Wallpapers : public QObject, public WallpaperControl {
   bool galleryOpen_ = false;
   QString galleryScreen_;
   bool setLockScreen_ = true;
+  QTimer verifyTimer_;
+  QString verifyPath_;
+  QString verifyBeforeKey_;
+  int verifyTries_ = 0;
 };
 
 }  // namespace waku::wallpapers
