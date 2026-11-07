@@ -29,12 +29,9 @@ Pill {
     property string orientation: "portrait"
     property int cornerRadius: 0
     property color accentColor: "#ffffff"
-    property bool engine: false
-    property string animation: "split"
 
     function sync() {
         S.Wallpapers.configure(imagePath, hotkey, hotkeyScreen, autoChange);
-        S.Wallpapers.configureEngine(engine, animation);
     }
 
     visible: label !== "" && S.Wallpapers.available
@@ -45,8 +42,6 @@ Pill {
     onHotkeyChanged: sync()
     onHotkeyScreenChanged: sync()
     onAutoChangeChanged: sync()
-    onEngineChanged: sync()
-    onAnimationChanged: sync()
     Component.onCompleted: sync()
 
     onClicked: S.Wallpapers.toggleGallery()

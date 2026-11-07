@@ -7,7 +7,7 @@ waku is at the git tag `widgets-main-final`).
 
 Python's wallpapers widget does four things: an optional bar button, a gallery of the wallpapers in
 `image_path`, a hotkey that toggles the gallery, and an animated change (`engine`). waku ships the
-first three plus an optional random timer, and the animation (see "Transition engine").
+first three plus an optional random timer. It has no animated change: see "Animation dropped".
 
 The user's config (`label ""`, `image_path ~/.config/wallpapers`, gallery `strip`, portrait, 240 px,
 accent `#fff`, radius 0, `alt+e` on the cursor screen) needs no bar button. The widget stays loaded
@@ -72,7 +72,7 @@ Qt Quick window.
 6. **Auto-change** is the manager's timer (`autoChange` seconds, 0 off), cheap to expose. `random()`
    uses the manager's picker. The timer calls the service's `random()`
    (`WallpaperManager::Dependencies::timedChange`), so a timed change is a manual one: the lock
-   screen follows, a dry run only logs and the animation plays when `engine` is on.
+   screen follows and a dry run only logs.
 7. **Non-default constructor.** Qt prefers a singleton's default constructor over `create()`, and
    `create()` registers the image provider (as for Taskbar).
 
@@ -89,7 +89,7 @@ screen shows too. `setLockScreen` is on by default; a shell turns it off with
   service has no setter, so tests and offscreen runs never touch the lock screen.
 - **When.** After the wallpaper was set: `current` (read back from `IDesktopWallpaper`) must equal
   the new path, so a failed set leaves the lock screen alone. Gallery clicks, `random()`, `wakuc
-  wallpaper ...`, the animated change and the auto-change timer (which calls `random()`) all
+  wallpaper ...` and the auto-change timer (which calls `random()`) all
   qualify.
 - **Dry run.** `WAKU_WALLPAPER_DRYRUN=1` or `--dry-run` never calls the API; the service logs
   `Wallpapers: lock screen (dry run): <path>`.
@@ -101,66 +101,20 @@ screen shows too. `setLockScreen` is on by default; a shell turns it off with
   GUI thread never waits on WinRT. A failure is one warning line. Group policy or an unpackaged
   process can make the call fail; it then fails soft.
 
-## Transition engine (Qt Quick)
+## Animation dropped
 
-The animated change (`engine`, `animation`) is ported from the `QWidget` `WallpaperEngine` to Qt Quick,
-so the waku wallpaper widget needs no Qt Widgets code. The old engine is in the Widgets build
-(git tag `widgets-main-final`).
+An animated change (a Qt Quick overlay on WorkerW that revealed the new image before the set)
+existed and was removed. Windows fades the wallpaper itself, about a second after the set and
+drawn above any overlay, so the overlay ended first and the previous wallpaper flashed back before
+the new one settled. No timing of the overlay fixed that, so the engine, its `engine` and
+`animation` settings, `configureEngine` and the WorkerW and image-decode code that only it used
+are gone. The old engine is in the Widgets build (git tag `widgets-main-final`).
 
-- **Approach.** `qml/wallpaper_transition.*`: `WallpaperTransition` owns a frameless,
-  input-transparent `QQuickWindow` and one `WallpaperScene` (`qml/wallpaper_scene.*`, a plain
-  `QQuickItem` with scene graph nodes, built in C++: no QML file) that shows, for every monitor
-  area, the old image and then the new image revealed by the animation's shape at `progress`
-  (0..1). A `QVariantAnimation` (1200 ms, OutQuad) drives `progress`. The window is
-  re-parented to WorkerW (above the wallpaper, below the icons) and ends when the animation does.
-  When it ends the service sets the wallpaper (one `IDesktopWallpaper` call, the existing path); the
-  overlay lingers a moment so the desktop never shows the old picture, then goes. A new change
-  during the animation cancels it (no commit for the cancelled one) and starts the next.
-- **Scene graph, not a painted item.** The first version was a full-screen `QQuickPaintedItem`:
-  every frame it rasterized both images into a CPU frame buffer (screen size, 4 bytes a pixel)
-  that was then uploaded again. `WallpaperScene` uploads each laid-out image once
-  (`createTextureFromImage`, one texture per distinct image, so a span layout shares) and a frame
-  only rewrites vertices. Per monitor: an opaque textured quad for the old image (hidden once the
-  reveal is complete); a flat-colour fill of the reveal shape (the desktop background, as the
-  reference fills the clip); the new image as triangles of the reveal shape with texture
-  coordinates, under a `QSGOpacityNode` that holds `t` for a fade and 1 for the shapes. Qt Quick has no
-  path clip, so the shapes are convex polygons (`wallpaper_reveal.*`, UI-free: `revealPieces`,
-  `computeAreaFrame`): the circle and the slide are a polygon whose edge stays within 0.2 px of
-  the circle (16 to 512 segments), the diamond a quad, the split two rectangles, each clipped to
-  the monitor and, for the new image, to the image's own rectangle (a "fit" layout leaves the
-  background around it). No shader, no `.qsb`.
-- **Reference.** `paintWallpaperFrame` stays: `renderFrame()` and the tests render through it.
-  `test_wallpaper_reveal.cpp` checks that the polygons cover the same area and the same pixels as
-  `revealPath` for every shape at several progress values and monitor sizes;
-  `test_wallpaper_scene.cpp` checks the node tree (textures per distinct image, one rebuild,
-  geometry per frame) on the software scene graph, which builds the tree but draws no triangles.
-- **Threads of the scene.** The GUI thread passes the images (they share the pixels of the
-  transition's pixmaps) and the progress. `updatePaintNode` runs on the render thread with the GUI
-  thread blocked; the textures and nodes live there and go with the node. It catches every
-  exception and logs. A lost scene graph rebuilds from the same images.
-- **Edge quality.** The reveal edge is antialiased only if the window's surface is multisampled;
-  the overlay window asks for no multisampling (a 4x swap chain costs 4x its memory), so the
-  circle, diamond and slide edge are one hard pixel step, the split edges are pixel aligned.
-- **Reused.** `wallpaper_layout` (`layoutForScreens`, `revealPath`, `readDesktopSettings`): the same
-  per-monitor areas, fit modes (fill, fit, stretch, tile, center, span) and reveal shapes as the old
-  engine. `attachToWorkerW` and `transcodedWallpaperPath` (`win32/workerw.h`) for the Win32 side: no Win32 is
-  duplicated and no undocumented API is added.
-- **Threads.** GUI thread. One short-lived `QThread` decodes the new image and the old one (the
-  transcoded wallpaper); it touches no Qt Quick object and is joined before the transition is
-  destroyed. Scaling for the monitors (`QPixmap`) runs on the GUI thread, as before.
-- **Failure.** WorkerW not found or an unreadable image: the window never shows, `skipped(reason)` is
-  logged once and the wallpaper is set at once. Unknown animation names fall back to a cross-fade.
-- **Dropped.** The 50 ms window fade-in before the reveal (the window sits at opacity 0.999 instead:
-  a child of WorkerW is only composed on this Windows build when it is layered, and Qt layers a
-  window once its opacity is not 1). The auto-change timer animates like the gallery and the
-  right-click random, since it calls `random()`. Seams for tests: `WallpaperTransition::Platform`
-  (settings, old image path, attach, decode, show) and `Wallpapers::Deps::transition`.
-- **Dry run.** `WAKU_WALLPAPER_DRYRUN=1` plays the transition and logs instead of calling
-  `IDesktopWallpaper`, so it can be watched without changing the real wallpaper.
+- **Dry run.** `WAKU_WALLPAPER_DRYRUN=1` logs instead of calling `IDesktopWallpaper`, so a change
+  can be watched without changing the real wallpaper.
 
 ## Left out
 
-- **The manager's own engine.** It stays off (it is a `QWidget`); the Qt Quick transition above replaces it.
 - `default`/`magnified`/`slide` gallery types, mouse-wheel/page-key scrolling, `run_after` commands,
   other keybinding actions (`change_wallpaper`), `system` accent colour, tooltips.
 - Double-click to apply (Python): a single click applies, which is what the brief asks for.
@@ -168,18 +122,17 @@ so the waku wallpaper widget needs no Qt Widgets code. The old engine is in the 
 ## No widget: `WallpaperSettings` and `wakuc wallpaper`
 
 - **`WallpaperSettings`** (`waku.services`, `qml/wallpaper_settings.*`) is a non-visual QML
-  type declared next to the windows: `ShellRoot { WallpaperSettings { imagePath: ...; hotkey: "alt+e";
-  engine: true; animation: "split" } Panel { ... } }`. It has `imagePath`, `hotkey`, `hotkeyScreen`,
-  `autoChange`, `engine`, `animation` and the gallery look (`imageWidth`, `orientation`,
+  type declared next to the windows: `ShellRoot { WallpaperSettings { imagePath: ...; hotkey: "alt+e" } Panel { ... } }`. It has `imagePath`, `hotkey`, `hotkeyScreen`,
+  `autoChange` and the gallery look (`imageWidth`, `orientation`,
   `cornerRadius`, `accentColor`). `ShellRoot` and `Scope` keep any object they declare; one that is not
   a window is a part.
 - **Activation.** `ShellHost::install` calls `activate()` (found by name, so `waku` does not link
   `waku.services`) on every part once the config is live. Not in the validation pass: that runs in
   a throwaway engine and must not build a second service or grab the hotkey. `activate()` fetches
-  the `Wallpapers` singleton of the engine (creating it), calls `configure` and `configureEngine`,
+  the `Wallpapers` singleton of the engine (creating it), calls `configure`,
   and creates the gallery window (`WallpaperGallery.qml`, loaded by URL) as its child, so the hotkey
   and `wakuc wallpaper gallery` work with no widget. Destroying the object (a reload, quitting)
-  switches the folder, hotkey and engine off; the next config's settings then switch them on.
+  switches the folder and hotkey off; the next config's settings then switch them on.
 - **Sharing.** The singleton is shared with any `Wallpapers` widget; the last `configure` wins. Use
   one or the other: both create a gallery and two would open at once.
 - **CLI.** `wakuc wallpaper set|random|next|previous [--dry-run]` and `gallery`. The client sends one
@@ -191,14 +144,14 @@ so the waku wallpaper widget needs no Qt Widgets code. The old engine is in the 
   tests fake. Neither `control` nor `host` knows the verb: `src/app/waku/main.cpp` adds it to the
   bar's control handler as a `host::ControlCommands` entry. The service is looked up when a
   command arrives, so a bar without wallpaper settings builds it only on the first command.
-- **Answers.** `ok: <full path>` once the change has started (the animation may still run), `ok:
+- **Answers.** `ok: <full path>` once the change has started, `ok:
   gallery opened|closed`, or `error: <why>` with nothing changed. `set` checks that the target
   exists, is a regular file, has a supported extension (`supportedImageTypes`) and a header Qt can
   read. `next`/`previous` use the Explorer-ordered list and wrap; when the current wallpaper is not
   in the folder `next` is the first file and `previous` the last. `random` never picks the current
   one.
 - **Dry run.** `--dry-run` is a per-call argument of the service (`Wallpapers::Deps::dryRun` and
-  `WAKU_WALLPAPER_DRYRUN` still work): the animation plays and the setter is skipped. Because the
+  `WAKU_WALLPAPER_DRYRUN` still work): the setter is skipped. Because the
   wallpaper does not change, repeated `next --dry-run` shows the same file.
 - **Left out.** A `WallpaperSettings` removed from `shell.qml` is switched off by the reload that drops it.
 
@@ -206,4 +159,4 @@ so the waku wallpaper widget needs no Qt Widgets code. The old engine is in the 
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `waku.services.Wallpapers` (`src/features/wallpapers/qml/wallpapers_service.{h,cpp}`): the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `waku` run, shared by every Wallpapers widget; created by the QML engine on first use and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles` and `DesktopWallpaperBackend` (animated `engine` off); thumbnails are the host's `image://thumb/`. No thread of its own: the hotkey is a handle in `kernel::Hotkeys` (GUI thread), removed in the destructor. Inert, no hotkey, when `kernel::liveDesktop("wallpapers")` is false; no hotkey either when `kernel::liveDesktop("hotkeys")` is false (`--no-hotkeys`).
+- `waku.services.Wallpapers` (`src/features/wallpapers/qml/wallpapers_service.{h,cpp}`): the wallpaper folder listing, current wallpaper, gallery state and toggle hotkey of a `waku` run, shared by every Wallpapers widget; created by the QML engine on first use and destroyed with it. Wraps the UI-free `WallpaperManager`, `collectImageFiles` and `DesktopWallpaperBackend`; thumbnails are the host's `image://thumb/`. No thread of its own: the hotkey is a handle in `kernel::Hotkeys` (GUI thread), removed in the destructor. Inert, no hotkey, when `kernel::liveDesktop("wallpapers")` is false; no hotkey either when `kernel::liveDesktop("hotkeys")` is false (`--no-hotkeys`).

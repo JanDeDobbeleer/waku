@@ -16,8 +16,7 @@ namespace waku::wallpapers {
 // random-change timer, the "a change is running" guard and the post-change commands.
 //
 // Thread: GUI thread only; post-change commands run as async QProcess children. stop() (called by
-// the registry at shutdown) stops the timer. The animated change is not here: the Qt Quick bar
-// plays it itself (qml/wallpaper_transition.*) and then asks for the plain change.
+// the registry at shutdown) stops the timer.
 class WallpaperManager : public QObject {
   Q_OBJECT
  public:

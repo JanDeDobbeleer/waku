@@ -9,32 +9,20 @@ waku_feature(
     desktop_wallpaper.h
     lock_screen.h
     lock_screen.cpp
-    wallpaper_decode.h
-    wallpaper_decode.cpp
     wallpaper_files.h
     wallpaper_files.cpp
-    wallpaper_layout.h
     wallpaper_command.h
     wallpaper_command.cpp
-    wallpaper_layout.cpp
     wallpaper_manager.h
     wallpaper_manager.cpp
-    wallpaper_reveal.h
-    wallpaper_reveal.cpp
   WIN32_SOURCES
     win32/desktop_wallpaper_win.cpp
     win32/lock_screen_win.cpp
     win32/window_focus.h
     win32/window_focus.cpp
-    win32/workerw.h
-    win32/workerw.cpp
   QML_SOURCES
-    qml/wallpaper_scene.h
-    qml/wallpaper_scene.cpp
     qml/wallpaper_settings.h
     qml/wallpaper_settings.cpp
-    qml/wallpaper_transition.h
-    qml/wallpaper_transition.cpp
     qml/wallpapers_service.h
     qml/wallpapers_service.cpp
   QML_FILES
@@ -42,13 +30,9 @@ waku_feature(
     qml/Wallpapers.qml
   TESTS
     tests/test_wallpaper_command.cpp
-    tests/test_wallpaper_decode.cpp
     tests/test_wallpaper_lock_screen.cpp
     tests/test_wallpaper_manager.cpp
-    tests/test_wallpaper_reveal.cpp
-    tests/test_wallpaper_scene.cpp
     tests/test_wallpaper_service.cpp
-    tests/test_wallpaper_transition.cpp
     tests/test_wallpapers.cpp
   SYSTEM_LIBS
     advapi32

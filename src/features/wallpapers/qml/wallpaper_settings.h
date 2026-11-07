@@ -40,9 +40,7 @@ class WallpaperSettings : public QObject {
   Q_PROPERTY(QString hotkeyScreen MEMBER hotkeyScreen_ NOTIFY changed FINAL)
   // Seconds between random wallpapers, 0 for never.
   Q_PROPERTY(int autoChange MEMBER autoChange_ NOTIFY changed FINAL)
-  Q_PROPERTY(bool engine MEMBER engine_ NOTIFY changed FINAL)
   // circle, slide_top, diamond, split or fade.
-  Q_PROPERTY(QString animation MEMBER animation_ NOTIFY changed FINAL)
   // How the gallery looks, as on the Wallpapers widget.
   Q_PROPERTY(int imageWidth MEMBER imageWidth_ NOTIFY changed FINAL)
   Q_PROPERTY(QString orientation MEMBER orientation_ NOTIFY changed FINAL)
@@ -71,8 +69,6 @@ class WallpaperSettings : public QObject {
   QString hotkey_ = QStringLiteral("alt+e");
   QString hotkeyScreen_ = QStringLiteral("cursor");
   int autoChange_ = 0;
-  bool engine_ = false;
-  QString animation_ = QStringLiteral("split");
   int imageWidth_ = 240;
   QString orientation_ = QStringLiteral("portrait");
   int cornerRadius_ = 0;

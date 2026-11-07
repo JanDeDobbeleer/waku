@@ -26,7 +26,6 @@ WallpaperSettings::~WallpaperSettings() {
     delete gallery_.data();
     if (active_ && service_) {
       service_->configure(QString(), QString(), QStringLiteral("cursor"), 0);
-      service_->configureEngine(false, QString());
     }
   } catch (...) {
     qWarning() << "WallpaperSettings: could not switch the wallpaper service off";
@@ -62,7 +61,6 @@ void WallpaperSettings::activate() {
 void WallpaperSettings::apply() {
   if (!service_) return;
   service_->configure(imagePath_, hotkey_, hotkeyScreen_, autoChange_);
-  service_->configureEngine(engine_, animation_);
   if (gallery_) {
     gallery_->setProperty("imageWidth", imageWidth_);
     gallery_->setProperty("orientation", orientation_);

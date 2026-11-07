@@ -1,5 +1,5 @@
-// WallpaperManager and the file scan against a fake desktop: no widget, no
-// engine (the animated change is waku's WallpaperTransition), nothing touches the real wallpaper.
+// WallpaperManager and the file scan against a fake desktop: no widget, no engine, nothing
+// touches the real wallpaper.
 #include <gtest/gtest.h>
 
 #include <QDir>
