@@ -189,6 +189,28 @@ TEST(WallpaperLockScreen, AFailureIsLoggedAndTheWallpaperStillChanges) {
       << qPrintable(lockScreenMessages().join(QLatin1Char('\n')));
 }
 
+// Windows can report the old wallpaper for a moment after a set.
+TEST(WallpaperLockScreen, ItFollowsWhenWindowsReportsTheOldWallpaperAtFirst) {
+  LockFixture f;
+  f.service->setWallpaper(f.file(QStringLiteral("a.jpg")));  // the fake current is now a.jpg
+  ASSERT_EQ(f.lock->sets.size(), 1);
+  f.desktop->staleReads = 3;
+  f.service->setWallpaper(f.file(QStringLiteral("b.png")));
+  EXPECT_TRUE(QTest::qWaitFor([&] { return f.lock->sets.size() == 2; }, 3000));
+  EXPECT_EQ(f.lock->sets.last(), f.file(QStringLiteral("b.png")));
+  EXPECT_EQ(QDir::toNativeSeparators(f.service->current()), f.file(QStringLiteral("b.png")));
+}
+
+TEST(WallpaperLockScreen, ARandomChangeFollowsWhenWindowsReportsTheOldWallpaperAtFirst) {
+  LockFixture f;
+  f.service->setWallpaper(f.file(QStringLiteral("b.png")));
+  ASSERT_EQ(f.lock->sets.size(), 1);
+  f.desktop->staleReads = 3;
+  f.service->random();  // the fixture's picker takes the first file
+  EXPECT_TRUE(QTest::qWaitFor([&] { return f.lock->sets.size() == 2; }, 3000));
+  EXPECT_EQ(f.lock->sets.last(), f.file(QStringLiteral("a.jpg")));
+}
+
 // The auto-change timer (one second, the shortest interval) takes the path of random().
 void startAutoChange(LockFixture& f) {
   f.service->configure(QDir::fromNativeSeparators(f.folder.path()), QString(), QString(), 1);

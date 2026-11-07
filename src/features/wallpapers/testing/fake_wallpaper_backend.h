@@ -26,6 +26,8 @@ struct DesktopState {
   std::vector<Call> calls;  // every set with its monitor id, in order
   std::vector<WallpaperMonitor> monitors{{QStringLiteral("mon-1"), QRect(0, 0, 100, 100)}};
   bool failSet = false;  // setWallpaper fails and changes nothing
+  int staleReads = 0;    // the next reads still return the wallpaper from before the last set
+  QString previous;      // that wallpaper
 };
 
 class FakeBackend final : public DesktopWallpaperBackend {
@@ -36,13 +38,20 @@ class FakeBackend final : public DesktopWallpaperBackend {
       if (error) *error = QStringLiteral("fake failure");
       return false;
     }
+    state_->previous = state_->wallpaper;
     state_->wallpaper = path;
     state_->sets << path;
     state_->calls.push_back({monitorId, path});
     return true;
   }
   std::vector<WallpaperMonitor> monitors() override { return state_->monitors; }
-  QString wallpaperOf(const QString&) override { return state_->wallpaper; }
+  QString wallpaperOf(const QString&) override {
+    if (state_->staleReads > 0) {
+      --state_->staleReads;
+      return state_->previous;
+    }
+    return state_->wallpaper;
+  }
 
  private:
   std::shared_ptr<DesktopState> state_;

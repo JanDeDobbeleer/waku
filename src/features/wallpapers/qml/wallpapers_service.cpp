@@ -138,6 +138,15 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
   available_ = backend_ != nullptr;
   if (!available_) return;
 
+  verifyTimer_.setInterval(150);
+  connect(&verifyTimer_, &QTimer::timeout, this, [this] {
+    guarded("wallpaper check", [&] {
+      readCurrent();
+      if (changeConfirmed()) return;
+      if (++verifyTries_ >= 20) verifyTimer_.stop();
+    });
+  });
+
   WallpaperManager::Dependencies managerDeps;
   managerDeps.backend = deps_.backend;
   managerDeps.picker = deps_.picker;
@@ -288,9 +297,26 @@ void Wallpapers::commitWallpaper(const QString& path, bool dryRun) {
   // The manager has just listed the folder; only the current mark moves.
   readCurrent();
   // `current` comes from Windows, so a failed set leaves the lock screen alone.
-  if (!current_.isEmpty() && normalizedPathKey(current_) == normalizedPathKey(path)) {
-    updateLockScreen(path, false);
-  }
+  confirmChange(path, QString());
+}
+
+void Wallpapers::confirmChange(const QString& path, const QString& beforeKey) {
+  verifyTimer_.stop();
+  verifyPath_ = path;
+  verifyBeforeKey_ = beforeKey;
+  verifyTries_ = 0;
+  if (!changeConfirmed()) verifyTimer_.start();
+}
+
+bool Wallpapers::changeConfirmed() {
+  if (current_.isEmpty()) return false;
+  const QString key = normalizedPathKey(current_);
+  const bool done =
+      verifyPath_.isEmpty() ? key != verifyBeforeKey_ : key == normalizedPathKey(verifyPath_);
+  if (!done) return false;
+  verifyTimer_.stop();
+  updateLockScreen(verifyPath_.isEmpty() ? current_ : verifyPath_, false);
+  return true;
 }
 
 void Wallpapers::updateLockScreen(const QString& path, bool dryRun) {
@@ -317,9 +343,7 @@ void Wallpapers::random() {
       const QString before = normalizedPathKey(current_);
       manager_->changeBackground();
       refresh();
-      if (!current_.isEmpty() && normalizedPathKey(current_) != before) {
-        updateLockScreen(current_, false);
-      }
+      confirmChange(QString(), before);
       return;
     }
     // A dry run picks here (never the one shown now) and goes the way of a gallery click.
