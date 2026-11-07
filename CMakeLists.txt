@@ -15,6 +15,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 # /ZI (edit and continue) is incompatible with /guard:cf
 set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+# Whole-program optimisation (/GL, /LTCG) for the shipped configurations: it drops unused code
+# across static libraries and shrinks the executables. Debug and RelWithDebInfo keep fast links.
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL ON)
 
 # Qt root comes from QT_ROOT (default C:/Qt/6.10.2); WAKU_QT_DIR picks the kit folder.
 if(DEFINED ENV{QT_ROOT})

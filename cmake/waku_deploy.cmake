@@ -23,7 +23,7 @@ set(_modules "${_dist}/modules/waku")
 # from the Qt Image Formats add-on, qwebp). Shells load .webp wallpapers, so qwebp is required; the
 # add-on's other formats (qicns, qtga, qtiff, qwbmp) stay out.
 set(_windeployqt_flags $<IF:$<CONFIG:Debug>,--debug,--release>
-  --no-translations --no-system-d3d-compiler --no-opengl-sw
+  --no-translations --no-system-d3d-compiler --no-system-dxc-compiler --no-opengl-sw
   --include-plugins qwebp --exclude-plugins qicns,qtga,qtiff,qwbmp)
 if(NOT EXISTS "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}/imageformats/qwebp.dll")
   message(WARNING "The qwebp image plugin is missing from Qt (${QT6_INSTALL_PREFIX}): install the "
