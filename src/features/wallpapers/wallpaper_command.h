@@ -8,7 +8,7 @@ namespace waku::wallpapers {
 // What the `wallpaper` commands of `wakuc` ask of the wallpaper service. The command parser
 // below depends on this interface only (so its tests use a fake); waku::wallpapers::Wallpapers
 // implements it. Every function returns the answer line: "ok: <text>" or "error: <text>".
-// `dryRun` plays the transition but never calls the wallpaper setter.
+// `dryRun` never calls the wallpaper setter.
 class WallpaperControl {
  public:
   virtual ~WallpaperControl() = default;

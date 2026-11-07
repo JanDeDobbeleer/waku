@@ -141,14 +141,13 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
   WallpaperManager::Dependencies managerDeps;
   managerDeps.backend = deps_.backend;
   managerDeps.picker = deps_.picker;
-  // A timed change takes the path of a manual random(): lock screen, dry run and animation.
+  // A timed change takes the path of a manual random(): lock screen and dry run.
   managerDeps.timedChange = [this] { random(); };
   manager_ = std::make_unique<WallpaperManager>(std::move(managerDeps));
   readCurrent();
 }
 
 Wallpapers::~Wallpapers() {
-  if (transition_) transition_->cancel();
   releaseHotkey();
   if (manager_) manager_->stop();
 }
@@ -207,11 +206,6 @@ void Wallpapers::configure(const QString& imagePath, const QString& hotkey,
                            << "(already taken?)";
     }
   });
-}
-
-void Wallpapers::configureEngine(bool enabled, const QString& animation) {
-  engineEnabled_ = enabled;
-  animation_ = animation.isEmpty() ? QStringLiteral("split") : animation;
 }
 
 void Wallpapers::setSetLockScreen(bool enabled) {
@@ -281,47 +275,7 @@ void Wallpapers::setWallpaper(const QString& path) { setWallpaperImpl(path, fals
 
 void Wallpapers::setWallpaperImpl(const QString& path, bool dryRun) {
   if (!available_ || !QFileInfo(path).isFile()) return;
-  guarded("set wallpaper", [&] {
-    if (transition_) {
-      // A change during the animation supersedes it. This can run inside the old transition's
-      // own signal emission (a handler of currentChanged re-enters here), so the old one is
-      // deleted later, never under its own stack frame.
-      transition_->cancel();
-      transition_->disconnect(this);
-      transition_.release()->deleteLater();
-    }
-    if (engineEnabled_) {
-      playTransition(path, dryRun);
-    } else {
-      commitWallpaper(path, dryRun);
-    }
-  });
-}
-
-void Wallpapers::playTransition(const QString& path, bool dryRun) {
-  transition_ = deps_.transition ? deps_.transition(path, animation_)
-                                 : std::make_unique<WallpaperTransition>(path, animation_);
-  if (!transition_) {
-    commitWallpaper(path, dryRun);
-    return;
-  }
-  connect(transition_.get(), &WallpaperTransition::skipped, this, [this](const QString& reason) {
-    // The same reason repeats on every change, so say it once.
-    if (std::exchange(skipLogged_, true)) return;
-    qWarning().noquote() << "Wallpaper animation skipped:" << reason;
-  });
-  // finished() follows skipped(), so a skipped animation sets the wallpaper at once. Queued, so
-  // the commit (and every QML handler of currentChanged it triggers) runs after the transition
-  // has left its own emission; a transition superseded meanwhile commits nothing.
-  const QPointer<WallpaperTransition> played(transition_.get());
-  connect(
-      transition_.get(), &WallpaperTransition::finished, this,
-      [this, played, path, dryRun] {
-        if (!played || played != transition_.get()) return;
-        guarded("set wallpaper", [&] { commitWallpaper(path, dryRun); });
-      },
-      Qt::QueuedConnection);
-  transition_->start();
+  guarded("set wallpaper", [&] { commitWallpaper(path, dryRun); });
 }
 
 void Wallpapers::commitWallpaper(const QString& path, bool dryRun) {
@@ -359,7 +313,7 @@ void Wallpapers::random() {
   if (!available_) return;
   guarded("random wallpaper", [&] {
     // The manager sets what it picks, so a dry run picks here too.
-    if (!engineEnabled_ && !deps_.dryRun) {
+    if (!deps_.dryRun) {
       const QString before = normalizedPathKey(current_);
       manager_->changeBackground();
       refresh();
@@ -368,7 +322,7 @@ void Wallpapers::random() {
       }
       return;
     }
-    // Pick here (never the one shown now) so the change can animate like a gallery click.
+    // A dry run picks here (never the one shown now) and goes the way of a gallery click.
     const QStringList all = collectImageFiles({imagePath_});
     if (all.isEmpty()) return;
     QString next;

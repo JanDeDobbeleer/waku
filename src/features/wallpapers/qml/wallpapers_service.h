@@ -12,7 +12,6 @@
 
 #include "features/wallpapers/desktop_wallpaper.h"
 #include "features/wallpapers/lock_screen.h"
-#include "features/wallpapers/qml/wallpaper_transition.h"
 #include "features/wallpapers/wallpaper_command.h"
 #include "features/wallpapers/wallpaper_manager.h"
 #include "kernel/qt/hotkeys.h"
@@ -37,18 +36,16 @@ ResolvedWallpaper resolveWallpaperTarget(const QString& target, const QString& f
 
 // The wallpaper folder, the current wallpaper and the gallery of every Wallpapers widget of a
 // `waku` run, as a QML singleton. Wraps the UI-free classes of the Widgets build:
-// waku::wallpapers::WallpaperManager (set, random, auto-change timer; the animated change is the
-// Qt Quick WallpaperTransition, see docs/plans/2026-10-29-waku-wallpapers-design.md),
+// waku::wallpapers::WallpaperManager (set, random, auto-change timer),
 // collectImageFiles and DesktopWallpaperBackend. The gallery's thumbnails come from the host's
 // image://thumb/ provider (waku.Thumbnails), which keeps one memory and disk cache for the run.
 //
-// Threads: GUI thread. The transition's decoder thread is described there, the lock screen worker
-// in win32/lock_screen_win.cpp.
+// Threads: GUI thread; the lock screen worker is in win32/lock_screen_win.cpp.
 // The hotkey is a handle in kernel::Hotkeys, the table GlobalShortcut uses too; it fires on the
 // GUI thread.
 //
 // Several `Wallpapers` widgets and a `WallpaperSettings` share this one service; the last one
-// to call configure()/configureEngine() wins.
+// to call configure() wins.
 //
 // `files` is a list of maps: path, name and current (bool), in Explorer name order. A shell builds
 // thumbnail URLs with `Thumbnails.url(path, width)`. filesChanged() fires only when the list
@@ -81,12 +78,10 @@ class Wallpapers : public QObject, public WallpaperControl {
   struct Deps {
     waku::wallpapers::WallpaperManager::BackendFactory backend;
     waku::wallpapers::WallpaperManager::Picker picker;
-    // Builds the transition for (image, animation); null means the real WallpaperTransition.
-    std::function<std::unique_ptr<WallpaperTransition>(const QString&, const QString&)> transition;
     // Sets the lock screen picture; null means the real one on a live desktop, none otherwise.
     std::unique_ptr<LockScreenSetter> lockScreen;
     bool realBackend = true;
-    // Play the transition but never call SetWallpaper (WAKU_WALLPAPER_DRYRUN=1 sets it). A
+    // Never call SetWallpaper (WAKU_WALLPAPER_DRYRUN=1 sets it). A
     // `wakuc ... --dry-run` does the same for one call.
     bool dryRun = false;
   };
@@ -116,9 +111,6 @@ class Wallpapers : public QObject, public WallpaperControl {
   // seconds (0 off). Safe to call again from every bar; the last call wins.
   Q_INVOKABLE void configure(const QString& imagePath, const QString& hotkey,
                              const QString& hotkeyScreen, int autoChangeSeconds);
-  // The animated change: `enabled` plays the transition (Qt Quick overlay on WorkerW) before the
-  // wallpaper is set, `animation` is circle, slide_top, diamond, split or fade. Off by default.
-  Q_INVOKABLE void configureEngine(bool enabled, const QString& animation);
   // Rescans the folder and reads the current wallpaper.
   Q_INVOKABLE void refresh();
   Q_INVOKABLE void setWallpaper(const QString& path);
@@ -129,8 +121,8 @@ class Wallpapers : public QObject, public WallpaperControl {
   // `wakuc` (kernel::forceForegroundFocus). Does nothing off the live desktop.
   Q_INVOKABLE void focusWindow(QWindow* window);
   // `wakuc wallpaper ...` (WallpaperControl): the answer is "ok: <full path>" once the change
-  // has started (the animation may still run), or "error: <why>" with nothing changed. `dryRun`
-  // plays the animation and skips the setter, for this call only.
+  // has started, or "error: <why>" with nothing changed. `dryRun` skips the setter, for this
+  // call only.
   QString controlSet(const QString& target, bool dryRun) override;
   QString controlRandom(bool dryRun) override;
   QString controlNext(bool dryRun) override;
@@ -155,7 +147,6 @@ class Wallpapers : public QObject, public WallpaperControl {
   // Gives the hotkey's handle back to kernel::Hotkeys (no-op without one).
   void releaseHotkey();
   void commitWallpaper(const QString& path, bool dryRun);
-  void playTransition(const QString& path, bool dryRun);
   void setWallpaperImpl(const QString& path, bool dryRun);
   // The lock screen follows `path`, which has just become the wallpaper (or would have in a dry
   // run).
@@ -176,10 +167,6 @@ class Wallpapers : public QObject, public WallpaperControl {
   QString current_;
   bool galleryOpen_ = false;
   QString galleryScreen_;
-  bool engineEnabled_ = false;
-  QString animation_ = QStringLiteral("split");
-  std::unique_ptr<WallpaperTransition> transition_;
-  bool skipLogged_ = false;
   bool setLockScreen_ = true;
 };
 

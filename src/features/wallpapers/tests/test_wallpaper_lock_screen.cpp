@@ -14,7 +14,6 @@
 #include <memory>
 
 #include "features/wallpapers/lock_screen.h"
-#include "features/wallpapers/qml/wallpaper_transition.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/testing/fake_lock_screen.h"
 #include "features/wallpapers/testing/fake_wallpaper_backend.h"
@@ -82,24 +81,6 @@ QByteArray animatedGif() {
   return header + frame + frame + QByteArray::fromHex("3b");
 }
 
-std::unique_ptr<wp::WallpaperTransition> skippingTransition(const QString& path,
-                                                            const QString& animation) {
-  wp::WallpaperTransition::Platform platform;
-  platform.readSettings = [] { return wp::DesktopSettings{}; };
-  platform.oldImagePath = [] { return QStringLiteral("old"); };
-  platform.attach = [](std::uintptr_t, QString* failure) -> std::optional<wp::WorkerWAttachment> {
-    if (failure) *failure = QStringLiteral("no WorkerW");
-    return std::nullopt;
-  };
-  platform.decode = [](const QString&, const QString&, const waku::wallpapers::DecodeBudget&) {
-    QImage image(QSize(8, 8), QImage::Format_RGB32);
-    image.fill(Qt::blue);
-    return std::make_pair(image, image);
-  };
-  platform.showWindow = false;
-  return std::make_unique<wp::WallpaperTransition>(path, animation, platform, 10);
-}
-
 // A folder with a.jpg, b.png, clip.mp4 and anim.gif, a fake desktop and a fake lock screen.
 struct LockFixture {
   explicit LockFixture(bool dryRun = false) {
@@ -113,7 +94,6 @@ struct LockFixture {
     Wallpapers::Deps deps;
     deps.backend = [state = desktop] { return std::make_unique<wp::FakeBackend>(state); };
     deps.picker = [n = 0](int count) mutable { return n++ % count; };
-    deps.transition = skippingTransition;
     deps.lockScreen = std::make_unique<wp::FakeLockScreen>(lock);
     deps.realBackend = false;
     deps.dryRun = dryRun;
@@ -207,15 +187,6 @@ TEST(WallpaperLockScreen, AFailureIsLoggedAndTheWallpaperStillChanges) {
   EXPECT_EQ(f.lock->sets.size(), 1);
   EXPECT_TRUE(capture.any(QStringLiteral("fake lock screen failure")))
       << qPrintable(lockScreenMessages().join(QLatin1Char('\n')));
-}
-
-TEST(WallpaperLockScreen, WithTheEngineItFollowsTheCommit) {
-  LockFixture f;
-  f.service->configureEngine(true, QStringLiteral("fade"));
-  f.service->setWallpaper(f.file(QStringLiteral("b.png")));
-  EXPECT_TRUE(QTest::qWaitFor([&] { return f.lock->sets.size() == 1; }, 3000));
-  EXPECT_EQ(f.desktop->sets.size(), 1);
-  EXPECT_EQ(f.lock->sets.first(), f.file(QStringLiteral("b.png")));
 }
 
 // The auto-change timer (one second, the shortest interval) takes the path of random().

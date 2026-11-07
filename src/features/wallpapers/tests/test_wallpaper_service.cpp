@@ -11,7 +11,6 @@
 #include <memory>
 #include <vector>
 
-#include "features/wallpapers/qml/wallpaper_transition.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/testing/fake_wallpaper_backend.h"
 #include "host/testing/shell_fixtures.h"
@@ -29,7 +28,6 @@ using waku::wallpapers::DesktopState;
 using waku::wallpapers::FakeBackend;
 using waku::wallpapers::resolveWallpaperTarget;
 using waku::wallpapers::Wallpapers;
-using waku::wallpapers::WallpaperTransition;
 
 void makeImage(const QString& path, const QColor& color) {
   QImage image(QSize(40, 20), QImage::Format_RGB32);
@@ -41,39 +39,6 @@ void makeFile(const QString& path, const QByteArray& content) {
   QFile file(path);
   ASSERT_TRUE(file.open(QIODevice::WriteOnly));
   file.write(content);
-}
-
-// The transition played by an engine-on change: records what it was asked for and, with no
-// WorkerW, skips at once so finished() follows.
-struct TransitionLog {
-  QStringList played;  // "<path>|<animation>"
-  std::vector<QPointer<WallpaperTransition>> made;
-  // The last transition has skipped (its finished() has been emitted) or is gone.
-  bool lastDone() const {
-    return !made.empty() &&
-           (!made.back() || made.back()->state() == WallpaperTransition::State::Skipped);
-  }
-};
-
-std::unique_ptr<WallpaperTransition> fakeTransition(const std::shared_ptr<TransitionLog>& log,
-                                                    const QString& path, const QString& animation) {
-  log->played << path + QLatin1Char('|') + animation;
-  WallpaperTransition::Platform platform;
-  platform.readSettings = [] { return waku::wallpapers::DesktopSettings{}; };
-  platform.oldImagePath = [] { return QStringLiteral("old"); };
-  platform.attach = [](std::uintptr_t, QString* failure) -> std::optional<plat::WorkerWAttachment> {
-    if (failure) *failure = QStringLiteral("no WorkerW");
-    return std::nullopt;
-  };
-  platform.decode = [](const QString&, const QString&, const waku::wallpapers::DecodeBudget&) {
-    QImage image(QSize(8, 8), QImage::Format_RGB32);
-    image.fill(Qt::blue);
-    return std::make_pair(image, image);
-  };
-  platform.showWindow = false;
-  auto transition = std::make_unique<WallpaperTransition>(path, animation, platform, 10);
-  log->made.emplace_back(transition.get());
-  return transition;
 }
 
 // A wallpaper folder with a.jpg, img2.png, img10.png (Explorer order), notes.txt, fake.png (not
@@ -95,7 +60,6 @@ struct Fixture {
     makeImage(elsewhere.filePath(QStringLiteral("with space.png")), Qt::gray);
 
     state = std::make_shared<DesktopState>();
-    transitions = std::make_shared<TransitionLog>();
     service = make();
   }
 
@@ -105,9 +69,6 @@ struct Fixture {
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [this](int count) { return picks[next++ % picks.size()] % count; };
-    deps.transition = [log = transitions](const QString& path, const QString& animation) {
-      return fakeTransition(log, path, animation);
-    };
     deps.realBackend = false;
     return std::make_unique<Wallpapers>(std::move(deps), nullptr);
   }
@@ -128,7 +89,6 @@ struct Fixture {
   QTemporaryDir cacheFolder;
   QTemporaryDir elsewhere;
   std::shared_ptr<DesktopState> state;
-  std::shared_ptr<TransitionLog> transitions;
   std::unique_ptr<Wallpapers> service;
   std::vector<int> picks{0};
   size_t next = 0;
@@ -238,7 +198,6 @@ TEST(WallpaperService, MissingNonImageAndUnreadableTargetsChangeNothing) {
   EXPECT_TRUE(f.service->controlSet(QStringLiteral("fake.png"), false)
                   .contains(QStringLiteral("cannot read")));
   EXPECT_TRUE(f.setsEmpty());
-  EXPECT_TRUE(f.transitions->played.isEmpty());
 }
 
 TEST(WallpaperService, ANameNeedsAConfiguredFolder) {
@@ -269,23 +228,6 @@ TEST(WallpaperService, DryRunDoesNotCallTheSetter) {
   // The same call without the flag does set.
   EXPECT_EQ(f.service->controlSet(QStringLiteral("img2.png"), false), f.ok(path));
   EXPECT_EQ(f.state->sets.size(), 1);
-}
-
-TEST(WallpaperService, DryRunWithTheEnginePlaysTheAnimationButNeverSetsIt) {
-  Fixture f;
-  f.configure();
-  f.service->configureEngine(true, QStringLiteral("fade"));
-  const QString path = f.inFolder(QStringLiteral("img2.png"));
-  EXPECT_EQ(f.service->controlSet(QStringLiteral("img2.png"), true), f.ok(path));
-  ASSERT_EQ(f.transitions->played.size(), 1);
-  EXPECT_TRUE(f.transitions->played.first().endsWith(QStringLiteral("|fade")));
-  // The transition decodes on a thread, then skips (no WorkerW) and emits finished().
-  ASSERT_TRUE(QTest::qWaitFor([&] { return f.transitions->lastDone(); }, 3000));
-  EXPECT_TRUE(f.setsEmpty());
-
-  // Without the flag the same flow sets the wallpaper once the animation is done.
-  EXPECT_EQ(f.service->controlSet(QStringLiteral("img2.png"), false), f.ok(path));
-  EXPECT_TRUE(QTest::qWaitFor([&] { return f.state->sets.size() == 1; }, 3000));
 }
 
 // Off the live desktop (and with --no-hotkeys) liveDesktop("hotkeys") is false: kernel::Hotkeys
@@ -388,7 +330,7 @@ import waku
 import waku.services
 
 ShellRoot {
-    WallpaperSettings { objectName: "settings"; imagePath: "%1"; hotkey: "ctrl+shift+f5"; engine: true; animation: "fade"; %2 }
+    WallpaperSettings { objectName: "settings"; imagePath: "%1"; hotkey: "ctrl+shift+f5"; %2 }
     Panel { content: PanelLayout { start: [ Text { objectName: "a"; text: "a" } ] } }
 }
 )")
@@ -427,11 +369,6 @@ TEST(WallpaperSettingsTest, ConfiguresAndCreatesTheServiceWithoutAWidget) {
   ASSERT_EQ(hotkeys->registered.size(), 1u);
   EXPECT_EQ(hotkeys->registered.begin()->second.modifiers, 2u | 4u);
   EXPECT_EQ(hotkeys->registered.begin()->second.virtualKey, 0x74u);  // VK_F5
-
-  // The animation and engine reached the service: a dry-run set plays "fade".
-  EXPECT_EQ(service->controlSet(QStringLiteral("img2"), true).left(4), QStringLiteral("ok: "));
-  ASSERT_EQ(f.transitions->played.size(), 1);
-  EXPECT_TRUE(f.transitions->played.first().endsWith(QStringLiteral("|fade")));
 
   // The hotkey opens the gallery, a window of the settings object.
   ASSERT_TRUE(hotkeys->press(ctrlShiftF5));
