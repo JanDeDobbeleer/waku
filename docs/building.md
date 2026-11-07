@@ -209,6 +209,14 @@ the config home's `widgets/` folder to change it, and lint it with
 running copy. Note that a copy of `waku.exe` outside the checkout has no sample config to fall back
 on: pass `--config-home`.
 
+## Binary size
+
+Release builds use whole-program optimisation (`/GL`, `/LTCG`, through
+`CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE`) and `/Gy /Gw /OPT:REF /OPT:ICF` (`cmake/waku_options.cmake`).
+`deploy` skips `dxcompiler.dll` and `dxil.dll` (about 32 MB): Qt Quick runs on Direct3D 11 with
+precompiled shaders, so nothing loads them. Measured on ARM64: `waku.exe` 6.46 MB to 6.23 MB, the
+other binaries about 3% smaller. `/O1` (MinSizeRel) saves a further 0.2 MB and is not used.
+
 ## Release and MSIX
 
 `.github/workflows/release.yml` releases from conventional commits, the way oh-my-posh does. A push

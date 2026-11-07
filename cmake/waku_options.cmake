@@ -16,7 +16,12 @@ target_compile_definitions(waku_options INTERFACE
 target_compile_options(waku_options INTERFACE
   /W4 /WX /permissive- /guard:cf /sdl /utf-8 /EHsc /Zc:__cplusplus
   /external:anglebrackets /external:W0)
+# Optimised builds: one COMDAT per function and data item (/Gy, /Gw) so the linker can drop and
+# fold them (/OPT:REF, /OPT:ICF; MSVC already defaults to both outside Debug, stated here so a
+# changed default cannot undo it).
+target_compile_options(waku_options INTERFACE $<$<NOT:$<CONFIG:Debug>>:/Gy;/Gw>)
 target_link_options(waku_options INTERFACE /GUARD:CF /DYNAMICBASE /NXCOMPAT)
+target_link_options(waku_options INTERFACE $<$<NOT:$<CONFIG:Debug>>:/OPT:REF;/OPT:ICF>)
 
 # waku_qt_generated_code(<qml module target>): the one place that relaxes a warning for code we do
 # not write. The AOT output of qmlcachegen (<build>/.../.rcc/qmlcache/*.cpp) instantiates Qt
