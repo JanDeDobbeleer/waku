@@ -279,7 +279,7 @@ licences apply to binaries that include them.
 
 | Dependency | Licence | How it is used |
 |---|---|---|
-| Qt 6.10 (Core, Gui, Qml, Quick, Network) | LGPLv3 | Dynamically linked; DLLs deployed next to the exe by `windeployqt`, unmodified |
+| Qt 6.12 (Core, Gui, Qml, Quick, Network) | LGPLv3 | Dynamically linked; DLLs deployed next to the exe by `windeployqt`, unmodified |
 | nlohmann-json | MIT | Header-only (JSON from the window managers, GitHub and the tray hook) |
 | GoogleTest | BSD-3-Clause | Test executable only; not shipped |
 | C++/WinRT headers (Windows SDK) | MIT | Header-only (apartment init) |

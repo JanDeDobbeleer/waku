@@ -38,8 +38,8 @@ concurrency:
   group: ${{ github.workflow }}
 
 env:
-  QT_VERSION: "6.10.2"
-  QT_ROOT: C:/Qt/6.10.2
+  QT_VERSION: "6.12.0"
+  QT_ROOT: C:/Qt/6.12.0
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
   VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite
 
