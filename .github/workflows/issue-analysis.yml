@@ -43,6 +43,7 @@ jobs:
           # Lets issues from users without write access be analysed. Tools stay read-only.
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_non_write_users: "*"
+          show_full_output: true
           prompt: |
             Analyse issue #${{ github.event.issue.number }} in ${{ github.repository }}.
             Read it and its comments with `gh issue view ${{ github.event.issue.number }} --comments`.
