@@ -42,7 +42,7 @@ written in lower case and plain ASCII in code and paths.
   pipe). While that implicit folder has no `shell.qml`, `waku` shows the built-in bar
   (`DefaultShell.qml`) with the default theme and switches to `shell.qml` when it appears. A chosen
   config home without `shell.qml` is an error. Copy `examples/config` to start a config.
-  Edit and save: the shell reloads. A 1.x `bar.qml` without a `shell.qml` shows an error that
+  Edit and save, then run `wakuc reload`; `--watch` reloads on every save. A 1.x `bar.qml` without a `shell.qml` shows an error that
   names the rename (`docs/building.md`).
 - QML modules: `waku` 2.0 (ShellRoot, Scope, PanelWindow, FloatingWindow, Panel, PanelLayout,
   Variants, LazyLoader, Theme, ...), `waku.widgets` (the built-in widgets), `waku.services` (the C++

@@ -64,6 +64,7 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `--safe` | Start the built-in shell with the default theme and ignore the config home. |
 | `--import-path <dir>` | Add a folder of QML modules to the import path. Repeatable. See "User-built QML plugins". |
 | `--no-keys` | Do not start `wakukeys.exe` beside waku. By default, when the config home has a `keys.conf`, waku starts the key daemon and stops it on exit (a daemon that already runs is left alone). Tests and tools pass this flag. |
+| `--watch` | Reload the shell when a file in the config home changes. Off by default: `wakuc reload` applies an edit. |
 | `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
 | `--keep-taskbar` | Leave the Windows taskbar alone. By default, on a live desktop, waku hides it (all monitors) while it runs and restores it on exit; tests and tools pass this flag. See "The Windows taskbar" in `docs/architecture.md`. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wakuc shortcut`. |
