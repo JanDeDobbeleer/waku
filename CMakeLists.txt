@@ -20,11 +20,11 @@ set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedd
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL ON)
 
-# Qt root comes from QT_ROOT (default C:/Qt/6.10.2); WAKU_QT_DIR picks the kit folder.
+# Qt root comes from QT_ROOT (default C:/Qt/6.12.0); WAKU_QT_DIR picks the kit folder.
 if(DEFINED ENV{QT_ROOT})
   file(TO_CMAKE_PATH "$ENV{QT_ROOT}" WAKU_QT_ROOT)
 else()
-  set(WAKU_QT_ROOT "C:/Qt/6.10.2")
+  set(WAKU_QT_ROOT "C:/Qt/6.12.0")
 endif()
 set(WAKU_QT_DIR "msvc2022_arm64" CACHE STRING "Qt kit folder under QT_ROOT")
 list(PREPEND CMAKE_PREFIX_PATH "${WAKU_QT_ROOT}/${WAKU_QT_DIR}")
@@ -34,7 +34,7 @@ if(WAKU_QT_DIR STREQUAL "msvc2022_64" AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "A
   set(QT_HOST_PATH "${WAKU_QT_ROOT}/msvc2022_arm64")
 endif()
 
-find_package(Qt6 6.10 REQUIRED COMPONENTS Core Gui Qml Quick Network)
+find_package(Qt6 6.12 REQUIRED COMPONENTS Core Gui Qml Quick Network)
 qt_policy(SET QTP0001 NEW)  # QML module resources under :/qt/qml/<URI>
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)

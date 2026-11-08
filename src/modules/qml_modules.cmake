@@ -4,7 +4,7 @@
 #
 # Why include() from src/CMakeLists.txt and not add_subdirectory(src/modules): qt_add_qml_module names
 # each qmlcachegen output after the .qml file's path relative to CMAKE_CURRENT_SOURCE_DIR
-# (".rcc/qmlcache/<target>_<relative path>_qml.cpp", Qt 6.10 Qt6QmlMacros.cmake). From src/modules
+# (".rcc/qmlcache/<target>_<relative path>_qml.cpp", Qt 6.12 Qt6QmlMacros.cmake). From src/modules
 # a feature file is "../features/<f>/qml/X.qml", which yields a directory "waku_widgets_.." that
 # Windows cannot create (trailing dots are stripped), and the build fails. The modules must be
 # declared from a directory that contains every contributing file: src/.

@@ -10,7 +10,7 @@
 > **waku is in active development.** Expect breaking changes: flags, config options, QML types and
 > file formats can change or go away between releases without a deprecation period.
 
-waku (枠, "frame", say "wah-koo") is a top bar for Windows, written in C++23 and Qt 6.10
+waku (枠, "frame", say "wah-koo") is a top bar for Windows, written in C++23 and Qt 6.12
 (Qt Quick) and configured in QML. The name is the Japanese word for the frame around a window
 (Dutch: kozijn), and the frame of your desktop is where the bar lives.
 
@@ -101,7 +101,7 @@ waku runs on its own. One thing may need a helper:
 
 ## Build from source
 
-Install Visual Studio Build Tools, Qt 6.10 and vcpkg, then:
+Install Visual Studio Build Tools, Qt 6.12 and vcpkg, then:
 
 ```powershell
 cmake --preset arm64-release

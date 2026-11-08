@@ -1,1 +1,4 @@
-aqtinstall==3.3.0
+# aqtinstall 3.3.0 cannot install the Qt 6.11+ x64 kit (the repository layout changed). The fix
+# (miurahr/aqtinstall#1000) is merged but unreleased: pin the commit, return to a release pin once
+# one ships. Dependabot does not track a git pin.
+aqtinstall @ git+https://github.com/miurahr/aqtinstall@5a49f2b391ae8ee1d3c0dd87f8b33c1d49a4deb7

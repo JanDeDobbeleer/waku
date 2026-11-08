@@ -3,8 +3,8 @@
 Prerequisites (Windows 11, ARM64 or x64 host):
 
 - Visual Studio 2022 Build Tools (MSVC 14.44, Windows SDK 10.0.26100 with C++/WinRT headers)
-- Qt 6.10.2 from aqtinstall at `C:\Qt\6.10.2\msvc2022_arm64` and `...\msvc2022_64`
-  (`QT_ROOT` overrides the `C:\Qt\6.10.2` root)
+- Qt 6.12.0 from aqtinstall at `C:\Qt\6.12.0\msvc2022_arm64` and `...\msvc2022_64`
+  (`QT_ROOT` overrides the `C:\Qt\6.12.0` root)
 - vcpkg checkout at `C:\vcpkg` (`git clone https://github.com/microsoft/vcpkg C:\vcpkg`, then
   `C:\vcpkg\bootstrap-vcpkg.bat -disableMetrics`). The Build Tools' bundled vcpkg has no ports
   tree, so it can't resolve the `builtin-baseline` in `vcpkg.json`.
