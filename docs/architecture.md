@@ -221,7 +221,6 @@ The folders are `<config home>/modules` and each `--import-path`; `--safe` adds 
 build), checks the PE machine against the process, then reads the file's embedded
 `QtPluginMetaData` with `QPluginLoader::metaData()` (no load) and compares `version` (major and
 minor) and `debug` with this build. A failing plugin refuses its whole folder, because the
-throwaway engine that `ShellHost::validate` creates copies the main engine's import paths and the
 granularity of a path is a folder. `ShellHost::reload` also runs `configPluginFailures` over every
 other `qmldir` under the config home (import roots already checked are skipped; symbolic links,
 `.git`, `node_modules` and depth beyond 8 are not walked) and refuses the reload with the file and
@@ -230,10 +229,11 @@ reason when one fails. Tests: `tests/integration/test_plugin_import.cpp` and the
 
 ### The shell runtime
 
-`ShellHost` (`src/host/qml/shell_host.*`) loads `<config home>\shell.qml`. Before it replaces the
-running shell it compiles the new file in a throwaway engine and checks that the root is a
-`ShellRoot`; nothing is created there, so no window, widget or service starts. Then the old shell
-goes (its app bars first), the theme is applied and the new shell is created in the main engine.
+`ShellHost` (`src/host/qml/shell_host.*`) loads `<config home>\shell.qml`. It destroys the old
+shell (its app bars first), applies the theme and creates the new shell in the main engine. There is
+no check in a second engine: a second `QQmlEngine` shares the process-wide QML type registry with
+the live one, and its teardown raced the live engine's loader thread. A file that does not compile
+shows the fallback shell with the error.
 
 Every window type derives from `QsWindow` (`src/host/qml/qs_window.*`; the subclasses and the
 `WlrLayershell` attached type each have their own file beside it: `panel_window.*`,
@@ -490,8 +490,7 @@ Function-local `static const` regexes and lookup tables are immutable and not li
 
 ### Singletons across a reload
 
-`ShellHost::reload` starts a clean engine, as Quickshell does. After the check of the new files
-passes, it destroys the old shell, calls `QQmlEngine::clearSingletons()` and `clearComponentCache()`,
+`ShellHost::reload` starts a clean engine, as Quickshell does. It destroys the old shell, calls `QQmlEngine::clearSingletons()` and `clearComponentCache()`,
 emits `singletonsCleared` and builds the new shell. Without it, a QML singleton kept its old type
 definitions and the new shell failed with `Unable to assign Foo to Foo` and null dereferences. Rules:
 
@@ -500,11 +499,11 @@ definitions and the new shell failed with `Unable to assign Foo to Foo` and null
   composition root does so (`wallpaper` accessor in `main.cpp`, `connectQuickshell` rewires the
   `Quickshell` singleton on `singletonsCleared`). A shell part that caches one (`WallpaperSettings`)
   is destroyed with the old shell and resolves it again in `activate()`.
-- A shell that passes the check but cannot be created leaves the fallback shell with the error: the
+- A shell that does not compile or cannot be created leaves the fallback shell with the error: the
   old shell is gone. A new shell that creates no window while the old one had some (a `Variants`
   delegate that failed) counts as a failure too: the error is `the shell created no windows` plus
   the first QML warning of the build, and `reload()` returns false. A first start with no windows
-  stays valid. A file that fails the check still keeps the old shell and the singletons.
+  stays valid.
 - State that must survive stays outside the singletons: `PersistentProperties` (per engine), the
   taskbar marker, `kernel::Hotkeys`, and the shared hubs (`kernel::LingeringHub`: the media and
   notification services, the system_stats data sources), which live while any holder lives and

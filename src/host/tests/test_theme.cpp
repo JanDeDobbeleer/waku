@@ -244,20 +244,18 @@ TEST(ThemeHost, WidgetsFollowAChangeToTheSingletonWithoutAReload) {
   EXPECT_EQ(colorOf(h, QStringLiteral("p"), "fill"), QColor(1, 2, 3, 4));
 }
 
-TEST(ThemeHost, ABrokenThemeKeepsThePreviousShellAndTheme) {
+TEST(ThemeHost, ABrokenThemeShowsTheFallbackWithTheError) {
   Harness h;
   writeTheme(h, themeText(QStringLiteral("fill: \"#40ff0000\"")));
   h.start(pillConfig());
   ASSERT_TRUE(h.host->reload());
-  QQuickWindow* before = h.window();
 
   writeTheme(h, QStringLiteral("import waku\nThemeSpec { fill: "));
   EXPECT_FALSE(h.host->reload());
   EXPECT_TRUE(h.host->error().startsWith(QStringLiteral("theme.qml:")))
       << qPrintable(h.host->error());
-  EXPECT_EQ(h.window(), before);
-  EXPECT_EQ(colorOf(h, QStringLiteral("p"), "fill"), QColor(0xff, 0x00, 0x00, 0x40));
-  EXPECT_EQ(themeOf(h)->property("fill").value<QColor>(), QColor(0xff, 0x00, 0x00, 0x40));
+  EXPECT_EQ(h.host->windows().size(), 1);                         // the fallback shell
+  EXPECT_EQ(findItem(h.window(), QStringLiteral("p")), nullptr);  // the old shell is gone
 }
 
 TEST(ThemeHost, ARootThatIsNotAThemeSpecIsAnError) {

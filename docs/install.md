@@ -97,8 +97,8 @@ The config home holds:
 - `theme.qml`: colours and sizes (optional).
 - `widgets/`: your own widgets, one component per file (optional).
 
-Edit a file and save. The bar reloads on its own. A mistake keeps the previous shell running and
-shows an error pill on the bar. To reload by hand:
+Edit a file and save. The bar reloads on its own. A mistake shows the built-in fallback bar with an
+error pill. To reload by hand:
 
 ```powershell
 wakuc reload
@@ -172,7 +172,7 @@ Delete them yourself for a clean slate. Run `wakuc startup disable` too if you e
 
 - **Bar not visible.** Run `wakuc status`. If it exits with 2, no bar is running: start `waku`.
   If a bar runs, check which screen it targets: the sample `shell.qml` uses `screens: ["primary"]`.
-- **Config error pill.** Your last save has a mistake. The previous shell stays on screen. Read the
+- **Config error pill.** Your last save has a mistake. The fallback bar shows the error. Read the
   message on the pill, fix the file and save again.
 - **Start with the built-in bar.** `waku --safe` ignores your config. Use it to rule out your
   shell as the cause.
@@ -204,7 +204,7 @@ Build a waku shell for me.
 - Write the shell into a scratch folder, [<scratch>\my-shell], with shell.qml (and theme.qml if
   needed). Run it with: waku --config-home [<scratch>\my-shell]
 - The bar hot reloads when a file is saved. Edit, save, look at the result, repeat. A mistake shows
-  an error pill and keeps the previous shell.
+  the fallback bar with an error pill.
 - Use wakuc --config-home [<scratch>\my-shell] status|reload|call to talk to that bar.
 - The target look is in the attached screenshots: [describe or attach them].
 - Do not touch %USERPROFILE%\.config\waku until I say the shell is done. Then copy the folder

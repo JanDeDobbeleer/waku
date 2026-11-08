@@ -64,17 +64,16 @@ TEST(ControlHandlerTest, ReloadAppliesAChangedConfigAndAnswersOk) {
   EXPECT_FALSE(quit);
 }
 
-TEST(ControlHandlerTest, AFailedReloadAnswersTheErrorAndKeepsTheBars) {
+TEST(ControlHandlerTest, AFailedReloadAnswersTheError) {
   Harness h;
   h.start(shellConfig(QStringLiteral("good")));
   ASSERT_TRUE(h.host->reload());
-  QQuickWindow* before = h.window();
   const ControlHandler handler = makeControlHandler(*h.host, false);
 
   write(h.shellFile(), QStringLiteral("not qml {{{"));
   const QString answer = handler(QStringLiteral("reload"));
   EXPECT_TRUE(answer.startsWith(QStringLiteral("error: shell.qml:"))) << qPrintable(answer);
-  EXPECT_EQ(h.window(), before);
+  EXPECT_EQ(h.host->windows().size(), 1);  // the fallback shell
 }
 
 TEST(ControlHandlerTest, StatusReportsBarsModeAndError) {
