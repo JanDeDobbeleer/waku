@@ -80,15 +80,26 @@ TEST(ConfigInit, StarterKeepsTheDefaultShellBody) {
   const QString starter = waku::control::starterShellText(source);
   EXPECT_TRUE(
       starter.startsWith(QStringLiteral("// The starter shell, written by `wakuc config init`")));
-  EXPECT_TRUE(starter.contains(QStringLiteral("import waku\n")));
+  EXPECT_TRUE(starter.contains(QStringLiteral("import waku\nimport waku.widgets\n")));
   EXPECT_TRUE(starter.contains(QStringLiteral("ShellRoot {")));
   EXPECT_FALSE(starter.contains(QStringLiteral("examples/config")));
-  const qsizetype body = source.indexOf(QStringLiteral("import waku"));
+  const qsizetype body = source.indexOf(QStringLiteral("import waku\n"));
   ASSERT_GE(body, 0);
-  EXPECT_TRUE(starter.endsWith(source.mid(body)));
+  const QString rest = source.mid(body + QStringLiteral("import waku\n").size());
+  EXPECT_TRUE(starter.endsWith(rest));
+}
+
+// The built-in bar needs no widgets import, a user's shell does (issue #10).
+TEST(ConfigInit, StarterImportsTheWidgetsModuleOnce) {
+  const QString once =
+      waku::control::starterShellText(QStringLiteral("import waku\nShellRoot {}\n"));
+  EXPECT_TRUE(once.endsWith(QStringLiteral("import waku\nimport waku.widgets\nShellRoot {}\n")));
+  const QString twice = waku::control::starterShellText(
+      QStringLiteral("import waku\nimport waku.widgets\nShellRoot {}\n"));
+  EXPECT_EQ(twice.count(QStringLiteral("import waku.widgets")), 1);
 }
 
 TEST(ConfigInit, StarterWithoutLeadingCommentIsPrefixed) {
   const QString starter = waku::control::starterShellText(QStringLiteral("import waku\n"));
-  EXPECT_TRUE(starter.endsWith(QStringLiteral("\nimport waku\n")));
+  EXPECT_TRUE(starter.endsWith(QStringLiteral("\nimport waku\nimport waku.widgets\n")));
 }

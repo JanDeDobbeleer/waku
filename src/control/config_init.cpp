@@ -22,7 +22,16 @@ QString starterShellText(const QString& templateText) {
     }
     pos = eol + 1;
   }
-  return header + templateText.mid(pos);
+  QString body = templateText.mid(pos);
+  // The built-in bar is part of the waku.widgets module and needs no import. A user's shell.qml
+  // does, or Clock, Volume and the other widgets stay unknown.
+  const QString widgetsImport = QStringLiteral("import waku.widgets");
+  if (!body.contains(widgetsImport)) {
+    const QString coreImport = QStringLiteral("import waku\n");
+    const qsizetype at = body.indexOf(coreImport);
+    if (at >= 0) body.insert(at + coreImport.size(), widgetsImport + QLatin1Char('\n'));
+  }
+  return header + body;
 }
 
 ConfigInitResult initConfigHome(const QString& configHome, const QString& shellText, bool force) {
