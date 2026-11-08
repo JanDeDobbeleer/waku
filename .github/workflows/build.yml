@@ -54,9 +54,21 @@ jobs:
           ref: ${{ steps.baseline.outputs.sha }}
           path: vcpkg
 
-      - name: Bootstrap vcpkg
-        shell: cmd
-        run: vcpkg\bootstrap-vcpkg.bat -disableMetrics
+      # Not bootstrap-vcpkg.bat: it downloads vcpkg.exe once, with no retry. The script retries,
+      # checks the Microsoft signature and takes the exe from the cache when it can.
+      - name: Read vcpkg tool tag
+        id: vcpkg_tool
+        shell: pwsh
+        run: .github/scripts/install-vcpkg.ps1 -Mode Tag -Arch ${{ matrix.vcvars_arch }}
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .vcpkg-tool
+          key: vcpkg-tool-${{ matrix.vcvars_arch }}-${{ steps.vcpkg_tool.outputs.tag }}
+
+      - name: Install vcpkg
+        shell: pwsh
+        run: .github/scripts/install-vcpkg.ps1 -Mode Install -Arch ${{ matrix.vcvars_arch }}
 
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
