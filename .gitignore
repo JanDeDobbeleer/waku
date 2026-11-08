@@ -8,3 +8,4 @@ CMakeUserPresets.json
 /packaging/msix/out/
 /packaging/msix/stage-*/
 /packaging/msix/signing-tools/
+/dist-*/

@@ -27,6 +27,22 @@ commands). Do not mix Bash and PowerShell for the same task.
   commands.
 - Do not chain a delete or overwrite with a `Start-Process` of a path with spaces in one command;
   run them as separate calls.
+- One shell per task: PowerShell. The Bash tool is only for `git`, `gh` and one-line file
+  commands. Never write PowerShell from Bash, and never put `$var` in a Bash heredoc that holds a
+  `.ps1`.
+- Multi-line code goes through the Write tool into a file (the scratchpad), then runs by path
+  (`pwsh -NoProfile -File <path>`). No `@'...'@` inside `@'...'@`. No Python inside a Bash heredoc.
+- Do not name a PowerShell variable `$home`, `$args`, `$input`, `$error`, `$pid`, `$host` or
+  `$matches`; they are read-only or automatic.
+- Python: `python -I file.py`. Use `os.devnull`, never `/dev/null`.
+- Edit files with the Edit tool; it keeps CRLF. Do not write replace helper scripts.
+- Do not pipe a build, check or test run into `head`, `tail` or `Select-String`. Redirect it
+  (`*> $env:TEMP\x.log`), read `$LASTEXITCODE`, then read the tail of the log.
+- Wait for work with `run_in_background` (you get a notification) or `Monitor`. Do not poll with
+  `sleep`.
+- `gh ... --jq` with braces or pipes: do not nest it in `until` or `$(...)`. Call `gh` plainly and
+  filter in PowerShell.
+- Check that a path exists (Glob) before you Grep or Read it. Do not guess file names.
 
 Run every step in one `cmd.exe` process after the MSVC environment script; environment changes do
 not survive between separate `cmd /c` calls. `vcvars*.bat` live in
@@ -53,6 +69,11 @@ see `docs/building.md`). `ctest` needs `QT_QPA_PLATFORM=offscreen`; the CMake te
 it, so `ctest --test-dir` works without the test preset. A ctest test is one gtest suite (one
 process); a single case runs with `waku_tests --gtest_filter=Suite.Case`. Presets live in `CMakePresets.json`;
 `compile_commands.json` is written to `build\<preset>`.
+
+Run `clang-format -i` on touched files before `tools\check.ps1`; the `format` step fails
+otherwise. Iterate with `tools\check.ps1 -Fast`; run the full check once at the end. Never call
+`cl` or `cmake` outside the `cmd /c` + `vcvars` call above. On a Linux runner or in a CI worktree
+the build cannot run: use `-Fast` only.
 
 ## Definition of done
 
@@ -186,6 +207,21 @@ fine. Never use the `const` `nlohmann::json::operator[]` on a key that may be mi
 - A live run reserves screen work area, hides the Windows taskbar, tiles windows and starts the key
   daemon. Tests and tools pass `--no-app-bar --keep-taskbar --no-keys --no-tiling` so a run leaves the
   desktop alone (the offscreen platform never reserves). `--safe` starts the built-in bar and ignores the config.
+
+- Every `wakuc` call passes `--config-home <dir>`, the same one as the `waku.exe` it controls.
+  Without it `wakuc` targets the user's real config.
+- Start a test instance with `Start-Process -PassThru`, keep the PID, and stop that PID in a
+  `finally`. Before you finish, list `waku*` processes and stop leftovers, including ones from
+  deleted worktrees.
+- A test that takes over keys, the taskbar or the tiler says so first and restores the user's
+  setup before it ends.
+- `Remove-Item` on `D:\waku-ports` itself is blocked. Delete files inside it.
+
+## Housekeeping
+
+When a feature or experiment ends, delete in the same change: probes, scratch builds, plans,
+designs, handover docs, `dist-*` folders and stale scripts. Do not wait to be asked. Validate
+against the running program or the source, not memory.
 
 ## Undocumented Windows APIs
 
