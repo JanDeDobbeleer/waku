@@ -4,7 +4,7 @@ Read this before changing anything. It applies to every agent session and to hum
 single source of truth for how to work in this repository. Background: `docs/architecture.md`,
 `docs/building.md`, `SECURITY.md`, `src/app/README.md`.
 
-waku is a C++20/Qt 6.10 Qt Quick desktop shell runtime for Windows, configured in QML, with
+waku is a C++23/Qt 6.10 Qt Quick desktop shell runtime for Windows, configured in QML, with
 Quickshell-compatible modules. Python YASB is a reference for how Windows behaves (undocumented
 APIs, edge cases), not a behavioural spec: nothing in this repository has to match it.
 
