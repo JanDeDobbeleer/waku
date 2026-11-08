@@ -378,25 +378,23 @@ TEST(ShellHostTest, ReloadReplacesTheWindowsWithTheNewShell) {
   EXPECT_EQ(h.native.removed, 1);  // the old window's app bar went with it
 }
 
-TEST(ShellHostTest, ABrokenReloadKeepsThePreviousShellAndReportsTheError) {
+TEST(ShellHostTest, ABrokenReloadShowsTheFallbackWithTheError) {
   Harness h;
   h.start(shellConfig(QStringLiteral("good")));
   ASSERT_TRUE(h.host->reload());
-  QQuickWindow* before = h.window();
   QSignalSpy errorChanged(h.host.get(), &ShellHost::errorChanged);
 
   write(h.shellFile(), shellConfig(QStringLiteral("x")) + QStringLiteral("\nthis is not qml {{{"));
   EXPECT_FALSE(h.host->reload());
   EXPECT_EQ(h.host->windows().size(), 1);
-  EXPECT_EQ(h.window(), before);  // the very same window
-  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("good"));
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("<missing>"));  // the old shell is gone
   EXPECT_EQ(errorChanged.count(), 1);
   EXPECT_TRUE(h.host->error().startsWith(QStringLiteral("shell.qml:")))
       << qPrintable(h.host->error());
 
-  // The pill is visible in the kept window.
+  // The pill is visible in the fallback window.
   settle();
-  QQuickItem* pill = findItem(before, QStringLiteral("errorPill"));
+  QQuickItem* pill = findItem(h.window(), QStringLiteral("errorPill"));
   ASSERT_NE(pill, nullptr);
   EXPECT_TRUE(pill->isVisible());
 }
@@ -451,7 +449,7 @@ TEST(ShellHostTest, ARootThatIsNotAShellRootIsAnError) {
   EXPECT_FALSE(h.host->reload());
   EXPECT_TRUE(h.host->error().contains(QStringLiteral("must declare a ShellRoot")))
       << qPrintable(h.host->error());
-  EXPECT_EQ(h.host->windows().size(), 1);  // still the old shell
+  EXPECT_EQ(h.host->windows().size(), 1);  // the fallback shell
 }
 
 TEST(ShellHostTest, AnUnknownWidgetTypeIsAnError) {
@@ -464,22 +462,8 @@ ShellRoot { Panel { content: PanelLayout { start: [ NoSuchWidget {} ] } } }
 )"));
   EXPECT_FALSE(h.host->reload());
   EXPECT_FALSE(h.host->error().isEmpty());
-  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("good"));
-}
-
-TEST(ShellHostTest, CheckingAShellCreatesNothing) {
-  Harness h;
-  h.start(QStringLiteral(R"(
-import QtQuick
-import waku
-ShellRoot {
-    PanelWindow { objectName: "probe"; Text { text: "x" } }
-}
-)"));
-  QString error;
-  const int before = static_cast<int>(QGuiApplication::allWindows().size());
-  EXPECT_TRUE(h.host->checkShell(QUrl::fromLocalFile(h.shellFile()), &error)) << qPrintable(error);
-  EXPECT_EQ(static_cast<int>(QGuiApplication::allWindows().size()), before);
+  EXPECT_EQ(h.host->windows().size(), 1);                               // the fallback shell
+  EXPECT_EQ(h.text(QStringLiteral("a")), QStringLiteral("<missing>"));  // the old shell is gone
 }
 
 TEST(ShellHostTest, ABrokenFirstLoadShowsAFallbackShellWithTheError) {
@@ -496,7 +480,7 @@ TEST(ShellHostTest, ABrokenFirstLoadShowsAFallbackShellWithTheError) {
 
 TEST(ShellHostTest, AFirstLoadWhoseRootIsNotAShellRootCreatesNothingAndShowsTheFallback) {
   Harness h;
-  // The first load skips the probe engine: build() itself refuses the root before creating it.
+  // build() refuses the root before it creates anything.
   h.start(QStringLiteral(R"(
 import QtQuick
 import waku
@@ -580,13 +564,13 @@ ShellRoot {
   EXPECT_EQ(findItem(h.window(), QStringLiteral("bad")), nullptr);
 }
 
-// The check passed, so the engine was reset: the old shell is gone and the fallback shows why.
+// The engine was reset: the old shell is gone and the fallback shows why.
 TEST(ShellHostTest, AReloadThatFailsWhileCreatingShowsTheFallbackWithTheError) {
   Harness h;
   h.start(shellConfig(QStringLiteral("good")));
   ASSERT_TRUE(h.host->reload());
 
-  // It compiles, so the check passes; the content cannot be created.
+  // It compiles; the content cannot be created.
   write(h.shellFile(), QStringLiteral(R"(
 import QtQuick
 import waku
@@ -960,10 +944,10 @@ TEST(ShellHostTest, ReloadTellsHoldersToResolveSingletonsAgain) {
   ASSERT_TRUE(h.host->reload());
   ASSERT_TRUE(h.host->reload());
   EXPECT_EQ(cleared.count(), 2);
-  // A file that fails the check is not a reload: the engine and its singletons stay.
+  // A file that does not compile still resets the engine: the old shell is gone.
   write(h.shellFile(), QStringLiteral("not qml {{{"));
   EXPECT_FALSE(h.host->reload());
-  EXPECT_EQ(cleared.count(), 2);
+  EXPECT_EQ(cleared.count(), 3);
 }
 
 namespace {

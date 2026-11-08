@@ -61,11 +61,18 @@ ShellRoot { Panel { content: PanelLayout { start: [ Text { objectName: "a"; text
   ASSERT_NE(quickshell, nullptr);
   EXPECT_EQ(QDir::fromNativeSeparators(quickshell->shellDir()),
             QDir::fromNativeSeparators(h.dir.path()));
-  QSignalSpy failed(quickshell, &waku::quickshell_io::QuickshellSingleton::reloadFailed);
+  // A failed reload resets the engine too, so the singleton that reports it is a new one: listen
+  // to it as soon as it exists.
+  QString failure;
+  QObject::connect(h.host.get(), &ShellHost::singletonsCleared, &h.engine, [&] {
+    if (auto* fresh = quickshellOf()) {
+      QObject::connect(fresh, &waku::quickshell_io::QuickshellSingleton::reloadFailed, &h.engine,
+                       [&failure](const QString& error) { failure = error; });
+    }
+  });
   write(h.shellFile(), QStringLiteral("not qml {{{"));
   quickshell->reload(true);
-  ASSERT_TRUE(QTest::qWaitFor([&] { return failed.count() >= 1; }, 3000));
-  EXPECT_FALSE(failed.first().first().toString().isEmpty());
+  ASSERT_TRUE(QTest::qWaitFor([&] { return !failure.isEmpty(); }, 3000));
 }
 
 // Creating the Quickshell singleton (start and every reload) must not read the system clipboard:

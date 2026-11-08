@@ -118,22 +118,4 @@ TEST(SafeMode, TheBuiltInSafeShellIsAValidShell) {
   h.makeHost();
   EXPECT_EQ(ShellHost::safeShellUrl().toString(),
             QStringLiteral("qrc:/qt/qml/waku/widgets/SafeShell.qml"));
-  QString error;
-  // Checking creates nothing: no widget is built and no service starts.
-  EXPECT_TRUE(h.host->checkShell(ShellHost::safeShellUrl(), &error)) << qPrintable(error);
-}
-
-TEST(CheckShell, AcceptsAGoodShellAndExplainsABadOne) {
-  Harness h;
-  h.start(shellConfig());
-  QString error;
-  EXPECT_TRUE(h.host->checkShell(QUrl::fromLocalFile(h.shellFile()), &error)) << qPrintable(error);
-
-  write(h.shellFile(), QStringLiteral("not qml {{{"));
-  EXPECT_FALSE(h.host->checkShell(QUrl::fromLocalFile(h.shellFile()), &error));
-  EXPECT_TRUE(error.startsWith(QStringLiteral("shell.qml:"))) << qPrintable(error);
-
-  write(h.shellFile(), QStringLiteral("import QtQuick\nItem {}\n"));
-  EXPECT_FALSE(h.host->checkShell(QUrl::fromLocalFile(h.shellFile()), &error));
-  EXPECT_TRUE(error.contains(QStringLiteral("must declare a ShellRoot"))) << qPrintable(error);
 }

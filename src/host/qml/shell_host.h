@@ -33,15 +33,12 @@ class QsWindow;
 
 // Builds the shell declared in <config home>\shell.qml and keeps it up to date.
 //
-// While a shell is on the screen, reload() first checks shell.qml and theme.qml in a throwaway
-// engine: they compile, their types exist and their roots are a ShellRoot and a ThemeSpec. Nothing
-// is created there, so no widget is built and no service starts. Only then is the Theme singleton
-// filled and the new shell built in the live engine. A file that fails the check leaves the
-// previous shell in place: `error` holds the first message (each PanelWindow shows it as a pill)
-// and the full list goes to the log. The first load has no shell to protect and skips the shell
-// check; build() refuses a root that is no ShellRoot before it creates anything.
+// reload() destroys the old shell, fills the Theme singleton and builds the new shell in the live
+// engine. A file that does not compile, or a shell that cannot be created, shows the fallback
+// shell: `error` holds the first message (each PanelWindow shows it as a pill) and the full list
+// goes to the log. build() refuses a root that is no ShellRoot before it creates anything.
 //
-// A check that passes starts a clean engine, as Quickshell does: the old shell is destroyed, then
+// A reload starts a clean engine, as Quickshell does: the old shell is destroyed, then
 // the engine drops its QML singletons (QQmlEngine::clearSingletons) and compiled files, then
 // `singletonsCleared` fires and the new shell is built. Singletons survive a plain
 // clearComponentCache() with their old types, and the new shell then mixes old and new types
@@ -142,10 +139,6 @@ class ShellHost : public QObject {
   // Reloads whenever a file in the config home changes. Does nothing in safe mode.
   void watch();
 
-  // Whether `url` is a shell that would load: it compiles and its root is a ShellRoot. Creates
-  // nothing. `error` gets the first message when it does not.
-  bool checkShell(const QUrl& url, QString* error);
-
   // Gives a window the native look of a shell window (the backdrop). PopupWindow and Tooltip call
   // this for their own windows with the backdrop of the window they belong to. `window` is a
   // QWindow; `backdrop` is a Backdrop value.
@@ -229,13 +222,10 @@ class ShellHost : public QObject {
     std::list<Entry> entries;
   };
 
-  // Compiles `url` in a throwaway engine and checks that its root is an `expected`. With
-  // `create`, the root is also created (theme.qml: a ThemeSpec has no side effects).
-  bool validate(const QUrl& url, const QMetaObject& expected, bool create, QString* error);
-  // theme.qml, when there is one, passes the same check (as a ThemeSpec).
-  bool validateTheme(QString* error);
   // Copies theme.qml (or the defaults, when there is none) into the Theme singleton.
-  void applyTheme(bool defaultsOnly = false);
+  // `error` gets the first message when theme.qml does not compile or is no ThemeSpec; the
+  // defaults apply then.
+  bool applyTheme(QString* error, bool defaultsOnly = false);
   bool reloadSafe();
   // Builds `url` as the built-in shell with the default theme; the config home is not read.
   // A failure of the built-in shell shows the fallback and reports the error.

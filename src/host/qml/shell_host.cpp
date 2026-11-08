@@ -268,71 +268,36 @@ void ShellHost::setError(const QString& error) {
   emit errorChanged();
 }
 
-bool ShellHost::validate(const QUrl& url, const QMetaObject& expected, bool create,
-                         QString* error) {
-  // A throwaway engine: no cache can serve a stale file, and nothing the current shell uses is
-  // touched. Compiling resolves every import and type of the file and of the files it uses;
-  // nothing is created, so no window, widget or service starts.
-  QQmlEngine probe;
-  probe.setImportPathList(engine_->importPathList());
-  QQmlComponent component(&probe, url);
-  if (component.isError()) {
-    const QStringList lines = describeAll(component.errors());
-    qWarning().noquote() << "waku: config errors:\n" << lines.join('\n');
-    *error = lines.value(0);
-    return false;
-  }
-  const QMetaObject* root = rootType(component);
-  if (!root || !root->inherits(&expected)) {
-    *error = QStringLiteral("%1 must declare a %2 at its root")
-                 .arg(QFileInfo(url.toLocalFile()).fileName(),
-                      QString::fromLatin1(expected.className()).section(QStringLiteral("::"), -1));
-    qWarning().noquote() << "waku:" << *error;
-    return false;
-  }
-  if (create) {
-    std::unique_ptr<QObject> object(component.create());
-    if (!object) {
-      const QStringList lines = describeAll(component.errors());
-      qWarning().noquote() << "waku: config errors:\n" << lines.join('\n');
-      *error = lines.value(0, QStringLiteral("the file could not be created"));
-      return false;
-    }
-  }
-  traceStep(create ? "theme checked in the probe engine" : "shell checked in the probe engine");
-  return true;
-}
-
-bool ShellHost::validateTheme(QString* error) {
-  if (!QFileInfo::exists(themePath())) return true;
-  return validate(QUrl::fromLocalFile(themePath()), ThemeSpec::staticMetaObject, true, error);
-}
-
-void ShellHost::applyTheme(bool defaultsOnly) {
+bool ShellHost::applyTheme(QString* error, bool defaultsOnly) {
   auto* theme = engine_->singletonInstance<Theme*>(QStringLiteral("waku"), QStringLiteral("Theme"));
-  if (!theme) return;
+  if (!theme) return true;
   const ThemeSpec defaults;
   if (options_.safe || defaultsOnly || !QFileInfo::exists(themePath())) {
     theme->assignFrom(defaults);
-    return;
+    return true;
   }
   // Declared in this order so the object is destroyed before its component.
   QQmlComponent component(engine_, QUrl::fromLocalFile(themePath()));
   std::unique_ptr<QObject> root(component.isError() ? nullptr : component.create());
   if (auto* spec = qobject_cast<ThemeSpec*>(root.get())) {
     theme->assignFrom(*spec);
-  } else {
-    theme->assignFrom(defaults);
+    return true;
   }
+  theme->assignFrom(defaults);
+  if (component.isError() || !root) {
+    const QStringList lines = describeAll(component.errors());
+    qWarning().noquote() << "waku: config errors:\n" << lines.join('\n');
+    *error = lines.value(0, QStringLiteral("theme.qml could not be created"));
+  } else {
+    *error = QStringLiteral("theme.qml must declare a ThemeSpec at its root");
+    qWarning().noquote() << "waku:" << *error;
+  }
+  return false;
 }
 
 QUrl ShellHost::safeShellUrl() { return QUrl(QString::fromLatin1(kSafeUrl)); }
 
 QUrl ShellHost::defaultShellUrl() { return QUrl(QString::fromLatin1(kDefaultUrl)); }
-
-bool ShellHost::checkShell(const QUrl& url, QString* error) {
-  return validate(url, ShellRoot::staticMetaObject, false, error);
-}
 
 bool ShellHost::buildFallback() {
   QString fallbackError;
@@ -373,8 +338,8 @@ bool ShellHost::reloadSafe() {
 
 bool ShellHost::reloadBuiltIn(const QUrl& url) {
   resetEngine();
-  applyTheme(true);
   QString error;
+  applyTheme(&error, true);
   std::unique_ptr<Loaded> next = build(url, &error);
   if (!next) {
     setError(error);
@@ -460,21 +425,18 @@ bool ShellHost::reload() {
     error = QStringLiteral("plugin %1 refused: %2")
                 .arg(QDir::toNativeSeparators(refused.first().file), refused.first().reason);
     qWarning().noquote() << "waku:" << error;
-  } else if ((!loaded_ || validate(QUrl::fromLocalFile(entryPath()), ShellRoot::staticMetaObject,
-                                   false, &error)) &&
-             validateTheme(&error)) {
-    // The check in a throwaway engine protects the shell on the screen. With none (the first
-    // start) there is nothing to protect: a shell that does not compile fails in build() with the
-    // same message and the fallback shows it, so the probe would only compile the shell twice.
-    // The files compile, but creating the shell can still fail. resetEngine() destroys the old
-    // shell, all its windows included, before the new one is built: two generations never live
-    // at once. If the build fails, reload() shows the fallback shell.
+  } else {
+    // The old shell goes first, all of it: two generations never live at once. A shell that does
+    // not compile or cannot be created fails in build() and reload() shows the fallback shell
+    // with the error. No second engine checks the files first: its teardown shared the global QML
+    // type registry with the live engine.
     interceptor_->nextGeneration();
     resetEngine();
-    applyTheme();
-    warnings.start();
-    next = build(QUrl::fromLocalFile(entryPath()), &error);
-    warnings.stop();
+    if (applyTheme(&error)) {
+      warnings.start();
+      next = build(QUrl::fromLocalFile(entryPath()), &error);
+      warnings.stop();
+    }
   }
 
   if (next) {
@@ -548,8 +510,7 @@ std::unique_ptr<ShellHost::Loaded> ShellHost::build(const QUrl& url, QString* er
                           .fileName());
     qWarning().noquote() << "waku:" << *error;
   };
-  // Checked before anything is created, as validate() does: a root that is no ShellRoot starts
-  // nothing.
+  // Checked before anything is created: a root that is no ShellRoot starts nothing.
   if (const QMetaObject* type = rootType(*loaded->component);
       !type || !type->inherits(&ShellRoot::staticMetaObject)) {
     notAShell();
