@@ -13,8 +13,23 @@ $sha256 = @{
 
 $name = "ccache-$version-windows-$flavor"
 $zip = Join-Path $env:RUNNER_TEMP "$name.zip"
-Invoke-WebRequest "https://github.com/ccache/ccache/releases/download/v$version/$name.zip" -OutFile $zip
-if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $sha256) { throw "$name.zip checksum mismatch" }
+$url = "https://github.com/ccache/ccache/releases/download/v$version/$name.zip"
+# GitHub release downloads fail now and then (HTTP 504). Retry, and count a wrong checksum as a
+# failed attempt too: a truncated download looks like a mismatch.
+$attempts = 6
+for ($i = 1; $i -le $attempts; $i++) {
+  try {
+    Invoke-WebRequest $url -OutFile $zip -TimeoutSec 120
+    if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $sha256) { throw "$name.zip checksum mismatch" }
+    break
+  } catch {
+    Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
+    if ($i -eq $attempts) { throw "could not download $url after $attempts attempts: $_" }
+    $wait = 5 * $i * $i
+    Write-Warning "attempt $i of $attempts failed ($($_.Exception.Message)); retrying in ${wait}s"
+    Start-Sleep -Seconds $wait
+  }
+}
 Expand-Archive $zip -DestinationPath $env:RUNNER_TEMP
 
 (Join-Path $env:RUNNER_TEMP $name) >> $env:GITHUB_PATH
