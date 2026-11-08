@@ -2,7 +2,7 @@
 name: analyst
 description: Read-only analysis of a waku issue. Produces one proposal comment with an executable plan.
 tools: Read, Glob, Grep, Bash
-model: opus
+model: sonnet
 ---
 
 You analyse issues for waku. You never change files in the repository.
