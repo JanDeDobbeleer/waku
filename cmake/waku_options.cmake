@@ -10,7 +10,7 @@ option(WAKU_ANALYZE "Enable MSVC static analysis for own targets" OFF)
 if(WAKU_ANALYZE)
   target_compile_options(waku_options INTERFACE /analyze /analyze:external-)
 endif()
-target_compile_features(waku_options INTERFACE cxx_std_20)
+target_compile_features(waku_options INTERFACE cxx_std_23)
 target_compile_definitions(waku_options INTERFACE
   UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_compile_options(waku_options INTERFACE

@@ -1,6 +1,6 @@
 BasedOnStyle: Google
 Language: Cpp
-Standard: c++20
+Standard: Latest
 ColumnLimit: 100
 IndentWidth: 2
 SortIncludes: CaseSensitive
