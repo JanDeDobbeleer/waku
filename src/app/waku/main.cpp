@@ -147,6 +147,10 @@ int main(int argc, char* argv[]) {
   QCommandLineOption noTilingOpt(
       QStringLiteral("no-tiling"),
       QStringLiteral("Never start the built-in tiler, even when the shell sets Tiling.enabled."));
+  QCommandLineOption watchOpt(
+      QStringLiteral("watch"),
+      QStringLiteral("Reload the shell when a file in the config home changes. Off by default: "
+                     "run `wakuc reload` to apply an edit."));
   QCommandLineOption logFileOpt(
       QStringLiteral("log-file"),
       QStringLiteral("Write a diagnostics log (JSON Lines) to <file>: every log message, the start "
@@ -156,6 +160,7 @@ int main(int argc, char* argv[]) {
   parser.addOption(configHomeOpt);
   parser.addOption(importPathOpt);
   parser.addOption(logFileOpt);
+  parser.addOption(watchOpt);
   parser.addOption(noShellDesktopsOpt);
   parser.addOption(noTilingOpt);
   parser.addOption(keepTaskbarOpt);
@@ -281,8 +286,10 @@ int main(int argc, char* argv[]) {
   if (waku::kernel::liveDesktop() && !parser.isSet(noKeysOpt) && startKeys(configHome)) {
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &app, [] { stopKeys(); });
   }
-  host.watch();
-  waku::host::traceStep("watch done");
+  if (parser.isSet(watchOpt)) {
+    host.watch();
+    waku::host::traceStep("watch done");
+  }
   const int exitCode = app.exec();
   waku::host::RunLog::stop(exitCode);
   return exitCode;

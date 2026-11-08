@@ -54,8 +54,8 @@ class QsWindow;
 // `shell.qml` gets an error naming the rename.
 //
 // Threading: GUI thread only. Owns the loaded shell; its windows go first, then the root object,
-// then its component, when it is replaced or the host is destroyed. watch() reloads after a
-// change in the config home, debounced.
+// then its component, when it is replaced or the host is destroyed. watch() (the `--watch` flag)
+// reloads after a change in the config home, debounced; without it only reload() does.
 class ShellHost : public QObject {
   Q_OBJECT
   Q_PROPERTY(QString error READ error NOTIFY errorChanged FINAL)

@@ -97,8 +97,8 @@ The config home holds:
 - `theme.qml`: colours and sizes (optional).
 - `widgets/`: your own widgets, one component per file (optional).
 
-Edit a file and save. The bar reloads on its own. A mistake shows the built-in fallback bar with an
-error pill. To reload by hand:
+Edit a file and save, then reload the bar. A mistake shows the built-in fallback bar with an
+error pill. To reload:
 
 ```powershell
 wakuc reload
@@ -203,8 +203,8 @@ Build a waku shell for me.
   docs/shells.md in https://github.com/JanDeDobbeleer/waku first.
 - Write the shell into a scratch folder, [<scratch>\my-shell], with shell.qml (and theme.qml if
   needed). Run it with: waku --config-home [<scratch>\my-shell]
-- The bar hot reloads when a file is saved. Edit, save, look at the result, repeat. A mistake shows
-  the fallback bar with an error pill.
+- Run waku with --watch to reload on every save, or run wakuc reload after each edit. A mistake
+  shows the fallback bar with an error pill.
 - Use wakuc --config-home [<scratch>\my-shell] status|reload|call to talk to that bar.
 - The target look is in the attached screenshots: [describe or attach them].
 - Do not touch %USERPROFILE%\.config\waku until I say the shell is done. Then copy the folder
