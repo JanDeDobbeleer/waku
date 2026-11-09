@@ -50,6 +50,8 @@ feature prefix such as `virtual desktops:` or `tiling:`.
 | `run.start` | First record of a run. | `argv`, `configHome`, `exe`, `pid`, `version`, `qt`, `os`, `kernel`, `cpu`, `platform`, `screens` |
 | `run.previous_unclean` | Right after `run.start`, when the last run in this file has a `run.start` and no `run.stop`: it crashed or was killed. | `previousRun` (its `run`) |
 | `screen.changed` | A screen was added or removed, the primary screen changed, or a screen's geometry, available area, scale or DPI changed. | `why` (the Qt signal), `screen` (its name), `screens` |
+| `reload.start` | A reload begins. | `cause` (`startup`, `config-files-changed`, `screens-settled`, `wakuc`, `quickshell-reload`, `api`), `hadShell`, `screenCount` |
+| `reload.step` | Each step of a reload and of start-up (the `WAKU_TRACE` steps), flushed at once. After a crash the last one shows how far the reload got. | `step`, `ms` (since start) |
 | `shell.reload` | The shell was reloaded, by a file change, `wakuc reload` or a screen change. | `ok`, `error` (empty when ok) |
 | `run.stop` | Last record of a clean exit (`wakuc quit`, logoff). | `exit` |
 

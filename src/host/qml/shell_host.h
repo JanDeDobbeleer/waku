@@ -135,7 +135,9 @@ class ShellHost : public QObject {
   // True when the shell was applied (some windows may still have failed: see `error`). False
   // leaves the previous shell in place when the files failed the check, and shows the fallback
   // when the new shell could not be created or there was no shell.
-  bool reload();
+  // `cause` goes to the run log (`reload.start`): "startup", "config-files-changed",
+  // "screens-settled", "wakuc", "quickshell-reload" or "api".
+  bool reload(const char* cause = "api");
   // Reloads whenever a file in the config home changes. Does nothing in safe mode.
   void watch();
 
