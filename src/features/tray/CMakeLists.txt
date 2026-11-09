@@ -24,6 +24,8 @@ waku_feature(
     win32/tray_hook.cpp
     win32/tray_win.h
     win32/tray_win.cpp
+    win32/tray_window_host.h
+    win32/tray_window_host.cpp
   QML_SOURCES
     qml/systray.h
     qml/systray.cpp
@@ -47,6 +49,7 @@ waku_feature(
     tests/test_tray_model.cpp
     tests/test_tray_pins.cpp
     tests/test_tray_widget.cpp
+    tests/test_tray_window_host.cpp
   SYSTEM_LIBS
     psapi
     user32

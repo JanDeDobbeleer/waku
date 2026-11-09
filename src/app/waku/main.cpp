@@ -16,6 +16,7 @@
 #include "control/control.h"
 #include "features/tiling/qml/tiling_service.h"
 #include "features/tiling/tiling_command.h"
+#include "features/tray/tray_service.h"
 #include "features/wallpapers/qml/wallpapers_service.h"
 #include "features/wallpapers/wallpaper_command.h"
 #include "features/workspaces/desktop_command.h"
@@ -114,6 +115,12 @@ int main(int argc, char* argv[]) {
           "Start the built-in shell with the default theme and ignore the config home."));
   QCommandLineOption noTrayOpt(QStringLiteral("no-tray"),
                                QStringLiteral("Never hook Explorer; the Tray widget stays empty."));
+  QCommandLineOption trayHostOpt(
+      QStringLiteral("tray-host"),
+      QStringLiteral("How the Tray widget gets the icons: hook (default, a DLL in Explorer) or "
+                     "window (a Shell_TrayWnd window of waku's own, used while the Windows taskbar "
+                     "is hidden; no DLL goes into Explorer)."),
+      QStringLiteral("hook|window"));
   // Read from the raw arguments before the application exists; declared here for --help and so
   // the parser accepts it.
   QCommandLineOption fontEngineOpt(
@@ -168,11 +175,20 @@ int main(int argc, char* argv[]) {
   parser.addOption(noHotkeysOpt);
   parser.addOption(fontEngineOpt);
   parser.addOption(noTrayOpt);
+  parser.addOption(trayHostOpt);
   parser.addOption(noAppBarOpt);
   parser.addOption(safeOpt);
   parser.process(app);
   if (!fontEngine.error.isEmpty()) qWarning().noquote() << "waku:" << fontEngine.error;
   waku::kernel::setCapabilityDisabled(QStringLiteral("tray"), parser.isSet(noTrayOpt));
+  if (parser.isSet(trayHostOpt)) {
+    const QString kind = parser.value(trayHostOpt);
+    if (kind == QLatin1String("window")) {
+      waku::tray::setTrayHostKind(waku::tray::TrayHostKind::Window);
+    } else if (kind != QLatin1String("hook")) {
+      qWarning().noquote() << "waku: --tray-host" << kind << "is not hook or window; using hook";
+    }
+  }
   waku::kernel::setCapabilityDisabled(QStringLiteral("hotkeys"), parser.isSet(noHotkeysOpt));
   waku::kernel::setCapabilityDisabled(QStringLiteral("shell_desktops"),
                                       parser.isSet(noShellDesktopsOpt));

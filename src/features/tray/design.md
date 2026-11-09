@@ -196,3 +196,63 @@ were not run live.
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
 - systray hook thread (`std::thread`) (`SystrayHook` (`src/features/tray/win32/tray_hook.h`), owned by `waku.services.Systray`, started by the first Tray widget): creates nothing itself: the GUI thread creates the watchdog mutex and the `\\.\pipe\waku_systray_monitor` pipe in the constructor; the worker injects `WakuTrayHook[_arm64].dll` into Explorer (`SetWindowsHookEx`), owns the OVERLAPPED I/O, read buffer and completion event (it waits on that event and a stop event that `stop()` sets, so an idle pipe costs no wakeups), parses each pipe message, scales a non-32 px icon to the tray size (Lanczos and sharpen, so not on the GUI thread) and emits queued signals to the GUI thread; retries after Explorer restarts (1 s no Explorer, 5 s failed injection, 3 s after the DLL disconnects); `stop()` (also called by the destructor): sets the stop flag, releases the injection hook, cancels pending I/O, releases and closes the mutex (the DLL's watchdog then detaches and restores Shell_TrayWnd's window procedure within 5 s), `join`
+
+## Window host (`--tray-host window`)
+
+An alternative to the hook: `win32/tray_window_host.{h,cpp}` is a window of class `Shell_TrayWnd`
+in waku's own process. `Shell_NotifyIcon` calls `FindWindow("Shell_TrayWnd")` on every call and
+sends `WM_COPYDATA` (`dwData` 1) to what it finds; `FindWindow` walks the top-level windows in
+Z-order, hidden ones included. While waku hides the Windows taskbar the window sits above Explorer's
+in the topmost band and is found first.
+
+Findings of the spike (a throwaway program, run live next to Explorer):
+
+- Icons from every running program arrive (16 processes in the first second after a
+  `TaskbarCreated` broadcast), and `GetIconInfo` on the 32-bit `hIcon` works across processes, so
+  no conversion inside Explorer is needed.
+- Callbacks (`NIN_SELECT`, `WM_CONTEXTMENU`, `WM_MOUSEMOVE`, version 4 layout) reach the owning
+  program, elevated programs included.
+- After an Explorer restart the new taskbar window raises itself above ours. Hidden, it stops
+  after one re-raise. Our window keeps its icons through a restart, so no program has to re-add;
+  `TaskbarCreated` from the shell is not guaranteed and is not relied on.
+
+Decisions:
+
+- **Role.** The host owns the lookup only while no Explorer taskbar window is visible, checked every
+  second and a short time after a `TaskbarCreated` that is not its own. Otherwise (`--keep-taskbar`,
+  an Explorer restart before the hider has acted) it goes to the bottom and Explorer's tray keeps
+  the icons. Every change of role broadcasts `TaskbarCreated`.
+- **Found first, then announced.** A hidden window is not always first after one `SetWindowPos`.
+  The host raises, checks with `FindWindow` that it is first, and only then marks itself the owner
+  and broadcasts; otherwise it tries again at the next poll. It broadcasts once more 2.5 s later
+  for programs that were busy. Live, the first attempt often fails and the retry succeeds: with the
+  broadcast sent before the check only 3 of 16 programs reached the window.
+- **What is not ours is passed on, and only that.** The app bar protocol (`WM_COPYDATA`, `dwData`
+  0) and the icon rectangle query (`dwData` 3) go to Explorer's own `Shell_TrayWnd` with
+  `SendMessageTimeout` (2 s, `SMTO_ABORTIFHUNG`). The target is the window of that class that
+  Explorer's process owns, not the first one found: any program can create a window of that
+  class. `WM_COMMAND`, `WM_USER`-range and registered messages are not passed on: forwarding them
+  would run them against Explorer with waku's identity for any sender, and `WM_COPYDATA` is open
+  to lower integrity levels (see Elevation). Any other `dwData` is refused.
+- **Callback messages.** `uCallbackMessage` below `WM_USER` is dropped by the parser (hook and window
+  host alike): a click on the icon sends that message to the owner window, and `WM_CLOSE` or
+  `WM_SYSCOMMAND` there would close or command another program's window.
+- **The host outlives a reload.** The widget (`Systray`) is an engine singleton and is deleted and
+  made again on every reload. A window host that went with it would hand the tray back to Explorer
+  (a broadcast), claim it again (two more) and leave the bar empty until the programs answered.
+  The host is kept for the life of the process (`systray.cpp`, stopped on `aboutToQuit`) and keeps
+  the icons it was sent, merged as the widget merges them (a `TrayIconRegistry` of its own).
+  `replay()` announces them to the new widget, dropping icons whose owner window is gone.
+- **Giving up the role is debounced.** Explorer shows its new taskbar for a moment after a restart
+  before the hider hides it. The host gives the lookup up only when an Explorer taskbar window is
+  visible at two polls in a row; a `TaskbarCreated` that is not its own schedules one broadcast
+  1.5 s later, for the programs that sent their icons to Explorer's new window in the meantime.
+- **Elevation.** `WM_COPYDATA` is allowed through `ChangeWindowMessageFilterEx`, so elevated
+  programs can send. Callbacks to an elevated program were accepted in the spike.
+- **One per session.** A named mutex (`Local\WakuTrayWindowHost`); a second waku does not start a
+  second host.
+- **On stop** the window goes away and, when it owned the lookup, `TaskbarCreated` is broadcast so
+  the programs send their icons to Explorer's tray again.
+
+Default: still the hook, until the window host has run for a while. Tests use their own window class,
+never claim the Z-order place and never pass anything on (`TrayWindowHost::Options`).

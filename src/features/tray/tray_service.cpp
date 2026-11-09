@@ -2,10 +2,19 @@
 
 #include <QCoreApplication>
 #include <QDebug>
+#include <atomic>
 
 #include "features/tray/win32/tray_hook.h"
+#include "features/tray/win32/tray_window_host.h"
 
 namespace waku::tray {
+
+namespace {
+std::atomic<TrayHostKind> g_kind{TrayHostKind::Hook};
+}  // namespace
+
+TrayHostKind trayHostKind() { return g_kind.load(); }
+void setTrayHostKind(TrayHostKind kind) { g_kind = kind; }
 
 TrayHostFactories realTrayHostFactories() {
   TrayHostFactories factories;
@@ -18,6 +27,11 @@ TrayHostFactories realTrayHostFactories() {
     auto hook = std::make_unique<SystrayHook>(std::move(options));
     if (!hook->valid()) return nullptr;
     return hook;
+  };
+  factories.makeWindow = []() -> std::unique_ptr<TrayHost> {
+    auto host = std::make_unique<TrayWindowHost>();
+    if (!host->valid()) return nullptr;
+    return host;
   };
   return factories;
 }
@@ -39,6 +53,15 @@ std::unique_ptr<TrayHost> createTrayHost(bool useHook, const QString& appDir,
     }
   }
   return nullptr;
+}
+
+std::unique_ptr<TrayHost> createTrayHost(TrayHostKind kind, const QString& appDir,
+                                         const TrayHostFactories& factories) {
+  if (kind == TrayHostKind::Hook) return createTrayHost(true, appDir, factories);
+  if (!factories.makeWindow) return nullptr;
+  auto host = factories.makeWindow();
+  if (!host) qWarning().noquote() << "Tray window host could not start (another one is running).";
+  return host;
 }
 
 SystrayService::SystrayService(bool useHook, const QString& appDir,

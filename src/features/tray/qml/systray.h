@@ -86,7 +86,8 @@ class Systray : public QObject {
   void updateSweepTimer();
   void connectHost();
 
-  std::unique_ptr<TrayHost> host_;
+  // Shared with the process-wide window host, which outlives a reload; otherwise only ours.
+  std::shared_ptr<TrayHost> host_;
   std::unique_ptr<TrayWindowApi> api_;
   QString reason_;
   waku::tray::TrayIconRegistry registry_;

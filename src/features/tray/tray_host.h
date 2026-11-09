@@ -28,6 +28,10 @@ class TrayHost : public QObject {
   Q_INVOKABLE virtual void stop() = 0;
   // "hook", "legacy" or a fake's name; for logs and tests.
   virtual QString mode() const = 0;
+  // Announces every icon the host already knows, as iconModified, on the calling thread. A host
+  // that outlives its widget (the window host, across a reload) gives a new widget its icons
+  // without making every program send them again. Nothing for a host that knows none.
+  virtual void replay() {}
 
  signals:
   // The tray should be asked to re-announce its icons (TaskbarCreated broadcast).
