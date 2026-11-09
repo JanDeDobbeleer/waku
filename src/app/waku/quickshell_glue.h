@@ -29,7 +29,7 @@ inline void connectQuickshell(QQmlEngine* engine, host::ShellHost* host,
     // Queued: a widget asks for the reload from inside the shell the reload replaces.
     QObject::connect(
         quickshell, &quickshell_io::QuickshellSingleton::reloadRequested, host,
-        [host](bool) { host->reload(); }, Qt::QueuedConnection);
+        [host](bool) { host->reload("quickshell-reload"); }, Qt::QueuedConnection);
   };
   wire();
   QObject::connect(host, &host::ShellHost::singletonsCleared, host, wire);

@@ -25,6 +25,7 @@
 #include "host/qml/panel_window.h"
 #include "host/qml/qs_window.h"
 #include "host/qml/shell_screen.h"
+#include "host/run_log.h"
 #include "host/startup_trace.h"
 
 namespace waku::host {
@@ -195,7 +196,7 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
   debounce_.setInterval(150);
   connect(&debounce_, &QTimer::timeout, this, [this] {
     snapshot_ = scanQmlFiles();  // before the reload: an edit during it is seen as a change
-    reload();
+    reload("config-files-changed");
     refreshWatches();
   });
   trimTimer_.setSingleShot(true);
@@ -359,7 +360,7 @@ void ShellHost::watchScreens() {
   // wait reloads two or three times in a row while Windows still moves the windows.
   screenDebounce_.setInterval(options_.screenSettleMs);
   connect(&screenDebounce_, &QTimer::timeout, this, [this] {
-    if (loaded_) reload();
+    if (loaded_) reload("screens-settled");
   });
   const auto changed = [this] { screenDebounce_.start(); };
   connect(qGuiApp, &QGuiApplication::screenAdded, this, [this, changed](QScreen* screen) {
@@ -382,7 +383,12 @@ void ShellHost::watchScreen(QScreen* screen) {
           Qt::UniqueConnection);
 }
 
-bool ShellHost::reload() {
+bool ShellHost::reload(const char* cause) {
+  RunLog::event(
+      QStringLiteral("reload.start"),
+      {{QStringLiteral("cause"), QString::fromLatin1(cause)},
+       {QStringLiteral("hadShell"), loaded_ != nullptr},
+       {QStringLiteral("screenCount"), static_cast<int>(QGuiApplication::screens().size())}});
   traceStep("reload started");
   if (options_.safe) return reloadSafe();
   QString error;

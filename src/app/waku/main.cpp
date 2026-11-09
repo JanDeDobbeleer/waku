@@ -278,7 +278,7 @@ int main(int argc, char* argv[]) {
         QStringLiteral("shell.reload"),
         {{QStringLiteral("ok"), ok}, {QStringLiteral("error"), host.error()}});
   });
-  host.reload();
+  host.reload("startup");
   ensureTiler();
   waku::host::traceStep("first reload done");
   // The key daemon: started beside waku when the config home has a keys.conf, stopped with it. A

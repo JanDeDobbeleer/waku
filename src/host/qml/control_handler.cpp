@@ -34,7 +34,7 @@ control::ControlHandler makeControlHandler(ShellHost& host, bool safe, std::func
           taskbar](const QString& command) -> QString {
     if (!guard) return QStringLiteral("error: the shell is shutting down");
     if (command == QLatin1String("reload")) {
-      const bool ok = guard->reload();
+      const bool ok = guard->reload("wakuc");
       if (ok && guard->error().isEmpty()) return QStringLiteral("ok");
       return QStringLiteral("error: ") + guard->error();
     }
