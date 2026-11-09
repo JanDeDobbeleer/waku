@@ -19,11 +19,19 @@ constexpr int kRefreshDelayMs = 200;     // SystrayWidget's refreshTimer_
 constexpr int kSweepIntervalMs = 30000;  // SystrayWidget checked every 5 s
 
 struct RealHost {
-  std::unique_ptr<TrayHost> host;
+  std::shared_ptr<TrayHost> host;
   QString reason;
 };
 
-// The hook host or nothing.
+// The window host lives as long as the process: a reload deletes the Systray and makes a new one,
+// and every program would have to send its icons again if the host went with it. It is stopped
+// when the application quits, which hands the tray back to Explorer.
+std::shared_ptr<TrayHost>& sharedWindowHost() {
+  static std::shared_ptr<TrayHost> host;
+  return host;
+}
+
+// The host `--tray-host` chose (the hook, or the window host) or nothing.
 RealHost makeRealHost() {
   RealHost result;
   if (kernel::capabilityDisabled(QStringLiteral("tray"))) {
@@ -48,14 +56,28 @@ RealHost makeRealHost() {
     hookTried = true;
     return makeHook(dll);
   };
+  const TrayHostKind kind = trayHostKind();
+  if (kind == TrayHostKind::Window && sharedWindowHost()) {
+    result.host = sharedWindowHost();
+    return result;
+  }
   try {
     result.host =
-        waku::tray::createTrayHost(true, QCoreApplication::applicationDirPath(), factories);
+        waku::tray::createTrayHost(kind, QCoreApplication::applicationDirPath(), factories);
+    if (kind == TrayHostKind::Window && result.host) {
+      sharedWindowHost() = result.host;
+      QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
+                       QCoreApplication::instance(), [] {
+                         if (auto host = std::exchange(sharedWindowHost(), nullptr)) host->stop();
+                       });
+    }
   } catch (const std::exception& error) {
     qWarning().noquote() << "Tray host failed:" << error.what();
   }
   if (!result.host) {
-    if (!dllReason.isEmpty()) {
+    if (kind == TrayHostKind::Window) {
+      result.reason = QStringLiteral("tray unavailable: another tray window host is running");
+    } else if (!dllReason.isEmpty()) {
       result.reason = QStringLiteral("tray unavailable: %1").arg(dllReason);
     } else if (hookTried) {
       result.reason = QStringLiteral("tray unavailable: another tray host is running");
@@ -97,7 +119,8 @@ Systray::Systray(std::unique_ptr<TrayHost> host, std::unique_ptr<TrayWindowApi> 
 }
 
 Systray::~Systray() {
-  if (host_) host_->stop();
+  // The shared window host goes on without this widget; any other host is ours to stop.
+  if (host_ && host_.use_count() == 1) host_->stop();
 }
 
 void Systray::connectHost() {
@@ -114,6 +137,8 @@ void Systray::connectHost() {
   connect(&refreshTimer_, &QTimer::timeout, this, [this] { refresh(); });
   connect(&sweepTimer_, &QTimer::timeout, this, [this] { sweep(); });
   host_->start();
+  // A host that was already running (the window host after a reload) knows the icons.
+  host_->replay();
 }
 
 Systray* Systray::create(QQmlEngine* engine, QJSEngine*) {

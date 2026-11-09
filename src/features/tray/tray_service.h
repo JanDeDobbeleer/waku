@@ -16,7 +16,16 @@ struct TrayHostFactories {
   std::function<QString(const QString& appDir, QString* reason)> findHookDll;
   // A hook host for `dllPath`; null for a host that is not valid.
   std::function<std::unique_ptr<TrayHost>(const QString& dllPath)> makeHook;
+  // The window host; null for a host that is not valid (another waku of the session has it).
+  std::function<std::unique_ptr<TrayHost>()> makeWindow;
 };
+
+// Which tray host a run uses: the hook DLL in Explorer, or a Shell_TrayWnd window of waku's own
+// (win32/tray_window_host.h). Set once at start-up by main (`--tray-host`), read when the first
+// Tray widget creates the host.
+enum class TrayHostKind { Hook, Window };
+TrayHostKind trayHostKind();
+void setTrayHostKind(TrayHostKind kind);
 
 // The factories wired to SystrayHook.
 TrayHostFactories realTrayHostFactories();
@@ -25,6 +34,9 @@ TrayHostFactories realTrayHostFactories();
 // logged as a warning, emulation and unsupported architectures at debug level). There is no
 // fallback that replaces Explorer's tray window.
 std::unique_ptr<TrayHost> createTrayHost(bool useHook, const QString& appDir,
+                                         const TrayHostFactories& factories);
+// The host of `kind`: the same as above for Hook; for Window the window host, which needs no DLL.
+std::unique_ptr<TrayHost> createTrayHost(TrayHostKind kind, const QString& appDir,
                                          const TrayHostFactories& factories);
 
 // The one tray client every systray widget of a run shares (Python keeps it in class attributes
