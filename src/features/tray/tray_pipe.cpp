@@ -14,6 +14,7 @@ constexpr int kOffHWnd = 12;
 constexpr int kOffUId = 16;
 constexpr int kOffFlags = 20;
 constexpr int kOffCallback = 24;
+constexpr std::uint32_t kMinCallbackMessage = 0x400;  // WM_USER
 constexpr int kOffIcon = 28;
 constexpr int kOffTip = 32;
 constexpr int kTipUnits = 128;
@@ -108,7 +109,12 @@ ParsedTrayMessage parseShellTrayData(const char* payload, std::int64_t size, con
   }
   const std::uint32_t version = u32(payload, kOffVersion);
   if (version > 0 && version <= 4) data.uVersion = version;
-  if (flags & kNifMessage) data.uCallbackMessage = u32(payload, kOffCallback);
+  if (flags & kNifMessage) {
+    // A callback message is a WM_USER-range message (NOTIFYICONDATA); a smaller number is a system
+    // message (WM_CLOSE, WM_SYSCOMMAND) that a click on the icon would send to the owner window.
+    const std::uint32_t callback = u32(payload, kOffCallback);
+    data.uCallbackMessage = callback >= kMinCallbackMessage ? callback : 0;
+  }
   if (flags & kNifIcon) {
     data.hIcon = u32(payload, kOffIcon);
     const std::int64_t expected = static_cast<std::int64_t>(iconWidth) * iconHeight * 4;

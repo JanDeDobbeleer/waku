@@ -134,6 +134,25 @@ TEST(TrayPipeParser, AddWithEveryFieldIsValidated) {
   EXPECT_EQ(data.iconRgba, rgba);
 }
 
+TEST(TrayPipeParser, ACallbackMessageBelowWmUserIsDropped) {
+  // WM_CLOSE or WM_SYSCOMMAND as a "callback" would make a click on the icon close or command
+  // another program's window; NOTIFYICONDATA callbacks are WM_USER-range messages.
+  for (const std::uint32_t system : {0x10u, 0x112u, 0x111u, 0x3FFu}) {
+    ShellTrayData tray = makeTray(kNimAdd, kNifMessage);
+    tray.nid.uCallbackMessage = system;
+    const auto parsed = parseTrayPipeMessage(pipeMessage(tray));
+    ASSERT_EQ(parsed.kind, ParsedTrayMessage::Kind::IconModified);
+    EXPECT_EQ(parsed.data.uCallbackMessage, 0u) << system;
+  }
+  for (const std::uint32_t user : {0x400u, 0x8001u, 0xC123u}) {
+    ShellTrayData tray = makeTray(kNimAdd, kNifMessage);
+    tray.nid.uCallbackMessage = user;
+    const auto parsed = parseTrayPipeMessage(pipeMessage(tray));
+    ASSERT_EQ(parsed.kind, ParsedTrayMessage::Kind::IconModified);
+    EXPECT_EQ(parsed.data.uCallbackMessage, user);
+  }
+}
+
 TEST(TrayPipeParser, FieldsWithoutTheirFlagStayEmpty) {
   ShellTrayData tray = makeTray(kNimModify, kNifTip);
   tray.nid.uCallbackMessage = 99;
