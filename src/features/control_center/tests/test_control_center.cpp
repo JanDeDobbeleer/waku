@@ -175,6 +175,31 @@ TEST(ControlCenterService, BrightnessTargetsTheFirstMonitorThenTheChosenOne) {
   EXPECT_EQ(f.service->brightnessSource(), QStringLiteral("9"));
 }
 
+TEST(ControlCenterService, ExposesContrastForTheSelectedMonitor) {
+  Fixture f;
+  EXPECT_FALSE(f.service->contrastAvailable());
+  f.service->setContrast(25);
+  EXPECT_TRUE(f.brightness->contrastWrites.empty());
+
+  f.brightness->contrastValues[7] = 30;
+  f.brightness->contrastValues[9] = 60;
+  QSignalSpy changed(f.service.get(), &ControlCenter::contrastChanged);
+  f.service->setBrightnessSource(QStringLiteral("7"));
+  EXPECT_TRUE(f.service->contrastAvailable());
+  EXPECT_EQ(f.service->contrast(), 30);
+
+  f.service->setContrast(150);
+  ASSERT_EQ(f.brightness->contrastWrites.size(), 1u);
+  EXPECT_EQ(f.brightness->contrastWrites[0], (std::pair<qulonglong, int>(7, 100)));
+  EXPECT_EQ(f.service->contrast(), 100);
+
+  f.service->setBrightnessSource(QStringLiteral("9"));
+  EXPECT_EQ(f.service->contrast(), 60);
+  emit f.brightness->contrastChanged(9, 42);
+  EXPECT_EQ(f.service->contrast(), 42);
+  EXPECT_EQ(changed.count(), 4);
+}
+
 TEST(ControlCenterService, BrightnessFollowsExternalChanges) {
   Fixture f;
   f.brightness->values[7] = 12;
@@ -351,6 +376,8 @@ TEST(ControlCenterService, EachGroupAnnouncesOnlyItself) {
   EXPECT_EQ(notifyOf("powerPlans"), QStringLiteral("powerChanged"));
   EXPECT_EQ(notifyOf("brightnessSources"), QStringLiteral("brightnessSourcesChanged"));
   EXPECT_EQ(notifyOf("brightness"), QStringLiteral("brightnessChanged"));
+  EXPECT_EQ(notifyOf("contrastAvailable"), QStringLiteral("contrastChanged"));
+  EXPECT_EQ(notifyOf("contrast"), QStringLiteral("contrastChanged"));
   EXPECT_EQ(notifyOf("userName"), QStringLiteral("userChanged"));
 }
 

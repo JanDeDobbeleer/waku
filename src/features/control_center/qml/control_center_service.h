@@ -46,6 +46,8 @@ class ControlCenter : public QObject {
   Q_PROPERTY(bool darkMode READ darkMode NOTIFY themeChanged FINAL)
   Q_PROPERTY(bool brightnessAvailable READ brightnessAvailable NOTIFY brightnessChanged FINAL)
   Q_PROPERTY(int brightness READ brightness NOTIFY brightnessChanged FINAL)
+  Q_PROPERTY(bool contrastAvailable READ contrastAvailable NOTIFY contrastChanged FINAL)
+  Q_PROPERTY(int contrast READ contrast NOTIFY contrastChanged FINAL)
   Q_PROPERTY(
       QVariantList brightnessSources READ brightnessSources NOTIFY brightnessSourcesChanged FINAL)
   Q_PROPERTY(QString brightnessSource READ brightnessSource NOTIFY brightnessChanged FINAL)
@@ -105,6 +107,11 @@ class ControlCenter : public QObject {
   bool darkMode() const { return theme_ == QLatin1String("dark"); }
   bool brightnessAvailable() const { return brightnessMonitor_.has_value(); }
   int brightness() const { return brightness_; }
+  bool contrastAvailable() const {
+    return brightnessControl_ && brightnessMonitor_ &&
+           brightnessControl_->supportsContrast(*brightnessMonitor_);
+  }
+  int contrast() const { return contrast_; }
   QVariantList brightnessSources() const;
   QString brightnessSource() const;
   QVariantList powerPlans() const;
@@ -124,6 +131,7 @@ class ControlCenter : public QObject {
   Q_INVOKABLE void screenshot();
   Q_INVOKABLE void openSettings(const QString& uri);
   Q_INVOKABLE void setBrightness(int percent);
+  Q_INVOKABLE void setContrast(int percent);
   Q_INVOKABLE void setBrightnessSource(const QString& id);
   Q_INVOKABLE bool setPowerPlan(const QString& id);
   Q_INVOKABLE bool setPowerMode(const QString& id);
@@ -142,6 +150,7 @@ class ControlCenter : public QObject {
   void dndChanged();
   void themeChanged();
   void brightnessChanged();
+  void contrastChanged();
   void brightnessSourcesChanged();
   void powerChanged();
   void userChanged();
@@ -156,7 +165,8 @@ class ControlCenter : public QObject {
     kPower = 16,
     kUser = 32,
     kPending = 64,
-    kAll = 127,
+    kContrast = 128,
+    kAll = 255,
   };
   // Emits the signal of every group in groups, then changed().
   void announce(unsigned groups);
@@ -183,6 +193,7 @@ class ControlCenter : public QObject {
   std::optional<qulonglong> brightnessMonitor_;
   std::optional<qulonglong> selectedMonitor_;
   int brightness_ = 0;
+  int contrast_ = 0;
   std::vector<PowerPlan> plans_;
   std::optional<QUuid> activePlan_;
   bool modeSupported_ = false;
