@@ -21,14 +21,13 @@ it again. Paths are under `src/features/tray/`.
 
 | Piece | Where | Layer | Reuse |
 |---|---|---|---|
-| `TrayHost` (signals `iconModified`, `iconDeleted`, `updateIcons`) and `SystrayHook` (a hook DLL in Explorer's `Shell_TrayWnd` thread, messages over a pipe) | `tray_host.h`, `win32/tray_hook.*` | root, `win32/` | as is |
+| `TrayHost` (signals `iconModified`, `iconDeleted`, `updateIcons`) and `TrayWindowHost` (a `Shell_TrayWnd` window of waku's own, see "Window host") | `tray_host.h`, `win32/tray_window_host.*` | root, `win32/` | new |
 | `TrayWindowApi` (is the window alive, allow foreground, send a notify message, cursor, `TaskbarCreated` broadcast) | `tray_host.h` | root | as is |
 | `TrayIconData` (raw RGBA icon, tip, guid, hwnd, uID, callback message, version) and the `SHELLTRAYDATA` parser | `tray_types.h`, `tray_pipe.*` | root | as is |
-| `SystrayService` / `createTrayHost` (one host per run) | `tray_service.*` | root (no UI) | as is, without the legacy factory |
+| `createTrayHost` (one host per run) | `tray_service.*` | root (no UI) | new |
 | `IconStateMap`, `updateCurrentState`, `updateIconData`, `iconStateKey`, `SystrayStateStore` (per-screen JSON), `cleanScreenId` | `tray_state.*` | root (no UI) | as is; the folder is `kernel::appDataDir()` |
 | `scaleTrayIcon` (Lanczos to 32 px plus sharpen) | `icon_scale.*` | root (no UI) | as is |
 | `colorIconToRgba`, `monochromeIconToRgba`, `trayIconPixelsProblem` (the host-side `GetDIBits` conversion and the blank-icon check) | `icon_bits.*` | root (no UI) | new |
-| The hook DLL (`WakuTrayHook[_arm64].dll`) | `hook/trayhook.cpp` | native | copied next to `waku.exe` |
 
 Logic that was tangled into Widgets classes and was **extracted**:
 
@@ -45,18 +44,18 @@ Logic that was tangled into Widgets classes and was **extracted**:
 
 1. **Pin state file: separate.** `%LOCALAPPDATA%\waku\systray_state_<screen>.json`, same JSON
    format. The file lives in `kernel::appDataDir()`.
-2. **One hook at a time, so no second DLL.** Waku builds the hook DLL (`hook/`) next to
-   `waku.exe`. Safety net: if the pipe or mutex is already held (another tray host, such as Python
-   YASB, is running), `SystrayHook::valid()` is false and the widget says "tray unavailable:
-   another tray host is running" instead of doing anything to Explorer.
-3. **No legacy mode.** The fallback that replaces `Shell_TrayWnd` with our own window takes over
-   the tray for the whole session and has no automated test. When the hook cannot be used the
-   widget reports "tray unavailable" and shows nothing.
+2. **One host, built in, no injection.** The window host is the only tray host: no DLL, no
+   switch. With `--keep-taskbar` the user keeps Explorer's taskbar and its tray, so the widget has
+   nothing to show and the host stays idle. If another waku of the session holds the host,
+   `TrayWindowHost::valid()` is false and the widget says "tray unavailable: another tray window
+   host is running".
+3. **No hook in Explorer.** An earlier design injected a DLL into Explorer. It needed a DLL per
+   architecture, could not run in an x64 build under emulation and put waku code in the shell
+   process. The window host replaced it.
 4. **No dragging; popups and a small menu.** See the answer below.
 5. **System icons** (battery, volume, network GUIDs): hidden by default, option to show them.
-6. **Live testing.** The hook injects a DLL into `explorer.exe`. Everything before the live phase
-   runs on fakes and the offscreen platform and never touches Explorer. The live phase needs any
-   other tray host stopped first.
+6. **Live testing.** Everything before the live phase runs on fakes and the offscreen platform.
+   The live phase needs any other tray host stopped first.
 
 ### Do we need drag? No.
 
@@ -110,8 +109,8 @@ Only a message with `NIF_ICON` changes the stored pixels (`updateIconData`). `NI
 pixels used to blank the icon (empty `iconUrl`). `NIF_ICON` whose handle cannot be read keeps the
 last good image; `NIF_ICON` with no handle clears it.
 
-The DLL converts the icon inside Explorer. When it sends `NIF_ICON` without pixels, the host
-retries with `extractIconRgba`, which also reads monochrome icons (no colour bitmap) and records
+The window host reads the icon inside the sender's call. When a message carries `NIF_ICON` without
+pixels, the host retries with `extractIconRgba`, which also reads monochrome icons (no colour bitmap) and records
 why it failed in `TrayIconData::iconError`. A colour bitmap whose alpha bytes are all 0 has no
 alpha channel; the AND mask gives its transparency.
 
@@ -126,13 +125,13 @@ id only: no tooltip, path or handle.
 `iconSize` (16), `hide` (list of exe names), `showUnpinned` (true), `unpinnedInPopup` (false),
 `iconsPerRow` (5), `showSystemIcons` (false), `pinModifier` (Ctrl), `tooltip` (true). Collapsed and
 expanded button glyphs are properties of the chevron `Pill`. These are the Widgets build's options
-minus the CSS ones and `use_hook` (there is only the hook).
+minus the CSS ones and `use_hook`.
 
 ### Threads and lifetime
 
 As in the Widgets build: the host's worker thread parses and emits queued signals; the
 registry, the model and the widgets live on the GUI thread. The `Systray` singleton stops the host
-(releasing the pipe and mutex; the DLL detaches itself within 5 s) when the engine destroys it. The
+when the process quits (`aboutToQuit`); the window host outlives a reload (see "Window host"). The
 control channel's `quit` and a normal exit both go through that path. No new thread.
 
 ### Clicks
@@ -168,22 +167,20 @@ Each phase ends with passing tests and a commit; sizes are my estimate of effort
 
 | Risk | Mitigation |
 |---|---|
-| Injecting into Explorer disrupts the user's session | phases 1 to 4 never touch it; phase 5 only with any other tray host stopped; `--no-tray`; the hook is the one already run daily by the Widgets build; the DLL detaches within 5 s when the host's mutex goes |
-| `waku.exe` starts while another tray host still holds the pipe and mutex | `valid()` is false, the widget reports it and does nothing to Explorer |
+| Claiming the tray disrupts the user's session | phases 1 to 4 never touch it; `--no-tray`; the host claims the tray only while the Windows taskbar is hidden and hands it back on stop |
+| A second waku starts while one holds the host | `valid()` is false, the widget reports it and does nothing |
 | Tray icons update very often (progress, media) | model `dataChanged` on one row, image revision bump only when the pixels changed |
 | An icon with a version-4 callback behaves differently | the click function is the single place that encodes it, with tests per version |
 | Undocumented Windows API use grows | none added: all of it is already in the allowlist of `docs/architecture.md`, and waku adds no call |
 
 ## History
 
-The tray came from the Widgets build (`yasb-native`, git tag `widgets-main-final`), which owned the
-hook DLL, the pipe and mutex names and the pin-state file format. Waku took them over: the DLL and
-its names are now `WakuTrayHook[_arm64].dll`, `waku_systray_monitor` and `WakuTrayHookAlive`
-(`WAKU_TRAY_PIPE_NAME` and `WAKU_TRAY_MUTEX_NAME` in the root `CMakeLists.txt`), pin state is in
-`%LOCALAPPDATA%\waku` (the kernel copies the `systray_state_*.json` files from `YASB` once), and
-the legacy host that replaced `Shell_TrayWnd` is gone. Python YASB has its own hook DLL
-(`YASBTrayHook_arm64.dll`); stop it before starting the `Tray` widget, because whether the two coexist
-was not tested. A regular `waku` run reserves work area; pass `--no-app-bar` to avoid it (see
+The tray came from the Widgets build (`yasb-native`, git tag `widgets-main-final`), which owned a
+hook DLL injected into Explorer, a pipe and the pin-state file format. Waku first took the DLL over
+(`WakuTrayHook[_arm64].dll`) and later dropped it for the window host: the DLL, its pipe and mutex
+and the `--tray-host` switch are gone. Pin state is in `%LOCALAPPDATA%\waku` (the kernel copies the
+`systray_state_*.json` files from `YASB` once). Stop Python YASB before starting the `Tray` widget:
+it holds its own tray host, and whether the two coexist was not tested. A regular `waku` run reserves work area; pass `--no-app-bar` to avoid it (see
 `AGENTS.md`).
 
 ## Next step
@@ -195,11 +192,9 @@ were not run live.
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- systray hook thread (`std::thread`) (`SystrayHook` (`src/features/tray/win32/tray_hook.h`), owned by `waku.services.Systray`, started by the first Tray widget): creates nothing itself: the GUI thread creates the watchdog mutex and the `\\.\pipe\waku_systray_monitor` pipe in the constructor; the worker injects `WakuTrayHook[_arm64].dll` into Explorer (`SetWindowsHookEx`), owns the OVERLAPPED I/O, read buffer and completion event (it waits on that event and a stop event that `stop()` sets, so an idle pipe costs no wakeups), parses each pipe message, scales a non-32 px icon to the tray size (Lanczos and sharpen, so not on the GUI thread) and emits queued signals to the GUI thread; retries after Explorer restarts (1 s no Explorer, 5 s failed injection, 3 s after the DLL disconnects); `stop()` (also called by the destructor): sets the stop flag, releases the injection hook, cancels pending I/O, releases and closes the mutex (the DLL's watchdog then detaches and restores Shell_TrayWnd's window procedure within 5 s), `join`
+## Window host
 
-## Window host (`--tray-host window`)
-
-An alternative to the hook: `win32/tray_window_host.{h,cpp}` is a window of class `Shell_TrayWnd`
+`win32/tray_window_host.{h,cpp}` is a window of class `Shell_TrayWnd`
 in waku's own process. `Shell_NotifyIcon` calls `FindWindow("Shell_TrayWnd")` on every call and
 sends `WM_COPYDATA` (`dwData` 1) to what it finds; `FindWindow` walks the top-level windows in
 Z-order, hidden ones included. While waku hides the Windows taskbar the window sits above Explorer's
@@ -234,8 +229,7 @@ Decisions:
   class. `WM_COMMAND`, `WM_USER`-range and registered messages are not passed on: forwarding them
   would run them against Explorer with waku's identity for any sender, and `WM_COPYDATA` is open
   to lower integrity levels (see Elevation). Any other `dwData` is refused.
-- **Callback messages.** `uCallbackMessage` below `WM_USER` is dropped by the parser (hook and window
-  host alike): a click on the icon sends that message to the owner window, and `WM_CLOSE` or
+- **Callback messages.** `uCallbackMessage` below `WM_USER` is dropped by the parser: a click on the icon sends that message to the owner window, and `WM_CLOSE` or
   `WM_SYSCOMMAND` there would close or command another program's window.
 - **The host outlives a reload.** The widget (`Systray`) is an engine singleton and is deleted and
   made again on every reload. A window host that went with it would hand the tray back to Explorer
@@ -254,5 +248,5 @@ Decisions:
 - **On stop** the window goes away and, when it owned the lookup, `TaskbarCreated` is broadcast so
   the programs send their icons to Explorer's tray again.
 
-Default: still the hook, until the window host has run for a while. Tests use their own window class,
+Tests use their own window class,
 never claim the Z-order place and never pass anything on (`TrayWindowHost::Options`).

@@ -2,7 +2,6 @@
 
 // windows.h first.
 #include <windows.h>
-#include <psapi.h>
 
 #include <QThread>
 #include <vector>
@@ -59,39 +58,6 @@ TrayHost::TrayHost(QObject* parent) : QObject(parent) {
 
 std::unique_ptr<TrayWindowApi> makeTrayWindowApi() { return std::make_unique<RealTrayWindowApi>(); }
 
-HostArch hostArch() {
-  USHORT processMachine = 0;
-  USHORT nativeMachine = 0;
-  if (!IsWow64Process2(GetCurrentProcess(), &processMachine, &nativeMachine))
-    return HostArch::Unknown;
-  switch (nativeMachine) {
-    case IMAGE_FILE_MACHINE_AMD64:
-      return HostArch::X64;
-    case IMAGE_FILE_MACHINE_ARM64:
-      return HostArch::Arm64;
-    default:
-      return HostArch::Unknown;
-  }
-}
-
-bool runningUnderEmulation() {
-  USHORT processMachine = 0;
-  USHORT nativeMachine = 0;
-  if (!IsWow64Process2(GetCurrentProcess(), &processMachine, &nativeMachine)) return false;
-  return processMachine != IMAGE_FILE_MACHINE_UNKNOWN;
-}
-
-QString trayHookDllName() {
-  switch (hostArch()) {
-    case HostArch::X64:
-      return QStringLiteral("WakuTrayHook.dll");
-    case HostArch::Arm64:
-      return QStringLiteral("WakuTrayHook_arm64.dll");
-    default:
-      return {};
-  }
-}
-
 QString exePathFromHwnd(std::uint64_t hwnd) {
   DWORD pid = 0;
   GetWindowThreadProcessId(toHwnd(hwnd), &pid);
@@ -127,32 +93,6 @@ std::optional<std::uint32_t> explorerPid(const std::function<bool()>& stopping) 
     return static_cast<std::uint32_t>(pid);
   }
   return std::nullopt;
-}
-
-bool isModuleLoaded(std::uint32_t pid, const QString& moduleName) {
-  HandleCloser process{OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid)};
-  if (!process.handle) return false;
-  std::vector<HMODULE> modules(1024);
-  DWORD needed = 0;
-  if (!EnumProcessModulesEx(process.handle, modules.data(),
-                            static_cast<DWORD>(modules.size() * sizeof(HMODULE)), &needed,
-                            LIST_MODULES_ALL)) {
-    return false;
-  }
-  const size_t count = std::min<size_t>(needed / sizeof(HMODULE), modules.size());
-  const QString target = moduleName.toLower();
-  wchar_t name[512];
-  for (size_t i = 0; i < count; ++i) {
-    const DWORD length = GetModuleBaseNameW(process.handle, modules[i], name, 512);
-    if (length && QString::fromWCharArray(name, static_cast<int>(length)).toLower() == target)
-      return true;
-  }
-  return false;
-}
-
-bool anyMouseButtonDown() {
-  return (GetAsyncKeyState(VK_LBUTTON) & 0x8000) || (GetAsyncKeyState(VK_RBUTTON) & 0x8000) ||
-         (GetAsyncKeyState(VK_MBUTTON) & 0x8000);
 }
 
 namespace {

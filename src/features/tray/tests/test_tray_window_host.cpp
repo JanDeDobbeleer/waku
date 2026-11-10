@@ -252,27 +252,22 @@ TEST_F(TrayWindowHostTest, ClaimingNothingLeavesTheHostIdle) {
   EXPECT_EQ(host.mode(), QStringLiteral("window"));
 }
 
-TEST(TrayHostKind, TheHookIsTheDefaultAndTheFactoryBuildsTheWindowHost) {
-  EXPECT_EQ(trayHostKind(), TrayHostKind::Hook);
+TEST(TrayHostFactory, TheFactoryBuildsTheWindowHost) {
   int built = 0;
   TrayHostFactories factories;
   factories.makeWindow = [&]() -> std::unique_ptr<TrayHost> {
     ++built;
     return std::make_unique<TrayWindowHost>(testOptions());
   };
-  auto host = createTrayHost(TrayHostKind::Window, QString(), factories);
+  auto host = createTrayHost(factories);
   ASSERT_TRUE(host);
   EXPECT_EQ(host->mode(), QStringLiteral("window"));
   EXPECT_EQ(built, 1);
-  // The hook kind never builds the window host.
-  EXPECT_FALSE(createTrayHost(TrayHostKind::Hook, QString(), factories));
-  EXPECT_EQ(built, 1);
 }
 
-TEST(TrayHostKind, ANotValidWindowHostGivesNoHost) {
+TEST(TrayHostFactory, ANotValidWindowHostGivesNoHost) {
   TrayHostFactories factories;
   factories.makeWindow = []() -> std::unique_ptr<TrayHost> { return nullptr; };
-  EXPECT_FALSE(createTrayHost(TrayHostKind::Window, QString(), factories));
-  TrayHostFactories none;
-  EXPECT_FALSE(createTrayHost(TrayHostKind::Window, QString(), none));
+  EXPECT_FALSE(createTrayHost(factories));
+  EXPECT_FALSE(createTrayHost(TrayHostFactories{}));
 }

@@ -176,10 +176,9 @@ Delete them yourself for a clean slate. Run `wakuc startup disable` too if you e
   message on the pill, fix the file and save again.
 - **Start with the built-in bar.** `waku --safe` ignores your config. Use it to rule out your
   shell as the cause.
-- **Tray and Explorer.** The Tray widget injects a small DLL into Explorer to see tray icons.
-  `waku --tray-host window` takes the icons with a window of waku's own instead, with no DLL in
-  Explorer (it needs the Windows taskbar hidden, the default). `waku --no-tray` never hooks Explorer. If tray icons are missing or Explorer misbehaves, run
-  with `--no-tray` to rule the hook in or out.
+- **Tray.** The Tray widget takes the icons with a window of waku's own; nothing is injected into
+  Explorer. It needs the Windows taskbar hidden, the default: with `--keep-taskbar` Explorer keeps
+  the icons. If tray icons are missing, run with `--no-tray` to rule the widget in or out.
 - **Stop the bar.** `wakuc quit`.
 - **`wakuc` exit codes.** 0 ok, 1 the bar answered an error, 2 no bar is running, 3 usage error.
 - **Try a config safely.** Pass a scratch folder, for example

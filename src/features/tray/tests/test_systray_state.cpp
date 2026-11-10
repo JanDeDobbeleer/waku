@@ -7,7 +7,6 @@
 #include <memory>
 #include <optional>
 
-#include "features/tray/tray_service.h"
 #include "features/tray/tray_state.h"
 #include "features/tray/tray_types.h"
 
@@ -203,80 +202,4 @@ TEST(TrayIconData, TheHostsScaledPixelsTravelWithThePixels) {
   fresh.iconRgba = QByteArray(32 * 32 * 4, '\x22');
   updateIconData(old, fresh);
   EXPECT_TRUE(old.scaledRgba.isEmpty());
-}
-
-// --- host selection (the hook or no host: there is no legacy window) ----------------------------
-
-namespace {
-
-struct CountingHost : public TrayHost {
-  explicit CountingHost(QString name) : name_(std::move(name)) {}
-  void start() override {}
-  void stop() override {}
-  QString mode() const override { return name_; }
-  QString name_;
-};
-
-struct FactoryProbe {
-  int hooksMade = 0;
-  bool hookStarts = true;
-  QString dll = "C:\\fake\\hook.dll";
-  QString reason;
-  TrayHostFactories factories() {
-    TrayHostFactories f;
-    f.findHookDll = [this](const QString&, QString* why) {
-      if (why) *why = reason;
-      return dll;
-    };
-    f.makeHook = [this](const QString&) -> std::unique_ptr<TrayHost> {
-      ++hooksMade;
-      if (!hookStarts) return nullptr;
-      return std::make_unique<CountingHost>("hook");
-    };
-    return f;
-  }
-};
-
-}  // namespace
-
-TEST(SystrayHostChoice, HookWhenUsable) {
-  FactoryProbe probe;
-  auto host = createTrayHost(true, "app", probe.factories());
-  ASSERT_NE(host, nullptr);
-  EXPECT_EQ(host->mode(), "hook");
-}
-
-TEST(SystrayHostChoice, UseHookFalseNeverTouchesTheHook) {
-  FactoryProbe probe;
-  EXPECT_EQ(createTrayHost(false, "app", probe.factories()), nullptr);
-  EXPECT_EQ(probe.hooksMade, 0);
-}
-
-TEST(SystrayHostChoice, MissingDllMeansNoHost) {
-  FactoryProbe probe;
-  probe.dll.clear();
-  probe.reason = "WakuTrayHook.dll not found next to the executable";
-  EXPECT_EQ(createTrayHost(true, "app", probe.factories()), nullptr);
-  EXPECT_EQ(probe.hooksMade, 0);
-}
-
-TEST(SystrayHostChoice, EmulationAndFailedHookMeanNoHost) {
-  FactoryProbe emulated;
-  emulated.dll.clear();
-  emulated.reason = "running under emulation";
-  EXPECT_EQ(createTrayHost(true, "app", emulated.factories()), nullptr);
-
-  FactoryProbe broken;
-  broken.hookStarts = false;
-  EXPECT_EQ(createTrayHost(true, "app", broken.factories()), nullptr);
-  EXPECT_EQ(broken.hooksMade, 1);
-}
-
-TEST(SystrayHostChoice, ServiceHandsTheRefreshSignalToOneWidget) {
-  FactoryProbe probe;
-  SystrayService service(true, "app", probe.factories());
-  EXPECT_TRUE(service.claimRefreshSignal());
-  EXPECT_FALSE(service.claimRefreshSignal());
-  ASSERT_NE(service.windowApi(), nullptr);
-  service.stop();
 }

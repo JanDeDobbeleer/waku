@@ -63,8 +63,7 @@ cmd /c "call `"$vc\vcvarsarm64_amd64.bat`" && set VCPKG_ROOT=C:\vcpkg&& cmake --
 ```
 
 Targets: `waku` (the bar), `wakuc` (its console client), `wakukeys` (the hotkey daemon, a GUI
-program), `WakuTrayHook[_arm64]` (the DLL injected
-into Explorer), `waku_tests` (all tests, defined in `tests/`) and `deploy` (assembles `dist/waku`;
+program), `waku_tests` (all tests, defined in `tests/`) and `deploy` (assembles `dist/waku`;
 see `docs/building.md`). `ctest` needs `QT_QPA_PLATFORM=offscreen`; the CMake test properties set
 it, so `ctest --test-dir` works without the test preset. A ctest test is one gtest suite (one
 process); a single case runs with `waku_tests --gtest_filter=Suite.Case`. Presets live in `CMakePresets.json`;
@@ -120,7 +119,7 @@ of that step in the script, which is exact; do not restate it here. In short:
 - S2: includes are rooted at `src/` and stay inside the unit, `kernel/`, `control/` and the root
   headers of `DEPENDS` features. `quickshell` may also include `host/qml/` and the root and `qml/`
   headers of any feature; only `app/` and tests include `quickshell/`.
-- S3, S4: Windows SDK and WinRT headers only in `win32/` folders (and the tray hook, `app/`,
+- S3, S4: Windows SDK and WinRT headers only in `win32/` folders (`app/`,
   tests); `QtQml`/`QtQuick` and `QML_*` macros only in `qml/` folders (and `testing/`, `app/`,
   tests); `QtWidgets` nowhere.
 - S5: only tests include `testing/` (fakes).
@@ -199,7 +198,7 @@ fine. Never use the `const` `nlohmann::json::operator[]` on a key that may be mi
 - Tests and tooling always pass `--config-home <dir>` to `waku.exe`. Never run it against the
   user's real config (`%USERPROFILE%\.config\waku`) and never write to that folder.
 - Tests never touch the user's real bar, wallpaper, tray or Explorer. Use `--no-tray` so a test run
-  never hooks Explorer, and never change the wallpaper outside a `--dry-run`.
+  never claims the tray, and never change the wallpaper outside a `--dry-run`.
 - To diagnose a live run, start waku with `--log-file <path>` (off by default; format and how to
   read it in `docs/logging.md`).
 - Services ask `kernel::liveDesktop()` before touching the machine; it is false on the offscreen

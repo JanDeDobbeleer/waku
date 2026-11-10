@@ -5,8 +5,7 @@
 waku runs as the interactive user and loads that user's own QML config (`shell.qml`, `theme.qml`,
 custom widgets) from `%USERPROFILE%\.config\waku`. The config is code: it can run processes and read
 files by design. Changes must neither sandbox the config nor widen the IPC surface beyond the local
-user: the control pipe between `wakuc` and a running bar, and the tray hook pipe, are meant for the
-local user only.
+user: the control pipe between `wakuc` and a running bar is meant for the local user only.
 
 ## User-built QML plugins
 
