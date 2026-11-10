@@ -192,6 +192,24 @@ TEST(NotificationServer, EmitsNotificationForNewToastsAndTracksThem) {
   EXPECT_EQ(server.trackedNotifications()->count(), 0);
 }
 
+TEST(NotificationServer, CanDestroyTheLastHubOwnerWithTrackedToasts) {
+  Harness h;
+  auto server = std::make_unique<NotificationServer>(h.hub, nullptr);
+  QObject::connect(server.get(), &NotificationServer::notification, server.get(),
+                   [](NotificationToast* t) { t->setTracked(true); });
+  h.publish({toast(3, QStringLiteral("Three"))});
+  ASSERT_EQ(server->trackedNotifications()->count(), 1);
+  QSignalSpy toastDestroyed(h.hub->model()->find(3), &QObject::destroyed);
+  std::weak_ptr<NotificationHub> hub = h.hub;
+  h.feed.reset();
+  h.hub.reset();
+
+  server.reset();
+
+  EXPECT_TRUE(hub.expired());
+  EXPECT_EQ(toastDestroyed.count(), 1);
+}
+
 TEST(NotificationServer, IsUsableFromQmlWithoutASource) {
   QQmlEngine engine;
   QQmlComponent component(&engine);
