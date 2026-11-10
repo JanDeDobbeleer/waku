@@ -268,6 +268,9 @@ focus mode changes, `ShellHost::syncAppBar` compares the new request with the la
 `IAppBar::reposition` (the same `ABM_QUERYPOS`/`ABM_SETPOS` without a new `ABM_NEW`), or removes the
 bar when the panel is no longer docked. The request holds the screen's device pixel ratio: a scale
 change alone (same logical thickness, 63 physical pixels at 1.5 and 84 at 2) is a different request.
+The Win32 app bar listens for `ABN_POSCHANGED` on its registered window. A GUI-thread single-shot
+timer coalesces notifications and asks the host to renegotiate even when the cached request is
+unchanged. Removing the app bar cancels pending recovery.
 
 A screen added or removed, a new primary screen, and a change of a screen's logical DPI or geometry
 reload the shell once the changes stop (`screenSettleMs`, 1.5 s). Windows reports a scale change as

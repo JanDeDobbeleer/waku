@@ -94,6 +94,7 @@ struct AppBarRecord {
 };
 
 struct Native {
+  std::vector<waku::host::IAppBar*> appBars;
   std::vector<AppBarRecord> created;
   int removed = 0;
   // What the fake system pushes every app bar inward by, physical pixels; and the requests to
@@ -134,7 +135,9 @@ struct Native {
     };
     ShellHost::NativeHooks hooks;
     hooks.makeAppBar = [this]() -> std::unique_ptr<waku::host::IAppBar> {
-      return std::make_unique<Recording>(this);
+      auto bar = std::make_unique<Recording>(this);
+      appBars.push_back(bar.get());
+      return bar;
     };
     hooks.applyBackdrop = [this](quintptr, Backdrop::Kind backdrop) {
       backdrops.push_back(backdrop);

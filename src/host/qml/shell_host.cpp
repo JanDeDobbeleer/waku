@@ -750,12 +750,12 @@ void ShellHost::applyNative(Entry& entry) {
   }
 }
 
-void ShellHost::panelLayoutChanged(PanelWindow* panel) {
+void ShellHost::panelLayoutChanged(PanelWindow* panel, bool force) {
   if (!loaded_) return;
   for (Entry& entry : loaded_->entries) {
     if (entry.window != panel || !entry.live() || !entry.layoutConnected) continue;
     try {
-      syncAppBar(entry);
+      syncAppBar(entry, force);
     } catch (const std::exception& e) {
       qWarning().noquote() << "waku: updating an app bar failed:" << e.what();
     } catch (...) {
@@ -764,7 +764,7 @@ void ShellHost::panelLayoutChanged(PanelWindow* panel) {
   }
 }
 
-void ShellHost::syncAppBar(Entry& entry) {
+void ShellHost::syncAppBar(Entry& entry, bool force) {
   auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
   const NativeHooks& hooks = options_.hooks;
   if (!entry.live() || !panel || !hooks.makeAppBar) return;
@@ -788,9 +788,14 @@ void ShellHost::syncAppBar(Entry& entry) {
   request.reserveSpace = options_.allowReserve && zone > 0;
   request.alwaysOnTop = panel->aboveWindows();
   request.noActivate = !panel->focusable();
-  if (entry.appBar && entry.appBarRequest && *entry.appBarRequest == request) return;
+  if (!force && entry.appBar && entry.appBarRequest && *entry.appBarRequest == request) return;
 
-  if (!entry.appBar) entry.appBar = hooks.makeAppBar();
+  if (!entry.appBar) {
+    entry.appBar = hooks.makeAppBar();
+    entry.appBar->positionChanged = [this, panel = QPointer<PanelWindow>(panel)] {
+      if (panel) panelLayoutChanged(panel, true);
+    };
+  }
   const bool sameBar = entry.appBarRequest && entry.appBarRequest->edge == request.edge &&
                        entry.appBarRequest->reserveSpace == request.reserveSpace &&
                        entry.appBarRequest->screen == request.screen;

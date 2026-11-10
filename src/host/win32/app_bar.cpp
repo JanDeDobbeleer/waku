@@ -3,8 +3,14 @@
 #include <windows.h>
 #include <shellapi.h>
 
+#include <QAbstractNativeEventFilter>
+#include <QCoreApplication>
+#include <QDebug>
+#include <QObject>
+#include <QTimer>
 #include <cmath>
 #include <cwchar>
+#include <exception>
 #include <vector>
 
 namespace waku::host {
@@ -77,8 +83,34 @@ class Win32AppBarSystem final : public IAppBarSystem {
   APPBARDATA data_{};
 };
 
-class Win32AppBar : public IAppBar {
+class Win32AppBar : public QObject, public IAppBar, public QAbstractNativeEventFilter {
  public:
+  Win32AppBar() {
+    positionTimer_.setSingleShot(true);
+    connect(&positionTimer_, &QTimer::timeout, this, [this] {
+      try {
+        if (active_ && positionChanged) positionChanged();
+      } catch (const std::exception& e) {
+        qWarning() << "app bar: renegotiation failed:" << e.what();
+      } catch (...) {
+        qWarning() << "app bar: renegotiation failed";
+      }
+    });
+    QCoreApplication::instance()->installNativeEventFilter(this);
+  }
+
+  ~Win32AppBar() override { QCoreApplication::instance()->removeNativeEventFilter(this); }
+
+  bool nativeEventFilter(const QByteArray&, void* message, qintptr*) override {
+    const auto* event = static_cast<MSG*>(message);
+    if (active_ && event->hwnd == data_.hWnd && event->message == kAppBarCallbackMessage &&
+        event->wParam == ABN_POSCHANGED) {
+      // Explorer can notify synchronously from SETPOS. Defer until negotiation has unwound.
+      if (!positionTimer_.isActive()) positionTimer_.start(0);
+    }
+    return false;
+  }
+
   int create(const AppBarRequest& r) override {
     TrayWindowYield yield;
     HWND hwnd = reinterpret_cast<HWND>(r.hwnd);
@@ -109,6 +141,7 @@ class Win32AppBar : public IAppBar {
   }
 
   void remove() override {
+    positionTimer_.stop();
     if (!active_) return;
     TrayWindowYield yield;
     SHAppBarMessage(ABM_REMOVE, &data_);
@@ -128,6 +161,7 @@ class Win32AppBar : public IAppBar {
 
   APPBARDATA data_{};
   bool active_ = false;
+  QTimer positionTimer_;
 };
 
 }  // namespace

@@ -3,6 +3,7 @@
 #include <QRect>
 #include <QScreen>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -90,6 +91,8 @@ QPoint appBarWindowShift(AppBarEdge edge, int inset);
 class IAppBar {
  public:
   virtual ~IAppBar() = default;
+  // The system changed another app bar or the taskbar; renegotiate even an unchanged request.
+  std::function<void()> positionChanged;
   // Sets the window styles and, when the request reserves space, registers the bar and asks for
   // its rect (ABM_NEW, ABM_QUERYPOS, ABM_SETPOS).
   virtual int create(const AppBarRequest& request) = 0;

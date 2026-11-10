@@ -185,14 +185,14 @@ NotificationServer::NotificationServer(std::shared_ptr<NotificationHub> hub, QOb
 }
 
 void NotificationServer::onToastAdded(NotificationToast* toast) {
-  connect(toast, &NotificationToast::trackedChanged, this, [this, toast] {
+  connect(toast, &NotificationToast::trackedChanged, &tracked_, [this, toast] {
     if (toast->tracked()) {
       if (!tracked_.values().contains(toast)) tracked_.insert(tracked_.count(), toast);
     } else {
       tracked_.remove(toast);
     }
   });
-  connect(toast, &QObject::destroyed, this,
+  connect(toast, &QObject::destroyed, &tracked_,
           [this, toast] { tracked_.remove(static_cast<NotificationToast*>(toast)); });
   emit notification(toast);
 }
