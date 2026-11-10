@@ -246,8 +246,8 @@ class ShellHost : public QObject {
   void applyNative(Entry& entry);
   // Creates, renegotiates or removes the panel's app bar to match its layout now, and tells the
   // panel how far the shell pushed it in.
-  void syncAppBar(Entry& entry);
-  void panelLayoutChanged(PanelWindow* panel);
+  void syncAppBar(Entry& entry, bool force = false);
+  void panelLayoutChanged(PanelWindow* panel, bool force = false);
   void setError(const QString& error);
   void trimIfSettled();
   // Walks the config home again and watches what it finds.

@@ -160,6 +160,22 @@ TEST(ShellWindowsTest, AutoReservesTheThicknessAndIgnoreNothing) {
   EXPECT_FALSE(ignore.native.created[0].request.reserveSpace);
 }
 
+TEST(ShellWindowsTest, SystemPositionChangesRenegotiateAnUnchangedRequest) {
+  Harness h;
+  h.allowReserve = true;
+  startPanel(h, QStringLiteral("anchors { top: true; left: true; right: true }"));
+  ASSERT_EQ(h.native.appBars.size(), 1u);
+  const auto count = h.native.repositioned.size();
+  h.native.appBarInset = 12;
+
+  h.native.appBars.front()->positionChanged();
+
+  ASSERT_EQ(h.native.repositioned.size(), count + 1);
+  EXPECT_EQ(h.native.repositioned.back().request, h.native.created.front().request);
+  const qreal dpr = QGuiApplication::primaryScreen()->devicePixelRatio();
+  EXPECT_EQ(h.window()->y(), screenRect().y() + qRound(12 / dpr));
+}
+
 TEST(ShellWindowsTest, ASidePanelIsAnAppBarOnItsOwnEdgeWithItsWidthAsThickness) {
   const struct {
     const char* anchors;
