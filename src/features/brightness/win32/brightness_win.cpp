@@ -100,39 +100,56 @@ bool openPhysical(HMONITOR monitor, PhysicalMonitors& out) {
   return true;
 }
 
-std::optional<int> vcpRead(HMONITOR monitor, BYTE code) {
+struct VcpReading {
+  int percent = 0;
+  std::vector<std::optional<DWORD>> maximums;
+};
+
+std::optional<VcpReading> vcpRead(HMONITOR monitor, BYTE code) {
   PhysicalMonitors physical;
   if (!openPhysical(monitor, physical)) return std::nullopt;
-  for (const PHYSICAL_MONITOR& entry : physical.list) {
+  VcpReading result;
+  result.maximums.resize(physical.list.size());
+  bool read = false;
+  for (size_t i = 0; i < physical.list.size(); ++i) {
     DWORD current = 0;
     DWORD maximum = 0;
     for (int attempt = 0; attempt < kDdcAttempts; ++attempt) {
-      if (GetVCPFeatureAndVCPFeatureReply(entry.hPhysicalMonitor, code, nullptr, &current,
-                                          &maximum)) {
-        return static_cast<int>(
-            std::lround(static_cast<double>(current) / std::max<DWORD>(maximum, 1) * 100.0));
+      if (GetVCPFeatureAndVCPFeatureReply(physical.list[i].hPhysicalMonitor, code, nullptr,
+                                          &current, &maximum)) {
+        result.maximums[i] = maximum ? maximum : 100;
+        if (!read) {
+          result.percent = static_cast<int>(
+              std::lround(static_cast<double>(current) / std::max<DWORD>(maximum, 1) * 100.0));
+          read = true;
+        }
+        break;
       }
       if (attempt + 1 < kDdcAttempts) std::this_thread::sleep_for(kDdcRetrySleep);
     }
   }
-  return std::nullopt;
+  return read ? std::optional<VcpReading>(std::move(result)) : std::nullopt;
 }
 
-bool vcpWrite(HMONITOR monitor, BYTE code, int percent) {
+bool vcpWrite(HMONITOR monitor, BYTE code, int percent,
+              const std::vector<std::optional<DWORD>>& cachedMaximums) {
   PhysicalMonitors physical;
   if (!openPhysical(monitor, physical)) return false;
   bool any = false;
-  for (const PHYSICAL_MONITOR& entry : physical.list) {
-    DWORD current = 0;
-    DWORD maximum = 0;
-    DWORD maxValue = 100;
-    for (int attempt = 0; attempt < kDdcAttempts; ++attempt) {
-      if (GetVCPFeatureAndVCPFeatureReply(entry.hPhysicalMonitor, code, nullptr, &current,
-                                          &maximum)) {
-        maxValue = maximum ? maximum : 100;
-        break;
+  for (size_t i = 0; i < physical.list.size(); ++i) {
+    const PHYSICAL_MONITOR& entry = physical.list[i];
+    DWORD maxValue = i < cachedMaximums.size() && cachedMaximums[i] ? *cachedMaximums[i] : 100;
+    if (i >= cachedMaximums.size() || !cachedMaximums[i]) {
+      DWORD current = 0;
+      DWORD maximum = 0;
+      for (int attempt = 0; attempt < kDdcAttempts; ++attempt) {
+        if (GetVCPFeatureAndVCPFeatureReply(entry.hPhysicalMonitor, code, nullptr, &current,
+                                            &maximum)) {
+          maxValue = maximum ? maximum : 100;
+          break;
+        }
+        if (attempt + 1 < kDdcAttempts) std::this_thread::sleep_for(kDdcRetrySleep);
       }
-      if (attempt + 1 < kDdcAttempts) std::this_thread::sleep_for(kDdcRetrySleep);
     }
     const long native =
         std::clamp<long>(std::lround(percent * static_cast<double>(maxValue) / 100.0), 0,
@@ -243,6 +260,8 @@ struct MonitorInfo {
   bool supportsContrast = false;
   bool contrastTested = false;
   std::optional<int> contrast;
+  std::vector<std::optional<DWORD>> brightnessMaximums;
+  std::vector<std::optional<DWORD>> contrastMaximums;
 };
 
 class SystemBrightness final : public BrightnessControl {
@@ -514,11 +533,12 @@ class SystemBrightness final : public BrightnessControl {
         {
           std::lock_guard lock(mutex_);
           if (MonitorInfo* info = find(id)) {
-            info->brightness = *value;
+            info->brightness = value->percent;
+            info->brightnessMaximums = value->maximums;
             info->reported = true;
           }
         }
-        post([this, id = id, v = *value] { emit brightnessChanged(id, v); });
+        post([this, id = id, v = value->percent] { emit brightnessChanged(id, v); });
       }
       const auto contrastValue = vcpRead(reinterpret_cast<HMONITOR>(id), kVcpContrast);
       bool announce = false;
@@ -527,11 +547,14 @@ class SystemBrightness final : public BrightnessControl {
         if (MonitorInfo* info = find(id); info && !info->contrastTested) {
           info->contrastTested = true;
           info->supportsContrast = contrastValue.has_value();
-          info->contrast = contrastValue;
+          info->contrast =
+              contrastValue ? std::optional<int>(contrastValue->percent) : std::nullopt;
+          if (contrastValue) info->contrastMaximums = contrastValue->maximums;
           announce = contrastValue.has_value();
         }
       }
-      if (announce) post([this, id = id, v = *contrastValue] { emit contrastChanged(id, v); });
+      if (announce)
+        post([this, id = id, v = contrastValue->percent] { emit contrastChanged(id, v); });
     }
     for (const qulonglong id : pendingScheme) {
       bool canScheme = false;
@@ -582,8 +605,13 @@ class SystemBrightness final : public BrightnessControl {
     std::vector<std::future<void>> jobs;
     for (const qulonglong id : targets) {
       jobs.push_back(std::async(std::launch::async, [this, id] {
-        if (const auto value = vcpRead(reinterpret_cast<HMONITOR>(id), kVcpBrightness))
-          update(id, *value);
+        if (const auto value = vcpRead(reinterpret_cast<HMONITOR>(id), kVcpBrightness)) {
+          {
+            std::lock_guard lock(mutex_);
+            if (MonitorInfo* info = find(id)) info->brightnessMaximums = value->maximums;
+          }
+          update(id, value->percent);
+        }
         refreshContrast(id);
       }));
     }
@@ -606,12 +634,14 @@ class SystemBrightness final : public BrightnessControl {
         info->contrastTested = true;
         info->supportsContrast = value.has_value();
       }
-      if (info->supportsContrast && info->contrast != value) {
-        info->contrast = value;
+      if (value) info->contrastMaximums = value->maximums;
+      const std::optional<int> percent = value ? std::optional<int>(value->percent) : std::nullopt;
+      if (info->supportsContrast && info->contrast != percent) {
+        info->contrast = percent;
         changed = value.has_value();
       }
     }
-    if (changed) post([this, id, v = *value] { emit contrastChanged(id, v); });
+    if (changed) post([this, id, v = value->percent] { emit contrastChanged(id, v); });
   }
 
   // Applies the newest slider value per monitor (keeps only the latest while writes are slow).
@@ -629,27 +659,39 @@ class SystemBrightness final : public BrightnessControl {
         }
       }
       for (const auto& [id, value] : batch) apply(id, value);
-      for (const auto& [id, value] : contrastBatch)
-        vcpWrite(reinterpret_cast<HMONITOR>(id), kVcpContrast, value);
+      for (const auto& [id, value] : contrastBatch) applyContrast(id, value);
     }
   }
 
   void apply(qulonglong id, int value) {
     bool ddc = false;
     bool scheme = false;
+    std::vector<std::optional<DWORD>> maximums;
     {
       std::lock_guard lock(mutex_);
       const MonitorInfo* info = find(id);
       if (!info || !info->tested) return;
       ddc = info->ddc;
       scheme = info->scheme;
+      maximums = info->brightnessMaximums;
     }
-    if (ddc && vcpWrite(reinterpret_cast<HMONITOR>(id), kVcpBrightness, value)) return;
+    if (ddc && vcpWrite(reinterpret_cast<HMONITOR>(id), kVcpBrightness, value, maximums)) return;
     if (scheme) {
       // Our own write triggers a power-setting notification; ignore it (service.py).
       ignorePolicy_.arm(PolicyIgnoreWindow::Clock::now());
       setSchemeBrightness(value);
     }
+  }
+
+  void applyContrast(qulonglong id, int value) {
+    std::vector<std::optional<DWORD>> maximums;
+    {
+      std::lock_guard lock(mutex_);
+      const MonitorInfo* info = find(id);
+      if (!info || !info->ddc) return;
+      maximums = info->contrastMaximums;
+    }
+    vcpWrite(reinterpret_cast<HMONITOR>(id), kVcpContrast, value, maximums);
   }
 
   // --- power-policy watcher (service.py _policy_message_loop / _policy_wnd_proc) -----------------
