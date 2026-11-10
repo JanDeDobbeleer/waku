@@ -17,7 +17,7 @@ certificate, then `Add-AppxPackage -Path out/waku-arm64.msix`.
 ## What the package does
 
 - Aliases `waku.exe`, `wakuc.exe` and `wakukeys.exe` go on `PATH` (`Application` entries `Waku`,
-  `Wakuc` and `Wakukeys`). `build.ps1` signs all three executables and the tray hook DLLs before it
+  `Wakuc` and `Wakukeys`). `build.ps1` signs all three executables before it
   packs, then signs the package.
 - `runFullTrust` and `unvirtualizedResources`, with file-system and registry write virtualization
   off: the config home, `%LOCALAPPDATA%\waku` and the registry are shared with unpackaged tools.

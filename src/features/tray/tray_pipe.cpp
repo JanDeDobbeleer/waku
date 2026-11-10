@@ -7,8 +7,8 @@
 namespace waku::tray {
 namespace {
 
-// Offsets inside SHELLTRAYDATA (packed): the layout hook/trayhook.cpp and Python YASB's
-// NOTIFYICONDATA ctypes struct agree on.
+// Offsets inside SHELLTRAYDATA (packed): the layout Python YASB's NOTIFYICONDATA ctypes
+// struct also uses.
 constexpr int kOffMessage = 4;
 constexpr int kOffHWnd = 12;
 constexpr int kOffUId = 16;

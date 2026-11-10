@@ -9,7 +9,7 @@
 
 namespace waku::tray {
 
-// Wire format of the tray hook pipe (hook/trayhook.cpp, packed 1):
+// Wire format of a tray message (the window host builds it from a WM_COPYDATA, packed 1):
 //   u32 type            1 = text, 2 = WM_COPYDATA copy
 //   type 1: UTF-8 text follows
 //   type 2: u64 dwData, u32 cbData, u32 iconWidth, u32 iconHeight, u32 iconDataSize,
@@ -32,8 +32,8 @@ struct ParsedTrayMessage {
 // Resolves the executable behind a window; null function means "do not resolve".
 using ExePathResolver = std::function<QString(std::uint64_t hwnd)>;
 
-// Port of SystrayHook._process_message plus validate_icon_data. Never throws; a malformed message
-// gives Kind::Invalid.
+// Port of Python YASB's tray message parser plus validate_icon_data. Never throws; a malformed
+// message gives Kind::Invalid.
 ParsedTrayMessage parseTrayPipeMessage(const QByteArray& message,
                                        const ExePathResolver& exePath = {});
 

@@ -45,10 +45,6 @@ include(waku_feature)   # waku_feature(), waku_contribute()
 
 # Targets: see docs/architecture.md. src/CMakeLists.txt adds every unit; the QML modules are
 # assembled from their contributions (src/modules/qml_modules.cmake).
-# Pipe and watchdog mutex names the host (features/tray/win32/tray_hook) and the injected DLL (features/tray/hook/)
-# must agree on; distinct from Python YASB's so both builds can coexist.
-set(WAKU_TRAY_PIPE_NAME "waku_systray_monitor")
-set(WAKU_TRAY_MUTEX_NAME "WakuTrayHookAlive")
 
 add_subdirectory(src)
 include(waku_deploy)    # the deploy target (needs the targets of src/)

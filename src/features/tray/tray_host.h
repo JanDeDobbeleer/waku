@@ -10,8 +10,8 @@
 
 namespace waku::tray {
 
-// Where tray icon notifications come from. The real implementation (`SystrayHook`) intercepts
-// Explorer's Shell_TrayWnd; widgets and tests only see this interface,
+// Where tray icon notifications come from. The real implementation (`TrayWindowHost`) is
+// a Shell_TrayWnd window of waku's own; widgets and tests only see this interface,
 // so a test substitutes a fake and never touches the real tray.
 //
 // Signals are emitted from the implementation's worker thread; connect with the default (auto)
@@ -26,7 +26,7 @@ class TrayHost : public QObject {
   // Stops the worker, releases every OS resource and returns once the worker has ended. Safe to
   // call twice and from the destructor of the derived class.
   Q_INVOKABLE virtual void stop() = 0;
-  // "hook", "legacy" or a fake's name; for logs and tests.
+  // "window" or a fake's name; for logs and tests.
   virtual QString mode() const = 0;
   // Announces every icon the host already knows, as iconModified, on the calling thread. A host
   // that outlives its widget (the window host, across a reload) gives a new widget its icons

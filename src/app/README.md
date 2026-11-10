@@ -54,7 +54,7 @@ written in lower case and plain ASCII in code and paths.
 - On a live desktop waku hides the Windows taskbar while it runs and restores it on exit
   (`--keep-taskbar` leaves it alone); `wakuc taskbar hide|show|status` does the same at run time.
 - Panels reserve screen work area on a live desktop; `--no-app-bar` turns that off; `--no-tray`
-  never hooks Explorer; `--no-keys` skips the key daemon; `--safe` starts
+  never claims the tray; `--no-keys` skips the key daemon; `--safe` starts
   the built-in shell and ignores the config; `--font-engine=directwrite` honours variable-font axes.
 - A built-in tiler places new windows in a main+stack or columns layout per monitor and virtual
   desktop; on by default (`Tiling.enabled = false` in a shell or `--no-tiling` turns it off); `wakuc tile toggle|float|layout|retile|status`.

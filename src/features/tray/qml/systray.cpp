@@ -31,7 +31,7 @@ std::shared_ptr<TrayHost>& sharedWindowHost() {
   return host;
 }
 
-// The host `--tray-host` chose (the hook, or the window host) or nothing.
+// The shared window host, or nothing.
 RealHost makeRealHost() {
   RealHost result;
   if (kernel::capabilityDisabled(QStringLiteral("tray"))) {
@@ -42,29 +42,13 @@ RealHost makeRealHost() {
     result.reason = QStringLiteral("tray unavailable: offscreen platform");
     return result;
   }
-  waku::tray::TrayHostFactories factories = waku::tray::realTrayHostFactories();
-  QString dllReason;
-  bool hookTried = false;
-  auto findDll = factories.findHookDll;
-  factories.findHookDll = [&](const QString& appDir, QString* reason) {
-    const QString dll = findDll(appDir, reason);
-    if (reason) dllReason = *reason;
-    return dll;
-  };
-  auto makeHook = factories.makeHook;
-  factories.makeHook = [&](const QString& dll) {
-    hookTried = true;
-    return makeHook(dll);
-  };
-  const TrayHostKind kind = trayHostKind();
-  if (kind == TrayHostKind::Window && sharedWindowHost()) {
+  if (sharedWindowHost()) {
     result.host = sharedWindowHost();
     return result;
   }
   try {
-    result.host =
-        waku::tray::createTrayHost(kind, QCoreApplication::applicationDirPath(), factories);
-    if (kind == TrayHostKind::Window && result.host) {
+    result.host = waku::tray::createTrayHost(waku::tray::realTrayHostFactories());
+    if (result.host) {
       sharedWindowHost() = result.host;
       QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
                        QCoreApplication::instance(), [] {
@@ -75,15 +59,7 @@ RealHost makeRealHost() {
     qWarning().noquote() << "Tray host failed:" << error.what();
   }
   if (!result.host) {
-    if (kind == TrayHostKind::Window) {
-      result.reason = QStringLiteral("tray unavailable: another tray window host is running");
-    } else if (!dllReason.isEmpty()) {
-      result.reason = QStringLiteral("tray unavailable: %1").arg(dllReason);
-    } else if (hookTried) {
-      result.reason = QStringLiteral("tray unavailable: another tray host is running");
-    } else {
-      result.reason = QStringLiteral("tray unavailable: hook not usable");
-    }
+    result.reason = QStringLiteral("tray unavailable: another tray window host is running");
   }
   return result;
 }
@@ -130,7 +106,7 @@ void Systray::connectHost() {
           [this](const TrayIconData& data) { onIconModified(data); });
   connect(host_.get(), &TrayHost::iconDeleted, this,
           [this](const TrayIconData& data) { onIconDeleted(data); });
-  // The hook has just connected: have Explorer announce every icon it already has.
+  // The host has just claimed the tray: have every program announce its icons.
   refreshTimer_.setSingleShot(true);
   refreshTimer_.setInterval(kRefreshDelayMs);
   connect(host_.get(), &TrayHost::updateIcons, this, [this] { refreshTimer_.start(); });

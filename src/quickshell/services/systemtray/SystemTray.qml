@@ -9,8 +9,8 @@ import waku.services as S
 //   items  a model (with `values`) of SystemTrayItem, one per icon, in arrival order. Items
 //          keep their identity while the icon changes
 //
-// Icons come through the tray service, which is empty when Explorer cannot be hooked (no live
-// desktop, a missing hook DLL, or `--no-tray`). A left click is activate(), a middle click
+// Icons come through the tray service, which is empty when the tray cannot be claimed (no live
+// desktop, another tray window host, or `--no-tray`). A left click is activate(), a middle click
 // secondaryActivate(), a right click display(); there is no QML menu.
 //
 // `tray` is the service clicks go to (click(id, button)) and `trayModel` the list of icons; tests

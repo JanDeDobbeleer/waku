@@ -1,5 +1,5 @@
-# tray: the notification area. The Explorer hook (hook/, a DLL injected into Explorer), the pipe
-# parser, icon state, pins, and the Tray widget. No dependencies on other features.
+# tray: the notification area. The window host (a Shell_TrayWnd window of waku's own), the
+# message parser, icon state, pins, and the Tray widget. No dependencies on other features.
 waku_feature(
   NAME tray
   SOURCES
@@ -20,8 +20,6 @@ waku_feature(
     tray_state.cpp
     tray_types.h
   WIN32_SOURCES
-    win32/tray_hook.h
-    win32/tray_hook.cpp
     win32/tray_win.h
     win32/tray_win.cpp
     win32/tray_window_host.h
@@ -42,26 +40,17 @@ waku_feature(
     tests/test_systray.cpp
     tests/test_systray_click.cpp
     tests/test_systray_icon_scale.cpp
-    tests/test_systray_pipe.cpp
     tests/test_systray_state.cpp
     tests/test_tray_icon_bits.cpp
     tests/test_tray_icon_registry.cpp
     tests/test_tray_model.cpp
     tests/test_tray_pins.cpp
+    tests/test_tray_pipe.cpp
     tests/test_tray_widget.cpp
     tests/test_tray_window_host.cpp
   SYSTEM_LIBS
-    psapi
     user32
-  SUBTARGET_SOURCES
-    hook/trayhook.cpp
 )
 
-# Pipe and watchdog mutex names shared with the DLL (hook/), set once in the root CMakeLists.txt.
-target_compile_definitions(waku_tray PUBLIC
-  WAKU_TRAY_PIPE_NAME="${WAKU_TRAY_PIPE_NAME}" WAKU_TRAY_MUTEX_NAME="${WAKU_TRAY_MUTEX_NAME}")
 # tray_state.cpp reads and writes the per-screen JSON state.
 target_link_libraries(waku_tray PRIVATE nlohmann_json::nlohmann_json)
-
-# The hook DLL builds next to waku.exe.
-add_subdirectory(hook)

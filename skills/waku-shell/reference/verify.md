@@ -23,7 +23,7 @@ finding, not noise: fix it or explain it.
 
 ## Level 2
 
-Run with `-Visible` (real platform, still no app bar and no tray hook). Then:
+Run with `-Visible` (real platform, still no app bar and no tray). Then:
 
 ```powershell
 pwsh -NoProfile -File skills\waku-shell\scripts\capture.ps1 -Out $dir\shot.png
