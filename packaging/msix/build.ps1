@@ -3,7 +3,7 @@
     Packages a deployed waku folder as an MSIX, optionally signed with Azure Trusted Signing.
 
 .PARAMETER Architecture
-    x64 or arm64. Must match the build in -Source (each holds its own tray hook DLL).
+    x64 or arm64. Must match the build in -Source.
 
 .PARAMETER Version
     Three-part version without a leading v, for example 0.1.0. The package version is Version.0.
@@ -54,8 +54,6 @@ $Source = (Resolve-Path $Source).Path
 foreach ($file in 'waku.exe', 'wakuc.exe', 'wakukeys.exe') {
     if (-not (Test-Path (Join-Path $Source $file))) { throw "$file not found in $Source" }
 }
-$hook = if ($Architecture -eq 'arm64') { 'WakuTrayHook_arm64.dll' } else { 'WakuTrayHook.dll' }
-if (-not (Test-Path (Join-Path $Source $hook))) { throw "$hook not found in $Source (wrong -Architecture?)" }
 
 $out = Join-Path $PSScriptRoot 'out'
 $stage = Join-Path $PSScriptRoot "stage-$Architecture"
@@ -111,7 +109,6 @@ if ($Sign) {
         '/td', 'SHA256', '/dlib', $dlib, '/dmdf', (Join-Path $PSScriptRoot 'signing.json'))
 
     $binaries = @('waku.exe', 'wakuc.exe', 'wakukeys.exe') | ForEach-Object { Join-Path $stage $_ }
-    $binaries += Get-ChildItem -Path $stage -Filter 'WakuTrayHook*.dll' | ForEach-Object FullName
     & $signtool @signArgs @binaries
 }
 

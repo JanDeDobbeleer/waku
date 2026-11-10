@@ -21,13 +21,13 @@ class QJSEngine;
 namespace waku::tray {
 
 // The notification-area icons of other programs, as a QML singleton shared by every Tray widget.
-// Owns the one TrayHost (the hook in Explorer), applies the
+// Owns the one TrayHost (the window host), applies the
 // TrayIconRegistry to its notifications and mirrors the result in `icons`. Registers the
 // image://tray provider on the engine that creates it. When no host can be used, `available` is
-// false, `unavailableReason` says why and `icons` stays empty; nothing touches Explorer.
+// false, `unavailableReason` says why and `icons` stays empty.
 //
 // Threads: the host's worker thread emits queued signals; everything here is on the GUI thread.
-// The destructor stops the host (pipe and mutex are released; the DLL detaches within 5 s).
+// The window host outlives the widget (see systray.cpp); the destructor stops any other host.
 class Systray : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -37,7 +37,7 @@ class Systray : public QObject {
   Q_PROPERTY(QObject* icons READ icons CONSTANT FINAL)
 
  public:
-  // Real: hook host from the DLL next to the executable; unavailable on the offscreen platform.
+  // Real: the window host; unavailable on the offscreen platform.
   // Deliberately not default-constructible: Qt uses a singleton's default constructor in
   // preference to create(), and create() must run to register the image provider.
   explicit Systray(QObject* parent);
@@ -56,7 +56,7 @@ class Systray : public QObject {
   QString unavailableReason() const { return reason_; }
   TrayIconModel* icons() { return &model_; }
   waku::tray::TrayIconRegistry& registry() { return registry_; }
-  // Whether the refresh after the hook asked for icons is still to come (tests).
+  // Whether the refresh after the host asked for icons is still to come (tests).
   bool refreshPending() const { return refreshTimer_.isActive(); }
   // True while the stale-icon sweep timer runs (only while an icon exists).
   bool sweeping() const { return sweepTimer_.isActive(); }
@@ -97,7 +97,7 @@ class Systray : public QObject {
   QSet<int> swallowRelease_;
   // The icon problems already logged, per id; dropped with the icon.
   QHash<int, QSet<QString>> loggedIconProblems_;
-  QTimer refreshTimer_;  // 200 ms single shot after the hook asks for icons: TaskbarCreated
+  QTimer refreshTimer_;  // 200 ms single shot after the host asks for icons: TaskbarCreated
   // 30 s, only while an icon exists: drops icons whose owner window is gone.
   QTimer sweepTimer_;
 };

@@ -25,7 +25,7 @@ ShellRoot {
                 Whoami {},
                 Media {},
                 Volume {},
-                // Tray {},                   // notification-area icons (starts the tray hook)
+                // Tray {},                   // notification-area icons (claims the tray)
                 Battery {},
                 Cpu {},
                 Memory {}

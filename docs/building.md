@@ -29,9 +29,9 @@ cmd /c "call `"$vc`" arm64_amd64 && set VCPKG_ROOT=C:\vcpkg&& cmake --preset x64
 
 On an x64 host use `vcvarsall.bat x64` and the same presets.
 
-Everything lands in `build\<preset>`: `waku.exe`, `wakuc.exe`, `wakukeys.exe`, the tray hook DLL next to them and
+Everything lands in `build\<preset>`: `waku.exe`, `wakuc.exe`, `wakukeys.exe` and
 `waku_tests.exe` with the Qt DLLs and the offscreen platform plugin that `windeployqt` copies next
-to it. The targets are `waku`, `wakuc`, `wakukeys`, `WakuTrayHook` (`WakuTrayHook_arm64` on ARM64),
+to it. The targets are `waku`, `wakuc`, `wakukeys`,
 `waku_tests` and `deploy`; select one with `cmake --build --preset <preset> --target <name>`.
 
 `build\<preset>\qml_modules` holds the build copy of every QML module of `src/` (qmldir, `.qmltypes`,
@@ -65,8 +65,7 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 | `--import-path <dir>` | Add a folder of QML modules to the import path. Repeatable. See "User-built QML plugins". |
 | `--no-keys` | Do not start `wakukeys.exe` beside waku. By default, when the config home has a `keys.conf`, waku starts the key daemon and stops it on exit (a daemon that already runs is left alone). Tests and tools pass this flag. |
 | `--watch` | Reload the shell when a file in the config home changes. Off by default: `wakuc reload` applies an edit. |
-| `--no-tray` | Never hook Explorer; the Tray widget stays empty. |
-| `--tray-host hook\|window` | How the Tray widget gets the icons. `hook` (default) injects a DLL into Explorer. `window` makes waku own a `Shell_TrayWnd` window while the Windows taskbar is hidden: no DLL, no injection, and it works on an x64 build under emulation. With `--keep-taskbar` the window host stays idle and Explorer keeps the icons. |
+| `--no-tray` | Never claim the tray; the Tray widget stays empty. |
 | `--keep-taskbar` | Leave the Windows taskbar alone. By default, on a live desktop, waku hides it (all monitors) while it runs and restores it on exit; tests and tools pass this flag. See "The Windows taskbar" in `docs/architecture.md`. |
 | `--no-hotkeys` | Register no global hotkey: `GlobalShortcut` keys stay unregistered and the shortcuts fire only through `wakuc shortcut`. |
 | `--no-shell-desktops` | Never use the undocumented shell interface behind Task View for virtual desktops: closing a desktop, creating one without a keystroke, the animated switch and the change notifications. The registry and the documented calls remain, so switching still works and closing is unavailable (`Workspaces.canRemove` is false). See "Shell interface" in `src/features/workspaces/design.md`. |
@@ -170,18 +169,13 @@ then fails with the usual "module is not installed" error. `--safe` adds no fold
 documents how to write a plugin; `tests/plugin/` is a minimal one. A plugin runs as native code:
 see `SECURITY.md`.
 
-## Tray hook DLL
+## Tray
 
-`waku.exe` ships `WakuTrayHook.dll` (x64) or `WakuTrayHook_arm64.dll` next to it; the
-Tray widget injects it into Explorer to see tray icons. `src/features/tray/hook/` builds it with a static CRT, and
-each preset builds the DLL for its own architecture, so an ARM64 host runs the ARM64 preset's build.
-The DLL must match Explorer's architecture: an x64 build running under emulation on ARM64 cannot use
-it and has no tray host (the tray stays empty). The pipe and watchdog mutex names are set once in
-the root `CMakeLists.txt` (`WAKU_TRAY_PIPE_NAME`, `WAKU_TRAY_MUTEX_NAME`) and passed to both the DLL
-and `waku_tray`. The DLL detaches from Explorer by itself (up to 5 s) after the host exits, so wait
-for it to unload before starting another run that hooks the tray. Automated tests never inject it:
-they use a private pipe and fake injector, and the tray host is not created on the `offscreen`
-platform. Pass `--no-tray` to `waku.exe` for runs that must not hook Explorer.
+The Tray widget gets icons from a `Shell_TrayWnd` window of waku's own (no DLL, no injection into
+Explorer). It works only while the Windows taskbar is hidden, the default; with `--keep-taskbar` the host
+stays idle and Explorer keeps the icons. It also works in an x64 build under emulation. Automated tests
+never create it: the tray host is not created on the `offscreen` platform. Pass `--no-tray` to
+`waku.exe` for runs that must not claim the tray.
 
 ## Deploy
 
@@ -190,7 +184,7 @@ default (`-DWAKU_DIST_DIR=...` changes it; `dist/` is not tracked):
 
 ```
 dist/waku/
-  waku.exe, wakuc.exe, WakuTrayHook[_arm64].dll
+  waku.exe, wakuc.exe, wakukeys.exe
   <Qt runtime>                  from windeployqt, scanning src/ and cmake/deploy_imports/ for QML imports
                                 (the latter lists QtQuick.Layouts, QtQuick.Effects, Qt.labs.folderlistmodel,
                                 QtQuick.Templates and QtQuick.Controls.Basic, which shells written for
@@ -239,7 +233,7 @@ nothing. Jobs:
    from `VCToolsRedistDir` into `dist/waku` (a package cannot run `vc_redist`).
 3. `package` (both architectures): `packaging/msix/build.ps1` makes `waku-<arch>.msix` and
    `waku-<arch>.appinstaller`. A release, or a manual run with `sign`, signs `waku.exe`,
-   `wakuc.exe`, the tray hook DLLs and then the MSIX with Azure Trusted Signing.
+   `wakuc.exe`, `wakukeys.exe` and then the MSIX with Azure Trusted Signing.
 4. `release` (pushes only): creates the tag on the built commit and a GitHub release with both
    MSIX files, both App Installer files, `checksums.txt` and the changelog as notes.
 
