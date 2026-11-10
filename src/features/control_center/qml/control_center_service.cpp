@@ -101,6 +101,12 @@ ControlCenter::ControlCenter(Backend backend, Launcher launcher,
     // A slider write, a power-setting notification or a DDC re-read.
     connect(brightnessControl_, &waku::brightness::BrightnessControl::brightnessChanged, this,
             [this](qulonglong, int) { announce(kBrightness | readBrightness()); });
+    connect(brightnessControl_, &waku::brightness::BrightnessControl::contrastChanged, this,
+            [this](qulonglong id, int value) {
+              if (!brightnessMonitor_ || *brightnessMonitor_ != id) return;
+              contrast_ = value;
+              announce(kContrast);
+            });
   }
   if (readLater) {
     readBrightness();
@@ -118,6 +124,7 @@ void ControlCenter::announce(unsigned groups) {
   if (groups & kDnd) emit dndChanged();
   if (groups & kTheme) emit themeChanged();
   if (groups & kBrightness) emit brightnessChanged();
+  if (groups & kContrast) emit contrastChanged();
   if (groups & kBrightnessSources) emit brightnessSourcesChanged();
   if (groups & kPower) emit powerChanged();
   if (groups & kUser) emit userChanged();
@@ -211,6 +218,8 @@ void ControlCenter::refresh() {
 }
 
 unsigned ControlCenter::readBrightness() {
+  const auto previousMonitor = brightnessMonitor_;
+  const int previousContrast = contrast_;
   std::vector<qulonglong> ids;
   brightnessMonitor_.reset();
   if (brightnessControl_) {
@@ -222,11 +231,17 @@ unsigned ControlCenter::readBrightness() {
       });
       brightnessMonitor_ = kept != monitors.end() ? kept->id : monitors.front().id;
       brightness_ = brightnessControl_->brightness(*brightnessMonitor_).value_or(brightness_);
+      contrast_ = brightnessControl_->contrast(*brightnessMonitor_).value_or(0);
     }
   }
-  if (ids == monitorIds_) return 0;
-  monitorIds_ = std::move(ids);
-  return kBrightnessSources;
+  if (!brightnessMonitor_) contrast_ = 0;
+  unsigned groups = 0;
+  if (ids != monitorIds_) {
+    monitorIds_ = std::move(ids);
+    groups |= kBrightnessSources;
+  }
+  if (brightnessMonitor_ != previousMonitor || contrast_ != previousContrast) groups |= kContrast;
+  return groups;
 }
 
 void ControlCenter::readPower() {
@@ -353,12 +368,19 @@ void ControlCenter::setBrightness(int percent) {
   announce(kBrightness);
 }
 
+void ControlCenter::setContrast(int percent) {
+  if (!contrastAvailable()) return;
+  contrast_ = std::clamp(percent, 0, 100);
+  brightnessControl_->setContrast(*brightnessMonitor_, contrast_);
+  announce(kContrast);
+}
+
 void ControlCenter::setBrightnessSource(const QString& id) {
   bool ok = false;
   const qulonglong value = id.toULongLong(&ok);
   if (!ok || !brightnessControl_) return;
   selectedMonitor_ = value;
-  announce(kBrightness | readBrightness());
+  announce(kBrightness | kContrast | readBrightness());
 }
 
 bool ControlCenter::setPowerPlan(const QString& id) {

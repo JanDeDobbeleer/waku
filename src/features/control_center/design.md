@@ -48,14 +48,16 @@ other singletons do not cover. Two injectable structs:
 - `Backend`: reads and writes of settings (DND, theme, touch keyboard, power, user).
 - `Launcher`: lock, sleep, hibernate, sign out, restart, shut down, and `open(uri)`.
 
-QML-facing API (GUI thread). Each property notifies with its group, and every group change also emits `changed`: `dndChanged` (`dnd`, `dndActive`), `themeChanged` (`darkMode`), `brightnessChanged` (`brightnessAvailable`, `brightness`, `brightnessSource`), `brightnessSourcesChanged` (`brightnessSources`, when the monitor set changes), `powerChanged` (plans and modes), `userChanged` (`userName`, `avatarUrl`), `pendingActionChanged`:
+QML-facing API (GUI thread). Each property notifies with its group, and every group change also emits `changed`: `dndChanged` (`dnd`, `dndActive`), `themeChanged` (`darkMode`), `brightnessChanged` (`brightnessAvailable`, `brightness`, `brightnessSource`), `contrastChanged` (`contrastAvailable`, `contrast`), `brightnessSourcesChanged` (`brightnessSources`, when the monitor set changes), `powerChanged` (plans and modes), `userChanged` (`userName`, `avatarUrl`), `pendingActionChanged`:
 
-- State: `dnd`, `dndActive`, `darkMode`, `brightnessAvailable`, `brightness`,
+- State: `dnd`, `dndActive`, `darkMode`, `brightnessAvailable`, `brightness`, `contrastAvailable`,
+  `contrast`,
   `brightnessSources` (list of `{id, name}`), `brightnessSource`, `powerPlans` and `powerModes`
   (lists of `{id, name, active}`), `powerPlanName`, `powerModeName`, `powerModeAvailable`,
   `userName`, `avatarUrl`, `pendingAction`.
 - Calls: `refresh()`, `toggleDnd()`, `cycleDnd()`, `toggleTheme()`, `toggleTouchKeyboard()`,
-  `screenshot()`, `openSettings(uri)`, `setBrightness(percent)`, `setBrightnessSource(id)`,
+  `screenshot()`, `openSettings(uri)`, `setBrightness(percent)`, `setContrast(percent)`,
+  `setBrightnessSource(id)`,
   `setPowerPlan(id)`, `setPowerMode(id)`, `requestAction(id)`, `cancelAction()`.
 
 `qml/ControlCenter.qml`: the widget, with inline components `Choice` (a collapsible
