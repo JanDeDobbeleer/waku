@@ -16,6 +16,15 @@ namespace waku::taskbar {
 // An HWND as an integer. 0 means "no window".
 using WindowHandle = std::uintptr_t;
 
+enum class ProgressState { None = 0, Indeterminate = 1, Normal = 2, Error = 4, Paused = 8 };
+
+struct WindowProgress {
+  ProgressState state = ProgressState::None;
+  double value = 0;  // 0..1; ignored for None and Indeterminate.
+
+  bool operator==(const WindowProgress&) const = default;
+};
+
 // Port of ApplicationWindow.as_dict(): what the taskbar knows about a top-level window.
 struct WindowInfo {
   WindowHandle hwnd = 0;
@@ -31,6 +40,7 @@ struct WindowInfo {
   std::uint32_t pid = 0;
   QString processPath;
   bool canMinimize = false;
+  WindowProgress progress;
 
   bool operator==(const WindowInfo&) const = default;
 };
@@ -50,7 +60,7 @@ class WindowSystem {
   virtual WindowHandle foregroundWindow() const = 0;
   // Every top-level window, in z order (EnumWindows).
   virtual std::vector<WindowHandle> enumerateWindows() const = 0;
-  // A fresh read of every field. isActive and isFlashing are always false (the tracker owns them).
+  // A fresh read. Activity, flashing and progress are defaulted (the tracker owns them).
   // It opens the window's process, so the tracker reads it once per event.
   virtual WindowInfo query(WindowHandle hwnd) const = 0;
   // The cheap tests of isTaskbarWindow that need no query: false only for a window that can never

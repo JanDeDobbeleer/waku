@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 
+#include "features/taskbar/progress_cache.h"
 #include "features/taskbar/window_system.h"
 
 class QTimer;
@@ -82,6 +83,11 @@ class WindowTracker : public QObject {
   void handleShellHook(std::uintptr_t wparam, std::intptr_t lparam);
   void handleWinEvent(unsigned eventType, WindowHandle hwnd, long idObject, long idChild);
 
+  // The progress applications reported (see ProgressCache). Set before start(); without one the
+  // tracker makes its own, which only tests write to.
+  void setProgress(std::shared_ptr<ProgressCache> progress);
+  const std::shared_ptr<ProgressCache>& progress() const { return progress_; }
+
  signals:
   void windowAdded(waku::taskbar::WindowHandle hwnd, const waku::taskbar::WindowInfo& info);
   void windowRemoved(waku::taskbar::WindowHandle hwnd, const waku::taskbar::WindowInfo& info);
@@ -89,6 +95,8 @@ class WindowTracker : public QObject {
   void windowMonitorChanged(waku::taskbar::WindowHandle hwnd,
                             const waku::taskbar::WindowInfo& info);
   void windowMinimizeChanged(waku::taskbar::WindowHandle hwnd, bool minimized);
+  void windowProgressChanged(waku::taskbar::WindowHandle hwnd,
+                             const waku::taskbar::WindowProgress& progress);
 
  private:
   // ApplicationWindow: the title and class are cached and only refreshed by update().
@@ -97,6 +105,8 @@ class WindowTracker : public QObject {
     QString className;
     bool isActive = false;
     bool isFlashing = false;
+    std::uint32_t pid = 0;
+    WindowProgress progress;
   };
 
   // A fresh query with the tracked fields on top.
@@ -126,9 +136,12 @@ class WindowTracker : public QObject {
   void updateWindow(WindowHandle hwnd);
   void debounceUpdate(WindowHandle hwnd, int delayMs);
   void enumerateExisting();
+  void onProgressChanged(WindowHandle hwnd);
 
   std::shared_ptr<WindowSystem> system_;
   std::unique_ptr<TrackerHooks> hooks_;
+  std::shared_ptr<ProgressCache> progress_;
+  QMetaObject::Connection progressConnection_;
   std::map<WindowHandle, Tracked> windows_;
   std::map<WindowHandle, QTimer*> pendingUpdates_;
   bool initialized_ = false;

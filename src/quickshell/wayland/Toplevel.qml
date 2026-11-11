@@ -23,6 +23,8 @@ QtObject {
     property bool maximized: false
     property bool fullscreen: false
     property string iconUrl: ""
+    property string progressState: "none"
+    property real progress: 0
     property var screens: []
 
     // The taskbar model and the row of this window in it, set by ToplevelManager.

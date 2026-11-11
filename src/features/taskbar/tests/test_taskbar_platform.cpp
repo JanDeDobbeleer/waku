@@ -1,3 +1,4 @@
+#include <windows.h>
 #include <gtest/gtest.h>
 
 #include <QDir>
@@ -33,6 +34,47 @@ constexpr WindowHandle kThird = 103;
 }  // namespace
 
 // --- window tracker
+
+TEST(TaskbarProgressNative, ReceivesValidatedProgressFromAnyThreadAndStopsCleanly) {
+  struct Owner {
+    HWND hwnd = CreateWindowExW(0, L"STATIC", L"", WS_POPUP, 0, 0, 1, 1, nullptr, nullptr,
+                                GetModuleHandleW(nullptr), nullptr);
+    ~Owner() {
+      if (hwnd) DestroyWindow(hwnd);
+    }
+  } owner;
+  ASSERT_NE(owner.hwnd, nullptr);
+  const auto handle = reinterpret_cast<WindowHandle>(owner.hwnd);
+  const auto pid = static_cast<std::uint32_t>(GetCurrentProcessId());
+  auto cache = std::make_shared<ProgressCache>();
+  auto receiver = makeWin32ProgressReceiver(cache);
+  ASSERT_NE(receiver, nullptr);
+  HWND window = nullptr;
+  while ((window = FindWindowExW(nullptr, window, L"WakuTaskbarProgress", nullptr))) {
+    DWORD process = 0;
+    GetWindowThreadProcessId(window, &process);
+    if (process == GetCurrentProcessId()) break;
+  }
+  ASSERT_NE(window, nullptr);
+  // The receiver runs its own thread: a send returns after it was handled there.
+  SendMessageW(window, WM_USER + 65, handle, 1);
+  EXPECT_EQ(cache->get(handle, pid)->state, ProgressState::Indeterminate);
+  SendMessageW(window, WM_USER + 64, handle, 32767);
+  EXPECT_EQ(cache->get(handle, pid)->state, ProgressState::Normal);
+  EXPECT_DOUBLE_EQ(cache->get(handle, pid)->value, 0.5);
+  SendMessageW(window, WM_USER + 64, handle, -1);
+  SendMessageW(window, WM_USER + 64, handle, 65535);
+  SendMessageW(window, WM_USER + 65, handle, 3);
+  // Not a window: nothing is kept for it.
+  SendMessageW(window, WM_USER + 65, 0x7ffffff0, 1);
+  EXPECT_DOUBLE_EQ(cache->get(handle, pid)->value, 0.5);
+  EXPECT_EQ(cache->get(handle, pid)->state, ProgressState::Normal);
+  EXPECT_EQ(cache->size(), 1u);
+  SendMessageW(window, WM_USER + 64, handle, 65534);
+  EXPECT_DOUBLE_EQ(cache->get(handle, pid)->value, 1);
+  receiver.reset();
+  EXPECT_FALSE(IsWindow(window));
+}
 
 class TrackerTest : public testing::Test {
  protected:

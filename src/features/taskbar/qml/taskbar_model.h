@@ -59,6 +59,8 @@ class TaskbarModel : public QAbstractListModel {
     ClassNameRole,      // window class of it
     HwndRole,           // its handle, as a number
     MonitorHandleRole,  // the HMONITOR it is on, 0 when unknown (matches Workspaces monitors)
+    ProgressStateRole,  // "none", "indeterminate", "normal", "error", "paused"
+    ProgressRole,       // 0..1
   };
 
   explicit TaskbarModel(QObject* parent = nullptr);
@@ -125,6 +127,7 @@ class TaskbarModel : public QAbstractListModel {
     QString className;
     WindowHandle hwnd = 0;
     WindowHandle monitor = 0;
+    WindowProgress progress;
 
     bool operator==(const Row&) const = default;
   };

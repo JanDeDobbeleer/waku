@@ -61,7 +61,9 @@ QtObject {
             readonly property string iconUrl: model.iconUrl ?? ""
             readonly property bool active: model.active ?? false
             readonly property bool minimized: model.minimized ?? false
-            readonly property string signature: [key, title, exe, className, hwnd, monitorHandle, iconUrl, active, minimized].join("|")
+            readonly property string progressState: model.progressState ?? "none"
+            readonly property real progress: model.progress ?? 0
+            readonly property string signature: [key, title, exe, className, hwnd, monitorHandle, iconUrl, active, minimized, progressState, progress].join("|")
             // The delegate is its own component; `root` is the singleton's id.
             // qmllint disable unqualified
             onSignatureChanged: Qt.callLater(root.rebuild)
@@ -98,6 +100,8 @@ QtObject {
             t.iconUrl = r.iconUrl;
             t.minimized = r.minimized;
             t.activated = r.active;
+            t.progressState = r.progressState;
+            t.progress = r.progress;
             // qmllint enable missing-property
             if (t.activated)
                 active = t;
