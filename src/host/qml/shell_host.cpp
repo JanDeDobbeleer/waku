@@ -11,6 +11,7 @@
 #include <QEvent>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QLoggingCategory>
 #include <QMutex>
 #include <QQmlContext>
 #include <QQmlEngine>
@@ -20,6 +21,7 @@
 #include <QWindow>
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 #include "host/plugin_guard.h"
 #include "host/qml/panel_window.h"
@@ -106,6 +108,92 @@ class WarningCapture {
 
   bool active_ = false;
   QString first_;
+};
+
+// Local diagnostics, not for upstream. With --log-file only: turns on Qt's qt.qml.import debug
+// category for one reload and keeps its lines in memory instead of the log. reload() writes them
+// to the log only when the reload failed with a "protected module" registration error, so a normal
+// reload adds nothing. Qt logs from the type loader thread too, hence the mutex.
+class ImportTrace {
+ public:
+  ImportTrace() = default;
+  ImportTrace(const ImportTrace&) = delete;
+  ImportTrace& operator=(const ImportTrace&) = delete;
+  ~ImportTrace() { stop(); }
+
+  void start() {
+    if (active_ || !RunLog::active()) return;
+    {
+      QMutexLocker lock(&mutex());
+      lines().clear();
+      tracing() = true;
+      previousHandler() = qInstallMessageHandler(&ImportTrace::handle);
+    }
+    previousFilter() = QLoggingCategory::installFilter(&ImportTrace::filter);
+    active_ = true;
+  }
+  void stop() {
+    if (!active_) return;
+    {
+      QMutexLocker lock(&mutex());
+      tracing() = false;
+    }
+    // Installing the previous filter again re-applies it to every category: debug goes off.
+    QLoggingCategory::installFilter(previousFilter());
+    QMutexLocker lock(&mutex());
+    qInstallMessageHandler(previousHandler());
+    active_ = false;
+  }
+  QStringList take() {
+    QMutexLocker lock(&mutex());
+    return std::exchange(lines(), {});
+  }
+
+ private:
+  static constexpr qsizetype kMaxLines = 20000;
+  static constexpr const char* kCategory = "qt.qml.import";
+
+  static QMutex& mutex() {
+    static QMutex m;
+    return m;
+  }
+  static bool& tracing() {
+    static bool t = false;
+    return t;
+  }
+  static QStringList& lines() {
+    static QStringList l;
+    return l;
+  }
+  static QtMessageHandler& previousHandler() {
+    static QtMessageHandler p = nullptr;
+    return p;
+  }
+  static QLoggingCategory::CategoryFilter& previousFilter() {
+    static QLoggingCategory::CategoryFilter f = nullptr;
+    return f;
+  }
+  static void filter(QLoggingCategory* category) {
+    if (previousFilter()) previousFilter()(category);
+    if (qstrcmp(category->categoryName(), kCategory) == 0) {
+      QMutexLocker lock(&mutex());
+      if (tracing()) category->setEnabled(QtDebugMsg, true);
+    }
+  }
+  static void handle(QtMsgType type, const QMessageLogContext& context, const QString& message) {
+    QtMessageHandler next = nullptr;
+    {
+      QMutexLocker lock(&mutex());
+      next = previousHandler();
+      if (type == QtDebugMsg && context.category && qstrcmp(context.category, kCategory) == 0) {
+        if (lines().size() < kMaxLines) lines() << message;
+        return;
+      }
+    }
+    if (next) next(type, context, message);
+  }
+
+  bool active_ = false;
 };
 
 QStringList describeAll(const QList<QQmlError>& errors) {
@@ -397,6 +485,7 @@ bool ShellHost::reload(const char* cause) {
   // that creates none (a Variants delegate that failed) is an error and not an empty screen.
   const bool hadWindows = loaded_ && hasWindows(*loaded_);
   WarningCapture warnings;
+  QStringList importLines;
   const QString legacyPath = QDir(options_.configHome).filePath(options_.legacyEntryFile);
   const bool legacyEntry = !options_.legacyEntryFile.isEmpty() && QFileInfo::exists(legacyPath);
   if (options_.implicitConfigHome && !QFileInfo::exists(entryPath()) && !legacyEntry) {
@@ -439,11 +528,31 @@ bool ShellHost::reload(const char* cause) {
     interceptor_->nextGeneration();
     resetEngine();
     if (applyTheme(&error)) {
+      ImportTrace imports;
       warnings.start();
+      imports.start();
       next = build(QUrl::fromLocalFile(entryPath()), &error);
+      imports.stop();
       warnings.stop();
+      importLines = imports.take();
     }
   }
+  // Local diagnostics: the import trace goes to the log only for a registry failure.
+  const auto dumpImports = [&importLines](const QString& failure) {
+    if (!failure.contains(QStringLiteral("into protected module")) || importLines.isEmpty()) return;
+    QStringList relevant;
+    for (const QString& line : std::as_const(importLines)) {
+      if (!line.contains(QStringLiteral("Quickshell"))) continue;
+      if (line.contains(QStringLiteral("plugin"), Qt::CaseInsensitive) ||
+          line.contains(QStringLiteral("qmldir"), Qt::CaseInsensitive)) {
+        relevant << line;
+      }
+      if (relevant.size() >= 400) break;
+    }
+    RunLog::event(QStringLiteral("reload.import_trace"),
+                  {{QStringLiteral("total"), static_cast<int>(importLines.size())},
+                   {QStringLiteral("lines"), relevant}});
+  };
 
   if (next) {
     int built = 0;
@@ -460,6 +569,7 @@ bool ShellHost::reload(const char* cause) {
       qWarning().noquote() << "waku: no window could be built:" << error;
       next.reset();
     } else {
+      dumpImports(failed);
       setError(failed);
       install(std::move(next));
       emit reloaded(true);
@@ -467,6 +577,7 @@ bool ShellHost::reload(const char* cause) {
     }
   }
 
+  dumpImports(error);
   setError(error);
   if (!loaded_) buildFallback();  // nothing to keep: show the error
   emit reloaded(false);

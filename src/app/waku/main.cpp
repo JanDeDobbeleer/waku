@@ -9,7 +9,9 @@
 #include <QProcess>
 #include <QQmlEngine>
 #include <QQuickWindow>
+#include <cstdlib>
 #include <memory>
+#include <string>
 
 #include "app/waku/font_engine.h"
 #include "app/waku/quickshell_glue.h"
@@ -50,6 +52,24 @@ bool startKeys(const QString& configHome) {
 }
 
 void stopKeys() { QProcess::execute(keysExecutable(), {QStringLiteral("stop")}); }
+
+// Local recovery, not for upstream. Set when a reload found the QML type registry broken; the
+// process then quits and starts itself again with the same command line. The start runs at exit,
+// after the control server released the single-instance mutex, or the new process would refuse.
+bool restartPending = false;
+
+void restartAtExit() {
+  if (!restartPending) return;
+  STARTUPINFOW startup{};
+  startup.cb = sizeof(startup);
+  PROCESS_INFORMATION process{};
+  std::wstring commandLine = GetCommandLineW();
+  if (CreateProcessW(nullptr, commandLine.data(), nullptr, nullptr, FALSE, DETACHED_PROCESS,
+                     nullptr, nullptr, &startup, &process)) {
+    CloseHandle(process.hThread);
+    CloseHandle(process.hProcess);
+  }
+}
 
 }  // namespace
 
@@ -273,13 +293,28 @@ int main(int argc, char* argv[]) {
                                                       QStringLiteral("Tiling"));
     }
   };
-  QObject::connect(&host, &waku::host::ShellHost::reloaded, &host, [&host, ensureTiler](bool ok) {
-    ensureTiler();
-    waku::host::RunLog::event(
-        QStringLiteral("shell.reload"),
-        {{QStringLiteral("ok"), ok}, {QStringLiteral("error"), host.error()}});
-  });
+  // Local recovery, not for upstream: with --log-file only, and never for the first load, so a
+  // registry that is broken from the start cannot loop.
+  const bool restartOnBrokenRegistry = waku::host::RunLog::active() && !parser.isSet(safeOpt);
+  auto firstLoadDone = std::make_shared<bool>(false);
+  QObject::connect(&host, &waku::host::ShellHost::reloaded, &host,
+                   [&host, &app, ensureTiler, restartOnBrokenRegistry, firstLoadDone](bool ok) {
+                     ensureTiler();
+                     waku::host::RunLog::event(
+                         QStringLiteral("shell.reload"),
+                         {{QStringLiteral("ok"), ok}, {QStringLiteral("error"), host.error()}});
+                     if (!ok && restartOnBrokenRegistry && *firstLoadDone && !restartPending &&
+                         host.error().contains(QStringLiteral("into protected module"))) {
+                       waku::host::RunLog::event(QStringLiteral("run.restart"),
+                                                 {{QStringLiteral("reason"), host.error()}});
+                       restartPending = true;
+                       std::atexit(restartAtExit);
+                       QMetaObject::invokeMethod(&app, &QCoreApplication::quit,
+                                                 Qt::QueuedConnection);
+                     }
+                   });
   host.reload("startup");
+  *firstLoadDone = true;
   ensureTiler();
   waku::host::traceStep("first reload done");
   // The key daemon: started beside waku when the config home has a keys.conf, stopped with it. A
