@@ -54,7 +54,7 @@ Replace `x64` with `arm64` on an ARM64 PC.
 Start waku from the Start menu (the entry is named `waku`), or run `waku` in a terminal. The
 package puts `waku.exe` and `wakuc.exe` on your `PATH`.
 
-With no config, waku shows a built-in bar on the top edge of the primary screen. It has a clock,
+With no config, waku shows a built-in bar on the top edge of each screen. It has a clock,
 workspaces, volume, battery, CPU and memory, on a blurred background with the default theme.
 
 Check that the bar runs:
@@ -171,7 +171,7 @@ Delete them yourself for a clean slate. Run `wakuc startup disable` too if you e
 ## Troubleshooting
 
 - **Bar not visible.** Run `wakuc status`. If it exits with 2, no bar is running: start `waku`.
-  If a bar runs, check which screen it targets: the sample `shell.qml` uses `screens: ["primary"]`.
+  If a bar runs, check which screens its `shell.qml` targets.
 - **Config error pill.** Your last save has a mistake. The fallback bar shows the error. Read the
   message on the pill, fix the file and save again.
 - **Start with the built-in bar.** `waku --safe` ignores your config. Use it to rule out your

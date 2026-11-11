@@ -3,6 +3,7 @@
 #include "host/panel_geometry.h"
 
 using waku::host::AppBarEdge;
+using waku::host::coversScreenForFullscreen;
 using waku::host::PanelAnchorSet;
 using waku::host::panelAppBarEdge;
 using waku::host::panelGeometry;
@@ -23,6 +24,14 @@ constexpr int kNormal = 1;
 constexpr int kAuto = 2;
 
 }  // namespace
+
+TEST(PanelGeometryTest, FullscreenCoversTheMonitorButACaptionedMaximizedWindowDoesNot) {
+  EXPECT_TRUE(coversScreenForFullscreen(kScreen, kScreen, false, false));
+  EXPECT_TRUE(coversScreenForFullscreen(kScreen, kScreen, true, false));
+  EXPECT_FALSE(coversScreenForFullscreen(kScreen, kScreen, true, true));
+  EXPECT_FALSE(coversScreenForFullscreen(kScreen.adjusted(0, 0, -1, 0), kScreen, false, false));
+  EXPECT_FALSE(coversScreenForFullscreen(kScreen, QRect(), false, false));
+}
 
 TEST(PanelGeometryTest, ATopPanelSpansTheTopEdge) {
   EXPECT_EQ(panelGeometry(anchors(true, false, true, true), {}, kSize, kScreen),

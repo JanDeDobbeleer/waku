@@ -42,6 +42,11 @@ int panelThickness(AppBarEdge edge, const QSize& size) {
   return isVerticalEdge(edge) ? size.width() : size.height();
 }
 
+bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool maximized,
+                               bool captioned) {
+  return !screen.isEmpty() && !(maximized && captioned) && window.contains(screen);
+}
+
 int panelReservedZone(const PanelAnchorSet& anchors, const QMargins& margins, int mode,
                       int exclusiveZone, const QSize& size) {
   constexpr int kIgnore = 0;

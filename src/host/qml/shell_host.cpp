@@ -289,6 +289,11 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
   });
   trimTimer_.setSingleShot(true);
   connect(&trimTimer_, &QTimer::timeout, this, [this] { trimIfSettled(); });
+  if (options_.hooks.fullscreenOnMonitor && options_.hooks.lowerToBottom) {
+    fullscreenTimer_.setInterval(500);
+    connect(&fullscreenTimer_, &QTimer::timeout, this, [this] { updateFullscreenPanels(); });
+    fullscreenTimer_.start();
+  }
   watchScreens();
   connect(&watcher_, &QFileSystemWatcher::directoryChanged, this, [this] { configHomeChanged(); });
   connect(&watcher_, &QFileSystemWatcher::fileChanged, this,
@@ -785,7 +790,25 @@ void ShellHost::windowShown(QsWindow* window, bool activate) {
   const auto hwnd = static_cast<quintptr>(backing->winId());
   try {
     if (hooks.setNoActivate) hooks.setNoActivate(hwnd, !window->takesFocus());
-    if (window->stackTopmost() && hooks.raiseTopmost) hooks.raiseTopmost(hwnd);
+    bool lower = false;
+    auto* panel = qobject_cast<PanelWindow*>(window);
+    if (panel && panel->appBarEdge() && panel->stackTopmost() && hooks.fullscreenOnMonitor &&
+        hooks.lowerToBottom) {
+      lower = hooks.fullscreenOnMonitor(hwnd);
+    }
+    if (loaded_) {
+      for (Entry& entry : loaded_->entries) {
+        if (entry.window == window) {
+          entry.fullscreenLowered = lower;
+          break;
+        }
+      }
+    }
+    if (lower) {
+      hooks.lowerToBottom(hwnd);
+    } else if (window->stackTopmost() && hooks.raiseTopmost) {
+      hooks.raiseTopmost(hwnd);
+    }
     if (activate) {
       backing->requestActivate();
       if (hooks.forceForeground) hooks.forceForeground(hwnd);
@@ -799,6 +822,31 @@ void ShellHost::windowShown(QsWindow* window, bool activate) {
 
 void ShellHost::windowStackingChanged(QsWindow* window, bool activate) {
   windowShown(window, activate);
+}
+
+void ShellHost::updateFullscreenPanels() {
+  if (!loaded_) return;
+  const NativeHooks& hooks = options_.hooks;
+  try {
+    for (Entry& entry : loaded_->entries) {
+      auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
+      if (!entry.live() || !panel || !entry.presented || !panel->backingWindowVisible()) continue;
+      const auto hwnd = static_cast<quintptr>(panel->backingWindow()->winId());
+      const bool lower =
+          panel->appBarEdge() && panel->stackTopmost() && hooks.fullscreenOnMonitor(hwnd);
+      if (lower == entry.fullscreenLowered) continue;
+      entry.fullscreenLowered = lower;
+      if (lower) {
+        hooks.lowerToBottom(hwnd);
+      } else if (panel->stackTopmost() && hooks.raiseTopmost) {
+        hooks.raiseTopmost(hwnd);
+      }
+    }
+  } catch (const std::exception& e) {
+    qWarning().noquote() << "waku: fullscreen panel update failed:" << e.what();
+  } catch (...) {
+    qWarning() << "waku: fullscreen panel update failed";
+  }
 }
 
 void ShellHost::present(Entry& entry) {

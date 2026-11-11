@@ -75,6 +75,10 @@ class ShellHost : public QObject {
     // Keeps the window above the others (SetWindowPos HWND_TOPMOST, no activation): called each
     // time a window of the Top or Overlay layer is shown.
     std::function<void(quintptr hwnd)> raiseTopmost;
+    // Whether a fullscreen application covers this panel's monitor, and how to lower the panel
+    // behind it. Empty offscreen, so tests never inspect or alter the live desktop.
+    std::function<bool(quintptr hwnd)> fullscreenOnMonitor;
+    std::function<void(quintptr hwnd)> lowerToBottom;
     // Sets or clears WS_EX_NOACTIVATE: clicks on a window with `keyboardFocus: None` never take
     // the focus. Called each time a window is shown or its layer or keyboard focus changes.
     std::function<void(quintptr hwnd, bool noActivate)> setNoActivate;
@@ -210,6 +214,7 @@ class ShellHost : public QObject {
     std::optional<waku::host::AppBarRequest> appBarRequest;
     bool layoutConnected = false;
     bool presented = false;
+    bool fullscreenLowered = false;
     // Set by retire(): the window waits for its deferred deletion and is skipped everywhere.
     bool retired = false;
     bool live() const { return window && !retired; }
@@ -248,6 +253,7 @@ class ShellHost : public QObject {
   // panel how far the shell pushed it in.
   void syncAppBar(Entry& entry, bool force = false);
   void panelLayoutChanged(PanelWindow* panel, bool force = false);
+  void updateFullscreenPanels();
   void setError(const QString& error);
   void trimIfSettled();
   // Walks the config home again and watches what it finds.
@@ -288,6 +294,7 @@ class ShellHost : public QObject {
   QTimer screenDebounce_;
   // Single shot, started by install(): trims the working set once the window count stops growing.
   QTimer trimTimer_;
+  QTimer fullscreenTimer_;
   // The window count at the last look (install() or the previous timer tick).
   int windowsSeen_ = 0;
   FileStamps snapshot_;

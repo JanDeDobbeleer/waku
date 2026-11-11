@@ -6,7 +6,7 @@ import "widgets"           // your own, one component per file (see widgets/)
 
 ShellRoot {
     Panel {
-        screens: ["primary"]          // "primary", "all", or a screen name such as "DISPLAY2"
+        screens: ["all"]              // "primary", "all", or a screen name such as "DISPLAY2"
         edge: Panel.Top               // Panel.Top | Panel.Bottom
         thickness: 40
         // Blur is the DWM acrylic blur of what is behind the bar. The compositor draws it, so its
