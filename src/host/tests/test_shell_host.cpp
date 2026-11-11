@@ -2,6 +2,7 @@
 
 #include <QMouseEvent>
 
+#include "host/qml/panel_window.h"
 #include "host/testing/shell_fixtures.h"
 
 // ---- ShellRoot ----
@@ -188,10 +189,57 @@ ShellRoot {
 TEST(ShellHostTest, AllScreensGetAPanel) {
   Harness h;
   h.screenCount = 2;
-  h.start(shellConfig(QStringLiteral("a"), QStringLiteral("screens: [\"all\"]")));
+  h.start(shellConfig());
   ASSERT_TRUE(h.host->reload());
   EXPECT_EQ(h.host->windows().size(), 2);
   EXPECT_NE(h.window(0), h.window(1));
+}
+
+TEST(ShellHostTest, PrimaryScreenCanBeSelectedExplicitly) {
+  Harness h;
+  h.screenCount = 2;
+  h.start(shellConfig(QStringLiteral("a"), QStringLiteral("screens: [\"primary\"]")));
+  ASSERT_TRUE(h.host->reload());
+  EXPECT_EQ(h.host->windows().size(), 1);
+}
+
+TEST(ShellHostTest, FullscreenLowersOnlyTheAffectedPanelAndRestoresIt) {
+  Harness h;
+  h.screenCount = 2;
+  h.native.fullscreenHook = true;
+  h.start(shellConfig());
+  ASSERT_TRUE(h.host->reload());
+  ASSERT_EQ(h.host->windows().size(), 2);
+  const auto first = static_cast<quintptr>(h.window(0)->winId());
+  const auto second = static_cast<quintptr>(h.window(1)->winId());
+  h.native.raised.clear();
+  h.native.fullscreenPanels.insert(second);
+  QTRY_COMPARE_WITH_TIMEOUT(h.native.lowered.size(), 1u, 2000);
+  EXPECT_EQ(h.native.lowered[0], second);
+  EXPECT_TRUE(h.native.raised.empty());
+  h.host->windowShown(h.shellWindow(1), false);
+  EXPECT_TRUE(h.native.raised.empty());
+  h.native.fullscreenPanels.clear();
+  QTRY_COMPARE_WITH_TIMEOUT(h.native.raised.size(), 1u, 2000);
+  EXPECT_EQ(h.native.raised[0], second);
+  EXPECT_NE(first, second);
+}
+
+TEST(ShellHostTest, FullscreenDoesNotRestoreAPanelThatChangedToTheBottomLayer) {
+  Harness h;
+  h.native.fullscreenHook = true;
+  h.start(shellConfig());
+  ASSERT_TRUE(h.host->reload());
+  const auto hwnd = static_cast<quintptr>(h.window()->winId());
+  h.native.fullscreenPanels.insert(hwnd);
+  QTRY_COMPARE_WITH_TIMEOUT(h.native.lowered.size(), 1u, 2000);
+  h.native.raised.clear();
+  auto* panel = qobject_cast<PanelWindow*>(h.shellWindow());
+  ASSERT_NE(panel, nullptr);
+  panel->setLayer(WlrLayer::Bottom);
+  h.native.fullscreenPanels.clear();
+  QTest::qWait(600);
+  EXPECT_TRUE(h.native.raised.empty());
 }
 
 TEST(ShellHostTest, APanelForAnUnknownScreenOrDisabledBuildsNothing) {

@@ -36,6 +36,11 @@ std::optional<AppBarEdge> panelAppBarEdge(const PanelAnchorSet& anchors);
 // The pixels across the bar: `size.height()` for Top and Bottom, `size.width()` for Left and Right.
 int panelThickness(AppBarEdge edge, const QSize& size);
 
+// A captioned maximized window is not fullscreen even when the work area fills the monitor.
+// Both rectangles use physical screen coordinates.
+bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool maximized,
+                               bool captioned);
+
 // The pixels a PanelWindow reserves along its app bar edge, before the host's
 // --no-app-bar gate. `mode` is an ExclusionMode value (Ignore 0, Normal 1, Auto 2):
 // Ignore reserves nothing, Normal `exclusiveZone` plus the margin on that edge, Auto the window's

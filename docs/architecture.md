@@ -341,7 +341,15 @@ appears and leaves; `hideDelay` (ms) keeps the window up after `visible` turns f
 can fade out, and showing again cancels the hide. Layer and keyboard focus reach Windows through
 `ShellHost::NativeHooks`, so tests record them: `Top` and `Overlay` call `raiseTopmost`
 (`SetWindowPos(HWND_TOPMOST)`, no activation) each time the window is shown, `Bottom` stays on the
-Qt hint `Qt::WindowStaysOnBottomHint`, `Background` is still `Bottom`. `keyboardFocus: None` sets
+Qt hint `Qt::WindowStaysOnBottomHint`, `Background` is still `Bottom`. Docked panels yield to a
+fullscreen window on their own monitor, including panels that reserve no work area. A GUI-thread
+timer checks visible, uncloaked desktop windows in z-order every 500 ms. It ignores tool windows,
+desktop windows and waku's own windows; the first remaining window intersecting the panel must
+cover the monitor for the panel to move to `HWND_BOTTOM`. A maximized window with a standard caption
+does not count. When the fullscreen window no longer covers the panel, the panel returns to its
+configured layer. This geometry-based check can miss fullscreen windows reported as tool windows,
+and can treat a borderless maximized window that covers the entire monitor as fullscreen.
+`keyboardFocus: None` sets
 `WS_EX_NOACTIVATE` (`setNoActivate`) and `Qt::WindowDoesNotAcceptFocus`. Any other value is
 activated when shown at run time (not when the shell is first installed or re-shown after a
 reload): `requestActivate()` plus `forceForeground`, which is `kernel::forceForegroundFocus`

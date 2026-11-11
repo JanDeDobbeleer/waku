@@ -14,6 +14,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QScreen>
+#include <QSet>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -110,6 +111,9 @@ struct Native {
   // What the window hooks were asked: raised to topmost, WS_EX_NOACTIVATE set (true) or cleared,
   // given the foreground. Nothing here touches a real window.
   std::vector<quintptr> raised;
+  bool fullscreenHook = false;
+  QSet<quintptr> fullscreenPanels;
+  std::vector<quintptr> lowered;
   std::vector<std::pair<quintptr, bool>> noActivate;
   std::vector<quintptr> foregrounded;
   // True: the working set hook exists and counts its calls in `trims`.
@@ -145,6 +149,10 @@ struct Native {
     hooks.monitorHandle = [this](quintptr) { return monitor; };
     if (cursorHook) hooks.cursorPosition = [this]() { return cursor; };
     hooks.raiseTopmost = [this](quintptr hwnd) { raised.push_back(hwnd); };
+    if (fullscreenHook) {
+      hooks.fullscreenOnMonitor = [this](quintptr hwnd) { return fullscreenPanels.contains(hwnd); };
+      hooks.lowerToBottom = [this](quintptr hwnd) { lowered.push_back(hwnd); };
+    }
     hooks.setNoActivate = [this](quintptr hwnd, bool value) {
       noActivate.emplace_back(hwnd, value);
     };

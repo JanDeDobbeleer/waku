@@ -14,7 +14,7 @@ import QtQuick
 //         }
 //     }
 //
-//   screens     "primary", "all" or screen names ("DISPLAY2"); one window each
+//   screens     "primary", "all" (default) or screen names ("DISPLAY2"); one window each
 //   edge        Panel.Top | Bottom | Left | Right (an app bar on each; Left and Right are vertical)
 //   thickness   the height of a top or bottom panel, the width of a side one
 //   exclusive   reserve the work area (takes effect unless --no-app-bar is passed)
@@ -34,7 +34,7 @@ Variants {
         Right
     }
 
-    property var screens: ["primary"]
+    property var screens: ["all"]
     property int edge: Panel.Top
     property int thickness: 40
     property bool exclusive: false
