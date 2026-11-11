@@ -32,6 +32,8 @@ class WindowControl : public QObject {
   Q_INVOKABLE bool activate(qlonglong hwnd);
   // The foreground window, 0 when there is none.
   Q_INVOKABLE qlonglong foreground() const;
+  // The window's monitor handle, 0 when the window or monitor cannot be found.
+  Q_INVOKABLE qlonglong monitor(qlonglong hwnd) const;
   Q_INVOKABLE bool isWindow(qlonglong hwnd) const;
 
  private:

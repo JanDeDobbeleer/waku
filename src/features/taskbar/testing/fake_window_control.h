@@ -3,6 +3,7 @@
 #include <QString>
 #include <QStringList>
 #include <cstdint>
+#include <map>
 #include <set>
 
 #include "features/taskbar/window_control_backend.h"
@@ -14,6 +15,7 @@ class FakeWindowControl final : public WindowControlBackend {
  public:
   std::set<std::uintptr_t> windows;
   std::set<std::uintptr_t> minimized;
+  std::map<std::uintptr_t, std::uintptr_t> monitors;
   std::uintptr_t foregroundWindow = 0;
   // When true, bringToFront models the foreground lock refusing.
   bool refuseForeground = false;
@@ -22,6 +24,11 @@ class FakeWindowControl final : public WindowControlBackend {
   bool isWindow(std::uintptr_t hwnd) const override { return windows.count(hwnd) != 0; }
   bool isIconic(std::uintptr_t hwnd) const override { return minimized.count(hwnd) != 0; }
   std::uintptr_t foreground() const override { return foregroundWindow; }
+  std::uintptr_t monitor(std::uintptr_t hwnd) const override {
+    if (!isWindow(hwnd)) return 0;
+    const auto found = monitors.find(hwnd);
+    return found == monitors.end() ? 0 : found->second;
+  }
 
   void restore(std::uintptr_t hwnd) override {
     log << QStringLiteral("restore %1").arg(hwnd);
