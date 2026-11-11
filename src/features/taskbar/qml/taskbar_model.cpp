@@ -7,6 +7,39 @@
 #include <set>
 
 namespace waku::taskbar {
+namespace {
+
+int progressPriority(ProgressState state) {
+  switch (state) {
+    case ProgressState::Error:
+      return 0;
+    case ProgressState::Paused:
+      return 1;
+    case ProgressState::Normal:
+      return 2;
+    case ProgressState::Indeterminate:
+      return 3;
+    default:
+      return 4;
+  }
+}
+
+QString progressName(ProgressState state) {
+  switch (state) {
+    case ProgressState::Indeterminate:
+      return QStringLiteral("indeterminate");
+    case ProgressState::Normal:
+      return QStringLiteral("normal");
+    case ProgressState::Error:
+      return QStringLiteral("error");
+    case ProgressState::Paused:
+      return QStringLiteral("paused");
+    default:
+      return QStringLiteral("none");
+  }
+}
+
+}  // namespace
 
 TaskbarModel::TaskbarModel(QObject* parent) : QAbstractListModel(parent) {}
 
@@ -31,6 +64,8 @@ QHash<int, QByteArray> TaskbarModel::roleNames() const {
       {ClassNameRole, "className"},
       {HwndRole, "hwnd"},
       {MonitorHandleRole, "monitorHandle"},
+      {ProgressStateRole, "progressState"},
+      {ProgressRole, "progress"},
   };
 }
 
@@ -69,6 +104,10 @@ QVariant TaskbarModel::data(const QModelIndex& index, int role) const {
       return static_cast<qlonglong>(row.hwnd);
     case MonitorHandleRole:
       return static_cast<qlonglong>(row.monitor);
+    case ProgressStateRole:
+      return progressName(row.progress.state);
+    case ProgressRole:
+      return row.progress.value;
     default:
       return {};
   }
@@ -220,6 +259,11 @@ std::vector<TaskbarModel::Row> TaskbarModel::compute() {
       row.active = row.active || w->info.isActive;
       row.flashing = row.flashing || w->info.isFlashing;
       allMinimized = allMinimized && w->minimized;
+      const auto& progress = w->info.progress;
+      const int priority = progressPriority(progress.state);
+      const int current = progressPriority(row.progress.state);
+      if (priority < current || (priority == current && progress.value < row.progress.value))
+        row.progress = progress;
     }
     row.flashing = row.flashing && !row.active;
     row.minimized = allMinimized && !row.active;

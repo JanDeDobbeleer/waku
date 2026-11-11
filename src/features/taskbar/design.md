@@ -58,6 +58,12 @@ tracker on that bar window's handle, once).
 the button), `pinned`, `running`, `active`, `minimized`, `flashing`, `uniqueId`. Invokables by row:
 `activate`, `middleClick`, `closeWindow`, `closeAll`, `togglePin`, `launch`.
 
+Progress roles: `progressState` is `none`, `indeterminate`, `normal`, `error` or `paused`;
+`progress` is a fraction from 0 to 1 (ignored for `none` and `indeterminate`). These are also
+Windows extensions on `Quickshell.Wayland.Toplevel`. A port chooses its own indicator and colours.
+Grouped rows choose error, paused, normal, then indeterminate; ties use the least progress.
+Flashing for attention stays separate from progress.
+
 Row order: pinned apps in pin-file order, then the other buttons in the order their first window
 appeared.
 
@@ -94,8 +100,34 @@ No new Windows API. It does not touch the tracker, so it does not toggle or mini
 5. **Middle click closes** (Python has no default for it; the brief asked for close or launch).
 6. **Pins are written only from the menu.** Reorder by drag is out of scope, as for the tray;
    the order is the file's order.
-7. **No new Windows API.** Everything goes through the `win32/` implementations of the root
-   interfaces; nothing is added to the undocumented-API allowlist.
+7. **Progress uses our own tray host only.** A receiver window on its own thread
+   (`win32/progress_receiver_win.cpp`) lives for the whole process. Once per second it looks for a
+   `Shell_TrayWnd` owned by this process and sets its `TaskbandHWND` property to that receiver.
+   It never writes to Explorer or another shell. `ITaskbarList3` sends `WM_USER + 64` (value,
+   scaled by 65534) and `WM_USER + 65` (state) there, synchronously, which is why the receiver
+   has its own thread: a reload on the GUI thread never blocks the sender. The receiver accepts
+   only valid scalar payloads for live windows, allows these two messages through UIPI and never
+   forwards commands. It writes a `ProgressCache` keyed by window and owning process, so a reused
+   handle never inherits a state. Applications keep the receiver they found, so the receiver and
+   the cache outlive a reload: the new tracker reads the cache when it adds a window. A window
+   that hides keeps its progress; a destroyed one, or one the receiver finds gone, loses it.
+   Debug logging category `waku.taskbar.progress` logs every message and bind. See the
+   undocumented-API allowlist.
+
+## Progress limitations
+
+The port must instantiate the tray service, without `--no-tray`, and waku's tray host must own
+the shell lookup. With `--keep-taskbar`, Explorer keeps that lookup and progress is unavailable.
+This version does not observe Explorer or take over its receiver. An application that cached
+Explorer's receiver before waku attached can keep sending there: open a new application window or
+restart it after waku starts. No global `TaskbarCreated` or `TaskbarButtonCreated` is sent just to
+recover it. Restarted tray hosts are rebound by the timer. An app that never publishes progress
+cannot be detected as busy. Terminal progress belongs to the terminal window, aggregated over its
+tabs, not to one CLI process or tab; Terminal does not report again when a tab closes or another
+tab is selected, so a closed busy tab can leave the window busy until it reports again.
+
+To tell "the application sent nothing" from "waku dropped it", run with `--log-file` and
+`QT_LOGGING_RULES=waku.taskbar.progress.debug=true`.
 
 ## Left out
 

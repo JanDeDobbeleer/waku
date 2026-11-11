@@ -87,7 +87,9 @@ class TaskbarService : public QObject {
     std::shared_ptr<WindowSystem> system;
     std::shared_ptr<PinSupport> pins;
     std::unique_ptr<TrackerHooks> hooks;  // none in tests: events are fed by hand
-    QString pinFile;                      // empty: PinStore::defaultFile()
+    // The process-lifetime progress cache; none in tests: the tracker makes its own.
+    std::shared_ptr<ProgressCache> progress;
+    QString pinFile;  // empty: PinStore::defaultFile()
     bool asyncIcons = true;
     bool trackerAvailable = true;
     QString unavailableReason;

@@ -8,6 +8,8 @@ waku_feature(
     pin_store.h
     pin_store.cpp
     pin_support.h
+    progress_cache.h
+    progress_cache.cpp
     taskbar_icons.h
     taskbar_icons.cpp
     window_control_backend.h
@@ -17,6 +19,7 @@ waku_feature(
   WIN32_SOURCES
     win32/app_identity_win.cpp
     win32/pin_support_win.cpp
+    win32/progress_receiver_win.cpp
     win32/window_control_win.cpp
     win32/window_system_win.cpp
     win32/window_tracker_hooks_win.cpp

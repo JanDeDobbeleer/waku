@@ -1,5 +1,6 @@
 #include "features/taskbar/qml/taskbar_service.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QJsonObject>
 #include <QPointer>
@@ -34,6 +35,27 @@ void guarded(const char* what, Fn&& fn) {
 
 constexpr WindowHandle kPseudoBase = WindowHandle(1) << 63;
 
+// Applications cache the progress receiver they found once (Windows Terminal, per window, when it
+// is made), so it lives as long as the process: a reload deletes the Taskbar service and makes a
+// new one, and a receiver that went with it would leave every running application sending into a
+// window that no longer exists. Stopped when the application quits.
+struct SharedProgress {
+  std::shared_ptr<ProgressCache> cache;
+  std::unique_ptr<ProgressReceiver> receiver;
+};
+
+std::shared_ptr<ProgressCache> sharedProgress() {
+  static SharedProgress* shared = nullptr;
+  if (shared) return shared->cache;
+  auto cache = std::make_shared<ProgressCache>();
+  auto receiver = makeWin32ProgressReceiver(cache);
+  if (!receiver) return cache;
+  shared = new SharedProgress{cache, std::move(receiver)};
+  QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
+                   QCoreApplication::instance(), [] { delete std::exchange(shared, nullptr); });
+  return cache;
+}
+
 }  // namespace
 
 TaskbarService::TaskbarService(QObject* parent) : QObject(parent) {
@@ -46,6 +68,7 @@ TaskbarService::TaskbarService(QObject* parent) : QObject(parent) {
     deps.unavailableReason = QStringLiteral("taskbar unavailable: offscreen platform");
   } else {
     deps.hooks = makeWin32TrackerHooks();
+    deps.progress = sharedProgress();
   }
   init(std::move(deps));
 }
@@ -74,6 +97,7 @@ void TaskbarService::init(Deps deps) {
 
   if (!deps.trackerAvailable) return;
   tracker_ = new WindowTracker(system_, std::move(deps.hooks), this);
+  tracker_->setProgress(std::move(deps.progress));
   connect(tracker_, &WindowTracker::windowAdded, this,
           [this](WindowHandle hwnd, const WindowInfo& info) {
             guarded("window added", [&] { onAdded(hwnd, info); });
@@ -93,6 +117,15 @@ void TaskbarService::init(Deps deps) {
   connect(tracker_, &WindowTracker::windowMinimizeChanged, this,
           [this](WindowHandle hwnd, bool minimized) {
             guarded("window minimize", [&] { onMinimizeChanged(hwnd, minimized); });
+          });
+  connect(tracker_, &WindowTracker::windowProgressChanged, this,
+          [this](WindowHandle hwnd, const WindowProgress& progress) {
+            guarded("window progress", [&] {
+              if (TaskbarWindow* w = find(hwnd)) {
+                w->info.progress = progress;
+                scheduleChanged();
+              }
+            });
           });
 }
 

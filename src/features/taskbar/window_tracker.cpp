@@ -24,7 +24,22 @@ void guarded(const char* what, Fn&& fn) {
 
 WindowTracker::WindowTracker(std::shared_ptr<WindowSystem> system,
                              std::unique_ptr<TrackerHooks> hooks, QObject* parent)
-    : QObject(parent), system_(std::move(system)), hooks_(std::move(hooks)) {}
+    : QObject(parent), system_(std::move(system)), hooks_(std::move(hooks)) {
+  setProgress(std::make_shared<ProgressCache>());
+}
+
+void WindowTracker::setProgress(std::shared_ptr<ProgressCache> progress) {
+  if (!progress) return;
+  disconnect(progressConnection_);
+  progress_ = std::move(progress);
+  // Queued when the receiver writes from its worker thread.
+  progressConnection_ =
+      connect(progress_.get(), &ProgressCache::changed, this, [this](quintptr hwnd) {
+        guarded("progress", [&] { onProgressChanged(static_cast<WindowHandle>(hwnd)); });
+      });
+  for (auto& [hwnd, tracked] : windows_)
+    tracked.progress = progress_->get(hwnd, tracked.pid).value_or(WindowProgress{});
+}
 
 WindowTracker::~WindowTracker() { stop(); }
 
@@ -66,6 +81,7 @@ WindowInfo WindowTracker::merged(WindowHandle hwnd, const Tracked& tracked, Wind
   fresh.className = tracked.className;
   fresh.isActive = tracked.isActive;
   fresh.isFlashing = tracked.isFlashing;
+  fresh.progress = tracked.progress;
   return fresh;
 }
 
@@ -113,6 +129,16 @@ bool WindowTracker::updateCached(Tracked& tracked, const WindowInfo& fresh) {
 }
 
 // --- event entry points
+
+void WindowTracker::onProgressChanged(WindowHandle hwnd) {
+  const auto found = windows_.find(hwnd);
+  if (found == windows_.end()) return;
+  const WindowProgress progress =
+      progress_->get(hwnd, found->second.pid).value_or(WindowProgress{});
+  if (progress == found->second.progress) return;
+  found->second.progress = progress;
+  emit windowProgressChanged(hwnd, progress);
+}
 
 void WindowTracker::handleShellHook(std::uintptr_t wparam, std::intptr_t lparam) {
   guarded("shell hook", [&] {
@@ -200,6 +226,8 @@ void WindowTracker::onWindowCreated(WindowHandle hwnd) {
 }
 
 void WindowTracker::onWindowDestroyed(WindowHandle hwnd) {
+  // A hidden window keeps its progress; a destroyed one loses it (its handle may come back).
+  progress_->forget(hwnd);
   if (isTracked(hwnd)) removeWindow(hwnd);
 }
 
@@ -342,6 +370,8 @@ void WindowTracker::addWindow(WindowHandle hwnd, bool active, bool flashing) {
   }
   tracked.isActive = active;
   tracked.isFlashing = flashing;
+  tracked.pid = fresh.pid;
+  tracked.progress = progress_->get(hwnd, fresh.pid).value_or(WindowProgress{});
   windows_[hwnd] = tracked;
   emit windowAdded(hwnd, merged(hwnd, tracked, fresh));
 }
@@ -355,6 +385,8 @@ void WindowTracker::delayedAdd(WindowHandle hwnd, int delayMs) {
       tracked.title = fresh.title;
       tracked.className = fresh.className;
       if (!system_->isTaskbarWindow(merged(hwnd, tracked, fresh))) return;
+      tracked.pid = fresh.pid;
+      tracked.progress = progress_->get(hwnd, fresh.pid).value_or(WindowProgress{});
       windows_[hwnd] = tracked;
       emit windowAdded(hwnd, merged(hwnd, tracked, fresh));
     });

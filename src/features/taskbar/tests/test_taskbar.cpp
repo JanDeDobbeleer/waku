@@ -8,10 +8,13 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QQmlComponent>
+#include <QQmlContext>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QWindow>
+#include <limits>
 #include <map>
 #include <memory>
 #include <set>
@@ -77,14 +80,26 @@ struct Fixture {
   std::shared_ptr<FakeSystem> system = std::make_shared<FakeSystem>();
   std::shared_ptr<FakePins> pins = std::make_shared<FakePins>();
   std::unique_ptr<TaskbarService> service;
+  // Shared across services when set, as the process-lifetime cache is across reloads.
+  std::shared_ptr<plat::ProgressCache> progress;
   TaskbarModel model;
 
   // Builds the service (reading the windows already in `system`) and connects the model.
   void start() {
-    service = std::make_unique<TaskbarService>(makeDeps(system, pins, dir));
+    TaskbarService::Deps deps = makeDeps(system, pins, dir);
+    deps.progress = progress;
+    service = std::make_unique<TaskbarService>(std::move(deps));
     model.setService(service.get());
     ASSERT_TRUE(service->tracker()->start(1));
     QCoreApplication::processEvents();
+  }
+
+  // What an application sends to the taskbar. The fake's windows belong to process 1.
+  void sendState(plat::WindowHandle hwnd, int state, std::uint32_t pid = 1) {
+    service->tracker()->progress()->setState(hwnd, pid, state);
+  }
+  void sendValue(plat::WindowHandle hwnd, double value, std::uint32_t pid = 1) {
+    service->tracker()->progress()->setValue(hwnd, pid, value);
   }
 
   // The service coalesces its changes to one per loop turn: the accessors let that turn run, so a
@@ -123,6 +138,131 @@ TEST(TaskbarModel, ShowsTheOpenWindowsInArrivalOrder) {
   EXPECT_EQ(f.rows(), 3);
   EXPECT_EQ(f.key(2), QStringLiteral("w:103"));
   EXPECT_EQ(f.title(2), QStringLiteral("Third"));
+}
+
+TEST(TaskbarModel, ProgressTracksBusyValuesAndBlockingStatesWithoutLosingItOnRedraw) {
+  Fixture f;
+  f.system->add(kFirst);
+  f.start();
+  f.sendState(kFirst, 1);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("indeterminate"));
+  f.sendValue(kFirst, 0.37);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("normal"));
+  EXPECT_DOUBLE_EQ(f.at(0, TaskbarModel::ProgressRole).toDouble(), 0.37);
+  f.sendState(kFirst, 4);
+  f.sendValue(kFirst, 0.6);
+  f.hook(plat::shell::kWindowActivated, kFirst);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("error"));
+  EXPECT_DOUBLE_EQ(f.at(0, TaskbarModel::ProgressRole).toDouble(), 0.6);
+  f.sendState(kFirst, 8);
+  f.sendValue(kFirst, 0.8);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("paused"));
+  f.sendState(kFirst, 0);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("none"));
+  EXPECT_DOUBLE_EQ(f.at(0, TaskbarModel::ProgressRole).toDouble(), 0);
+}
+
+TEST(TaskbarModel, ProgressRejectsInvalidUpdatesAndClearsWhenAWindowHandleIsReused) {
+  Fixture f;
+  f.system->add(kFirst);
+  f.start();
+  f.sendValue(kFirst, 0.5);
+  EXPECT_DOUBLE_EQ(f.at(0, TaskbarModel::ProgressRole).toDouble(), 0.5);
+  QSignalSpy changed(f.service.get(), &TaskbarService::changed);
+  f.sendValue(kFirst, 0.5);
+  f.sendValue(kFirst, -0.1);
+  f.sendValue(kFirst, 1.1);
+  f.sendValue(kFirst, std::numeric_limits<double>::quiet_NaN());
+  f.sendState(kFirst, 3);
+  f.sendValue(kSecond, 0.9);
+  QCoreApplication::processEvents();
+  EXPECT_EQ(changed.count(), 0);
+  // Another process owns the handle now: its state is not this window's, and the old one is gone.
+  f.sendState(kFirst, 4, 2);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("none"));
+  f.sendValue(kFirst, 0.5);
+  f.hook(plat::shell::kWindowDestroyed, kFirst);
+  f.hook(plat::shell::kWindowCreated, kFirst);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("none"));
+  EXPECT_DOUBLE_EQ(f.at(0, TaskbarModel::ProgressRole).toDouble(), 0);
+}
+
+TEST(TaskbarModel, ProgressSentBeforeAWindowIsTrackedShowsWhenItArrives) {
+  Fixture f;
+  f.start();
+  f.sendState(kFirst, 1);
+  f.system->add(kFirst);
+  f.hook(plat::shell::kWindowCreated, kFirst);
+  ASSERT_EQ(f.rows(), 1);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("indeterminate"));
+}
+
+TEST(TaskbarModel, ProgressSurvivesAReloadOfTheService) {
+  Fixture f;
+  f.progress = std::make_shared<plat::ProgressCache>();
+  f.system->add(kFirst);
+  f.start();
+  f.sendValue(kFirst, 0.25);
+  // A reload deletes the service and makes a new one over the same cache.
+  f.model.setService(nullptr);
+  f.service.reset();
+  f.start();
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("normal"));
+  EXPECT_DOUBLE_EQ(f.at(0, TaskbarModel::ProgressRole).toDouble(), 0.25);
+}
+
+TEST(TaskbarModel, GroupProgressUsesStatePriorityThenTheLeastProgress) {
+  Fixture f;
+  f.system->add(kFirst, QStringLiteral("First"), QStringLiteral("app"));
+  f.system->add(kSecond, QStringLiteral("Second"), QStringLiteral("app"));
+  f.system->add(kThird, QStringLiteral("Third"), QStringLiteral("app"));
+  f.start();
+  f.model.setGrouping(true);
+  f.sendState(kFirst, 1);
+  f.sendValue(kSecond, 0.7);
+  f.sendValue(kThird, 0.2);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("normal"));
+  EXPECT_DOUBLE_EQ(f.at(0, TaskbarModel::ProgressRole).toDouble(), 0.2);
+  f.sendState(kSecond, 8);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("paused"));
+  EXPECT_DOUBLE_EQ(f.at(0, TaskbarModel::ProgressRole).toDouble(), 0.7);
+  f.sendState(kThird, 4);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("error"));
+  f.sendState(kThird, 0);
+  f.sendState(kSecond, 0);
+  EXPECT_EQ(f.at(0, TaskbarModel::ProgressStateRole).toString(), QStringLiteral("indeterminate"));
+}
+
+TEST(TaskbarModel, ProgressReachesToplevelsWithoutReplacingTheirIdentity) {
+  Fixture f;
+  f.system->add(kFirst);
+  f.start();
+  QQmlEngine engine;
+  engine.rootContext()->setContextProperty(QStringLiteral("progressBackend"), f.service.get());
+  QQmlComponent component(&engine);
+  component.setData(R"(
+import QtQuick
+import Quickshell.Wayland
+Item {
+    Component.onCompleted: ToplevelManager.service = progressBackend
+    property var first: ToplevelManager.toplevels.values[0] ?? null
+    property string state: first?.progressState ?? "none"
+    property real value: first?.progress ?? 0
+}
+)",
+                    QUrl(QStringLiteral("file:///progress.qml")));
+  std::unique_ptr<QObject> root(component.create());
+  ASSERT_NE(root, nullptr) << qPrintable(component.errorString());
+  ASSERT_TRUE(
+      QTest::qWaitFor([&] { return root->property("first").value<QObject*>() != nullptr; }));
+  QObject* first = root->property("first").value<QObject*>();
+  f.sendState(kFirst, 1);
+  ASSERT_TRUE(QTest::qWaitFor(
+      [&] { return root->property("state").toString() == QStringLiteral("indeterminate"); }));
+  f.sendValue(kFirst, 0.42);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return root->property("value").toDouble() == 0.42; }));
+  EXPECT_EQ(root->property("state").toString(), QStringLiteral("normal"));
+  EXPECT_EQ(root->property("first").value<QObject*>(), first);
 }
 
 TEST(TaskbarModel, AnActivationRebuildsTheRowsOnce) {
