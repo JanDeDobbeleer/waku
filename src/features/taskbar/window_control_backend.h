@@ -15,6 +15,8 @@ class WindowControlBackend {
   virtual bool isIconic(std::uintptr_t hwnd) const = 0;
   // 0 when there is no foreground window.
   virtual std::uintptr_t foreground() const = 0;
+  // 0 when the window or its monitor cannot be found.
+  virtual std::uintptr_t monitor(std::uintptr_t hwnd) const = 0;
   // Asks the window to leave the minimised state.
   virtual void restore(std::uintptr_t hwnd) = 0;
   // Brings the window to the front and gives it focus. True when it is the foreground window

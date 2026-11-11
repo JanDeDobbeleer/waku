@@ -68,15 +68,16 @@ Row order: pinned apps in pin-file order, then the other buttons in the order th
 appeared.
 
 `S.WindowControl` (singleton, `qml/window_control.h`): `activate(hwnd)`, `foreground()`,
-`isWindow(hwnd)`. For a shell that knows HWNDs from elsewhere and has no tracker
+`monitor(hwnd)`, `isWindow(hwnd)`. For a shell that knows HWNDs from elsewhere and has no tracker
 rows, because the tracker needs a bar window to attach to. `activate` restores the window when it
 is minimised (`ShowWindowAsync(SW_RESTORE)`), then calls `kernel::forceForegroundFocus`; it
 returns true when the window is the foreground window afterwards. Windows' foreground lock can
 still refuse a window of another process: the window's taskbar button then flashes
 (`FlashWindowEx`) and the call returns false. A missing window or `hwnd <= 0` returns false.
 Everything sits behind `WindowControlBackend` (`window_control_backend.h`), with a Win32
-implementation and a fake in `testing/`; without a live desktop all three calls return false or 0.
-No new Windows API. It does not touch the tracker, so it does not toggle or minimise (unlike
+implementation and a fake in `testing/`; without a live desktop all calls return false or 0.
+`monitor` returns the window's HMONITOR, or 0 if it cannot be found. It does not touch the tracker,
+so it does not toggle or minimise (unlike
 `TaskbarModel.activate`).
 
 ## Decisions
@@ -149,6 +150,6 @@ To tell "the application sent nothing" from "waku dropped it", run with `--log-f
 
 The thread and singleton tables there keep one line per cell. This is the longer text of their rows before they were shortened.
 
-- `waku.services.WindowControl` (`src/features/taskbar/qml/window_control.{h,cpp}`): `activate(hwnd)` (restore when minimised, then `kernel::forceForegroundFocus`; the taskbar button flashes and the call returns false when the foreground lock refuses), `foreground()` and `isWindow(hwnd)` for a shell that gets HWNDs from elsewhere (komorebi state) and has no tracker rows. A singleton only because QML needs an object to call; it holds no state, a thin call into Win32 through a `WindowControlBackend`. GUI thread only, no thread, no timer. Inert (false, 0) when `kernel::liveDesktop()` is false
+- `waku.services.WindowControl` (`src/features/taskbar/qml/window_control.{h,cpp}`): `activate(hwnd)` (restore when minimised, then `kernel::forceForegroundFocus`; the taskbar button flashes and the call returns false when the foreground lock refuses), `foreground()`, `monitor(hwnd)` and `isWindow(hwnd)` for a shell that gets HWNDs from elsewhere (komorebi state) and has no tracker rows. A singleton only because QML needs an object to call; it holds no state, a thin call into Win32 through a `WindowControlBackend`. GUI thread only, no thread, no timer. Inert (false, 0) when `kernel::liveDesktop()` is false
 
 - `waku.services.TaskbarService` (`src/features/taskbar/qml/taskbar_service.{h,cpp}`): the one window tracker (`waku::taskbar::WindowTracker`: shell hook and WinEvent hooks), pinned-apps store (`taskbar_pinned.json`) and window-icon cache of a `waku` run, shared by every Taskbar widget; created by the QML engine on first use and destroyed with it (the tracker stops, the icon loader's one-thread pool is joined). Registers `image://windowicon`. The tracker starts when the first Taskbar widget hands over its bar window; it never starts on the offscreen platform.

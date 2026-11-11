@@ -67,10 +67,23 @@ TEST(WindowControl, ReadsTheForegroundAndZeroWhenNone) {
   EXPECT_EQ(h.control->foreground(), 0);
 }
 
+TEST(WindowControl, ReadsTheMonitorOfAnyValidWindow) {
+  Harness h;
+  h.fake->monitors = {{100, 11}, {200, 22}};
+  EXPECT_EQ(h.control->monitor(h.control->foreground()), 11);
+  EXPECT_EQ(h.control->monitor(200), 22);
+  EXPECT_EQ(h.control->monitor(999), 0);
+  EXPECT_EQ(h.control->monitor(0), 0);
+  EXPECT_EQ(h.control->monitor(-1), 0);
+  h.fake->monitors.erase(100);
+  EXPECT_EQ(h.control->monitor(100), 0);
+}
+
 TEST(WindowControl, IsInertWithoutALiveDesktop) {
   Harness h(false);
   EXPECT_FALSE(h.control->activate(200));
   EXPECT_EQ(h.control->foreground(), 0);
+  EXPECT_EQ(h.control->monitor(100), 0);
   EXPECT_FALSE(h.control->isWindow(100));
   EXPECT_TRUE(h.fake->log.isEmpty());
 }

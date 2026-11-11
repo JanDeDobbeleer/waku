@@ -42,6 +42,15 @@ qlonglong WindowControl::foreground() const {
   }
 }
 
+qlonglong WindowControl::monitor(qlonglong hwnd) const {
+  if (!backend_ || hwnd <= 0) return 0;
+  try {
+    return static_cast<qlonglong>(backend_->monitor(static_cast<std::uintptr_t>(hwnd)));
+  } catch (...) {
+    return 0;
+  }
+}
+
 bool WindowControl::isWindow(qlonglong hwnd) const {
   if (!backend_ || hwnd <= 0) return false;
   try {

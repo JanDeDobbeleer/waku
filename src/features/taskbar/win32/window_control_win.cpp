@@ -10,7 +10,8 @@ namespace {
 
 HWND toHwnd(std::uintptr_t hwnd) { return reinterpret_cast<HWND>(hwnd); }
 
-// Documented Win32 only: IsWindow, IsIconic, GetForegroundWindow, ShowWindowAsync, FlashWindowEx.
+// Documented Win32 only: IsWindow, IsIconic, GetForegroundWindow, MonitorFromWindow,
+// ShowWindowAsync, FlashWindowEx.
 class Win32WindowControlBackend final : public WindowControlBackend {
  public:
   bool isWindow(std::uintptr_t hwnd) const override { return hwnd && IsWindow(toHwnd(hwnd)); }
@@ -19,6 +20,11 @@ class Win32WindowControlBackend final : public WindowControlBackend {
 
   std::uintptr_t foreground() const override {
     return reinterpret_cast<std::uintptr_t>(GetForegroundWindow());
+  }
+
+  std::uintptr_t monitor(std::uintptr_t hwnd) const override {
+    if (!isWindow(hwnd)) return 0;
+    return reinterpret_cast<std::uintptr_t>(MonitorFromWindow(toHwnd(hwnd), MONITOR_DEFAULTTONULL));
   }
 
   // Asynchronous, so a window that does not pump messages cannot block the GUI thread. Works on
