@@ -12,20 +12,20 @@ import QtQuick
 QtObject {
     id: root
 
-    property QtObject source: null
-    property string kind: "stream"
+    final property QtObject source: null
+    final property string kind: "stream"
 
-    readonly property bool isSink: kind === "sink"
-    readonly property bool isStream: kind === "stream"
-    readonly property bool ready: source !== null
+    final readonly property bool isSink: kind === "sink"
+    final readonly property bool isStream: kind === "stream"
+    final readonly property bool ready: source !== null
     // Quickshell's PwNode also has an integer `id` (the Pipewire object id); QML cannot declare a
     // property named id, so it is missing. `pid` is the process id of a stream, else 0.
-    readonly property int pid: kind === "stream" && source && source.pid !== undefined ? source.pid : 0
-    readonly property string name: kind === "stream" ? (source ? String(source.name) : "") : deviceName
-    readonly property string description: kind === "stream" ? (source ? String(source.description) : "") : deviceName
-    readonly property string nickname: description
-    readonly property string type: kind === "sink" ? "Audio/Sink" : (kind === "source" ? "Audio/Source" : "Stream/Output/Audio")
-    readonly property var properties: {
+    final readonly property int pid: kind === "stream" && source && source.pid !== undefined ? source.pid : 0
+    final readonly property string name: kind === "stream" ? (source ? String(source.name) : "") : deviceName
+    final readonly property string description: kind === "stream" ? (source ? String(source.description) : "") : deviceName
+    final readonly property string nickname: description
+    final readonly property string type: kind === "sink" ? "Audio/Sink" : (kind === "source" ? "Audio/Source" : "Stream/Output/Audio")
+    final readonly property var properties: {
         const base = ({
                 "media.class": type,
                 "node.name": name,
@@ -41,7 +41,7 @@ QtObject {
     }
 
     // The name of the endpoint that is the default now.
-    property string deviceName: {
+    final property string deviceName: {
         if (!source || kind === "stream")
             return "";
         const list = source.devices;
@@ -52,7 +52,7 @@ QtObject {
         return kind === "sink" ? "Default output" : "Default input";
     }
 
-    readonly property PwNodeAudio audio: PwNodeAudio {
+    final readonly property PwNodeAudio audio: PwNodeAudio {
         source: root.source
         scale: root.kind === "stream" ? 1 : 0.01
     }

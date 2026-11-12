@@ -8,7 +8,7 @@ import waku.services as S
 // types that `import Quickshell` re-exports (the qmldir `import waku.services` line).
 QtObject {
     // A model of DesktopEntry (role modelData) with a `values` array, sorted by name.
-    readonly property var applications: S.AppsService.applications
+    final readonly property var applications: S.AppsService.applications
 
     // The entry with this id, null when there is none.
     function byId(id) {

@@ -15,15 +15,15 @@ import waku.services as S
 QtObject {
     id: root
 
-    property QtObject backend: S.ControlCenter
+    final property QtObject backend: S.ControlCenter
 
-    property int profile: PowerProfile.Balanced
-    readonly property bool hasPerformanceProfile: idFor(PowerProfile.Performance) !== ""
-    readonly property var holds: []
-    readonly property int degradationReason: PerformanceDegradationReason.None
+    final property int profile: PowerProfile.Balanced
+    final readonly property bool hasPerformanceProfile: idFor(PowerProfile.Performance) !== ""
+    final readonly property var holds: []
+    final readonly property int degradationReason: PerformanceDegradationReason.None
 
     // True while profile follows the system, so the setter below does not write back.
-    property bool syncing: false
+    final property bool syncing: false
 
     function profileOf(mode) {
         if (/^0{8}-0{4}-0{4}-0{4}-0{12}$/.test(String(mode.id).replace(/[{}]/g, "")))
@@ -65,7 +65,7 @@ QtObject {
             backend.setPowerMode(id);
     }
 
-    readonly property Connections watch: Connections {
+    final readonly property Connections watch: Connections {
         target: root.backend
         ignoreUnknownSignals: true
         function onChanged() {

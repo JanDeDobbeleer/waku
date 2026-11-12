@@ -12,16 +12,16 @@ import QtQuick
 QtObject {
     id: root
 
-    property bool active: false
-    property list<QtObject> windows
+    final property bool active: false
+    final property list<QtObject> windows
 
     signal cleared
 
     // Wait this long (ms) after the last window lost the focus: focus moves between two listed
     // windows pass through "none active".
-    property int graceInterval: 80
+    final property int graceInterval: 80
 
-    property bool armed: false
+    final property bool armed: false
 
     function nativeOf(w) {
         return w ? (w.backingWindow ? w.backingWindow : w) : null;
@@ -73,7 +73,7 @@ QtObject {
     }
     onWindowsChanged: check()
 
-    readonly property Timer graceTimer: Timer {
+    final readonly property Timer graceTimer: Timer {
         id: grace
         interval: root.graceInterval
         onTriggered: {
@@ -82,11 +82,11 @@ QtObject {
         }
     }
 
-    readonly property Instantiator watchers: Instantiator {
+    final readonly property Instantiator watchers: Instantiator {
         model: root.windows.length
         delegate: Item {
-            required property int index
-            readonly property QtObject nativeWindow: root.nativeOf(root.windows[index])
+            final required property int index
+            final readonly property QtObject nativeWindow: root.nativeOf(root.windows[index])
             Connections {
                 target: nativeWindow
                 ignoreUnknownSignals: true

@@ -13,23 +13,23 @@ import waku.services as S
 QtObject {
     id: root
 
-    property string appId: ""
-    property string title: ""
-    property string className: ""
-    property real hwnd: 0
-    property real monitorHandle: 0
-    property bool activated: false
-    property bool minimized: false
-    property bool maximized: false
-    property bool fullscreen: false
-    property string iconUrl: ""
-    property string progressState: "none"
-    property real progress: 0
-    property var screens: []
+    final property string appId: ""
+    final property string title: ""
+    final property string className: ""
+    final property real hwnd: 0
+    final property real monitorHandle: 0
+    final property bool activated: false
+    final property bool minimized: false
+    final property bool maximized: false
+    final property bool fullscreen: false
+    final property string iconUrl: ""
+    final property string progressState: "none"
+    final property real progress: 0
+    final property var screens: []
 
     // The taskbar model and the row of this window in it, set by ToplevelManager.
-    property var taskbar: null
-    property int row: -1
+    final property var taskbar: null
+    final property int row: -1
 
     function activate() {
         S.WindowControl.activate(Number(hwnd));

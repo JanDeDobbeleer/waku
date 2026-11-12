@@ -7,17 +7,17 @@ import waku as W
 // models, the focused objects are null, dispatch and the refresh functions do nothing and rawEvent
 // never fires, so a shell that reads them loads and shows its "no compositor" state.
 QtObject {
-    readonly property string requestSocketPath: ""
-    readonly property string eventSocketPath: ""
-    readonly property bool usingLua: false
+    final readonly property string requestSocketPath: ""
+    final readonly property string eventSocketPath: ""
+    final readonly property bool usingLua: false
 
-    readonly property W.ScriptModel workspaces: W.ScriptModel {}
-    readonly property W.ScriptModel monitors: W.ScriptModel {}
-    readonly property W.ScriptModel toplevels: W.ScriptModel {}
+    final readonly property W.ScriptModel workspaces: W.ScriptModel {}
+    final readonly property W.ScriptModel monitors: W.ScriptModel {}
+    final readonly property W.ScriptModel toplevels: W.ScriptModel {}
 
-    readonly property QtObject activeToplevel: null
-    readonly property QtObject focusedMonitor: null
-    readonly property QtObject focusedWorkspace: null
+    final readonly property QtObject activeToplevel: null
+    final readonly property QtObject focusedMonitor: null
+    final readonly property QtObject focusedWorkspace: null
 
     // Never emitted: there is no event socket.
     signal rawEvent(var event)

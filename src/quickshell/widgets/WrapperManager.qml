@@ -8,37 +8,37 @@ QtObject {
     id: root
 
     // The item whose size the child follows.
-    required property Item wrapper
+    final required property Item wrapper
     // The parent the child gets (the wrapper itself unless it has an inner content item).
-    property Item container: wrapper
-    property Item child: null
+    final property Item container: wrapper
+    final property Item child: null
     // Added to every side by wrappers that draw a border the child sits inside.
-    property real inset: 0
+    final property real inset: 0
 
-    property real margin: 0
-    property real extraMargin: 0
-    property real topMargin: margin
-    property real bottomMargin: margin
-    property real leftMargin: margin
-    property real rightMargin: margin
-    property bool resizeChild: true
+    final property real margin: 0
+    final property real extraMargin: 0
+    final property real topMargin: margin
+    final property real bottomMargin: margin
+    final property real leftMargin: margin
+    final property real rightMargin: margin
+    final property bool resizeChild: true
 
-    readonly property real left: leftMargin + extraMargin + inset
-    readonly property real right: rightMargin + extraMargin + inset
-    readonly property real top: topMargin + extraMargin + inset
-    readonly property real bottom: bottomMargin + extraMargin + inset
+    final readonly property real left: leftMargin + extraMargin + inset
+    final readonly property real right: rightMargin + extraMargin + inset
+    final readonly property real top: topMargin + extraMargin + inset
+    final readonly property real bottom: bottomMargin + extraMargin + inset
 
-    readonly property real childWidth: child ? child.implicitWidth : 0
-    readonly property real childHeight: child ? child.implicitHeight : 0
-    readonly property real contentImplicitWidth: childWidth + left + right
-    readonly property real contentImplicitHeight: childHeight + top + bottom
+    final readonly property real childWidth: child ? child.implicitWidth : 0
+    final readonly property real childHeight: child ? child.implicitHeight : 0
+    final readonly property real contentImplicitWidth: childWidth + left + right
+    final readonly property real contentImplicitHeight: childHeight + top + bottom
 
     onChildChanged: {
         if (child)
             child.parent = container;
     }
 
-    readonly property list<Binding> bindings: [
+    final readonly property list<Binding> bindings: [
         Binding {
             target: root.child
             property: "x"

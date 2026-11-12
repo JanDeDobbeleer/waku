@@ -17,17 +17,17 @@ import waku.services as S
 QtObject {
     id: root
 
-    property var service: S.TaskbarService
+    final property var service: S.TaskbarService
 
-    readonly property W.ScriptModel toplevels: W.ScriptModel {
+    final readonly property W.ScriptModel toplevels: W.ScriptModel {
         values: root.list
     }
-    property Toplevel activeToplevel: null
+    final property Toplevel activeToplevel: null
 
-    property var list: []
-    property var cache: ({})
+    final property var list: []
+    final property var cache: ({})
 
-    readonly property Window anchor: Window {
+    final readonly property Window anchor: Window {
         visible: true
         width: 1
         height: 1
@@ -37,33 +37,33 @@ QtObject {
         flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowTransparentForInput | Qt.WindowDoesNotAcceptFocus
     }
 
-    readonly property S.TaskbarModel taskbar: S.TaskbarModel {
+    final readonly property S.TaskbarModel taskbar: S.TaskbarModel {
         service: root.service
         grouping: false
         showOnlyVisible: false
         window: root.anchor
     }
 
-    readonly property Component toplevelComponent: Component {
+    final readonly property Component toplevelComponent: Component {
         Toplevel {}
     }
 
-    readonly property Instantiator rows: Instantiator {
+    final readonly property Instantiator rows: Instantiator {
         model: root.taskbar
         delegate: QtObject {
-            required property var model
-            readonly property string key: model.key ?? ""
-            readonly property string title: model.title ?? ""
-            readonly property string exe: model.exe ?? ""
-            readonly property string className: model.className ?? ""
-            readonly property real hwnd: model.hwnd ?? 0
-            readonly property real monitorHandle: model.monitorHandle ?? 0
-            readonly property string iconUrl: model.iconUrl ?? ""
-            readonly property bool active: model.active ?? false
-            readonly property bool minimized: model.minimized ?? false
-            readonly property string progressState: model.progressState ?? "none"
-            readonly property real progress: model.progress ?? 0
-            readonly property string signature: [key, title, exe, className, hwnd, monitorHandle, iconUrl, active, minimized, progressState, progress].join("|")
+            final required property var model
+            final readonly property string key: model.key ?? ""
+            final readonly property string title: model.title ?? ""
+            final readonly property string exe: model.exe ?? ""
+            final readonly property string className: model.className ?? ""
+            final readonly property real hwnd: model.hwnd ?? 0
+            final readonly property real monitorHandle: model.monitorHandle ?? 0
+            final readonly property string iconUrl: model.iconUrl ?? ""
+            final readonly property bool active: model.active ?? false
+            final readonly property bool minimized: model.minimized ?? false
+            final readonly property string progressState: model.progressState ?? "none"
+            final readonly property real progress: model.progress ?? 0
+            final readonly property string signature: [key, title, exe, className, hwnd, monitorHandle, iconUrl, active, minimized, progressState, progress].join("|")
             // The delegate is its own component; `root` is the singleton's id.
             // qmllint disable unqualified
             onSignatureChanged: Qt.callLater(root.rebuild)

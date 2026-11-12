@@ -11,9 +11,9 @@ import waku.services as S
 QtObject {
     id: root
 
-    property real timeout: 0
-    property bool enabled: true
-    property bool respectInhibitors: true
+    final property real timeout: 0
+    final property bool enabled: true
+    final property bool respectInhibitors: true
 
-    readonly property bool isIdle: enabled && timeout > 0 && S.DesktopState.idleSeconds >= timeout
+    final readonly property bool isIdle: enabled && timeout > 0 && S.DesktopState.idleSeconds >= timeout
 }

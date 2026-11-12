@@ -13,13 +13,13 @@ import QtQuick
 Item {
     id: root
 
-    property string source: ""
-    property real implicitSize: 0
-    property bool asynchronous: false
-    property bool mipmap: false
-    readonly property real actualSize: Math.min(width, height)
-    readonly property Image backer: image
-    readonly property int status: image.status
+    final property string source: ""
+    final property real implicitSize: 0
+    final property bool asynchronous: false
+    final property bool mipmap: false
+    final readonly property real actualSize: Math.min(width, height)
+    final readonly property Image backer: image
+    final readonly property int status: image.status
 
     implicitWidth: implicitSize
     implicitHeight: implicitSize

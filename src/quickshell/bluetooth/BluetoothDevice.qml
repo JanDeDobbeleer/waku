@@ -23,36 +23,36 @@ import QtQuick
 QtObject {
     id: root
 
-    property QtObject service: null
-    property var row: ({})
-    property QtObject adapter: null
+    final property QtObject service: null
+    final property var row: ({})
+    final property QtObject adapter: null
 
-    property string name: ""
-    readonly property string deviceName: String(row.name ? row.name : "")
-    readonly property string address: String(row.id ? row.id : "")
-    readonly property int state: {
+    final property string name: ""
+    final readonly property string deviceName: String(row.name ? row.name : "")
+    final readonly property string address: String(row.id ? row.id : "")
+    final readonly property int state: {
         if (row.connecting === true)
             return BluetoothDeviceState.Connecting;
         if (row.disconnecting === true)
             return BluetoothDeviceState.Disconnecting;
         return connected ? BluetoothDeviceState.Connected : BluetoothDeviceState.Disconnected;
     }
-    property bool connected: false
-    readonly property bool paired: row.paired === true
-    readonly property bool bonded: paired
-    readonly property bool pairing: pairingNow
-    property bool trusted: paired
-    property bool blocked: false
-    property bool wakeAllowed: false
-    readonly property string icon: "bluetooth"
-    readonly property bool batteryAvailable: row.batteryPercent !== undefined && row.batteryPercent >= 0
-    readonly property real battery: batteryAvailable ? row.batteryPercent / 100 : 0
-    readonly property string dbusPath: ""
+    final property bool connected: false
+    final readonly property bool paired: row.paired === true
+    final readonly property bool bonded: paired
+    final readonly property bool pairing: pairingNow
+    final property bool trusted: paired
+    final property bool blocked: false
+    final property bool wakeAllowed: false
+    final readonly property string icon: "bluetooth"
+    final readonly property bool batteryAvailable: row.batteryPercent !== undefined && row.batteryPercent >= 0
+    final readonly property real battery: batteryAvailable ? row.batteryPercent / 100 : 0
+    final readonly property string dbusPath: ""
 
-    property bool pulling: false
-    property bool pairingNow: false
+    final property bool pulling: false
+    final property bool pairingNow: false
 
-    readonly property Connections watch: Connections {
+    final readonly property Connections watch: Connections {
         target: root.service
         ignoreUnknownSignals: true
         function onPairingChanged() {

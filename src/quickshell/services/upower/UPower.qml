@@ -16,22 +16,22 @@ import waku.services as S
 UPowerBase {
     id: root
 
-    property QtObject backend: batterySource
+    final property QtObject backend: batterySource
 
-    readonly property UPowerDevice displayDevice: UPowerDevice {
+    final readonly property UPowerDevice displayDevice: UPowerDevice {
         id: displayDev
         nativePath: "DisplayDevice"
     }
-    readonly property W.ScriptModel devices: W.ScriptModel {
+    final readonly property W.ScriptModel devices: W.ScriptModel {
         values: root.backend && root.backend.available ? [batteryDev] : []
     }
 
-    readonly property UPowerDevice battery: UPowerDevice {
+    final readonly property UPowerDevice battery: UPowerDevice {
         id: batteryDev
         nativePath: "battery_BAT0"
     }
 
-    readonly property S.Battery batterySource: S.Battery {
+    final readonly property S.Battery batterySource: S.Battery {
         interval: 10000
     }
 
@@ -67,7 +67,7 @@ UPowerBase {
     }
 
     // The service signals every sample through `updated`; a replaced backend is read at once.
-    readonly property Connections watch: Connections {
+    final readonly property Connections watch: Connections {
         target: root.backend
         ignoreUnknownSignals: true
         function onUpdated() {
