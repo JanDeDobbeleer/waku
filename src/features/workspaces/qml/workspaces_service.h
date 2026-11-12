@@ -8,6 +8,7 @@
 #include <QVariantList>
 
 #include "features/workspaces/qml/virtual_desktops_service.h"
+#include "kernel/qt/sealed_singleton.h"
 
 class QJSEngine;
 class QQmlEngine;
@@ -35,6 +36,7 @@ class Workspaces : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(QString provider READ provider NOTIFY changed FINAL)
   Q_PROPERTY(bool connected READ connected NOTIFY changed FINAL)
   Q_PROPERTY(QVariantList monitors READ monitors NOTIFY changed FINAL)

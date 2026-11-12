@@ -20,6 +20,7 @@
 #include "features/taskbar/taskbar_icons.h"
 #include "features/taskbar/window_system.h"
 #include "features/taskbar/window_tracker.h"
+#include "kernel/qt/sealed_singleton.h"
 
 class QQmlEngine;
 class QJSEngine;
@@ -78,6 +79,7 @@ class TaskbarService : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
   Q_PROPERTY(QString unavailableReason READ unavailableReason CONSTANT FINAL)
 

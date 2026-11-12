@@ -16,6 +16,7 @@
 #include "features/wallpapers/wallpaper_command.h"
 #include "features/wallpapers/wallpaper_manager.h"
 #include "kernel/qt/hotkeys.h"
+#include "kernel/qt/sealed_singleton.h"
 
 class QJSEngine;
 class QQmlEngine;
@@ -63,6 +64,7 @@ class Wallpapers : public QObject, public WallpaperControl {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
   Q_PROPERTY(QString imagePath READ imagePath WRITE setImagePath NOTIFY imagePathChanged FINAL)
   Q_PROPERTY(QVariantList files READ files NOTIFY filesChanged FINAL)

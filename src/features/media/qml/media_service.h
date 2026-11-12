@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "features/media/media_session.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::media {
 
@@ -32,6 +33,7 @@ class Media : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available NOTIFY changed FINAL)
   Q_PROPERTY(QString title READ title NOTIFY changed FINAL)
   Q_PROPERTY(QString artist READ artist NOTIFY changed FINAL)

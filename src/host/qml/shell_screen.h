@@ -10,6 +10,8 @@
 #include <QStringList>
 #include <QVariantList>
 
+#include "kernel/qt/sealed_singleton.h"
+
 class QQmlEngine;
 
 namespace waku::host {
@@ -73,6 +75,7 @@ class ScreenList : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(QQmlListProperty<waku::host::ShellScreen> screens READ screensProperty NOTIFY
                  screensChanged FINAL)
   Q_PROPERTY(waku::host::ShellScreen* primary READ primary NOTIFY screensChanged FINAL)

@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "features/notifications/notifications.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::notifications {
 
@@ -30,6 +31,7 @@ class Notifications : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available NOTIFY changed FINAL)
   Q_PROPERTY(int count READ count NOTIFY changed FINAL)
   Q_PROPERTY(bool unread READ unread NOTIFY changed FINAL)

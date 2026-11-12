@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "features/taskbar/window_control_backend.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::taskbar {
 
@@ -21,6 +22,7 @@ class WindowControl : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
 
  public:
   explicit WindowControl(QObject* parent = nullptr);

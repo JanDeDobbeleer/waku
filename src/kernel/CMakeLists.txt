@@ -28,6 +28,7 @@ add_library(waku_kernel STATIC
   qt/live_desktop.h
   qt/live_desktop.cpp
   qt/polled_source.h
+  qt/sealed_singleton.h
   qt/polled_source.cpp
   win32/shell_icons.h
   win32/shell_icons.cpp

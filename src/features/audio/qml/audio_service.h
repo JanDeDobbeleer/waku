@@ -7,6 +7,7 @@
 #include <QVariantList>
 
 #include "features/audio/audio_endpoints.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::audio {
 
@@ -56,6 +57,7 @@ class AudioOutput : public AudioBase {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
 
  public:
   explicit AudioOutput(QObject* parent = nullptr)
@@ -66,6 +68,7 @@ class AudioInput : public AudioBase {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
 
  public:
   explicit AudioInput(QObject* parent = nullptr)

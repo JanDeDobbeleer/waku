@@ -7,6 +7,8 @@
 #include <QStringList>
 #include <functional>
 
+#include "kernel/qt/sealed_singleton.h"
+
 namespace waku::quickshell_io {
 
 // What a widget does on click, as a QML singleton: start a program, run a command line, open a
@@ -18,6 +20,7 @@ class Shell : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(QString homeDir READ homeDir CONSTANT FINAL)
   Q_PROPERTY(QString configHome READ configHome CONSTANT FINAL)
 

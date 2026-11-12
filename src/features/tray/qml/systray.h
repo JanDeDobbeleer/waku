@@ -14,6 +14,7 @@
 #include "features/tray/qml/tray_icon_model.h"
 #include "features/tray/tray_host.h"
 #include "features/tray/tray_icon_registry.h"
+#include "kernel/qt/sealed_singleton.h"
 
 class QQmlEngine;
 class QJSEngine;
@@ -32,6 +33,7 @@ class Systray : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available NOTIFY availableChanged FINAL)
   Q_PROPERTY(QString unavailableReason READ unavailableReason NOTIFY availableChanged FINAL)
   Q_PROPERTY(QObject* icons READ icons CONSTANT FINAL)

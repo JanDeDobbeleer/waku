@@ -10,6 +10,7 @@
 
 #include "features/quickshell_io/command_spec.h"
 #include "features/quickshell_io/qml/clipboard_text.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::quickshell_io {
 
@@ -27,6 +28,7 @@ class QuickshellSingleton : public QObject {
   Q_OBJECT
   QML_NAMED_ELEMENT(QuickshellSingleton)
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(qint64 processId READ processId CONSTANT FINAL)
   Q_PROPERTY(QString clipboardText READ clipboardText WRITE setClipboardText NOTIFY
                  clipboardTextChanged FINAL)

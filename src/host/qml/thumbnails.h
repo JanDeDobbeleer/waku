@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "host/thumbnail_store.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::host {
 
@@ -58,6 +59,7 @@ class Thumbnails : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
 
  public:
   explicit Thumbnails(std::shared_ptr<ThumbnailStore> store, QObject* parent = nullptr);

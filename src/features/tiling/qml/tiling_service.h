@@ -14,6 +14,7 @@
 #include "features/tiling/tiling_engine.h"
 #include "features/tiling/tiling_events.h"
 #include "features/tiling/window_placer.h"
+#include "kernel/qt/sealed_singleton.h"
 
 class QJSEngine;
 class QQmlEngine;
@@ -45,6 +46,7 @@ class Tiling : public QObject, public TilingControl {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged FINAL)
   Q_PROPERTY(QString layout READ layout WRITE setLayoutName NOTIFY layoutChanged FINAL)
   Q_PROPERTY(int gap READ gap WRITE setGap NOTIFY gapChanged FINAL)
