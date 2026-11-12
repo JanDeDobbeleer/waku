@@ -205,6 +205,30 @@ jobs:
       - name: Deploy
         run: cmake --build --preset ${{ matrix.preset }} --target deploy
 
+      # Shells lint against the engine's QML type metadata (qmldir, qmltypes and the QML-defined
+      # types of the Quickshell and waku modules). The metadata is the same on both architectures,
+      # so only x64 publishes it.
+      - name: Package the QML type metadata
+        if: ${{ matrix.arch == 'x64' }}
+        shell: pwsh
+        run: |
+          $src = 'build/${{ matrix.preset }}/qml_modules'
+          $stage = Join-Path $env:RUNNER_TEMP 'qml-types'
+          Get-ChildItem $src -Recurse -File -Include qmldir, *.qmltypes, *.qml | ForEach-Object {
+              $rel = $_.FullName.Substring((Resolve-Path $src).Path.Length + 1)
+              $dest = Join-Path $stage $rel
+              New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
+              Copy-Item $_.FullName $dest
+          }
+          Compress-Archive -Path (Join-Path $stage '*') -DestinationPath waku-qml-types.zip -Force
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ matrix.arch == 'x64' }}
+        with:
+          name: qml-types
+          path: waku-qml-types.zip
+          if-no-files-found: error
+
       # Qt and waku use the dynamic CRT. A package cannot run vc_redist, so ship the CRT next to
       # waku.exe (app-local deployment).
       - name: Bundle the C++ runtime
@@ -277,6 +301,11 @@ jobs:
         with:
           pattern: msix-*
           merge-multiple: true
+          path: release
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: qml-types
           path: release
 
       - name: Checksums
