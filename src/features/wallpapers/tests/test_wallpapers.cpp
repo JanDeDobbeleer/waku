@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "features/wallpapers/qml/wallpapers_service.h"
+#include "features/wallpapers/testing/fake_lock_screen.h"
 #include "features/wallpapers/testing/fake_wallpaper_backend.h"
 #include "host/testing/shell_fixtures.h"
 #include "kernel/qt/hotkeys.h"
@@ -38,7 +39,7 @@ void makeImage(const QString& path, const QColor& color, QSize size = QSize(40, 
 }
 
 struct Fixture {
-  Fixture() {
+  explicit Fixture(bool dryRun = false) {
     EXPECT_TRUE(folder.isValid());
     EXPECT_TRUE(cacheFolder.isValid());
     makeImage(folder.filePath(QStringLiteral("img10.png")), Qt::red);
@@ -48,10 +49,19 @@ struct Fixture {
     EXPECT_TRUE(notes.open(QIODevice::WriteOnly));
 
     state = std::make_shared<DesktopState>();
+    lockScreen = std::make_shared<plat::LockScreenLog>();
     Wallpapers::Deps deps;
     deps.backend = [state = state] { return std::make_unique<FakeBackend>(state); };
     deps.picker = [this](int count) { return picks[next++ % picks.size()] % count; };
+    deps.allDesktops = [this](const QString& path) {
+      allDesktopSets << path;
+      if (failAllDesktops) return false;
+      state->wallpaper = path;
+      return true;
+    };
+    deps.lockScreen = std::make_unique<plat::FakeLockScreen>(lockScreen);
     deps.realBackend = false;
+    deps.dryRun = dryRun;
     service = std::make_unique<Wallpapers>(std::move(deps), nullptr);
   }
 
@@ -69,6 +79,9 @@ struct Fixture {
   QTemporaryDir folder;
   QTemporaryDir cacheFolder;
   std::shared_ptr<DesktopState> state;
+  std::shared_ptr<plat::LockScreenLog> lockScreen;
+  QStringList allDesktopSets;
+  bool failAllDesktops = false;
   std::unique_ptr<Wallpapers> service;
   std::vector<int> picks{0};
   size_t next = 0;
@@ -114,6 +127,49 @@ TEST(WallpapersService, IgnoresAPathThatIsNotAFile) {
   f.service->setWallpaper(f.file(QStringLiteral("missing.png")));
   f.service->setWallpaper(f.folder.path());
   EXPECT_TRUE(f.state->sets.isEmpty());
+}
+
+TEST(WallpapersService, AllDesktopsUsesTheShellSetterAndUpdatesCurrentAndLockScreen) {
+  Fixture f;
+  const QString target = f.file(QStringLiteral("img2.png"));
+  // Unlike the random manager, an explicit all-desktop selection needs no configured folder.
+  ASSERT_TRUE(f.service->setWallpaperAllDesktops(target));
+  EXPECT_EQ(f.allDesktopSets, QStringList{target});
+  EXPECT_TRUE(f.state->sets.isEmpty());
+  EXPECT_EQ(f.service->current(), target);
+  EXPECT_EQ(f.lockScreen->sets, QStringList{target});
+}
+
+TEST(WallpapersService, FailedAllDesktopsDoesNotFallBackOrChangeTheLockScreen) {
+  Fixture f;
+  f.failAllDesktops = true;
+  EXPECT_FALSE(f.service->setWallpaperAllDesktops(f.file(QStringLiteral("img2.png"))));
+  EXPECT_EQ(f.allDesktopSets.size(), 1);
+  EXPECT_TRUE(f.state->sets.isEmpty());
+  EXPECT_TRUE(f.service->current().isEmpty());
+  EXPECT_TRUE(f.lockScreen->sets.isEmpty());
+}
+
+TEST(WallpapersService, AllDesktopsRejectsInvalidImagesAndUnsupportedSystems) {
+  Fixture f;
+  EXPECT_FALSE(f.service->setWallpaperAllDesktops(f.file(QStringLiteral("missing.png"))));
+  EXPECT_FALSE(f.service->setWallpaperAllDesktops(f.file(QStringLiteral("notes.txt"))));
+  EXPECT_FALSE(f.service->setWallpaperAllDesktops(f.folder.path()));
+  EXPECT_TRUE(f.allDesktopSets.isEmpty());
+  Wallpapers::Deps deps;
+  deps.realBackend = false;
+  deps.backend = [state = f.state] { return std::make_unique<FakeBackend>(state); };
+  Wallpapers unsupported(std::move(deps));
+  EXPECT_FALSE(unsupported.setWallpaperAllDesktops(f.file(QStringLiteral("img2.png"))));
+  EXPECT_TRUE(f.state->sets.isEmpty());
+}
+
+TEST(WallpapersService, AllDesktopsDryRunCallsNeitherSetterNorLockScreen) {
+  Fixture f(true);
+  EXPECT_TRUE(f.service->setWallpaperAllDesktops(f.file(QStringLiteral("img2.png"))));
+  EXPECT_TRUE(f.allDesktopSets.isEmpty());
+  EXPECT_TRUE(f.state->sets.isEmpty());
+  EXPECT_TRUE(f.lockScreen->sets.isEmpty());
 }
 
 TEST(WallpapersService, RandomPicksOneOfTheListedFilesAndNeverRepeatsInARow) {
@@ -222,5 +278,19 @@ ShellRoot {
       },
       3000));
   EXPECT_EQ(gallery->property("count").toInt(), 3);
-  EXPECT_TRUE(hotkeys->press(combo("alt+e")));
+  f.failAllDesktops = true;
+  QTest::keyClick(gallery->window(), Qt::Key_Return, Qt::ShiftModifier);
+  ASSERT_EQ(f.allDesktopSets.size(), 1);
+  EXPECT_TRUE(gallery->window()->isVisible());
+  EXPECT_TRUE(f.state->sets.isEmpty());
+  f.failAllDesktops = false;
+  QTest::keyClick(gallery->window(), Qt::Key_Enter, Qt::ShiftModifier);
+  ASSERT_EQ(f.allDesktopSets.size(), 2);
+  EXPECT_FALSE(gallery->window()->isVisible());
+  EXPECT_TRUE(f.state->sets.isEmpty());
+  ASSERT_TRUE(hotkeys->press(combo("alt+e")));
+  QTest::keyClick(gallery->window(), Qt::Key_Return);
+  EXPECT_EQ(f.state->sets.size(), 1);
+  EXPECT_EQ(f.allDesktopSets.size(), 2);
+  EXPECT_FALSE(gallery->window()->isVisible());
 }

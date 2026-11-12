@@ -18,6 +18,7 @@
 
 #include "features/wallpapers/wallpaper_files.h"
 #include "features/wallpapers/win32/window_focus.h"
+#include "features/workspaces/virtual_desktops.h"
 #include "kernel/qt/app_data.h"
 #include "kernel/qt/live_desktop.h"
 #include "kernel/win32/window_focus.h"
@@ -137,6 +138,10 @@ Wallpapers::Wallpapers(Deps deps, QObject* parent) : QObject(parent), deps_(std:
   }
   available_ = backend_ != nullptr;
   if (!available_) return;
+
+  if (!deps_.allDesktops && deps_.realBackend) {
+    deps_.allDesktops = workspaces::vdesk::setWallpaperForAllDesktops;
+  }
 
   verifyTimer_.setInterval(150);
   connect(&verifyTimer_, &QTimer::timeout, this, [this] {
@@ -281,6 +286,32 @@ void Wallpapers::readCurrent() {
 }
 
 void Wallpapers::setWallpaper(const QString& path) { setWallpaperImpl(path, false); }
+
+bool Wallpapers::setWallpaperAllDesktops(const QString& path) {
+  if (!available_) return false;
+  bool applied = false;
+  guarded("set wallpaper on all desktops", [&] {
+    const ResolvedWallpaper resolved = resolveWallpaperTarget(path, imagePath_);
+    if (!resolved.ok()) {
+      qWarning().noquote() << "Wallpapers:" << resolved.error;
+      return;
+    }
+    if (deps_.dryRun) {
+      qInfo().noquote() << "Wallpapers: dry run, not setting on all desktops" << resolved.path;
+      updateLockScreen(resolved.path, true);
+      applied = true;
+      return;
+    }
+    if (!deps_.allDesktops || !deps_.allDesktops(resolved.path)) {
+      qWarning() << "Wallpapers: could not set wallpaper on all desktops";
+      return;
+    }
+    readCurrent();
+    confirmChange(resolved.path, QString());
+    applied = true;
+  });
+  return applied;
+}
 
 void Wallpapers::setWallpaperImpl(const QString& path, bool dryRun) {
   if (!available_ || !QFileInfo(path).isFile()) return;

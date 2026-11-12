@@ -81,6 +81,7 @@ class Wallpapers : public QObject, public WallpaperControl {
     waku::wallpapers::WallpaperManager::Picker picker;
     // Sets the lock screen picture; null means the real one on a live desktop, none otherwise.
     std::unique_ptr<LockScreenSetter> lockScreen;
+    std::function<bool(const QString&)> allDesktops;
     bool realBackend = true;
     // Never call SetWallpaper (WAKU_WALLPAPER_DRYRUN=1 sets it). A
     // `wakuc ... --dry-run` does the same for one call.
@@ -115,6 +116,8 @@ class Wallpapers : public QObject, public WallpaperControl {
   // Rescans the folder and reads the current wallpaper.
   Q_INVOKABLE void refresh();
   Q_INVOKABLE void setWallpaper(const QString& path);
+  // False on failure, without falling back to changing only the current desktop.
+  Q_INVOKABLE bool setWallpaperAllDesktops(const QString& path);
   Q_INVOKABLE void random();
   Q_INVOKABLE void toggleGallery();
   Q_INVOKABLE void closeGallery();
