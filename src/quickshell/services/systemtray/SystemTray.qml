@@ -18,20 +18,20 @@ import waku.services as S
 QtObject {
     id: root
 
-    property QtObject tray: S.Systray
-    property var trayModel: S.Systray.icons
+    final property QtObject tray: S.Systray
+    final property var trayModel: S.Systray.icons
 
-    property var itemList: []
-    readonly property W.ScriptModel items: W.ScriptModel {
+    final property var itemList: []
+    final readonly property W.ScriptModel items: W.ScriptModel {
         values: root.itemList
     }
 
-    readonly property Instantiator factory: Instantiator {
+    final readonly property Instantiator factory: Instantiator {
         model: root.trayModel
         delegate: SystemTrayItem {
             id: item
-            required property var model
-            readonly property var rowData: ({
+            final required property var model
+            final readonly property var rowData: ({
                     "id": model.id,
                     "tooltip": model.tooltip,
                     "exe": model.exe,

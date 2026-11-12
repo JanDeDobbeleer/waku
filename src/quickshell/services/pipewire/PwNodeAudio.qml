@@ -10,17 +10,17 @@ import QtQuick
 QtObject {
     id: root
 
-    property QtObject source: null
-    property real scale: 1
+    final property QtObject source: null
+    final property real scale: 1
 
     // Per channel; waku has one volume per node, so every channel reports it.
-    readonly property var channels: []
-    readonly property var volumes: [volume]
-    property real volume: 0
-    property bool muted: false
+    final readonly property var channels: []
+    final readonly property var volumes: [volume]
+    final property real volume: 0
+    final property bool muted: false
 
     // True while the source is copied in, so the handlers below do not write it back.
-    property bool pulling: false
+    final property bool pulling: false
 
     function pull() {
         if (!source)
@@ -45,7 +45,7 @@ QtObject {
             source.muted = muted;
     }
 
-    readonly property Connections watch: Connections {
+    final readonly property Connections watch: Connections {
         target: root.source
         ignoreUnknownSignals: true
         function onChanged() {

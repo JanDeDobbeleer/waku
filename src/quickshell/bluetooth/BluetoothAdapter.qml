@@ -16,25 +16,25 @@ import waku as W
 QtObject {
     id: root
 
-    property QtObject service: null
+    final property QtObject service: null
 
-    readonly property int state: enabled ? BluetoothAdapterState.Enabled : BluetoothAdapterState.Disabled
-    property bool enabled: false
-    property bool pairable: true
-    property bool discoverable: false
-    property bool discovering: false
-    readonly property string adapterId: "bluetooth"
-    readonly property string name: "Bluetooth"
-    readonly property string dbusPath: ""
-    property int pairableTimeout: 0
-    property int discoverableTimeout: 0
+    final readonly property int state: enabled ? BluetoothAdapterState.Enabled : BluetoothAdapterState.Disabled
+    final property bool enabled: false
+    final property bool pairable: true
+    final property bool discoverable: false
+    final property bool discovering: false
+    final readonly property string adapterId: "bluetooth"
+    final readonly property string name: "Bluetooth"
+    final readonly property string dbusPath: ""
+    final property int pairableTimeout: 0
+    final property int discoverableTimeout: 0
 
-    property var deviceObjects: []
-    readonly property W.ScriptModel devices: W.ScriptModel {
+    final property var deviceObjects: []
+    final readonly property W.ScriptModel devices: W.ScriptModel {
         values: root.deviceObjects
     }
 
-    property bool pulling: false
+    final property bool pulling: false
 
     function pull() {
         if (!service)
@@ -65,7 +65,7 @@ QtObject {
             Qt.callLater(root.pull);
     }
 
-    readonly property Connections watch: Connections {
+    final readonly property Connections watch: Connections {
         target: root.service
         ignoreUnknownSignals: true
         function onChanged() {
@@ -76,15 +76,15 @@ QtObject {
         }
     }
 
-    readonly property W.ScriptModel rows: W.ScriptModel {
+    final readonly property W.ScriptModel rows: W.ScriptModel {
         values: root.service ? root.service.devices : []
         objectProp: "id"
     }
 
-    readonly property Instantiator factory: Instantiator {
+    final readonly property Instantiator factory: Instantiator {
         model: root.rows
         delegate: BluetoothDevice {
-            required property var modelData
+            final required property var modelData
             service: root.service
             adapter: root
             row: modelData

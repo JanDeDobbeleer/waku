@@ -316,6 +316,28 @@ Item {
 
 // ---- Quickshell.Services.Pipewire ----
 
+TEST(QuickshellPipewire, NodePropertiesAreFinalButCanStillBeAssigned) {
+  Loaded l(R"(
+import QtQuick
+import Quickshell.Services.Pipewire
+PwNode { kind: "source" }
+)");
+  ASSERT_NE(l.root, nullptr);
+  EXPECT_EQ(l.get("kind").toString(), "source");
+
+  QQmlComponent derived(&l.engine);
+  derived.setData(R"(
+import QtQuick
+import Quickshell.Services.Pipewire
+PwNode { property string kind: "replacement" }
+)",
+                  QUrl(QStringLiteral("file:///derived.qml")));
+  std::unique_ptr<QObject> object(derived.create());
+  EXPECT_EQ(object, nullptr);
+  EXPECT_TRUE(derived.errorString().contains(QStringLiteral("final"), Qt::CaseInsensitive))
+      << qPrintable(derived.errorString());
+}
+
 namespace {
 const char* kPipewireQml = R"(
 import QtQuick

@@ -19,20 +19,20 @@ import waku.services as S
 QtObject {
     id: root
 
-    property QtObject output: S.AudioOutput
-    property QtObject input: S.AudioInput
-    property var sessions: S.AudioStreams.streams
+    final property QtObject output: S.AudioOutput
+    final property QtObject input: S.AudioInput
+    final property var sessions: S.AudioStreams.streams
 
-    readonly property bool ready: true
-    readonly property PwNode defaultAudioSink: output && output.available ? sinkNode : null
-    readonly property PwNode defaultAudioSource: input && input.available ? sourceNode : null
+    final readonly property bool ready: true
+    final readonly property PwNode defaultAudioSink: output && output.available ? sinkNode : null
+    final readonly property PwNode defaultAudioSource: input && input.available ? sourceNode : null
 
-    property QtObject preferredDefaultAudioSink: null
-    property QtObject preferredDefaultAudioSource: null
+    final property QtObject preferredDefaultAudioSink: null
+    final property QtObject preferredDefaultAudioSource: null
 
-    readonly property W.ScriptModel links: W.ScriptModel {}
-    readonly property W.ScriptModel linkGroups: W.ScriptModel {}
-    readonly property W.ScriptModel nodes: W.ScriptModel {
+    final readonly property W.ScriptModel links: W.ScriptModel {}
+    final readonly property W.ScriptModel linkGroups: W.ScriptModel {}
+    final readonly property W.ScriptModel nodes: W.ScriptModel {
         values: {
             const list = [];
             if (root.defaultAudioSink)
@@ -43,13 +43,13 @@ QtObject {
         }
     }
 
-    property var sessionNodes: []
+    final property var sessionNodes: []
 
-    readonly property PwNode sinkNode: PwNode {
+    final readonly property PwNode sinkNode: PwNode {
         kind: "sink"
         source: root.output
     }
-    readonly property PwNode sourceNode: PwNode {
+    final readonly property PwNode sourceNode: PwNode {
         kind: "source"
         source: root.input
     }
@@ -70,10 +70,10 @@ QtObject {
     onPreferredDefaultAudioSinkChanged: prefer(preferredDefaultAudioSink, output)
     onPreferredDefaultAudioSourceChanged: prefer(preferredDefaultAudioSource, input)
 
-    readonly property Instantiator sessionNodeFactory: Instantiator {
+    final readonly property Instantiator sessionNodeFactory: Instantiator {
         model: root.sessions
         delegate: PwNode {
-            required property var modelData
+            final required property var modelData
             kind: "stream"
             source: modelData
         }

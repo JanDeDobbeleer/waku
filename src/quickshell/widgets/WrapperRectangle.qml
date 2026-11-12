@@ -6,15 +6,15 @@ import QtQuick
 Rectangle {
     id: root
 
-    default property alias child: manager.child
-    property alias margin: manager.margin
-    property alias extraMargin: manager.extraMargin
-    property alias topMargin: manager.topMargin
-    property alias bottomMargin: manager.bottomMargin
-    property alias leftMargin: manager.leftMargin
-    property alias rightMargin: manager.rightMargin
-    property alias resizeChild: manager.resizeChild
-    property bool contentInsideBorder: true
+    default final property alias child: manager.child
+    final property alias margin: manager.margin
+    final property alias extraMargin: manager.extraMargin
+    final property alias topMargin: manager.topMargin
+    final property alias bottomMargin: manager.bottomMargin
+    final property alias leftMargin: manager.leftMargin
+    final property alias rightMargin: manager.rightMargin
+    final property alias resizeChild: manager.resizeChild
+    final property bool contentInsideBorder: true
 
     implicitWidth: manager.contentImplicitWidth
     implicitHeight: manager.contentImplicitHeight

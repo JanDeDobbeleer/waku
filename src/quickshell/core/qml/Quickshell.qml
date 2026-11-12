@@ -11,28 +11,28 @@ QtObject {
     id: root
 
     // The screens shells are built for (the same list as ScreenList.screens).
-    readonly property list<ShellScreen> screens: ScreenList.screens
+    final readonly property list<ShellScreen> screens: ScreenList.screens
 
-    readonly property real processId: S.QuickshellSingleton.processId
-    readonly property string shellDir: S.QuickshellSingleton.shellDir
-    readonly property string shellRoot: S.QuickshellSingleton.shellDir
-    readonly property string configDir: S.QuickshellSingleton.shellDir
-    readonly property string dataDir: S.QuickshellSingleton.dataDir
-    readonly property string stateDir: S.QuickshellSingleton.stateDir
-    readonly property string cacheDir: S.QuickshellSingleton.cacheDir
+    final readonly property real processId: S.QuickshellSingleton.processId
+    final readonly property string shellDir: S.QuickshellSingleton.shellDir
+    final readonly property string shellRoot: S.QuickshellSingleton.shellDir
+    final readonly property string configDir: S.QuickshellSingleton.shellDir
+    final readonly property string dataDir: S.QuickshellSingleton.dataDir
+    final readonly property string stateDir: S.QuickshellSingleton.stateDir
+    final readonly property string cacheDir: S.QuickshellSingleton.cacheDir
 
     // Read and write. An alias, not a binding: the system clipboard is read when a shell reads the
     // value, not each time this singleton is created (every start and reload). A read can block
     // for seconds while another process holds the clipboard.
-    property alias clipboardText: clipboard.text
-    property QtObject clipboardSource: S.ClipboardText {
+    final property alias clipboardText: clipboard.text
+    final property QtObject clipboardSource: S.ClipboardText {
         id: clipboard
     }
 
     // Read and write: the value is copied both ways, so it follows the singleton and a write
     // reaches it.
-    property bool watchFiles: S.QuickshellSingleton.watchFiles
-    property string workingDirectory: S.QuickshellSingleton.workingDirectory
+    final property bool watchFiles: S.QuickshellSingleton.watchFiles
+    final property string workingDirectory: S.QuickshellSingleton.workingDirectory
 
     onWatchFilesChanged: S.QuickshellSingleton.watchFiles = watchFiles
     onWorkingDirectoryChanged: S.QuickshellSingleton.workingDirectory = workingDirectory
@@ -97,7 +97,7 @@ QtObject {
         S.QuickshellSingleton.inhibitReloadPopup();
     }
 
-    property QtObject forwarder: Connections {
+    final property QtObject forwarder: Connections {
         target: S.QuickshellSingleton
 
         function onWatchFilesChanged() {

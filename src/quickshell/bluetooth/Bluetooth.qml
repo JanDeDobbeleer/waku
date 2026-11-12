@@ -16,17 +16,17 @@ import waku.services as S
 QtObject {
     id: root
 
-    property QtObject service: S.Bluetooth
+    final property QtObject service: S.Bluetooth
 
-    readonly property BluetoothAdapter defaultAdapter: service && service.available ? adapter : null
-    readonly property W.ScriptModel adapters: W.ScriptModel {
+    final readonly property BluetoothAdapter defaultAdapter: service && service.available ? adapter : null
+    final readonly property W.ScriptModel adapters: W.ScriptModel {
         values: root.defaultAdapter ? [root.defaultAdapter] : []
     }
-    readonly property W.ScriptModel devices: W.ScriptModel {
+    final readonly property W.ScriptModel devices: W.ScriptModel {
         values: root.defaultAdapter ? root.defaultAdapter.deviceObjects : []
     }
 
-    readonly property BluetoothAdapter adapter: BluetoothAdapter {
+    final readonly property BluetoothAdapter adapter: BluetoothAdapter {
         service: root.service
     }
 }

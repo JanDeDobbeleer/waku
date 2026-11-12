@@ -12,12 +12,12 @@ import waku.services as S
 QtObject {
     id: root
 
-    property var service: S.Network
+    final property var service: S.Network
 
-    property bool wifiEnabled: false
-    readonly property bool wifiHardwareEnabled: true
+    final property bool wifiEnabled: false
+    final readonly property bool wifiHardwareEnabled: true
 
-    property bool syncing: false
+    final property bool syncing: false
 
     onWifiEnabledChanged: {
         if (!syncing && service && wifiEnabled !== service.wifiEnabled)
@@ -33,7 +33,7 @@ QtObject {
     onServiceChanged: pull()
     Component.onCompleted: pull()
 
-    readonly property Connections follow: Connections {
+    final readonly property Connections follow: Connections {
         target: root.service
         function onWifiChanged() {
             root.pull();

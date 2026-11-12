@@ -3,8 +3,8 @@ import QtQuick
 // Quickshell.Hyprland's HyprlandEvent, so type annotations in a shell resolve. The Hyprland
 // singleton never emits one on Windows.
 QtObject {
-    property string name: ""
-    property string data: ""
+    final property string name: ""
+    final property string data: ""
 
     // The data split on commas into at most `count` parts, like Hyprland event payloads.
     function parse(count) {

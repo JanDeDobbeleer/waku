@@ -11,18 +11,18 @@ import QtQuick.Effects
 Item {
     id: root
 
-    property color color: "transparent"
-    property real radius: 0
-    property real topLeftRadius: radius
-    property real topRightRadius: radius
-    property real bottomLeftRadius: radius
-    property real bottomRightRadius: radius
-    property alias border: frame.border
-    property bool contentUnderBorder: false
-    property bool contentInsideBorder: !contentUnderBorder
+    final property color color: "transparent"
+    final property real radius: 0
+    final property real topLeftRadius: radius
+    final property real topRightRadius: radius
+    final property real bottomLeftRadius: radius
+    final property real bottomRightRadius: radius
+    final property alias border: frame.border
+    final property bool contentUnderBorder: false
+    final property bool contentInsideBorder: !contentUnderBorder
 
-    default property alias data: content.data
-    readonly property Item contentItem: content
+    default final property alias data: content.data
+    final readonly property Item contentItem: content
 
     antialiasing: topLeftRadius > 0 || topRightRadius > 0 || bottomLeftRadius > 0 || bottomRightRadius > 0
 
