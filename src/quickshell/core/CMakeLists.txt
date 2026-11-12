@@ -30,6 +30,7 @@ qt_add_qml_module(waku_quickshell
   QML_FILES ${quickshell_qml_files}
   SOURCES qml/quickshell_types.h
           qml/quickshell_types_core.h
+          qml/qs_menu_button_type.h
 )
 target_include_directories(waku_quickshell PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/qml)
 # waku_services: the staticMetaObject of DesktopEntry, DesktopAction and ElapsedTimer.

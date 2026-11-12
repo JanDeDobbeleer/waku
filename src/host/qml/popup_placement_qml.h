@@ -150,8 +150,12 @@ class PopupAnchor : public QObject {
     return fallback;
   }
 
+  // Quickshell's updateAnchor(): place an open popup again after its anchor item moved.
+  Q_INVOKABLE void updateAnchor() { emit updateRequested(); }
+
  signals:
   void changed();
+  void updateRequested();
 
  private:
   QPointer<QQuickItem> item_;

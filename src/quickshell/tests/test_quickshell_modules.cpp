@@ -762,6 +762,22 @@ Item {
   EXPECT_TRUE(l.get("handle").isNull());
 }
 
+TEST(QuickshellCore, QsMenuButtonTypeHasQuickshellValues) {
+  Loaded l(R"(
+import QtQuick
+import Quickshell
+Item {
+    property int none: QsMenuButtonType.None
+    property int checkBox: QsMenuButtonType.CheckBox
+    property int radioButton: QsMenuButtonType.RadioButton
+}
+)");
+  ASSERT_NE(l.root, nullptr);
+  EXPECT_EQ(l.get("none").toInt(), 0);
+  EXPECT_EQ(l.get("checkBox").toInt(), 1);
+  EXPECT_EQ(l.get("radioButton").toInt(), 2);
+}
+
 TEST(QuickshellNetworking, WifiEnabledFollowsTheServiceAndSwitchesIt) {
   Loaded l(R"(
 import QtQuick
