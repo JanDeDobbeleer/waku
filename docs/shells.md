@@ -134,7 +134,9 @@ when the window must follow it.
 
 `Quickshell.Wayland` has `IdleInhibitor` (holds the machine awake, ignores `window`) and
 `IdleMonitor` (`isIdle` after `timeout` seconds without input). `QsMenuOpener` and
-`QsMenuHandle` load but never hold entries, because a tray item's `menu` is null.
+`QsMenuHandle` load but never hold entries, because a tray item's `menu` is null;
+`QsMenuButtonType` (`None`, `CheckBox`, `RadioButton`) is there for menus that compare against it.
+A `PopupWindow`'s `anchor.updateAnchor()` places an open popup again after its anchor item moved.
 `Quickshell.Networking` has `wifiEnabled` (assign it to switch the radio).
 
 ### ToplevelManager

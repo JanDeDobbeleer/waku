@@ -8,7 +8,7 @@ Window {
     id: popup
 
     // What the popup opens next to.
-    readonly property PopupAnchor anchor: PopupAnchor {}
+    final readonly property PopupAnchor anchor: PopupAnchor {}
     // The space between the popup and what it opens next to (Theme.popupGap), and the one kept to
     // the screen edge.
     property real gap: Theme.popupGap
@@ -110,6 +110,15 @@ Window {
             wasActive = true;
         else if (visible && wasActive)
             close();
+    }
+
+    // anchor.updateAnchor(): the anchor item moved without the popup resizing.
+    Connections {
+        target: popup.anchor
+        function onUpdateRequested() {
+            if (popup.visible && popup.anchor.item && popup.bar)
+                popup.reposition();
+        }
     }
 
     Connections {

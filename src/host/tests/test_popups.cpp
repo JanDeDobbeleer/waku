@@ -301,6 +301,22 @@ TEST(PopupWindowTest, ContentGrowingAfterOpenStaysOnScreen) {
   EXPECT_LE(popup->x() + popup->width(), screen.right() - 8 + 1);
 }
 
+TEST(PopupWindowTest, UpdateAnchorPlacesAnOpenPopupAgain) {
+  Harness h;
+  h.start(popupConfig());
+  ASSERT_TRUE(started(h));
+  QQuickWindow* popup = findWindow(QStringLiteral("pop"));
+  invoke(popup, "open");
+  QObject* anchor = popup->property("anchor").value<QObject*>();
+  ASSERT_NE(anchor, nullptr);
+  ASSERT_TRUE(QTest::qWaitFor([&] { return popup->y() >= 0 && popup->isVisible(); }, 2000));
+  const int before = popup->x();
+  // A rect change alone does not move the popup; updateAnchor() does.
+  anchor->setProperty("rect", QRectF(300, 0, 60, 24));
+  invoke(anchor, "updateAnchor");
+  EXPECT_TRUE(QTest::qWaitFor([&] { return popup->x() >= before + 250; }, 2000));
+}
+
 TEST(PopupWindowTest, CloseHidesItAndSignalsOnce) {
   Harness h;
   h.start(popupConfig());
