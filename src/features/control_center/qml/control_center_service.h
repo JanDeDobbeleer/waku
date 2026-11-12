@@ -13,6 +13,7 @@
 
 #include "features/brightness/brightness.h"
 #include "features/control_center/power.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::control_center {
 
@@ -40,6 +41,7 @@ class ControlCenter : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
   Q_PROPERTY(QString dnd READ dnd NOTIFY dndChanged FINAL)
   Q_PROPERTY(bool dndActive READ dndActive NOTIFY dndChanged FINAL)

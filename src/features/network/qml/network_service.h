@@ -17,6 +17,7 @@
 #include "features/network/vpn.h"
 #include "features/network/wlan.h"
 #include "kernel/qml/stat_source.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::network {
 
@@ -96,6 +97,7 @@ class Network : public kernel::StatSource {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
   Q_PROPERTY(QString kind READ kind NOTIFY updated FINAL)
   Q_PROPERTY(QString ssid READ ssid NOTIFY updated FINAL)

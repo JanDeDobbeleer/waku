@@ -20,6 +20,7 @@
 #include "features/apps/qml/app_icon_provider.h"
 #include "features/apps/qml/apps_model.h"
 #include "features/apps/qml/desktop_entry.h"
+#include "kernel/qt/sealed_singleton.h"
 
 class QFileSystemWatcher;
 class QJSEngine;
@@ -89,6 +90,7 @@ class AppsService : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(waku::apps::AppsModel* applications READ applications CONSTANT FINAL)
   Q_PROPERTY(bool ready READ ready NOTIFY readyChanged FINAL)
   Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged FINAL)

@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "features/github/github_api.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::github {
 
@@ -56,6 +57,7 @@ class GitHub : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
   Q_PROPERTY(bool signedIn READ signedIn NOTIFY changed FINAL)
   Q_PROPERTY(int unreadCount READ unreadCount NOTIFY changed FINAL)

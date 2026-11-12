@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "features/desktop_state/desktop_probe.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::desktop_state {
 
@@ -30,6 +31,7 @@ class DesktopState : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
   Q_PROPERTY(bool capsLock READ capsLock NOTIFY capsLockChanged FINAL)
   Q_PROPERTY(bool numLock READ numLock NOTIFY numLockChanged FINAL)

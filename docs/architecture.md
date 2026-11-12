@@ -447,6 +447,10 @@ anything they cache globally must be locked.
 
 No new singleton without a row here and a reason.
 
+C++ QML singletons with callable methods use `QML_EXTENDED(kernel::SealedSingleton)`: Qt 6.12's
+`qqmljsshadowcheck.cpp` treats their methods as shadowable otherwise. The empty extension adds a
+proxy metaobject to every property access, so singletons without callable methods do not use it.
+
 | What | Where | Notes |
 |---|---|---|
 | working set trim | `src/host/qml/shell_host.*`, `src/host/win32/shell_host_win32.cpp` | `ShellHost::install()` starts a single-shot GUI-thread `QTimer` (5 s); when it fires and the window count has not grown since the previous look (install, then each tick) it calls `NativeHooks::trimWorkingSet` (`SetProcessWorkingSetSizeEx(-1, -1)`, documented API), else it waits another 5 s. A shell that shows windows late (octalia) is trimmed once they stop appearing. Live desktop only. Idle working set of the sample shell 114 MB to 29 MB, no climb back in 60 s |

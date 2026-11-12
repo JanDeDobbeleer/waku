@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "features/bluetooth/bluetooth.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::bluetooth {
 
@@ -48,6 +49,7 @@ class Bluetooth : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
   Q_PROPERTY(bool radioOn READ radioOn NOTIFY changed FINAL)
   Q_PROPERTY(QVariantList devices READ devices NOTIFY changed FINAL)

@@ -9,6 +9,7 @@
 
 #include "features/workspaces/desktop_command.h"
 #include "features/workspaces/virtual_desktops.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::workspaces {
 
@@ -34,6 +35,7 @@ class VirtualDesktops : public QObject, public DesktopControl {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available NOTIFY changed FINAL)
   Q_PROPERTY(QVariantList desktops READ desktops NOTIFY changed FINAL)
   Q_PROPERTY(int current READ current NOTIFY changed FINAL)

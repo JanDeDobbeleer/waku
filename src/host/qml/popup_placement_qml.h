@@ -11,6 +11,7 @@
 
 #include "host/popup_placement.h"
 #include "host/qml/window_enums.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::host {
 
@@ -19,6 +20,7 @@ class PopupPlacement : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
 
  public:
   // Which side of the anchor the popup prefers.

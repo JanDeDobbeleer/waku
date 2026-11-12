@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "features/notifications/notifications.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::notifications {
 
@@ -233,6 +234,7 @@ class NotificationFeed : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(bool available READ available CONSTANT FINAL)
   Q_PROPERTY(
       waku::notifications::NotificationModel* notifications READ notifications CONSTANT FINAL)

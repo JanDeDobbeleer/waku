@@ -11,6 +11,7 @@
 
 #include "features/color_scheme/image_stats_cache.h"
 #include "features/color_scheme/qml/color_scheme_types.h"
+#include "kernel/qt/sealed_singleton.h"
 
 namespace waku::color_scheme {
 
@@ -32,6 +33,7 @@ class ColorSchemeService : public QObject {
   Q_OBJECT
   QML_NAMED_ELEMENT(ColorScheme)
   QML_SINGLETON
+  QML_EXTENDED(waku::kernel::SealedSingleton)
   Q_PROPERTY(QStringList variants READ variants CONSTANT FINAL)
 
  public:
