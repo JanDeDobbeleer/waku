@@ -124,8 +124,8 @@ WindowThumbnail { hwnd: 12345; width: 320; height: 180 }
 
 A Quickshell shell may declare its own property with the name of one the engine already has, and it
 loads: the declaration shadows the engine's. This works for `name`, `data`, `screen`,
-`contentItem` and `hideDelay` on windows and Scopes, and `data` on a `Singleton` (its default
-property is `shellChildren`, so a declared `data` does not take its children). Mind what shadows:
+`contentItem` and `hideDelay` on windows. A Scope or `Singleton` has no `data` property: as in
+Quickshell its default property is `children`, so a Singleton may declare `data` freely. Mind what shadows:
 a window that declares `screen` receives `screen: modelData` in its own property and the engine
 keeps placing the window on the primary screen. Pass the screen through a differently named property
 when the window must follow it.
