@@ -38,6 +38,7 @@ No wallpaper logic is re-implemented. The `Wallpapers` singleton wraps the UI-fr
 | `available` | false when `IDesktopWallpaper` cannot be created (offscreen platform) |
 | `galleryOpen`, `galleryScreen` | gallery state and the name of the screen it opens on |
 | `setWallpaper(path)`, `random()` | change the wallpaper on every monitor |
+| `setWallpaperAllDesktops(path)` | apply to every virtual desktop through `workspaces`; returns false when unsupported or refused, without a current-desktop fallback |
 | `toggleGallery()`, `closeGallery()` | open (on the screen the mode picks) or close |
 | `configure(imagePath, hotkey, hotkeyScreen, autoChangeSeconds)` | what `Wallpapers.qml` passes in |
 | `setLockScreen` (bool, read/write, default true) | a change also sets the Windows lock screen (and sign-in screen) picture; see "Lock screen" |
@@ -45,6 +46,12 @@ No wallpaper logic is re-implemented. The `Wallpapers` singleton wraps the UI-fr
 `Wallpapers.qml` takes `label`, `imagePath`, `hotkey`, `hotkeyScreen`, `autoChange` and the gallery
 look (`imageWidth`, `orientation`, `cornerRadius`, `accentColor`). `WallpaperGallery.qml` is the
 Qt Quick window.
+
+Enter and a click apply to the current desktop. Shift+Enter applies to every virtual desktop.
+The all-desktop call uses the shell's `UpdateWallpaperPathForAllDesktops`, without switching
+desktops or writing Explorer's registry values. It honours the wallpaper dry run and updates the
+lock screen only after Windows confirms the current wallpaper. A failed all-desktop choice
+keeps the gallery open. The native call is not exercised by tests; see the allowlist.
 
 ## Decisions
 

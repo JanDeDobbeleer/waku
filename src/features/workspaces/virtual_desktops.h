@@ -118,4 +118,8 @@ std::optional<QString> currentDesktopId();
 // does not answer. GUI thread only. Defined in win32/virtual_desktops_win.cpp; the tiler uses it.
 std::optional<QString> windowDesktopId(quint64 hwnd);
 
+// Sets the wallpaper on every virtual desktop without switching desktops. GUI thread only.
+// False when the shell API is disabled, unsupported or refuses the change. No fallback.
+bool setWallpaperForAllDesktops(const QString& path);
+
 }  // namespace waku::workspaces::vdesk

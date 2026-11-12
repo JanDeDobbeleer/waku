@@ -7,7 +7,8 @@ import waku.services as S
 
 // The wallpaper gallery: a strip of thumbnails of the files in the wallpaper folder, centred on a
 // dimmed full-screen window on the screen the service picked (S.Wallpapers.galleryScreen). A click
-// on a thumbnail or Enter sets that wallpaper and closes the gallery; Escape, a click outside the
+// on a thumbnail or Enter sets that wallpaper on the current desktop; Shift+Enter sets every
+// desktop. A successful choice closes the gallery; Escape, a click outside the
 // strip or switching to another window closes it. Left, Right, Home, End and Page Up/Down move.
 // The thumbnail of the wallpaper that is set has an accent border.
 //
@@ -42,15 +43,20 @@ Window {
         return 0;
     }
 
-    function apply(path) {
-        S.Wallpapers.setWallpaper(path);
+    function apply(path, allDesktops = false) {
+        if (allDesktops) {
+            if (!S.Wallpapers.setWallpaperAllDesktops(path))
+                return;
+        } else {
+            S.Wallpapers.setWallpaper(path);
+        }
         S.Wallpapers.closeGallery();
     }
 
-    function applyCurrent() {
+    function applyCurrent(allDesktops = false) {
         const files = S.Wallpapers.files;
         if (strip.currentIndex >= 0 && strip.currentIndex < files.length)
-            apply(files[strip.currentIndex].path);
+            apply(files[strip.currentIndex].path, allDesktops);
     }
 
     flags: Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
@@ -106,8 +112,8 @@ Window {
 
         focus: true
         Keys.onEscapePressed: S.Wallpapers.closeGallery()
-        Keys.onReturnPressed: root.applyCurrent()
-        Keys.onEnterPressed: root.applyCurrent()
+        Keys.onReturnPressed: event => root.applyCurrent((event.modifiers & Qt.ShiftModifier) !== 0)
+        Keys.onEnterPressed: event => root.applyCurrent((event.modifiers & Qt.ShiftModifier) !== 0)
         Keys.onLeftPressed: strip.currentIndex = Math.max(0, strip.currentIndex - 1)
         Keys.onRightPressed: strip.currentIndex = Math.min(strip.count - 1, strip.currentIndex + 1)
         Keys.onPressed: event => {

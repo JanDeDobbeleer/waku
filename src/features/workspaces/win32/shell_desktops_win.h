@@ -71,6 +71,7 @@ class ShellDesktopApi {
   // call of a run re-verifies the desktop list against the registry and refuses when they differ.
   bool remove(const QString& id, const QString& fallbackId);
   bool rename(const QString& id, const QString& name);
+  bool setWallpaperForAllDesktops(const QString& path);
   // Moves the top-level window `hwnd` (of any process) to desktop `id` without showing that
   // desktop, like Task View's "Move to". Goes through IApplicationViewCollection::GetViewForHwnd
   // and MoveViewToDesktop. Same first-mutation re-verification as the calls above. False when the

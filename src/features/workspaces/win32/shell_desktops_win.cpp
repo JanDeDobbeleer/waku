@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "features/workspaces/virtual_desktops.h"
+#include "kernel/qt/live_desktop.h"
 #include "kernel/win32/com_scope.h"
 #include "kernel/win32/windows_build.h"
 
@@ -644,6 +645,34 @@ bool ShellDesktopApi::rename(const QString& id, const QString& name) {
       "SetDesktopName", [&] { return impl_->manager->SetDesktopName(desktop.Get(), text); }));
   if (text) WindowsDeleteString(text);
   return ok;
+}
+
+bool ShellDesktopApi::setWallpaperForAllDesktops(const QString& path) {
+  if (path.isEmpty() || !impl_->verifiedForMutation()) return false;
+  HSTRING text = nullptr;
+  if (FAILED(WindowsCreateString(reinterpret_cast<const wchar_t*>(path.utf16()),
+                                 static_cast<UINT32>(path.size()), &text))) {
+    return false;
+  }
+  const bool ok = SUCCEEDED(impl_->call("UpdateWallpaperPathForAllDesktops", [&] {
+    return impl_->manager->UpdateWallpaperPathForAllDesktops(text);
+  }));
+  WindowsDeleteString(text);
+  return ok;
+}
+
+bool setWallpaperForAllDesktops(const QString& path) {
+  if (!kernel::liveDesktop(QStringLiteral("virtual_desktops")) ||
+      !kernel::liveDesktop(QStringLiteral("shell_desktops"))) {
+    return false;
+  }
+  QString reason;
+  const auto shell = ShellDesktopApi::open(&reason);
+  if (!shell) {
+    qWarning().noquote() << "virtual desktops: shell api unavailable:" << reason;
+    return false;
+  }
+  return shell->setWallpaperForAllDesktops(path);
 }
 
 bool ShellDesktopApi::moveWindow(quint64 hwnd, const QString& id) {

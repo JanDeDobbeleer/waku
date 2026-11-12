@@ -75,6 +75,11 @@ callbacks are marshalled to it.
   desktop was shown, Windows lands on the fallback. There is no keystroke fallback (Win+Ctrl+F4
   shows the desktop first), so without the shell interface `canRemove` is false.
 - **Rename.** `rename(index, name)` calls `SetDesktopName`; the same rules as close.
+- **Wallpaper on all desktops.** The root `setWallpaperForAllDesktops(path)` opens the guarded
+  shell interface and calls `UpdateWallpaperPathForAllDesktops` (slot 18). The wallpapers feature
+  uses it for Shift+Enter. It switches no desktop, writes no registry values and returns false
+  when the shell API is disabled or refuses the change. The call has no fallback; the native
+  mutation still needs owner validation on build 26300.9974.
 - **Shell changes.** The edits that make a ported shell use the `windows` provider live with that
   shell, in its config home, not here (a ported shell under a copyleft licence stays out of this
   repository).

@@ -1,10 +1,11 @@
 # wallpapers: the wallpaper folder, set and cycle wallpapers, the picker gallery and its hotkey, and
 # the animated change (a Qt Quick overlay on WorkerW) and the lock screen picture that follows a
-# change. No dependencies on other features; the hotkey is a handle in kernel::Hotkeys.
+# change. workspaces applies a wallpaper across virtual desktops; the hotkey is in kernel::Hotkeys.
 # wallpaper_command.h is the `wallpaper` verb of the control pipe and the WallpaperControl
 # interface the service implements; waku.exe adds the verb to the bar's control handler.
 waku_feature(
   NAME wallpapers
+  DEPENDS workspaces
   SOURCES
     desktop_wallpaper.h
     lock_screen.h
