@@ -88,7 +88,7 @@ Singleton {
     QtObject { id: marker; objectName: "marker" }
     Process { id: proc; command: ["x"]; running: false }
     Scope { property int nested: 7 }
-    readonly property int childCount: data.length
+    readonly property int childCount: children.length
 }
 )");
   QQmlEngine engine;
@@ -254,11 +254,13 @@ import "."
 
 QtObject {
     property int v: Store.data.v
+    property int childCount: Store.children.length
     property string id: Store.reloadableId
 }
 )",
                      QUrl::fromLocalFile(dir.filePath(QStringLiteral("main.qml"))));
   ASSERT_NE(root, nullptr);
   EXPECT_EQ(root->property("v").toInt(), 7);
+  EXPECT_EQ(root->property("childCount").toInt(), 1);
   EXPECT_EQ(root->property("id").toString(), QStringLiteral("store"));
 }

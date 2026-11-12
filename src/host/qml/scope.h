@@ -19,12 +19,10 @@ namespace waku::host {
 class Scope : public QObject {
   Q_OBJECT
   QML_ELEMENT
-  // The default property is not `data`: a shell that declares its own `data` on a Singleton
-  // (Octalia's Settings) would otherwise have its children assigned to that read-only alias.
-  Q_CLASSINFO("DefaultProperty", "shellChildren")
-  Q_PROPERTY(QQmlListProperty<QObject> shellChildren READ data FINAL)
-  // Not FINAL: a ported shell that declares its own `data` property (Octalia's Settings) loads.
-  Q_PROPERTY(QQmlListProperty<QObject> data READ data)
+  // Named `children`, as in Quickshell. There is no `data`, so a Singleton can declare its own
+  // (Octalia's Settings does) without overriding a base property.
+  Q_CLASSINFO("DefaultProperty", "children")
+  Q_PROPERTY(QQmlListProperty<QObject> children READ data FINAL)
   // Quickshell's Reloadable id. Accepted so a shell can set it; waku keeps no state by it.
   Q_PROPERTY(QString reloadableId MEMBER reloadableId_ NOTIFY reloadableIdChanged)
 
