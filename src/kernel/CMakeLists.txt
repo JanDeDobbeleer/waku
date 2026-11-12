@@ -49,6 +49,10 @@ target_include_directories(waku_kernel PUBLIC ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(waku_kernel
   PUBLIC Qt6::Core Qt6::Gui
   PRIVATE waku_options shell32 ole32 windowsapp propsys user32 version)
+# The metatypes of PolledSource reach waku.services' type registrar this way. Without them the
+# registrar cannot see the QObject base of StatSource, records QQmlParserStatus as its prototype,
+# and qmllint cannot resolve Cpu, Memory, Gpu or Disks.
+qt_extract_metatypes(waku_kernel)
 
 # qml/ is the QML face of the polled source. It is not part of waku_kernel (wakuc links the kernel
 # without QtQml); the header is compiled into the waku.services module like a feature's qml/.
