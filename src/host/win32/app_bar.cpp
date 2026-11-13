@@ -9,53 +9,13 @@
 #include <QObject>
 #include <QTimer>
 #include <cmath>
-#include <cwchar>
 #include <exception>
-#include <vector>
+
+#include "host/win32/tray_window_yield.h"
 
 namespace waku::host {
 
 namespace {
-
-// The tray window host (features/tray) is a Shell_TrayWnd window of this process. While the Windows
-// taskbar is hidden it is topmost, so FindWindow, and with it SHAppBarMessage, finds it before
-// Explorer's. SHAppBarMessage then puts the request in shared memory that only the process of the
-// window it found can open, and the host passes the request on to Explorer, which cannot open it:
-// the app bar is not registered and the work area is not reduced. While one of our own app bar
-// calls runs, the host window drops out of the topmost band so Explorer's window is found; it goes
-// back on top at once. Documented calls only; nothing happens when there is no such window.
-class TrayWindowYield {
- public:
-  TrayWindowYield() {
-    EnumWindows(&TrayWindowYield::collect, reinterpret_cast<LPARAM>(this));
-    for (HWND window : windows_) {
-      SetWindowPos(window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-    }
-  }
-  ~TrayWindowYield() {
-    for (HWND window : windows_) {
-      SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-    }
-  }
-  TrayWindowYield(const TrayWindowYield&) = delete;
-  TrayWindowYield& operator=(const TrayWindowYield&) = delete;
-
- private:
-  static BOOL CALLBACK collect(HWND window, LPARAM param) {
-    wchar_t className[32] = {};
-    if (!GetClassNameW(window, className, 32) || wcscmp(className, L"Shell_TrayWnd") != 0) {
-      return TRUE;
-    }
-    DWORD pid = 0;
-    GetWindowThreadProcessId(window, &pid);
-    if (pid != GetCurrentProcessId()) return TRUE;
-    if (!(GetWindowLongPtrW(window, GWL_EXSTYLE) & WS_EX_TOPMOST)) return TRUE;
-    reinterpret_cast<TrayWindowYield*>(param)->windows_.push_back(window);
-    return TRUE;
-  }
-
-  std::vector<HWND> windows_;
-};
 
 // ABM_QUERYPOS and ABM_SETPOS on one registered window; rects are physical pixels.
 class Win32AppBarSystem final : public IAppBarSystem {

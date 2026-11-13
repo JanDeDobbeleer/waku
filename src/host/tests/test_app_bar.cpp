@@ -1,7 +1,11 @@
+#include <windows.h>
 #include <gtest/gtest.h>
+
+#include <string>
 
 #include "host/app_bar.h"
 #include "host/testing/app_bar_fakes.h"
+#include "host/win32/tray_window_yield.h"
 
 using waku::host::AppBarEdge;
 using waku::host::AppBarGrant;
@@ -156,3 +160,76 @@ TEST(AppBarNegotiationTest, AtOneAndAHalfOnASecondaryScreenTheRectsStayPhysical)
   EXPECT_EQ(grant.granted, (AppBarRect{3728, 0, 3800, 1080}));
   EXPECT_EQ(grant.inset, 40);
 }
+
+namespace {
+
+bool above(HWND first, HWND second) {
+  struct Order {
+    HWND first;
+    HWND second;
+    int next = 0;
+    int firstIndex = -1;
+    int secondIndex = -1;
+  } order{first, second};
+  EnumWindows(
+      [](HWND window, LPARAM param) -> BOOL {
+        auto* state = reinterpret_cast<Order*>(param);
+        if (window == state->first) state->firstIndex = state->next;
+        if (window == state->second) state->secondIndex = state->next;
+        ++state->next;
+        return state->firstIndex < 0 || state->secondIndex < 0;
+      },
+      reinterpret_cast<LPARAM>(&order));
+  return order.firstIndex >= 0 && order.secondIndex >= 0 && order.firstIndex < order.secondIndex;
+}
+
+bool topmost(HWND window) { return (GetWindowLongPtrW(window, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0; }
+
+class AppBarTrayWindowYieldTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    className_ = L"WakuTestAppBarTray_" + std::to_wstring(GetCurrentProcessId());
+    WNDCLASSW type{};
+    type.lpfnWndProc = DefWindowProcW;
+    type.hInstance = GetModuleHandleW(nullptr);
+    type.lpszClassName = className_.c_str();
+    ASSERT_NE(RegisterClassW(&type), 0);
+    registered_ = true;
+    sentinel_ = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, L"STATIC", L"", WS_POPUP, 0, 0,
+                                1, 1, nullptr, nullptr, type.hInstance, nullptr);
+    ASSERT_NE(sentinel_, nullptr);
+    tray_ = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, className_.c_str(), L"", WS_POPUP,
+                            0, 0, 1, 1, nullptr, nullptr, type.hInstance, nullptr);
+    ASSERT_NE(tray_, nullptr);
+  }
+
+  void TearDown() override {
+    if (tray_) DestroyWindow(tray_);
+    if (sentinel_) DestroyWindow(sentinel_);
+    if (registered_) UnregisterClassW(className_.c_str(), GetModuleHandleW(nullptr));
+  }
+
+  void expectYield(bool wasTopmost) {
+    ASSERT_TRUE(SetWindowPos(tray_, wasTopmost ? HWND_TOPMOST : HWND_TOP, 0, 0, 0, 0,
+                             SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE));
+    ASSERT_TRUE(above(tray_, sentinel_));
+    {
+      waku::host::TrayWindowYield yield(className_.c_str());
+      EXPECT_TRUE(above(sentinel_, tray_));
+      EXPECT_FALSE(topmost(tray_));
+    }
+    EXPECT_EQ(topmost(tray_), wasTopmost);
+  }
+
+ private:
+  std::wstring className_;
+  HWND tray_ = nullptr;
+  HWND sentinel_ = nullptr;
+  bool registered_ = false;
+};
+
+}  // namespace
+
+TEST_F(AppBarTrayWindowYieldTest, YieldsBeforeTheTrayWindowBecomesTopmost) { expectYield(false); }
+
+TEST_F(AppBarTrayWindowYieldTest, RestoresAnAlreadyTopmostTrayWindow) { expectYield(true); }

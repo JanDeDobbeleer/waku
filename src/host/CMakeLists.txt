@@ -44,6 +44,7 @@ add_library(waku_host_base STATIC
   win32/app_bar.cpp
   win32/backdrop.h
   win32/backdrop.cpp
+  win32/tray_window_yield.h
   win32/windows_taskbar_win.cpp
   win32/thumbnail_win.cpp
 )
