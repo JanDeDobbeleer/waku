@@ -246,6 +246,83 @@ TEST(ShellHostTest, FullscreenDoesNotRestoreAPanelThatChangedToTheBottomLayer) {
   EXPECT_TRUE(h.native.raised.empty());
 }
 
+TEST(ShellHostTest, FullscreenStateReachesOverlayShellsWithoutHidingTheirWholeWindow) {
+  Harness h;
+  h.native.fullscreenHook = true;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import waku
+ShellRoot {
+    PanelWindow {
+        id: overlay
+        anchors { top: true; bottom: true; left: true; right: true }
+        readonly property bool shellFullscreen: screenFullscreen
+        Rectangle {
+            objectName: "bar"
+            width: parent.width
+            height: 40
+            visible: !overlay.screenFullscreen
+        }
+    }
+}
+)"));
+  ASSERT_TRUE(h.host->reload());
+  auto* panel = qobject_cast<PanelWindow*>(h.shellWindow());
+  ASSERT_NE(panel, nullptr);
+  QQuickItem* bar = findItem(panel->backingWindow(), QStringLiteral("bar"));
+  ASSERT_NE(bar, nullptr);
+  QSignalSpy changes(panel, &PanelWindow::screenFullscreenChanged);
+  h.native.fullscreenPanels.insert(static_cast<quintptr>(panel->backingWindow()->winId()));
+  QTRY_VERIFY_WITH_TIMEOUT(panel->screenFullscreen(), 2000);
+  EXPECT_TRUE(panel->property("shellFullscreen").toBool());
+  EXPECT_FALSE(bar->isVisible());
+  EXPECT_TRUE(panel->backingWindowVisible());
+  EXPECT_EQ(changes.count(), 1);
+  // A shell may hide its own overlay. That must not turn monitor occupancy off and on again.
+  panel->setVisible(false);
+  QTest::qWait(600);
+  EXPECT_TRUE(panel->screenFullscreen());
+  EXPECT_EQ(changes.count(), 1);
+  h.native.fullscreenPanels.clear();
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->screenFullscreen(), 2000);
+  EXPECT_FALSE(panel->backingWindowVisible());
+  EXPECT_EQ(changes.count(), 2);
+}
+
+TEST(ShellHostTest, FullscreenRevealRespectsTheStripOfAScreenSizedDockedSurface) {
+  Harness h;
+  h.native.fullscreenHook = true;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import waku
+ShellRoot {
+    PanelWindow {
+        anchors { top: true; left: true; right: true }
+        implicitHeight: screen.height
+        exclusiveZone: 40
+        mask: Region { width: 10000; height: 40 }
+    }
+}
+)"));
+  ASSERT_TRUE(h.host->reload());
+  QsWindow* panel = h.shellWindow();
+  QQuickWindow* backing = panel->backingWindow();
+  const QRect screen = backing->screen()->geometry();
+  const auto nativePoint = [backing, screen](const QPoint& logical) {
+    return screen.topLeft() +
+           (QPointF(logical - screen.topLeft()) * backing->devicePixelRatio()).toPoint();
+  };
+  h.native.fullscreenPanels.insert(static_cast<quintptr>(backing->winId()));
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
+  h.native.cursor = nativePoint(QPoint(screen.center().x(), screen.top()));
+  QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 1000);
+  h.native.cursor = nativePoint(QPoint(screen.center().x(), screen.top() + 20));
+  QTest::qWait(150);
+  EXPECT_TRUE(panel->backingWindowVisible());
+  h.native.cursor = nativePoint(screen.center());
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 1000);
+}
+
 TEST(ShellHostTest, FullscreenEdgeRevealOverlaysWithoutReservingOrTakingFocus) {
   Harness h;
   h.allowReserve = true;

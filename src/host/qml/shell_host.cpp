@@ -26,6 +26,7 @@
 #include "host/plugin_guard.h"
 #include "host/qml/panel_window.h"
 #include "host/qml/qs_window.h"
+#include "host/qml/region.h"
 #include "host/qml/shell_screen.h"
 #include "host/run_log.h"
 #include "host/startup_trace.h"
@@ -837,10 +838,13 @@ void ShellHost::updateFullscreenPanel(Entry& entry) {
   auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
   if (!entry.live() || !panel || !entry.presented) return;
   const auto& hooks = options_.hooks;
-  const bool fullscreen =
-      panel->visible() && panel->appBarEdge() && panel->stackTopmost() &&
+  const bool occupied =
       hooks.fullscreenOnMonitor &&
       hooks.fullscreenOnMonitor(static_cast<quintptr>(panel->backingWindow()->winId()));
+  panel->setScreenFullscreen(occupied);
+  if (!entry.live()) return;
+  const bool fullscreen =
+      occupied && panel->visible() && panel->appBarEdge() && panel->stackTopmost();
   if (fullscreen == entry.fullscreenActive) return;
   entry.fullscreenActive = fullscreen;
   entry.fullscreenRevealed = false;
@@ -870,6 +874,15 @@ void ShellHost::updateFullscreenReveal() {
         const QPointF logical = cursorInWindow(*cursor, screen->geometry().topLeft(),
                                                screen->devicePixelRatio(), QPointF());
         bool revealed = QRectF(area).contains(logical);
+        // Some docked shells use a screen-sized surface with only a strip taking input.
+        if (revealed && entry.fullscreenRevealed && panel->mask() &&
+            backing->geometry().contains(screen->geometry())) {
+          revealed =
+              QRectF(panelRevealArea(*edge, backing->geometry(), screen->geometry(), false))
+                  .contains(logical) ||
+              regionContainsPadded(panel->mask()->node(), logical - backing->geometry().topLeft(),
+                                   8, backing->size());
+        }
         if (entry.fullscreenRevealed && !revealed) {
           // Popups anchored to the bar stay usable outside the bar's own rectangle.
           for (QWindow* window : QGuiApplication::topLevelWindows()) {

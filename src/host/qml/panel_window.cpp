@@ -96,6 +96,12 @@ void PanelWindow::setLayerNamespace(const QString& name) {
   emit layerNamespaceChanged();
 }
 
+void PanelWindow::setScreenFullscreen(bool fullscreen) {
+  if (screenFullscreen_ == fullscreen) return;
+  screenFullscreen_ = fullscreen;
+  emit screenFullscreenChanged();
+}
+
 QRect PanelWindow::geometryOn(const QRect& screen) const {
   return panelGeometry(anchors_->set(), margins_->margins(),
                        QSize(implicitWidth(), implicitHeight()), screen);
