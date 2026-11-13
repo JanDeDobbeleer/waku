@@ -80,7 +80,10 @@ It restores otherwise eligible maximized windows with `ShowWindowAsync(SW_SHOWNO
 for the maximized state to clear before placing them. Restoration is requested once, with bounded
 completion checks; a hung window cannot block the bar or cause an endless retry. Windows on another
 virtual desktop wait until that desktop is shown. Minimized windows and ignore or float rules
-remain untouched. Later maximization stays under the user's control until the next load or reload.
+remain untouched. Later maximization stays under the user's control until the next load or reload,
+or an explicit `tile toggle`: on a maximized window, that command requests the same bounded
+restoration before tiling instead of floating it. The host auto-hides docked panels during
+maximization, releases their work area, and restores their reservation once maximization ends.
 
 ## Placement
 

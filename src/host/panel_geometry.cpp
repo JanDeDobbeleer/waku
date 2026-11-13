@@ -42,9 +42,8 @@ int panelThickness(AppBarEdge edge, const QSize& size) {
   return isVerticalEdge(edge) ? size.width() : size.height();
 }
 
-bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool maximized,
-                               bool captioned) {
-  return !screen.isEmpty() && !(maximized && captioned) && window.contains(screen);
+bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool maximized) {
+  return !screen.isEmpty() && (maximized ? window.intersects(screen) : window.contains(screen));
 }
 
 QRect panelRevealArea(AppBarEdge edge, const QRect& panel, const QRect& screen, bool revealed) {

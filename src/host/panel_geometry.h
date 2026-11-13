@@ -36,10 +36,9 @@ std::optional<AppBarEdge> panelAppBarEdge(const PanelAnchorSet& anchors);
 // The pixels across the bar: `size.height()` for Top and Bottom, `size.width()` for Left and Right.
 int panelThickness(AppBarEdge edge, const QSize& size);
 
-// A captioned maximized window is not fullscreen even when the work area fills the monitor.
-// Both rectangles use physical screen coordinates.
-bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool maximized,
-                               bool captioned);
+// Native fullscreen covers the monitor. Maximization also requests the full monitor, even before
+// releasing the panel's work area lets Windows expand it. Both rectangles use physical pixels.
+bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool maximized);
 
 // Cursor area that reveals a fullscreen-hidden panel. While revealed it includes the panel and
 // the gap to its screen edge; otherwise only a two-pixel strip along that edge. Logical pixels.

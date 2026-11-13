@@ -75,8 +75,8 @@ class ShellHost : public QObject {
     // Keeps the window above the others (SetWindowPos HWND_TOPMOST, no activation): called each
     // time a window of the Top or Overlay layer is shown.
     std::function<void(quintptr hwnd)> raiseTopmost;
-    // Whether a fullscreen application covers this panel's monitor. Empty offscreen, so tests
-    // never inspect the live desktop.
+    // Whether a fullscreen or maximized application uses this panel's monitor. Empty offscreen,
+    // so tests never inspect the live desktop.
     std::function<bool(quintptr hwnd)> fullscreenOnMonitor;
     // Sets or clears WS_EX_NOACTIVATE: clicks on a window with `keyboardFocus: None` never take
     // the focus. Called each time a window is shown or its layer or keyboard focus changes.

@@ -26,12 +26,19 @@ constexpr int kAuto = 2;
 
 }  // namespace
 
-TEST(PanelGeometryTest, FullscreenCoversTheMonitorButACaptionedMaximizedWindowDoesNot) {
-  EXPECT_TRUE(coversScreenForFullscreen(kScreen, kScreen, false, false));
-  EXPECT_TRUE(coversScreenForFullscreen(kScreen, kScreen, true, false));
-  EXPECT_FALSE(coversScreenForFullscreen(kScreen, kScreen, true, true));
-  EXPECT_FALSE(coversScreenForFullscreen(kScreen.adjusted(0, 0, -1, 0), kScreen, false, false));
-  EXPECT_FALSE(coversScreenForFullscreen(kScreen, QRect(), false, false));
+TEST(PanelGeometryTest, FullscreenCoversTheMonitorButAnOrdinaryWindowDoesNot) {
+  EXPECT_TRUE(coversScreenForFullscreen(kScreen, kScreen, false));
+  EXPECT_FALSE(coversScreenForFullscreen(kScreen.adjusted(0, 0, -1, 0), kScreen, false));
+  EXPECT_FALSE(coversScreenForFullscreen(kScreen, QRect(), false));
+}
+
+TEST(PanelGeometryTest, MaximizationHidesThePanelBeforeAndAfterTheWorkAreaExpands) {
+  const QRect besideBar = kScreen.adjusted(40, 0, 0, 0);
+  EXPECT_FALSE(coversScreenForFullscreen(besideBar, kScreen, false));
+  EXPECT_TRUE(coversScreenForFullscreen(besideBar, kScreen, true));
+  EXPECT_TRUE(coversScreenForFullscreen(kScreen, kScreen, true));
+  EXPECT_FALSE(coversScreenForFullscreen(kScreen.translated(kScreen.width(), 0), kScreen, true));
+  EXPECT_FALSE(coversScreenForFullscreen({}, kScreen, true));
 }
 
 TEST(PanelGeometryTest, FullscreenRevealUsesEachScreenEdgeAndKeepsTheMarginReachable) {

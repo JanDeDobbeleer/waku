@@ -41,12 +41,13 @@ See [Customization](Customization) for runnable examples and
 [shell author notes](https://github.com/JanDeDobbeleer/waku/blob/main/docs/shells.md) for
 Windows and Quickshell differences.
 
-Docked panels on the Top or Overlay layer auto-hide while a fullscreen application covers their
-monitor on the current desktop. Move the pointer to the panel's screen edge to reveal it; it
-hides again when the pointer leaves the bar and its popup. During fullscreen the bar reserves no
-work area, even while revealed. Leaving fullscreen restores its placement and reservation.
-Captioned maximized windows do not trigger auto-hide. This also applies to ported `PanelWindow`
-shells; no theme changes are needed.
+Docked panels on the Top or Overlay layer auto-hide while a fullscreen or maximized application
+uses their monitor on the current desktop. The square Maximize button also triggers this:
+releasing the bar's work area lets Windows expand the window into that space. Move the pointer
+to the panel's screen edge to reveal it; it hides again when the pointer leaves the bar and its
+popup. The revealed bar overlays the window without reserving work area. Restoring or returning
+the window to tiling restores the bar's placement and reservation. This also applies to ported
+`PanelWindow` shells; no theme changes are needed.
 
 ## Complete type and property metadata
 

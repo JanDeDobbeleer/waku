@@ -894,6 +894,58 @@ TEST(TilingEngine, ToggleFloatWithoutAForegroundWindowDoesNothing) {
   EXPECT_EQ(rig.engine.setForegroundFloating(std::nullopt), FloatOutcome::NoWindow);
 }
 
+TEST(TilingEngine, ToggleReturnsAMaximizedFloatingWindowToTiling) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.placer.front = 1;
+  ASSERT_EQ(rig.engine.setForegroundFloating(std::nullopt), FloatOutcome::Floated);
+  rig.settle();
+  rig.placer.windows[1].zoomed = true;
+  rig.placer.windows[1].fullscreen = true;
+  rig.placer.delayedRestores.insert(1);
+  rig.placer.placements.clear();
+  EXPECT_EQ(rig.engine.setForegroundFloating(std::nullopt), FloatOutcome::Tiled);
+  rig.scheduler.advance(0);
+  EXPECT_EQ(rig.placer.restored, (std::vector<WindowId>{1}));
+  EXPECT_TRUE(rig.placer.slotsOf(1).empty());
+  rig.placer.windows[1].zoomed = false;
+  rig.placer.windows[1].fullscreen = false;
+  rig.settle();
+  EXPECT_FALSE(rig.engine.model().isFloating(1));
+  EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(1, 2));
+  EXPECT_TRUE(rig.placer.activated.empty());
+}
+
+TEST(TilingEngine, ToggleRestoresAMaximizedManagedWindowInsteadOfFloatingIt) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.placer.front = 1;
+  rig.placer.windows[1].zoomed = true;
+  EXPECT_EQ(rig.engine.setForegroundFloating(std::nullopt), FloatOutcome::Tiled);
+  rig.settle();
+  EXPECT_EQ(rig.placer.restored, (std::vector<WindowId>{1}));
+  EXPECT_FALSE(rig.placer.windows[1].zoomed);
+  EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(0, 1));
+  EXPECT_FALSE(rig.engine.model().isFloating(1));
+}
+
+TEST(TilingEngine, ToggleDoesNotRestoreAnIneligibleMaximizedWindow) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.placer.front = 1;
+  ASSERT_EQ(rig.engine.setForegroundFloating(std::nullopt), FloatOutcome::Floated);
+  rig.placer.windows[1].zoomed = true;
+  rig.placer.windows[1].elevated = true;
+  EXPECT_EQ(rig.engine.setForegroundFloating(std::nullopt), FloatOutcome::Ineligible);
+  rig.settle();
+  EXPECT_TRUE(rig.placer.restored.empty());
+  EXPECT_TRUE(rig.placer.windows[1].zoomed);
+}
+
 TEST(TilingEngine, AMaximizedWindowTakesNoSlot) {
   Rig rig;
   rig.engine.start();
