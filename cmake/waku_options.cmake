@@ -27,8 +27,10 @@ target_link_options(waku_options INTERFACE $<$<NOT:$<CONFIG:Debug>>:/OPT:REF;/OP
 # not write. The AOT output of qmlcachegen (<build>/.../.rcc/qmlcache/*.cpp) instantiates Qt
 # templates and trips C4702 (unreachable code) inside QtCore/qvariant.h and QtQml/qjsengine.h;
 # /external:W0 does not silence it because MSVC reports C4702 at the instantiation, after the
-# header's external scope has ended. Only those generated files get /wd4702; the module's own
-# sources keep /W4 /WX. Deferred because Qt adds the generated sources when the directory ends.
+# header's external scope has ended. Newer MSVC also reports C4864 for dependent template calls
+# emitted without the template keyword by Qt 6.12. Only those generated files get these warning
+# exceptions; the module's own sources keep /W4 /WX. Deferred because Qt adds the generated
+# sources when the directory ends.
 function(_waku_qt_generated_code_apply target)
   # The static plugin targets Qt creates for the module compile generated code too.
   foreach(plugin IN ITEMS ${target}plugin ${target}plugin_init)
@@ -40,7 +42,7 @@ function(_waku_qt_generated_code_apply target)
   foreach(source IN LISTS sources)
     if(source MATCHES "/\.rcc/qmlcache/")
       set_source_files_properties(${source} TARGET_DIRECTORY ${target}
-        PROPERTIES COMPILE_OPTIONS /wd4702)
+        PROPERTIES COMPILE_OPTIONS "/wd4702;/wd4864")
     endif()
   endforeach()
 endfunction()

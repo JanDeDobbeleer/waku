@@ -106,6 +106,15 @@ build\arm64-debug\wakuc.exe --config-home examples\config status
 
 The `tile` and `desktop` commands are meant for the key daemon: `examples/config/keys.conf` is a whkd-syntax file that binds all of them (alt+arrows to focus and move, alt+1..8 for desktops) and replaces a tiling window manager plus whkd setup. Its commands start `wakuc`, so `wakuc.exe` must be on `PATH`.
 
+On load or shell reload, the tiler restores and tiles eligible maximized windows without taking
+focus. Windows on another virtual desktop wait until that desktop is shown. Minimized windows and
+explicit ignore or float rules stay untouched. Maximizing a window afterward keeps it out of the
+layout until it is restored; an ordinary `tile retile` does not undo that choice.
+
+In `mainStack`, drag a window border or corner to resize its tile. Neighbors follow shared-divider
+changes during the drag. Outer edges snap back into the work area on release. Dragging the title
+bar still floats the window; other layouts retain their move/resize-to-float behavior.
+
 `--dry-run` after `wallpaper` (not `gallery`) plays the animation without setting the wallpaper.
 
 ### `wakukeys`: global hotkeys without whkd

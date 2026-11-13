@@ -58,7 +58,7 @@ struct Eligibility {
 
 // Whether a window belongs to the tiler. A window is managed unless it is: not visible, cloaked,
 // iconic (Retry), untitled (Retry), a window of waku, owned by a visible owner, a tool window,
-// without a thick frame or caption, maximized by the user, fullscreen, of a built-in ignored class,
+// without a thick frame or caption, maximized, fullscreen, of a built-in ignored class,
 // ignored by a rule (a `float` rule gives Float), or the window of an elevated process while waku
 // is not elevated (UIPI forbids moving it). `forceTile` skips the user rules and the float
 // verdict: the user asked for this window.

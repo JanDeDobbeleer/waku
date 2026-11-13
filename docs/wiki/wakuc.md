@@ -170,7 +170,18 @@ wakuc tile retile
 ```
 
 The tiler is enabled by default on a live desktop. A shell can turn it off, or waku can start with
-`--no-tiling`. Most actions operate on the foreground window and its workspace:
+`--no-tiling`.
+
+On load or shell reload, the tiler restores and tiles eligible maximized windows without taking
+focus. Windows on another virtual desktop wait until that desktop is shown. Minimized windows and
+explicit ignore or float rules stay untouched. Maximizing a window afterward keeps it out of the
+layout until it is restored; `tile retile` does not undo that choice.
+
+In `mainStack`, drag a window border or corner to resize its tile. Neighbors follow shared-divider
+changes during the drag. Outer edges snap back into the work area on release. Dragging the title
+bar still floats the window; other layouts retain their move/resize-to-float behavior.
+
+Most actions operate on the foreground window and its workspace:
 
 - `toggle`: switch the focused window between floating and tiled.
 - `float`: make the focused window float.
