@@ -640,6 +640,63 @@ QtObject {
   EXPECT_EQ(fake->property("calls").toList().at(6).toString(), "forget:AA:BB");
 }
 
+TEST(QuickshellBluetooth, DiscoveryDoesNotRollBackAPendingPowerChange) {
+  Loaded l(R"(
+import QtQuick
+import Quickshell.Bluetooth
+Item {
+    QtObject {
+        id: fake; objectName: "fake"
+        property bool available: true
+        property bool radioOn: false
+        property bool scanning: false
+        property bool acceptScan: true
+        property var devices: []
+        property var calls: []
+        signal changed
+        function setRadio(on) { calls = calls.concat(["radio:" + on]) }
+        function scan() {
+            calls = calls.concat(["scan"]);
+            if (acceptScan)
+                scanning = true;
+        }
+    }
+    Component.onCompleted: Bluetooth.service = fake
+    property var adapter: Bluetooth.defaultAdapter
+}
+)");
+  ASSERT_NE(l.root, nullptr);
+  QObject* adapter = l.get("adapter").value<QObject*>();
+  QObject* fake = l.child("fake");
+  ASSERT_NE(adapter, nullptr);
+  ASSERT_NE(fake, nullptr);
+
+  adapter->setProperty("enabled", true);
+  adapter->setProperty("discovering", true);
+  EXPECT_FALSE(fake->property("radioOn").toBool());
+  EXPECT_TRUE(adapter->property("enabled").toBool());
+  EXPECT_TRUE(adapter->property("discovering").toBool());
+  fake->setProperty("scanning", false);
+  EXPECT_TRUE(adapter->property("enabled").toBool());
+  EXPECT_FALSE(adapter->property("discovering").toBool());
+
+  fake->setProperty("radioOn", true);
+  l.call(fake, "changed");
+  EXPECT_TRUE(adapter->property("enabled").toBool());
+  fake->setProperty("radioOn", false);
+  l.call(fake, "changed");
+  EXPECT_FALSE(adapter->property("enabled").toBool());
+
+  // A refused scan restores discovering later without undoing another pending power request.
+  fake->setProperty("acceptScan", false);
+  adapter->setProperty("enabled", true);
+  adapter->setProperty("discovering", true);
+  QTRY_VERIFY_WITH_TIMEOUT(!adapter->property("discovering").toBool(), 1000);
+  EXPECT_TRUE(adapter->property("enabled").toBool());
+  EXPECT_EQ(fake->property("calls").toList(),
+            (QVariantList{"radio:true", "scan", "radio:true", "scan"}));
+}
+
 TEST(QuickshellBluetooth, ConnectedIsARequestAndStateShowsThePendingConnection) {
   Loaded l(R"(
 import QtQuick
