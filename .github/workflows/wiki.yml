@@ -1,0 +1,37 @@
+name: publish wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/wiki/**"
+      - ".github/scripts/publish-wiki.ps1"
+      - ".github/workflows/wiki.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Publish pages from main
+        shell: pwsh
+        env:
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
+        run: |
+          .github/scripts/publish-wiki.ps1 `
+            -Source (Join-Path $env:GITHUB_WORKSPACE 'docs/wiki') `
+            -WikiUrl "https://github.com/$env:GITHUB_REPOSITORY.wiki.git" `
+            -Checkout (Join-Path $env:RUNNER_TEMP 'waku-wiki')

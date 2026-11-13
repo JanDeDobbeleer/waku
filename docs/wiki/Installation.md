@@ -88,7 +88,7 @@ wakuc config init
 This creates the folder if it is missing and writes the built-in bar as `shell.qml`, so you can
 edit it. It does not need a running bar. If a `shell.qml` exists, the command stops with exit code 1
 and changes nothing; add `--force` to replace it. The package also ships a fuller sample in
-`examples\config` under the package folder (or see [examples/config](../examples/config) in the
+`examples\config` under the package folder (or see [examples/config](https://github.com/JanDeDobbeleer/waku/tree/main/examples/config) in the
 repository).
 
 The config home holds:
@@ -96,6 +96,7 @@ The config home holds:
 - `shell.qml`: which bars to show and which widgets go where.
 - `theme.qml`: colours and sizes (optional).
 - `widgets/`: your own widgets, one component per file (optional).
+- `keys.conf`: global key bindings for `wakukeys` (optional).
 
 Edit a file and save, then reload the bar. A mistake shows the built-in fallback bar with an
 error pill. To reload:
@@ -104,15 +105,14 @@ error pill. To reload:
 wakuc reload
 ```
 
-Commands and flags are in [src/app/README.md](../src/app/README.md).
+Commands and flags are in the [wakuc reference](wakuc) and [waku reference](waku).
 
-## Optional companions
+## Key bindings
 
-waku runs without them. Install the ones you need:
-
-- [whkd](https://github.com/LGUG2234/whkd) or [AutoHotkey](https://www.autohotkey.com/): a hotkey
-  tool. Bind a key to `wakuc shortcut <name>` to fire a `GlobalShortcut` of your shell. The example
-  is in [docs/shells.md](shells.md).
+waku includes `wakukeys`, a hotkey daemon that reads `keys.conf` in your config home. When the file
+exists, waku starts the daemon with the bar. Copy or adapt the
+[sample bindings](https://github.com/JanDeDobbeleer/waku/blob/main/examples/config/keys.conf), or see the
+[wakukeys guide](https://github.com/JanDeDobbeleer/waku/wiki/wakukeys) to write your own.
 
 ## Run at sign-in
 
@@ -138,13 +138,13 @@ starts the key daemon when `keys.conf` exists. Change that with:
 - `--keep-taskbar`: start waku with `--keep-taskbar`, so the taskbar stays.
 - Other `waku` flags after `--`, for example `wakuc startup enable -- --no-tray`.
 
-If `keys.conf` exists in your config home (`--config-home`, else `%USERPROFILE%\.config\waku`),
-`enable` registers a second task that starts the keys daemon `wakukeys.exe` (it reads that file, and
-talks to the bar of your `--config-home`). Without the file
-it says so and registers nothing for the keys. `wakukeys.exe` must be on your PATH too (the package
-has an alias). The daemon puts its own folder first in the PATH of the commands it runs, so a
-binding can run `wakuc` without a PATH entry. To make `wakukeys` talk to a bar started with
-`--config-home`, set the user environment variable `WAKU_CONFIG_HOME` to that folder.
+If `keys.conf` exists in the `--config-home` folder, or in `%USERPROFILE%\.config\waku` when no
+folder is given, `enable` registers a second task that starts the keys daemon `wakukeys.exe`.
+The check does not use `WAKU_CONFIG_HOME`; pass `--config-home` when your keys file is elsewhere.
+Without the file, the command registers nothing for the keys. `wakukeys.exe` must be on your PATH
+too (the package has an alias). The daemon puts its own folder first in the PATH of the commands it
+runs, so bindings can find `wakuc`. An explicit `--config-home` is passed to the keys
+daemon too, so its commands target the same bar.
 
 `wakuc startup enable` again replaces the tasks. `wakuc startup status` shows whether each is
 registered, its command and which `waku.exe` and `wakukeys.exe` the PATH finds. `wakuc startup
@@ -184,15 +184,19 @@ Delete them yourself for a clean slate. Run `wakuc startup disable` too if you e
 - **Try a config safely.** Pass a scratch folder, for example
   `waku --config-home <scratch>\waku`. Your real config stays untouched.
 
-All `waku` flags are in [docs/building.md](building.md). Security notes are in
-[SECURITY.md](../SECURITY.md).
+All `waku` flags are in the [startup reference](waku). Security notes are in
+[SECURITY.md](https://github.com/JanDeDobbeleer/waku/blob/main/SECURITY.md).
 
 ## Use a Quickshell shell or let an agent build one
 
 waku is Quickshell-compatible: it offers the `Quickshell` modules, so shells written for
 Quickshell can run with few changes. Shells are not bundled. A shell lives in your config home
 (`%USERPROFILE%\.config\waku`) and carries its own layout and styling. The differences from
-Quickshell (input masks, shortcuts without keys) are in [docs/shells.md](shells.md).
+Quickshell (input masks, shortcuts without keys) are in
+[docs/shells.md](https://github.com/JanDeDobbeleer/waku/blob/main/docs/shells.md).
+
+Find ready-made shells ported to Windows in
+[waku-ports](https://github.com/JanDeDobbeleer/waku-ports).
 
 An agent can write a shell for you. Give it a prompt like this and fill in the brackets:
 
@@ -213,6 +217,6 @@ Build a waku shell for me.
 
 ## See also
 
-- [README.md](../README.md): what waku is.
-- [docs/building.md](building.md): build from source and every flag.
-- [src/app/README.md](../src/app/README.md): `waku` and `wakuc`.
+- [README.md](https://github.com/JanDeDobbeleer/waku/blob/main/README.md): what waku is.
+- [docs/building.md](https://github.com/JanDeDobbeleer/waku/blob/main/docs/building.md): build from source and every flag.
+- [Application overview](https://github.com/JanDeDobbeleer/waku/blob/main/src/app/README.md): `waku` and `wakuc`.

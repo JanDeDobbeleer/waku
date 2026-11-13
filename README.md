@@ -23,7 +23,7 @@ center. You can copy any of them into your config and change it.
 Download the MSIX for your processor (`waku-x64.msix` or `waku-arm64.msix`) from the
 [latest release](https://github.com/JanDeDobbeleer/waku/releases/latest) and open it.
 Then start `waku` from the Start menu or a terminal.
-The full guide is [docs/install.md](docs/install.md).
+The full guide is in the [wiki](https://github.com/JanDeDobbeleer/waku/wiki/Installation).
 
 ## Customise
 
@@ -89,15 +89,11 @@ npx skills add JanDeDobbeleer/waku --skill waku-shell
 or copy `skills/waku-shell` into your agent's skills folder.
 
 
-## Optional companions
+## Key bindings
 
-waku runs on its own. One thing may need a helper:
-
-- **Keybinds.** waku does not bind keys for a shell's shortcuts by default. Bind a key to
-  `wakuc shortcut <name>` in [whkd](https://github.com/LGUG2234/whkd) or
-  [AutoHotkey](https://www.autohotkey.com/), for example `win + space : wakuc shortcut launcher`.
-  A `GlobalShortcut` that sets `keys` registers its own key. See
-  [docs/shells.md](docs/shells.md#global-shortcuts-without-keys).
+waku includes `wakukeys`, a hotkey daemon that reads `keys.conf` in your config home. See the
+[sample bindings](examples/config/keys.conf) and the
+[wakukeys guide](https://github.com/JanDeDobbeleer/waku/wiki/wakukeys).
 
 ## Build from source
 
@@ -115,7 +111,7 @@ Use `x64-release` on an x64 PC. Prerequisites, presets and the flags of `waku` a
 
 | Document | What it covers |
 | --- | --- |
-| [docs/install.md](docs/install.md) | Install from the MSIX, first run, updates, troubleshooting |
+| [Installation guide](https://github.com/JanDeDobbeleer/waku/wiki/Installation) | Install from the MSIX, first run, updates, troubleshooting |
 | [docs/shells.md](docs/shells.md) | Notes for shell authors: what differs from Quickshell |
 | [docs/building.md](docs/building.md) | Prerequisites, presets, deploy, command-line flags |
 | [docs/architecture.md](docs/architecture.md) | Units and layering, threads, singletons, error policy |
