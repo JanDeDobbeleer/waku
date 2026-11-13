@@ -273,6 +273,12 @@ The Win32 app bar listens for `ABN_POSCHANGED` on its registered window. A GUI-t
 timer coalesces notifications and asks the host to renegotiate even when the cached request is
 unchanged. Removing the app bar cancels pending recovery.
 
+Before a native app-bar call, `TrayWindowYield` moves this process's `Shell_TrayWnd` windows
+below Explorer's so `SHAppBarMessage` reaches Explorer directly. This includes a newly created
+tray window that is not topmost yet: it can already win the lookup during startup. The guard
+restores each window's original topmost state afterward. Forwarding through the tray host
+breaks the app-bar shared-memory exchange even when the call reports success.
+
 A screen added or removed, a new primary screen, and a change of a screen's logical DPI or geometry
 reload the shell once the changes stop (`screenSettleMs`, 1.5 s). Windows reports a scale change as
 a new device pixel ratio and a new logical size with the logical DPI unchanged, so the geometry
