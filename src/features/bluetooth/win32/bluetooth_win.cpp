@@ -1409,14 +1409,14 @@ std::unique_ptr<BluetoothBackend> createBluetoothBackend() {
 }
 
 bool hasBluetoothAdapter() {
-  BLUETOOTH_FIND_RADIO_PARAMS findParams{};
-  findParams.dwSize = sizeof(findParams);
-  HANDLE radio = nullptr;
-  HBLUETOOTH_RADIO_FIND finder = BluetoothFindFirstRadio(&findParams, &radio);
-  if (!finder) return false;
-  if (radio) CloseHandle(radio);
-  BluetoothFindRadioClose(finder);
-  return true;
+  // BluetoothFindFirstRadio omits powered-off radios. Their adapter interfaces remain present,
+  // so the service must use those to stay available when it starts with Bluetooth off.
+  GUID interfaceId{};
+  if (FAILED(CLSIDFromString(kAdapterInterface, &interfaceId))) return false;
+  ULONG length = 0;
+  return CM_Get_Device_Interface_List_SizeW(&length, &interfaceId, nullptr,
+                                            CM_GET_DEVICE_INTERFACE_LIST_PRESENT) == CR_SUCCESS &&
+         length > 1;
 }
 
 }  // namespace waku::bluetooth
