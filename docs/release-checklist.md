@@ -9,6 +9,15 @@ The undocumented API rows in `docs/architecture.md` that say "not exercised live
 The automated part of a release is `tools\check.ps1` on `arm64-debug` plus `ctest` on
 `arm64-release` and `x64-release` (`docs/building.md`).
 
+## User documentation
+
+Before release, compare user-facing command, option, QML and installation changes with
+`docs/wiki/`. Update affected pages in the same pull requests. After publication, confirm the
+`publish wiki` workflow succeeded. It publishes the current `main`, not a release snapshot.
+Setup and recovery are in `docs/wiki/Maintaining-the-wiki.md`.
+
+## Live checks
+
 | Behaviour | Code | How to exercise it | Last seen working |
 |---|---|---|---|
 | App bar reservation (`ABM_NEW`, `ABM_QUERYPOS`, `ABM_SETPOS`) | `src/host/win32/app_bar.cpp` | Start waku normally. Maximise a window: it stops at the bar. `wakuc quit` gives the area back. | 2026-10-30, build 26300, ARM64 (left edge, scale 0.75) |

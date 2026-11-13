@@ -218,6 +218,10 @@ fine. Never use the `const` `nlohmann::json::operator[]` on a key that may be mi
 
 ## Housekeeping
 
+When changing a user-facing command, option, QML API or installation behaviour, update the
+affected pages in `docs/wiki/` in the same change. The wiki is published from those files; see
+`docs/wiki/Maintaining-the-wiki.md`.
+
 When a feature or experiment ends, delete in the same change: probes, scratch builds, plans,
 designs, handover docs, `dist-*` folders and stale scripts. Do not wait to be asked. Validate
 against the running program or the source, not memory.
