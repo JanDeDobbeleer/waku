@@ -41,6 +41,10 @@ int panelThickness(AppBarEdge edge, const QSize& size);
 bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool maximized,
                                bool captioned);
 
+// Cursor area that reveals a fullscreen-hidden panel. While revealed it includes the panel and
+// the gap to its screen edge; otherwise only a two-pixel strip along that edge. Logical pixels.
+QRect panelRevealArea(AppBarEdge edge, const QRect& panel, const QRect& screen, bool revealed);
+
 // The pixels a PanelWindow reserves along its app bar edge, before the host's
 // --no-app-bar gate. `mode` is an ExclusionMode value (Ignore 0, Normal 1, Auto 2):
 // Ignore reserves nothing, Normal `exclusiveZone` plus the margin on that edge, Auto the window's

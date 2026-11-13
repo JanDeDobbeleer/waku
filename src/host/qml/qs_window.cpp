@@ -327,6 +327,13 @@ void QsWindow::setPresentable(bool presentable) {
   updateVisibility();
 }
 
+void QsWindow::setSuppressed(bool suppressed) {
+  if (suppressed_ == suppressed) return;
+  suppressed_ = suppressed;
+  activateOnShow_ = false;
+  updateVisibility();
+}
+
 void QsWindow::retire() {
   // host_ stays: ~QsWindow still calls release() to drop the entry.
   if (host_) host_->retire(this);
@@ -356,13 +363,13 @@ void QsWindow::hideNow() {
 void QsWindow::updateVisibility() {
   if (!window_) return;
   const bool ready = complete_ && presentable_ && buildError_.isEmpty();
-  const bool show = ready && visible_;
+  const bool show = ready && visible_ && !suppressed_;
   if (show) hideTimer_.stop();
   if (show == window_->isVisible()) return;
   if (!show) {
     // The user hid it: the content gets `hideDelay` to animate out. Any other reason (the shell
     // goes away, the window broke) takes it off the screen at once.
-    if (ready && hideDelay_ > 0) {
+    if (ready && !suppressed_ && hideDelay_ > 0) {
       if (!hideTimer_.isActive()) hideTimer_.start(hideDelay_);
       return;
     }

@@ -47,6 +47,30 @@ bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool ma
   return !screen.isEmpty() && !(maximized && captioned) && window.contains(screen);
 }
 
+QRect panelRevealArea(AppBarEdge edge, const QRect& panel, const QRect& screen, bool revealed) {
+  if (panel.isEmpty() || screen.isEmpty()) return {};
+  QRect area = panel;
+  switch (edge) {
+    case AppBarEdge::Top:
+      area.setTop(screen.top());
+      if (!revealed) area.setBottom(screen.top() + 1);
+      break;
+    case AppBarEdge::Bottom:
+      area.setBottom(screen.bottom());
+      if (!revealed) area.setTop(screen.bottom() - 1);
+      break;
+    case AppBarEdge::Left:
+      area.setLeft(screen.left());
+      if (!revealed) area.setRight(screen.left() + 1);
+      break;
+    case AppBarEdge::Right:
+      area.setRight(screen.right());
+      if (!revealed) area.setLeft(screen.right() - 1);
+      break;
+  }
+  return area.intersected(screen);
+}
+
 int panelReservedZone(const PanelAnchorSet& anchors, const QMargins& margins, int mode,
                       int exclusiveZone, const QSize& size) {
   constexpr int kIgnore = 0;

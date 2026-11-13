@@ -75,10 +75,9 @@ class ShellHost : public QObject {
     // Keeps the window above the others (SetWindowPos HWND_TOPMOST, no activation): called each
     // time a window of the Top or Overlay layer is shown.
     std::function<void(quintptr hwnd)> raiseTopmost;
-    // Whether a fullscreen application covers this panel's monitor, and how to lower the panel
-    // behind it. Empty offscreen, so tests never inspect or alter the live desktop.
+    // Whether a fullscreen application covers this panel's monitor. Empty offscreen, so tests
+    // never inspect the live desktop.
     std::function<bool(quintptr hwnd)> fullscreenOnMonitor;
-    std::function<void(quintptr hwnd)> lowerToBottom;
     // Sets or clears WS_EX_NOACTIVATE: clicks on a window with `keyboardFocus: None` never take
     // the focus. Called each time a window is shown or its layer or keyboard focus changes.
     std::function<void(quintptr hwnd, bool noActivate)> setNoActivate;
@@ -214,7 +213,8 @@ class ShellHost : public QObject {
     std::optional<waku::host::AppBarRequest> appBarRequest;
     bool layoutConnected = false;
     bool presented = false;
-    bool fullscreenLowered = false;
+    bool fullscreenActive = false;
+    bool fullscreenRevealed = false;
     // Set by retire(): the window waits for its deferred deletion and is skipped everywhere.
     bool retired = false;
     bool live() const { return window && !retired; }
@@ -254,6 +254,8 @@ class ShellHost : public QObject {
   void syncAppBar(Entry& entry, bool force = false);
   void panelLayoutChanged(PanelWindow* panel, bool force = false);
   void updateFullscreenPanels();
+  void updateFullscreenPanel(Entry& entry);
+  void updateFullscreenReveal();
   void setError(const QString& error);
   void trimIfSettled();
   // Walks the config home again and watches what it finds.
@@ -295,6 +297,8 @@ class ShellHost : public QObject {
   // Single shot, started by install(): trims the working set once the window count stops growing.
   QTimer trimTimer_;
   QTimer fullscreenTimer_;
+  // GUI-thread cursor checks, only while a fullscreen panel needs edge reveal.
+  QTimer revealTimer_;
   // The window count at the last look (install() or the previous timer tick).
   int windowsSeen_ = 0;
   FileStamps snapshot_;

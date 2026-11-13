@@ -97,10 +97,6 @@ ShellHost::NativeHooks ShellHost::NativeHooks::win32() {
     hooks.fullscreenOnMonitor = [](quintptr hwnd) {
       return hasFullscreenWindow(reinterpret_cast<HWND>(hwnd));
     };
-    hooks.lowerToBottom = [](quintptr hwnd) {
-      SetWindowPos(reinterpret_cast<HWND>(hwnd), HWND_BOTTOM, 0, 0, 0, 0,
-                   SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-    };
   }
   hooks.raiseTopmost = [](quintptr hwnd) {
     SetWindowPos(reinterpret_cast<HWND>(hwnd), HWND_TOPMOST, 0, 0, 0, 0,

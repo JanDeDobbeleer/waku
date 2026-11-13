@@ -231,6 +231,8 @@ class QsWindow : public QObject, public QQmlParserStatus {
   QString buildError() const { return buildError_; }
   // The host lets the window show (its shell is installed), or takes that back.
   void setPresentable(bool presentable);
+  // Temporarily hide the native window without changing the shell's requested visibility.
+  void setSuppressed(bool suppressed);
   // The window is deleted later (its owner called deleteLater): it leaves the screen and stops
   // counting as a window of its shell now.
   void retire();
@@ -324,6 +326,7 @@ class QsWindow : public QObject, public QQmlParserStatus {
   bool visible_ = true;
   bool complete_ = false;
   bool presentable_ = false;
+  bool suppressed_ = false;
   bool shownOnce_ = false;
 };
 

@@ -289,7 +289,9 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
   });
   trimTimer_.setSingleShot(true);
   connect(&trimTimer_, &QTimer::timeout, this, [this] { trimIfSettled(); });
-  if (options_.hooks.fullscreenOnMonitor && options_.hooks.lowerToBottom) {
+  revealTimer_.setInterval(50);
+  connect(&revealTimer_, &QTimer::timeout, this, [this] { updateFullscreenReveal(); });
+  if (options_.hooks.fullscreenOnMonitor) {
     fullscreenTimer_.setInterval(500);
     connect(&fullscreenTimer_, &QTimer::timeout, this, [this] { updateFullscreenPanels(); });
     fullscreenTimer_.start();
@@ -790,23 +792,16 @@ void ShellHost::windowShown(QsWindow* window, bool activate) {
   const auto hwnd = static_cast<quintptr>(backing->winId());
   try {
     if (hooks.setNoActivate) hooks.setNoActivate(hwnd, !window->takesFocus());
-    bool lower = false;
-    auto* panel = qobject_cast<PanelWindow*>(window);
-    if (panel && panel->appBarEdge() && panel->stackTopmost() && hooks.fullscreenOnMonitor &&
-        hooks.lowerToBottom) {
-      lower = hooks.fullscreenOnMonitor(hwnd);
-    }
     if (loaded_) {
       for (Entry& entry : loaded_->entries) {
         if (entry.window == window) {
-          entry.fullscreenLowered = lower;
+          updateFullscreenPanel(entry);
           break;
         }
       }
     }
-    if (lower) {
-      hooks.lowerToBottom(hwnd);
-    } else if (window->stackTopmost() && hooks.raiseTopmost) {
+    if (!window->backingWindowVisible()) return;
+    if (window->stackTopmost() && hooks.raiseTopmost) {
       hooks.raiseTopmost(hwnd);
     }
     if (activate) {
@@ -826,27 +821,82 @@ void ShellHost::windowStackingChanged(QsWindow* window, bool activate) {
 
 void ShellHost::updateFullscreenPanels() {
   if (!loaded_) return;
-  const NativeHooks& hooks = options_.hooks;
   try {
     for (Entry& entry : loaded_->entries) {
-      auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
-      if (!entry.live() || !panel || !entry.presented || !panel->backingWindowVisible()) continue;
-      const auto hwnd = static_cast<quintptr>(panel->backingWindow()->winId());
-      const bool lower =
-          panel->appBarEdge() && panel->stackTopmost() && hooks.fullscreenOnMonitor(hwnd);
-      if (lower == entry.fullscreenLowered) continue;
-      entry.fullscreenLowered = lower;
-      if (lower) {
-        hooks.lowerToBottom(hwnd);
-      } else if (panel->stackTopmost() && hooks.raiseTopmost) {
-        hooks.raiseTopmost(hwnd);
-      }
+      updateFullscreenPanel(entry);
     }
+    updateFullscreenReveal();
   } catch (const std::exception& e) {
     qWarning().noquote() << "waku: fullscreen panel update failed:" << e.what();
   } catch (...) {
     qWarning() << "waku: fullscreen panel update failed";
   }
+}
+
+void ShellHost::updateFullscreenPanel(Entry& entry) {
+  auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
+  if (!entry.live() || !panel || !entry.presented) return;
+  const auto& hooks = options_.hooks;
+  const bool fullscreen =
+      panel->visible() && panel->appBarEdge() && panel->stackTopmost() &&
+      hooks.fullscreenOnMonitor &&
+      hooks.fullscreenOnMonitor(static_cast<quintptr>(panel->backingWindow()->winId()));
+  if (fullscreen == entry.fullscreenActive) return;
+  entry.fullscreenActive = fullscreen;
+  entry.fullscreenRevealed = false;
+  // The revealed bar overlays the application; it must not shrink its work area.
+  syncAppBar(entry);
+  if (!entry.live()) return;
+  panel->setSuppressed(fullscreen);
+  if (fullscreen && !revealTimer_.isActive()) revealTimer_.start();
+}
+
+void ShellHost::updateFullscreenReveal() {
+  bool active = false;
+  try {
+    const auto cursor =
+        options_.hooks.cursorPosition ? options_.hooks.cursorPosition() : std::nullopt;
+    if (loaded_) {
+      for (Entry& entry : loaded_->entries) {
+        auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
+        if (!entry.live() || !panel || !entry.fullscreenActive || !panel->visible()) continue;
+        active = true;
+        const auto edge = panel->appBarEdge();
+        QScreen* screen = panel->targetScreen();
+        if (!edge || !screen || !cursor) continue;
+        QQuickWindow* backing = panel->backingWindow();
+        const QRect area = panelRevealArea(*edge, backing->geometry(), screen->geometry(),
+                                           entry.fullscreenRevealed);
+        const QPointF logical = cursorInWindow(*cursor, screen->geometry().topLeft(),
+                                               screen->devicePixelRatio(), QPointF());
+        bool revealed = QRectF(area).contains(logical);
+        if (entry.fullscreenRevealed && !revealed) {
+          // Popups anchored to the bar stay usable outside the bar's own rectangle.
+          for (QWindow* window : QGuiApplication::topLevelWindows()) {
+            if (!window->isVisible() || window == backing || !window->screen()) continue;
+            const bool anchored = window->transientParent() == backing ||
+                                  window->property("bar").value<QObject*>() == backing;
+            if (!anchored) continue;
+            const QPointF local =
+                cursorInWindow(*cursor, window->screen()->geometry().topLeft(),
+                               window->devicePixelRatio(), window->geometry().topLeft());
+            if (QRectF(QPointF(), window->size()).adjusted(-8, -8, 8, 8).contains(local)) {
+              revealed = true;
+              break;
+            }
+          }
+        }
+        if (revealed == entry.fullscreenRevealed) continue;
+        entry.fullscreenRevealed = revealed;
+        panel->setSuppressed(!revealed);
+      }
+    }
+  } catch (const std::exception& e) {
+    qWarning().noquote() << "waku: fullscreen edge reveal failed:" << e.what();
+  } catch (...) {
+    qWarning() << "waku: fullscreen edge reveal failed";
+  }
+  if (!active) revealTimer_.stop();
 }
 
 void ShellHost::present(Entry& entry) {
@@ -944,7 +994,7 @@ void ShellHost::syncAppBar(Entry& entry, bool force) {
       zone > 0 ? zone : panelThickness(*edge, QSize(panel->width(), panel->height()));
   request.screen = panel->targetScreen();
   request.dpr = request.screen ? request.screen->devicePixelRatio() : 1.0;
-  request.reserveSpace = options_.allowReserve && zone > 0;
+  request.reserveSpace = options_.allowReserve && zone > 0 && !entry.fullscreenActive;
   request.alwaysOnTop = panel->aboveWindows();
   request.noActivate = !panel->focusable();
   if (!force && entry.appBar && entry.appBarRequest && *entry.appBarRequest == request) return;
