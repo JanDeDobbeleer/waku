@@ -41,6 +41,14 @@ QtObject {
             return;
         pulling = true;
         enabled = service.radioOn === true;
+        pulling = false;
+        pullScanning();
+    }
+
+    function pullScanning() {
+        if (!service)
+            return;
+        pulling = true;
         discovering = service.scanning === true;
         pulling = false;
     }
@@ -62,7 +70,7 @@ QtObject {
         // The value follows the service: a scan that did not start, or one that cannot be stopped,
         // puts it back.
         if ((service.scanning === true) !== discovering)
-            Qt.callLater(root.pull);
+            Qt.callLater(root.pullScanning);
     }
 
     final readonly property Connections watch: Connections {
@@ -72,7 +80,7 @@ QtObject {
             root.pull();
         }
         function onScanningChanged() {
-            root.pull();
+            root.pullScanning();
         }
     }
 

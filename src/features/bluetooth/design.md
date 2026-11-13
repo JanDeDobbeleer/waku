@@ -28,6 +28,10 @@ waits up to 2 s per such thread at exit (see the threads table in `docs/architec
 
 ## Start-up refresh
 
+Adapter presence comes from the present Bluetooth adapter PnP interfaces, not
+`BluetoothFindFirstRadio`, which omits powered-off radios. Starting with Bluetooth off still
+creates the backend, so the switch can enable it and follow changes from Windows Settings.
+
 A refresh publishes in two phases. Phase 1 lists the classic devices (about 2 ms) plus the cached LE
 ones and publishes at once. Phase 2 lists the paired LE devices and publishes again. The LE listing
 uses `BluetoothLEDevice::GetDeviceSelectorFromPairingState(true)`. The unfiltered `FindAllAsync()`
