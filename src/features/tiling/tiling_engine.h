@@ -68,6 +68,7 @@ enum class FloatOutcome { NoWindow, Floated, Tiled, Unchanged, Ineligible };
 //  - a desktop switch has no event: the first Uncloaked or Foreground after it finds a different
 //    current desktop and retiles that desktop
 //  - retiles are coalesced: any number of requests in one turn place the windows once
+// Startup restores eligible maximized windows before tiling them; later maximization is respected.
 // It never activates a window, never places a cloaked, minimized or maximized one, and reads the
 // rectangle back after a placement: a window that clamps (minimum size) keeps its slot and leaves
 // a gap; there is no second pass.
@@ -87,13 +88,15 @@ class TilingEngine {
   void setSettings(const TilingSettings& settings);
   const TilingSettings& settings() const { return settings_; }
 
-  // Scans the open windows and tiles them. Idempotent.
+  // Scans the open windows, restores eligible maximized ones and tiles them. Idempotent.
   void start();
   // Forgets everything and leaves the windows where they are.
   void stop();
   bool running() const { return running_; }
 
   void handle(const WindowEvent& event);
+  // True only while a managed mainStack window is being interactively resized.
+  bool tracksMouseResize(WindowId hwnd) const { return resizeDrags_.count(hwnd) != 0; }
 
   // Retiles every workspace of the shown desktop (a screen or work area change).
   void retileAll();
@@ -155,8 +158,9 @@ class TilingEngine {
 
  private:
   void defer(int ms, std::function<void()> task);
-  void scheduleEvaluate(WindowId hwnd, int ms, int attempt, bool force);
-  void evaluate(WindowId hwnd, int attempt, bool force);
+  void scheduleEvaluate(WindowId hwnd, int ms, int attempt, bool force, bool initialScan = false);
+  void evaluate(WindowId hwnd, int attempt, bool force, bool initialScan = false);
+  void waitForStartupRestore(WindowId hwnd, int attempt);
   void forget(WindowId hwnd, bool dropFloat);
   void refreshDesktop();
   void requestRetile(const WorkspaceKey& key);
@@ -165,6 +169,7 @@ class TilingEngine {
   void onCloaked(WindowId hwnd);
   void onMoveSizeStart(WindowId hwnd);
   void onMoveSizeEnd(WindowId hwnd);
+  void onLocationChange(WindowId hwnd);
   void raiseNewTops(const WorkspaceKey& key, const std::vector<WindowId>& active);
   void verifyPlacements(const std::vector<std::pair<WindowId, QRect>>& placed);
   WorkspaceKey keyFor(const WindowFacts& facts) const;
@@ -193,11 +198,25 @@ class TilingEngine {
   // is Lasting; a title change looks again only at an Untitled one.
   enum class Ignored { Lasting, Untitled, Transient };
   std::map<WindowId, Ignored> ignored_;
-  std::set<WindowId> pending_;        // an evaluation is scheduled
+  std::set<WindowId> pending_;  // an evaluation is scheduled
+  // Maximized in the initial scan; a cloaked window waits until its desktop is shown.
+  std::set<WindowId> restoreOnStartup_;
   std::set<WindowId> moving_;         // the user drags or resizes it
   std::map<WindowId, QRect> placed_;  // the visible bounds the window had when we last looked
-  std::set<WindowId> clamped_;        // placed, but not at the size of its slot
-  std::set<WindowId> wasTop_;         // tops of stacks (two windows or more) at the last retile
+  struct ResizeDrag {
+    WorkspaceKey key;
+    QRect startRect;
+    QRect area;
+    std::vector<WindowId> active;
+    std::vector<QRect> slotRects;
+    std::optional<double> initialRatio;
+    std::map<WindowId, double> initialWeights;
+    int gap = 0;
+    bool resized = false;
+  };
+  std::map<WindowId, ResizeDrag> resizeDrags_;
+  std::set<WindowId> clamped_;  // placed, but not at the size of its slot
+  std::set<WindowId> wasTop_;   // tops of stacks (two windows or more) at the last retile
   std::set<WorkspaceKey> retiles_;
   bool flushScheduled_ = false;
   // Tasks hold a weak copy: a task that outlives stop() or the engine does nothing.

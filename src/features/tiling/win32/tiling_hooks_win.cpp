@@ -1,7 +1,7 @@
 // The WinEvent hooks of the tiler: documented SetWinEventHook only (through kernel::WinEventHook),
 // out of context, so waku is never injected into another process and the callbacks run on the GUI
-// thread. One range hook per event group. EVENT_OBJECT_LOCATIONCHANGE is never hooked: it fires
-// for every cursor and caret move and the tiler has no use for it.
+// thread. One range hook per event group. Location changes are hooked only for an active managed
+// mainStack resize and are filtered to that window.
 #include <windows.h>
 
 #include <utility>
@@ -40,8 +40,28 @@ class Win32TilingHooks final : public TilingHooks {
     return !hooks_.empty();
   }
 
+  void trackLocation(WindowId hwnd, bool enabled) override {
+    if (!enabled) {
+      if (trackedLocation_ == hwnd || hwnd == 0) {
+        locationHook_.uninstall();
+        trackedLocation_ = 0;
+      }
+      return;
+    }
+    if (trackedLocation_ == hwnd) return;
+    locationHook_.uninstall();
+    trackedLocation_ = 0;
+    if (locationHook_.install(winevent::kObjectLocationChange, winevent::kObjectLocationChange,
+                              [this](unsigned event, std::uintptr_t id, long idObject,
+                                     long idChild) { deliver(event, id, idObject, idChild); })) {
+      trackedLocation_ = hwnd;
+    }
+  }
+
   void uninstall() override {
     hooks_.clear();
+    locationHook_.uninstall();
+    trackedLocation_ = 0;
     sink_ = nullptr;
   }
 
@@ -50,6 +70,7 @@ class Win32TilingHooks final : public TilingHooks {
     if (!sink_ || id == 0 || idObject != OBJID_WINDOW || idChild != CHILDID_SELF) return;
     const std::optional<EventKind> kind = eventKindFromWinEvent(event);
     if (!kind) return;
+    if (*kind == EventKind::LocationChange && id != trackedLocation_) return;
     // A destroyed window has no ancestor any more; every other event must come from a top-level
     // window, not a child control.
     if (*kind != EventKind::Destroy) {
@@ -61,6 +82,8 @@ class Win32TilingHooks final : public TilingHooks {
 
   Sink sink_;
   std::vector<kernel::WinEventHook> hooks_;
+  kernel::WinEventHook locationHook_;
+  std::uintptr_t trackedLocation_ = 0;
 };
 
 }  // namespace

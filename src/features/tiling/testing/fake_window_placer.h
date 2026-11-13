@@ -129,6 +129,7 @@ class FakeWindowPlacer final : public WindowPlacer {
     QRect achieved = slot;
     if (clamp) achieved = clamp(hwnd, slot);
     found->second.rect = achieved;
+    if (onPlace) onPlace(hwnd, slot);
     return {true, achieved};
   }
   void activate(WindowId hwnd) override {
@@ -137,6 +138,17 @@ class FakeWindowPlacer final : public WindowPlacer {
   }
 
   void raise(WindowId hwnd) override { raised.push_back(hwnd); }
+
+  bool restore(WindowId hwnd) override {
+    restored.push_back(hwnd);
+    const auto found = windows.find(hwnd);
+    if (found == windows.end() || refuse.count(hwnd)) return false;
+    if (!delayedRestores.count(hwnd)) {
+      found->second.zoomed = false;
+      found->second.fullscreen = false;
+    }
+    return true;
+  }
 
   bool close(WindowId hwnd) override {
     closed.push_back(hwnd);
@@ -165,11 +177,14 @@ class FakeWindowPlacer final : public WindowPlacer {
   QString desktop;
   std::optional<WindowId> front;
   std::set<WindowId> refuse;
+  std::set<WindowId> delayedRestores;
   std::function<QRect(WindowId, const QRect&)> clamp;
+  std::function<void(WindowId, const QRect&)> onPlace;
   std::vector<Placement> placements;
   std::vector<WindowId> cloakedPlacements;
   std::vector<WindowId> activated;
   std::vector<WindowId> raised;
+  std::vector<WindowId> restored;
   std::vector<WindowId> closed;
   std::vector<WindowId> minimized;
   int queries = 0;

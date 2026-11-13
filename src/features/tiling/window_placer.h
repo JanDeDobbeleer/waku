@@ -19,7 +19,7 @@ struct WindowFacts {
   bool visible = false;
   bool iconic = false;
   bool cloaked = false;
-  bool zoomed = false;          // maximized by the user
+  bool zoomed = false;          // maximized
   bool fullscreen = false;      // covers its whole monitor
   bool ownedByVisible = false;  // has a visible owner window (dialogs, popups)
   bool toolWindow = false;      // WS_EX_TOOLWINDOW
@@ -65,6 +65,8 @@ class WindowPlacer {
   // Brings the window to the front of the z-order without activating it or moving it (the top of
   // a stack goes over the windows that share its rectangle).
   virtual void raise(WindowId hwnd) = 0;
+  // Requests restoration from maximized without activating the window. Completion can be async.
+  virtual bool restore(WindowId hwnd) = 0;
   // Asks the window to close like its close button (WM_CLOSE); it may refuse or ask to save.
   virtual bool close(WindowId hwnd) = 0;
   // Minimizes the window.

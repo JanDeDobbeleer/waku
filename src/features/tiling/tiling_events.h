@@ -10,17 +10,18 @@ namespace waku::tiling {
 
 // What happened to a window, as far as the tiler cares.
 enum class EventKind {
-  Show,           // EVENT_OBJECT_SHOW
-  Destroy,        // EVENT_OBJECT_DESTROY
-  Hide,           // EVENT_OBJECT_HIDE
-  NameChange,     // EVENT_OBJECT_NAMECHANGE
-  Cloaked,        // EVENT_OBJECT_CLOAKED
-  Uncloaked,      // EVENT_OBJECT_UNCLOAKED
-  MinimizeStart,  // EVENT_SYSTEM_MINIMIZESTART
-  MinimizeEnd,    // EVENT_SYSTEM_MINIMIZEEND
-  MoveSizeStart,  // EVENT_SYSTEM_MOVESIZESTART
-  MoveSizeEnd,    // EVENT_SYSTEM_MOVESIZEEND
-  Foreground,     // EVENT_SYSTEM_FOREGROUND
+  Show,            // EVENT_OBJECT_SHOW
+  Destroy,         // EVENT_OBJECT_DESTROY
+  Hide,            // EVENT_OBJECT_HIDE
+  NameChange,      // EVENT_OBJECT_NAMECHANGE
+  Cloaked,         // EVENT_OBJECT_CLOAKED
+  Uncloaked,       // EVENT_OBJECT_UNCLOAKED
+  MinimizeStart,   // EVENT_SYSTEM_MINIMIZESTART
+  MinimizeEnd,     // EVENT_SYSTEM_MINIMIZEEND
+  MoveSizeStart,   // EVENT_SYSTEM_MOVESIZESTART
+  MoveSizeEnd,     // EVENT_SYSTEM_MOVESIZEEND
+  LocationChange,  // EVENT_OBJECT_LOCATIONCHANGE
+  Foreground,      // EVENT_SYSTEM_FOREGROUND
 };
 
 struct WindowEvent {
@@ -39,6 +40,7 @@ constexpr unsigned kObjectDestroy = 0x8001;
 constexpr unsigned kObjectShow = 0x8002;
 constexpr unsigned kObjectHide = 0x8003;
 constexpr unsigned kObjectNameChange = 0x800C;
+constexpr unsigned kObjectLocationChange = 0x800B;
 constexpr unsigned kObjectCloaked = 0x8017;
 constexpr unsigned kObjectUncloaked = 0x8018;
 }  // namespace winevent
@@ -54,6 +56,8 @@ inline std::optional<EventKind> eventKindFromWinEvent(unsigned code) {
       return EventKind::Hide;
     case winevent::kObjectNameChange:
       return EventKind::NameChange;
+    case winevent::kObjectLocationChange:
+      return EventKind::LocationChange;
     case winevent::kObjectCloaked:
       return EventKind::Cloaked;
     case winevent::kObjectUncloaked:
@@ -82,6 +86,11 @@ class TilingHooks {
   virtual ~TilingHooks() = default;
   // False when no hook could be installed.
   virtual bool install(Sink sink) = 0;
+  // Tracks geometry only for a managed interactive resize. Implementations may ignore this.
+  virtual void trackLocation(WindowId hwnd, bool enabled) {
+    (void)hwnd;
+    (void)enabled;
+  }
   virtual void uninstall() = 0;
 };
 

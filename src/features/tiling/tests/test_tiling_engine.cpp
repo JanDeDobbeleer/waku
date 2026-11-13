@@ -100,6 +100,132 @@ TEST(TilingEngine, ExistingWindowsAreTiledAtStart) {
   EXPECT_EQ(rig.placer.lastSlot(2), rig.slot(1, 2));
 }
 
+TEST(TilingEngine, MaximizedWindowsAreRestoredAndTiledAtStart) {
+  Rig rig;
+  rig.placer.add(1).zoomed = true;
+  rig.placer.windows[1].fullscreen = true;
+  rig.placer.add(2);
+  rig.engine.start();
+  rig.settle();
+  EXPECT_EQ(rig.placer.restored, (std::vector<WindowId>{1}));
+  EXPECT_FALSE(rig.placer.windows[1].zoomed);
+  EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(0, 2));
+  EXPECT_EQ(rig.placer.lastSlot(2), rig.slot(1, 2));
+  EXPECT_TRUE(rig.placer.activated.empty());
+}
+
+TEST(TilingEngine, RestartReclaimsMaximizationButRetilesLeaveItAlone) {
+  Rig rig;
+  rig.placer.add(1);
+  rig.engine.start();
+  rig.settle();
+  rig.placer.windows[1].zoomed = true;
+  rig.engine.retileAll();
+  rig.settle();
+  EXPECT_TRUE(rig.placer.restored.empty());
+  EXPECT_TRUE(rig.placer.windows[1].zoomed);
+
+  rig.engine.stop();
+  rig.engine.start();
+  rig.settle();
+  EXPECT_EQ(rig.placer.restored, (std::vector<WindowId>{1}));
+  EXPECT_FALSE(rig.placer.windows[1].zoomed);
+  EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(0, 1));
+
+  const size_t placements = rig.placer.placements.size();
+  rig.placer.windows[1].zoomed = true;
+  rig.engine.retileAll();
+  rig.settle();
+  EXPECT_EQ(rig.placer.restored.size(), 1u);
+  EXPECT_TRUE(rig.placer.windows[1].zoomed);
+  EXPECT_EQ(rig.placer.placements.size(), placements);
+}
+
+TEST(TilingEngine, StartupRestoreWaitsForTheWindowToLeaveMaximizedState) {
+  Rig rig;
+  rig.placer.add(1).zoomed = true;
+  rig.placer.delayedRestores.insert(1);
+  rig.engine.start();
+  rig.scheduler.advance(0);
+  EXPECT_EQ(rig.placer.restored, (std::vector<WindowId>{1}));
+  EXPECT_TRUE(rig.placer.placements.empty());
+  rig.scheduler.advance(TilingEngine::kRetryMs);
+  EXPECT_TRUE(rig.placer.placements.empty());
+
+  rig.placer.windows[1].zoomed = false;
+  rig.settle();
+  EXPECT_EQ(rig.placer.restored.size(), 1u);
+  EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(0, 1));
+}
+
+TEST(TilingEngine, StartupRestoreOnAnotherDesktopWaitsUntilItIsShown) {
+  Rig rig;
+  auto& window = rig.placer.add(1);
+  window.zoomed = true;
+  window.cloaked = true;
+  window.desktopId = QStringLiteral("{D2}");
+  rig.placer.add(2);
+  rig.engine.start();
+  rig.settle();
+  EXPECT_TRUE(rig.placer.restored.empty());
+  EXPECT_TRUE(rig.placer.cloakedPlacements.empty());
+
+  rig.placer.desktop = QStringLiteral("{D2}");
+  rig.placer.windows[2].cloaked = true;
+  window.cloaked = false;
+  rig.send(EventKind::Uncloaked, 1);
+  rig.settle();
+  EXPECT_EQ(rig.placer.restored, (std::vector<WindowId>{1}));
+  EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(0, 1));
+  EXPECT_TRUE(rig.placer.cloakedPlacements.empty());
+}
+
+TEST(TilingEngine, StartupRestorationHonorsRulesAndUnsafeStates) {
+  Rig rig;
+  TilingSettings settings = rig.engine.settings();
+  settings.rules =
+      parseRules({QVariantMap{{QStringLiteral("process"), QStringLiteral("ignore.exe")}},
+                  QVariantMap{{QStringLiteral("process"), QStringLiteral("float.exe")},
+                              {QStringLiteral("action"), QStringLiteral("float")}}})
+          .rules;
+  rig.placer.add(1).elevated = true;
+  rig.placer.add(2, QStringLiteral("ignore.exe"));
+  rig.placer.add(3, QStringLiteral("float.exe"));
+  rig.placer.add(4).iconic = true;
+  rig.placer.add(5).fullscreen = true;
+  rig.placer.add(6).toolWindow = true;
+  for (const WindowId hwnd : {1, 2, 3, 4, 6}) rig.placer.windows[hwnd].zoomed = true;
+  rig.engine.start();
+  rig.engine.setSettings(settings);
+  rig.settle();
+  EXPECT_TRUE(rig.placer.restored.empty());
+  EXPECT_TRUE(rig.placer.placements.empty());
+  EXPECT_TRUE(rig.engine.model().isFloating(3));
+}
+
+TEST(TilingEngine, FailedStartupRestoreDoesNotBlockOtherWindows) {
+  Rig rig;
+  rig.placer.add(1).zoomed = true;
+  rig.placer.refuse.insert(1);
+  rig.placer.add(2);
+  rig.engine.start();
+  rig.settle();
+  EXPECT_EQ(rig.placer.restored, (std::vector<WindowId>{1}));
+  EXPECT_FALSE(rig.engine.model().contains(1));
+  EXPECT_EQ(rig.placer.lastSlot(2), rig.slot(0, 1));
+}
+
+TEST(TilingEngine, StartupRestorationStopsWaitingIfTheWindowNeverRestores) {
+  Rig rig;
+  rig.placer.add(1).zoomed = true;
+  rig.placer.delayedRestores.insert(1);
+  rig.engine.start();
+  rig.settle();
+  EXPECT_EQ(rig.placer.restored, (std::vector<WindowId>{1}));
+  EXPECT_TRUE(rig.placer.placements.empty());
+  EXPECT_EQ(rig.scheduler.pending(), 0u);
+}
+
 TEST(TilingEngine, ClosingAWindowRetilesTheOthers) {
   Rig rig;
   rig.engine.start();
@@ -247,7 +373,8 @@ TEST(TilingEngine, DraggingAWindowFloatsItAndTheOthersFillTheGap) {
   rig.open(2);
   rig.open(3);
   rig.send(EventKind::MoveSizeStart, 2);
-  rig.placer.windows[2].rect = QRect(400, 300, 500, 400);  // the user moved it
+  rig.placer.windows[2].rect.moveTopLeft(QPoint(400, 300));  // the user moved it
+  rig.send(EventKind::LocationChange, 2);
   rig.send(EventKind::MoveSizeEnd, 2);
   rig.settle();
   EXPECT_TRUE(rig.engine.model().isFloating(2));
@@ -271,6 +398,252 @@ TEST(TilingEngine, AClickOnATitleBarWithoutAMoveKeepsTheWindowTiled) {
   rig.settle();
   EXPECT_TRUE(rig.engine.model().contains(2));
   EXPECT_FALSE(rig.engine.model().isFloating(2));
+}
+
+TEST(TilingEngine, MainStackDividerResizeUpdatesRatioAndNeighborsDuringDrag) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  const QRect oldMain = rig.placer.windows[1].rect;
+  const QRect oldStack = rig.placer.lastSlot(2);
+  rig.placer.onPlace = [&rig](WindowId hwnd, const QRect&) {
+    rig.send(EventKind::LocationChange, hwnd);
+  };
+
+  rig.send(EventKind::MoveSizeStart, 1);
+  ASSERT_TRUE(rig.engine.tracksMouseResize(1));
+  rig.placer.windows[1].rect.setWidth(oldMain.width() + 120);
+  rig.send(EventKind::LocationChange, 1);
+  rig.settle();
+
+  const WorkspaceKey key = *rig.engine.model().keyOf(1);
+  ASSERT_TRUE(rig.engine.model().view(key).ratio.has_value());
+  EXPECT_GT(*rig.engine.model().view(key).ratio, 0.5);
+  EXPECT_LT(rig.placer.lastSlot(2).width(), oldStack.width());
+  EXPECT_TRUE(rig.engine.model().contains(1));
+  EXPECT_FALSE(rig.engine.model().isFloating(1));
+
+  rig.send(EventKind::MoveSizeEnd, 1);
+  rig.settle();
+  EXPECT_FALSE(rig.engine.tracksMouseResize(1));
+  EXPECT_TRUE(rig.engine.model().contains(1));
+}
+
+TEST(TilingEngine, MainStackResizeConsumesEndGeometryWithoutALocationEvent) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  const QRect original = rig.placer.windows[1].rect;
+  const QRect expected(original.x(), original.y(), original.width() + 120, original.height());
+
+  rig.send(EventKind::MoveSizeStart, 1);
+  rig.placer.windows[1].rect = expected;
+  rig.send(EventKind::MoveSizeEnd, 1);
+  rig.settle();
+
+  EXPECT_EQ(rig.placer.windows[1].rect, expected);
+  EXPECT_EQ(rig.placer.windows[2].rect.x(), expected.right() + 1 + kGap);
+  EXPECT_TRUE(rig.engine.model().contains(1));
+  EXPECT_FALSE(rig.engine.model().isFloating(1));
+  EXPECT_FALSE(rig.engine.tracksMouseResize(1));
+}
+
+TEST(TilingEngine, MainStackResizeConsumesEndGeometryNewerThanTheLastLocationEvent) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.open(3);
+  const QRect original = rig.placer.windows[2].rect;
+  const QRect expected(original.x() - 120, original.y(), original.width() + 120,
+                       original.height() + 80);
+
+  rig.send(EventKind::MoveSizeStart, 2);
+  rig.placer.windows[2].rect =
+      QRect(original.x() - 40, original.y(), original.width() + 40, original.height() + 30);
+  rig.send(EventKind::LocationChange, 2);
+  rig.settle();
+  rig.placer.windows[2].rect = expected;
+  rig.send(EventKind::MoveSizeEnd, 2);
+  rig.settle();
+
+  const QRect achieved = rig.placer.windows[2].rect;
+  EXPECT_EQ(achieved.x(), expected.x());
+  EXPECT_EQ(achieved.width(), expected.width());
+  EXPECT_NEAR(achieved.height(), expected.height(), 1);
+  EXPECT_EQ(rig.placer.windows[3].rect.y(), achieved.bottom() + 1 + kGap);
+  EXPECT_EQ(rig.placer.windows[1].rect.right() + 1 + kGap, achieved.x());
+  EXPECT_TRUE(rig.engine.model().contains(2));
+  EXPECT_FALSE(rig.engine.model().isFloating(2));
+  EXPECT_FALSE(rig.engine.tracksMouseResize(2));
+}
+
+TEST(TilingEngine, MainStackResizeUsesTheSharedEdgeAfterAHorizontalFlip) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.placer.front = 1;
+  ASSERT_TRUE(rig.engine.flip(Axis::Horizontal).ok);
+  rig.settle();
+  const QRect oldStack = rig.placer.windows[2].rect;
+  const QRect oldMain = rig.placer.lastSlot(1);
+  const WorkspaceKey key = *rig.engine.model().keyOf(1);
+
+  rig.send(EventKind::MoveSizeStart, 2);
+  rig.placer.windows[2].rect.setWidth(oldStack.width() + 100);
+  rig.send(EventKind::LocationChange, 2);
+  rig.settle();
+
+  ASSERT_TRUE(rig.engine.model().view(key).ratio.has_value());
+  EXPECT_LT(*rig.engine.model().view(key).ratio, 0.5);
+  EXPECT_LT(rig.placer.lastSlot(1).width(), oldMain.width());
+  rig.send(EventKind::MoveSizeEnd, 2);
+  rig.settle();
+  EXPECT_TRUE(rig.engine.model().contains(2));
+  EXPECT_FALSE(rig.engine.model().isFloating(2));
+}
+
+TEST(TilingEngine, ResizingAnOuterEdgeSnapsBackInsideTheWorkArea) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  const QRect original = rig.placer.windows[1].rect;
+
+  rig.send(EventKind::MoveSizeStart, 1);
+  rig.placer.windows[1].rect.setX(original.x() + 40);
+  rig.placer.windows[1].rect.setWidth(original.width() - 40);
+  rig.send(EventKind::LocationChange, 1);
+  rig.send(EventKind::MoveSizeEnd, 1);
+  rig.settle();
+
+  EXPECT_TRUE(rig.engine.model().contains(1));
+  EXPECT_FALSE(rig.engine.model().isFloating(1));
+  EXPECT_EQ(rig.placer.windows[1].rect, original);
+}
+
+TEST(TilingEngine, CancellingAMainStackResizeRestoresItsOriginalSizing) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  const QRect original = rig.placer.windows[1].rect;
+
+  rig.send(EventKind::MoveSizeStart, 1);
+  rig.placer.windows[1].rect.setWidth(original.width() + 100);
+  rig.send(EventKind::LocationChange, 1);
+  rig.settle();
+  const WorkspaceKey key = *rig.engine.model().keyOf(1);
+  ASSERT_TRUE(rig.engine.model().view(key).ratio.has_value());
+
+  rig.placer.windows[1].rect = original;
+  rig.send(EventKind::MoveSizeEnd, 1);
+  rig.settle();
+  EXPECT_FALSE(rig.engine.tracksMouseResize(1));
+  EXPECT_FALSE(rig.engine.model().view(key).ratio.has_value());
+  EXPECT_TRUE(rig.engine.model().contains(1));
+}
+
+TEST(TilingEngine, MainStackStackResizeChangesWeightsAndFollowsVerticalFlip) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.open(3);
+  rig.placer.front = 1;
+  ASSERT_TRUE(rig.engine.flip(Axis::Vertical).ok);
+  rig.settle();
+  const WorkspaceKey key = *rig.engine.model().keyOf(2);
+  const QRect oldSecond = rig.placer.windows[2].rect;
+  const QRect oldThird = rig.placer.lastSlot(3);
+
+  rig.send(EventKind::MoveSizeStart, 2);
+  rig.placer.windows[2].rect.setY(oldSecond.y() - 80);
+  rig.placer.windows[2].rect.setHeight(oldSecond.height() + 80);
+  rig.send(EventKind::LocationChange, 2);
+  rig.settle();
+
+  const auto& weights = rig.engine.model().view(key).weights;
+  ASSERT_NE(weights.find(2), weights.end());
+  EXPECT_GT(weights.at(2), 1.0);
+  EXPECT_LT(rig.placer.lastSlot(3).height(), oldThird.height());
+  rig.send(EventKind::MoveSizeEnd, 2);
+  rig.settle();
+  EXPECT_TRUE(rig.engine.model().contains(2));
+  EXPECT_FALSE(rig.engine.model().isFloating(2));
+}
+
+TEST(TilingEngine, ResizingAStackedSlotKeepsItsWindowsTogether) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.open(3);
+  rig.open(4);
+  rig.placer.front = 4;
+  ASSERT_TRUE(rig.engine.stackDirection(Direction::Up).ok);
+  rig.settle();
+  ASSERT_EQ(rig.engine.status().stacks, 1);
+  ASSERT_TRUE(rig.engine.model().isTop(4));
+  const std::vector<WindowId> group = rig.engine.model().stackOf(4);
+  ASSERT_EQ(group.size(), 2u);
+  const WindowId hidden = group.front() == 4 ? group.back() : group.front();
+  const QRect oldSlot = rig.placer.lastSlot(4);
+
+  rig.send(EventKind::MoveSizeStart, 4);
+  ASSERT_TRUE(rig.engine.tracksMouseResize(4));
+  rig.placer.windows[4].rect.setY(oldSlot.y() + 40);
+  rig.placer.windows[4].rect.setHeight(oldSlot.height() - 40);
+  rig.send(EventKind::LocationChange, 4);
+  rig.settle();
+
+  EXPECT_NE(rig.placer.lastSlot(hidden), oldSlot);
+  EXPECT_TRUE(rig.engine.model().contains(hidden));
+  rig.send(EventKind::MoveSizeEnd, 4);
+  rig.settle();
+  EXPECT_TRUE(rig.engine.model().contains(4));
+  EXPECT_EQ(rig.placer.windows[hidden].rect, rig.placer.windows[4].rect);
+}
+
+TEST(TilingEngine, ResizeInAnotherLayoutKeepsTheExistingFloatBehavior) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.placer.front = 2;
+  ASSERT_TRUE(rig.engine.setWorkspaceLayout(QStringLiteral("columns")));
+  rig.settle();
+
+  rig.send(EventKind::MoveSizeStart, 2);
+  EXPECT_FALSE(rig.engine.tracksMouseResize(2));
+  rig.placer.windows[2].rect.setWidth(rig.placer.windows[2].rect.width() + 100);
+  rig.send(EventKind::LocationChange, 2);
+  rig.send(EventKind::MoveSizeEnd, 2);
+  rig.settle();
+  EXPECT_TRUE(rig.engine.model().isFloating(2));
+}
+
+TEST(TilingEngine, ResizeTrackingStopsOnDestroyAndStop) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.send(EventKind::MoveSizeStart, 1);
+  ASSERT_TRUE(rig.engine.tracksMouseResize(1));
+  rig.placer.windows.erase(1);
+  rig.send(EventKind::Destroy, 1);
+  EXPECT_FALSE(rig.engine.tracksMouseResize(1));
+  EXPECT_FALSE(rig.engine.model().contains(1));
+
+  rig.send(EventKind::MoveSizeStart, 2);
+  ASSERT_TRUE(rig.engine.tracksMouseResize(2));
+  rig.engine.stop();
+  EXPECT_FALSE(rig.engine.tracksMouseResize(2));
+  rig.send(EventKind::LocationChange, 2);
+  EXPECT_FALSE(rig.engine.model().contains(2));
 }
 
 TEST(TilingEngine, AWindowIsNotPlacedWhileTheUserHoldsIt) {

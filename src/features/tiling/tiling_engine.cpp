@@ -70,7 +70,8 @@ void TilingEngine::start() {
   if (running_) return;
   running_ = true;
   currentDesktop_ = placer_.currentDesktop();
-  for (const WindowId hwnd : placer_.candidates()) evaluate(hwnd, 0, false);
+  // Let the shell finish setting its rules before taking over existing windows.
+  for (const WindowId hwnd : placer_.candidates()) scheduleEvaluate(hwnd, 0, 0, false, true);
   retileAll();
 }
 
@@ -80,8 +81,10 @@ void TilingEngine::stop() {
   model_.clear();
   ignored_.clear();
   pending_.clear();
+  restoreOnStartup_.clear();
   moving_.clear();
   placed_.clear();
+  resizeDrags_.clear();
   clamped_.clear();
   wasTop_.clear();
   retiles_.clear();
@@ -147,6 +150,9 @@ void TilingEngine::handle(const WindowEvent& event) {
     case EventKind::MoveSizeEnd:
       onMoveSizeEnd(hwnd);
       break;
+    case EventKind::LocationChange:
+      onLocationChange(hwnd);
+      break;
     case EventKind::Foreground:
       refreshDesktop();
       // A window that is under the top of its stack (alt-tab, the taskbar) takes the top.
@@ -182,12 +188,49 @@ void TilingEngine::onCloaked(WindowId hwnd) {
 void TilingEngine::onMoveSizeStart(WindowId hwnd) {
   if (!model_.contains(hwnd)) return;
   moving_.insert(hwnd);
+  const std::optional<WindowFacts> facts = placer_.state(hwnd);
+  if (!facts) return;
   // The bounds now are what the end is compared with: a clamped window counts as unmoved.
-  if (const std::optional<WindowFacts> facts = placer_.state(hwnd)) placed_[hwnd] = facts->rect;
+  placed_[hwnd] = facts->rect;
+  const std::optional<WorkspaceKey> key = model_.keyOf(hwnd);
+  if (!key || paused_ ||
+      canonicalLayout(model_.layout(*key, settings_.layout)) != QLatin1String("mainStack")) {
+    return;
+  }
+  const std::vector<WindowId> active = activeWindows(*key);
+  const auto at = std::find(active.begin(), active.end(), hwnd);
+  if (at == active.end()) return;
+  const QRect area = placer_.workArea(key->monitor);
+  if (area.isEmpty()) return;
+  ResizeDrag drag;
+  drag.key = *key;
+  drag.startRect = facts->rect;
+  drag.area = area;
+  drag.active = active;
+  drag.slotRects = slotsFor(*key, area, active);
+  drag.initialRatio = model_.view(*key).ratio;
+  drag.initialWeights = model_.view(*key).weights;
+  drag.gap = std::clamp(
+      settings_.gap, 0,
+      std::min(area.width(), area.height()) / (2 * (static_cast<int>(active.size()) + 1)));
+  resizeDrags_[hwnd] = std::move(drag);
 }
 
 void TilingEngine::onMoveSizeEnd(WindowId hwnd) {
-  if (moving_.erase(hwnd) == 0 || !model_.contains(hwnd)) return;
+  if (!moving_.count(hwnd)) return;
+  // The final bounds can be newer than the last location event, or the only sample.
+  onLocationChange(hwnd);
+  moving_.erase(hwnd);
+  const auto drag = resizeDrags_.find(hwnd);
+  const bool hasResizeDrag = drag != resizeDrags_.end();
+  const bool wasResize = hasResizeDrag && drag->second.resized;
+  const QRect startRect = hasResizeDrag ? drag->second.startRect : QRect();
+  const std::optional<double> initialRatio =
+      hasResizeDrag ? drag->second.initialRatio : std::nullopt;
+  const std::map<WindowId, double> initialWeights =
+      hasResizeDrag ? drag->second.initialWeights : std::map<WindowId, double>{};
+  resizeDrags_.erase(hwnd);
+  if (!model_.contains(hwnd)) return;
   if (paused_) return;  // nothing was placed, so there is nothing to compare with
   const std::optional<WindowFacts> facts = placer_.state(hwnd);
   const std::optional<WorkspaceKey> key = model_.keyOf(hwnd);
@@ -195,8 +238,18 @@ void TilingEngine::onMoveSizeEnd(WindowId hwnd) {
     forget(hwnd, true);
     return;
   }
+  const bool sizeChanged =
+      hasResizeDrag && (std::abs(startRect.width() - facts->rect.width()) > kMovedTolerance ||
+                        std::abs(startRect.height() - facts->rect.height()) > kMovedTolerance);
+  const bool cancelled = hasResizeDrag && wasResize && !differs(startRect, facts->rect);
+  if (cancelled && key) {
+    WorkspaceView& view = model_.edit(*key);
+    view.ratio = initialRatio;
+    view.weights = initialWeights;
+  }
   const auto placed = placed_.find(hwnd);
-  if (placed != placed_.end() && differs(placed->second, facts->rect)) {
+  if (!cancelled && !wasResize && !sizeChanged && placed != placed_.end() &&
+      differs(placed->second, facts->rect)) {
     // The user took this window out of the layout.
     model_.setFloating(hwnd, true);
     placed_.erase(hwnd);
@@ -204,14 +257,116 @@ void TilingEngine::onMoveSizeEnd(WindowId hwnd) {
   if (key) requestRetile(*key);  // the others fill the gap, or the window snaps back
 }
 
-// --- evaluation
+void TilingEngine::onLocationChange(WindowId hwnd) {
+  auto found = resizeDrags_.find(hwnd);
+  if (!running_ || found == resizeDrags_.end() || !model_.contains(hwnd)) return;
+  const std::optional<WindowFacts> facts = placer_.state(hwnd);
+  if (!facts) {
+    forget(hwnd, true);
+    return;
+  }
+  ResizeDrag& drag = found->second;
+  const QRect& rect = facts->rect;
+  if (std::abs(drag.startRect.width() - rect.width()) > kMovedTolerance ||
+      std::abs(drag.startRect.height() - rect.height()) > kMovedTolerance) {
+    drag.resized = true;
+  }
+  if (paused_ || !drag.resized || drag.slotRects.size() != drag.active.size() ||
+      drag.active.size() < 2) {
+    return;
+  }
 
-void TilingEngine::scheduleEvaluate(WindowId hwnd, int ms, int attempt, bool force) {
-  if (!pending_.insert(hwnd).second) return;
-  defer(ms, [this, hwnd, attempt, force] { evaluate(hwnd, attempt, force); });
+  const auto at = std::find(drag.active.begin(), drag.active.end(), hwnd);
+  if (at == drag.active.end()) return;
+  const size_t index = static_cast<size_t>(at - drag.active.begin());
+  const QRect& slot = drag.slotRects[index];
+  const QRect& main = drag.slotRects.front();
+  const bool mainOnLeft = main.x() < drag.slotRects[1].x();
+  const int innerLeft = drag.area.x() + drag.gap;
+  const int innerRight = drag.area.x() + drag.area.width() - drag.gap;
+  const int usableWidth = innerRight - innerLeft - drag.gap;
+  if (usableWidth <= 0) return;
+
+  WorkspaceView& view = model_.edit(drag.key);
+  bool changed = false;
+  const bool mainBoundaryIsRight = index == 0 ? mainOnLeft : !mainOnLeft;
+  const int startEdge =
+      mainBoundaryIsRight ? drag.startRect.x() + drag.startRect.width() : drag.startRect.x();
+  const int currentEdge = mainBoundaryIsRight ? rect.x() + rect.width() : rect.x();
+  if (std::abs(currentEdge - startEdge) > kMovedTolerance) {
+    int mainWidth = 0;
+    if (index == 0) {
+      mainWidth = mainOnLeft ? currentEdge - innerLeft : innerRight - currentEdge;
+    } else {
+      mainWidth =
+          mainOnLeft ? currentEdge - innerLeft - drag.gap : innerRight - currentEdge - drag.gap;
+    }
+    const double ratio = std::clamp(static_cast<double>(mainWidth) / usableWidth, 0.1, 0.9);
+    if (!view.ratio || std::abs(*view.ratio - ratio) > 0.0001) {
+      view.ratio = ratio;
+      changed = true;
+    }
+  }
+
+  if (index > 0 && drag.active.size() > 2) {
+    std::optional<size_t> above;
+    std::optional<size_t> below;
+    for (size_t other = 1; other < drag.slotRects.size(); ++other) {
+      if (other == index) continue;
+      if (drag.slotRects[other].y() + drag.slotRects[other].height() <= slot.y() &&
+          (!above || drag.slotRects[other].y() > drag.slotRects[*above].y())) {
+        above = other;
+      }
+      if (drag.slotRects[other].y() >= slot.y() + slot.height() &&
+          (!below || drag.slotRects[other].y() < drag.slotRects[*below].y())) {
+        below = other;
+      }
+    }
+    const bool bottomMoved =
+        below && std::abs((rect.y() + rect.height()) -
+                          (drag.startRect.y() + drag.startRect.height())) > kMovedTolerance;
+    const bool topMoved = above && std::abs(rect.y() - drag.startRect.y()) > kMovedTolerance;
+    if (bottomMoved || topMoved) {
+      const size_t neighbor = bottomMoved ? *below : *above;
+      const int pairHeight = slot.height() + drag.slotRects[neighbor].height();
+      const int desiredHeight =
+          bottomMoved ? rect.y() + rect.height() - slot.y() : slot.y() + slot.height() - rect.y();
+      if (pairHeight > 1) {
+        const double currentWeight = view.weights.count(hwnd) ? view.weights.at(hwnd) : 1.0;
+        const WindowId otherWindow = drag.active[neighbor];
+        const double otherWeight =
+            view.weights.count(otherWindow) ? view.weights.at(otherWindow) : 1.0;
+        const double pairWeight = currentWeight + otherWeight;
+        const double fraction =
+            static_cast<double>(std::clamp(desiredHeight, 1, pairHeight - 1)) / pairHeight;
+        const double minWeight = std::max(kMinWeight, pairWeight - kMaxWeight);
+        const double maxWeight = std::min(kMaxWeight, pairWeight - kMinWeight);
+        if (minWeight <= maxWeight) {
+          const double nextWeight = std::clamp(pairWeight * fraction, minWeight, maxWeight);
+          const double nextOther = pairWeight - nextWeight;
+          if (std::abs(nextWeight - currentWeight) > 0.0001 ||
+              std::abs(nextOther - otherWeight) > 0.0001) {
+            view.weights[hwnd] = nextWeight;
+            view.weights[otherWindow] = nextOther;
+            changed = true;
+          }
+        }
+      }
+    }
+  }
+  if (changed) requestRetile(drag.key);
 }
 
-void TilingEngine::evaluate(WindowId hwnd, int attempt, bool force) {
+// --- evaluation
+
+void TilingEngine::scheduleEvaluate(WindowId hwnd, int ms, int attempt, bool force,
+                                    bool initialScan) {
+  if (!pending_.insert(hwnd).second) return;
+  defer(ms,
+        [this, hwnd, attempt, force, initialScan] { evaluate(hwnd, attempt, force, initialScan); });
+}
+
+void TilingEngine::evaluate(WindowId hwnd, int attempt, bool force, bool initialScan) {
   if (!running_) return;
   pending_.erase(hwnd);
   const std::optional<WindowFacts> facts = placer_.query(hwnd);
@@ -223,12 +378,23 @@ void TilingEngine::evaluate(WindowId hwnd, int attempt, bool force) {
   if (model_.contains(hwnd)) return;
   if (model_.isFloating(hwnd) && !force) return;
 
-  const Eligibility eligibility = classify(*facts, settings_.rules, settings_.selfElevated, force);
+  if (initialScan && facts->zoomed && !facts->iconic) restoreOnStartup_.insert(hwnd);
+  if (facts->iconic) restoreOnStartup_.erase(hwnd);
+  WindowFacts candidate = *facts;
+  if (restoreOnStartup_.count(hwnd) && facts->zoomed) {
+    candidate.zoomed = false;
+    // A maximized window can cover the monitor before the app bar reserves its work area.
+    candidate.fullscreen = false;
+  }
+  const Eligibility eligibility =
+      classify(candidate, settings_.rules, settings_.selfElevated, force);
   switch (eligibility.verdict) {
     case Verdict::Ignore:
+      if (eligibility.reason != QStringLiteral("cloaked")) restoreOnStartup_.erase(hwnd);
       ignored_[hwnd] = eligibility.lasting ? Ignored::Lasting : Ignored::Transient;
       break;
     case Verdict::Float:
+      restoreOnStartup_.erase(hwnd);
       ignored_.erase(hwnd);
       model_.setFloating(hwnd, true);
       break;
@@ -251,9 +417,11 @@ void TilingEngine::evaluate(WindowId hwnd, int attempt, bool force) {
 }
 
 void TilingEngine::forget(WindowId hwnd, bool dropFloat) {
+  restoreOnStartup_.erase(hwnd);
   placed_.erase(hwnd);
   clamped_.erase(hwnd);
   moving_.erase(hwnd);
+  resizeDrags_.erase(hwnd);
   wasTop_.erase(hwnd);
   const std::optional<WorkspaceKey> key = model_.remove(hwnd);
   if (dropFloat) model_.setFloating(hwnd, false);
@@ -334,8 +502,19 @@ void TilingEngine::retile(const WorkspaceKey& key) {
         requestRetile(key);
         continue;
       }
-      // A minimized, maximized or cloaked window keeps its place in the stack but takes no slot.
-      if (facts->iconic || facts->zoomed || facts->cloaked) continue;
+      if (facts->iconic || facts->cloaked) continue;
+      if (facts->zoomed) {
+        if (restoreOnStartup_.erase(hwnd) != 0) {
+          if (placer_.restore(hwnd)) {
+            defer(kRetryMs, [this, hwnd] { waitForStartupRestore(hwnd, 0); });
+          } else {
+            forget(hwnd, false);
+            ignored_[hwnd] = Ignored::Lasting;
+          }
+        }
+        continue;
+      }
+      restoreOnStartup_.erase(hwnd);
       current[hwnd] = facts->rect;
       if (hwnd == slot.topWindow()) {
         active.push_back(hwnd);
@@ -382,6 +561,22 @@ void TilingEngine::retile(const WorkspaceKey& key) {
   if (!placedNow.empty()) {
     defer(kVerifyMs, [this, placedNow] { verifyPlacements(placedNow); });
   }
+}
+
+void TilingEngine::waitForStartupRestore(WindowId hwnd, int attempt) {
+  if (!running_ || !model_.contains(hwnd)) return;
+  const std::optional<WindowFacts> facts = placer_.state(hwnd);
+  if (!facts) {
+    forget(hwnd, true);
+    return;
+  }
+  if (facts->zoomed) {
+    if (attempt < kMaxRetries) {
+      defer(kRetryMs, [this, hwnd, attempt] { waitForStartupRestore(hwnd, attempt + 1); });
+    }
+    return;
+  }
+  if (const auto key = model_.keyOf(hwnd)) requestRetile(*key);
 }
 
 // A stack shows its top: when the top of a stack is not the one the last retile left on top, it

@@ -37,7 +37,8 @@ through `Scheduler`.
 
 One out-of-context range hook per group (`kernel::WinEventHook`): destroy, show and hide; name
 change; cloak and uncloak; minimize start and end; move and size start and end; foreground.
-Location change is never hooked. The hook filters `idObject == OBJID_WINDOW`, `idChild == 0` and
+Location change is hooked only during a managed `mainStack` drag, and its callback forwards only
+the dragged window. The hook filters `idObject == OBJID_WINDOW`, `idChild == 0` and
 `GetAncestor(GA_ROOT) == hwnd` (not for destroy: a destroyed window has no ancestor). Events from
 waku's own process are skipped by the hook (`WINEVENT_SKIPOWNPROCESS`).
 
@@ -54,18 +55,32 @@ waku's own process are skipped by the hook (`WINEVENT_SKIPOWNPROCESS`).
 - **Desktop switch.** Windows has no documented notification. The first `Uncloaked`, `Cloaked` or
   `Foreground` after a switch reads `CurrentVirtualDesktop` (`vdesk::currentDesktopId`, the row
   that already is on the allowlist) and retiles the new desktop. No timer.
-- **User intent.** `MoveSizeStart` remembers the bounds, `MoveSizeEnd` compares: a window that
-  moved or resized by more than 2 px floats. A clamped window counts as unmoved because the
-  comparison starts from the bounds it had at the start. A window the user holds is not placed.
+- **User intent.** `MoveSizeStart` remembers the bounds. A title-bar translation still floats the
+  window at `MoveSizeEnd`. In `mainStack`, a size change remains tiled: a drag of the main/stack
+  divider updates the workspace ratio, and a drag of a divider between stacked windows
+  updates the adjacent slots' weights. Both updates retile neighboring windows
+  while the dragged window is held, so it cannot feed its own placement back into the resize.
+  Flipped layouts use the same shared edges. Outer edges stay constrained to the work area, gaps
+  remain intact, and the window is placed back into its final slot on release. Other layouts keep
+  the prior move/resize-floats behavior. A clamped window is compared against the bounds it had at
+  the start. Cancellation restores the starting sizing; destroy, stop and cancellation clear
+  the active resize tracking.
 
 ## Eligibility
 
 A window is managed unless: not visible; cloaked; minimized or untitled (retry); a window of waku;
-owned by a visible window; a tool window; without `WS_THICKFRAME` or `WS_CAPTION`; maximized by the
-user; fullscreen; a splash or shell class (`isBuiltinIgnoredClass`); ignored by a rule; or the window
-of an elevated process while waku is not elevated (UIPI forbids moving it; unmanaged, no error).
+owned by a visible window; a tool window; without `WS_THICKFRAME` or `WS_CAPTION`; maximized after
+startup; fullscreen; a splash or shell class (`isBuiltinIgnoredClass`); ignored by a rule; or the
+window of an elevated process while waku is not elevated (UIPI forbids moving it; unmanaged, no error).
 A `float` rule keeps the window, unplaced; `toggle` tiles it. A maximized managed window keeps its
 place in the stack but takes no slot.
+
+On load or shell reload, the initial scan waits one event-loop turn so the shell can set its rules.
+It restores otherwise eligible maximized windows with `ShowWindowAsync(SW_SHOWNOACTIVATE)` and waits
+for the maximized state to clear before placing them. Restoration is requested once, with bounded
+completion checks; a hung window cannot block the bar or cause an endless retry. Windows on another
+virtual desktop wait until that desktop is shown. Minimized windows and ignore or float rules
+remain untouched. Later maximization stays under the user's control until the next load or reload.
 
 ## Placement
 

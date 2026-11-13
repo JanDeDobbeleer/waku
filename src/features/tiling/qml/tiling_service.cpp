@@ -106,7 +106,13 @@ void Tiling::reevaluate() {
 
 void Tiling::onEvent(const WindowEvent& event) {
   try {
+    if (hooks_ && (event.kind == EventKind::MoveSizeEnd || event.kind == EventKind::Destroy)) {
+      hooks_->trackLocation(event.hwnd, false);
+    }
     if (engine_) engine_->handle(event);
+    if (hooks_ && event.kind == EventKind::MoveSizeStart) {
+      hooks_->trackLocation(event.hwnd, engine_ && engine_->tracksMouseResize(event.hwnd));
+    }
     if (event.kind == EventKind::Foreground) refreshCurrentLayout();
   } catch (const std::exception& e) {
     qWarning().noquote() << "tiling: event failed:" << e.what();

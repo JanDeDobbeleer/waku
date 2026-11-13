@@ -184,6 +184,10 @@ class Win32WindowPlacer final : public WindowPlacer {
                  SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
   }
 
+  bool restore(WindowId id) override {
+    return ShowWindowAsync(toHwnd(id), SW_SHOWNOACTIVATE) != FALSE;
+  }
+
   // PostMessage and ShowWindowAsync do not wait for the window, so a hung one cannot block us.
   bool close(WindowId id) override {
     return PostMessageW(reinterpret_cast<HWND>(id), WM_CLOSE, 0, 0) != FALSE;
