@@ -18,6 +18,7 @@
 
 #include "host/app_bar.h"
 #include "host/mask_poller.h"
+#include "host/panel_geometry.h"
 #include "host/qml/scope.h"
 #include "host/qml/theme.h"
 #include "host/qml/window_enums.h"
@@ -30,8 +31,6 @@ namespace waku::host {
 
 class PanelWindow;
 class QsWindow;
-
-enum class ScreenOccupancy { None, Maximized, Fullscreen };
 
 // Builds the shell declared in <config home>\shell.qml and keeps it up to date.
 //

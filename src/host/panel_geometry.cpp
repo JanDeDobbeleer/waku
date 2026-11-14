@@ -46,6 +46,16 @@ bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool ma
   return !screen.isEmpty() && (maximized ? window.intersects(screen) : window.contains(screen));
 }
 
+std::optional<ScreenOccupancy> fullscreenWindowDecision(const QRect& window, const QRect& screen,
+                                                        bool maximized, bool topmost) {
+  if (!window.intersects(screen)) return std::nullopt;
+  if (coversScreenForFullscreen(window, screen, maximized)) {
+    return maximized ? ScreenOccupancy::Maximized : ScreenOccupancy::Fullscreen;
+  }
+  if (topmost) return std::nullopt;
+  return ScreenOccupancy::None;
+}
+
 QRect panelRevealArea(AppBarEdge edge, const QRect& panel, const QRect& screen, bool revealed) {
   if (panel.isEmpty() || screen.isEmpty()) return {};
   QRect area = panel;

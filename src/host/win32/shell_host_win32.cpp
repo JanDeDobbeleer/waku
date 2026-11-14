@@ -25,7 +25,8 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
   DWORD pid = 0;
   GetWindowThreadProcessId(window, &pid);
   if (pid == GetCurrentProcessId()) return TRUE;
-  if (GetWindowLongPtrW(window, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) return TRUE;
+  const LONG_PTR exStyle = GetWindowLongPtrW(window, GWL_EXSTYLE);
+  if (exStyle & WS_EX_TOOLWINDOW) return TRUE;
   DWORD cloaked = 0;
   if (SUCCEEDED(DwmGetWindowAttribute(window, DWMWA_CLOAKED, &cloaked, sizeof(cloaked))) &&
       cloaked) {
@@ -51,14 +52,10 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
   const QRect monitor(search.monitor.left, search.monitor.top,
                       search.monitor.right - search.monitor.left,
                       search.monitor.bottom - search.monitor.top);
-  if (!coversScreenForFullscreen(bounds, monitor, maximized)) return TRUE;
-  if (maximized) {
-    if (search.occupancy == ScreenOccupancy::None) {
-      search.occupancy = ScreenOccupancy::Maximized;
-    }
-    return TRUE;
-  }
-  search.occupancy = ScreenOccupancy::Fullscreen;
+  const auto decision =
+      fullscreenWindowDecision(bounds, monitor, maximized, (exStyle & WS_EX_TOPMOST) != 0);
+  if (!decision) return TRUE;
+  search.occupancy = *decision;
   return FALSE;
 }
 

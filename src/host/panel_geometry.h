@@ -9,6 +9,8 @@
 
 namespace waku::host {
 
+enum class ScreenOccupancy { None, Maximized, Fullscreen };
+
 // The edges a PanelWindow is anchored to (Quickshell `anchors`).
 struct PanelAnchorSet {
   bool top = false;
@@ -39,6 +41,10 @@ int panelThickness(AppBarEdge edge, const QSize& size);
 // Native fullscreen covers the monitor. Maximization also requests the full monitor, even before
 // releasing the panel's work area lets Windows expand it. Both rectangles use physical pixels.
 bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool maximized);
+
+// A result ends the z-order search; an empty result skips the window.
+std::optional<ScreenOccupancy> fullscreenWindowDecision(const QRect& window, const QRect& screen,
+                                                        bool maximized, bool topmost);
 
 // Cursor area that reveals a fullscreen-hidden panel. While revealed it includes the panel and
 // the gap to its screen edge; otherwise only a two-pixel strip along that edge. Logical pixels.
