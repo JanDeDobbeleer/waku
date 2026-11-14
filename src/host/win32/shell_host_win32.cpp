@@ -15,7 +15,7 @@ namespace {
 
 struct FullscreenSearch {
   RECT monitor;
-  RECT panel;
+  HMONITOR monitorHandle = nullptr;
   bool found = false;
 };
 
@@ -39,17 +39,20 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
   }
   RECT rect{};
   RECT intersection{};
-  if (!GetWindowRect(window, &rect) || !IntersectRect(&intersection, &rect, &search.panel)) {
+  if (!GetWindowRect(window, &rect) || !IntersectRect(&intersection, &rect, &search.monitor)) {
     return TRUE;
   }
-  const LONG_PTR style = GetWindowLongPtrW(window, GWL_STYLE);
+  const bool maximized = IsZoomed(window) != FALSE;
+  // A maximized frame can extend a few resize-border pixels onto a neighboring monitor.
+  if (maximized && MonitorFromWindow(window, MONITOR_DEFAULTTONULL) != search.monitorHandle) {
+    return TRUE;
+  }
   const QRect bounds(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
   const QRect monitor(search.monitor.left, search.monitor.top,
                       search.monitor.right - search.monitor.left,
                       search.monitor.bottom - search.monitor.top);
-  search.found = coversScreenForFullscreen(bounds, monitor, IsZoomed(window) != FALSE,
-                                           (style & WS_CAPTION) == WS_CAPTION);
-  return FALSE;
+  search.found = coversScreenForFullscreen(bounds, monitor, maximized);
+  return search.found ? FALSE : TRUE;
 }
 
 bool hasFullscreenWindow(HWND panel) {
@@ -57,10 +60,11 @@ bool hasFullscreenWindow(HWND panel) {
   MONITORINFO info{};
   info.cbSize = sizeof(info);
   FullscreenSearch search{};
-  if (!monitor || !GetMonitorInfoW(monitor, &info) || !GetWindowRect(panel, &search.panel)) {
+  if (!monitor || !GetMonitorInfoW(monitor, &info)) {
     return false;
   }
   search.monitor = info.rcMonitor;
+  search.monitorHandle = monitor;
   EnumWindows(findFullscreenWindow, reinterpret_cast<LPARAM>(&search));
   return search.found;
 }
@@ -96,10 +100,6 @@ ShellHost::NativeHooks ShellHost::NativeHooks::win32() {
     };
     hooks.fullscreenOnMonitor = [](quintptr hwnd) {
       return hasFullscreenWindow(reinterpret_cast<HWND>(hwnd));
-    };
-    hooks.lowerToBottom = [](quintptr hwnd) {
-      SetWindowPos(reinterpret_cast<HWND>(hwnd), HWND_BOTTOM, 0, 0, 0, 0,
-                   SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
     };
   }
   hooks.raiseTopmost = [](quintptr hwnd) {

@@ -81,7 +81,7 @@ void TilingEngine::stop() {
   model_.clear();
   ignored_.clear();
   pending_.clear();
-  restoreOnStartup_.clear();
+  restoreBeforeTile_.clear();
   moving_.clear();
   placed_.clear();
   resizeDrags_.clear();
@@ -378,10 +378,10 @@ void TilingEngine::evaluate(WindowId hwnd, int attempt, bool force, bool initial
   if (model_.contains(hwnd)) return;
   if (model_.isFloating(hwnd) && !force) return;
 
-  if (initialScan && facts->zoomed && !facts->iconic) restoreOnStartup_.insert(hwnd);
-  if (facts->iconic) restoreOnStartup_.erase(hwnd);
+  if ((initialScan || force) && facts->zoomed && !facts->iconic) restoreBeforeTile_.insert(hwnd);
+  if (facts->iconic) restoreBeforeTile_.erase(hwnd);
   WindowFacts candidate = *facts;
-  if (restoreOnStartup_.count(hwnd) && facts->zoomed) {
+  if (restoreBeforeTile_.count(hwnd) && facts->zoomed) {
     candidate.zoomed = false;
     // A maximized window can cover the monitor before the app bar reserves its work area.
     candidate.fullscreen = false;
@@ -390,11 +390,11 @@ void TilingEngine::evaluate(WindowId hwnd, int attempt, bool force, bool initial
       classify(candidate, settings_.rules, settings_.selfElevated, force);
   switch (eligibility.verdict) {
     case Verdict::Ignore:
-      if (eligibility.reason != QStringLiteral("cloaked")) restoreOnStartup_.erase(hwnd);
+      if (eligibility.reason != QStringLiteral("cloaked")) restoreBeforeTile_.erase(hwnd);
       ignored_[hwnd] = eligibility.lasting ? Ignored::Lasting : Ignored::Transient;
       break;
     case Verdict::Float:
-      restoreOnStartup_.erase(hwnd);
+      restoreBeforeTile_.erase(hwnd);
       ignored_.erase(hwnd);
       model_.setFloating(hwnd, true);
       break;
@@ -417,7 +417,7 @@ void TilingEngine::evaluate(WindowId hwnd, int attempt, bool force, bool initial
 }
 
 void TilingEngine::forget(WindowId hwnd, bool dropFloat) {
-  restoreOnStartup_.erase(hwnd);
+  restoreBeforeTile_.erase(hwnd);
   placed_.erase(hwnd);
   clamped_.erase(hwnd);
   moving_.erase(hwnd);
@@ -504,9 +504,9 @@ void TilingEngine::retile(const WorkspaceKey& key) {
       }
       if (facts->iconic || facts->cloaked) continue;
       if (facts->zoomed) {
-        if (restoreOnStartup_.erase(hwnd) != 0) {
+        if (restoreBeforeTile_.erase(hwnd) != 0) {
           if (placer_.restore(hwnd)) {
-            defer(kRetryMs, [this, hwnd] { waitForStartupRestore(hwnd, 0); });
+            defer(kRetryMs, [this, hwnd] { waitForRestore(hwnd, 0); });
           } else {
             forget(hwnd, false);
             ignored_[hwnd] = Ignored::Lasting;
@@ -514,7 +514,7 @@ void TilingEngine::retile(const WorkspaceKey& key) {
         }
         continue;
       }
-      restoreOnStartup_.erase(hwnd);
+      restoreBeforeTile_.erase(hwnd);
       current[hwnd] = facts->rect;
       if (hwnd == slot.topWindow()) {
         active.push_back(hwnd);
@@ -563,7 +563,7 @@ void TilingEngine::retile(const WorkspaceKey& key) {
   }
 }
 
-void TilingEngine::waitForStartupRestore(WindowId hwnd, int attempt) {
+void TilingEngine::waitForRestore(WindowId hwnd, int attempt) {
   if (!running_ || !model_.contains(hwnd)) return;
   const std::optional<WindowFacts> facts = placer_.state(hwnd);
   if (!facts) {
@@ -572,7 +572,7 @@ void TilingEngine::waitForStartupRestore(WindowId hwnd, int attempt) {
   }
   if (facts->zoomed) {
     if (attempt < kMaxRetries) {
-      defer(kRetryMs, [this, hwnd, attempt] { waitForStartupRestore(hwnd, attempt + 1); });
+      defer(kRetryMs, [this, hwnd, attempt] { waitForRestore(hwnd, attempt + 1); });
     }
     return;
   }
@@ -639,7 +639,9 @@ FloatOutcome TilingEngine::setForegroundFloating(std::optional<bool> floating) {
   if (!front) return FloatOutcome::NoWindow;
   const WindowId hwnd = *front;
   const bool managed = model_.contains(hwnd);
-  const bool wantFloat = floating.value_or(managed);
+  const std::optional<WindowFacts> facts = placer_.state(hwnd);
+  const bool maximized = facts && facts->zoomed && !facts->iconic;
+  const bool wantFloat = floating.value_or(managed && !maximized);
   if (wantFloat) {
     if (!managed) return FloatOutcome::Unchanged;
     const std::optional<WorkspaceKey> key = model_.keyOf(hwnd);
@@ -648,7 +650,12 @@ FloatOutcome TilingEngine::setForegroundFloating(std::optional<bool> floating) {
     if (key) requestRetile(*key);
     return FloatOutcome::Floated;
   }
-  if (managed) return FloatOutcome::Unchanged;
+  if (managed) {
+    if (!maximized) return FloatOutcome::Unchanged;
+    restoreBeforeTile_.insert(hwnd);
+    if (const auto key = model_.keyOf(hwnd)) requestRetile(*key);
+    return FloatOutcome::Tiled;
+  }
   pending_.erase(hwnd);
   evaluate(hwnd, 0, true);
   return model_.contains(hwnd) ? FloatOutcome::Tiled : FloatOutcome::Ineligible;

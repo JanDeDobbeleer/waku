@@ -177,6 +177,12 @@ focus. Windows on another virtual desktop wait until that desktop is shown. Mini
 explicit ignore or float rules stay untouched. Maximizing a window afterward keeps it out of the
 layout until it is restored; `tile retile` does not undo that choice.
 
+Maximizing a window with the square title-bar button auto-hides docked bars on its monitor and
+releases their work area. Move the pointer to the bar's screen edge to reveal it temporarily.
+Restore the window, or focus it and run `wakuc tile toggle` (`Alt+F` in the sample bindings), to
+restore it into tiling and bring the bar back. The explicit `tile float` command leaves a
+maximized window floating.
+
 In `mainStack`, drag a window border or corner to resize its tile. Neighbors follow shared-divider
 changes during the drag. Outer edges snap back into the work area on release. Dragging the title
 bar still floats the window; other layouts retain their move/resize-to-float behavior.

@@ -91,6 +91,7 @@ class PanelWindow : public QsWindow {
   Q_PROPERTY(waku::host::WlrLayer::Enum layer READ layer WRITE setLayer NOTIFY layerChanged FINAL)
   Q_PROPERTY(waku::host::WlrKeyboardFocus::Enum keyboardFocus READ keyboardFocus WRITE
                  setKeyboardFocus NOTIFY keyboardFocusChanged FINAL)
+  Q_PROPERTY(bool screenFullscreen READ screenFullscreen NOTIFY screenFullscreenChanged FINAL)
 
  public:
   explicit PanelWindow(QObject* parent = nullptr);
@@ -111,6 +112,9 @@ class PanelWindow : public QsWindow {
   void setKeyboardFocus(WlrKeyboardFocus::Enum focus);
   QString layerNamespace() const { return namespace_; }
   void setLayerNamespace(const QString& name);
+  // Monitor occupancy, independent of this panel's anchors, layer and requested visibility.
+  bool screenFullscreen() const { return screenFullscreen_; }
+  void setScreenFullscreen(bool fullscreen);
 
   // The geometry it asks for on `screen` (logical pixels).
   QRect geometryOn(const QRect& screen) const;
@@ -134,6 +138,7 @@ class PanelWindow : public QsWindow {
   void layerChanged();
   void keyboardFocusChanged();
   void layerNamespaceChanged();
+  void screenFullscreenChanged();
   // The window was placed again (anchors, margins, size, screen or inset changed): the host asks
   // the shell for the app bar rect again if the request differs.
   void layoutChanged();
@@ -155,6 +160,7 @@ class PanelWindow : public QsWindow {
   WlrLayer::Enum layer_ = WlrLayer::Top;
   WlrKeyboardFocus::Enum keyboardFocus_ = WlrKeyboardFocus::None;
   QString namespace_;
+  bool screenFullscreen_ = false;
 };
 
 }  // namespace waku::host

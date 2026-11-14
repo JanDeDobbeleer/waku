@@ -41,6 +41,21 @@ See [Customization](Customization) for runnable examples and
 [shell author notes](https://github.com/JanDeDobbeleer/waku/blob/main/docs/shells.md) for
 Windows and Quickshell differences.
 
+Docked panels on the Top or Overlay layer auto-hide while a fullscreen or maximized application
+uses their monitor on the current desktop. The square Maximize button also triggers this:
+releasing the bar's work area lets Windows expand the window into that space. Move the pointer
+to the panel's screen edge to reveal it; it hides again when the pointer leaves the bar and its
+popup. The revealed bar overlays the window without reserving work area. Restoring or returning
+the window to tiling restores the bar's placement and reservation. This also applies to ported
+`PanelWindow` shells; no theme changes are needed.
+
+For shells that draw a bar inside a full-screen overlay, `PanelWindow.screenFullscreen` is a
+read-only waku extension. It reports a fullscreen or maximized application on that window's
+monitor and current desktop, regardless of the panel's anchors, layer or visibility. Bind the
+bar's content and input regions to this state; the host does not hide an entire full-screen
+overlay because it can also contain notifications and other panels. Such shells handle their
+own edge reveal. Ordinary docked panels get automatic hiding and reveal from the host.
+
 ## Complete type and property metadata
 
 The built and deployed module folders contain `qmldir`, `.qmltypes` files and QML source for

@@ -160,7 +160,7 @@ class TilingEngine {
   void defer(int ms, std::function<void()> task);
   void scheduleEvaluate(WindowId hwnd, int ms, int attempt, bool force, bool initialScan = false);
   void evaluate(WindowId hwnd, int attempt, bool force, bool initialScan = false);
-  void waitForStartupRestore(WindowId hwnd, int attempt);
+  void waitForRestore(WindowId hwnd, int attempt);
   void forget(WindowId hwnd, bool dropFloat);
   void refreshDesktop();
   void requestRetile(const WorkspaceKey& key);
@@ -199,8 +199,8 @@ class TilingEngine {
   enum class Ignored { Lasting, Untitled, Transient };
   std::map<WindowId, Ignored> ignored_;
   std::set<WindowId> pending_;  // an evaluation is scheduled
-  // Maximized in the initial scan; a cloaked window waits until its desktop is shown.
-  std::set<WindowId> restoreOnStartup_;
+  // Maximized at startup or explicitly requested back into tiling. Cloaked windows wait.
+  std::set<WindowId> restoreBeforeTile_;
   std::set<WindowId> moving_;         // the user drags or resizes it
   std::map<WindowId, QRect> placed_;  // the visible bounds the window had when we last looked
   struct ResizeDrag {
