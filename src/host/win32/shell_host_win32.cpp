@@ -25,7 +25,8 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
   DWORD pid = 0;
   GetWindowThreadProcessId(window, &pid);
   if (pid == GetCurrentProcessId()) return TRUE;
-  if (GetWindowLongPtrW(window, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) return TRUE;
+  const LONG_PTR exStyle = GetWindowLongPtrW(window, GWL_EXSTYLE);
+  if (exStyle & WS_EX_TOOLWINDOW) return TRUE;
   DWORD cloaked = 0;
   if (SUCCEEDED(DwmGetWindowAttribute(window, DWMWA_CLOAKED, &cloaked, sizeof(cloaked))) &&
       cloaked) {
@@ -52,7 +53,9 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
                       search.monitor.right - search.monitor.left,
                       search.monitor.bottom - search.monitor.top);
   search.found = coversScreenForFullscreen(bounds, monitor, maximized);
-  return search.found ? FALSE : TRUE;
+  if (search.found) return FALSE;
+  // Only the window in front decides; small always-on-top windows are skipped.
+  return (exStyle & WS_EX_TOPMOST) ? TRUE : FALSE;
 }
 
 bool hasFullscreenWindow(HWND panel) {
