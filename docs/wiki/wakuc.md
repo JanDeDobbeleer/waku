@@ -183,6 +183,9 @@ Restore the window, or focus it and run `wakuc tile toggle` (`Alt+F` in the samp
 restore it into tiling and bring the bar back. The explicit `tile float` command leaves a
 maximized window floating.
 
+Native fullscreen, such as Edge's `F11`, also stays outside the layout while the bar releases
+its work area. Exit native fullscreen with the application's own shortcut to return to tiling.
+
 In `mainStack`, drag a window border or corner to resize its tile. Neighbors follow shared-divider
 changes during the drag. Outer edges snap back into the work area on release. Dragging the title
 bar still floats the window; other layouts retain their move/resize-to-float behavior.

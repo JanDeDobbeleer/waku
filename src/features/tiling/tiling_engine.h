@@ -69,9 +69,9 @@ enum class FloatOutcome { NoWindow, Floated, Tiled, Unchanged, Ineligible };
 //    current desktop and retiles that desktop
 //  - retiles are coalesced: any number of requests in one turn place the windows once
 // Startup restores eligible maximized windows before tiling them; later maximization is respected.
-// It never activates a window, never places a cloaked, minimized or maximized one, and reads the
-// rectangle back after a placement: a window that clamps (minimum size) keeps its slot and leaves
-// a gap; there is no second pass.
+// It never activates a window, never places a cloaked, minimized, maximized or fullscreen one, and
+// reads the rectangle back after a placement: a window that clamps (minimum size) keeps its slot
+// and leaves a gap; there is no second pass.
 class TilingEngine {
  public:
   static constexpr int kRetryMs = 100;

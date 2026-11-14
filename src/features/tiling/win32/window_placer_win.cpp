@@ -91,6 +91,12 @@ class Win32WindowPlacer final : public WindowPlacer {
     facts.rect = visibleBounds(hwnd, window);
     HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
     facts.monitor = reinterpret_cast<MonitorId>(monitor);
+    MONITORINFO info = {sizeof(info)};
+    if (monitor && GetMonitorInfoW(monitor, &info)) {
+      facts.fullscreen = !facts.iconic && window.left <= info.rcMonitor.left &&
+                         window.top <= info.rcMonitor.top && window.right >= info.rcMonitor.right &&
+                         window.bottom >= info.rcMonitor.bottom;
+    }
     return facts;
   }
 
@@ -109,16 +115,6 @@ class Win32WindowPlacer final : public WindowPlacer {
     facts.ownedByVisible = owner != nullptr && IsWindowVisible(owner);
     facts.className = windowClass(hwnd);
     facts.title = windowTitle(hwnd);
-
-    RECT window = {};
-    GetWindowRect(hwnd, &window);
-    HMONITOR monitor = reinterpret_cast<HMONITOR>(facts.monitor);
-    MONITORINFO info = {sizeof(info)};
-    if (monitor && GetMonitorInfoW(monitor, &info)) {
-      facts.fullscreen = !facts.iconic && window.left <= info.rcMonitor.left &&
-                         window.top <= info.rcMonitor.top && window.right >= info.rcMonitor.right &&
-                         window.bottom >= info.rcMonitor.bottom;
-    }
 
     DWORD pid = 0;
     GetWindowThreadProcessId(hwnd, &pid);

@@ -1,8 +1,10 @@
 // The tiler's behaviour as event sequences against a fake placer and a manual clock. No test
-// touches a real window.
+// touches a user's window. The native state probe stays hidden.
+#include <windows.h>
 #include <gtest/gtest.h>
 
 #include <QVariantMap>
+#include <type_traits>
 
 #include "features/tiling/layouts.h"
 #include "features/tiling/testing/fake_window_placer.h"
@@ -46,6 +48,33 @@ struct Rig {
 };
 
 }  // namespace
+
+TEST(WindowPlacer, FastStateTracksNativeFullscreenTransitions) {
+  const POINT origin{};
+  const HMONITOR monitor = MonitorFromPoint(origin, MONITOR_DEFAULTTOPRIMARY);
+  MONITORINFO info{sizeof(info)};
+  ASSERT_TRUE(GetMonitorInfoW(monitor, &info));
+  const RECT& bounds = info.rcMonitor;
+  std::unique_ptr<std::remove_pointer_t<HWND>, decltype(&DestroyWindow)> window(
+      CreateWindowExW(WS_EX_TOOLWINDOW, L"STATIC", L"waku hidden fullscreen state probe", WS_POPUP,
+                      bounds.left, bounds.top, bounds.right - bounds.left,
+                      bounds.bottom - bounds.top, nullptr, nullptr, GetModuleHandleW(nullptr),
+                      nullptr),
+      &DestroyWindow);
+  ASSERT_NE(window, nullptr);
+  const auto placer = makeWin32WindowPlacer();
+  const WindowId id = reinterpret_cast<WindowId>(window.get());
+  const auto fullscreen = placer->state(id);
+  ASSERT_TRUE(fullscreen);
+  EXPECT_TRUE(fullscreen->fullscreen);
+  EXPECT_FALSE(fullscreen->zoomed);
+  EXPECT_FALSE(fullscreen->visible);
+  ASSERT_TRUE(SetWindowPos(window.get(), nullptr, bounds.left + 20, bounds.top + 20, 640, 480,
+                           SWP_NOACTIVATE | SWP_NOZORDER));
+  const auto restored = placer->state(id);
+  ASSERT_TRUE(restored);
+  EXPECT_FALSE(restored->fullscreen);
+}
 
 TEST(TilingEngine, AWindowThatAppearsIsPlacedInTheFullArea) {
   Rig rig;
@@ -960,6 +989,46 @@ TEST(TilingEngine, AMaximizedWindowTakesNoSlot) {
   rig.engine.retileAll();
   rig.settle();
   EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(0, 2));
+}
+
+TEST(TilingEngine, NativeFullscreenSurvivesWorkAreaRetilesAndReturnsToItsSlot) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  const QRect fullscreen(0, 0, 1920, 1080);
+  rig.placer.windows[1].fullscreen = true;
+  rig.placer.windows[1].rect = fullscreen;
+  rig.placer.placements.clear();
+
+  for (const QRect& area : {fullscreen, kAreaA, fullscreen}) {
+    rig.placer.areas[kMonitorA] = area;
+    rig.engine.retileAll();
+    rig.settle();
+    EXPECT_TRUE(rig.placer.slotsOf(1).empty());
+    EXPECT_EQ(rig.placer.windows[1].rect, fullscreen);
+    EXPECT_EQ(rig.placer.lastSlot(2),
+              layoutSlots(QStringLiteral("mainStack"), area, 1, kGap, 0.5).front());
+    EXPECT_TRUE(rig.engine.model().contains(1));
+  }
+  EXPECT_TRUE(rig.placer.restored.empty());
+  rig.placer.windows[1].fullscreen = false;
+  rig.placer.areas[kMonitorA] = kAreaA;
+  rig.engine.retileAll();
+  rig.settle();
+  EXPECT_EQ(rig.placer.lastSlot(1), rig.slot(0, 2));
+  EXPECT_EQ(rig.placer.lastSlot(2), rig.slot(1, 2));
+}
+
+TEST(TilingEngine, NativeFullscreenHasNoDirectionalLayoutSlot) {
+  Rig rig;
+  rig.engine.start();
+  rig.open(1);
+  rig.open(2);
+  rig.placer.front = 1;
+  rig.placer.windows[1].fullscreen = true;
+  EXPECT_FALSE(rig.engine.focusDirection(Direction::Right).ok);
+  EXPECT_TRUE(rig.placer.activated.empty());
 }
 
 TEST(TilingEngine, ALayoutNameAppliesToTheForegroundWorkspaceOnly) {

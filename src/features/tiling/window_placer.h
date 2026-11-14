@@ -50,8 +50,9 @@ class WindowPlacer {
   virtual std::vector<WindowId> candidates() = 0;
   // Nothing when the window is gone.
   virtual std::optional<WindowFacts> query(WindowId hwnd) = 0;
-  // The cheap part of query(): visible, iconic, zoomed, cloaked, monitor and rect, without the
-  // process, class, title and desktop lookups. Enough to place a window that is already tracked.
+  // The cheap part of query(): visible, iconic, zoomed, fullscreen, cloaked, monitor and rect,
+  // without the process, class, title and desktop lookups. Enough to place a window that is already
+  // tracked.
   virtual std::optional<WindowFacts> state(WindowId hwnd) { return query(hwnd); }
   // The work area of a monitor in physical pixels; empty when the monitor is unknown.
   virtual QRect workArea(MonitorId monitor) = 0;
