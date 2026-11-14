@@ -225,6 +225,11 @@ int main(int argc, char* argv[]) {
   options.configHome = configHome;
   options.implicitConfigHome = resolvedHome.implicit;
   options.allowReserve = !parser.isSet(noAppBarOpt) && waku::kernel::liveDesktop();
+  options.maximizedAutoHideEnabled = [&engine] {
+    auto* tiling = engine.singletonInstance<waku::tiling::Tiling*>(QStringLiteral("waku.services"),
+                                                                   QStringLiteral("Tiling"));
+    return tiling && tiling->active();
+  };
   options.safe = parser.isSet(safeOpt);
   options.hooks = waku::host::ShellHost::NativeHooks::win32();
   waku::host::ShellHost host(&engine, std::move(options));

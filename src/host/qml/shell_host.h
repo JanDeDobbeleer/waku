@@ -31,6 +31,8 @@ namespace waku::host {
 class PanelWindow;
 class QsWindow;
 
+enum class ScreenOccupancy { None, Maximized, Fullscreen };
+
 // Builds the shell declared in <config home>\shell.qml and keeps it up to date.
 //
 // reload() destroys the old shell, fills the Theme singleton and builds the new shell in the live
@@ -77,7 +79,7 @@ class ShellHost : public QObject {
     std::function<void(quintptr hwnd)> raiseTopmost;
     // Whether a fullscreen or maximized application uses this panel's monitor. Empty offscreen,
     // so tests never inspect the live desktop.
-    std::function<bool(quintptr hwnd)> fullscreenOnMonitor;
+    std::function<ScreenOccupancy(quintptr hwnd)> screenOccupancyOnMonitor;
     // Sets or clears WS_EX_NOACTIVATE: clicks on a window with `keyboardFocus: None` never take
     // the focus. Called each time a window is shown or its layer or keyboard focus changes.
     std::function<void(quintptr hwnd, bool noActivate)> setNoActivate;
@@ -104,6 +106,9 @@ class ShellHost : public QObject {
     // Reserving the work area changes the user's desktop, so it needs this on top of a window's
     // own exclusive zone (off with `--no-app-bar`).
     bool allowReserve = false;
+    // Whether maximizing a window should auto-hide docked panels. The app ties this to the tiler's
+    // active state; native fullscreen auto-hides independently.
+    std::function<bool()> maximizedAutoHideEnabled;
     NativeHooks hooks;
     // Screens to build shells for (ScreenList); default: every screen of the application.
     std::function<QList<QScreen*>()> screens;
@@ -213,8 +218,9 @@ class ShellHost : public QObject {
     std::optional<waku::host::AppBarRequest> appBarRequest;
     bool layoutConnected = false;
     bool presented = false;
-    bool fullscreenActive = false;
+    bool autoHideActive = false;
     bool fullscreenRevealed = false;
+    ScreenOccupancy occupancy = ScreenOccupancy::None;
     // Set by retire(): the window waits for its deferred deletion and is skipped everywhere.
     bool retired = false;
     bool live() const { return window && !retired; }
