@@ -4,6 +4,7 @@
 
 using waku::host::AppBarEdge;
 using waku::host::coversScreenForFullscreen;
+using waku::host::fullscreenWindowDecision;
 using waku::host::PanelAnchorSet;
 using waku::host::panelAppBarEdge;
 using waku::host::panelGeometry;
@@ -39,6 +40,24 @@ TEST(PanelGeometryTest, MaximizationHidesThePanelBeforeAndAfterTheWorkAreaExpand
   EXPECT_TRUE(coversScreenForFullscreen(kScreen, kScreen, true));
   EXPECT_FALSE(coversScreenForFullscreen(kScreen.translated(kScreen.width(), 0), kScreen, true));
   EXPECT_FALSE(coversScreenForFullscreen({}, kScreen, true));
+}
+
+TEST(PanelGeometryTest, FrontmostOrdinaryWindowStopsFullscreenSearch) {
+  const QRect ordinary = kScreen.adjusted(100, 100, -100, -100);
+  const auto decision = fullscreenWindowDecision(ordinary, kScreen, false, false);
+  ASSERT_TRUE(decision.has_value());
+  EXPECT_FALSE(*decision);
+  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, false, false), true);
+  EXPECT_EQ(fullscreenWindowDecision(ordinary, kScreen, true, false), true);
+}
+
+TEST(PanelGeometryTest, FullscreenSearchSkipsNonFullscreenTopmostAndOtherMonitors) {
+  const QRect ordinary = kScreen.adjusted(100, 100, -100, -100);
+  EXPECT_FALSE(fullscreenWindowDecision(ordinary, kScreen, false, true).has_value());
+  EXPECT_FALSE(
+      fullscreenWindowDecision(kScreen.translated(kScreen.width(), 0), kScreen, false, false)
+          .has_value());
+  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, false, true), true);
 }
 
 TEST(PanelGeometryTest, FullscreenRevealUsesEachScreenEdgeAndKeepsTheMarginReachable) {

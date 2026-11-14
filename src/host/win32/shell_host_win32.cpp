@@ -52,10 +52,11 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
   const QRect monitor(search.monitor.left, search.monitor.top,
                       search.monitor.right - search.monitor.left,
                       search.monitor.bottom - search.monitor.top);
-  search.found = coversScreenForFullscreen(bounds, monitor, maximized);
-  if (search.found) return FALSE;
-  // Only the window in front decides; small always-on-top windows are skipped.
-  return (exStyle & WS_EX_TOPMOST) ? TRUE : FALSE;
+  const auto decision =
+      fullscreenWindowDecision(bounds, monitor, maximized, (exStyle & WS_EX_TOPMOST) != 0);
+  if (!decision) return TRUE;
+  search.found = *decision;
+  return FALSE;
 }
 
 bool hasFullscreenWindow(HWND panel) {

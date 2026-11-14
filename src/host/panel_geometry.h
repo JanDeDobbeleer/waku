@@ -40,6 +40,10 @@ int panelThickness(AppBarEdge edge, const QSize& size);
 // releasing the panel's work area lets Windows expand it. Both rectangles use physical pixels.
 bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool maximized);
 
+// A result ends the z-order search; an empty result skips a non-fullscreen topmost window.
+std::optional<bool> fullscreenWindowDecision(const QRect& window, const QRect& screen,
+                                             bool maximized, bool topmost);
+
 // Cursor area that reveals a fullscreen-hidden panel. While revealed it includes the panel and
 // the gap to its screen edge; otherwise only a two-pixel strip along that edge. Logical pixels.
 QRect panelRevealArea(AppBarEdge edge, const QRect& panel, const QRect& screen, bool revealed);
