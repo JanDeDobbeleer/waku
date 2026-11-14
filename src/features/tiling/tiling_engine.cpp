@@ -515,6 +515,7 @@ void TilingEngine::retile(const WorkspaceKey& key) {
         continue;
       }
       restoreBeforeTile_.erase(hwnd);
+      if (facts->fullscreen) continue;
       current[hwnd] = facts->rect;
       if (hwnd == slot.topWindow()) {
         active.push_back(hwnd);
@@ -756,7 +757,10 @@ std::vector<WindowId> TilingEngine::activeWindows(const WorkspaceKey& key) {
   std::vector<WindowId> active;
   for (const WindowId hwnd : model_.stack(key)) {
     const std::optional<WindowFacts> facts = placer_.state(hwnd);
-    if (!facts || !facts->visible || facts->iconic || facts->zoomed || facts->cloaked) continue;
+    if (!facts || !facts->visible || facts->iconic || facts->zoomed || facts->fullscreen ||
+        facts->cloaked) {
+      continue;
+    }
     active.push_back(hwnd);
   }
   return active;
