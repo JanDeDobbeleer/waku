@@ -16,7 +16,7 @@ namespace {
 struct FullscreenSearch {
   RECT monitor;
   HMONITOR monitorHandle = nullptr;
-  bool found = false;
+  ScreenOccupancy occupancy = ScreenOccupancy::None;
 };
 
 BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
@@ -55,22 +55,22 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
   const auto decision =
       fullscreenWindowDecision(bounds, monitor, maximized, (exStyle & WS_EX_TOPMOST) != 0);
   if (!decision) return TRUE;
-  search.found = *decision;
+  search.occupancy = *decision;
   return FALSE;
 }
 
-bool hasFullscreenWindow(HWND panel) {
+ScreenOccupancy screenOccupancy(HWND panel) {
   const HMONITOR monitor = MonitorFromWindow(panel, MONITOR_DEFAULTTONULL);
   MONITORINFO info{};
   info.cbSize = sizeof(info);
   FullscreenSearch search{};
   if (!monitor || !GetMonitorInfoW(monitor, &info)) {
-    return false;
+    return ScreenOccupancy::None;
   }
   search.monitor = info.rcMonitor;
   search.monitorHandle = monitor;
   EnumWindows(findFullscreenWindow, reinterpret_cast<LPARAM>(&search));
-  return search.found;
+  return search.occupancy;
 }
 
 }  // namespace
@@ -102,8 +102,8 @@ ShellHost::NativeHooks ShellHost::NativeHooks::win32() {
       if (!GetCursorPos(&point)) return std::nullopt;
       return QPoint(point.x, point.y);
     };
-    hooks.fullscreenOnMonitor = [](quintptr hwnd) {
-      return hasFullscreenWindow(reinterpret_cast<HWND>(hwnd));
+    hooks.screenOccupancyOnMonitor = [](quintptr hwnd) {
+      return screenOccupancy(reinterpret_cast<HWND>(hwnd));
     };
   }
   hooks.raiseTopmost = [](quintptr hwnd) {

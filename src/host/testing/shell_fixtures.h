@@ -113,6 +113,7 @@ struct Native {
   std::vector<quintptr> raised;
   bool fullscreenHook = false;
   QSet<quintptr> fullscreenPanels;
+  QSet<quintptr> maximizedPanels;
   std::vector<std::pair<quintptr, bool>> noActivate;
   std::vector<quintptr> foregrounded;
   // True: the working set hook exists and counts its calls in `trims`.
@@ -149,7 +150,11 @@ struct Native {
     if (cursorHook) hooks.cursorPosition = [this]() { return cursor; };
     hooks.raiseTopmost = [this](quintptr hwnd) { raised.push_back(hwnd); };
     if (fullscreenHook) {
-      hooks.fullscreenOnMonitor = [this](quintptr hwnd) { return fullscreenPanels.contains(hwnd); };
+      hooks.screenOccupancyOnMonitor = [this](quintptr hwnd) {
+        if (fullscreenPanels.contains(hwnd)) return ScreenOccupancy::Fullscreen;
+        if (maximizedPanels.contains(hwnd)) return ScreenOccupancy::Maximized;
+        return ScreenOccupancy::None;
+      };
     }
     hooks.setNoActivate = [this](quintptr hwnd, bool value) {
       noActivate.emplace_back(hwnd, value);
@@ -169,6 +174,7 @@ struct Harness {
   std::unique_ptr<ShellHost> host;
   int screenCount = 1;
   bool allowReserve = false;
+  bool maximizedAutoHideEnabled = false;
   bool safe = false;
   QUrl safeUrl;
   bool implicitConfigHome = false;
@@ -191,6 +197,7 @@ struct Harness {
     options.implicitConfigHome = implicitConfigHome;
     options.defaultUrl = defaultUrl;
     options.allowReserve = allowReserve;
+    options.maximizedAutoHideEnabled = [enabled = maximizedAutoHideEnabled] { return enabled; };
     options.safe = safe;
     options.safeUrl = safeUrl;
     options.screenSettleMs = screenSettleMs;

@@ -58,6 +58,8 @@ written in lower case and plain ASCII in code and paths.
   the built-in shell and ignores the config; `--font-engine=directwrite` honours variable-font axes.
 - A built-in tiler places new windows in a main+stack or columns layout per monitor and virtual
   desktop; on by default (`Tiling.enabled = false` in a shell or `--no-tiling` turns it off); `wakuc tile toggle|float|layout|retile|status`.
+- Maximizing auto-hides docked bars only while the built-in tiler is active; native fullscreen
+  auto-hides without changing the bar's work-area reservation.
 - `--log-file <path>` writes a JSON Lines diagnostics log (log messages, screen and scale
   changes, reloads, start and stop); off by default. Format: `docs/logging.md`.
 
