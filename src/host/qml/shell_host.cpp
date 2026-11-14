@@ -292,7 +292,7 @@ ShellHost::ShellHost(QQmlEngine* engine, Options options, QObject* parent)
   connect(&trimTimer_, &QTimer::timeout, this, [this] { trimIfSettled(); });
   revealTimer_.setInterval(50);
   connect(&revealTimer_, &QTimer::timeout, this, [this] { updateFullscreenReveal(); });
-  if (options_.hooks.fullscreenOnMonitor) {
+  if (options_.hooks.screenOccupancyOnMonitor) {
     fullscreenTimer_.setInterval(500);
     connect(&fullscreenTimer_, &QTimer::timeout, this, [this] { updateFullscreenPanels(); });
     fullscreenTimer_.start();
@@ -838,21 +838,26 @@ void ShellHost::updateFullscreenPanel(Entry& entry) {
   auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
   if (!entry.live() || !panel || !entry.presented) return;
   const auto& hooks = options_.hooks;
-  const bool occupied =
-      hooks.fullscreenOnMonitor &&
-      hooks.fullscreenOnMonitor(static_cast<quintptr>(panel->backingWindow()->winId()));
-  panel->setScreenFullscreen(occupied);
+  const ScreenOccupancy occupancy =
+      hooks.screenOccupancyOnMonitor
+          ? hooks.screenOccupancyOnMonitor(static_cast<quintptr>(panel->backingWindow()->winId()))
+          : ScreenOccupancy::None;
+  panel->setScreenFullscreen(occupancy != ScreenOccupancy::None);
   if (!entry.live()) return;
-  const bool fullscreen =
-      occupied && panel->visible() && panel->appBarEdge() && panel->stackTopmost();
-  if (fullscreen == entry.fullscreenActive) return;
-  entry.fullscreenActive = fullscreen;
+  const bool hideForMaximization = occupancy == ScreenOccupancy::Maximized &&
+                                   options_.maximizedAutoHideEnabled &&
+                                   options_.maximizedAutoHideEnabled();
+  const bool autoHide = (occupancy == ScreenOccupancy::Fullscreen || hideForMaximization) &&
+                        panel->visible() && panel->appBarEdge() && panel->stackTopmost();
+  if (occupancy == entry.occupancy && autoHide == entry.autoHideActive) return;
+  entry.occupancy = occupancy;
+  entry.autoHideActive = autoHide;
   entry.fullscreenRevealed = false;
   // The revealed bar overlays the application; it must not shrink its work area.
   syncAppBar(entry);
   if (!entry.live()) return;
-  panel->setSuppressed(fullscreen);
-  if (fullscreen && !revealTimer_.isActive()) revealTimer_.start();
+  panel->setSuppressed(autoHide);
+  if (autoHide && !revealTimer_.isActive()) revealTimer_.start();
 }
 
 void ShellHost::updateFullscreenReveal() {
@@ -863,7 +868,7 @@ void ShellHost::updateFullscreenReveal() {
     if (loaded_) {
       for (Entry& entry : loaded_->entries) {
         auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
-        if (!entry.live() || !panel || !entry.fullscreenActive || !panel->visible()) continue;
+        if (!entry.live() || !panel || !entry.autoHideActive || !panel->visible()) continue;
         active = true;
         const auto edge = panel->appBarEdge();
         QScreen* screen = panel->targetScreen();
@@ -1007,7 +1012,8 @@ void ShellHost::syncAppBar(Entry& entry, bool force) {
       zone > 0 ? zone : panelThickness(*edge, QSize(panel->width(), panel->height()));
   request.screen = panel->targetScreen();
   request.dpr = request.screen ? request.screen->devicePixelRatio() : 1.0;
-  request.reserveSpace = options_.allowReserve && zone > 0 && !entry.fullscreenActive;
+  request.reserveSpace = options_.allowReserve && zone > 0 &&
+                         !(entry.autoHideActive && entry.occupancy == ScreenOccupancy::Maximized);
   request.alwaysOnTop = panel->aboveWindows();
   request.noActivate = !panel->focusable();
   if (!force && entry.appBar && entry.appBarRequest && *entry.appBarRequest == request) return;

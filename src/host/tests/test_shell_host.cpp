@@ -305,7 +305,8 @@ ShellRoot {
 }
 )"));
   ASSERT_TRUE(h.host->reload());
-  QsWindow* panel = h.shellWindow();
+  auto* panel = qobject_cast<PanelWindow*>(h.shellWindow());
+  ASSERT_NE(panel, nullptr);
   QQuickWindow* backing = panel->backingWindow();
   const QRect screen = backing->screen()->geometry();
   const auto nativePoint = [backing, screen](const QPoint& logical) {
@@ -323,7 +324,7 @@ ShellRoot {
   QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 1000);
 }
 
-TEST(ShellHostTest, FullscreenEdgeRevealOverlaysWithoutReservingOrTakingFocus) {
+TEST(ShellHostTest, FullscreenEdgeRevealOverlaysWithoutChangingReservationOrTakingFocus) {
   Harness h;
   h.allowReserve = true;
   h.native.fullscreenHook = true;
@@ -336,7 +337,7 @@ TEST(ShellHostTest, FullscreenEdgeRevealOverlaysWithoutReservingOrTakingFocus) {
   ASSERT_TRUE(h.native.created.back().request.reserveSpace);
   h.native.fullscreenPanels.insert(hwnd);
   QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
-  EXPECT_FALSE(h.native.created.back().request.reserveSpace);
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
   h.native.raised.clear();
   const auto nativePoint = [backing](const QPoint& logical) {
     const QPoint origin = backing->screen()->geometry().topLeft();
@@ -347,7 +348,7 @@ TEST(ShellHostTest, FullscreenEdgeRevealOverlaysWithoutReservingOrTakingFocus) {
   ASSERT_FALSE(h.native.raised.empty());
   EXPECT_EQ(h.native.raised.back(), hwnd);
   EXPECT_TRUE(h.native.foregrounded.empty());
-  EXPECT_FALSE(h.native.created.back().request.reserveSpace);
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
   EXPECT_EQ(backing->geometry(), original);
   h.native.cursor = nativePoint(original.center());
   QTest::qWait(150);
@@ -358,6 +359,44 @@ TEST(ShellHostTest, FullscreenEdgeRevealOverlaysWithoutReservingOrTakingFocus) {
   QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 2000);
   EXPECT_TRUE(h.native.created.back().request.reserveSpace);
   EXPECT_EQ(backing->geometry(), original);
+}
+
+TEST(ShellHostTest, MaximizationAutoHidesAndReleasesSpaceOnlyWhenEnabled) {
+  Harness h;
+  h.allowReserve = true;
+  h.maximizedAutoHideEnabled = true;
+  h.native.fullscreenHook = true;
+  h.start(shellConfig(QStringLiteral("a"), QStringLiteral("exclusive: true")));
+  ASSERT_TRUE(h.host->reload());
+  auto* panel = qobject_cast<PanelWindow*>(h.shellWindow());
+  ASSERT_NE(panel, nullptr);
+  const auto hwnd = static_cast<quintptr>(panel->backingWindow()->winId());
+  ASSERT_TRUE(h.native.created.back().request.reserveSpace);
+
+  h.native.maximizedPanels.insert(hwnd);
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
+  EXPECT_TRUE(panel->screenFullscreen());
+  EXPECT_FALSE(h.native.created.back().request.reserveSpace);
+
+  h.native.maximizedPanels.clear();
+  QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 2000);
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
+}
+
+TEST(ShellHostTest, MaximizationDoesNotAutoHideWhenDisabled) {
+  Harness h;
+  h.allowReserve = true;
+  h.native.fullscreenHook = true;
+  h.start(shellConfig(QStringLiteral("a"), QStringLiteral("exclusive: true")));
+  ASSERT_TRUE(h.host->reload());
+  auto* panel = qobject_cast<PanelWindow*>(h.shellWindow());
+  ASSERT_NE(panel, nullptr);
+  const auto hwnd = static_cast<quintptr>(panel->backingWindow()->winId());
+
+  h.native.maximizedPanels.insert(hwnd);
+  QTRY_VERIFY_WITH_TIMEOUT(panel->screenFullscreen(), 2000);
+  EXPECT_TRUE(panel->backingWindowVisible());
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
 }
 
 TEST(ShellHostTest, FullscreenNeverResurrectsAWindowHiddenByTheShell) {
