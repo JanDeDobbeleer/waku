@@ -45,10 +45,21 @@ Docked panels on the Top or Overlay layer auto-hide while a fullscreen applicati
 monitor on the current desktop. The bar keeps its work-area reservation while native fullscreen
 is active, so leaving fullscreen does not resize the desktop again. Maximized windows also hide
 docked panels and release their work area when waku's tiler is active; with the tiler disabled,
-maximizing does not affect the panel. Move the pointer to the panel's screen edge to reveal it;
-it hides again when the pointer leaves the bar and its popup. The revealed bar overlays the window
-without changing the work area. This also applies to ported `PanelWindow` shells; no theme changes
-are needed.
+maximizing does not affect the panel. By default, panels stay hidden for native fullscreen, keeping
+the fullscreen application above them. Set `ShellRoot.fullscreenRevealApps` to executable filenames
+including `.exe` to allow edge reveal for those apps, for example:
+
+```qml
+ShellRoot {
+    fullscreenRevealApps: ["thefinals.exe"]
+    // ...
+}
+```
+
+While a maximized window is auto-hiding panels, move the pointer to the panel's screen edge to
+reveal it; it hides again when the pointer leaves the bar and its popup. The revealed bar overlays
+the window without changing the work area. This also applies to ported `PanelWindow` shells; no
+theme changes are needed.
 
 For shells that draw a bar inside a full-screen overlay, `PanelWindow.screenFullscreen` is a
 read-only waku extension. It reports a fullscreen or maximized application on that window's

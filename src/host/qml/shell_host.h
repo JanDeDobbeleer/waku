@@ -64,6 +64,11 @@ class ShellHost : public QObject {
  public:
   // The parts that touch the real desktop, replaceable so tests never register an app bar or
   // blur a window.
+  struct ScreenOccupancyInfo {
+    ScreenOccupancy occupancy = ScreenOccupancy::None;
+    QString executableName;
+  };
+
   struct NativeHooks {
     // One per app bar window; null function: no app bar object at all.
     std::function<std::unique_ptr<waku::host::IAppBar>()> makeAppBar;
@@ -76,9 +81,9 @@ class ShellHost : public QObject {
     // Keeps the window above the others (SetWindowPos HWND_TOPMOST, no activation): called each
     // time a window of the Top or Overlay layer is shown.
     std::function<void(quintptr hwnd)> raiseTopmost;
-    // Whether a fullscreen or maximized application uses this panel's monitor. Empty offscreen,
-    // so tests never inspect the live desktop.
-    std::function<ScreenOccupancy(quintptr hwnd)> screenOccupancyOnMonitor;
+    // The fullscreen or maximized application using this panel's monitor. Empty offscreen, so
+    // tests never inspect the live desktop.
+    std::function<ScreenOccupancyInfo(quintptr hwnd)> screenOccupancyOnMonitor;
     // Sets or clears WS_EX_NOACTIVATE: clicks on a window with `keyboardFocus: None` never take
     // the focus. Called each time a window is shown or its layer or keyboard focus changes.
     std::function<void(quintptr hwnd, bool noActivate)> setNoActivate;
@@ -220,6 +225,7 @@ class ShellHost : public QObject {
     bool autoHideActive = false;
     bool fullscreenRevealed = false;
     ScreenOccupancy occupancy = ScreenOccupancy::None;
+    QString executableName;
     // Set by retire(): the window waits for its deferred deletion and is skipped everywhere.
     bool retired = false;
     bool live() const { return window && !retired; }

@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
+#include <QHash>
 #include <QPointer>
 #include <QQmlComponent>
 #include <QQmlEngine>
@@ -113,6 +114,7 @@ struct Native {
   std::vector<quintptr> raised;
   bool fullscreenHook = false;
   QSet<quintptr> fullscreenPanels;
+  QHash<quintptr, QString> fullscreenApps;
   QSet<quintptr> maximizedPanels;
   std::vector<std::pair<quintptr, bool>> noActivate;
   std::vector<quintptr> foregrounded;
@@ -151,9 +153,14 @@ struct Native {
     hooks.raiseTopmost = [this](quintptr hwnd) { raised.push_back(hwnd); };
     if (fullscreenHook) {
       hooks.screenOccupancyOnMonitor = [this](quintptr hwnd) {
-        if (fullscreenPanels.contains(hwnd)) return ScreenOccupancy::Fullscreen;
-        if (maximizedPanels.contains(hwnd)) return ScreenOccupancy::Maximized;
-        return ScreenOccupancy::None;
+        if (fullscreenPanels.contains(hwnd)) {
+          return ShellHost::ScreenOccupancyInfo{ScreenOccupancy::Fullscreen,
+                                                fullscreenApps.value(hwnd)};
+        }
+        if (maximizedPanels.contains(hwnd)) {
+          return ShellHost::ScreenOccupancyInfo{ScreenOccupancy::Maximized, {}};
+        }
+        return ShellHost::ScreenOccupancyInfo{};
       };
     }
     hooks.setNoActivate = [this](quintptr hwnd, bool value) {

@@ -838,10 +838,11 @@ void ShellHost::updateFullscreenPanel(Entry& entry) {
   auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
   if (!entry.live() || !panel || !entry.presented) return;
   const auto& hooks = options_.hooks;
-  const ScreenOccupancy occupancy =
+  const ScreenOccupancyInfo occupancyInfo =
       hooks.screenOccupancyOnMonitor
           ? hooks.screenOccupancyOnMonitor(static_cast<quintptr>(panel->backingWindow()->winId()))
-          : ScreenOccupancy::None;
+          : ScreenOccupancyInfo{};
+  const ScreenOccupancy occupancy = occupancyInfo.occupancy;
   panel->setScreenFullscreen(occupancy != ScreenOccupancy::None);
   if (!entry.live()) return;
   const bool hideForMaximization = occupancy == ScreenOccupancy::Maximized &&
@@ -849,6 +850,7 @@ void ShellHost::updateFullscreenPanel(Entry& entry) {
                                    options_.maximizedAutoHideEnabled();
   const bool autoHide = (occupancy == ScreenOccupancy::Fullscreen || hideForMaximization) &&
                         panel->visible() && panel->appBarEdge() && panel->stackTopmost();
+  entry.executableName = occupancyInfo.executableName;
   if (occupancy == entry.occupancy && autoHide == entry.autoHideActive) return;
   entry.occupancy = occupancy;
   entry.autoHideActive = autoHide;
@@ -870,6 +872,16 @@ void ShellHost::updateFullscreenReveal() {
         auto* panel = qobject_cast<PanelWindow*>(entry.window.data());
         if (!entry.live() || !panel || !entry.autoHideActive || !panel->visible()) continue;
         active = true;
+        if (entry.occupancy == ScreenOccupancy::Fullscreen) {
+          const QStringList& allowedApps = loaded_->shell->fullscreenRevealApps();
+          const bool allowed = !entry.executableName.isEmpty() &&
+                               allowedApps.contains(entry.executableName, Qt::CaseInsensitive);
+          if (!allowed && entry.fullscreenRevealed) {
+            entry.fullscreenRevealed = false;
+            panel->setSuppressed(true);
+          }
+          if (!allowed) continue;
+        }
         const auto edge = panel->appBarEdge();
         QScreen* screen = panel->targetScreen();
         if (!edge || !screen || !cursor) continue;

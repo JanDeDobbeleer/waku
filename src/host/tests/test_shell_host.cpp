@@ -324,7 +324,7 @@ ShellRoot {
   QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 1000);
 }
 
-TEST(ShellHostTest, FullscreenEdgeRevealOverlaysWithoutChangingReservationOrTakingFocus) {
+TEST(ShellHostTest, FullscreenDoesNotRevealThePanelAtTheScreenEdge) {
   Harness h;
   h.allowReserve = true;
   h.native.fullscreenHook = true;
@@ -336,6 +336,7 @@ TEST(ShellHostTest, FullscreenEdgeRevealOverlaysWithoutChangingReservationOrTaki
   const QRect original = backing->geometry();
   ASSERT_TRUE(h.native.created.back().request.reserveSpace);
   h.native.fullscreenPanels.insert(hwnd);
+  h.native.fullscreenApps.insert(hwnd, QStringLiteral("thefinals.exe"));
   QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
   EXPECT_TRUE(h.native.created.back().request.reserveSpace);
   h.native.raised.clear();
@@ -344,21 +345,49 @@ TEST(ShellHostTest, FullscreenEdgeRevealOverlaysWithoutChangingReservationOrTaki
     return origin + ((QPointF(logical - origin) * backing->devicePixelRatio()).toPoint());
   };
   h.native.cursor = nativePoint(QPoint(original.center().x(), backing->screen()->geometry().top()));
-  QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 1000);
-  ASSERT_FALSE(h.native.raised.empty());
-  EXPECT_EQ(h.native.raised.back(), hwnd);
+  QTest::qWait(150);
+  EXPECT_FALSE(panel->backingWindowVisible());
+  EXPECT_TRUE(h.native.raised.empty());
   EXPECT_TRUE(h.native.foregrounded.empty());
   EXPECT_TRUE(h.native.created.back().request.reserveSpace);
   EXPECT_EQ(backing->geometry(), original);
-  h.native.cursor = nativePoint(original.center());
-  QTest::qWait(150);
-  EXPECT_TRUE(panel->backingWindowVisible());
-  h.native.cursor = nativePoint(original.bottomLeft() + QPoint(0, 100));
-  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 1000);
   h.native.fullscreenPanels.clear();
   QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 2000);
   EXPECT_TRUE(h.native.created.back().request.reserveSpace);
   EXPECT_EQ(backing->geometry(), original);
+}
+
+TEST(ShellHostTest, FullscreenRevealCanBeEnabledForConfiguredProcess) {
+  Harness h;
+  h.native.fullscreenHook = true;
+  h.start(QStringLiteral(R"(
+import QtQuick
+import waku
+ShellRoot {
+    fullscreenRevealApps: ["thefinals.exe"]
+    Panel {
+        edge: Panel.Top
+        thickness: 40
+    }
+}
+)"));
+  ASSERT_TRUE(h.host->reload());
+  QsWindow* panel = h.shellWindow();
+  QQuickWindow* backing = panel->backingWindow();
+  const auto hwnd = static_cast<quintptr>(backing->winId());
+  const QRect geometry = backing->geometry();
+  h.native.fullscreenPanels.insert(hwnd);
+  h.native.fullscreenApps.insert(hwnd, QStringLiteral("thefinals.exe"));
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
+
+  const QPoint origin = backing->screen()->geometry().topLeft();
+  h.native.cursor = origin + ((QPointF(QPoint(geometry.center().x(), geometry.top()) - origin) *
+                               backing->devicePixelRatio())
+                                  .toPoint());
+  QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 1000);
+  h.native.cursor =
+      origin + ((QPointF(geometry.center() - origin) * backing->devicePixelRatio()).toPoint());
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 1000);
 }
 
 TEST(ShellHostTest, MaximizationAutoHidesAndReleasesSpaceOnlyWhenEnabled) {
@@ -377,6 +406,17 @@ TEST(ShellHostTest, MaximizationAutoHidesAndReleasesSpaceOnlyWhenEnabled) {
   QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
   EXPECT_TRUE(panel->screenFullscreen());
   EXPECT_FALSE(h.native.created.back().request.reserveSpace);
+  const QRect original = panel->backingWindow()->geometry();
+  const auto nativePoint = [panel](const QPoint& logical) {
+    const QQuickWindow* backing = panel->backingWindow();
+    const QPoint origin = backing->screen()->geometry().topLeft();
+    return origin + ((QPointF(logical - origin) * backing->devicePixelRatio()).toPoint());
+  };
+  h.native.cursor = nativePoint(QPoint(original.center().x(), original.top()));
+  QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 1000);
+  EXPECT_FALSE(h.native.created.back().request.reserveSpace);
+  h.native.cursor = nativePoint(original.center());
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 1000);
 
   h.native.maximizedPanels.clear();
   QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 2000);
