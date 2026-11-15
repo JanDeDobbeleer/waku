@@ -130,7 +130,7 @@ TEST_F(TrackerTest, StartEnumeratesTaskbarWindowsOnly) {
   system_->foreground = kFirst;
   EXPECT_FALSE(tracker_->start(0));
   ASSERT_TRUE(tracker_->start(1));
-  EXPECT_EQ(events, (QStringList{"add 101"}));
+  EXPECT_EQ(events, (QStringList{"add 101", "update 101"}));
   EXPECT_TRUE(tracker_->isActive(kFirst));
   EXPECT_FALSE(tracker_->isTracked(kSecond));
 }
