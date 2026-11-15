@@ -6,6 +6,8 @@
 #include <QObject>
 #include <QQmlListProperty>
 #include <QString>
+#include <QStringList>
+#include <utility>
 
 namespace waku::host {
 
@@ -69,9 +71,24 @@ class Scope : public QObject {
 class ShellRoot : public Scope {
   Q_OBJECT
   QML_ELEMENT
+  Q_PROPERTY(QStringList fullscreenRevealApps READ fullscreenRevealApps WRITE
+                 setFullscreenRevealApps NOTIFY fullscreenRevealAppsChanged FINAL)
 
  public:
   explicit ShellRoot(QObject* parent = nullptr) : Scope(parent) {}
+
+  QStringList fullscreenRevealApps() const { return fullscreenRevealApps_; }
+  void setFullscreenRevealApps(QStringList apps) {
+    if (fullscreenRevealApps_ == apps) return;
+    fullscreenRevealApps_ = std::move(apps);
+    emit fullscreenRevealAppsChanged();
+  }
+
+ signals:
+  void fullscreenRevealAppsChanged();
+
+ private:
+  QStringList fullscreenRevealApps_;
 };
 
 // Quickshell's `Singleton`: the root of a `pragma Singleton` file. Like a Scope it keeps what is

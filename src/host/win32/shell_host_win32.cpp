@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <dwmapi.h>
 
+#include <QFileInfo>
 #include <cwchar>
 
 #include "host/panel_geometry.h"
@@ -17,7 +18,24 @@ struct FullscreenSearch {
   RECT monitor;
   HMONITOR monitorHandle = nullptr;
   ScreenOccupancy occupancy = ScreenOccupancy::None;
+  QString applicationName;
 };
+
+QString processName(DWORD pid) {
+  if (!pid) return {};
+  HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+  if (!process) return {};
+  wchar_t path[MAX_PATH] = {};
+  DWORD length = MAX_PATH;
+  QString name;
+  if (QueryFullProcessImageNameW(process, 0, path, &length)) {
+    name = QFileInfo(QString::fromWCharArray(path, static_cast<qsizetype>(length)))
+               .completeBaseName()
+               .toCaseFolded();
+  }
+  CloseHandle(process);
+  return name;
+}
 
 BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
   auto& search = *reinterpret_cast<FullscreenSearch*>(parameter);
@@ -56,21 +74,22 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
       fullscreenWindowDecision(bounds, monitor, maximized, (exStyle & WS_EX_TOPMOST) != 0);
   if (!decision) return TRUE;
   search.occupancy = *decision;
+  if (*decision == ScreenOccupancy::Fullscreen) search.applicationName = processName(pid);
   return FALSE;
 }
 
-ScreenOccupancy screenOccupancy(HWND panel) {
+ShellHost::ScreenOccupancyInfo screenOccupancy(HWND panel) {
   const HMONITOR monitor = MonitorFromWindow(panel, MONITOR_DEFAULTTONULL);
   MONITORINFO info{};
   info.cbSize = sizeof(info);
   FullscreenSearch search{};
   if (!monitor || !GetMonitorInfoW(monitor, &info)) {
-    return ScreenOccupancy::None;
+    return {};
   }
   search.monitor = info.rcMonitor;
   search.monitorHandle = monitor;
   EnumWindows(findFullscreenWindow, reinterpret_cast<LPARAM>(&search));
-  return search.occupancy;
+  return {search.occupancy, search.applicationName};
 }
 
 }  // namespace
