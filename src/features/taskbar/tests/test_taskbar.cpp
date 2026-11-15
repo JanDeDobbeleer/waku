@@ -140,6 +140,17 @@ TEST(TaskbarModel, ShowsTheOpenWindowsInArrivalOrder) {
   EXPECT_EQ(f.title(2), QStringLiteral("Third"));
 }
 
+TEST(TaskbarModel, ReportsTheForegroundWindowAtStartup) {
+  Fixture f;
+  f.system->add(kFirst);
+  f.system->add(kSecond);
+  f.system->foreground = kSecond;
+  f.start();
+  ASSERT_EQ(f.rows(), 2);
+  EXPECT_FALSE(f.at(0, TaskbarModel::ActiveRole).toBool());
+  EXPECT_TRUE(f.at(1, TaskbarModel::ActiveRole).toBool());
+}
+
 TEST(TaskbarModel, ProgressTracksBusyValuesAndBlockingStatesWithoutLosingItOnRedraw) {
   Fixture f;
   f.system->add(kFirst);

@@ -449,8 +449,7 @@ void WindowTracker::enumerateExisting() {
       guarded("add existing window", [&] { addWindow(hwnd); });
     }
     const WindowHandle foreground = system_->foregroundWindow();
-    if (const auto found = windows_.find(foreground); foreground != 0 && found != windows_.end())
-      found->second.isActive = true;
+    if (foreground != 0 && isTracked(foreground)) onWindowActivated(foreground);
   });
 }
 
