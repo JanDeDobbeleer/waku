@@ -18,19 +18,20 @@ struct FullscreenSearch {
   RECT monitor;
   HMONITOR monitorHandle = nullptr;
   ScreenOccupancy occupancy = ScreenOccupancy::None;
-  QString applicationName;
+  QString executableName;
 };
 
-QString processName(DWORD pid) {
+QString executableName(DWORD pid) {
   if (!pid) return {};
   HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
   if (!process) return {};
-  wchar_t path[MAX_PATH] = {};
-  DWORD length = MAX_PATH;
+  constexpr DWORD kImagePathCapacity = 32768;
+  wchar_t path[kImagePathCapacity] = {};
+  DWORD length = kImagePathCapacity;
   QString name;
   if (QueryFullProcessImageNameW(process, 0, path, &length)) {
     name = QFileInfo(QString::fromWCharArray(path, static_cast<qsizetype>(length)))
-               .completeBaseName()
+               .fileName()
                .toCaseFolded();
   }
   CloseHandle(process);
@@ -74,7 +75,7 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
       fullscreenWindowDecision(bounds, monitor, maximized, (exStyle & WS_EX_TOPMOST) != 0);
   if (!decision) return TRUE;
   search.occupancy = *decision;
-  if (*decision == ScreenOccupancy::Fullscreen) search.applicationName = processName(pid);
+  if (*decision == ScreenOccupancy::Fullscreen) search.executableName = executableName(pid);
   return FALSE;
 }
 
@@ -89,7 +90,7 @@ ShellHost::ScreenOccupancyInfo screenOccupancy(HWND panel) {
   search.monitor = info.rcMonitor;
   search.monitorHandle = monitor;
   EnumWindows(findFullscreenWindow, reinterpret_cast<LPARAM>(&search));
-  return {search.occupancy, search.applicationName};
+  return {search.occupancy, search.executableName};
 }
 
 }  // namespace

@@ -336,7 +336,7 @@ TEST(ShellHostTest, FullscreenDoesNotRevealThePanelAtTheScreenEdge) {
   const QRect original = backing->geometry();
   ASSERT_TRUE(h.native.created.back().request.reserveSpace);
   h.native.fullscreenPanels.insert(hwnd);
-  h.native.fullscreenApps.insert(hwnd, QStringLiteral("thefinals"));
+  h.native.fullscreenApps.insert(hwnd, QStringLiteral("thefinals.exe"));
   QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
   EXPECT_TRUE(h.native.created.back().request.reserveSpace);
   h.native.raised.clear();
@@ -364,7 +364,7 @@ TEST(ShellHostTest, FullscreenRevealCanBeEnabledForConfiguredProcess) {
 import QtQuick
 import waku
 ShellRoot {
-    fullscreenRevealApps: ["thefinals"]
+    fullscreenRevealApps: ["thefinals.exe"]
     Panel {
         edge: Panel.Top
         thickness: 40
@@ -377,7 +377,7 @@ ShellRoot {
   const auto hwnd = static_cast<quintptr>(backing->winId());
   const QRect geometry = backing->geometry();
   h.native.fullscreenPanels.insert(hwnd);
-  h.native.fullscreenApps.insert(hwnd, QStringLiteral("thefinals"));
+  h.native.fullscreenApps.insert(hwnd, QStringLiteral("thefinals.exe"));
   QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
 
   const QPoint origin = backing->screen()->geometry().topLeft();

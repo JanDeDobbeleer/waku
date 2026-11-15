@@ -66,7 +66,7 @@ class ShellHost : public QObject {
   // blur a window.
   struct ScreenOccupancyInfo {
     ScreenOccupancy occupancy = ScreenOccupancy::None;
-    QString applicationName;
+    QString executableName;
   };
 
   struct NativeHooks {
@@ -225,7 +225,7 @@ class ShellHost : public QObject {
     bool autoHideActive = false;
     bool fullscreenRevealed = false;
     ScreenOccupancy occupancy = ScreenOccupancy::None;
-    QString applicationName;
+    QString executableName;
     // Set by retire(): the window waits for its deferred deletion and is skipped everywhere.
     bool retired = false;
     bool live() const { return window && !retired; }

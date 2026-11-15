@@ -46,12 +46,12 @@ monitor on the current desktop. The bar keeps its work-area reservation while na
 is active, so leaving fullscreen does not resize the desktop again. Maximized windows also hide
 docked panels and release their work area when waku's tiler is active; with the tiler disabled,
 maximizing does not affect the panel. By default, panels stay hidden for native fullscreen, keeping
-the fullscreen application above them. Set `ShellRoot.fullscreenRevealApps` to executable names
-without `.exe` to allow edge reveal for those apps, for example:
+the fullscreen application above them. Set `ShellRoot.fullscreenRevealApps` to executable filenames
+including `.exe` to allow edge reveal for those apps, for example:
 
 ```qml
 ShellRoot {
-    fullscreenRevealApps: ["thefinals"]
+    fullscreenRevealApps: ["thefinals.exe"]
     // ...
 }
 ```

@@ -850,7 +850,7 @@ void ShellHost::updateFullscreenPanel(Entry& entry) {
                                    options_.maximizedAutoHideEnabled();
   const bool autoHide = (occupancy == ScreenOccupancy::Fullscreen || hideForMaximization) &&
                         panel->visible() && panel->appBarEdge() && panel->stackTopmost();
-  entry.applicationName = occupancyInfo.applicationName;
+  entry.executableName = occupancyInfo.executableName;
   if (occupancy == entry.occupancy && autoHide == entry.autoHideActive) return;
   entry.occupancy = occupancy;
   entry.autoHideActive = autoHide;
@@ -874,8 +874,8 @@ void ShellHost::updateFullscreenReveal() {
         active = true;
         if (entry.occupancy == ScreenOccupancy::Fullscreen) {
           const QStringList& allowedApps = loaded_->shell->fullscreenRevealApps();
-          const bool allowed = !entry.applicationName.isEmpty() &&
-                               allowedApps.contains(entry.applicationName, Qt::CaseInsensitive);
+          const bool allowed = !entry.executableName.isEmpty() &&
+                               allowedApps.contains(entry.executableName, Qt::CaseInsensitive);
           if (!allowed && entry.fullscreenRevealed) {
             entry.fullscreenRevealed = false;
             panel->setSuppressed(true);
