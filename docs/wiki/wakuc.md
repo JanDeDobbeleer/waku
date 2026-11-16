@@ -184,6 +184,11 @@ the sample bindings), to restore it into tiling and bring the bar back. With `--
 `Tiling.enabled = false`, maximizing does not hide the bar. The explicit `tile float` command
 leaves a maximized window floating.
 
+To keep the bar and its reserved work area on maximize while tiling stays active, set
+`ShellRoot.maximizedAutoHideEnabled: false` in `shell.qml`. To exclude only selected apps,
+set `ShellRoot.maximizedAutoHideExcludedApps: ["msedge.exe", "code.exe"]`. Filenames match
+case-insensitively. Both settings affect maximized windows only; see [QML reference](QML-reference).
+
 Native fullscreen, such as Edge's `F11`, also stays outside the layout and hides the bar. The bar
 keeps its work-area reservation while fullscreen is active, avoiding a desktop resize when you
 alt-tab or minimize the fullscreen window. Exit native fullscreen with the application's own

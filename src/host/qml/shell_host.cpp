@@ -845,9 +845,12 @@ void ShellHost::updateFullscreenPanel(Entry& entry) {
   const ScreenOccupancy occupancy = occupancyInfo.occupancy;
   panel->setScreenFullscreen(occupancy != ScreenOccupancy::None);
   if (!entry.live()) return;
-  const bool hideForMaximization = occupancy == ScreenOccupancy::Maximized &&
-                                   options_.maximizedAutoHideEnabled &&
-                                   options_.maximizedAutoHideEnabled();
+  const bool hideForMaximization =
+      occupancy == ScreenOccupancy::Maximized && loaded_->shell->maximizedAutoHideEnabled() &&
+      options_.maximizedAutoHideEnabled && options_.maximizedAutoHideEnabled() &&
+      (occupancyInfo.executableName.isEmpty() ||
+       !loaded_->shell->maximizedAutoHideExcludedApps().contains(occupancyInfo.executableName,
+                                                                 Qt::CaseInsensitive));
   const bool autoHide = (occupancy == ScreenOccupancy::Fullscreen || hideForMaximization) &&
                         panel->visible() && panel->appBarEdge() && panel->stackTopmost();
   entry.executableName = occupancyInfo.executableName;

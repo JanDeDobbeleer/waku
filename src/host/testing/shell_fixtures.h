@@ -116,6 +116,7 @@ struct Native {
   QSet<quintptr> fullscreenPanels;
   QHash<quintptr, QString> fullscreenApps;
   QSet<quintptr> maximizedPanels;
+  QHash<quintptr, QString> maximizedApps;
   std::vector<std::pair<quintptr, bool>> noActivate;
   std::vector<quintptr> foregrounded;
   // True: the working set hook exists and counts its calls in `trims`.
@@ -158,7 +159,8 @@ struct Native {
                                                 fullscreenApps.value(hwnd)};
         }
         if (maximizedPanels.contains(hwnd)) {
-          return ShellHost::ScreenOccupancyInfo{ScreenOccupancy::Maximized, {}};
+          return ShellHost::ScreenOccupancyInfo{ScreenOccupancy::Maximized,
+                                                maximizedApps.value(hwnd)};
         }
         return ShellHost::ScreenOccupancyInfo{};
       };

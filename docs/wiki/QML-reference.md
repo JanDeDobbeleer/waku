@@ -45,7 +45,24 @@ Docked panels on the Top or Overlay layer auto-hide while a fullscreen applicati
 monitor on the current desktop. The bar keeps its work-area reservation while native fullscreen
 is active, so leaving fullscreen does not resize the desktop again. Maximized windows also hide
 docked panels and release their work area when waku's tiler is active; with the tiler disabled,
-maximizing does not affect the panel. By default, panels stay hidden for native fullscreen, keeping
+maximizing does not affect the panel. Set `ShellRoot.maximizedAutoHideEnabled: false` to keep
+docked panels visible and their work area reserved on maximize without disabling the tiler.
+It defaults to true. To exclude only specific apps, set `ShellRoot.maximizedAutoHideExcludedApps`
+to executable filenames including `.exe`. The list defaults to empty and matches exact filenames
+case-insensitively; it does not accept paths or wildcards. If waku cannot read a window's executable
+name, no exclusion applies. Neither setting changes fullscreen or borderless-fullscreen behavior
+or `PanelWindow.screenFullscreen`. For example:
+
+```qml
+ShellRoot {
+    maximizedAutoHideExcludedApps: ["msedge.exe", "code.exe"]
+    // Or disable maximized auto-hide for every app:
+    // maximizedAutoHideEnabled: false
+    // ...
+}
+```
+
+By default, panels stay hidden for native fullscreen, keeping
 the fullscreen application above them. Set `ShellRoot.fullscreenRevealApps` to executable filenames
 including `.exe` to allow edge reveal for those apps, for example:
 

@@ -110,8 +110,8 @@ class ShellHost : public QObject {
     // Reserving the work area changes the user's desktop, so it needs this on top of a window's
     // own exclusive zone (off with `--no-app-bar`).
     bool allowReserve = false;
-    // Whether maximizing a window should auto-hide docked panels. The app ties this to the tiler's
-    // active state; native fullscreen auto-hides independently.
+    // Whether the tiler's state permits maximized auto-hide. ShellRoot can disable it or exclude
+    // apps independently; native fullscreen auto-hides regardless of these settings.
     std::function<bool()> maximizedAutoHideEnabled;
     NativeHooks hooks;
     // Screens to build shells for (ScreenList); default: every screen of the application.
