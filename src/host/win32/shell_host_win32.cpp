@@ -67,12 +67,20 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
   if (maximized && MonitorFromWindow(window, MONITOR_DEFAULTTONULL) != search.monitorHandle) {
     return TRUE;
   }
+  bool hasCaption = true;
+  if (maximized) {
+    SetLastError(ERROR_SUCCESS);
+    const LONG_PTR style = GetWindowLongPtrW(window, GWL_STYLE);
+    if (style != 0 || GetLastError() == ERROR_SUCCESS) {
+      hasCaption = (style & WS_CAPTION) == WS_CAPTION;
+    }
+  }
   const QRect bounds(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
   const QRect monitor(search.monitor.left, search.monitor.top,
                       search.monitor.right - search.monitor.left,
                       search.monitor.bottom - search.monitor.top);
-  const auto decision =
-      fullscreenWindowDecision(bounds, monitor, maximized, (exStyle & WS_EX_TOPMOST) != 0);
+  const auto decision = fullscreenWindowDecision(bounds, monitor, maximized,
+                                                 (exStyle & WS_EX_TOPMOST) != 0, hasCaption);
   if (!decision) return TRUE;
   search.occupancy = *decision;
   if (*decision == ScreenOccupancy::Fullscreen) search.executableName = executableName(pid);

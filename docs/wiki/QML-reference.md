@@ -42,10 +42,11 @@ See [Customization](Customization) for runnable examples and
 Windows and Quickshell differences.
 
 Docked panels on the Top or Overlay layer auto-hide while a fullscreen application uses their
-monitor on the current desktop. The bar keeps its work-area reservation while native fullscreen
-is active, so leaving fullscreen does not resize the desktop again. Maximized windows also hide
-docked panels and release their work area when waku's tiler is active; with the tiler disabled,
-maximizing does not affect the panel. By default, panels stay hidden for native fullscreen, keeping
+monitor on the current desktop. A maximized window without a title bar that covers the monitor
+counts as fullscreen. The bar keeps its work-area reservation while fullscreen is active, so
+leaving fullscreen does not resize the desktop again. Other maximized windows also hide docked
+panels and release their work area when waku's tiler is active; with the tiler disabled,
+maximizing does not affect the panel. By default, panels stay hidden for fullscreen, keeping
 the fullscreen application above them. Set `ShellRoot.fullscreenRevealApps` to executable filenames
 including `.exe` to allow edge reveal for those apps, for example:
 

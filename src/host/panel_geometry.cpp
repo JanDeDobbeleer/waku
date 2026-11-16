@@ -47,8 +47,10 @@ bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool ma
 }
 
 std::optional<ScreenOccupancy> fullscreenWindowDecision(const QRect& window, const QRect& screen,
-                                                        bool maximized, bool topmost) {
+                                                        bool maximized, bool topmost,
+                                                        bool hasCaption) {
   if (!window.intersects(screen)) return std::nullopt;
+  if (maximized && !hasCaption && window.contains(screen)) return ScreenOccupancy::Fullscreen;
   if (coversScreenForFullscreen(window, screen, maximized)) {
     return maximized ? ScreenOccupancy::Maximized : ScreenOccupancy::Fullscreen;
   }
