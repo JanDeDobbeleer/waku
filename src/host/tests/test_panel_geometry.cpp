@@ -47,20 +47,40 @@ TEST(PanelGeometryTest, MaximizationHidesThePanelBeforeAndAfterTheWorkAreaExpand
 
 TEST(PanelGeometryTest, FrontmostOrdinaryWindowStopsFullscreenSearch) {
   const QRect ordinary = kScreen.adjusted(100, 100, -100, -100);
-  const auto decision = fullscreenWindowDecision(ordinary, kScreen, false, false);
+  const auto decision = fullscreenWindowDecision(ordinary, kScreen, false, false, true);
   ASSERT_TRUE(decision.has_value());
   EXPECT_EQ(*decision, ScreenOccupancy::None);
-  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, false, false), ScreenOccupancy::Fullscreen);
-  EXPECT_EQ(fullscreenWindowDecision(ordinary, kScreen, true, false), ScreenOccupancy::Maximized);
+  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, false, false, true),
+            ScreenOccupancy::Fullscreen);
+  EXPECT_EQ(fullscreenWindowDecision(ordinary, kScreen, true, false, true),
+            ScreenOccupancy::Maximized);
 }
 
 TEST(PanelGeometryTest, FullscreenSearchSkipsNonFullscreenTopmostAndOtherMonitors) {
   const QRect ordinary = kScreen.adjusted(100, 100, -100, -100);
-  EXPECT_FALSE(fullscreenWindowDecision(ordinary, kScreen, false, true).has_value());
+  EXPECT_FALSE(fullscreenWindowDecision(ordinary, kScreen, false, true, true).has_value());
   EXPECT_FALSE(
-      fullscreenWindowDecision(kScreen.translated(kScreen.width(), 0), kScreen, false, false)
+      fullscreenWindowDecision(kScreen.translated(kScreen.width(), 0), kScreen, false, false, true)
           .has_value());
-  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, false, true), ScreenOccupancy::Fullscreen);
+  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, false, true, true),
+            ScreenOccupancy::Fullscreen);
+}
+
+TEST(PanelGeometryTest, BorderlessMaximizedWindowMustCoverMonitorToBeFullscreen) {
+  const QRect besideBar = kScreen.adjusted(40, 0, 0, 0);
+  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, true, false, false),
+            ScreenOccupancy::Fullscreen);
+  EXPECT_EQ(fullscreenWindowDecision(kScreen.adjusted(-5, -5, 5, 5), kScreen, true, true, false),
+            ScreenOccupancy::Fullscreen);
+  EXPECT_EQ(fullscreenWindowDecision(besideBar, kScreen, true, false, false),
+            ScreenOccupancy::Maximized);
+  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, true, false, true),
+            ScreenOccupancy::Maximized);
+  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, false, false, false),
+            ScreenOccupancy::Fullscreen);
+  EXPECT_FALSE(
+      fullscreenWindowDecision(kScreen.translated(kScreen.width(), 0), kScreen, true, false, false)
+          .has_value());
 }
 
 TEST(PanelGeometryTest, FrontmostEligibleWindowDeterminesOccupancy) {
@@ -68,24 +88,28 @@ TEST(PanelGeometryTest, FrontmostEligibleWindowDeterminesOccupancy) {
     QRect bounds;
     bool maximized;
     bool topmost;
+    bool hasCaption;
   };
   const auto occupancy = [](std::initializer_list<Window> windows) {
     for (const auto& window : windows) {
-      const auto decision =
-          fullscreenWindowDecision(window.bounds, kScreen, window.maximized, window.topmost);
+      const auto decision = fullscreenWindowDecision(window.bounds, kScreen, window.maximized,
+                                                     window.topmost, window.hasCaption);
       if (decision) return *decision;
     }
     return ScreenOccupancy::None;
   };
-  const Window fullscreen{kScreen, false, false};
-  const Window ordinary{kScreen.adjusted(100, 100, -100, -100), false, false};
-  const Window maximized{ordinary.bounds, true, false};
-  const Window topmost{ordinary.bounds, false, true};
+  const Window fullscreen{kScreen, false, false, false};
+  const Window borderlessMaximized{kScreen, true, false, false};
+  const Window ordinary{kScreen.adjusted(100, 100, -100, -100), false, false, true};
+  const Window maximized{ordinary.bounds, true, false, true};
+  const Window topmost{ordinary.bounds, false, true, true};
   EXPECT_EQ(occupancy({ordinary, fullscreen}), ScreenOccupancy::None);
   EXPECT_EQ(occupancy({maximized, fullscreen}), ScreenOccupancy::Maximized);
   EXPECT_EQ(occupancy({fullscreen, maximized}), ScreenOccupancy::Fullscreen);
   EXPECT_EQ(occupancy({topmost, fullscreen}), ScreenOccupancy::Fullscreen);
   EXPECT_EQ(occupancy({topmost, ordinary, fullscreen}), ScreenOccupancy::None);
+  EXPECT_EQ(occupancy({ordinary, borderlessMaximized}), ScreenOccupancy::None);
+  EXPECT_EQ(occupancy({topmost, borderlessMaximized}), ScreenOccupancy::Fullscreen);
 }
 
 TEST(PanelGeometryTest, FullscreenRevealUsesEachScreenEdgeAndKeepsTheMarginReachable) {

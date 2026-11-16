@@ -44,7 +44,8 @@ bool coversScreenForFullscreen(const QRect& window, const QRect& screen, bool ma
 
 // A result ends the z-order search; an empty result skips the window.
 std::optional<ScreenOccupancy> fullscreenWindowDecision(const QRect& window, const QRect& screen,
-                                                        bool maximized, bool topmost);
+                                                        bool maximized, bool topmost,
+                                                        bool hasCaption);
 
 // Cursor area that reveals a fullscreen-hidden panel. While revealed it includes the panel and
 // the gap to its screen edge; otherwise only a two-pixel strip along that edge. Logical pixels.

@@ -354,15 +354,15 @@ timer checks visible, uncloaked desktop windows in z-order every 500 ms. It igno
 desktop windows and waku's own windows, and non-maximized always-on-top windows that do not cover
 the monitor.
 The first remaining window intersecting the monitor determines its occupancy. A fullscreen window
-behind another ordinary window does not count. A maximized window counts separately and hides the
-panel only when the tiler permits maximized auto-hide, `ShellRoot.maximizedAutoHideEnabled` is true
-(the default), and its executable filename is not in `ShellRoot.maximizedAutoHideExcludedApps`
-(empty by default, case-insensitive matching). The executable name is read for both fullscreen and
-maximized occupancy; a failed lookup matches no exclusion. These shell settings are checked on
-each timer tick and affect neither fullscreen nor the reported `PanelWindow.screenFullscreen`
-state. When the window no longer occupies the monitor, the
-panel returns to its configured layer. This geometry-based check can miss fullscreen windows
-reported as tool windows.
+behind another ordinary window does not count. A maximized window without a caption that covers
+the monitor counts as fullscreen. Other maximized windows hide the panel only when the tiler
+permits maximized auto-hide, `ShellRoot.maximizedAutoHideEnabled` is true (the default), and the
+executable filename is not in `ShellRoot.maximizedAutoHideExcludedApps` (empty by default,
+case-insensitive matching). The executable name is read for both fullscreen and maximized
+occupancy; a failed lookup matches no exclusion. These shell settings are checked on each timer
+tick and affect neither fullscreen nor the reported `PanelWindow.screenFullscreen` state. When
+the window no longer occupies the monitor, the panel returns to its configured layer. This
+geometry-based check can miss fullscreen windows reported as tool windows.
 `keyboardFocus: None` sets
 `WS_EX_NOACTIVATE` (`setNoActivate`) and `Qt::WindowDoesNotAcceptFocus`. Any other value is
 activated when shown at run time (not when the shell is first installed or re-shown after a
