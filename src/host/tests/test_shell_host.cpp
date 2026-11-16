@@ -364,6 +364,8 @@ TEST(ShellHostTest, FullscreenRevealCanBeEnabledForConfiguredProcess) {
 import QtQuick
 import waku
 ShellRoot {
+    maximizedAutoHideEnabled: false
+    maximizedAutoHideExcludedApps: ["thefinals.exe"]
     fullscreenRevealApps: ["thefinals.exe"]
     Panel {
         edge: Panel.Top
@@ -436,6 +438,86 @@ TEST(ShellHostTest, MaximizationDoesNotAutoHideWhenDisabled) {
   h.native.maximizedPanels.insert(hwnd);
   QTRY_VERIFY_WITH_TIMEOUT(panel->screenFullscreen(), 2000);
   EXPECT_TRUE(panel->backingWindowVisible());
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
+}
+
+TEST(ShellHostTest, ShellCanDisableMaximizedAutoHideWithoutDisablingFullscreen) {
+  Harness h;
+  h.allowReserve = true;
+  h.maximizedAutoHideEnabled = true;
+  h.native.fullscreenHook = true;
+  h.start(QStringLiteral(R"(
+import waku
+ShellRoot {
+    maximizedAutoHideEnabled: false
+    Panel { edge: Panel.Top; thickness: 40; exclusive: true }
+}
+)"));
+  ASSERT_TRUE(h.host->reload());
+  auto* panel = qobject_cast<PanelWindow*>(h.shellWindow());
+  ASSERT_NE(panel, nullptr);
+  const auto hwnd = static_cast<quintptr>(panel->backingWindow()->winId());
+  h.native.maximizedPanels.insert(hwnd);
+  QTRY_VERIFY_WITH_TIMEOUT(panel->screenFullscreen(), 2000);
+  EXPECT_TRUE(panel->backingWindowVisible());
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
+
+  h.host->shell()->setMaximizedAutoHideEnabled(true);
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
+  EXPECT_FALSE(h.native.created.back().request.reserveSpace);
+  h.host->shell()->setMaximizedAutoHideEnabled(false);
+  QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 2000);
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
+
+  h.native.fullscreenPanels.insert(hwnd);
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
+  h.native.fullscreenPanels.clear();
+  QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 2000);
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
+}
+
+TEST(ShellHostTest, MaximizedAppExclusionsKeepSpaceAndDoNotExcludeFullscreen) {
+  Harness h;
+  h.allowReserve = true;
+  h.maximizedAutoHideEnabled = true;
+  h.native.fullscreenHook = true;
+  h.start(QStringLiteral(R"(
+import waku
+ShellRoot {
+    maximizedAutoHideExcludedApps: ["EDITOR.EXE", ""]
+    Panel { edge: Panel.Top; thickness: 40; exclusive: true }
+}
+)"));
+  ASSERT_TRUE(h.host->reload());
+  auto* panel = qobject_cast<PanelWindow*>(h.shellWindow());
+  ASSERT_NE(panel, nullptr);
+  const auto hwnd = static_cast<quintptr>(panel->backingWindow()->winId());
+  h.native.maximizedPanels.insert(hwnd);
+  h.native.maximizedApps.insert(hwnd, QStringLiteral("editor.exe"));
+  QTRY_VERIFY_WITH_TIMEOUT(panel->screenFullscreen(), 2000);
+  EXPECT_TRUE(panel->backingWindowVisible());
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
+
+  h.host->shell()->setMaximizedAutoHideExcludedApps({});
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
+  EXPECT_FALSE(h.native.created.back().request.reserveSpace);
+  h.host->shell()->setMaximizedAutoHideExcludedApps({QStringLiteral("EDITOR.EXE"), QString()});
+  QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 2000);
+  EXPECT_TRUE(h.native.created.back().request.reserveSpace);
+
+  for (const QString& app : {QStringLiteral("browser.exe"), QString()}) {
+    h.native.maximizedApps.insert(hwnd, app);
+    QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
+    EXPECT_FALSE(h.native.created.back().request.reserveSpace);
+    h.native.maximizedApps.insert(hwnd, QStringLiteral("editor.exe"));
+    QTRY_VERIFY_WITH_TIMEOUT(panel->backingWindowVisible(), 2000);
+    EXPECT_TRUE(h.native.created.back().request.reserveSpace);
+  }
+
+  h.native.fullscreenPanels.insert(hwnd);
+  h.native.fullscreenApps.insert(hwnd, QStringLiteral("editor.exe"));
+  QTRY_VERIFY_WITH_TIMEOUT(!panel->backingWindowVisible(), 2000);
   EXPECT_TRUE(h.native.created.back().request.reserveSpace);
 }
 

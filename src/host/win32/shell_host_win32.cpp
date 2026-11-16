@@ -83,7 +83,7 @@ BOOL CALLBACK findFullscreenWindow(HWND window, LPARAM parameter) {
                                                  (exStyle & WS_EX_TOPMOST) != 0, hasCaption);
   if (!decision) return TRUE;
   search.occupancy = *decision;
-  if (*decision == ScreenOccupancy::Fullscreen) search.executableName = executableName(pid);
+  if (*decision != ScreenOccupancy::None) search.executableName = executableName(pid);
   return FALSE;
 }
 
