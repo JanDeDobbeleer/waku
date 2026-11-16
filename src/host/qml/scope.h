@@ -71,11 +71,28 @@ class Scope : public QObject {
 class ShellRoot : public Scope {
   Q_OBJECT
   QML_ELEMENT
+  Q_PROPERTY(bool maximizedAutoHideEnabled READ maximizedAutoHideEnabled WRITE
+                 setMaximizedAutoHideEnabled NOTIFY maximizedAutoHideEnabledChanged FINAL)
+  Q_PROPERTY(QStringList maximizedAutoHideExcludedApps READ maximizedAutoHideExcludedApps WRITE
+                 setMaximizedAutoHideExcludedApps NOTIFY maximizedAutoHideExcludedAppsChanged FINAL)
   Q_PROPERTY(QStringList fullscreenRevealApps READ fullscreenRevealApps WRITE
                  setFullscreenRevealApps NOTIFY fullscreenRevealAppsChanged FINAL)
 
  public:
   explicit ShellRoot(QObject* parent = nullptr) : Scope(parent) {}
+
+  bool maximizedAutoHideEnabled() const { return maximizedAutoHideEnabled_; }
+  void setMaximizedAutoHideEnabled(bool enabled) {
+    if (maximizedAutoHideEnabled_ == enabled) return;
+    maximizedAutoHideEnabled_ = enabled;
+    emit maximizedAutoHideEnabledChanged();
+  }
+  QStringList maximizedAutoHideExcludedApps() const { return maximizedAutoHideExcludedApps_; }
+  void setMaximizedAutoHideExcludedApps(QStringList apps) {
+    if (maximizedAutoHideExcludedApps_ == apps) return;
+    maximizedAutoHideExcludedApps_ = std::move(apps);
+    emit maximizedAutoHideExcludedAppsChanged();
+  }
 
   QStringList fullscreenRevealApps() const { return fullscreenRevealApps_; }
   void setFullscreenRevealApps(QStringList apps) {
@@ -85,9 +102,13 @@ class ShellRoot : public Scope {
   }
 
  signals:
+  void maximizedAutoHideEnabledChanged();
+  void maximizedAutoHideExcludedAppsChanged();
   void fullscreenRevealAppsChanged();
 
  private:
+  bool maximizedAutoHideEnabled_ = true;
+  QStringList maximizedAutoHideExcludedApps_;
   QStringList fullscreenRevealApps_;
 };
 

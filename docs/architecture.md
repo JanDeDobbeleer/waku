@@ -355,7 +355,12 @@ desktop windows and waku's own windows, and non-maximized always-on-top windows 
 the monitor.
 The first remaining window intersecting the monitor determines its occupancy. A fullscreen window
 behind another ordinary window does not count. A maximized window counts separately and hides the
-panel only when maximized auto-hide is enabled. When the window no longer occupies the monitor, the
+panel only when the tiler permits maximized auto-hide, `ShellRoot.maximizedAutoHideEnabled` is true
+(the default), and its executable filename is not in `ShellRoot.maximizedAutoHideExcludedApps`
+(empty by default, case-insensitive matching). The executable name is read for both fullscreen and
+maximized occupancy; a failed lookup matches no exclusion. These shell settings are checked on
+each timer tick and affect neither fullscreen nor the reported `PanelWindow.screenFullscreen`
+state. When the window no longer occupies the monitor, the
 panel returns to its configured layer. This geometry-based check can miss fullscreen windows
 reported as tool windows.
 `keyboardFocus: None` sets
