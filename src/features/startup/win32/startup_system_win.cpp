@@ -106,7 +106,8 @@ using Task = StartupSystem::Task;
 
 const wchar_t* taskName(Task task) { return task == Task::Keys ? kKeysTaskName : kTaskName; }
 
-std::wstring taskXml(Task task, const std::wstring& user, const std::wstring& arguments) {
+std::wstring taskXml(Task task, const std::wstring& user, const std::wstring& program,
+                     const std::wstring& arguments) {
   const std::wstring u = xmlEscape(user);
   const bool keys = task == Task::Keys;
   return std::wstring(
@@ -133,8 +134,8 @@ std::wstring taskXml(Task task, const std::wstring& user, const std::wstring& ar
          L"Hidden>"
          L"<ExecutionTimeLimit>PT0S</ExecutionTimeLimit><Priority>4</Priority></Settings>\n"
          L"<Actions Context=\"Author\"><Exec><Command>" +
-         std::wstring(keys ? L"wakukeys.exe" : L"waku.exe") + L"</Command><Arguments>" +
-         xmlEscape(arguments) + L"</Arguments></Exec></Actions>\n</Task>\n";
+         xmlEscape(program) + L"</Command><Arguments>" + xmlEscape(arguments) +
+         L"</Arguments></Exec></Actions>\n</Task>\n";
 }
 
 // Connects to the Task Scheduler and opens the root folder.
@@ -246,6 +247,11 @@ class Win32StartupSystem final : public StartupSystem {
         return info;
       }
       const auto exec = action.try_as<IExecAction>();
+      BSTR program = nullptr;
+      if (exec && SUCCEEDED(exec->get_Path(&program)) && program) {
+        info.program = QString::fromWCharArray(program, int(SysStringLen(program)));
+      }
+      SysFreeString(program);
       BSTR arguments = nullptr;
       if (exec && SUCCEEDED(exec->get_Arguments(&arguments)) && arguments) {
         info.arguments = QString::fromWCharArray(arguments, int(SysStringLen(arguments)));
@@ -256,7 +262,7 @@ class Win32StartupSystem final : public StartupSystem {
     return info;
   }
 
-  QString registerTask(Task which, const QString& arguments) override {
+  QString registerTask(Task which, const QString& program, const QString& arguments) override {
     try {
       const std::wstring user = currentUser();
       if (user.empty()) return QStringLiteral("could not read the current user name");
@@ -265,7 +271,7 @@ class Win32StartupSystem final : public StartupSystem {
       HRESULT hr = openRoot(root);
       if (FAILED(hr)) return hresultText("connect to the Task Scheduler", hr);
       Bstr name(taskName(which));
-      Bstr xml(taskXml(which, user, arguments.toStdWString()));
+      Bstr xml(taskXml(which, user, program.toStdWString(), arguments.toStdWString()));
       Variant userId(user);
       Variant empty;
       winrt::com_ptr<IRegisteredTask> task;

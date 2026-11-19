@@ -62,8 +62,8 @@ keys, launch code or panels.
 - Run with `--config-home`. Ports that need environment variables (a config dir) set them in a start script. A scheduled task does not run that script:
   tell the user to set the variables in their user environment.
 - `wakuc startup enable` registers a per-user logon task. It replaces any earlier task and deletes
-  `waku.lnk` in the Startup folder. It bakes in one config home. A bare `waku.exe` resolves on the
-  system `PATH`. Tell the user before you run it. Do not run it unasked.
+  `waku.lnk` in the Startup folder. It bakes in one config home and the executable path found on
+  `PATH`. Tell the user before you run it. Do not run it unasked.
 - Restart order for a live bar: `wakuc --config-home <dir> quit`, then start the shell. waku starts and stops `wakukeys.exe`
   itself when the config home has a `keys.conf`.
 

@@ -11,10 +11,12 @@ second task (`waku keys`) starts the keys daemon `wakukeys.exe`.
   level or instances.
 - Not an MSIX `StartupTask`: it needs a manifest extension and a packaged build, and its state
   lives in a per-package setting the user can flip in Settings. A task works for any install.
-- The action is the bare `waku.exe`. The MSIX package puts a `waku.exe` execution alias on the user
-  PATH, and the task resolves it at logon. The command registers nothing when `waku.exe` is not on
-  the PATH, and says which folder to add. When the PATH finds another install than the one next
-  to `wakuc`, the command warns and registers anyway: the task starts the one on the PATH.
+- The action is the full `waku.exe` path found on PATH at registration. The MSIX package puts a
+  stable `waku.exe` execution alias on the user PATH. The command registers nothing when `waku.exe`
+  is not on the PATH, and says which folder to add. When the PATH finds another install than the one next
+  to `wakuc`, the command warns and registers anyway: the task starts the one on the PATH. No
+  warning when `wakuc` runs from a package folder and the PATH hit is the alias in
+  `Microsoft\WindowsApps`: both are the same install.
 - Defaults: no flags and no `--config-home`. waku resolves its own
   config home at start. `--config-home` is passed only when the user gave one (made absolute).
   `--no-app-bar` and `--keep-taskbar` drop the defaults. Extra waku flags follow `--`; an exact
@@ -25,7 +27,7 @@ second task (`waku keys`) starts the keys daemon `wakukeys.exe`.
 - An old `waku.lnk` in the Startup folder would start a second waku. `enable` deletes it and keeps
   no backup: a backup file in the Startup folder makes Windows ask which app opens it at sign-in.
 - The keys daemon task. `enable` registers it after the bar task, with the same trigger and
-  settings. The action is the bare `wakukeys.exe` (PATH, like `waku.exe`; the MSIX has an alias)
+  settings. The action is the resolved `wakukeys.exe` path (like `waku.exe`; the MSIX has an alias)
   with the `--config-home` the user gave (no `--config`: wakukeys reads `keys.conf` in that config
   home, else in `%USERPROFILE%\.config\waku`). It is registered only when that file exists: a user without a keys file gets one line saying so
   and no task. When `wakukeys.exe` is not on the PATH the command warns and skips the task; the bar

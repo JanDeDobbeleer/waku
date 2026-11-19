@@ -37,7 +37,7 @@ class FakeStartupSystem final : public StartupSystem {
   bool keysConfigExists(const QString&) const override { return keysConfigPresent; }
   TaskInfo queryTask(Task which) const override { return which == Task::Keys ? keysTask : task; }
 
-  QString registerTask(Task which, const QString& arguments) override {
+  QString registerTask(Task which, const QString& program, const QString& arguments) override {
     const bool keys = which == Task::Keys;
     (keys ? keysRegisteredArguments : registeredArguments) << arguments;
     const QString& error = keys ? keysRegisterError : registerError;
@@ -46,6 +46,7 @@ class FakeStartupSystem final : public StartupSystem {
     target.registered = true;
     target.enabled = true;
     target.arguments = arguments;
+    target.program = program;
     return {};
   }
   QString removeTask(Task which) override {

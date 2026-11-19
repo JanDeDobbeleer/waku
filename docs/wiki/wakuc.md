@@ -63,8 +63,10 @@ wakuc startup disable
 for `wakukeys` when `keys.conf` exists in the explicitly selected config home or, if none is
 specified, in `%USERPROFILE%\.config\waku`, and `wakukeys.exe` is on PATH. The keys-file check
 does not use `WAKU_CONFIG_HOME`; pass `--config-home` when your keys file is elsewhere.
-`waku.exe` must be on your user PATH. Run `enable` again to replace the tasks. `status` shows their
-state and executable paths; `disable` removes them.
+`waku.exe` must be on your user PATH. The tasks use the full paths found on PATH; MSIX installs use
+the stable WindowsApps execution aliases. Run `enable` again to replace existing tasks, including
+those registered by older versions with bare executable names. `status` shows their state and
+executable paths; `disable` removes them.
 
 For `enable`, use `--config-home` to pass a config home to waku. `--no-app-bar` prevents panels
 from reserving screen space, and `--keep-taskbar` leaves the Windows taskbar alone. Pass other

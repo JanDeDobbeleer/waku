@@ -12,7 +12,7 @@ class StartupSystem {
   virtual ~StartupSystem() = default;
 
   // The full path `exeName` (for example "waku.exe") resolves to through the PATH of the current
-  // user, the way the logon task will find it. Empty when it is not on the PATH.
+  // user. Empty when it is not on the PATH.
   virtual QString findOnPath(const QString& exeName) const = 0;
 
   // The folder of the running wakuc.exe. waku.exe and wakukeys.exe sit next to it.
@@ -31,14 +31,15 @@ class StartupSystem {
     bool registered = false;
     bool enabled = false;
     QString arguments;  // the command line of the task action, without the program name
+    QString program;
   };
   virtual TaskInfo queryTask(Task task) const = 0;
 
   // Replaces the logon task of the current user: trigger at logon with no delay, Limited run
   // level, priority 4, no execution time limit, one instance, runs on battery. The action is the
-  // bare `waku.exe` or `wakukeys.exe` (resolved through the PATH at logon) with `arguments` as its
-  // command line. Returns an empty string on success, else a one-line reason.
-  virtual QString registerTask(Task task, const QString& arguments) = 0;
+  // resolved executable path with `arguments` as its command line.
+  // Returns an empty string on success, else a one-line reason.
+  virtual QString registerTask(Task task, const QString& program, const QString& arguments) = 0;
 
   // Removes a logon task. Succeeds when there is none. Same return value as registerTask.
   virtual QString removeTask(Task task) = 0;
