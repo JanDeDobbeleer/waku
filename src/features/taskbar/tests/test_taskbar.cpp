@@ -173,6 +173,19 @@ TEST(TaskbarModel, ProgressTracksBusyValuesAndBlockingStatesWithoutLosingItOnRed
   EXPECT_DOUBLE_EQ(f.at(0, TaskbarModel::ProgressRole).toDouble(), 0);
 }
 
+TEST(TaskbarModel, ProgressOnlyNotifiesProgressRoles) {
+  Fixture f;
+  f.system->add(kFirst);
+  f.start();
+  QSignalSpy changed(&f.model, &QAbstractItemModel::dataChanged);
+
+  f.sendValue(kFirst, 0.5);
+  ASSERT_EQ(f.rows(), 1);
+  ASSERT_EQ(changed.count(), 1);
+  EXPECT_EQ(qvariant_cast<QList<int>>(changed.takeFirst().at(2)),
+            (QList<int>{TaskbarModel::ProgressStateRole, TaskbarModel::ProgressRole}));
+}
+
 TEST(TaskbarModel, ProgressRejectsInvalidUpdatesAndClearsWhenAWindowHandleIsReused) {
   Fixture f;
   f.system->add(kFirst);
