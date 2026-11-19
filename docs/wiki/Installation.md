@@ -124,10 +124,10 @@ by up to a minute:
 wakuc startup enable
 ```
 
-The task runs the bare `waku.exe`, so `waku.exe` must be on your user PATH. The package puts an
-execution alias there. If it is missing, `enable` registers nothing and tells you which folder to
-add. A change to the PATH reaches new sessions only: sign out and in again, then run the command
-again.
+The task runs the full path to `waku.exe` found on your PATH. For MSIX installs this is the
+execution alias in `%LOCALAPPDATA%\Microsoft\WindowsApps`, which remains stable across updates.
+If it is missing, `enable` registers nothing and tells you which folder to add. A change to the
+PATH reaches new sessions only: sign out and in again, then run the command again.
 
 The task starts waku with no flags: it reserves screen space, hides the taskbar, tiles windows and
 starts the key daemon when `keys.conf` exists. Change that with:
@@ -146,8 +146,9 @@ too (the package has an alias). The daemon puts its own folder first in the PATH
 runs, so bindings can find `wakuc`. An explicit `--config-home` is passed to the keys
 daemon too, so its commands target the same bar.
 
-`wakuc startup enable` again replaces the tasks. `wakuc startup status` shows whether each is
-registered, its command and which `waku.exe` and `wakukeys.exe` the PATH finds. `wakuc startup
+`wakuc startup enable` again replaces the tasks. Run it again after updating from a version that
+registered bare executable names, or after moving an installation. `wakuc startup status` shows
+whether each is registered, its command and which `waku.exe` and `wakukeys.exe` the PATH finds. `wakuc startup
 disable` removes both tasks. An old `waku.lnk` in the Startup folder is deleted on `enable`; `disable` does not bring it
 back.
 

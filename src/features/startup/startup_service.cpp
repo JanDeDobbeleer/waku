@@ -18,6 +18,17 @@ QString normalizedFolder(const QString& folder) {
   return text;
 }
 
+// True when the PATH hit is not the install next to wakuc. An MSIX execution alias in
+// %LOCALAPPDATA%\Microsoft\WindowsApps resolves to the packaged exe, so it is the same install
+// when wakuc itself runs from a package folder.
+bool foundElsewhere(const QString& found, const QString& ownFolder) {
+  const QString foundFolder = normalizedFolder(QFileInfo(found).path());
+  const QString own = normalizedFolder(ownFolder);
+  if (foundFolder == own) return false;
+  return !(foundFolder.endsWith(QStringLiteral("\\microsoft\\windowsapps")) &&
+           own.contains(QStringLiteral("\\windowsapps\\")));
+}
+
 QString quoteArgument(const QString& argument) {
   const bool plain = !argument.isEmpty() && !argument.contains(QLatin1Char(' ')) &&
                      !argument.contains(QLatin1Char('\t')) && !argument.contains(QLatin1Char('"'));
@@ -43,11 +54,8 @@ QString quoteArgument(const QString& argument) {
 }
 
 QString programWithArguments(const QString& program, const QString& arguments) {
-  return arguments.isEmpty() ? program : program + QLatin1Char(' ') + arguments;
-}
-
-QString programWithArguments(const QString& arguments) {
-  return programWithArguments(exeName(), arguments);
+  const QString quoted = quoteArgument(program);
+  return arguments.isEmpty() ? quoted : quoted + QLatin1Char(' ') + arguments;
 }
 
 using Task = StartupSystem::Task;
@@ -70,7 +78,7 @@ bool enableKeys(StartupSystem& system, const StartupOptions& options, StartupRes
                         .arg(QDir::toNativeSeparators(system.ownFolder()));
     return true;
   }
-  if (normalizedFolder(QFileInfo(found).path()) != normalizedFolder(system.ownFolder())) {
+  if (foundElsewhere(found, system.ownFolder())) {
     result.lines << QStringLiteral(
                         "warning: wakukeys.exe on your PATH is %1, not the one next to wakuc in "
                         "%2; the task starts the one on the PATH")
@@ -79,13 +87,13 @@ bool enableKeys(StartupSystem& system, const StartupOptions& options, StartupRes
   }
   // No --config: wakukeys reads its default file itself, which is the file checked above.
   const QString arguments = commandLine(keysArguments(options.configHome));
-  const QString error = system.registerTask(Task::Keys, arguments);
+  const QString error = system.registerTask(Task::Keys, found, arguments);
   if (!error.isEmpty()) {
     result.lines << QStringLiteral("keys daemon: %1").arg(error);
     return false;
   }
   result.lines << QStringLiteral("startup: keys daemon enabled, %1")
-                      .arg(programWithArguments(keysExeName(), arguments));
+                      .arg(programWithArguments(found, arguments));
   return true;
 }
 
@@ -127,14 +135,14 @@ StartupResult enableStartup(StartupSystem& system, const StartupOptions& options
                         .arg(own);
     return result;
   }
-  if (normalizedFolder(QFileInfo(found).path()) != normalizedFolder(system.ownFolder())) {
+  if (foundElsewhere(found, system.ownFolder())) {
     result.lines << QStringLiteral(
                         "warning: waku.exe on your PATH is %1, not the one next to wakuc in %2; "
                         "the task starts the one on the PATH")
                         .arg(QDir::toNativeSeparators(found), own);
   }
   const QString arguments = commandLine(wakuArguments(options));
-  const QString error = system.registerTask(Task::Bar, arguments);
+  const QString error = system.registerTask(Task::Bar, found, arguments);
   if (!error.isEmpty()) {
     result.lines << error;
     result.ok = false;
@@ -143,7 +151,8 @@ StartupResult enableStartup(StartupSystem& system, const StartupOptions& options
   if (system.removeShortcut()) {
     result.lines << QStringLiteral("startup: deleted waku.lnk from your Startup folder");
   }
-  result.lines << QStringLiteral("startup: enabled, %1").arg(programWithArguments(arguments));
+  result.lines
+      << QStringLiteral("startup: enabled, %1").arg(programWithArguments(found, arguments));
   result.ok = enableKeys(system, options, result);
   return result;
 }
@@ -187,7 +196,9 @@ StartupResult startupStatus(StartupSystem& system) {
   } else {
     result.lines << (task.enabled ? QStringLiteral("startup: enabled")
                                   : QStringLiteral("startup: disabled"));
-    result.lines << QStringLiteral("command: %1").arg(programWithArguments(task.arguments));
+    result.lines << QStringLiteral("command: %1")
+                        .arg(programWithArguments(task.program.isEmpty() ? exeName() : task.program,
+                                                  task.arguments));
   }
   const QString found = system.findOnPath(exeName());
   if (found.isEmpty()) {
@@ -204,7 +215,8 @@ StartupResult startupStatus(StartupSystem& system) {
     result.lines << (keys.enabled ? QStringLiteral("keys startup: enabled")
                                   : QStringLiteral("keys startup: disabled"));
     result.lines << QStringLiteral("keys command: %1")
-                        .arg(programWithArguments(keysExeName(), keys.arguments));
+                        .arg(programWithArguments(
+                            keys.program.isEmpty() ? keysExeName() : keys.program, keys.arguments));
   }
   const QString keysFound = system.findOnPath(keysExeName());
   result.lines

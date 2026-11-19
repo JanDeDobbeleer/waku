@@ -56,7 +56,8 @@ TEST(StartupServiceEnable, RegistersTheDefaults) {
   EXPECT_TRUE(result.ok);
   ASSERT_EQ(system.registeredArguments.size(), 1);
   EXPECT_EQ(system.registeredArguments.first(), QString());
-  EXPECT_EQ(result.lines.first(), QStringLiteral("startup: enabled, waku.exe"));
+  EXPECT_EQ(result.lines.first(), QStringLiteral("startup: enabled, C:\\Apps\\waku\\waku.exe"));
+  EXPECT_EQ(system.task.program, system.pathResult);
 }
 
 TEST(StartupServiceEnable, ConfigHomeWithSpacesIsQuoted) {
@@ -201,6 +202,62 @@ TEST(StartupServiceStatus, ReportsTheKeysDaemon) {
                    QStringLiteral("keys command: wakukeys.exe --config k.conf"),
                    QStringLiteral("wakukeys.exe: C:\\Apps\\waku\\wakukeys.exe"),
                    QStringLiteral("keys file: C:\\Users\\me\\.config\\waku\\keys.conf (found)")}));
+}
+
+TEST(StartupServiceStatus, ReportsRegisteredPathsInsteadOfCurrentPath) {
+  FakeStartupSystem system;
+  system.task = {true, true, QStringLiteral("--safe"),
+                 QStringLiteral("C:\\Program Files\\waku\\waku.exe")};
+  system.keysTask = {true, true, QString(), QStringLiteral("D:\\old\\wakukeys.exe")};
+  const StartupResult result = startupStatus(system);
+  EXPECT_EQ(result.lines.at(1),
+            QStringLiteral("command: \"C:\\Program Files\\waku\\waku.exe\" --safe"));
+  EXPECT_EQ(result.lines.at(4), QStringLiteral("keys command: D:\\old\\wakukeys.exe"));
+}
+
+TEST(StartupServiceEnable, NoWarningForThePackageAlias) {
+  FakeStartupSystem system;
+  system.own = QStringLiteral("C:\\Program Files\\WindowsApps\\JanDeDobbeleer.Waku_1_arm64__x");
+  system.pathResult =
+      QStringLiteral("C:\\Users\\me\\AppData\\Local\\Microsoft\\WindowsApps\\waku.exe");
+  system.keysPathResult =
+      QStringLiteral("C:\\Users\\me\\AppData\\Local\\Microsoft\\WindowsApps\\wakukeys.exe");
+  system.keysConfigPresent = true;
+  const StartupResult result = enableStartup(system, StartupOptions{});
+  EXPECT_TRUE(result.ok);
+  EXPECT_EQ(result.lines,
+            (QStringList{QStringLiteral("startup: enabled, C:\\Users\\me\\AppData\\Local\\"
+                                        "Microsoft\\WindowsApps\\waku.exe"),
+                         QStringLiteral("startup: keys daemon enabled, C:\\Users\\me\\AppData\\"
+                                        "Local\\Microsoft\\WindowsApps\\wakukeys.exe")}));
+  EXPECT_EQ(system.registeredArguments.size(), 1);
+  EXPECT_EQ(system.keysRegisteredArguments.size(), 1);
+  EXPECT_EQ(system.task.program, system.pathResult);
+  EXPECT_EQ(system.keysTask.program, system.keysPathResult);
+}
+
+TEST(StartupServiceEnable, PackageWithDifferentInstallOnPathWarnsForBothTasks) {
+  FakeStartupSystem system;
+  system.own = QStringLiteral("C:\\Program Files\\WindowsApps\\JanDeDobbeleer.Waku_1_arm64__x");
+  system.pathResult = QStringLiteral("D:\\Other\\waku.exe");
+  system.keysPathResult = QStringLiteral("D:\\Other\\wakukeys.exe");
+  system.keysConfigPresent = true;
+  const StartupResult result = enableStartup(system, StartupOptions{});
+  EXPECT_TRUE(result.ok);
+  ASSERT_EQ(result.lines.size(), 4);
+  EXPECT_TRUE(result.lines.at(0).startsWith(QStringLiteral("warning: waku.exe")));
+  EXPECT_TRUE(result.lines.at(2).startsWith(QStringLiteral("warning: wakukeys.exe")));
+  EXPECT_EQ(system.registeredArguments.size(), 1);
+  EXPECT_EQ(system.keysRegisteredArguments.size(), 1);
+}
+
+TEST(StartupServiceEnable, UnpackagedInstallWithAliasOnPathWarns) {
+  FakeStartupSystem system;
+  system.pathResult =
+      QStringLiteral("C:\\Users\\me\\AppData\\Local\\Microsoft\\WindowsApps\\waku.exe");
+  const StartupResult result = enableStartup(system, StartupOptions{});
+  EXPECT_TRUE(result.ok);
+  EXPECT_TRUE(result.lines.first().startsWith(QStringLiteral("warning: waku.exe")));
 }
 
 TEST(StartupServiceKeys, RegisteredWhenTheFileExists) {
