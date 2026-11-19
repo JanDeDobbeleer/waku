@@ -331,6 +331,17 @@ void TaskbarModel::apply(std::vector<Row> rows) {
   std::set<QString> keep;
   for (const Row& row : rows) keep.insert(row.key);
 
+  const auto updateRow = [this](int at, Row next) {
+    Row& current = rows_[static_cast<size_t>(at)];
+    if (current == next) return;
+    Row withoutProgress = next;
+    withoutProgress.progress = current.progress;
+    const QList<int> roles =
+        withoutProgress == current ? QList<int>{ProgressStateRole, ProgressRole} : QList<int>{};
+    current = std::move(next);
+    emit dataChanged(index(at), index(at), roles);
+  };
+
   for (int i = static_cast<int>(rows_.size()) - 1; i >= 0; --i) {
     if (keep.count(rows_[static_cast<size_t>(i)].key)) continue;
     beginRemoveRows({}, i, i);
@@ -340,10 +351,7 @@ void TaskbarModel::apply(std::vector<Row> rows) {
   for (size_t i = 0; i < rows.size(); ++i) {
     const int at = static_cast<int>(i);
     if (i < rows_.size() && rows_[i].key == rows[i].key) {
-      if (!(rows_[i] == rows[i])) {
-        rows_[i] = std::move(rows[i]);
-        emit dataChanged(index(at), index(at));
-      }
+      updateRow(at, std::move(rows[i]));
       continue;
     }
     size_t from = i + 1;
@@ -354,10 +362,7 @@ void TaskbarModel::apply(std::vector<Row> rows) {
       rows_.erase(rows_.begin() + static_cast<long>(from));
       rows_.insert(rows_.begin() + at, std::move(moved));
       endMoveRows();
-      if (!(rows_[i] == rows[i])) {
-        rows_[i] = std::move(rows[i]);
-        emit dataChanged(index(at), index(at));
-      }
+      updateRow(at, std::move(rows[i]));
     } else {
       beginInsertRows({}, at, at);
       rows_.insert(rows_.begin() + at, std::move(rows[i]));
