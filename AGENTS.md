@@ -70,13 +70,14 @@ process); a single case runs with `waku_tests --gtest_filter=Suite.Case`. Preset
 `compile_commands.json` is written to `build\<preset>`.
 
 Run `clang-format -i` on touched files before `tools\check.ps1`; the `format` step fails
-otherwise. Iterate with `tools\check.ps1 -Fast`; run the full check once at the end. Never call
-`cl` or `cmake` outside the `cmd /c` + `vcvars` call above. On a Linux runner or in a CI worktree
-the build cannot run: use `-Fast` only.
+otherwise. Use `tools\check.ps1 -Fast` for the format, structure and JSON-subscript checks. Run
+build, qmllint and tests when they are relevant to the change; the full check is not required for
+every change. Never call `cl` or `cmake` outside the `cmd /c` + `vcvars` call above. On a Linux
+runner or in a CI worktree the build cannot run: use `-Fast` only.
 
-## Definition of done
+## Validation
 
-`tools\check.ps1` exits 0. Its steps, in order:
+Choose checks that cover the change. The full `tools\check.ps1` runs these steps in order:
 
 1. `format`: clang-format dry run over `src/` and `tests/`.
 2. `structure`: rules S1-S8 (below).
@@ -158,7 +159,8 @@ under a licence that is not MIT stays out of this repository entirely.
 8. Update `docs/architecture.md` in the same commit: a row in the dependency table, one per new
    thread, one per new singleton, one per undocumented Windows API. Add the feature name to the
    commit scopes in `tools/hooks/commit-msg` and to this file.
-9. Run `tools\check.ps1`.
+9. Run the checks relevant to the feature change; a full `tools\check.ps1` run is not required by
+   default.
 
 ## The kernel
 
