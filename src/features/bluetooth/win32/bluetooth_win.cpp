@@ -536,6 +536,32 @@ enumeration::DeviceInformation deviceInformationFor(const waku::bluetooth::Bluet
   return classic ? classic.DeviceInformation() : nullptr;
 }
 
+// The DeviceInformation of an unpaired device, found the way Windows' own pairing UI finds it: by
+// enumerating the unpaired Bluetooth devices in range (documented WinRT). A device that was just
+// forgotten can have no entry that the address lookup above can open, so pairing starts here.
+// Empty when the device is not in range or not advertising.
+enumeration::DeviceInformation findUnpairedDeviceInformation(
+    const waku::bluetooth::BluetoothDevice& d) {
+  const winrt::hstring addressKey = L"System.Devices.Aep.DeviceAddress";
+  const auto properties = winrt::single_threaded_vector<winrt::hstring>({addressKey});
+  const winrt::hstring selector =
+      d.isLe ? bt::BluetoothLEDevice::GetDeviceSelectorFromPairingState(false)
+             : bt::BluetoothDevice::GetDeviceSelectorFromPairingState(false);
+  const QString wanted = waku::bluetooth::formatBtAddress(d.addressInt).remove(':').toUpper();
+  for (const enumeration::DeviceInformation& info :
+       enumeration::DeviceInformation::FindAllAsync(selector, properties).get()) {
+    const auto value = info.Properties().TryLookup(addressKey);
+    if (!value) continue;
+    const QString address =
+        toQString(winrt::unbox_value_or<winrt::hstring>(value, winrt::hstring()))
+            .remove(':')
+            .remove('-')
+            .toUpper();
+    if (address == wanted) return info;
+  }
+  return nullptr;
+}
+
 // How WinRT delegates reach the worker. They run on WinRT pool threads and can still run after
 // their token was revoked (revoking does not wait for a running delegate, and `DeviceWatcher.Stop`
 // is asynchronous), so they never hold the worker: a QPointer tested on the pool thread and then
@@ -797,7 +823,16 @@ class BluetoothWorker : public QObject {
       return;
     }
     try {
-      const enumeration::DeviceInformation info = deviceInformationFor(device);
+      enumeration::DeviceInformation info = nullptr;
+      if (pair) {
+        try {
+          info = findUnpairedDeviceInformation(device);
+        } catch (const winrt::hresult_error& error) {
+          qWarning().noquote() << "Bluetooth: looking for" << address
+                               << "among the unpaired devices failed:" << hresultText(error);
+        }
+      }
+      if (!info) info = deviceInformationFor(device);
       if (!info) {
         finishPairing(false, QStringLiteral("Device not found"), device);
         return;
@@ -855,7 +890,9 @@ class BluetoothWorker : public QObject {
       refreshLePending_ = true;
       refresh();
       finishPairing(true, QStringLiteral("Device paired"), device);
-    } catch (const winrt::hresult_error&) {
+    } catch (const winrt::hresult_error& error) {
+      qWarning().noquote() << "Bluetooth:" << (pair ? "pair" : "forget") << address
+                           << "threw:" << hresultText(error);
       finishPairing(false, QStringLiteral("Windows could not reach the device"), device);
     } catch (...) {
       finishPairing(false, QStringLiteral("Pairing failed"), device);
