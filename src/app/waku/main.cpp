@@ -298,9 +298,9 @@ int main(int argc, char* argv[]) {
                                                       QStringLiteral("Tiling"));
     }
   };
-  // Local recovery, not for upstream: with --log-file only, and never for the first load, so a
-  // registry that is broken from the start cannot loop.
-  const bool restartOnBrokenRegistry = waku::host::RunLog::active() && !parser.isSet(safeOpt);
+  // Local recovery, not for upstream: never for the first load, so a registry that is broken from
+  // the start cannot loop. The restart keeps the command line and the environment.
+  const bool restartOnBrokenRegistry = !parser.isSet(safeOpt);
   auto firstLoadDone = std::make_shared<bool>(false);
   QObject::connect(&host, &waku::host::ShellHost::reloaded, &host,
                    [&host, &app, ensureTiler, restartOnBrokenRegistry, firstLoadDone](bool ok) {
