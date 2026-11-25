@@ -256,35 +256,40 @@ int main(int argc, char* argv[]) {
 
   // One shell per config home: `wakuc` finds it by the same name, and a second start would put
   // a second shell over the first.
-  waku::control::ControlServer control(
-      waku::control::controlPipeName(configHome),
-      waku::host::makeAsyncControlHandler(waku::host::makeControlHandler(
-          host, parser.isSet(safeOpt), {},
-          {{QStringLiteral("wallpaper"),
-            [&engine](const QStringList& words) {
-              // Built on the first wallpaper command if no config did.
-              return waku::wallpapers::answerWallpaperCommand(
-                  words, engine.singletonInstance<waku::wallpapers::Wallpapers*>(
-                             QStringLiteral("waku.services"), QStringLiteral("Wallpapers")));
-            }},
-           {QStringLiteral("tile"),
-            [&engine](const QStringList& words) {
-              // Built on the first `tile` command if no config did; inert unless the shell sets
-              // Tiling.enabled.
-              return waku::tiling::answerTileCommand(
-                  words, engine.singletonInstance<waku::tiling::Tiling*>(
-                             QStringLiteral("waku.services"), QStringLiteral("Tiling")));
-            }},
-           {QStringLiteral("desktop"),
-            [&engine](const QStringList& words) {
-              // Built on the first `desktop` command if no config did.
-              return waku::workspaces::answerDesktopCommand(
-                  words, engine.singletonInstance<waku::workspaces::VirtualDesktops*>(
-                             QStringLiteral("waku.services"), QStringLiteral("VirtualDesktops")));
-            }}},
-          taskbar.get())));
+  const auto controlHandler = waku::host::makeAsyncControlHandler(waku::host::makeControlHandler(
+      host, parser.isSet(safeOpt), {},
+      {{QStringLiteral("wallpaper"),
+        [&engine](const QStringList& words) {
+          // Built on the first wallpaper command if no config did.
+          return waku::wallpapers::answerWallpaperCommand(
+              words, engine.singletonInstance<waku::wallpapers::Wallpapers*>(
+                         QStringLiteral("waku.services"), QStringLiteral("Wallpapers")));
+        }},
+       {QStringLiteral("tile"),
+        [&engine](const QStringList& words) {
+          // Built on the first `tile` command if no config did; inert unless the shell sets
+          // Tiling.enabled.
+          return waku::tiling::answerTileCommand(
+              words, engine.singletonInstance<waku::tiling::Tiling*>(
+                         QStringLiteral("waku.services"), QStringLiteral("Tiling")));
+        }},
+       {QStringLiteral("desktop"),
+        [&engine](const QStringList& words) {
+          // Built on the first `desktop` command if no config did.
+          return waku::workspaces::answerDesktopCommand(
+              words, engine.singletonInstance<waku::workspaces::VirtualDesktops*>(
+                         QStringLiteral("waku.services"), QStringLiteral("VirtualDesktops")));
+        }}},
+      taskbar.get()));
+  waku::control::ControlServer control(waku::control::controlPipeName(configHome), controlHandler);
   if (!control.listen()) {
     qCritical().noquote() << "waku is already running for" << configHome << "(wakuc quit stops it)";
+    return 1;
+  }
+  waku::control::ControlServer discovery(waku::control::barDiscoveryPipeName(configHome),
+                                         controlHandler);
+  if (!discovery.listen()) {
+    qCritical().noquote() << "waku cannot open its discovery pipe for" << configHome;
     return 1;
   }
 

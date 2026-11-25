@@ -10,6 +10,8 @@ add_library(waku_control STATIC
   config_init.cpp
   win32/instance_mutex.h
   win32/instance_mutex.cpp
+  win32/pipe_discovery.h
+  win32/pipe_discovery.cpp
 )
 target_link_libraries(waku_control
   PUBLIC waku_kernel Qt6::Core Qt6::Network

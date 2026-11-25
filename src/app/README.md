@@ -39,7 +39,8 @@ written in lower case and plain ASCII in code and paths.
 - Config home: a folder with `shell.qml`, optionally `theme.qml` and your own widgets in `widgets/`.
   Select it with `--config-home <dir>` or `WAKU_CONFIG_HOME`; without either, `waku` and `wakuc`
   use `%USERPROFILE%\.config\waku` (also when it does not exist, so both agree on the control
-  pipe). While that implicit folder has no `shell.qml`, `waku` shows the built-in bar
+  pipe). `wakuc reload` without `--config-home` reloads every running instance; pass the option to
+  reload one. While that implicit folder has no `shell.qml`, `waku` shows the built-in bar
   (`DefaultShell.qml`) with the default theme and switches to `shell.qml` when it appears. A chosen
   config home without `shell.qml` is an error. Copy `examples/config` to start a config.
   Edit and save, then run `wakuc reload`; `--watch` reloads on every save. A 1.x `bar.qml` without a `shell.qml` shows an error that

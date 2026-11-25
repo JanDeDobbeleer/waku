@@ -10,16 +10,31 @@
 #include <memory>
 
 #include "control/win32/instance_mutex.h"
+#include "control/win32/pipe_discovery.h"
 
 namespace waku::control {
 
-QString pipeNameFor(const QString& key) { return controlPipeName(key); }
-
-QString controlPipeName(const QString& configHome) {
-  QString normal = QDir::cleanPath(QDir::fromNativeSeparators(configHome)).toLower();
+namespace {
+QString shortHash(const QString& key) {
+  const QString normal = QDir::cleanPath(QDir::fromNativeSeparators(key)).toLower();
   const QByteArray hash = QCryptographicHash::hash(normal.toUtf8(), QCryptographicHash::Sha1);
-  return QStringLiteral("waku-") + QString::fromLatin1(hash.toHex().left(12));
+  return QString::fromLatin1(hash.toHex().left(12));
 }
+
+QString barPipePrefix() {
+  return QStringLiteral("waku-bar-") + shortHash(QDir::homePath()) + QLatin1Char('-');
+}
+}  // namespace
+
+QString pipeNameFor(const QString& key) { return QStringLiteral("waku-") + shortHash(key); }
+
+QString controlPipeName(const QString& configHome) { return pipeNameFor(configHome); }
+
+QString barDiscoveryPipeName(const QString& configHome) {
+  return barPipePrefix() + shortHash(configHome);
+}
+
+QStringList barControlPipes(QString* error) { return findPipesWithPrefix(barPipePrefix(), error); }
 
 QString quoteArgument(const QString& argument) {
   bool plain = !argument.isEmpty();
@@ -214,6 +229,13 @@ ControlReply sendControlCommand(const QString& name, const QString& command, int
     received += socket.readAll();
   }
   return {ControlReply::Ok, QString::fromUtf8(received).trimmed()};
+}
+
+QList<ControlReply> sendControlCommands(const QStringList& names, const QString& command,
+                                        int timeoutMs) {
+  QList<ControlReply> replies;
+  for (const QString& name : names) replies.append(sendControlCommand(name, command, timeoutMs));
+  return replies;
 }
 
 }  // namespace waku::control

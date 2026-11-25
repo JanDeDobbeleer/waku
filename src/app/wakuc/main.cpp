@@ -44,7 +44,7 @@
 //
 // A separate console program: the bar itself is a Windows (GUI)
 // program with no console to print to. `--config-home <dir>` (or $WAKU_CONFIG_HOME) selects
-// the instance, as it does for the bar.
+// the instance, except that reload without --config-home reaches every running bar.
 //
 // Exit code: 0 the bar answered ok, 1 it answered an error, 2 no bar is running, 3 usage error or
 // no answer.
@@ -131,7 +131,8 @@ int main(int argc, char* argv[]) {
       "changing the wallpaper."));
   parser.addHelpOption();
   QCommandLineOption configHomeOpt(QStringLiteral("config-home"),
-                                   QStringLiteral("Config folder of the bar to talk to."),
+                                   QStringLiteral("Config folder of the bar to talk to. Reload "
+                                                  "without this option reaches every bar."),
                                    QStringLiteral("dir"));
   parser.addOption(configHomeOpt);
   QCommandLineOption dryRunOpt(QStringLiteral("dry-run"),
@@ -260,7 +261,38 @@ int main(int argc, char* argv[]) {
     line = waku::control::joinCommand(positional);
   }
 
-  // The same default as the bar, so that the two meet without any option.
+  if (command == QLatin1String("reload") && !parser.isSet(configHomeOpt)) {
+    QString discoveryError;
+    const QStringList pipes = waku::control::barControlPipes(&discoveryError);
+    if (!discoveryError.isEmpty()) {
+      print(stderr, QStringLiteral("wakuc: %1").arg(discoveryError));
+      return kUsage;
+    }
+    if (pipes.isEmpty()) {
+      print(stderr, QStringLiteral("wakuc: no bar is running"));
+      return kNotRunning;
+    }
+    const QList<waku::control::ControlReply> replies =
+        waku::control::sendControlCommands(pipes, line, kReloadTimeoutMs);
+    int result = kOk;
+    for (qsizetype i = 0; i < pipes.size(); ++i) {
+      const auto& reply = replies.at(i);
+      const QString prefix = pipes.size() > 1 ? pipes.at(i) + QStringLiteral(": ") : QString();
+      if (reply.status == waku::control::ControlReply::NotRunning) {
+        print(stderr, prefix + QStringLiteral("wakuc: bar stopped before reload"));
+        result = qMax(result, kNotRunning);
+      } else if (reply.status == waku::control::ControlReply::Failed) {
+        print(stderr, prefix + QStringLiteral("wakuc: ") + reply.text);
+        result = qMax(result, kUsage);
+      } else {
+        const bool error = reply.text.startsWith(QLatin1String("error:"));
+        print(error ? stderr : stdout, prefix + reply.text);
+        if (error) result = qMax(result, kBarError);
+      }
+    }
+    return result;
+  }
+
   const QString configHome =
       waku::control::resolveConfigHome(parser.value(configHomeOpt), QDir::homePath()).path;
   const QString pipeName = waku::control::controlPipeName(configHome);

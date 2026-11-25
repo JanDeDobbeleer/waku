@@ -18,9 +18,14 @@ namespace waku::control {
 // "waku-" plus a short hash of the config home (case and trailing slashes do not matter).
 QString controlPipeName(const QString& configHome);
 
-// The pipe name of a service that is not a bar: any key (the keys daemon uses "keys:<user>"). It
-// shares the hash of controlPipeName() without the meaning of a config home.
+// The pipe name of a service that is not a bar (the keys daemon uses "keys:<user>").
 QString pipeNameFor(const QString& key);
+
+// A second pipe for discovering this user's bars without changing their control pipe names.
+QString barDiscoveryPipeName(const QString& configHome);
+
+// Discover bar pipes for this user. An enumeration failure is returned in error.
+QStringList barControlPipes(QString* error);
 
 // The config home to use: the command-line value if given, else $WAKU_CONFIG_HOME, else
 // `<userHome>/.config/waku`. The last is returned even when the folder does not exist, so `waku`
@@ -92,5 +97,9 @@ struct ControlReply {
 // Sends `command` to the instance listening on `name` and waits for its answer. Blocking: call it
 // off the thread that runs the server (the CLI has no server).
 ControlReply sendControlCommand(const QString& name, const QString& command, int timeoutMs = 5000);
+
+// Send to every named pipe, even if an earlier command fails. Replies follow the input order.
+QList<ControlReply> sendControlCommands(const QStringList& names, const QString& command,
+                                        int timeoutMs = 5000);
 
 }  // namespace waku::control
