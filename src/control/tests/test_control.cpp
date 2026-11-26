@@ -62,6 +62,24 @@ TEST(ControlNames, DifferentConfigHomesGetDifferentPipes) {
   EXPECT_NE(controlPipeName(QStringLiteral("C:\\a")), controlPipeName(QStringLiteral("C:\\b")));
 }
 
+TEST(ControlNames, DiscoveryFindsBarPipesButNotOtherServices) {
+  const QString firstName = barDiscoveryPipeName(uniqueName());
+  const QString secondName = barDiscoveryPipeName(uniqueName());
+  const QString otherName = pipeNameFor(uniqueName());
+  ControlServer first(firstName, [](const QString&) { return QStringLiteral("one"); });
+  ControlServer second(secondName, [](const QString&) { return QStringLiteral("two"); });
+  ControlServer other(otherName, [](const QString&) { return QStringLiteral("other"); });
+  ASSERT_TRUE(first.listen());
+  ASSERT_TRUE(second.listen());
+  ASSERT_TRUE(other.listen());
+  QString error;
+  const QStringList names = barControlPipes(&error);
+  EXPECT_TRUE(error.isEmpty()) << error.toStdString();
+  EXPECT_TRUE(names.contains(firstName));
+  EXPECT_TRUE(names.contains(secondName));
+  EXPECT_FALSE(names.contains(otherName));
+}
+
 TEST(ControlNames, TheConfigHomeIsTheOptionThenTheEnvironmentThenTheUserHome) {
   const QString home = QStringLiteral("C:/Users/test");
   qunsetenv("WAKU_CONFIG_HOME");
@@ -105,6 +123,30 @@ TEST(ControlChannel, SeveralCommandsInARowAreAnsweredEach) {
 TEST(ControlChannel, NothingListeningMeansNotRunning) {
   const ControlReply reply = sendControlCommand(uniqueName(), QStringLiteral("reload"), 500);
   EXPECT_EQ(reply.status, ControlReply::NotRunning);
+}
+
+TEST(ControlChannel, BroadcastContinuesAfterAnInstanceStops) {
+  const QString firstName = uniqueName();
+  const QString missingName = uniqueName();
+  const QString secondName = uniqueName();
+  ControlServer first(firstName,
+                      [](const QString& command) { return QStringLiteral("first:") + command; });
+  ControlServer second(secondName,
+                       [](const QString& command) { return QStringLiteral("second:") + command; });
+  ASSERT_TRUE(first.listen());
+  ASSERT_TRUE(second.listen());
+  std::atomic<bool> done{false};
+  QList<ControlReply> replies;
+  std::thread client([&] {
+    replies = sendControlCommands({firstName, missingName, secondName}, QStringLiteral("reload"));
+    done = true;
+  });
+  EXPECT_TRUE(QTest::qWaitFor([&] { return done.load(); }, 10000));
+  client.join();
+  ASSERT_EQ(replies.size(), 3);
+  EXPECT_EQ(replies.at(0).text, QStringLiteral("first:reload"));
+  EXPECT_EQ(replies.at(1).status, ControlReply::NotRunning);
+  EXPECT_EQ(replies.at(2).text, QStringLiteral("second:reload"));
 }
 
 TEST(ControlChannel, ASecondServerOnTheSameNameIsRefused) {

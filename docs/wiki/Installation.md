@@ -73,7 +73,8 @@ waku finds its config home in this order:
 2. The `WAKU_CONFIG_HOME` environment variable.
 3. `%USERPROFILE%\.config\waku`.
 
-`wakuc` resolves the folder the same way.
+`wakuc` resolves the folder the same way, except that `wakuc reload` without `--config-home`
+reloads every running instance.
 
 If the folder has no `shell.qml` (or does not exist) and you did not set the home yourself, waku
 shows the built-in bar. When you create `%USERPROFILE%\.config\waku\shell.qml`, the running bar

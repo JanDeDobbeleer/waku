@@ -24,8 +24,9 @@ wakuc --config-home 'C:\Users\Example\my shell' status
 wakuc --config-home 'C:\Users\Example\my shell' surface toggle launcher
 ```
 
-Different config homes can have separate running instances. `--help` or `-h` prints command-line
-help.
+Different config homes can have separate running instances. `wakuc reload` without
+`--config-home` reloads all running instances, even when `WAKU_CONFIG_HOME` is set. Pass
+`--config-home` to reload only one. `--help` or `-h` prints command-line help.
 
 ## Bar commands
 
@@ -265,13 +266,14 @@ booleans, real numbers and colors. The result is printed on one line; void or nu
 
 - `0`: success.
 - `1`: the bar returned an error, or a local config or startup operation failed.
-- `2`: no bar is running for the selected config home.
+- `2`: no bar is running for the selected config home, or a bar stopped before a broadcast reload.
 - `3`: invalid usage or a communication failure, including no answer.
 
-Errors go to standard error. If a command cannot find the bar, check that waku is running and
-that `wakuc` uses the same config home. Shell-specific shortcuts, surfaces and IPC handlers exist
-only when the running shell defines them. Wallpaper, desktop and tiling commands can report that
-their service or requested operation is unavailable.
+Errors go to standard error. A broadcast reload attempts every discovered bar even if one fails,
+and returns the highest exit code encountered. If another command cannot find the bar, check that
+waku is running and that `wakuc` uses the same config home. Shell-specific shortcuts, surfaces and
+IPC handlers exist only when the running shell defines them. Wallpaper, desktop and tiling commands
+can report that their service or requested operation is unavailable.
 
 ## Related documentation
 
