@@ -51,6 +51,9 @@ std::optional<ScreenOccupancy> fullscreenWindowDecision(const QRect& window, con
                                                         bool hasCaption) {
   if (!window.intersects(screen)) return std::nullopt;
   if (maximized && !hasCaption && window.contains(screen)) return ScreenOccupancy::Fullscreen;
+  // A captioned, non-maximized window is an ordinary one even when its restored bounds cover the
+  // monitor (Chromium keeps maximized bounds after a restore). Topmost keeps it fullscreen.
+  if (!maximized && hasCaption && !topmost) return ScreenOccupancy::None;
   if (coversScreenForFullscreen(window, screen, maximized)) {
     return maximized ? ScreenOccupancy::Maximized : ScreenOccupancy::Fullscreen;
   }

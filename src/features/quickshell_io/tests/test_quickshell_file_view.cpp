@@ -211,8 +211,11 @@ TEST(QuickshellFileView, WatchChangesReportsExternalEditsButNotOwnWrites) {
   ASSERT_TRUE(waitFor([&] { return loaded.count() == 1; }));
 
   QSignalSpy saved(&v, &FileView::saved);
+  QSignalSpy saveFailed(&v, &FileView::saveFailed);
   v.setText(QStringLiteral("own"));
-  ASSERT_TRUE(waitFor([&] { return saved.count() == 1; }));
+  ASSERT_TRUE(waitFor([&] { return saved.count() == 1 || saveFailed.count() > 0; }));
+  ASSERT_EQ(saveFailed.count(), 0) << "save error " << saveFailed.first().at(0).toInt();
+  ASSERT_EQ(saved.count(), 1);
   QTest::qWait(400);
   EXPECT_EQ(changed.count(), 0);
 

@@ -93,7 +93,12 @@ class Win32WindowPlacer final : public WindowPlacer {
     facts.monitor = reinterpret_cast<MonitorId>(monitor);
     MONITORINFO info = {sizeof(info)};
     if (monitor && GetMonitorInfoW(monitor, &info)) {
-      facts.fullscreen = !facts.iconic && window.left <= info.rcMonitor.left &&
+      // A captioned window is not fullscreen even when its restored bounds cover the monitor
+      // (Chromium keeps maximized bounds after a restore). Topmost keeps it fullscreen.
+      const LONG_PTR style = GetWindowLongPtrW(hwnd, GWL_STYLE);
+      const bool ordinaryFrame = (style & WS_CAPTION) == WS_CAPTION &&
+                                 (GetWindowLongPtrW(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST) == 0;
+      facts.fullscreen = !facts.iconic && !ordinaryFrame && window.left <= info.rcMonitor.left &&
                          window.top <= info.rcMonitor.top && window.right >= info.rcMonitor.right &&
                          window.bottom >= info.rcMonitor.bottom;
     }

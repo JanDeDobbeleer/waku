@@ -50,10 +50,23 @@ TEST(PanelGeometryTest, FrontmostOrdinaryWindowStopsFullscreenSearch) {
   const auto decision = fullscreenWindowDecision(ordinary, kScreen, false, false, true);
   ASSERT_TRUE(decision.has_value());
   EXPECT_EQ(*decision, ScreenOccupancy::None);
-  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, false, false, true),
+  EXPECT_EQ(fullscreenWindowDecision(kScreen, kScreen, false, false, false),
             ScreenOccupancy::Fullscreen);
   EXPECT_EQ(fullscreenWindowDecision(ordinary, kScreen, true, false, true),
             ScreenOccupancy::Maximized);
+}
+
+TEST(PanelGeometryTest, CaptionedWindowWithMaximizedBoundsIsOrdinary) {
+  // Chromium keeps the maximized rectangle as the restored size, so a not-maximized Edge window
+  // can cover the monitor. It must not hide the panel.
+  const QRect covering = kScreen.adjusted(-7, -7, 7, 7);
+  const auto decision = fullscreenWindowDecision(covering, kScreen, false, false, true);
+  ASSERT_TRUE(decision.has_value());
+  EXPECT_EQ(*decision, ScreenOccupancy::None);
+  EXPECT_EQ(fullscreenWindowDecision(covering, kScreen, false, true, true),
+            ScreenOccupancy::Fullscreen);
+  EXPECT_EQ(fullscreenWindowDecision(covering, kScreen, false, false, false),
+            ScreenOccupancy::Fullscreen);
 }
 
 TEST(PanelGeometryTest, FullscreenSearchSkipsNonFullscreenTopmostAndOtherMonitors) {
