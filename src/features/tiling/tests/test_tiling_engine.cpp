@@ -76,6 +76,26 @@ TEST(WindowPlacer, FastStateTracksNativeFullscreenTransitions) {
   EXPECT_FALSE(restored->fullscreen);
 }
 
+TEST(WindowPlacer, ACaptionedWindowCoveringTheMonitorIsNotFullscreen) {
+  const POINT origin{};
+  const HMONITOR monitor = MonitorFromPoint(origin, MONITOR_DEFAULTTOPRIMARY);
+  MONITORINFO info{sizeof(info)};
+  ASSERT_TRUE(GetMonitorInfoW(monitor, &info));
+  const RECT& bounds = info.rcMonitor;
+  std::unique_ptr<std::remove_pointer_t<HWND>, decltype(&DestroyWindow)> window(
+      CreateWindowExW(WS_EX_TOOLWINDOW, L"STATIC", L"waku captioned cover probe",
+                      WS_OVERLAPPEDWINDOW, bounds.left - 7, bounds.top - 7,
+                      bounds.right - bounds.left + 14, bounds.bottom - bounds.top + 14, nullptr,
+                      nullptr, GetModuleHandleW(nullptr), nullptr),
+      &DestroyWindow);
+  ASSERT_NE(window, nullptr);
+  const auto placer = makeWin32WindowPlacer();
+  const auto state = placer->state(reinterpret_cast<WindowId>(window.get()));
+  ASSERT_TRUE(state);
+  EXPECT_FALSE(state->zoomed);
+  EXPECT_FALSE(state->fullscreen);
+}
+
 TEST(TilingEngine, AWindowThatAppearsIsPlacedInTheFullArea) {
   Rig rig;
   rig.engine.start();

@@ -70,7 +70,8 @@ waku's own process are skipped by the hook (`WINEVENT_SKIPOWNPROCESS`).
 
 A window is managed unless: not visible; cloaked; minimized or untitled (retry); a window of waku;
 owned by a visible window; a tool window; without `WS_THICKFRAME` or `WS_CAPTION`; maximized after
-startup; fullscreen; a splash or shell class (`isBuiltinIgnoredClass`); ignored by a rule; or the
+startup; fullscreen (covers its monitor and has no caption, or is topmost: a captioned window with
+maximized bounds, such as Edge after a restore, is ordinary and gets a slot); a splash or shell class (`isBuiltinIgnoredClass`); ignored by a rule; or the
 window of an elevated process while waku is not elevated (UIPI forbids moving it; unmanaged, no error).
 A `float` rule keeps the window, unplaced; `toggle` tiles it. A maximized managed window keeps its
 place in the stack but takes no slot.
