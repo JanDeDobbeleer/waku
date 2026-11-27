@@ -23,6 +23,12 @@ FileView::FileView(QObject* parent) : QObject(parent) {
   debounce_.setSingleShot(true);
   debounce_.setInterval(kDebounceMs);
   connect(&debounce_, &QTimer::timeout, this, [this] {
+    // Our own write is in flight: a read now sees the old file and reports it as an external edit.
+    // The write's own events start the check again once it is done.
+    if (writeWatcher_ || pendingWrite_) {
+      debounce_.start();
+      return;
+    }
     startRead(true);
     updateWatcher();  // an atomic replace drops the watched path
   });

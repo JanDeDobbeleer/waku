@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <atomic>
+#include <chrono>
+#include <thread>
 
 #include "kernel/qt/file_write.h"
 
@@ -20,6 +22,20 @@ FileError fromDevice(QFileDevice::FileError error) {
     default:
       return FileError::Unknown;
   }
+}
+
+// The commit renames over the target. On Windows that fails while another handle holds the target
+// open, as the watching FileView's own re-read can for a moment. The call runs on a thread-pool
+// thread, so a short wait is fine; a permanent error still fails after the last attempt.
+FileError writeAtomicWithRetry(const QString& path, const QByteArray& data) {
+  constexpr int kAttempts = 5;
+  FileError error = FileError::Unknown;
+  for (int attempt = 0; attempt < kAttempts; ++attempt) {
+    if (attempt > 0) std::this_thread::sleep_for(std::chrono::milliseconds(20 * attempt));
+    error = fromDevice(kernel::writeFileAtomic(path, data).error);
+    if (error != FileError::Unknown) return error;
+  }
+  return error;
 }
 
 class RealFileAccess : public FileAccess {
@@ -39,7 +55,7 @@ class RealFileAccess : public FileAccess {
     const QFileInfo info(path);
     if (info.isDir()) return FileError::NotAFile;
     if (!QDir().mkpath(info.absolutePath())) return FileError::Unknown;
-    if (atomic) return fromDevice(kernel::writeFileAtomic(path, data).error);
+    if (atomic) return writeAtomicWithRetry(path, data);
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) return fromDevice(file.error());
     if (file.write(data) != data.size()) return FileError::Unknown;
